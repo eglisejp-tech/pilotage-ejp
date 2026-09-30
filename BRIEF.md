@@ -3,6 +3,7 @@
 Ce document est la source de vérité pour construire l'application. Lis-le en entier avant d'écrire la moindre ligne. En cas de doute, pose la question plutôt que d'inventer.
 
 Références jointes :
+
 - `docs/reference/maquettes/` : **maquettes validées de tous les écrans, profil par profil** (direction visuelle C). Lis d'abord `LISEZMOI.md`. Pour l'apparence, elles priment sur tout le reste.
 - `docs/reference/tokens.css` : couleurs, polices et tailles de la direction C, à copier dans `src/styles/tokens.css`.
 - `docs/reference/prototype.html` : prototype interactif (comportement, textes, données d'exemple). Son apparence est **dépassée** par les maquettes.
@@ -15,6 +16,7 @@ Références jointes :
 Un outil web **temporaire** de prise d'information pour le berger et le conseil de l'Église des Jeunes Prodiges (EJP). Chaque ministère y saisit ses chiffres, événements, réunions et points d'attention. L'outil **conserve chaque saisie** pour montrer l'évolution, et affiche **qui a saisi et qui manque**. Il ne remplace aucune décision : les décisions se prennent en dehors.
 
 La page d'accueil doit répondre en quelques secondes à quatre questions :
+
 1. Où en sont les ministères ?
 2. Qu'est-ce qui arrive prochainement ?
 3. Qu'est-ce qui demande une attention ou une décision ?
@@ -22,24 +24,24 @@ La page d'accueil doit répondre en quelques secondes à quatre questions :
 
 ## 2. Utilisateurs et comptes
 
-| Compte | Connexion | Droits |
-|---|---|---|
-| Ministère | **Un email partagé par ministère** (plusieurs personnes l'utilisent, c'est voulu) | Vue globale + sa fiche. Saisit ses données. Voit les points d'attention qui le mentionnent. |
-| Berger | Email personnel | Lecture de tout. Marque un point d'attention comme traité. |
-| Membre du conseil | Un email par membre | Lecture de tout. Marque un point d'attention comme traité. |
-| Administration de l'église | Email dédié | Crée/désactive les ministères et leurs comptes, crée les comptes berger et conseil, déclare les sessions et leurs ministères attendus. |
-| Administration plateforme (EJP Tech) | Comptes EJP Tech | Technique et modération des champs libres. Ne décide pas des accès. |
+| Compte                               | Connexion                                                                         | Droits                                                                                                                                 |
+| ------------------------------------ | --------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Ministère                            | **Un email partagé par ministère** (plusieurs personnes l'utilisent, c'est voulu) | Vue globale + sa fiche. Saisit ses données. Voit les points d'attention qui le mentionnent.                                            |
+| Berger                               | Email personnel                                                                   | Lecture de tout. Marque un point d'attention comme traité.                                                                             |
+| Membre du conseil                    | Un email par membre                                                               | Lecture de tout. Marque un point d'attention comme traité.                                                                             |
+| Administration de l'église           | Email dédié                                                                       | Crée/désactive les ministères et leurs comptes, crée les comptes berger et conseil, déclare les sessions et leurs ministères attendus. |
+| Administration plateforme (EJP Tech) | Comptes EJP Tech                                                                  | Technique et modération des champs libres. Ne décide pas des accès.                                                                    |
 
 Tous les comptes se connectent **avec Google ou avec email et mot de passe, puis avec un code de double authentification** (section 8). Aucun compte ne peut s'en passer.
 
 Chaque profil a sa propre navigation et son propre écran d'accueil (planche `maquettes/00-profils-qui-voit-quoi.png`) :
 
-| Profil | Onglets (le premier est l'accueil) |
-|---|---|
-| Ministère | Cette semaine, Ma fiche, Mes points, Mon journal |
-| Berger et conseil | Cette semaine, Ministères, Points d'attention, Journal |
+| Profil                     | Onglets (le premier est l'accueil)                      |
+| -------------------------- | ------------------------------------------------------- |
+| Ministère                  | Cette semaine, Ma fiche, Mes points, Mon journal        |
+| Berger et conseil          | Cette semaine, Ministères, Points d'attention, Journal  |
 | Administration de l'église | Cette semaine, Ministères et comptes, Sessions, Journal |
-| EJP Tech | Modération, Journal technique |
+| EJP Tech                   | Modération, Journal technique                           |
 
 Le nom du compte connecté reste toujours visible dans l'en-tête (un email de ministère est partagé). Un compte ne voit jamais les onglets d'un autre profil, et **le routage ne remplace pas la RLS** : un ministère qui tape l'adresse d'un écran berger ne reçoit aucune donnée.
 
@@ -60,18 +62,19 @@ Ne crée **pas** de profils personnels (nom, téléphone, date de naissance). Ne
 
 ## 4. Indicateurs de la vue globale
 
-| Code | Libellé | Nature | Saisi par | Affichage |
-|---|---|---|---|---|
-| `service` | STARs de service | Chaque dimanche | Chaque ministère | Total du dernier dimanche, delta vs dimanche précédent, courbe, complétude |
-| `actifs` | STARs actifs | À ce jour | Chaque ministère | Total |
-| `en_fij` | Dont présents en FIJ | À ce jour | Chaque ministère | Sert au calcul du % |
-| `fij_departement` | FIJ par département | À ce jour | Ministère FIJ | Carte en carrés des 8 départements (75, 77, 78, 91, 92, 93, 94, 95), placés comme sur la carte réelle |
-| session `batir` | Présents à Bâtir l'Église | Par session | Chaque ministère | Total dernière session, courbe, complétude, liste des manquants |
-| session `anti_dispersion` | Présents à Anti-Dispersion | Par session | Chaque ministère | Idem |
+| Code                      | Libellé                    | Nature          | Saisi par        | Affichage                                                                                             |
+| ------------------------- | -------------------------- | --------------- | ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `service`                 | STARs de service           | Chaque dimanche | Chaque ministère | Total du dernier dimanche, delta vs dimanche précédent, courbe, complétude                            |
+| `actifs`                  | STARs actifs               | À ce jour       | Chaque ministère | Total                                                                                                 |
+| `en_fij`                  | Dont présents en FIJ       | À ce jour       | Chaque ministère | Sert au calcul du %                                                                                   |
+| `fij_departement`         | FIJ par département        | À ce jour       | Ministère FIJ    | Carte en carrés des 8 départements (75, 77, 78, 91, 92, 93, 94, 95), placés comme sur la carte réelle |
+| session `batir`           | Présents à Bâtir l'Église  | Par session     | Chaque ministère | Total dernière session, courbe, complétude, liste des manquants                                       |
+| session `anti_dispersion` | Présents à Anti-Dispersion | Par session     | Chaque ministère | Idem                                                                                                  |
 
 Les indicateurs propres à un ministère (ex. « Enfants accueillis le dimanche » pour Prodiges Junior) utilisent la même table avec `ministere_id` renseigné. Ils s'affichent sur la fiche du ministère, pas sur la vue globale.
 
 **Questions ouvertes à ne pas trancher seul** (garde le code paramétrable) :
+
 - STARs de service et actifs : saisie par ministère (hypothèse retenue) ou saisie globale unique ?
 - Double comptage d'un STAR présent dans deux ministères.
 - Un ministère mentionné peut-il marquer « traité » ? (hypothèse : non)
@@ -238,7 +241,7 @@ Principe : **le cloisonnement vit dans la base**, pas dans l'interface.
 2. **Deux façons de se connecter, au choix** (maquette 16) :
    - **« Continuer avec Google »** (`signInWithOAuth({ provider: 'google' })`), recommandé quand l'adresse du compte est une adresse Google (Gmail ou Google Workspace) ;
    - **email et mot de passe**, pour les adresses qui ne sont pas des comptes Google.
-   Quand quelqu'un se connecte avec Google pour la première fois, Supabase **rattache automatiquement** l'identité Google au compte existant qui a la même adresse email, à condition que cette adresse soit vérifiée. C'est pour cela que l'invitation doit être acceptée avant.
+     Quand quelqu'un se connecte avec Google pour la première fois, Supabase **rattache automatiquement** l'identité Google au compte existant qui a la même adresse email, à condition que cette adresse soit vérifiée. C'est pour cela que l'invitation doit être acceptée avant.
 3. **Double authentification obligatoire pour tous les comptes** (TOTP, application d'authentification : Google Authenticator, Microsoft Authenticator, etc.). Gratuit et activé par défaut dans Supabase.
    - Après le premier facteur (Google ou mot de passe), la session est de niveau `aal1`. Tant qu'elle n'est pas `aal2`, l'application n'affiche que l'écran de code (maquette 18) ou l'écran d'activation (maquette 17).
    - **La base l'impose, pas seulement l'interface** : une politique **restrictive** sur chaque table exposée, en plus des politiques existantes :
@@ -259,10 +262,10 @@ Principe : **le cloisonnement vit dans la base**, pas dans l'interface.
 
 ### Les Edge Functions (seul endroit où vit la clé `service_role`)
 
-| Fonction | Qui peut l'appeler | Ce qu'elle fait |
-|---|---|---|
-| `creer-compte` | `admin_eglise` en `aal2` | Invite l'adresse par email (`auth.admin.inviteUserByEmail`), crée la ligne `compte` (type, ministère, libellé), écrit le journal. |
-| `desactiver-compte` | `admin_eglise` en `aal2` | Bannit l'utilisateur dans Auth, garde toutes ses données, écrit le journal. |
+| Fonction            | Qui peut l'appeler       | Ce qu'elle fait                                                                                                                                |
+| ------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `creer-compte`      | `admin_eglise` en `aal2` | Invite l'adresse par email (`auth.admin.inviteUserByEmail`), crée la ligne `compte` (type, ministère, libellé), écrit le journal.              |
+| `desactiver-compte` | `admin_eglise` en `aal2` | Bannit l'utilisateur dans Auth, garde toutes ses données, écrit le journal.                                                                    |
 | `reinitialiser-2fa` | `admin_eglise` en `aal2` | Supprime les facteurs TOTP du compte (`auth.admin.mfa.deleteFactor`), écrit le journal. Le compte refait l'activation à la connexion suivante. |
 
 Chaque fonction vérifie le JWT de l'appelant, son type de compte **et** son niveau `aal2` avant d'agir.
@@ -301,21 +304,21 @@ Chaque fonction vérifie le JWT de l'appelant, son type de compte **et** son niv
 
 Reproduis les maquettes de `docs/reference/maquettes/`. Ordre de lecture : résumé d'abord, détail ensuite.
 
-| Profil | Écran | Maquette | Contenu |
-|---|---|---|---|
-| Tous | Connexion | 16 | « Continuer avec Google », ou email et mot de passe. Message d'erreur clair, pas d'inscription. |
-| Tous | Double authentification | 17, 18 | Activation à la première connexion (QR code, consigne pour les comptes partagés), puis code à chaque connexion. |
-| Berger et conseil | Cette semaine | 01, 02, 03 | Numéro de semaine, phrase de la semaine (générée à partir des données), tableau des chiffres (valeur, écart, courbe, date, complétude), colonne « À décider » (3 points ouverts les plus prioritaires), dernière session et manquants, carte des FIJ, ministères triés du moins récent au plus récent. |
-| Berger et conseil | Fiche d'un ministère | 04 | Phrase du ministère, ses chiffres avec historique, ses points (créés ou mentionnés), calendrier prévisionnel avec statuts, dernières saisies. Lecture seule, sauf « Marquer traité ». |
-| Berger et conseil | Points d'attention | 05 | Onglets Ouverts, Traités, Tous. Tri par priorité puis échéance. Échéance dépassée écrite en rouge **et** en mots. |
-| Berger et conseil | Journal | 06 | Date, compte, action, détail. Filtres compte, action, période. |
-| Ministère | Cette semaine | 07 (téléphone) | Phrase qui dit ce qu'il reste à faire, bouton principal pour la prochaine action, ses saisies, ses points, puis un résumé de l'église. Sur ordinateur : vue de 01 **sans « À décider »**. |
-| Ministère | Ma fiche | 12 | Comme 04, avec les boutons de saisie. Un point où il est seulement **mentionné** n'a pas de bouton « Marquer traité ». |
-| Ministère | Saisies | 08, 09, 10, 11 | Dimanche, session, nouveau point (avec mentions et compteur de 280 caractères), événement. Plein écran sur téléphone, panneau latéral de 460 px sur ordinateur. Moins d'une minute chacune. |
-| Ministère | Mes points, Mon journal | 05, 06 filtrés | Mêmes écrans, limités à son ministère. |
-| Administration de l'église | Ministères et comptes | 13 | Créer et désactiver un ministère et son compte, comptes berger et conseil (état de la double authentification). Les statuts d'événement sont affichés en lecture (liste fixe, `statut_evenement`). |
-| Administration de l'église | Sessions | 14 | Liste des sessions et complétude, panneau « Déclarer une session » avec les ministères attendus. |
-| EJP Tech | Modération | 15 | Champs libres récents, « Rien à signaler » ou « Masquer le texte » avec un motif. Chaque décision écrit une ligne de journal. |
+| Profil                     | Écran                   | Maquette       | Contenu                                                                                                                                                                                                                                                                                                |
+| -------------------------- | ----------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Tous                       | Connexion               | 16             | « Continuer avec Google », ou email et mot de passe. Message d'erreur clair, pas d'inscription.                                                                                                                                                                                                        |
+| Tous                       | Double authentification | 17, 18         | Activation à la première connexion (QR code, consigne pour les comptes partagés), puis code à chaque connexion.                                                                                                                                                                                        |
+| Berger et conseil          | Cette semaine           | 01, 02, 03     | Numéro de semaine, phrase de la semaine (générée à partir des données), tableau des chiffres (valeur, écart, courbe, date, complétude), colonne « À décider » (3 points ouverts les plus prioritaires), dernière session et manquants, carte des FIJ, ministères triés du moins récent au plus récent. |
+| Berger et conseil          | Fiche d'un ministère    | 04             | Phrase du ministère, ses chiffres avec historique, ses points (créés ou mentionnés), calendrier prévisionnel avec statuts, dernières saisies. Lecture seule, sauf « Marquer traité ».                                                                                                                  |
+| Berger et conseil          | Points d'attention      | 05             | Onglets Ouverts, Traités, Tous. Tri par priorité puis échéance. Échéance dépassée écrite en rouge **et** en mots.                                                                                                                                                                                      |
+| Berger et conseil          | Journal                 | 06             | Date, compte, action, détail. Filtres compte, action, période.                                                                                                                                                                                                                                         |
+| Ministère                  | Cette semaine           | 07 (téléphone) | Phrase qui dit ce qu'il reste à faire, bouton principal pour la prochaine action, ses saisies, ses points, puis un résumé de l'église. Sur ordinateur : vue de 01 **sans « À décider »**.                                                                                                              |
+| Ministère                  | Ma fiche                | 12             | Comme 04, avec les boutons de saisie. Un point où il est seulement **mentionné** n'a pas de bouton « Marquer traité ».                                                                                                                                                                                 |
+| Ministère                  | Saisies                 | 08, 09, 10, 11 | Dimanche, session, nouveau point (avec mentions et compteur de 280 caractères), événement. Plein écran sur téléphone, panneau latéral de 460 px sur ordinateur. Moins d'une minute chacune.                                                                                                            |
+| Ministère                  | Mes points, Mon journal | 05, 06 filtrés | Mêmes écrans, limités à son ministère.                                                                                                                                                                                                                                                                 |
+| Administration de l'église | Ministères et comptes   | 13             | Créer et désactiver un ministère et son compte, comptes berger et conseil (état de la double authentification). Les statuts d'événement sont affichés en lecture (liste fixe, `statut_evenement`).                                                                                                     |
+| Administration de l'église | Sessions                | 14             | Liste des sessions et complétude, panneau « Déclarer une session » avec les ministères attendus.                                                                                                                                                                                                       |
+| EJP Tech                   | Modération              | 15             | Champs libres récents, « Rien à signaler » ou « Masquer le texte » avec un motif. Chaque décision écrit une ligne de journal.                                                                                                                                                                          |
 
 États à construire même s'ils ne sont pas dessinés : chargement, liste vide, erreur réseau, compte désactivé (voir `maquettes/LISEZMOI.md`).
 
@@ -346,14 +349,14 @@ Thème sombre, notifications, validation dans l'outil, gestion des personnes ou 
 
 Travaille en **mode plan** au début de chaque étape, présente le plan, attends mon accord, puis code.
 
-| Étape | Contenu | Vérification |
-|---|---|---|
-| 0 | Échafaudage Vite + TS + Tailwind + shadcn, ESLint, Prettier, Vitest, Playwright, CI | Build et CI verts |
-| 1 | Migrations, vues, fonctions `private`, RLS, jeu de données d'exemple (celui du prototype) | `supabase test db` vert, revue `rls-auditor` |
-| 2 | Authentification (section 8) : Google et mot de passe, activation et code de double authentification, politique `aal2`, Edge Functions de comptes ; puis chargement du compte, navigation et accueil selon le profil (maquettes 00, 16, 17, 18) | pgTAP `aal1` refusé ; E2E : chaque profil passe par le code, arrive sur son accueil et ne voit que ses onglets |
-| 3 | Vue globale | E2E + captures + revue `ui-reviewer` |
-| 4 | Fiche ministère et saisies | E2E : une saisie crée une ligne, l'historique grandit, le journal aussi |
-| 5 | Points d'attention et mentions | E2E : un ministère mentionné voit le point, un autre non |
-| 6 | Journal et administration de l'église | E2E admin |
-| 7 | Finitions : responsive 360 à 1440 px, accessibilité, états vides, erreurs réseau | Audit accessibilité Playwright |
-| 8 | Déploiement (comptes au nom de l'église), documentation d'exploitation | Recette sur l'environnement de préproduction |
+| Étape | Contenu                                                                                                                                                                                                                                         | Vérification                                                                                                   |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| 0     | Échafaudage Vite + TS + Tailwind + shadcn, ESLint, Prettier, Vitest, Playwright, CI                                                                                                                                                             | Build et CI verts                                                                                              |
+| 1     | Migrations, vues, fonctions `private`, RLS, jeu de données d'exemple (celui du prototype)                                                                                                                                                       | `supabase test db` vert, revue `rls-auditor`                                                                   |
+| 2     | Authentification (section 8) : Google et mot de passe, activation et code de double authentification, politique `aal2`, Edge Functions de comptes ; puis chargement du compte, navigation et accueil selon le profil (maquettes 00, 16, 17, 18) | pgTAP `aal1` refusé ; E2E : chaque profil passe par le code, arrive sur son accueil et ne voit que ses onglets |
+| 3     | Vue globale                                                                                                                                                                                                                                     | E2E + captures + revue `ui-reviewer`                                                                           |
+| 4     | Fiche ministère et saisies                                                                                                                                                                                                                      | E2E : une saisie crée une ligne, l'historique grandit, le journal aussi                                        |
+| 5     | Points d'attention et mentions                                                                                                                                                                                                                  | E2E : un ministère mentionné voit le point, un autre non                                                       |
+| 6     | Journal et administration de l'église                                                                                                                                                                                                           | E2E admin                                                                                                      |
+| 7     | Finitions : responsive 360 à 1440 px, accessibilité, états vides, erreurs réseau                                                                                                                                                                | Audit accessibilité Playwright                                                                                 |
+| 8     | Déploiement (comptes au nom de l'église), documentation d'exploitation                                                                                                                                                                          | Recette sur l'environnement de préproduction                                                                   |

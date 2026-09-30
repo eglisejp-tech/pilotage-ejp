@@ -13,13 +13,13 @@ L'outil doit inspirer confiance aux premiers et ne rien coûter aux seconds.
 
 La recherche porte sur ce que les éditeurs et analystes les plus exigeants proposent aux dirigeants.
 
-| Référence | Ce qu'on en retient |
-|---|---|
-| Stephen Few, *Information Dashboard Design* | L'essentiel en haut à gauche. La taille d'un élément suit son importance. Pas de logo, pas de décor, pas de grille rigide et symétrique. |
-| Edward Tufte, sparklines | Des courbes de la taille d'un mot, placées dans le texte ou le tableau, sans cadre ni légende. Beaucoup de données, peu de dessin. |
-| Tableau de bord Stripe | Cinq chiffres, pas davantage. Chaque chiffre avec sa période précédente. La couleur réservée aux états, les courbes en une seule teinte. |
-| FT Visual Vocabulary | Choisir le graphique selon la relation montrée. Ici : évolution (courbe), part du tout (bande de complétude), géographie (carte des départements). |
-| Outils de comptage d'église (Planning Center, Vitals) | Comptages par événement, tendances sur douze semaines, une vue par ministère. |
+| Référence                                             | Ce qu'on en retient                                                                                                                                |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Stephen Few, _Information Dashboard Design_           | L'essentiel en haut à gauche. La taille d'un élément suit son importance. Pas de logo, pas de décor, pas de grille rigide et symétrique.           |
+| Edward Tufte, sparklines                              | Des courbes de la taille d'un mot, placées dans le texte ou le tableau, sans cadre ni légende. Beaucoup de données, peu de dessin.                 |
+| Tableau de bord Stripe                                | Cinq chiffres, pas davantage. Chaque chiffre avec sa période précédente. La couleur réservée aux états, les courbes en une seule teinte.           |
+| FT Visual Vocabulary                                  | Choisir le graphique selon la relation montrée. Ici : évolution (courbe), part du tout (bande de complétude), géographie (carte des départements). |
+| Outils de comptage d'église (Planning Center, Vitals) | Comptages par événement, tendances sur douze semaines, une vue par ministère.                                                                      |
 
 Le point commun : **un tableau de direction ressemble à une note bien écrite, pas à un panneau de contrôle**. D'où le choix d'ouvrir chaque vue par une phrase, pas par une grille de tuiles.
 
@@ -55,12 +55,12 @@ Typographies : Big Shoulders Display (chiffres et titres), Archivo (interface), 
 
 ### Comment choisir
 
-| Question | A | B |
-|---|---|---|
-| Lecture par le berger et le conseil | Plus confortable, plus « note de direction » | Plus spectaculaire, moins de texte |
-| Saisie au téléphone | Sobre, champs classiques | Très grands chiffres, gestes évidents |
-| Cohérence avec l'image EJP | Neutre, institutionnelle | Forte, liée à la culture Prodiges |
-| Risque | Paraître trop sage | Fatiguer à l'usage quotidien |
+| Question                            | A                                            | B                                     |
+| ----------------------------------- | -------------------------------------------- | ------------------------------------- |
+| Lecture par le berger et le conseil | Plus confortable, plus « note de direction » | Plus spectaculaire, moins de texte    |
+| Saisie au téléphone                 | Sobre, champs classiques                     | Très grands chiffres, gestes évidents |
+| Cohérence avec l'image EJP          | Neutre, institutionnelle                     | Forte, liée à la culture Prodiges     |
+| Risque                              | Paraître trop sage                           | Fatiguer à l'usage quotidien          |
 
 ### C. Le mélange (direction retenue)
 
@@ -74,12 +74,12 @@ Chaque écran se conçoit **d'abord à 390 px**, puis s'élargit. Jamais l'inver
 
 ### Paliers
 
-| Palier | Largeur | Usage principal | Disposition |
-|---|---|---|---|
-| Téléphone | 360 à 599 px | Saisie du dimanche, lecture rapide par le berger | Une colonne. Menu dans un bouton de 44 px. Actions principales pleine largeur. |
-| Tablette | 600 à 1023 px | Lecture en réunion | Deux colonnes pour les chiffres, le reste en une colonne. |
-| Ordinateur | 1024 à 1439 px | Lecture du berger et du conseil | Colonne principale et colonne « À décider » à droite. |
-| Grand écran | 1440 px et plus | Écran de salle, projection en conseil | Largeur de contenu plafonnée à 1280 px, centrée. Texte agrandi d'un cran, jamais étiré sur toute la largeur. |
+| Palier      | Largeur         | Usage principal                                  | Disposition                                                                                                  |
+| ----------- | --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Téléphone   | 360 à 599 px    | Saisie du dimanche, lecture rapide par le berger | Une colonne. Menu dans un bouton de 44 px. Actions principales pleine largeur.                               |
+| Tablette    | 600 à 1023 px   | Lecture en réunion                               | Deux colonnes pour les chiffres, le reste en une colonne.                                                    |
+| Ordinateur  | 1024 à 1439 px  | Lecture du berger et du conseil                  | Colonne principale et colonne « À décider » à droite.                                                        |
+| Grand écran | 1440 px et plus | Écran de salle, projection en conseil            | Largeur de contenu plafonnée à 1280 px, centrée. Texte agrandi d'un cran, jamais étiré sur toute la largeur. |
 
 ### Règles
 

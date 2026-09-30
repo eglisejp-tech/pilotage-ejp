@@ -1,0 +1,80 @@
+/*
+ * Tokens de design : direction C « Le point du berger » (validée).
+ * Source : docs/reference/maquettes. À copier dans src/styles/tokens.css.
+ * Aucune couleur en dur dans les composants : toujours passer par ces variables.
+ */
+
+/* Polices (Google Fonts ou @fontsource) :
+ *   Newsreader 400, 500, 600          phrases, titres de page et de section
+ *   Big Shoulders Display 700 à 900   TOUS les chiffres, les priorités
+ *   Public Sans 400 à 700             interface, libellés, textes courants
+ */
+
+:root {
+  /* Surfaces */
+  --fond: #f2f3f5; /* fond de page */
+  --papier: #ffffff; /* en-tête, champs, panneaux */
+  --filet: #dcdfe5; /* séparateurs de lignes */
+
+  /* Encre */
+  --encre: #101828; /* texte principal, filets épais sous les titres */
+  --encre-2: #3f4a5c; /* texte secondaire */
+  --encre-3: #5f6b7e; /* notes, dates, en-têtes de colonnes (4,86:1 sur --fond, AA) */
+
+  /* Données */
+  --nuit: #1b2e6b; /* courbes, barres, carte des départements, liens */
+  --nuit-pale: #e6eaf5; /* fond des mentions @ministere */
+
+  /* La lumière : UNE seule couleur d'accent, trois usages seulement :
+   * surligneur de ce qui attend une décision, onglet actif, bouton principal */
+  --lumiere: #ffd23f;
+
+  /* États : toujours doublés d'un mot, jamais la couleur seule */
+  --bien: #1e7a4c; /* à jour, confirmé, fait */
+  --attention: #a85a00; /* 8 à 30 jours, à confirmer, à saisir, priorité haute */
+  --alerte: #b42318; /* plus de 30 jours, dépassée, priorité urgente */
+  --alerte-fond: #fdecea; /* fond des messages d'erreur */
+
+  /* Typographie */
+  --f-lecture: 'Newsreader', Georgia, serif;
+  --f-chiffres: 'Big Shoulders Display', 'Arial Narrow', sans-serif;
+  --f-interface: 'Public Sans', 'Helvetica Neue', sans-serif;
+
+  /* Tailles fluides (téléphone 390 px, ordinateur 1440 px) */
+  --t-semaine: clamp(84px, 11vw, 170px); /* le numéro de semaine */
+  --t-phrase: clamp(29px, 3.4vw, 48px); /* la phrase de la semaine */
+  --t-titre: clamp(32px, 3.4vw, 48px); /* titre de page */
+  --t-section: clamp(23px, 1.9vw, 26px); /* titre de section */
+  --t-chiffre: clamp(36px, 3vw, 44px); /* chiffres des tableaux */
+  --t-texte: 16px;
+  --t-note: 13px;
+
+  /* Espacements et formes */
+  --marge: clamp(20px, 6vw, 88px); /* marge latérale de page */
+  --contenu-max: 1280px;
+  --rayon: 0; /* angles droits partout */
+  --filet-titre: 2px solid var(--encre); /* sous chaque titre de section */
+  --cible: 44px; /* cible tactile minimale */
+  --cible-saisie: 64px; /* boutons plus et moins */
+}
+
+/* Chiffres : alignés et condensés */
+.chiffre {
+  font-family: var(--f-chiffres);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* Surligneur de la lumière */
+.a-decider {
+  background: linear-gradient(transparent 58%, var(--lumiere) 58%);
+  padding: 0 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

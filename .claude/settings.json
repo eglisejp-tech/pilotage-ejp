@@ -16,12 +16,7 @@
       "Bash(git diff *)",
       "Bash(git log *)"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Bash(supabase db push *)",
-      "Bash(git push *)"
-    ]
+    "deny": ["Read(./.env)", "Read(./.env.*)", "Bash(supabase db push *)", "Bash(git push *)"]
   },
   "hooks": {
     "PreToolUse": [
@@ -36,7 +31,10 @@
       {
         "matcher": "Edit|Write",
         "hooks": [
-          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-and-check.sh" }
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-and-check.sh"
+          }
         ]
       }
     ]

@@ -1,0 +1,139 @@
+/*
+ * Feuille de style principale.
+ * Toutes les valeurs viennent des tokens (src/styles/tokens.css, copie de docs/reference/tokens.css).
+ * La palette, les arrondis et les ombres par défaut de Tailwind sont retirés : une couleur hors
+ * tokens, un arrondi ou une ombre ne peuvent pas être générés (BRIEF section 10).
+ */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import './styles/tokens.css';
+
+/* Polices servies par @fontsource : aucun appel à Google au chargement. */
+@import '@fontsource/newsreader/400';
+@import '@fontsource/newsreader/500';
+@import '@fontsource/newsreader/600';
+@import '@fontsource/big-shoulders-display/700';
+@import '@fontsource/big-shoulders-display/800';
+@import '@fontsource/big-shoulders-display/900';
+@import '@fontsource/public-sans/400';
+@import '@fontsource/public-sans/500';
+@import '@fontsource/public-sans/600';
+@import '@fontsource/public-sans/700';
+
+/* Thème sombre hors périmètre : la variante dark ne s'active qu'avec une classe .dark, jamais posée. */
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-*: initial;
+  --radius-*: initial;
+  --shadow-*: initial;
+  --inset-shadow-*: initial;
+  --drop-shadow-*: initial;
+  --text-shadow-*: initial;
+}
+
+@theme inline {
+  /* Couleurs de la direction C */
+  --color-fond: var(--fond);
+  --color-papier: var(--papier);
+  --color-filet: var(--filet);
+  --color-encre: var(--encre);
+  --color-encre-2: var(--encre-2);
+  --color-encre-3: var(--encre-3);
+  --color-nuit: var(--nuit);
+  --color-nuit-pale: var(--nuit-pale);
+  --color-lumiere: var(--lumiere);
+  --color-bien: var(--bien);
+  --color-attention: var(--attention);
+  --color-alerte: var(--alerte);
+  --color-alerte-fond: var(--alerte-fond);
+  --color-black: var(--encre);
+  --color-white: var(--papier);
+
+  /* Rôles attendus par les composants shadcn/ui, branchés sur les tokens (voir :root) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Polices : trois rôles. sans, serif et mono sont remplacées pour qu'aucune police de repli n'apparaisse. */
+  --font-sans: var(--f-interface);
+  --font-serif: var(--f-lecture);
+  --font-interface: var(--f-interface);
+  --font-lecture: var(--f-lecture);
+  --font-chiffres: var(--f-chiffres);
+  --font-heading: var(--f-lecture);
+  --font-mono: var(--f-interface);
+
+  /* Tailles fluides */
+  --text-semaine: var(--t-semaine);
+  --text-phrase: var(--t-phrase);
+  --text-titre: var(--t-titre);
+  --text-section: var(--t-section);
+  --text-chiffre: var(--t-chiffre);
+  --text-texte: var(--t-texte);
+  --text-note: var(--t-note);
+
+  /* Espacements et largeurs */
+  --spacing-marge: var(--marge);
+  --spacing-cible: var(--cible);
+  --spacing-cible-saisie: var(--cible-saisie);
+  --container-contenu: var(--contenu-max);
+}
+
+:root {
+  --radius: var(--rayon);
+  --background: var(--fond);
+  --foreground: var(--encre);
+  --card: var(--papier);
+  --card-foreground: var(--encre);
+  --popover: var(--papier);
+  --popover-foreground: var(--encre);
+  /* Le bouton principal est l'un des trois usages de la lumière */
+  --primary: var(--lumiere);
+  --primary-foreground: var(--encre);
+  --secondary: var(--papier);
+  --secondary-foreground: var(--encre);
+  --muted: var(--fond);
+  --muted-foreground: var(--encre-3);
+  --accent: var(--fond);
+  --accent-foreground: var(--encre);
+  --destructive: var(--alerte);
+  --border: var(--filet);
+  /* Bord des champs : contraste 3:1 minimum sur le papier */
+  --input: var(--encre-3);
+  --ring: var(--encre);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: var(--t-texte);
+  }
+  /* Focus toujours visible (BRIEF section 10, accessibilité) */
+  :focus-visible {
+    outline: 2px solid var(--encre);
+    outline-offset: 2px;
+  }
+}

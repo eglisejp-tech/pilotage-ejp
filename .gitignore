@@ -1,11 +1,40 @@
+# Dépendances et builds
 node_modules/
 dist/
+dist-ssr/
+coverage/
+*.local
+
+# Secrets : seul .env.example est versionné
 .env
 .env.*
 !.env.example
+
+# Supabase
 supabase/.temp/
+supabase/.branches/
+
+# Tests
 playwright-report/
 test-results/
+blob-report/
+playwright/.cache/
+
+# Hébergement
+.vercel/
+.netlify/
+
+# Journaux
+logs/
+*.log
+npm-debug.log*
+
+# Éditeurs et système
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
 
 # Le dossier .claude fait partie du projet (hooks, agents, skills, permissions),
 # même si un .gitignore global l'exclut sur le poste. Seuls les réglages personnels restent hors du dépôt.

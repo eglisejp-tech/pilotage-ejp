@@ -4,22 +4,22 @@ Ce kit prépare un dépôt pour que Claude Code construise l'application « Pilo
 
 ## Contenu du kit
 
-| Fichier | Rôle |
-|---|---|
-| `BRIEF.md` | Le cahier de construction : produit, règles métier, données, sécurité, écrans, plan |
-| `CLAUDE.md` | La mémoire du projet, relue par Claude Code à chaque session |
-| `.claude/settings.json` | Permissions (ce qu'il peut lancer sans demander, ce qui est interdit) et hooks |
-| `.claude/hooks/protect-files.sh` | Bloque l'écriture dans `.env`, `.git/` et les migrations déjà créées |
-| `.claude/hooks/format-and-check.sh` | Formate chaque fichier modifié et refuse les tirets cadratin dans les textes |
-| `.claude/agents/rls-auditor.md` | Sous-agent qui relit la sécurité de la base (lecture seule) |
-| `.claude/agents/ui-reviewer.md` | Sous-agent qui relit les écrans à partir de captures (lecture seule) |
-| `.claude/agents/qa-parcours.md` | Sous-agent qui écrit et lance les tests Playwright par type de compte |
-| `.claude/skills/verifier/` | Commande `/verifier` : toute la chaîne de tests en une fois |
-| `.claude/skills/nouvelle-table/` | Commande `/nouvelle-table` : procédure migration + RLS + tests |
-| `.mcp.json` | Serveurs MCP : Supabase (lecture seule, projet de dev) et Playwright (navigateur) |
-| `docs/reference/maquettes/` | Les maquettes validées de tous les écrans, profil par profil (images et HTML) |
-| `docs/reference/tokens.css` | Couleurs, polices et tailles de la direction visuelle retenue |
-| `docs/reference/` | Aussi : le prototype HTML (comportement) et la réponse V2 au cahier des charges |
+| Fichier                             | Rôle                                                                                |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| `BRIEF.md`                          | Le cahier de construction : produit, règles métier, données, sécurité, écrans, plan |
+| `CLAUDE.md`                         | La mémoire du projet, relue par Claude Code à chaque session                        |
+| `.claude/settings.json`             | Permissions (ce qu'il peut lancer sans demander, ce qui est interdit) et hooks      |
+| `.claude/hooks/protect-files.sh`    | Bloque l'écriture dans `.env`, `.git/` et les migrations déjà créées                |
+| `.claude/hooks/format-and-check.sh` | Formate chaque fichier modifié et refuse les tirets cadratin dans les textes        |
+| `.claude/agents/rls-auditor.md`     | Sous-agent qui relit la sécurité de la base (lecture seule)                         |
+| `.claude/agents/ui-reviewer.md`     | Sous-agent qui relit les écrans à partir de captures (lecture seule)                |
+| `.claude/agents/qa-parcours.md`     | Sous-agent qui écrit et lance les tests Playwright par type de compte               |
+| `.claude/skills/verifier/`          | Commande `/verifier` : toute la chaîne de tests en une fois                         |
+| `.claude/skills/nouvelle-table/`    | Commande `/nouvelle-table` : procédure migration + RLS + tests                      |
+| `.mcp.json`                         | Serveurs MCP : Supabase (lecture seule, projet de dev) et Playwright (navigateur)   |
+| `docs/reference/maquettes/`         | Les maquettes validées de tous les écrans, profil par profil (images et HTML)       |
+| `docs/reference/tokens.css`         | Couleurs, polices et tailles de la direction visuelle retenue                       |
+| `docs/reference/`                   | Aussi : le prototype HTML (comportement) et la réponse V2 au cahier des charges     |
 
 ## Prérequis
 
@@ -40,6 +40,7 @@ claude
 ```
 
 Dans Claude Code :
+
 1. Tape `/mcp`, sélectionne `supabase` et termine la connexion dans le navigateur.
 2. Accepte les serveurs du projet quand Claude Code le demande.
 3. Passe en **mode plan** (Maj+Tab jusqu'à « plan mode ») avant le premier message.
