@@ -1,9 +1,9 @@
 name: CI
 
+# Toutes les branches : les tests de base de données ne tournent qu'ici tant que Docker
+# n'est pas disponible sur le poste de développement.
 on:
   push:
-    branches: [main]
-  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -30,6 +30,20 @@ jobs:
       - run: npm run typecheck
       - run: npm test -- --run
       - run: npm run build
+
+  base:
+    name: Base de données (migrations, RLS, pgTAP)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx supabase db start
+      - run: npx supabase test db
 
   e2e:
     name: Parcours Playwright (1440, 834, 390 px)
