@@ -44,8 +44,8 @@ select is_empty($$
    where p.schemaname = 'public' and p.roles <> array['authenticated']::name[]
 $$, 'toutes les politiques visent authenticated seulement (rien pour anon)');
 select results_eq($$
-  select p.tablename::text from pg_policies p
-   where p.schemaname = 'public' and p.cmd = 'INSERT' order by 1
+  select p.tablename::text collate "default" from pg_policies p
+   where p.schemaname = 'public' and p.cmd = 'INSERT' order by p.tablename
 $$, $$ values ('evenement'), ('evenement_etat'), ('fij_departement'), ('mesure'), ('participation'), ('reunion') $$,
   'politiques d''ajout : les six tables remplies directement par les ministères');
 
@@ -126,9 +126,9 @@ select is_empty($$
      and (has_function_privilege('anon', p.oid, 'EXECUTE') or has_function_privilege('service_role', p.oid, 'EXECUTE'))
 $$, 'aucune fonction de public ni de private n''est exécutable par anon ou service_role');
 select results_eq($$
-  select p.proname::text from pg_proc p
+  select p.proname::text collate "default" from pg_proc p
    where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'EXECUTE')
-   order by 1
+   order by p.proname
 $$, $$ values ('ajouter_evenement'), ('changer_statut_point'), ('creer_point'), ('declarer_session'), ('marquer_relu'),
               ('marquer_traite'), ('masquer_texte'), ('modifier_session'), ('supprimer_session') $$,
   'les 9 fonctions de l''API sont exécutables par authenticated, et elles seules dans public');
