@@ -48,6 +48,11 @@
   --color-attention: var(--attention);
   --color-alerte: var(--alerte);
   --color-alerte-fond: var(--alerte-fond);
+  --color-fij-1: var(--fij-1);
+  --color-fij-2: var(--fij-2);
+  --color-fij-3: var(--fij-3);
+  --color-fij-4: var(--fij-4);
+  --color-fij-5: var(--fij-5);
   --color-black: var(--encre);
   --color-white: var(--papier);
 
