@@ -25,6 +25,16 @@
   --nuit: #1b2e6b; /* courbes, barres, carte des départements, liens */
   --nuit-pale: #e6eaf5; /* fond des mentions @ministere */
 
+  /* Ajout de l'application (BRIEF section 10, absent de la référence) : cinq teintes pleines
+   * du bleu nuit pour la carte des FIJ, du plus clair au plus foncé. Elles valent le bleu nuit
+   * à 44, 58, 72, 86 et 100 % sur --fond. Texte --encre sur les deux premières (6,50:1 et
+   * 4,60:1), --papier sur les trois autres (5,70:1, 8,55:1 et 12,73:1). */
+  --fij-1: #939cb8;
+  --fij-2: #7581a5;
+  --fij-3: #576592;
+  --fij-4: #394a7e;
+  --fij-5: var(--nuit);
+
   /* La lumière : UNE seule couleur d'accent, trois usages seulement :
    * surligneur de ce qui attend une décision, onglet actif, bouton principal */
   --lumiere: #ffd23f;
