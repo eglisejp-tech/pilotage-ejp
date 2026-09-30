@@ -40,7 +40,7 @@ npm run dev                       # http://localhost:5173
 
 ## Avancement
 
-Construction étape par étape (BRIEF, section 13). Étape en cours : **0, échafaudage**.
+Construction étape par étape (BRIEF, section 13). Étapes terminées : **0** (échafaudage) et **1** (base de données : migrations, RLS, jeu d'exemple, tests pgTAP). Étape suivante : **2**, authentification.
 
 ## Règles à ne jamais casser
 
