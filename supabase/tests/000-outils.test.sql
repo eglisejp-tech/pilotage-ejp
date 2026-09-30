@@ -5,8 +5,29 @@
 
 create extension if not exists pgtap with schema extensions;
 
+-- Depuis la migration correctifs_audit, une fonction créée par postgres n'est plus exécutable
+-- par public. Les tests appellent pgTAP au nom d'authenticated et d'anon : on leur ouvre ses
+-- fonctions quand postgres en est le propriétaire (sinon elles gardent leurs droits).
+do $$
+declare
+  v_fonction regprocedure;
+begin
+  for v_fonction in
+    select p.oid::regprocedure
+      from pg_catalog.pg_depend d
+      join pg_catalog.pg_extension e on e.oid = d.refobjid and e.extname = 'pgtap'
+      join pg_catalog.pg_proc p on p.oid = d.objid
+     where d.classid = 'pg_catalog.pg_proc'::regclass and d.deptype = 'e'
+       and pg_catalog.pg_has_role(p.proowner, 'USAGE')
+  loop
+    execute pg_catalog.format('grant execute on function %s to anon, authenticated', v_fonction);
+  end loop;
+end $$;
+
 create schema if not exists tests;
 grant usage on schema tests to anon, authenticated;
+-- Les fonctions d'aide ajoutées plus tard dans tests par les autres fichiers restent appelables.
+alter default privileges for role postgres in schema tests grant execute on functions to anon, authenticated;
 
 -- Crée un ministère actif depuis un an (actif à toutes les dates du jeu d'exemple).
 create or replace function tests.creer_ministere(p_nom text) returns uuid

@@ -250,7 +250,7 @@ $$, 'berger et conseil : une ligne de journal chacun, sans commentaire');
 select is((select s.commentaire from public.point_suivi s where s.point_id = (select p3 from ctx) and s.statut = 'traite'),
   null, 'un commentaire vide est enregistré comme absent');
 
--- ajouter_evenement (security invoker : la RLS s'applique)
+-- ajouter_evenement (partie private security definer depuis la migration correctifs_audit)
 select tests.se_connecter((select a from ctx), 'aal2');
 select lives_ok($$ select public.ajouter_evenement('Événement de test', private.aujourdhui() + 10, 'brouillon') $$,
   'un ministère ajoute un événement');

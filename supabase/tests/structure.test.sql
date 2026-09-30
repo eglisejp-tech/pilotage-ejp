@@ -46,12 +46,12 @@ $$, 'toutes les politiques visent authenticated seulement (rien pour anon)');
 select results_eq($$
   select p.tablename::text collate "default" from pg_policies p
    where p.schemaname = 'public' and p.cmd = 'INSERT' order by p.tablename
-$$, $$ values ('evenement'), ('evenement_etat'), ('fij_departement'), ('mesure'), ('participation'), ('reunion') $$,
-  'politiques d''ajout : les six tables remplies directement par les ministères');
+$$, $$ values ('evenement_etat'), ('fij_departement'), ('mesure'), ('participation'), ('reunion') $$,
+  'politiques d''ajout : les cinq tables remplies directement par les ministères (evenement passe par l''API)');
 
 -- GRANT des tables : exactement la matrice
 select table_privs_are('public', t.nom::name, 'authenticated',
-         case when t.nom in ('mesure', 'fij_departement', 'participation', 'evenement', 'evenement_etat', 'reunion')
+         case when t.nom in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion')
               then array['INSERT', 'SELECT'] else array['SELECT'] end::name[],
          'authenticated : droits exacts sur ' || t.nom)
   from unnest(array['ministere', 'compte', 'indicateur', 'mesure', 'fij_departement', 'session', 'session_attendu',
@@ -132,27 +132,29 @@ select results_eq($$
 $$, $$ values ('ajouter_evenement'), ('changer_statut_point'), ('creer_point'), ('declarer_session'), ('marquer_relu'),
               ('marquer_traite'), ('masquer_texte'), ('modifier_session'), ('supprimer_session') $$,
   'les 9 fonctions de l''API sont exécutables par authenticated, et elles seules dans public');
-select is_empty($$
-  select p.proname from pg_proc p
-   where p.pronamespace = 'private'::regnamespace
-     and p.proname in ('creer_point', 'changer_statut_point', 'marquer_traite', 'declarer_session',
+select results_eq($$
+  select p.proname::text collate "default" from pg_proc p
+   where p.pronamespace = 'private'::regnamespace and p.prosecdef
+     and has_function_privilege('authenticated', p.oid, 'EXECUTE')
+     and p.proname in ('ajouter_evenement', 'creer_point', 'changer_statut_point', 'marquer_traite', 'declarer_session',
                        'modifier_session', 'supprimer_session', 'marquer_relu', 'masquer_texte')
-     and not (p.prosecdef and has_function_privilege('authenticated', p.oid, 'EXECUTE'))
-$$, 'les 8 parties private de l''API sont security definer et appelables par authenticated');
+   order by p.proname
+$$, $$ values ('ajouter_evenement'), ('changer_statut_point'), ('creer_point'), ('declarer_session'), ('marquer_relu'),
+              ('marquer_traite'), ('masquer_texte'), ('modifier_session'), ('supprimer_session') $$,
+  'les 9 parties private de l''API sont security definer et appelables par authenticated');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
-   where ((p.pronamespace = 'private'::regnamespace
-           and p.proname in ('creer_point', 'changer_statut_point', 'marquer_traite', 'declarer_session',
-                             'modifier_session', 'supprimer_session', 'marquer_relu', 'masquer_texte'))
-          or (p.pronamespace = 'public'::regnamespace and p.proname = 'ajouter_evenement'))
+   where p.pronamespace = 'private'::regnamespace
+     and p.proname in ('ajouter_evenement', 'creer_point', 'changer_statut_point', 'marquer_traite', 'declarer_session',
+                       'modifier_session', 'supprimer_session', 'marquer_relu', 'masquer_texte')
      and regexp_replace(substring(p.prosrc from position('begin' in p.prosrc) + 5), '^\s+', '')
          not like 'perform private.exige_aal2();%'
 $$, 'chaque fonction de l''API commence par perform private.exige_aal2()');
 select is_empty($$
   select p.proname from pg_proc p
-   where p.pronamespace = 'public'::regnamespace and p.proname <> 'ajouter_evenement'
+   where p.pronamespace = 'public'::regnamespace
      and p.prosrc not like '%private.' || p.proname || '(%'
-$$, 'chaque fonction publique (sauf ajouter_evenement) appelle sa partie private');
+$$, 'chaque fonction publique de l''API appelle sa partie private');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace)
