@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const port = 5173
+// PORT_E2E permet de lancer plusieurs copies de travail en parallèle sans partager le serveur.
+const port = Number(process.env.PORT_E2E ?? 5173)
 const enCI = Boolean(process.env.CI)
 
 // Trois formats de référence (BRIEF section 12) : ordinateur 1440, tablette 834, téléphone 390.
