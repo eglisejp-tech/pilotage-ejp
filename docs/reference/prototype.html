@@ -1,0 +1,748 @@
+<title>Tableau de bord des ministères EJP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Atkinson+Hyperlegible+Next:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : un bulletin de la semaine. Le titre et la phrase de synthèse viennent des données,
+   puis les chiffres groupés comme dans le cahier des charges (STARs, FIJ et sessions),
+   puis les ministères en tableau et les points d'attention en liste. Peu de cadres : un seul
+   niveau de surface, les séparations se font par l'espace et par de fines lignes. */
+:root {
+  --ground: #F4F5F7;
+  --surface: #FFFFFF;
+  --sunken: #ECEEF2;
+  --ink: #171C2B;
+  --ink-2: #4C5468;
+  --ink-3: #7B8296;
+  --line: #DDE1E8;
+  --accent: #23409C;
+  --accent-soft: #E4E9F7;
+  --good: #1E7348;
+  --warn: #9A5A00;
+  --warn-soft: #FAEEDC;
+  --bad: #B0261E;
+  --bad-soft: #F8E4E2;
+  --f-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "Atkinson Hyperlegible Next", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0F1320; --surface: #171C2B; --sunken: #1E2436; --ink: #E8EBF3; --ink-2: #B2B9CB; --ink-3: #848CA3;
+    --line: #2A3146; --accent: #97AAEE; --accent-soft: #24305A; --good: #62C495; --warn: #E6A650; --warn-soft: #382A14;
+    --bad: #EF8C83; --bad-soft: #3B1E1C; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ground: #0F1320; --surface: #171C2B; --sunken: #1E2436; --ink: #E8EBF3; --ink-2: #B2B9CB; --ink-3: #848CA3;
+  --line: #2A3146; --accent: #97AAEE; --accent-soft: #24305A; --good: #62C495; --warn: #E6A650; --warn-soft: #382A14;
+  --bad: #EF8C83; --bad-soft: #3B1E1C; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--ink); font-family: var(--f-body); font-size: 15px; line-height: 1.5; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 24px; padding-block: 0 56px; }
+h1, h2, h3 { font-family: var(--f-display); margin: 0; text-wrap: balance; }
+h1 { font-size: 2.1rem; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+h2 { font-size: 1.1rem; font-weight: 700; letter-spacing: -.005em; }
+h3 { font-size: .98rem; font-weight: 600; }
+p { margin: 0; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--ink-3); }
+.small { font-size: .82rem; }
+
+/* En-tête */
+.topbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
+.topbar .wrap { display: flex; align-items: center; gap: 12px 20px; padding-block: 12px; flex-wrap: wrap; }
+.wordmark { margin-right: auto; font-family: var(--f-display); font-weight: 700; font-size: 1rem; line-height: 1.2; }
+.wordmark span { display: block; font-family: var(--f-body); font-weight: 400; font-size: .8rem; color: var(--ink-3); }
+.sample { font-size: .8rem; color: var(--warn); }
+.account { display: flex; align-items: center; gap: 8px; }
+.account label { font-size: .8rem; color: var(--ink-3); }
+select, input[type="text"], input[type="number"], input[type="date"], textarea {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; min-height: 40px;
+}
+select:hover, input:hover, textarea:hover { border-color: var(--ink-3); }
+
+/* Onglets soulignés */
+.tabs { display: flex; gap: 22px; overflow-x: auto; border-bottom: 1px solid var(--line); margin-top: 8px; }
+.tab { border: 0; background: none; padding: 14px 0 12px; color: var(--ink-2); font-weight: 500; cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab:hover { color: var(--ink); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); font-weight: 700; }
+.tab .count { font-variant-numeric: tabular-nums; color: var(--bad); font-weight: 700; margin-left: 5px; }
+
+/* Ouverture de page */
+.lede { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px 32px; align-items: end; padding-block: 32px 8px; }
+.lede p { color: var(--ink-2); font-size: 1.05rem; max-width: 62ch; margin-top: 10px; }
+.lede p strong { color: var(--ink); }
+.lede p .alert { color: var(--bad); font-weight: 700; }
+
+section.block { margin-top: 36px; }
+.block-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+.surface { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; }
+
+/* Chiffres : deux groupes, sans cadre par chiffre */
+.figures { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.group { padding: 18px 20px 20px; min-width: 0; }
+.group + .group { border-left: 1px solid var(--line); }
+.group h2 { font-size: .9rem; color: var(--ink-2); font-weight: 600; margin-bottom: 14px; }
+.group-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.fig { border: 0; background: none; text-align: left; padding: 0 0 8px; display: grid; gap: 4px; align-content: start; border-bottom: 2px solid transparent; }
+.fig.has-history { cursor: pointer; }
+.fig.has-history:hover .fig-label { color: var(--ink); }
+.fig[aria-pressed="true"] { border-bottom-color: var(--accent); }
+.fig-label { font-size: .86rem; color: var(--ink-2); }
+.fig-value { font-family: var(--f-display); font-weight: 800; font-size: 2.3rem; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 8px; }
+.fig-value small { font-size: 1.1rem; font-weight: 700; margin-left: -6px; }
+.delta { font-family: var(--f-body); font-size: .82rem; font-weight: 700; letter-spacing: 0; }
+.delta.up { color: var(--good); } .delta.down { color: var(--bad); } .delta.flat { color: var(--ink-3); }
+.fig-meta { font-size: .78rem; color: var(--ink-3); }
+.fig-meta .gap { color: var(--warn); font-weight: 700; }
+.spark { width: 100%; max-width: 128px; height: 28px; display: block; margin-top: 4px; }
+
+.chart { padding: 18px 20px 12px; border-top: 1px solid var(--line); }
+.chart-scroll { overflow-x: auto; }
+.chart svg { width: 100%; height: auto; display: block; }
+
+/* Session et départements */
+.split { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; }
+.pad { padding: 18px 20px 20px; min-width: 0; }
+.switch { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.switch button { border: 0; background: var(--surface); padding: 6px 12px; cursor: pointer; font-size: .84rem; color: var(--ink-2); }
+.switch button + button { border-left: 1px solid var(--line); }
+.switch button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 600; }
+.session-total { display: flex; align-items: baseline; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.session-total .big { font-family: var(--f-display); font-weight: 800; font-size: 3rem; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.stack { display: flex; height: 12px; margin: 16px 0 12px; gap: 2px; }
+.stack span { background: var(--accent); }
+.stack span:nth-child(even) { opacity: .7; }
+.stack span.missing { background: repeating-linear-gradient(135deg, transparent 0 3px, var(--warn) 3px 5px); opacity: .55; }
+.contrib { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+.contrib div { display: flex; justify-content: space-between; font-size: .88rem; padding-block: 6px; border-bottom: 1px solid var(--line); }
+.contrib .miss { color: var(--warn); font-weight: 700; }
+.missing-line { margin-top: 14px; font-size: .9rem; }
+.missing-line strong { color: var(--warn); }
+.dept { display: grid; gap: 8px; margin-top: 14px; }
+.dept-row { display: grid; grid-template-columns: 30px 120px minmax(0, 1fr) 24px; gap: 10px; align-items: center; font-size: .86rem; }
+.dept-row .code { font-family: var(--f-mono); color: var(--ink-3); font-size: .8rem; }
+.bar { height: 8px; background: var(--sunken); }
+.bar i { display: block; height: 100%; background: var(--accent); }
+
+/* Tableau des ministères */
+.table-scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+th, td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .78rem; font-weight: 600; color: var(--ink-3); background: var(--sunken); }
+tbody tr:last-child td { border-bottom: 0; }
+tr.rowlink { cursor: pointer; }
+tr.rowlink:hover td { background: var(--sunken); }
+td.name { font-weight: 700; font-family: var(--f-display); }
+td.name button { border: 0; background: none; padding: 0; font: inherit; cursor: pointer; text-align: left; color: inherit; }
+td.name button:hover { color: var(--accent); text-decoration: underline; }
+.fresh { white-space: nowrap; font-weight: 700; }
+.fresh.good { color: var(--good); } .fresh.warn { color: var(--warn); } .fresh.bad { color: var(--bad); }
+.fresh::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 7px; vertical-align: 1px; background: currentColor; }
+
+/* Points d'attention en liste */
+.plist { display: grid; }
+.pitem { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 6px 18px; padding: 16px 20px; border-bottom: 1px solid var(--line); align-items: start; }
+.pitem:last-child { border-bottom: 0; }
+.prio { font-family: var(--f-display); font-weight: 700; font-size: .82rem; padding-top: 2px; }
+.prio.urgente { color: var(--bad); } .prio.haute { color: var(--warn); } .prio.normale { color: var(--ink-3); }
+.pitem h3 { font-size: 1rem; }
+.pitem .from { font-size: .8rem; color: var(--ink-3); }
+.pitem .desc { color: var(--ink-2); font-size: .9rem; margin-top: 4px; }
+.pitem .meta { font-size: .82rem; color: var(--ink-2); margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px 16px; }
+.pitem .meta .late { color: var(--bad); font-weight: 700; }
+.pside { display: grid; gap: 8px; justify-items: end; text-align: right; }
+.status { font-size: .82rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.status.attente { color: var(--warn); } .status.cours { color: var(--accent); } .status.traite { color: var(--good); }
+.pitem.done { opacity: .7; }
+.fiche .pitem { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+.fiche .pside { justify-items: start; text-align: left; margin-top: 6px; }
+.mention { font-family: var(--f-mono); font-size: .78rem; color: var(--accent); background: var(--accent-soft); padding: 1px 6px; }
+.seen { font-size: .8rem; color: var(--ink-3); max-width: 190px; }
+
+/* Boutons */
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 6px; padding: 8px 13px; cursor: pointer; font-weight: 600; font-size: .86rem; }
+.btn:hover { border-color: var(--ink-2); }
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.btn.primary:hover { opacity: .9; }
+.btn.link { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Fiche */
+.fiche { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; margin-top: 24px; }
+.col { display: grid; gap: 20px; align-content: start; min-width: 0; }
+.ind { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding-block: 12px; border-bottom: 1px solid var(--line); }
+.ind:last-child { border-bottom: 0; }
+.ind .v { font-family: var(--f-display); font-weight: 700; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.ind .spark { width: 96px; margin: 0; }
+.ev { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding-block: 11px; border-bottom: 1px solid var(--line); font-size: .92rem; }
+.ev:last-child { border-bottom: 0; }
+.ev .day { font-family: var(--f-display); font-weight: 700; font-size: 1.15rem; line-height: 1; }
+.ev .day span { display: block; font-family: var(--f-body); font-weight: 400; font-size: .76rem; color: var(--ink-3); margin-top: 2px; }
+.ev .st { font-size: .8rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+.ev .st.warn { color: var(--warn); } .ev .st.good { color: var(--good); } .ev .st.bad { color: var(--bad); } .ev .st.accent { color: var(--accent); }
+.meeting-when { font-family: var(--f-display); font-weight: 700; font-size: 1.25rem; margin-top: 8px; }
+
+/* Journal */
+.mono { font-family: var(--f-mono); font-size: .82rem; white-space: nowrap; }
+
+/* Panneau de saisie */
+.scrim { position: fixed; inset: 0; background: rgba(12, 16, 28, .45); z-index: 40; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: var(--surface); z-index: 41; display: flex; flex-direction: column; border-left: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.drawer header { padding: 18px 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.drawer form { padding: 20px 22px; display: grid; gap: 16px; overflow-y: auto; flex: 1; align-content: start; }
+.field { display: grid; gap: 6px; }
+.field label, .field legend { font-size: .86rem; font-weight: 700; }
+.field .hint { font-size: .8rem; color: var(--ink-3); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row2 > div { display: grid; gap: 6px; min-width: 0; }
+fieldset { border: 0; padding: 0; margin: 0; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 4px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; font-size: .86rem; font-weight: 400; cursor: pointer; min-height: 32px; }
+.checks input { accent-color: var(--accent); width: 18px; height: 18px; }
+.privacy { font-size: .82rem; color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 12px; }
+.drawer footer { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: 8px; }
+.error { color: var(--bad); font-size: .86rem; font-weight: 700; }
+
+.toast { position: fixed; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--surface); padding: 10px 16px; border-radius: 6px; font-size: .9rem; z-index: 60; max-width: calc(100% - 32px); }
+.note { font-size: .8rem; color: var(--ink-3); }
+.empty { padding: 20px; color: var(--ink-3); }
+.filters { display: inline-flex; }
+
+@media (max-width: 900px) {
+  .figures { grid-template-columns: minmax(0, 1fr); }
+  .group + .group { border-left: 0; border-top: 1px solid var(--line); }
+  .split, .fiche { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .wrap { padding-inline: 16px; }
+  h1 { font-size: 1.6rem; }
+  .lede { grid-template-columns: minmax(0, 1fr); padding-top: 24px; }
+  .group { padding: 16px; }
+  .group-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 14px; }
+  .fig-value { font-size: 1.9rem; }
+  .chart-scroll svg { min-width: 560px; }
+  .contrib { grid-template-columns: minmax(0, 1fr); }
+  .dept-row { grid-template-columns: 28px minmax(0, 1fr) 24px; }
+  .dept-row .dname { display: none; }
+  .pitem { grid-template-columns: minmax(0, 1fr); padding: 14px 16px; }
+  .pside { justify-items: start; text-align: left; }
+  .wordmark span { display: none; }
+  .account label { display: none; }
+  .ev { grid-template-columns: 50px minmax(0, 1fr); }
+  .ev .st { grid-column: 2; }
+  .row2 { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="topbar">
+  <div class="wrap">
+    <div class="wordmark">Pilotage des ministères<span>Église des Jeunes Prodiges</span></div>
+    <span class="sample">Données d'exemple</span>
+    <div class="account">
+      <label for="account">Compte</label>
+      <select id="account"></select>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+  <div id="view"></div>
+</main>
+
+<div id="overlay" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- Référentiel ---------- */
+  const TODAY = "2026-09-30";
+  const MINISTRIES = [
+    { id: "com", name: "Communication", desc: "Visuels, réseaux sociaux, annonces du dimanche." },
+    { id: "int", name: "Intégration", desc: "Accueil des nouveaux et suivi jusqu'à la FIJ." },
+    { id: "coo", name: "Coordination", desc: "Planning général, salles, logistique des événements." },
+    { id: "jeu", name: "Jeunesse", desc: "Activités et sorties des jeunes." },
+    { id: "soc", name: "Social", desc: "Entraide, collectes, accompagnement matériel." },
+    { id: "fij", name: "FIJ", desc: "Familles d'impact jeunesse et pilotes." },
+    { id: "pju", name: "Prodiges Junior", desc: "Accueil des enfants le dimanche." },
+    { id: "for", name: "EJP Formation", desc: "Parcours « Mes premiers pas avec Jésus »." }
+  ];
+  const M = Object.fromEntries(MINISTRIES.map(m => [m.id, m]));
+  const DEPTS = [["75", "Paris"], ["77", "Seine-et-Marne"], ["78", "Yvelines"], ["91", "Essonne"], ["92", "Hauts-de-Seine"], ["93", "Seine-Saint-Denis"], ["94", "Val-de-Marne"], ["95", "Val-d'Oise"]];
+  const ACCOUNTS = [
+    { id: "berger", label: "Berger", kind: "lead" },
+    { id: "conseil", label: "Membre du conseil", kind: "lead" },
+    ...MINISTRIES.map(m => ({ id: "m-" + m.id, label: "Ministère " + m.name, kind: "ministry", ministry: m.id }))
+  ];
+  const EVENT_STATUS = { "Brouillon": "", "En attente de validation": "warn", "Validé": "good", "En préparation": "accent", "Terminé": "", "Annulé": "bad" };
+  const POINT_STATUS = { "À traiter": "", "En cours": "cours", "En attente de décision": "attente", "Traité": "traite" };
+  const PRIORITIES = ["Normale", "Haute", "Urgente"];
+
+  /* ---------- Outils ---------- */
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+  const MONTHS_S = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  const DAYS = ["dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi"];
+  const parse = d => { const [y, m, j] = d.slice(0, 10).split("-").map(Number); return new Date(Date.UTC(y, m - 1, j)); };
+  const fmt = d => { const x = parse(d); return x.getUTCDate() + " " + MONTHS_S[x.getUTCMonth()]; };
+  const fmtDay = d => { const x = parse(d); return DAYS[x.getUTCDay()] + " " + x.getUTCDate() + " " + MONTHS[x.getUTCMonth()]; };
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  const daysBetween = (a, b) => Math.round((parse(b) - parse(a)) / 864e5);
+  const addDays = (d, n) => { const x = parse(d); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const nowStamp = () => TODAY + "T" + new Date().toTimeString().slice(0, 5);
+  const plural = (n, one, many) => n + " " + (n > 1 ? many : one);
+  let seed = 7;
+  const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  let uid = 1000;
+  const id = () => "x" + (uid++);
+
+  /* ---------- Données d'exemple ----------
+     Chaque saisie est une nouvelle ligne datée. Rien n'est écrasé : on obtient la dernière
+     valeur, l'évolution et la traçabilité avec la même table. */
+  const SUNDAYS = Array.from({ length: 10 }, (_, i) => addDays("2026-09-27", -7 * (9 - i)));
+  const base = { com: [9, 14, 11], int: [7, 12, 9], coo: [4, 6, 5], jeu: [8, 13, 10], soc: [5, 9, 6], fij: [6, 10, 10], pju: [7, 11, 7], for: [5, 8, 6] };
+  const measures = [];
+  for (const mid of Object.keys(base)) {
+    SUNDAYS.forEach((d, i) => {
+      if (i === 9 && (mid === "coo" || mid === "soc")) return;
+      if (mid === "soc" && i >= 6) return;
+      const v = Math.max(1, Math.round(base[mid][0] + (rnd() - .45) * 3 + i * .12));
+      measures.push({ id: id(), ministry: mid, indicator: "service", date: d, value: v, at: d + "T13:10", by: "Ministère " + M[mid].name });
+    });
+    const actDate = mid === "soc" ? "2026-08-27" : mid === "coo" ? "2026-09-18" : "2026-09-24";
+    measures.push({ id: id(), ministry: mid, indicator: "actifs", date: actDate, value: base[mid][1], at: actDate + "T20:00", by: "Ministère " + M[mid].name });
+    measures.push({ id: id(), ministry: mid, indicator: "enfij", date: actDate, value: base[mid][2], at: actDate + "T20:02", by: "Ministère " + M[mid].name });
+  }
+  const customIndicators = [
+    { ministry: "pju", label: "Enfants accueillis le dimanche", history: [36, 38, 41, 39, 42] },
+    { ministry: "for", label: "Parcours « Mes premiers pas avec Jésus » en cours", history: [2, 2, 3, 3, 3] },
+    { ministry: "for", label: "Étudiants inscrits", history: [19, 21, 24, 26, 27] },
+    { ministry: "for", label: "Baptêmes depuis septembre", history: [0, 0, 2, 4, 5] },
+    { ministry: "int", label: "NA", history: [11, 14, 12, 16, 18] },
+    { ministry: "int", label: "NC", history: [3, 4, 4, 5, 6] },
+    { ministry: "int", label: "Intégrés en FIJ", history: [5, 6, 7, 8, 9] }
+  ];
+  const deptCounts = { "75": 4, "77": 3, "78": 2, "91": 3, "92": 5, "93": 6, "94": 4, "95": 2 };
+  const deptUpdated = "2026-09-21";
+
+  const sessions = [
+    ...["2026-06-20", "2026-07-18", "2026-08-29", "2026-09-26"].map(d => ({ id: id(), type: "batir", date: d })),
+    ...["2026-06-27", "2026-07-25", "2026-08-22", "2026-09-19"].map(d => ({ id: id(), type: "anti", date: d }))
+  ];
+  const participations = [];
+  const partBase = { com: 10, int: 8, coo: 5, jeu: 11, soc: 6, fij: 9, pju: 7, for: 6 };
+  sessions.forEach((s, k) => {
+    for (const mid of Object.keys(partBase)) {
+      if (s.date === "2026-09-26" && (mid === "int" || mid === "coo")) continue;
+      const factor = s.type === "anti" ? .8 : 1;
+      participations.push({ session: s.id, ministry: mid, value: Math.max(1, Math.round((partBase[mid] + (k % 4) * .6 + (rnd() - .5) * 2) * factor)), at: addDays(s.date, 1) + "T18:30" });
+    }
+  });
+
+  const events = [
+    { id: id(), ministry: "int", title: "Welcome Prodiges", date: "2026-10-15", time: "19:30", place: "Grande salle", status: "En préparation" },
+    { id: id(), ministry: "int", title: "Parcours d'accueil, session 4", date: "2026-10-25", time: "", place: "", status: "Validé" },
+    { id: id(), ministry: "com", title: "Soirée de louange", date: "2026-10-10", time: "20:00", place: "Salle à confirmer", status: "En attente de validation" },
+    { id: id(), ministry: "com", title: "Photos des équipes", date: "2026-10-18", time: "14:00", place: "", status: "Brouillon" },
+    { id: id(), ministry: "jeu", title: "Sortie jeunesse", date: "2026-10-17", time: "10:00", place: "Base de loisirs", status: "En préparation" },
+    { id: id(), ministry: "coo", title: "Planning du trimestre", date: "2026-10-03", time: "", place: "", status: "Validé" },
+    { id: id(), ministry: "soc", title: "Collecte d'hiver", date: "2026-11-14", time: "", place: "", status: "Brouillon" },
+    { id: id(), ministry: "fij", title: "Rencontre des pilotes", date: "2026-10-08", time: "20:30", place: "En ligne", status: "Validé" },
+    { id: id(), ministry: "pju", title: "Fête des Prodiges Junior", date: "2026-11-22", time: "", place: "", status: "En préparation" },
+    { id: id(), ministry: "for", title: "Remise des certificats", date: "2026-09-13", time: "", place: "", status: "Terminé" },
+    { id: id(), ministry: "for", title: "Nouvelle promotion", date: "2026-10-04", time: "", place: "", status: "Validé" }
+  ];
+  const meetings = {
+    int: { date: "2026-10-02", time: "20:00", subject: "Préparation de Welcome Prodiges", decision: "Validation du budget" },
+    com: { date: "2026-10-05", time: "19:30", subject: "Calendrier éditorial d'octobre", decision: "" },
+    coo: { date: "2026-10-06", time: "20:00", subject: "Répartition des salles", decision: "Arbitrage des créneaux du samedi" },
+    jeu: { date: "2026-10-09", time: "19:00", subject: "Sortie du 17 octobre", decision: "" },
+    fij: { date: "2026-10-08", time: "20:30", subject: "Point pilotes", decision: "" },
+    pju: { date: "2026-10-12", time: "19:00", subject: "Supports du trimestre", decision: "" },
+    for: { date: "2026-10-01", time: "20:00", subject: "Bilan de la promotion", decision: "" }
+  };
+  const points = [
+    { id: id(), ministry: "int", title: "Financement de Welcome Prodiges", desc: "Budget nécessaire pour l'accueil du 15 octobre (collation, supports imprimés).", priority: "Urgente", status: "En attente de décision", due: "2026-10-05", action: "Décision du conseil sur le budget", mentions: [] },
+    { id: id(), ministry: "com", title: "Salle pour la soirée de louange", desc: "La salle du 10 octobre n'est pas encore confirmée.", priority: "Haute", status: "En attente de décision", due: "2026-10-03", action: "Confirmer la salle", mentions: ["coo"] },
+    { id: id(), ministry: "jeu", title: "Renfort de 4 STARs pour la sortie", desc: "Il manque 4 accompagnateurs pour la sortie du 17 octobre.", priority: "Normale", status: "À traiter", due: "2026-10-10", action: "Trouver des volontaires", mentions: ["soc"] },
+    { id: id(), ministry: "pju", title: "Réimpression des supports", desc: "Les livrets du trimestre sont épuisés.", priority: "Normale", status: "En cours", due: "2026-10-11", action: "Passer la commande", mentions: [] },
+    { id: id(), ministry: "soc", title: "Lieu de stockage de la collecte", desc: "Trouver un espace pour stocker les dons.", priority: "Normale", status: "Traité", due: "2026-09-15", action: "", mentions: ["coo"], doneBy: "Berger", doneAt: "2026-09-14" }
+  ];
+  const journal = [];
+  function log(by, ministry, what, at) { journal.unshift({ at: at || nowStamp(), by, ministry, what }); }
+  [...measures].sort((a, b) => a.at < b.at ? 1 : -1).slice(0, 14).forEach(x => journal.push({ at: x.at, by: x.by, ministry: x.ministry, what: x.indicator === "service" ? "STARs de service du " + fmt(x.date) + " : " + x.value : (x.indicator === "actifs" ? "STARs actifs : " : "STARs en FIJ : ") + x.value }));
+  journal.push({ at: "2026-09-27T18:04", by: "Ministère Jeunesse", ministry: "jeu", what: "Point d'attention créé : Renfort de 4 STARs pour la sortie" });
+  journal.push({ at: "2026-09-29T21:12", by: "Ministère Intégration", ministry: "int", what: "Réunion ajoutée pour le 2 oct." });
+  journal.sort((a, b) => a.at < b.at ? 1 : -1);
+
+  /* ---------- Calculs ---------- */
+  const latestSunday = () => SUNDAYS[SUNDAYS.length - 1];
+  function lastUpdate(mid) {
+    const dates = [...measures.filter(x => x.ministry === mid).map(x => x.at.slice(0, 10)), ...journal.filter(j => j.ministry === mid && j.by.startsWith("Ministère")).map(j => j.at.slice(0, 10))];
+    return dates.sort().pop() || "2026-01-01";
+  }
+  function freshness(mid) {
+    const d = daysBetween(lastUpdate(mid), TODAY);
+    const text = d === 0 ? "aujourd'hui" : d === 1 ? "hier" : "il y a " + d + " jours";
+    return { cls: d <= 7 ? "good" : d <= 30 ? "warn" : "bad", text, days: d };
+  }
+  function serviceByDate(d) { const rows = measures.filter(x => x.indicator === "service" && x.date === d); return { total: rows.reduce((s, x) => s + x.value, 0), n: new Set(rows.map(x => x.ministry)).size }; }
+  function latestPer(indicator) {
+    const out = {};
+    measures.filter(x => x.indicator === indicator).forEach(x => { if (!out[x.ministry] || out[x.ministry].at < x.at) out[x.ministry] = x; });
+    return out;
+  }
+  const sumLatest = ind => Object.values(latestPer(ind)).reduce((s, x) => s + x.value, 0);
+  function sessionData(s) {
+    // La saisie la plus récente de chaque ministère fait foi ; les anciennes restent dans l'historique.
+    const by = {};
+    participations.filter(p => p.session === s.id).sort((a, b) => a.at < b.at ? -1 : 1).forEach(r => { by[r.ministry] = r.value; });
+    return { total: Object.values(by).reduce((a, v) => a + v, 0), by, missing: MINISTRIES.filter(m => !(m.id in by)).map(m => m.id) };
+  }
+  const sessionsOf = t => sessions.filter(s => s.type === t).sort((a, b) => a.date < b.date ? -1 : 1);
+  const sessionName = t => t === "batir" ? "Bâtir l'Église" : "Anti-Dispersion";
+  const listNames = ids => { const n = ids.map(x => M[x].name); return n.length <= 1 ? n.join("") : n.slice(0, -1).join(", ") + " et " + n[n.length - 1]; };
+
+  /* ---------- État de l'interface ---------- */
+  const state = { account: "berger", tab: "global", fig: "service", sessionType: "batir", fiche: null, pointFilter: "open" };
+  const acc = () => ACCOUNTS.find(a => a.id === state.account);
+  const isLead = () => acc().kind === "lead";
+  const myMinistry = () => acc().ministry || null;
+  const canSeePoint = p => isLead() || p.ministry === myMinistry() || p.mentions.includes(myMinistry());
+  const canClosePoint = p => isLead() || p.ministry === myMinistry();
+  const canEdit = mid => myMinistry() === mid;
+
+  /* ---------- Graphiques SVG ---------- */
+  function sparkline(values) {
+    const w = 128, h = 28, pad = 3;
+    const min = Math.min(...values), max = Math.max(...values), span = max - min || 1;
+    const pts = values.map((v, i) => [pad + i * (w - 2 * pad) / (values.length - 1), h - pad - (v - min) / span * (h - 2 * pad)]);
+    const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join("");
+    const e = pts[pts.length - 1];
+    return '<svg class="spark" viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" aria-hidden="true"><path d="' + line + '" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="' + e[0].toFixed(1) + '" cy="' + e[1].toFixed(1) + '" r="2.6" fill="var(--accent)"/></svg>';
+  }
+  function lineChart(series, title) {
+    const W = 760, H = 210, L = 38, R = 20, T = 22, B = 30;
+    const vals = series.map(s => s.value);
+    const hi = Math.max(...vals), low = Math.min(...vals), step = (hi - low) > 40 ? 20 : (hi - low) > 16 ? 10 : 5;
+    const max = Math.ceil((hi + step / 2) / step) * step, min = Math.max(0, Math.floor((low - step / 2) / step) * step);
+    const x = i => L + (series.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (series.length - 1));
+    const y = v => T + (1 - (v - min) / (max - min)) * (H - T - B);
+    let g = "";
+    for (let t = min; t <= max; t += step) g += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(t) + '" y2="' + y(t) + '" stroke="var(--line)"/><text x="' + (L - 8) + '" y="' + (y(t) + 4) + '" text-anchor="end" font-size="11" fill="var(--ink-3)" font-family="IBM Plex Mono, monospace">' + t + '</text>';
+    const line = series.map((s, i) => (i ? "L" : "M") + x(i) + " " + y(s.value)).join("");
+    let marks = "";
+    series.forEach((s, i) => {
+      const last = i === series.length - 1;
+      marks += '<circle cx="' + x(i) + '" cy="' + y(s.value) + '" r="' + (last ? 4.5 : 3) + '" fill="' + (s.partial ? "var(--surface)" : "var(--accent)") + '" stroke="var(--accent)" stroke-width="2"/>';
+      marks += '<text x="' + x(i) + '" y="' + (H - 9) + '" text-anchor="middle" font-size="11" fill="var(--ink-3)" font-family="IBM Plex Mono, monospace">' + esc(s.label) + '</text>';
+      if (last) marks += '<text x="' + x(i) + '" y="' + (y(s.value) - 11) + '" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)" font-family="Schibsted Grotesk, sans-serif">' + s.value + '</text>';
+    });
+    return '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(title) + '">' + g + '<path d="' + line + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round"/>' + marks + '</svg>';
+  }
+
+  /* ---------- Chiffres ---------- */
+  function figures() {
+    const n = MINISTRIES.length;
+    const svc = SUNDAYS.map(d => ({ d, ...serviceByDate(d) }));
+    const cur = svc[svc.length - 1], prev = svc[svc.length - 2];
+    const actifs = sumLatest("actifs"), enfij = sumLatest("enfij");
+    const nAct = Object.keys(latestPer("actifs")).length;
+    const bat = sessionsOf("batir").map(s => ({ s, ...sessionData(s) })), anti = sessionsOf("anti").map(s => ({ s, ...sessionData(s) }));
+    const b = bat[bat.length - 1], a = anti[anti.length - 1];
+    const fijTotal = Object.values(deptCounts).reduce((p, q) => p + q, 0);
+    const done = k => k === n ? "tous les ministères" : k + " ministères sur " + n;
+    return {
+      stars: [
+        { key: "service", label: "STARs au service", value: cur.total, delta: cur.total - prev.total, meta: "Dimanche " + fmt(cur.d), gap: cur.n < n ? done(cur.n) : null, done: cur.n === n ? done(n) : null,
+          series: svc.map(s => ({ label: fmt(s.d), value: s.total, partial: s.n < n })), title: "STARs au service, chaque dimanche" },
+        { key: "actifs", label: "STARs actifs", value: actifs, meta: "À ce jour", gap: nAct < n ? done(nAct) : null, done: nAct === n ? done(n) : null },
+        { key: "enfij", label: "STARs présents en FIJ", value: Math.round(enfij / actifs * 100), unit: "%", meta: enfij + " sur " + actifs + " STARs actifs" }
+      ],
+      fij: [
+        { key: "fij", label: "FIJ en Île-de-France", value: fijTotal, meta: "Saisi par FIJ le " + fmt(deptUpdated) },
+        { key: "batir", label: "Présents à Bâtir l'Église", value: b.total, delta: b.total - bat[bat.length - 2].total, meta: "Session du " + fmt(b.s.date), gap: b.missing.length ? done(n - b.missing.length) : null, done: b.missing.length ? null : done(n),
+          series: bat.map(x => ({ label: fmt(x.s.date), value: x.total, partial: x.missing.length > 0 })), title: "Présents à Bâtir l'Église, par session" },
+        { key: "anti", label: "Présents à Anti-Dispersion", value: a.total, delta: a.total - anti[anti.length - 2].total, meta: "Session du " + fmt(a.s.date), gap: a.missing.length ? done(n - a.missing.length) : null, done: a.missing.length ? null : done(n),
+          series: anti.map(x => ({ label: fmt(x.s.date), value: x.total, partial: x.missing.length > 0 })), title: "Présents à Anti-Dispersion, par session" }
+      ],
+      cur
+    };
+  }
+  function deltaHtml(d) {
+    if (d === null || d === undefined) return "";
+    const cls = d > 0 ? "up" : d < 0 ? "down" : "flat";
+    return '<span class="delta ' + cls + '" title="Par rapport à la saisie précédente">' + (d > 0 ? "+" : d < 0 ? "−" : "±") + Math.abs(d) + '</span>';
+  }
+  function figHtml(f, sel) {
+    const hist = !!f.series;
+    return '<button class="fig' + (hist ? " has-history" : "") + '" data-fig="' + f.key + '"' + (hist ? ' aria-pressed="' + (sel === f.key) + '"' : ' tabindex="-1"') + '>' +
+      '<span class="fig-label">' + esc(f.label) + '</span>' +
+      '<span class="fig-value">' + f.value + (f.unit ? '<small>' + f.unit + '</small>' : '') + deltaHtml(f.delta) + '</span>' +
+      '<span class="fig-meta">' + esc(f.meta) + (f.gap ? ', <span class="gap">' + esc(f.gap) + '</span>' : f.done ? ', ' + esc(f.done) : '') + '</span>' +
+      (hist ? sparkline(f.series.map(s => s.value)) : '') + '</button>';
+  }
+
+  /* ---------- Vue globale ---------- */
+  function viewGlobal() {
+    const F = figures(), lead = isLead(), n = MINISTRIES.length;
+    const all = [...F.stars, ...F.fij];
+    const sel = all.find(f => f.key === state.fig && f.series) || all[0];
+    const missingSunday = MINISTRIES.filter(m => !measures.some(x => x.ministry === m.id && x.indicator === "service" && x.date === latestSunday())).map(m => m.id);
+    const urgent = points.filter(p => p.status !== "Traité" && p.priority === "Urgente" && canSeePoint(p)).length;
+    const stale = MINISTRIES.filter(m => freshness(m.id).days > 30).map(m => m.id);
+
+    // Phrase de synthèse, écrite à partir des chiffres
+    let s = '<strong>' + F.cur.total + ' STARs</strong> au service dimanche. ';
+    s += missingSunday.length ? listNames(missingSunday) + (missingSunday.length > 1 ? " n'ont" : " n'a") + ' pas encore saisi leurs chiffres. ' : 'Tous les ministères ont saisi. ';
+    if (urgent) s += '<span class="alert">' + plural(urgent, "point urgent attend", "points urgents attendent") + ' une décision.</span> ';
+    if (lead && stale.length) s += listNames(stale) + (stale.length > 1 ? " ne sont pas mis à jour" : " n'est pas mis à jour") + ' depuis plus d\'un mois.';
+
+    let h = '<div class="lede"><div><h1>Semaine du ' + parse(latestSunday()).getUTCDate() + ' ' + MONTHS[parse(latestSunday()).getUTCMonth()] + '</h1><p>' + s + '</p></div>';
+    if (!lead) h += '<button class="btn primary" data-act="open-fiche" data-m="' + myMinistry() + '">Mettre à jour ma fiche</button>';
+    h += '</div>';
+
+    h += '<section class="block" aria-label="Chiffres de l\'église"><div class="surface"><div class="figures">' +
+      '<div class="group"><h2>STARs</h2><div class="group-row">' + F.stars.map(f => figHtml(f, sel.key)).join("") + '</div></div>' +
+      '<div class="group"><h2>FIJ et sessions</h2><div class="group-row">' + F.fij.map(f => figHtml(f, sel.key)).join("") + '</div></div></div>' +
+      '<div class="chart"><div class="block-head"><h3>' + esc(sel.title) + '</h3><span class="note">Cercle vide : tous les ministères n\'avaient pas saisi ce jour-là.</span></div><div class="chart-scroll">' + lineChart(sel.series, sel.title) + '</div></div></div></section>';
+
+    const list = sessionsOf(state.sessionType), last = list[list.length - 1], sd = sessionData(last);
+    h += '<section class="block"><div class="split"><div class="surface pad"><div class="block-head"><h2>' + sessionName(state.sessionType) + ', ' + fmtDay(last.date) + '</h2><div class="switch" role="group" aria-label="Session">' +
+      '<button data-sess="batir" aria-pressed="' + (state.sessionType === "batir") + '">Bâtir l\'Église</button><button data-sess="anti" aria-pressed="' + (state.sessionType === "anti") + '">Anti-Dispersion</button></div></div>' +
+      '<div class="session-total"><span class="big">' + sd.total + '</span><span>STARs présents, saisis par ' + (n - sd.missing.length) + ' ministères sur ' + n + '</span></div>' +
+      '<div class="stack" aria-hidden="true">' + MINISTRIES.map(m => m.id in sd.by ? '<span style="flex:' + sd.by[m.id] + '" title="' + esc(m.name) + '"></span>' : '<span class="missing" style="flex:6" title="' + esc(m.name) + ', non saisi"></span>').join("") + '</div>' +
+      '<div class="contrib">' + MINISTRIES.map(m => '<div><span>' + esc(m.name) + '</span>' + (m.id in sd.by ? '<span class="num">' + sd.by[m.id] + '</span>' : '<span class="miss">Non saisi</span>') + '</div>').join("") + '</div>' +
+      (sd.missing.length ? '<p class="missing-line">Le total sera complet quand <strong>' + listNames(sd.missing) + '</strong> ' + (sd.missing.length > 1 ? "auront" : "aura") + ' saisi leurs présents.</p>' : '') +
+      '<p class="note" style="margin-top:10px">Un STAR rattaché à deux ministères peut être compté deux fois. Règle à valider.</p></div>';
+    const maxD = Math.max(...Object.values(deptCounts));
+    h += '<div class="surface pad"><div class="block-head"><h2>FIJ par département</h2><span class="note">Mis à jour le ' + fmt(deptUpdated) + '</span></div><div class="dept">' +
+      DEPTS.map(([c, nm]) => '<div class="dept-row"><span class="code">' + c + '</span><span class="dname">' + esc(nm) + '</span><span class="bar"><i style="width:' + (deptCounts[c] / maxD * 100) + '%"></i></span><span class="num">' + deptCounts[c] + '</span></div>').join("") + '</div></div></div></section>';
+
+    h += '<section class="block"><div class="block-head"><h2>Ministères</h2><span class="note">' + (lead ? "Du moins récent au plus récent. Cliquez sur un nom pour ouvrir sa fiche." : "Vous ne voyez que la fiche de votre ministère.") + '</span></div><div class="surface table-scroll"><table><thead><tr><th>Ministère</th><th>Dernière mise à jour</th><th>Prochain événement</th><th>Prochaine réunion</th>' + (lead ? '<th>Point d\'attention</th>' : '') + '</tr></thead><tbody>';
+    [...MINISTRIES].sort((a, b) => freshness(b.id).days - freshness(a.id).days).forEach(m => {
+      const f = freshness(m.id);
+      const ev = events.filter(e => e.ministry === m.id && e.date >= TODAY).sort((a, b) => a.date < b.date ? -1 : 1)[0];
+      const mt = meetings[m.id];
+      const pt = points.filter(p => p.ministry === m.id && p.status !== "Traité").sort((a, b) => PRIORITIES.indexOf(b.priority) - PRIORITIES.indexOf(a.priority))[0];
+      const openable = lead || m.id === myMinistry();
+      h += '<tr><td class="name">' + (openable ? '<button data-act="open-fiche" data-m="' + m.id + '">' + esc(m.name) + '</button>' : esc(m.name)) + '</td><td><span class="fresh ' + f.cls + '">' + cap(f.text) + '</span></td>' +
+        '<td>' + (ev ? '<span class="num">' + fmt(ev.date) + '</span>, ' + esc(ev.title) : '<span class="muted">Aucun</span>') + '</td>' +
+        '<td>' + (mt ? '<span class="num">' + fmt(mt.date) + '</span>' : '<span class="muted">Non renseignée</span>') + '</td>' +
+        (lead ? '<td>' + (pt ? '<span class="prio ' + pt.priority.toLowerCase() + '">' + esc(pt.priority) + '</span> ' + esc(pt.title) : '<span class="muted">Aucun</span>') + '</td>' : '') + '</tr>';
+    });
+    h += '</tbody></table></div></section>';
+
+    if (lead) {
+      const open = points.filter(p => p.status !== "Traité").sort(sortPoints).slice(0, 3);
+      h += '<section class="block"><div class="block-head"><h2>À décider</h2><button class="btn link" data-tab="points">Voir tous les points d\'attention</button></div><div class="surface plist">' + open.map(pointHtml).join("") + '</div></section>';
+    }
+    return h;
+  }
+
+  function sortPoints(a, b) {
+    const d = (a.status === "Traité") - (b.status === "Traité");
+    if (d) return d;
+    return (PRIORITIES.indexOf(b.priority) - PRIORITIES.indexOf(a.priority)) || (a.due < b.due ? -1 : 1);
+  }
+  function pointHtml(p) {
+    const late = p.status !== "Traité" && p.due && p.due < TODAY;
+    let side = '<span class="status ' + POINT_STATUS[p.status] + '">' + esc(p.status) + '</span>';
+    if (p.status === "Traité") side += '<span class="note">Par ' + esc(p.doneBy) + ', le ' + fmt(p.doneAt) + '</span>';
+    else if (canClosePoint(p)) side += '<button class="btn" data-act="close-point" data-id="' + p.id + '">Marquer comme traité</button>';
+    else side += '<span class="seen">Votre ministère est mentionné. Le sujet se règle en dehors de l\'outil.</span>';
+    const meta = [];
+    if (p.action) meta.push('Action attendue : <strong>' + esc(p.action) + '</strong>');
+    if (p.due) meta.push(late ? '<span class="late">Échéance dépassée, ' + fmt(p.due) + '</span>' : 'Échéance le ' + fmt(p.due));
+    if (p.mentions.length) meta.push(p.mentions.map(x => '<span class="mention">@' + esc(M[x].name.toLowerCase()) + '</span>').join(" "));
+    return '<article class="pitem' + (p.status === "Traité" ? " done" : "") + '"><span class="prio ' + p.priority.toLowerCase() + '">' + esc(p.priority) + '</span>' +
+      '<div><div class="from">' + esc(M[p.ministry].name) + '</div><h3>' + esc(p.title) + '</h3>' + (p.desc ? '<p class="desc">' + esc(p.desc) + '</p>' : '') + (meta.length ? '<div class="meta">' + meta.map(x => '<span>' + x + '</span>').join("") + '</div>' : '') + '</div>' +
+      '<div class="pside">' + side + '</div></article>';
+  }
+
+  function viewPoints() {
+    const list = points.filter(canSeePoint).filter(p => state.pointFilter === "all" || (state.pointFilter === "open" ? p.status !== "Traité" : p.status === "Traité")).sort(sortPoints);
+    const open = points.filter(p => canSeePoint(p) && p.status !== "Traité").length;
+    return '<div class="lede"><div><h1>Points d\'attention</h1><p>' + plural(open, "point ouvert", "points ouverts") + '. On signale et on suit ici. La décision se prend en dehors de l\'outil.</p></div>' +
+      '<div class="switch" role="group" aria-label="Filtre">' + [["open", "Ouverts"], ["done", "Traités"], ["all", "Tous"]].map(([k, l]) => '<button data-pf="' + k + '" aria-pressed="' + (state.pointFilter === k) + '">' + l + '</button>').join("") + '</div></div>' +
+      '<section class="block">' + (list.length ? '<div class="surface plist">' + list.map(pointHtml).join("") + '</div>' : '<p class="surface empty">Aucun point d\'attention dans cette catégorie.</p>') + '</section>';
+  }
+
+  function viewMinistries() {
+    let h = '<div class="lede"><div><h1>Fiches des ministères</h1><p>Du moins récent au plus récent.</p></div></div><section class="block"><div class="surface table-scroll"><table><thead><tr><th>Ministère</th><th>Mission</th><th>Dernière mise à jour</th></tr></thead><tbody>';
+    [...MINISTRIES].sort((a, b) => freshness(b.id).days - freshness(a.id).days).forEach(m => {
+      const f = freshness(m.id);
+      h += '<tr><td class="name"><button data-act="open-fiche" data-m="' + m.id + '">' + esc(m.name) + '</button></td><td>' + esc(m.desc) + '</td><td><span class="fresh ' + f.cls + '">' + cap(f.text) + '</span></td></tr>';
+    });
+    return h + '</tbody></table></div></section>';
+  }
+
+  function viewFiche(mid) {
+    const m = M[mid], f = freshness(mid), edit = canEdit(mid);
+    let h = '<div class="lede"><div><h1>' + esc(m.name) + '</h1><p>' + esc(m.desc) + ' Dernière mise à jour <span class="fresh ' + f.cls + '">' + esc(f.text) + '</span>.</p></div>';
+    if (edit) h += '<div class="actions"><button class="btn primary" data-act="form-sunday">Saisir le dimanche</button><button class="btn" data-act="form-session">Saisir une session</button><button class="btn" data-act="form-point">Signaler un point</button><button class="btn" data-act="form-event">Ajouter un événement</button></div>';
+    else if (isLead()) h += '<button class="btn" data-tab="ministries">Tous les ministères</button>';
+    h += '</div>';
+
+    const svc = measures.filter(x => x.ministry === mid && x.indicator === "service").sort((a, b) => a.date < b.date ? -1 : 1);
+    const lastSvc = svc[svc.length - 1];
+    const act = latestPer("actifs")[mid], fij = latestPer("enfij")[mid];
+    const custom = customIndicators.filter(c => c.ministry === mid);
+    const late = lastSvc && lastSvc.date !== latestSunday();
+    h += '<div class="fiche"><div class="col"><div class="surface pad"><div class="block-head"><h2>Chiffres du ministère</h2><span class="note">Chaque saisie est conservée</span></div>' +
+      '<div class="ind"><div><div>STARs au service</div><div class="note">' + (lastSvc ? cap(fmtDay(lastSvc.date)) : "Aucune saisie") + (late ? ', <strong style="color:var(--warn)">dimanche ' + fmt(latestSunday()) + ' non saisi</strong>' : '') + '</div></div><div style="display:flex;gap:14px;align-items:center">' + (svc.length > 1 ? sparkline(svc.map(x => x.value)) : '') + '<span class="v">' + (lastSvc ? lastSvc.value : 0) + '</span></div></div>' +
+      '<div class="ind"><div><div>STARs actifs</div><div class="note">' + (act ? "Saisi le " + fmt(act.date) : "") + '</div></div><span class="v">' + (act ? act.value : 0) + '</span></div>' +
+      '<div class="ind"><div><div>Dont présents en FIJ</div><div class="note">' + (act && fij ? Math.round(fij.value / act.value * 100) + " % des STARs actifs" : "") + '</div></div><span class="v">' + (fij ? fij.value : 0) + '</span></div>' +
+      custom.map(c => '<div class="ind"><div><div>' + esc(c.label) + '</div><div class="note">Propre au ministère</div></div><div style="display:flex;gap:14px;align-items:center">' + sparkline(c.history) + '<span class="v">' + c.history[c.history.length - 1] + '</span></div></div>').join("") + '</div>';
+
+    const evs = events.filter(e => e.ministry === mid).sort((a, b) => a.date < b.date ? -1 : 1);
+    h += '<div class="surface pad"><div class="block-head"><h2>Calendrier prévisionnel</h2><span class="note">' + plural(evs.length, "événement", "événements") + '</span></div>' +
+      (evs.length ? evs.map(e => { const x = parse(e.date); return '<div class="ev"><span class="day">' + x.getUTCDate() + '<span>' + MONTHS_S[x.getUTCMonth()] + '</span></span><div><div>' + esc(e.title) + '</div>' + ((e.time || e.place) ? '<div class="note">' + esc([e.time ? e.time.replace(":", " h ") : "", e.place].filter(Boolean).join(", ")) + '</div>' : '') + '</div><span class="st ' + EVENT_STATUS[e.status] + '">' + esc(e.status) + '</span></div>'; }).join("") : '<p class="empty">Aucun événement prévu.' + (edit ? ' Ajoutez le premier avec « Ajouter un événement ».' : '') + '</p>') + '</div></div>';
+
+    const mt = meetings[mid];
+    const pts = points.filter(p => (p.ministry === mid || p.mentions.includes(mid)) && canSeePoint(p)).sort(sortPoints);
+    h += '<div class="col"><div class="surface pad"><h2>Prochaine réunion</h2>' + (mt ? '<div class="meeting-when">' + cap(fmtDay(mt.date)) + (mt.time ? ', ' + mt.time.replace(":", " h ") : '') + '</div><p style="margin-top:4px">' + esc(mt.subject) + '</p>' + (mt.decision ? '<p class="note" style="margin-top:6px">Décision attendue : ' + esc(mt.decision) + '</p>' : '') : '<p class="muted" style="margin-top:8px">Aucune réunion renseignée.</p>') + '</div>' +
+      '<div class="surface"><div class="pad" style="padding-bottom:6px"><div class="block-head" style="margin:0"><h2>Points d\'attention</h2><span class="note">Y compris les mentions</span></div></div>' + (pts.length ? '<div class="plist">' + pts.map(pointHtml).join("") + '</div>' : '<p class="empty">Aucun point d\'attention.</p>') + '</div></div></div>';
+    return h;
+  }
+
+  function viewJournal() {
+    const rows = journal.filter(j => isLead() || j.ministry === myMinistry());
+    return '<div class="lede"><div><h1>Journal des modifications</h1><p>' + (isLead() ? "Toutes les saisies, avec le compte qui les a faites." : "Les saisies de votre ministère.") + ' Une ligne de journal ne se modifie pas.</p></div></div>' +
+      '<section class="block"><div class="surface table-scroll"><table><thead><tr><th>Date</th><th>Compte</th><th>Modification</th></tr></thead><tbody>' +
+      rows.slice(0, 40).map(j => '<tr><td class="mono">' + esc(j.at.slice(8, 10) + "/" + j.at.slice(5, 7) + ", " + j.at.slice(11, 16).replace(":", " h ")) + '</td><td>' + esc(j.by) + '</td><td>' + esc(j.what) + '</td></tr>').join("") + '</tbody></table></div></section>';
+  }
+
+  /* ---------- Formulaires ---------- */
+  const privacy = '<p class="privacy">N\'écrivez aucun nom ni information personnelle. EJP Tech relit les champs libres.</p>';
+  let submitHandler = null;
+  function drawer(title, body, submitLabel) {
+    const o = document.getElementById("overlay");
+    o.innerHTML = '<div class="scrim" data-act="close-drawer"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title"><header><h2 id="dr-title">' + esc(title) + '</h2><button class="btn" data-act="close-drawer">Fermer</button></header><form id="dr-form" novalidate>' + body + '<p class="error" id="dr-error" role="alert" hidden></p></form><footer><button class="btn" data-act="close-drawer">Annuler</button><button class="btn primary" type="submit" form="dr-form">' + esc(submitLabel) + '</button></footer></aside>';
+    o.hidden = false;
+    const first = o.querySelector("input, select, textarea"); if (first) first.focus();
+  }
+  function closeDrawer() { const o = document.getElementById("overlay"); o.hidden = true; o.innerHTML = ""; }
+  function formError(msg) { const e = document.getElementById("dr-error"); e.textContent = msg; e.hidden = false; }
+  const val = i => document.getElementById(i).value;
+  const num = i => { const v = document.getElementById(i).value; return v === "" ? null : Math.max(0, Math.round(Number(v))); };
+
+  function formSunday() {
+    const mid = myMinistry();
+    drawer("Chiffres du dimanche", '<div class="field"><label for="f-date">Dimanche</label><select id="f-date">' + [...SUNDAYS].reverse().slice(0, 4).map(d => '<option value="' + d + '">' + cap(fmtDay(d)) + '</option>').join("") + '</select><span class="hint">La saisie s\'ajoute à l\'historique, elle ne remplace pas la précédente.</span></div>' +
+      '<div class="field"><label for="f-service">STARs au service ce dimanche</label><input id="f-service" type="number" inputmode="numeric" min="0" max="500" required></div>' +
+      '<div class="row2"><div><label for="f-actifs" class="small"><strong>STARs actifs à ce jour</strong></label><input id="f-actifs" type="number" inputmode="numeric" min="0" value="' + ((latestPer("actifs")[mid] || {}).value || "") + '"></div><div><label for="f-enfij" class="small"><strong>Dont présents en FIJ</strong></label><input id="f-enfij" type="number" inputmode="numeric" min="0" value="' + ((latestPer("enfij")[mid] || {}).value || "") + '"></div></div>', "Enregistrer");
+    submitHandler = () => {
+      const d = val("f-date"), s = num("f-service"), a = num("f-actifs"), fj = num("f-enfij");
+      if (s === null) return formError("Indiquez le nombre de STARs au service.");
+      if (a !== null && fj !== null && fj > a) return formError("Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.");
+      const who = acc().label, at = nowStamp();
+      measures.push({ id: id(), ministry: mid, indicator: "service", date: d, value: s, at, by: who });
+      log(who, mid, "STARs de service du " + fmt(d) + " : " + s, at);
+      const prevA = (latestPer("actifs")[mid] || {}).value, prevF = (latestPer("enfij")[mid] || {}).value;
+      if (a !== null && a !== prevA) { measures.push({ id: id(), ministry: mid, indicator: "actifs", date: TODAY, value: a, at, by: who }); log(who, mid, "STARs actifs : " + a, at); }
+      if (fj !== null && fj !== prevF) { measures.push({ id: id(), ministry: mid, indicator: "enfij", date: TODAY, value: fj, at, by: who }); log(who, mid, "STARs en FIJ : " + fj, at); }
+      done("Chiffres du " + fmt(d) + " enregistrés");
+    };
+  }
+  function formSession() {
+    const mid = myMinistry();
+    const all = sessions.slice().sort((a, b) => a.date < b.date ? 1 : -1);
+    drawer("Présents à une session", '<div class="field"><label for="f-sess">Session</label><select id="f-sess">' + all.map(s => { const has = participations.some(p => p.session === s.id && p.ministry === mid); return '<option value="' + s.id + '">' + sessionName(s.type) + ", " + fmtDay(s.date) + (has ? " (déjà saisie)" : "") + '</option>'; }).join("") + '</select></div>' +
+      '<div class="field"><label for="f-pres">STARs de votre ministère présents</label><input id="f-pres" type="number" inputmode="numeric" min="0" required><span class="hint">Le total de l\'église additionne les saisies de chaque ministère.</span></div>', "Enregistrer");
+    submitHandler = () => {
+      const sid = val("f-sess"), v = num("f-pres");
+      if (v === null) return formError("Indiquez le nombre de présents.");
+      const s = sessions.find(x => x.id === sid), at = nowStamp();
+      participations.push({ session: sid, ministry: mid, value: v, at });
+      log(acc().label, mid, sessionName(s.type) + " du " + fmt(s.date) + " : " + v + " présents", at);
+      done("Présents enregistrés pour le " + fmt(s.date));
+    };
+  }
+  function formPoint() {
+    const mid = myMinistry();
+    drawer("Signaler un point d'attention", '<div class="field"><label for="f-title">Titre</label><input id="f-title" type="text" maxlength="80" required placeholder="Salle à confirmer pour le 10 octobre"></div>' +
+      '<div class="field"><label for="f-desc">Description</label><textarea id="f-desc" rows="3" maxlength="280"></textarea><span class="hint">280 caractères au maximum.</span></div>' +
+      '<div class="row2"><div><label for="f-prio" class="small"><strong>Priorité</strong></label><select id="f-prio">' + PRIORITIES.map(p => '<option>' + p + '</option>').join("") + '</select></div><div><label for="f-due" class="small"><strong>Échéance</strong></label><input id="f-due" type="date" min="' + TODAY + '"></div></div>' +
+      '<div class="field"><label for="f-action">Action attendue</label><input id="f-action" type="text" maxlength="80"></div>' +
+      '<fieldset class="field"><legend>Mentionner un ministère</legend><div class="checks">' + MINISTRIES.filter(m => m.id !== mid).map(m => '<label><input type="checkbox" name="f-mention" value="' + m.id + '">@' + esc(m.name.toLowerCase()) + '</label>').join("") + '</div><span class="hint">Le point apparaîtra aussi dans l\'espace du ministère mentionné.</span></fieldset>' + privacy, "Signaler");
+    submitHandler = () => {
+      const t = val("f-title").trim();
+      if (!t) return formError("Donnez un titre au point d'attention.");
+      const p = { id: id(), ministry: mid, title: t, desc: val("f-desc").trim(), priority: val("f-prio"), status: "À traiter", due: val("f-due"), action: val("f-action").trim(), mentions: [...document.querySelectorAll('input[name="f-mention"]:checked')].map(x => x.value) };
+      points.push(p);
+      log(acc().label, mid, "Point d'attention signalé : " + t + (p.mentions.length ? " (mention " + p.mentions.map(x => "@" + M[x].name.toLowerCase()).join(", ") + ")" : ""));
+      done("Point d'attention signalé");
+    };
+  }
+  function formEvent() {
+    const mid = myMinistry();
+    drawer("Ajouter un événement", '<div class="field"><label for="f-etitle">Nom de l\'événement</label><input id="f-etitle" type="text" maxlength="80" required></div>' +
+      '<div class="row2"><div><label for="f-edate" class="small"><strong>Date</strong></label><input id="f-edate" type="date" min="' + TODAY + '" required></div><div><label for="f-etime" class="small"><strong>Heure</strong></label><input id="f-etime" type="text" placeholder="19:30" maxlength="5"></div></div>' +
+      '<div class="field"><label for="f-eplace">Lieu</label><input id="f-eplace" type="text" maxlength="60"></div>' +
+      '<div class="field"><label for="f-estatus">Statut</label><select id="f-estatus">' + Object.keys(EVENT_STATUS).map(s => '<option>' + s + '</option>').join("") + '</select></div>' + privacy, "Ajouter");
+    submitHandler = () => {
+      const t = val("f-etitle").trim(), d = val("f-edate");
+      if (!t || !d) return formError("Le nom et la date sont obligatoires.");
+      events.push({ id: id(), ministry: mid, title: t, date: d, time: val("f-etime"), place: val("f-eplace").trim(), status: val("f-estatus") });
+      log(acc().label, mid, "Événement ajouté : " + t + ", " + fmt(d));
+      done("Événement ajouté");
+    };
+  }
+  function done(msg) { closeDrawer(); render(); toast(msg); }
+  let toastTimer;
+  function toast(msg) { const t = document.getElementById("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2600); }
+
+  /* ---------- Navigation ---------- */
+  function tabsFor() {
+    const open = points.filter(p => p.status !== "Traité" && canSeePoint(p)).length;
+    if (isLead()) return [["global", "Cette semaine"], ["ministries", "Ministères"], ["points", "Points d'attention", open], ["journal", "Journal"]];
+    return [["global", "Cette semaine"], ["fiche", M[myMinistry()].name], ["points", "Points d'attention", open], ["journal", "Journal"]];
+  }
+  function render() {
+    const tabs = tabsFor();
+    if (!tabs.some(t => t[0] === state.tab) && state.tab !== "fiche") state.tab = "global";
+    document.getElementById("tabs").innerHTML = tabs.map(([k, l, c]) => '<button class="tab" role="tab" data-tab="' + k + '" aria-selected="' + (state.tab === k || (k === "ministries" && state.tab === "fiche")) + '">' + esc(l) + (c ? '<span class="count">' + c + '</span>' : '') + '</button>').join("");
+    const v = document.getElementById("view");
+    if (state.tab === "global") v.innerHTML = viewGlobal();
+    else if (state.tab === "ministries") v.innerHTML = viewMinistries();
+    else if (state.tab === "points") v.innerHTML = viewPoints();
+    else if (state.tab === "journal") v.innerHTML = viewJournal();
+    else v.innerHTML = viewFiche(isLead() ? state.fiche : myMinistry());
+  }
+
+  const accSel = document.getElementById("account");
+  accSel.innerHTML = '<optgroup label="Décision">' + ACCOUNTS.filter(a => a.kind === "lead").map(a => '<option value="' + a.id + '">' + esc(a.label) + '</option>').join("") + '</optgroup><optgroup label="Ministères">' + ACCOUNTS.filter(a => a.kind === "ministry").map(a => '<option value="' + a.id + '">' + esc(a.label) + '</option>').join("") + '</optgroup>';
+  accSel.addEventListener("change", () => { state.account = accSel.value; state.tab = "global"; state.fiche = null; render(); window.scrollTo(0, 0); toast("Compte : " + acc().label); });
+
+  document.addEventListener("click", e => {
+    const t = e.target.closest("[data-tab],[data-act],[data-fig],[data-sess],[data-pf]");
+    if (!t) return;
+    if (t.dataset.tab) { state.tab = t.dataset.tab; render(); return; }
+    if (t.dataset.fig) { if (t.classList.contains("has-history")) { state.fig = t.dataset.fig; render(); } return; }
+    if (t.dataset.sess) { state.sessionType = t.dataset.sess; render(); return; }
+    if (t.dataset.pf) { state.pointFilter = t.dataset.pf; render(); return; }
+    const a = t.dataset.act;
+    if (a === "open-fiche") { state.fiche = t.dataset.m; state.tab = "fiche"; render(); window.scrollTo(0, 0); }
+    else if (a === "close-point") { const p = points.find(x => x.id === t.dataset.id); p.status = "Traité"; p.doneBy = acc().label; p.doneAt = TODAY; log(acc().label, p.ministry, "Point marqué comme traité : " + p.title); render(); toast("Point marqué comme traité"); }
+    else if (a === "form-sunday") formSunday();
+    else if (a === "form-session") formSession();
+    else if (a === "form-point") formPoint();
+    else if (a === "form-event") formEvent();
+    else if (a === "close-drawer") closeDrawer();
+  });
+  document.addEventListener("submit", e => { if (e.target.id === "dr-form") { e.preventDefault(); if (submitHandler) submitHandler(); } });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !document.getElementById("overlay").hidden) closeDrawer(); });
+
+  render();
+})();
+</script>

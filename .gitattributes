@@ -1,0 +1,5 @@
+# Fins de ligne normalisées. Les scripts shell restent en LF, sinon Git Bash ne peut pas les exécuter.
+* text=auto
+*.sh text eol=lf
+*.png binary
+*.docx binary
