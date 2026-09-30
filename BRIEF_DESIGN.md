@@ -1,6 +1,6 @@
-# Brief de design : Pilotage des ministères EJP
+# Brief de design : Pilotage EJP
 
-Ce brief accompagne le canevas « Pilotage des ministères, directions visuelles ». Il fixe l'intention visuelle. Le brief de construction (`BRIEF.md`) reste la référence fonctionnelle.
+Ce brief accompagne le canevas « Pilotage des ministères, directions visuelles » (ancien nom de travail : l'outil s'appelle « Pilotage EJP » depuis le 30 septembre 2026). Il fixe l'intention visuelle. Le brief de construction (`BRIEF.md`) reste la référence fonctionnelle.
 
 ## 1. Pour qui, à quel moment
 
@@ -77,19 +77,20 @@ Chaque écran se conçoit **d'abord à 390 px**, puis s'élargit. Jamais l'inver
 | Palier      | Largeur         | Usage principal                                  | Disposition                                                                                                  |
 | ----------- | --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | Téléphone   | 360 à 599 px    | Saisie du dimanche, lecture rapide par le berger | Une colonne. Menu dans un bouton de 44 px. Actions principales pleine largeur.                               |
-| Tablette    | 600 à 1023 px   | Lecture en réunion                               | Deux colonnes pour les chiffres, le reste en une colonne.                                                    |
+| Tablette    | 600 à 1023 px   | Lecture en réunion                               | Deux colonnes pour les chiffres, le reste en une colonne. Menu dans un bouton de 44 px, comme sur téléphone. |
 | Ordinateur  | 1024 à 1439 px  | Lecture du berger et du conseil                  | Colonne principale et colonne « À décider » à droite.                                                        |
 | Grand écran | 1440 px et plus | Écran de salle, projection en conseil            | Largeur de contenu plafonnée à 1280 px, centrée. Texte agrandi d'un cran, jamais étiré sur toute la largeur. |
 
 ### Règles
 
-- **Ordre de lecture identique à toutes les tailles** : la phrase de la semaine, les chiffres, À décider, la session, les départements, les ministères. Sur téléphone, « À décider » peut remonter juste après la phrase si un point est urgent.
-- **Les tableaux se transforment, ils ne défilent pas** : sur téléphone, le tableau des chiffres devient une liste (libellé et date à gauche, valeur et écart à droite), le tableau des ministères devient une liste nom et fraîcheur. Seul le graphique d'évolution peut défiler horizontalement, dans son propre cadre.
+- **Ordre de lecture identique à toutes les tailles** : la phrase de la semaine, les chiffres, À décider, la session, les départements, les ministères. Sur téléphone, « À décider » remonte juste après la phrase quand au moins un point ouvert a la priorité Urgente ; il montre trois points à toutes les tailles, puis « Tous les points ». L'accueil du ministère a lui aussi le même contenu à toutes les tailles (`BRIEF.md`, section 9).
+- **Les tableaux se transforment, ils ne défilent pas** : sous 600 px, le tableau des chiffres devient une liste (libellé et date à gauche, valeur et écart à droite), le tableau des ministères devient une liste nom et fraîcheur. De même : 05, un bloc par point ; 06, deux lignes par entrée (date et compte, puis action et détail) ; 13, un bloc par compte, boutons en pleine largeur ; 14, deux lignes par session ; 15, un bloc par texte. Pas de graphique d'évolution en V1 : seules les petites courbes des maquettes.
 - **Rien ne défile horizontalement** à 360 px. Marge latérale d'au moins 16 px à toutes les tailles.
-- **Typographie fluide** : les grands chiffres et la phrase de la semaine suivent la largeur (par exemple `clamp()`), dans des bornes fixées. Les textes courants restent entre 15 et 17 px ; lignes de 45 à 75 caractères.
-- **Cibles tactiles** de 44 px au minimum, 56 px pour les boutons plus et moins de la saisie. Clavier numérique sur les champs de chiffres.
-- **Le pouce d'abord** : sur téléphone, le bouton « Enregistrer » reste accessible en bas de l'écran pendant la saisie, en tenant compte de la zone de sécurité des téléphones.
-- **Images et cartes** : la carte des départements garde ses proportions et se met à l'échelle ; aucune largeur fixe supérieure à l'écran.
+- **Typographie fluide** : les grands chiffres et la phrase de la semaine suivent la largeur (par exemple `clamp()`), dans des bornes fixées. Les textes courants restent entre 15 et 17 px (17 px à partir de 1440 px) ; lignes de 45 à 75 caractères.
+- **Cibles tactiles** de 44 px au minimum, 64 px pour les boutons plus et moins de la saisie (`--cible-saisie` de `tokens.css`). Clavier numérique sur les champs de chiffres.
+- **Panneaux de saisie** : page entière sous 600 px ; à partir de 600 px (tablette comprise), panneau latéral de 460 px, fond `--papier`, filet gauche `--filet`, sans ombre ; le reste de la page est inerte et Échap ferme le panneau.
+- **Le pouce d'abord** : sur téléphone, le bouton « Enregistrer » reste dans une barre collée en bas de l'écran pendant la saisie (`position: sticky`), fond `--fond`, filet haut, marge basse qui tient compte de la zone de sécurité des téléphones.
+- **Images et cartes** : la carte des départements garde ses proportions et se met à l'échelle : grille de 5 colonnes sur 3 lignes, carreaux carrés, 100 % de la largeur de son bloc, au plus 346 px sur téléphone et 380 px dans la colonne de droite. Aucune largeur fixe supérieure à l'écran.
 - **Orientation et zoom** : l'interface reste utilisable en paysage et avec un zoom du navigateur à 200 %.
 - **Chaque direction est livrée en trois formats** au minimum : téléphone (390 px), ordinateur (1440 px), et un état grand écran ou tablette pour vérifier le comportement intermédiaire.
 
@@ -97,11 +98,15 @@ Chaque écran se conçoit **d'abord à 390 px**, puis s'élargit. Jamais l'inver
 
 L'application a cinq profils : ministère (email partagé), berger, conseil, administration de l'église, EJP Tech. Chaque profil a sa navigation et son écran d'accueil, mais la même identité visuelle.
 
-- **Le nom du compte connecté est toujours visible**, en haut à droite sur ordinateur, sous le titre sur téléphone.
-- **L'accueil du ministère se pense au téléphone** : ce qu'il reste à faire, un bouton pour la prochaine action, ses points, puis un résumé de l'église.
+- **Le nom du compte connecté est toujours visible.** L'en-tête a deux formats :
+  - à partir de 1024 px (format de 04, qui vaut aussi pour 01) : à gauche « Pilotage EJP » et le sous-titre « Église des Jeunes Prodiges », au centre les onglets du profil, à droite le libellé du compte et « Se déconnecter » ;
+  - en dessous de 1024 px (téléphone et tablette, format de 03) : « Pilotage EJP » sur la première ligne, le libellé du compte sur la deuxième, bouton menu de 44 px à droite. Le menu liste les onglets, puis le libellé du compte et « Se déconnecter ». Ne reproduis pas les onglets en ligne de la tablette 02 ;
+  - écrans de saisie et activation (17) : en-tête simplifié de la maquette, avec « Retour » ou « Annuler » ; connexion (16) et code (18) : pas d'en-tête ;
+  - le nombre à côté d'un onglet (« Points d'attention 4 ») est le nombre de points ouverts que ce compte peut voir.
+- **L'accueil du ministère se pense au téléphone** : ce qu'il reste à faire, un bouton pour la prochaine action, ses saisies, ses points, puis un résumé de l'église. Le même contenu s'élargit sur ordinateur.
 - **L'accueil du berger et du conseil se pense à l'ordinateur et à la tablette** : la semaine en une phrase, les chiffres, « À décider ».
 - **Les écrans d'administration** (église et EJP Tech) sont des outils : titre, une phrase qui dit à quoi sert l'écran et ce qu'il ne permet pas, puis des tableaux simples.
-- **Ce qu'un profil ne peut pas faire ne s'affiche pas** : pas de bouton grisé, pas d'onglet vide. Un ministère mentionné sur un point lit une phrase qui dit qui peut le marquer traité.
+- **Ce qu'un profil ne peut pas faire ne s'affiche pas** : pas de bouton grisé, pas d'onglet vide. Sur un point où il est mentionné, un ministère lit « Mentionné par Intégration. » et voit le bouton « Marquer traité » : il explique ce qui a été traité et comment dans la fenêtre qui s'ouvre (décision du 30 septembre 2026).
 
 La planche `maquettes/00-profils-qui-voit-quoi.png` récapitule qui voit quoi et la navigation de chaque profil.
 
@@ -117,8 +122,8 @@ La planche `maquettes/00-profils-qui-voit-quoi.png` récapitule qui voit quoi et
 ## 9. Ce que la coordination doit trancher
 
 1. Direction visuelle : **tranché, direction C** (mélange de A et B).
-2. L'EJP a-t-elle une charte (logo, couleurs, polices) à respecter ? Si oui, elle prime sur ce brief.
-3. Le nom de l'outil : « Le point du berger », « Pilotage des ministères », ou un autre.
+2. L'EJP a-t-elle une charte (logo, couleurs, polices) à respecter ? Si oui, elle prime sur ce brief. **Question encore ouverte.**
+3. Le nom de l'outil : **tranché, « Pilotage EJP »** (30 septembre 2026). « Le point du berger » reste le nom de la direction A ; les maquettes qui l'affichent se lisent « Pilotage EJP ».
 
 ## Sources
 

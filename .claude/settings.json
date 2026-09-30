@@ -1,39 +1,87 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "CLAUDE_CODE_USE_POWERSHELL_TOOL": "0"
+  },
   "permissions": {
     "allow": [
+      "Bash(npm run dev)",
       "Bash(npm run lint)",
+      "Bash(npm run lint -- --fix)",
+      "Bash(npm run format)",
+      "Bash(npm run format:check)",
       "Bash(npm run typecheck)",
       "Bash(npm run build)",
       "Bash(npm test *)",
       "Bash(npm run e2e *)",
+      "Bash(node scripts/verifier-textes.mjs)",
       "Bash(npx prettier *)",
-      "Bash(supabase start)",
-      "Bash(supabase status)",
-      "Bash(supabase db reset)",
-      "Bash(supabase test db)",
-      "Bash(supabase migration new *)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npx playwright test *)",
+      "Bash(npx playwright show-report)",
+      "Bash(npx supabase --version)",
+      "Bash(npx supabase start)",
+      "Bash(npx supabase stop)",
+      "Bash(npx supabase status *)",
+      "Bash(npx supabase db start)",
+      "Bash(npx supabase db reset)",
+      "Bash(npx supabase db lint *)",
+      "Bash(npx supabase test db)",
+      "Bash(npx supabase migration new *)",
+      "Bash(npx supabase gen types *)",
+      "Bash(npx supabase functions serve *)",
       "Bash(git status)",
       "Bash(git diff *)",
-      "Bash(git log *)"
+      "Bash(git log *)",
+      "Bash(git show *)",
+      "Bash(git ls-files *)"
     ],
-    "deny": ["Read(./.env)", "Read(./.env.*)", "Bash(supabase db push *)", "Bash(git push *)"]
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Read(~/.supabase/**)",
+      "Bash(git push *)",
+      "Bash(supabase *)",
+      "Bash(supabase db push *)",
+      "Bash(npx supabase db push *)",
+      "Bash(npx supabase link *)",
+      "Bash(npx supabase login *)",
+      "Bash(npx supabase functions deploy *)",
+      "Bash(npx supabase secrets *)",
+      "Bash(npx supabase config push *)",
+      "Bash(npx supabase migration repair *)",
+      "Bash(npx supabase projects *)",
+      "Bash(npx supabase db dump *)",
+      "Bash(*--linked*)",
+      "Bash(*--db-url*)",
+      "Bash(*--project-ref*)",
+      "PowerShell(git push *)",
+      "PowerShell(supabase *)",
+      "PowerShell(npx supabase *)"
+    ]
   },
   "hooks": {
     "PreToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|MultiEdit",
         "hooks": [
-          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh" }
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh\"",
+            "timeout": 30
+          }
         ]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write",
+        "matcher": "Edit|Write|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/format-and-check.sh"
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/format-and-check.sh\"",
+            "timeout": 60
           }
         ]
       }
