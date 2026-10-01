@@ -62,7 +62,7 @@ select results_eq($$
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace)
      and has_function_privilege('service_role', p.oid, 'EXECUTE')
    order by 1
-$$, $$ values ('private.serveur_controler_cible'), ('private.serveur_controler_creation_compte'),
+$$, $$ values ('private.serveur_controler_cible' collate "C"), ('private.serveur_controler_creation_compte'),
               ('private.serveur_controler_reactivation'), ('private.serveur_controler_relance'),
               ('private.serveur_creer_compte'), ('private.serveur_desactiver_compte'),
               ('private.serveur_reactiver_compte'), ('private.serveur_reinitialiser_2fa'),

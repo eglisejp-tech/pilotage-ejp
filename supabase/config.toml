@@ -227,8 +227,10 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# Pilotage EJP : personne ne s'inscrit seul (BRIEF, section 8).
-enable_signup = false
+# Pilotage EJP : cette clé active le fournisseur email lui-même dans la CLI (connexion par
+# mot de passe comprise) et doit rester à true. L'inscription reste fermée par
+# [auth] enable_signup = false (BRIEF, section 8).
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true

@@ -337,3 +337,12 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Audit de sécurité de l'étape 2, décision de la personne responsable
 - **Statut** : Décidé
 - **BRIEF** : section 8 (« Les Edge Functions », contrat commun) ; le BRIEF n'est pas modifié ; migration `comptes_session_appelant`
+
+### T16. Fournisseur email gardé actif dans `config.toml`
+
+- **Date** : 1er octobre 2026
+- **Sujet** : le BRIEF demande `[auth.email] enable_signup = false` pour fermer l'inscription.
+- **Décision** : `[auth.email] enable_signup = true`. Raison : dans la CLI Supabase, cette clé active le fournisseur email lui-même. À false, toute connexion par mot de passe est refusée (`email_provider_disabled`), constaté sur la première CI de l'étape 2. L'inscription reste fermée par `[auth] enable_signup = false`. Sur les projets distants, même logique : fournisseur Email activé, « Allow new users to sign up » désactivé.
+- **Origine** : CI de l'étape 2 (constat technique), le BRIEF demandant de vérifier chaque nom de clé
+- **Statut** : Appliqué, à confirmer par la personne responsable
+- **BRIEF** : section 8 (« Supabase, local », ligne 906) ; le BRIEF n'est pas modifié
