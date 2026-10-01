@@ -410,6 +410,47 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Pilotage EJP : fonctions de comptes (BRIEF, section 8, « Les Edge Functions »). Appelées
+# seulement avec le JWT d'un utilisateur. verify_jwt = false, par choix : chaque fonction vérifie
+# elle-même le JWT avant toute autre chose, avec @supabase/server (signature contre le JWKS du
+# projet, expiration, audience « authenticated »), puis exige aal2 et un compte actif de
+# l'administration de l'église. Raisons : 1. le contrôle de la plateforme répond avec son propre
+# corps et sans nos en-têtes CORS, alors que le front attend { erreur: 'non_authentifie' } ;
+# 2. la documentation Supabase se contredit sur ce contrôle avec les nouvelles clés (le guide de
+# migration dit qu'il ne comprend que les clés JWT anciennes, la page « Authorization headers »
+# qu'il accepte les clés de signature asymétriques) ; celle de @supabase/server demande
+# verify_jwt = false pour que la bibliothèque fasse la vérification. Ne jamais appeler ces
+# fonctions sans passer par servir() (supabase/functions/_shared/servir.ts).
+[functions.creer-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/creer-compte/deno.json"
+entrypoint = "./functions/creer-compte/index.ts"
+
+[functions.desactiver-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/desactiver-compte/deno.json"
+entrypoint = "./functions/desactiver-compte/index.ts"
+
+[functions.reinitialiser-2fa]
+enabled = true
+verify_jwt = false
+import_map = "./functions/reinitialiser-2fa/deno.json"
+entrypoint = "./functions/reinitialiser-2fa/index.ts"
+
+[functions.relancer-invitation]
+enabled = true
+verify_jwt = false
+import_map = "./functions/relancer-invitation/deno.json"
+entrypoint = "./functions/relancer-invitation/index.ts"
+
+[functions.reactiver-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/reactiver-compte/deno.json"
+entrypoint = "./functions/reactiver-compte/index.ts"
+
 [analytics]
 enabled = true
 port = 54327

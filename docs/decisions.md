@@ -319,3 +319,21 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Proposition EJP Tech
 - **Statut** : Proposé, à confirmer par EJP Tech
 - **BRIEF** : section 12 ; `DEMARRAGE.md`
+
+### T14. Sessions supprimées à la désactivation et à la réinitialisation
+
+- **Date** : 1er octobre 2026
+- **Sujet** : couper l'accès d'un compte désactivé ou dont la double authentification est refaite.
+- **Décision** : `desactiver-compte` et `reinitialiser-2fa` suppriment les sessions du compte dans `auth.sessions` (les jetons de rafraîchissement suivent). Raison : supprimer un facteur par l'API d'administration de Supabase ne déconnecte pas le compte, ses sessions redescendent seulement en aal1, d'où l'on peut enrôler un nouveau facteur ; un bannissement garde les sessions, qui reviendraient à sa levée. `reinitialiser-2fa` remplace d'abord le mot de passe, supprime les sessions, puis les facteurs, et supprime de nouveau les sessions avec le journal.
+- **Origine** : Audit de sécurité de l'étape 2, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 8 (règle 4, « Les Edge Functions ») ; le BRIEF n'est pas modifié ; migrations `comptes_fonctions_serveur` et `comptes_revocation_sessions`
+
+### T15. Session de l'appelant exigée par les fonctions de comptes
+
+- **Date** : 1er octobre 2026
+- **Sujet** : un jeton d'accès volé ou d'une session fermée reste valable jusqu'à son expiration (1 h).
+- **Décision** : les Edge Functions de comptes passent à la base la revendication `session_id` du JWT vérifié ; la base exige une ligne de `auth.sessions` avec cet identifiant, l'utilisateur de l'appelant et le niveau aal2, sinon elle refuse (réponse 401 `{ erreur: 'session_revoquee' }`). Raison : comme la suppression des facteurs et le bannissement ne ferment pas les sessions (T14), ce contrôle coupe un jeton aal2 volé, ou celui d'une session déconnectée, pour les fonctions de comptes sans attendre son expiration.
+- **Origine** : Audit de sécurité de l'étape 2, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 8 (« Les Edge Functions », contrat commun) ; le BRIEF n'est pas modifié ; migration `comptes_session_appelant`
