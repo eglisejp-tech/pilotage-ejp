@@ -45,8 +45,9 @@ jobs:
       - run: npx supabase db start
       - run: npx supabase test db
 
-  # Parcours avec une base Supabase locale (jamais un projet distant) : migrations, seed.sql
-  # (comptes de test avec mot de passe et facteur TOTP), Auth, API et Mailpit.
+  # Parcours avec une base Supabase locale (jamais un projet distant) : migrations, seed.sql,
+  # Auth, API et Mailpit. Avant les parcours, Playwright lance e2e/installer-comptes.ts
+  # (mot de passe et facteur TOTP de chaque compte d'exemple, par l'API).
   e2e:
     name: Parcours Playwright (1440, 834, 390 px)
     needs: qualite
@@ -68,12 +69,16 @@ jobs:
         run: >-
           npx supabase start
           -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
-      - name: Donner à l'application l'URL et la clé publique locales
+      # URL et clé publique pour le navigateur (VITE_) ; clé secrète locale pour le seul
+      # script d'installation des comptes (E2E_CLE_SECRETE_LOCALE, jamais VITE_), masquée.
+      - name: Exporter l'URL et les clés de la base locale
         run: |
-          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY)=')"
-          test -n "$API_URL" && test -n "$PUBLISHABLE_KEY"
+          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|SECRET_KEY)=')"
+          test -n "$API_URL" && test -n "$PUBLISHABLE_KEY" && test -n "$SECRET_KEY"
+          echo "::add-mask::$SECRET_KEY"
           echo "VITE_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "E2E_CLE_SECRETE_LOCALE=$SECRET_KEY" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
       - uses: actions/upload-artifact@v7

@@ -144,10 +144,10 @@ test.describe('en-tête et menu (aperçu)', () => {
           .filter(({ cadre }) => cadre.width > 0 && cadre.height > 0)
           .map(({ texte, cadre }) => ({ texte, hauteur: Math.round(cadre.height) })),
       )
-    // Le nom de l'outil est un lien de titre : seules les commandes comptent.
-    const commandes = tailles.filter(({ texte }) => texte !== 'Pilotage EJP')
-    expect(commandes.length).toBeGreaterThan(2)
-    expect(commandes.filter(({ hauteur }) => hauteur < 44)).toEqual([])
+    // Le nom de l'outil, lien vers l'accueil, compte comme les autres cibles.
+    expect(tailles.map(({ texte }) => texte)).toContain('Pilotage EJP')
+    expect(tailles.length).toBeGreaterThan(2)
+    expect(tailles.filter(({ hauteur }) => hauteur < 44)).toEqual([])
   })
 
   test('ne défile pas horizontalement, même à 360 px', async ({ page }) => {

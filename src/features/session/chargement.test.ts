@@ -1,6 +1,10 @@
 import { AuthApiError } from '@supabase/supabase-js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { chargerEtatSession } from '@/features/session/chargement'
+import {
+  chargerEtatSession,
+  chargerEtatSessionSuivi,
+  DELAI_MAX_SESSION,
+} from '@/features/session/chargement'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
@@ -24,6 +28,19 @@ const utilisateur = { id: 'u-berger', email: 'berger@exemple.test' }
 
 afterEach(() => {
   vi.clearAllMocks()
+  vi.useRealTimers()
+})
+
+describe('chargerEtatSessionSuivi', () => {
+  it('abandonne après 10 s : la page passe à son erreur au lieu de charger sans fin', async () => {
+    vi.useFakeTimers()
+    const faux = installer({})
+    faux.auth.getSession.mockReturnValueOnce(new Promise(() => undefined))
+    const lecture = chargerEtatSessionSuivi()
+    const verification = expect(lecture).rejects.toThrow('Lecture de la session trop longue.')
+    await vi.advanceTimersByTimeAsync(DELAI_MAX_SESSION)
+    await verification
+  })
 })
 
 describe('chargerEtatSession', () => {

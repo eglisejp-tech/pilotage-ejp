@@ -46,6 +46,10 @@ export function useEtatSession() {
     queryFn: chargerEtatSessionSuivi,
     staleTime: Infinity,
     gcTime: Infinity,
+    // Jamais de chargement sans fin : pas de nouvel essai caché (l'écran d'erreur propose
+    // « Réessayer »), et pas de mise en pause hors ligne (la lecture échoue et le dit).
+    retry: false,
+    networkMode: 'always',
   })
 }
 

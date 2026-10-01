@@ -48,7 +48,11 @@ export function MenuTelephone({
     <div className="lg:hidden" onKeyDown={surTouche}>
       <div className="flex items-center justify-between gap-4 px-5 py-3.5">
         <div className="min-w-0">
-          <Link to={accueil} className="font-lecture text-[19px] leading-tight font-semibold">
+          {/* Cible de 44 px ; les marges négatives gardent la hauteur de ligne dessinée. */}
+          <Link
+            to={accueil}
+            className="-my-2.5 inline-flex min-h-11 items-center font-lecture text-[19px] leading-tight font-semibold"
+          >
             Pilotage EJP
           </Link>
           <p className="mt-0.5 text-sm text-encre-2">

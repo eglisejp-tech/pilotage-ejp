@@ -130,7 +130,7 @@ test('un compte sans double authentification va vers l’activation et ne voit a
 
 test('« Se déconnecter » ferme la session de cet appareil', async ({ page }, infos) => {
   test.skip(infos.project.name !== 'ordinateur', 'Une vérification de code de plus suffit.')
-  await seConnecter(page, COMPTE_DECONNEXION.email, COMPTE_DECONNEXION.secret)
+  await seConnecter(page, COMPTE_DECONNEXION.email)
   await expect(page.getByRole('heading', { level: 1, name: 'Cette semaine' })).toBeVisible()
   await expect(page.getByRole('banner')).toContainText(COMPTE_DECONNEXION.libelle)
 

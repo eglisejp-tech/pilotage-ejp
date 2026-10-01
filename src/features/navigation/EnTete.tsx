@@ -27,7 +27,10 @@ export function EnTete(proprietes: ProprietesEnTete) {
           filet du bas, même quand le compte passe sur deux lignes (1024 à 1279 px). */}
       <div className="mx-auto box-content hidden max-w-contenu items-stretch justify-between gap-8 px-marge lg:flex">
         <div className="flex shrink-0 items-baseline gap-4 self-center">
-          <Link to={accueil} className="font-lecture text-[22px] font-semibold">
+          <Link
+            to={accueil}
+            className="inline-flex min-h-11 items-center font-lecture text-[22px] font-semibold"
+          >
             Pilotage EJP
           </Link>
           <span className="hidden text-sm text-encre-3 xl:inline">Église des Jeunes Prodiges</span>

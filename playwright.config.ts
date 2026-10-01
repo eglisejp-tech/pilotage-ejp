@@ -24,6 +24,9 @@ const dependances = avecBase ? ['connexion'] : []
 // Trois formats de référence (BRIEF section 12) : ordinateur 1440, tablette 834, téléphone 390.
 export default defineConfig({
   testDir: 'e2e',
+  // Avec la base : mot de passe et facteur TOTP de chaque compte d'exemple, par l'API, avant
+  // tout parcours (e2e/installer-comptes.ts, adresse locale seulement).
+  ...(avecBase ? { globalSetup: './e2e/installer-comptes.ts' } : {}),
   fullyParallel: true,
   forbidOnly: enCI,
   retries: enCI ? 1 : 0,

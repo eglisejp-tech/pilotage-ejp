@@ -417,37 +417,3 @@ select m.le, m.par, g.ministere,
 from public.moderation m
 join graine_point p on p.id = m.cible_id
 join graine_ministere g on g.code = p.code;
-
--- Étape 2 : connexion des comptes d'exemple pour les parcours Playwright (local et CI seulement,
--- jamais un projet distant). Un mot de passe de test commun, et un facteur TOTP vérifié avec un
--- secret de test fixe, repris par e2e/comptes.ts pour générer les codes avec otplib. Ce ne sont
--- pas de vrais secrets. Le Ministère EJP Formation reste sans facteur : il passe par
--- l'activation (BRIEF, section 8, « Tests obligatoires »).
--- Écart au BRIEF (section 8) : les facteurs s'écrivent ici dans auth.mfa_factors, colonnes
--- stables depuis l'arrivée du TOTP, au lieu d'un script par l'API (mfa.enroll), pour éviter la
--- limite de 15 vérifications par minute et rester identiques d'un lancement à l'autre.
-
-update auth.users u
-   set encrypted_password = extensions.crypt('essai-local-pilotage-ejp', extensions.gen_salt('bf'))
-  from graine_compte c
- where u.id = c.compte;
-
-insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, secret,
-  created_at, updated_at)
-select gen_random_uuid(), c.compte, 'Pilotage EJP', 'totp', 'verified', s.secret,
-       pg_temp.h(timestamp '2026-06-01 10:30'), pg_temp.h(timestamp '2026-06-01 10:30')
-from graine_compte c
-join (values
-  ('com', 'YJTOKMCFVXDQLKWSSDG62WS4CBUNIOWU'),
-  ('int', 'QFBU6WYYED6J6XYT4MLHPDP4T655MIMK'),
-  ('coo', 'DZKIAXZKNOT4CD2KM7HNFXA2U6RWLE7S'),
-  ('jeu', 'RVS4EQ4HK7NCDYPMAXAVSH3AMXKGTFCL'),
-  ('soc', 'QUV24H3RTESF3EVRWUDYUCMFYHJJJXMR'),
-  ('fij', 'JFUBDN4SQ27VJIYUMZSSXSJUBKRTOP4V'),
-  ('pju', '6OFAX3LHNGHDNB6SL3FIWO6CGIDVSYB5'),
-  ('berger', 'PAZKKX42TXYWVHS4EANMAHL6HNIQSIIY'),
-  ('conseil1', 'EK2Z5HTKXWGENCEU64D5P3G37MVGXZJY'),
-  ('conseil3', 'LR4FVZOOEIUXAOWPBYAQZYODFLZP45W7'),
-  ('admin', 'RVZWRYDFFXXUBQR5LUD4RQMD5OHHCW3U'),
-  ('ejptech', 'UC42SX5DFYC556NXA5SXZDGRALYXXHA4')
-) as s (code, secret) on s.code = c.code;

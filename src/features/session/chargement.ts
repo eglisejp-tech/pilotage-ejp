@@ -60,10 +60,28 @@ export async function chargerEtatSession(): Promise<EtatSession> {
   }
 }
 
-/** Fonction de la requête de session : note aussi comment la session s'est terminée. */
+/** Au-delà, la lecture de la session échoue : « Chargement » ne dure jamais (LISEZMOI, « États »). */
+export const DELAI_MAX_SESSION = 10_000
+
+function avecDelaiMaximal<T>(promesse: Promise<T>): Promise<T> {
+  let minuterie: ReturnType<typeof setTimeout> | undefined
+  const delai = new Promise<never>((_, refuser) => {
+    minuterie = setTimeout(
+      () => refuser(new Error('Lecture de la session trop longue.')),
+      DELAI_MAX_SESSION,
+    )
+  })
+  return Promise.race([promesse, delai]).finally(() => clearTimeout(minuterie))
+}
+
+/**
+ * Fonction de la requête de session : 10 s au plus (serveur injoignable, verrou ou
+ * renouvellement du jeton bloqués), puis l'écran d'erreur et « Réessayer ». Note aussi comment
+ * la session s'est terminée.
+ */
 export async function chargerEtatSessionSuivi(): Promise<EtatSession> {
   const precedent = clientRequetes.getQueryData<EtatSession>(CLE_SESSION)
-  const etat = await chargerEtatSession()
+  const etat = await avecDelaiMaximal(chargerEtatSession())
   noterTransition(precedent?.statut, etat.statut)
   return etat
 }

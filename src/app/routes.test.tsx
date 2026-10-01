@@ -12,7 +12,13 @@ import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
-vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
+vi.mock('@/lib/supabase', () => ({
+  // Une erreur à la place du client simule une configuration absente (createClient refusé).
+  supabase: () => {
+    if (courant.client instanceof Error) throw courant.client
+    return courant.client
+  },
+}))
 
 function installer(scenario: ScenarioSession) {
   const faux = fauxSupabase(scenario)
@@ -169,16 +175,48 @@ describe('routes', () => {
     expect(routeur.state.location.pathname).toBe('/ma-fiche')
   })
 
-  it('affiche la page introuvable pour une adresse inconnue', async () => {
+  it('adresse inconnue, connecté en aal2 : page introuvable, phrase et retour à son accueil', async () => {
     connecte('admin_plateforme')
-    afficher('/adresse-inconnue')
+    afficher('/nimportequoi')
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Page introuvable' }),
     ).toBeInTheDocument()
+    expect(screen.getByText("L'adresse est incomplète ou n'existe plus.")).toBeInTheDocument()
     expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
       'href',
       '/moderation',
     )
+    expect(document.title).toBe('Page introuvable, Pilotage EJP')
+  })
+
+  it("adresse inconnue, sans session : la connexion, avec l'adresse demandée", async () => {
+    const faux = installer({})
+    const routeur = afficher('/nimportequoi')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Pilotage EJP' }),
+    ).toBeInTheDocument()
+    expect(routeur.state.location.pathname).toBe('/connexion')
+    expect(routeur.state.location.search).toBe('?retour=%2Fnimportequoi')
+    expect(faux.from).not.toHaveBeenCalled()
+  })
+
+  it("serveur injoignable : l'écran d'erreur de session, jamais un chargement sans fin", async () => {
+    const faux = installer({})
+    faux.auth.getSession.mockRejectedValue(new TypeError('Failed to fetch'))
+    afficher('/nimportequoi')
+    expect(
+      await screen.findByRole('button', { name: 'Réessayer' }, { timeout: 5000 }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+  })
+
+  it("configuration absente : l'écran d'erreur de session, jamais un chargement sans fin", async () => {
+    courant.client = new Error('VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY manquent.')
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    afficher('/nimportequoi')
+    expect(
+      await screen.findByRole('button', { name: 'Réessayer' }, { timeout: 5000 }),
+    ).toBeInTheDocument()
   })
 
   it('compte désactivé : message, puis déconnexion locale', async () => {
