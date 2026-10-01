@@ -6,14 +6,7 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores([
-    'dist',
-    'coverage',
-    'playwright-report',
-    'test-results',
-    'docs/reference',
-    'supabase/functions',
-  ]),
+  globalIgnores(['dist', 'coverage', 'playwright-report', 'test-results', 'docs/reference']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
@@ -39,7 +32,14 @@ export default defineConfig([
     },
   },
   {
-    files: ['e2e/**/*.ts', 'playwright.config.ts', 'vite.config.ts', 'scripts/**/*.mjs'],
+    files: [
+      'e2e/**/*.ts',
+      'tests/**/*.ts',
+      'playwright.config.ts',
+      'vite.config.ts',
+      'vitest.fonctions.config.ts',
+      'scripts/**/*.mjs',
+    ],
     languageOptions: {
       globals: globals.node,
     },

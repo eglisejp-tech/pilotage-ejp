@@ -3,8 +3,9 @@
  * bouton de connexion), jamais redessiné.
  *
  * Exception assumée à la règle « aucune couleur hors des tokens » (CLAUDE.md) : le logo garde ses
- * quatre couleurs de marque, écrites ici en dur. C'est la seule exception de l'application
- * (docs/reference/maquettes/LISEZMOI.md, « Détails de l'authentification »).
+ * quatre couleurs de marque, écrites ici en dur. Avec le bouton qui le porte (BoutonGoogle), c'est
+ * la seule exception de l'application (docs/reference/maquettes/LISEZMOI.md, « Détails de
+ * l'authentification »).
  */
 export function LogoGoogle() {
   return (

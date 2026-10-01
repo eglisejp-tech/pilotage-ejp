@@ -20,6 +20,8 @@
 @import '@fontsource/public-sans/500';
 @import '@fontsource/public-sans/600';
 @import '@fontsource/public-sans/700';
+/* Roboto Medium : seulement pour le bouton « Continuer avec Google » (consignes de Google). */
+@import '@fontsource/roboto/latin-500.css';
 
 /* Thème sombre hors périmètre : la variante dark ne s'active qu'avec une classe .dark, jamais posée. */
 @custom-variant dark (&:is(.dark *));

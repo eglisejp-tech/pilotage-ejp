@@ -19,6 +19,8 @@ playwright-report/
 test-results/
 blob-report/
 playwright/.cache/
+# Sessions enregistrées par le projet Playwright « connexion » (BRIEF section 8)
+e2e/.auth/
 
 # Hébergement
 .vercel/

@@ -12,6 +12,8 @@ export const messagesConnexion = {
     "Cette adresse n'a pas encore de compte actif. Si vous avez reçu une invitation, ouvrez d'abord le lien de l'email. Sinon, adressez-vous à l'administration de l'église.",
   tropDeTentatives: 'Trop de tentatives. Attendez quelques minutes, puis réessayez.',
   echecReseau: 'La connexion a échoué. Réessayez.',
+  motDePasseFaible: 'Ce mot de passe est trop facile à deviner. Choisissez-en un autre.',
+  memeMotDePasse: "Choisissez un mot de passe différent de l'ancien.",
   lienEnvoye:
     'Si un compte existe pour cette adresse, un lien vient de lui être envoyé. Pensez à regarder les courriers indésirables.',
   lienInvalide: "Ce lien n'est plus valable",

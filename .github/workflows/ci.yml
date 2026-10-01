@@ -45,11 +45,19 @@ jobs:
       - run: npx supabase db start
       - run: npx supabase test db
 
+  # Parcours avec une base Supabase locale (jamais un projet distant) : migrations, seed.sql,
+  # Auth, API et Mailpit. Avant les parcours, Playwright lance e2e/installer-comptes.ts
+  # (mot de passe et facteur TOTP de chaque compte d'exemple, par l'API).
   e2e:
     name: Parcours Playwright (1440, 834, 390 px)
     needs: qualite
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
+    env:
+      E2E_BASE: '1'
+      # Google reste activé dans config.toml : valeurs factices, aucun parcours Google en CI.
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ci-sans-google
+      SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET: ci-sans-google
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -57,6 +65,20 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      - name: Démarrer Supabase en local (base, Auth, PostgREST, Kong, Mailpit)
+        run: >-
+          npx supabase start
+          -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      # URL et clé publique pour le navigateur (VITE_) ; clé secrète locale pour le seul
+      # script d'installation des comptes (E2E_CLE_SECRETE_LOCALE, jamais VITE_), masquée.
+      - name: Exporter l'URL et les clés de la base locale
+        run: |
+          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|SECRET_KEY)=')"
+          test -n "$API_URL" && test -n "$PUBLISHABLE_KEY" && test -n "$SECRET_KEY"
+          echo "::add-mask::$SECRET_KEY"
+          echo "VITE_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "E2E_CLE_SECRETE_LOCALE=$SECRET_KEY" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
       - uses: actions/upload-artifact@v7
@@ -65,3 +87,38 @@ jobs:
           name: rapport-playwright
           path: playwright-report/
           retention-days: 7
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: captures-playwright
+          path: test-results/captures/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  fonctions:
+    name: Edge Functions de comptes (pile locale)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Auth, API, base, boîte mail locale et edge runtime (qui sert supabase/functions) ;
+      # les services inutiles à ces tests restent arrêtés.
+      - run: npx supabase start -x studio,postgres-meta,imgproxy,storage-api,realtime,logflare,vector,supavisor
+      # Adresse et clés de la pile locale, comme le job e2e : la clé secrète est masquée.
+      - name: Environnement de la pile locale
+        run: |
+          eval "$(npx supabase status -o env | grep -E '^(API_URL|PUBLISHABLE_KEY|SECRET_KEY)=')"
+          test -n "$API_URL" && test -n "$PUBLISHABLE_KEY" && test -n "$SECRET_KEY"
+          echo "::add-mask::$SECRET_KEY"
+          echo "API_URL=$API_URL" >> "$GITHUB_ENV"
+          echo "PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
+          echo "SECRET_KEY=$SECRET_KEY" >> "$GITHUB_ENV"
+      - run: npm run test:fonctions
+      - name: Journal de l'edge runtime
+        if: failure()
+        run: docker logs "$(docker ps -q --filter name=supabase_edge_runtime)" 2>&1 | tail -n 200

@@ -155,11 +155,19 @@ max_indexes = 5
 enabled = true
 # The base URL of your website. Used as an allow-list for redirects and for constructing URLs used
 # in emails.
-site_url = "http://127.0.0.1:3000"
+# Pilotage EJP : serveur de développement Vite (BRIEF, section 8, « Configuration »).
+site_url = "http://127.0.0.1:5173"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["https://127.0.0.1:3000"]
+# Pilotage EJP : liens des emails (/acces) et retour de Google (/connexion), sur les deux noms
+# d'hôte du poste.
+additional_redirect_urls = [
+  "http://127.0.0.1:5173/acces",
+  "http://localhost:5173/acces",
+  "http://127.0.0.1:5173/connexion",
+  "http://localhost:5173/connexion",
+]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -179,7 +187,8 @@ enable_anonymous_sign_ins = false
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.
-minimum_password_length = 6
+# Pilotage EJP : 12 caractères au moins (BRIEF, section 8).
+minimum_password_length = 12
 # Passwords that do not meet the following requirements will be rejected as weak. Supported values
 # are: `letters_digits`, `lower_upper_letters_digits`, `lower_upper_letters_digits_symbols`
 password_requirements = ""
@@ -218,8 +227,10 @@ web3 = 30
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
-# Pilotage EJP : personne ne s'inscrit seul (BRIEF, section 8).
-enable_signup = false
+# Pilotage EJP : cette clé active le fournisseur email lui-même dans la CLI (connexion par
+# mot de passe comprise) et doit rester à true. L'inscription reste fermée par
+# [auth] enable_signup = false (BRIEF, section 8).
+enable_signup = true
 # If enabled, a user will be required to confirm any email change on both the old, and new email
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = true
@@ -232,7 +243,8 @@ max_frequency = "1s"
 # Number of characters used in the email OTP.
 otp_length = 6
 # Number of seconds before the email OTP expires (defaults to 1 hour).
-otp_expiry = 3600
+# Pilotage EJP : liens d'invitation et de récupération valables 24 h (décision T08).
+otp_expiry = 86400
 
 # Use a production-ready SMTP server
 # [auth.email.smtp]
@@ -244,10 +256,15 @@ otp_expiry = 3600
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
 
-# Uncomment to customize email template
-# [auth.email.template.invite]
-# subject = "You have been invited"
-# content_path = "./supabase/templates/invite.html"
+# Pilotage EJP : modèles locaux en français. Le lien mène à /acces, qui demande un clic avant
+# verifyOtp (BRIEF, section 8, « Parcours par email »). Les emails se lisent dans Mailpit.
+[auth.email.template.invite]
+subject = "Votre accès à Pilotage EJP"
+content_path = "./supabase/templates/invitation.html"
+
+[auth.email.template.recovery]
+subject = "Nouveau mot de passe pour Pilotage EJP"
+content_path = "./supabase/templates/recuperation.html"
 
 # Uncomment to customize notification email template
 # [auth.email.notification.password_changed]
@@ -300,9 +317,10 @@ auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
+# Pilotage EJP : double authentification obligatoire pour tous les comptes (BRIEF, section 8).
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
@@ -334,6 +352,14 @@ url = ""
 skip_nonce_check = false
 # If enabled, it will allow the user to successfully authenticate when the provider does not return an email address.
 email_optional = false
+
+# Pilotage EJP : « Continuer avec Google » (BRIEF, section 8). Identifiant et secret du projet
+# Google de développement, lus dans l'environnement, jamais écrits ici.
+[auth.external.google]
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false
 
 # Allow Solana wallet holders to sign in to your project via the Sign in with Solana (SIWS, EIP-4361) standard.
 # You can configure "web3" rate limit in the [auth.rate_limit] section and set up [auth.captcha] if self-hosting.
@@ -385,6 +411,47 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# Pilotage EJP : fonctions de comptes (BRIEF, section 8, « Les Edge Functions »). Appelées
+# seulement avec le JWT d'un utilisateur. verify_jwt = false, par choix : chaque fonction vérifie
+# elle-même le JWT avant toute autre chose, avec @supabase/server (signature contre le JWKS du
+# projet, expiration, audience « authenticated »), puis exige aal2 et un compte actif de
+# l'administration de l'église. Raisons : 1. le contrôle de la plateforme répond avec son propre
+# corps et sans nos en-têtes CORS, alors que le front attend { erreur: 'non_authentifie' } ;
+# 2. la documentation Supabase se contredit sur ce contrôle avec les nouvelles clés (le guide de
+# migration dit qu'il ne comprend que les clés JWT anciennes, la page « Authorization headers »
+# qu'il accepte les clés de signature asymétriques) ; celle de @supabase/server demande
+# verify_jwt = false pour que la bibliothèque fasse la vérification. Ne jamais appeler ces
+# fonctions sans passer par servir() (supabase/functions/_shared/servir.ts).
+[functions.creer-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/creer-compte/deno.json"
+entrypoint = "./functions/creer-compte/index.ts"
+
+[functions.desactiver-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/desactiver-compte/deno.json"
+entrypoint = "./functions/desactiver-compte/index.ts"
+
+[functions.reinitialiser-2fa]
+enabled = true
+verify_jwt = false
+import_map = "./functions/reinitialiser-2fa/deno.json"
+entrypoint = "./functions/reinitialiser-2fa/index.ts"
+
+[functions.relancer-invitation]
+enabled = true
+verify_jwt = false
+import_map = "./functions/relancer-invitation/deno.json"
+entrypoint = "./functions/relancer-invitation/index.ts"
+
+[functions.reactiver-compte]
+enabled = true
+verify_jwt = false
+import_map = "./functions/reactiver-compte/deno.json"
+entrypoint = "./functions/reactiver-compte/index.ts"
 
 [analytics]
 enabled = true
