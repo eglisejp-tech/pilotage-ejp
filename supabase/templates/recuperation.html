@@ -1,0 +1,14 @@
+<!-- Mot de passe oublié (Reset password). Même principe que l'invitation : le lien mène à /acces,
+     qui demande un clic avant de consommer le jeton (BRIEF, section 8). -->
+<h2>Nouveau mot de passe pour Pilotage EJP</h2>
+<p>Une demande de nouveau mot de passe a été faite pour ce compte.</p>
+<p>
+  <a href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=recovery"
+    >Choisir un nouveau mot de passe</a
+  >
+</p>
+<p>
+  Si la double authentification est déjà activée, son code vous sera demandé avant le nouveau mot de
+  passe. Ce lien reste valable 24 heures.
+</p>
+<p>Vous n'avez rien demandé ? Ignorez ce message : votre mot de passe ne change pas.</p>

@@ -91,6 +91,8 @@ Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 - **15** : le premier texte montre un masquage partiel (« Relancer [texte masqué] pour les colis... »). Dans l'application, tout le champ est remplacé par « [texte masqué par EJP Tech] », et le motif se choisit dans une liste.
 - **Carte des FIJ** (01, 03) : les teintes en `rgba` écrites en dur deviennent cinq tokens pleins, et le blanc sur la deuxième teinte (3,86:1) devient `--encre`. Pas de largeur fixe de 346 px : la carte suit la largeur de son bloc.
 - **`prototype.html`** : `canClosePoint` (seuls le créateur, le berger et le conseil ferment un point, en un clic) et la note « Un STAR rattaché à deux ministères peut être compté deux fois. Règle à valider. » sont dépassés par le brief.
+- **En-tête (01, 04)** : de 1024 à 1279 px, le sous-titre « Église des Jeunes Prodiges » disparaît et le libellé du compte passe au-dessus de « Se déconnecter », pour que les onglets de l'administration tiennent sur une ligne. Un lien « Confidentialité » s'ajoute en pied de page et à la fin du menu (`BRIEF.md`, section 7).
+- **16** : le bouton Google garde la taille dessinée (pleine largeur, 56 px, texte de 16 px) avec le thème clair officiel de Google : fond `#FFFFFF`, bordure `#747775`, texte `#1F1F1F` en Roboto Medium.
 - **Données** : elles changent d'une maquette à l'autre (01 et 05 n'ont pas les mêmes points ouverts, 05 et 06 pas les mêmes dates de traitement). Le jeu d'exemple de l'étape 1 (`BRIEF.md`, section 13) fait foi : compare la mise en page, pas les nombres.
 
 ## États (non dessinés)
