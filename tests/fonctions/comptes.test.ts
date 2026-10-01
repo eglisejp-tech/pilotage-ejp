@@ -23,7 +23,13 @@ import {
   type Session,
 } from './outils.ts'
 
-const FONCTIONS = ['creer-compte', 'desactiver-compte', 'reinitialiser-2fa'] as const
+const FONCTIONS = [
+  'creer-compte',
+  'desactiver-compte',
+  'reinitialiser-2fa',
+  'relancer-invitation',
+  'reactiver-compte',
+] as const
 
 let admin: CompteDeTest
 let sessionAdmin: Session
@@ -166,6 +172,8 @@ describe('validation de la demande', () => {
       ],
       ['desactiver-compte', { user_id: 'pas-un-uuid' }],
       ['reinitialiser-2fa', {}],
+      ['relancer-invitation', { user_id: randomUUID(), email: 'a@example.com' }],
+      ['reactiver-compte', '{"user_id": '],
     ]
     for (const [fonction, corps] of invalides) {
       attendreErreur(await appeler(fonction, corps, { jeton }), 400, 'requete_invalide')
@@ -450,5 +458,141 @@ describe('reinitialiser-2fa', () => {
         detail: {},
       },
     ])
+  })
+})
+
+describe('relancer-invitation', () => {
+  it('renvoie l’invitation d’une adresse pas encore confirmée et écrit le journal', async () => {
+    const email = adresseDeTest('essai-relance')
+    attendreSucces(
+      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionAdmin.jeton }),
+    )
+    const invite = await utilisateurParEmail(email)
+    expect(invite).toBeDefined()
+    const avant = await clientSecret().auth.admin.getUserById(invite!.id)
+    // Auth espace deux envois à la même adresse (max_frequency de la pile locale).
+    await new Promise((resolve) => setTimeout(resolve, 2_000))
+
+    const reponse = await appeler(
+      'relancer-invitation',
+      { user_id: invite!.id },
+      { jeton: sessionAdmin.jeton },
+    )
+    attendreSucces(reponse)
+    expect(sansFuite(reponse, [email])).toBe(true)
+    const apres = await clientSecret().auth.admin.getUserById(invite!.id)
+    expect(apres.data.user?.email_confirmed_at ?? null).toBeNull()
+    expect(Date.parse(apres.data.user?.invited_at ?? '')).toBeGreaterThanOrEqual(
+      Date.parse(avant.data.user?.invited_at ?? ''),
+    )
+    const lignes = await lignesJournal(sessionAdmin, invite!.id)
+    expect(lignes.filter((ligne) => ligne.action === 'invitation_relancee')).toEqual([
+      {
+        action: 'invitation_relancee',
+        compte: admin.id,
+        ministere_id: null,
+        cible: 'compte',
+        cible_id: invite!.id,
+        detail: {},
+      },
+    ])
+  })
+
+  it('refuse une adresse déjà confirmée, le compte de l’appelant et un compte inconnu', async () => {
+    const confirme = await creerCompteDeTest('conseil')
+    attendreErreur(
+      await appeler('relancer-invitation', { user_id: confirme.id }, { jeton: sessionAdmin.jeton }),
+      409,
+      'invitation_deja_acceptee',
+      [confirme.email],
+    )
+    expect(await lignesJournal(sessionAdmin, confirme.id)).toEqual([])
+    attendreErreur(
+      await appeler('relancer-invitation', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      403,
+      'propre_compte',
+    )
+    attendreErreur(
+      await appeler(
+        'relancer-invitation',
+        { user_id: randomUUID() },
+        { jeton: sessionAdmin.jeton },
+      ),
+      400,
+      'compte_inconnu',
+    )
+  })
+})
+
+describe('reactiver-compte', () => {
+  it('refuse un compte actif et le compte de l’appelant', async () => {
+    const actif = await creerCompteDeTest('conseil')
+    attendreErreur(
+      await appeler('reactiver-compte', { user_id: actif.id }, { jeton: sessionAdmin.jeton }),
+      409,
+      'compte_actif',
+    )
+    attendreErreur(
+      await appeler('reactiver-compte', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      403,
+      'propre_compte',
+    )
+    attendreErreur(
+      await appeler('reactiver-compte', { user_id: randomUUID() }, { jeton: sessionAdmin.jeton }),
+      400,
+      'compte_inconnu',
+    )
+    expect(await lignesJournal(sessionAdmin, actif.id)).toEqual([])
+  })
+
+  it('lève le bannissement, réactive le compte et son ministère, écrit le journal', async () => {
+    const ministere = await creerMinistereDeTest()
+    const cible = await creerCompteDeTest('ministere', { ministereId: ministere.id })
+    attendreSucces(
+      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+    )
+    await expect(connecter(cible)).rejects.toThrow()
+
+    attendreSucces(
+      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+    )
+    expect((await compte(cible.id))?.desactive_le).toBeNull()
+    const { data: ligneMinistere } = await clientSecret()
+      .from('ministere')
+      .select('desactive_le')
+      .eq('id', ministere.id)
+      .single()
+    expect(ligneMinistere?.desactive_le).toBeNull()
+    const { data } = await clientSecret().auth.admin.getUserById(cible.id)
+    const banni = data.user?.banned_until
+    expect(!banni || Date.parse(banni) <= Date.now()).toBe(true)
+    // Le compte se connecte de nouveau (puis refera son code TOTP s'il en a un).
+    await expect(connecter(cible)).resolves.toBeDefined()
+    expect(await lignesJournal(sessionAdmin, cible.id)).toEqual([
+      {
+        action: 'compte_desactive',
+        compte: admin.id,
+        ministere_id: ministere.id,
+        cible: 'compte',
+        cible_id: cible.id,
+        detail: { type: 'ministere', ministere_desactive: true },
+      },
+      {
+        action: 'compte_reactive',
+        compte: admin.id,
+        ministere_id: ministere.id,
+        cible: 'compte',
+        cible_id: cible.id,
+        detail: { type: 'ministere' },
+      },
+    ])
+
+    // Déjà réactivé : refusé, sans nouvelle ligne.
+    attendreErreur(
+      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      409,
+      'compte_actif',
+    )
+    expect(await lignesJournal(sessionAdmin, cible.id)).toHaveLength(2)
   })
 })

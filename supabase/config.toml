@@ -409,6 +409,18 @@ verify_jwt = true
 import_map = "./functions/reinitialiser-2fa/deno.json"
 entrypoint = "./functions/reinitialiser-2fa/index.ts"
 
+[functions.relancer-invitation]
+enabled = true
+verify_jwt = true
+import_map = "./functions/relancer-invitation/deno.json"
+entrypoint = "./functions/relancer-invitation/index.ts"
+
+[functions.reactiver-compte]
+enabled = true
+verify_jwt = true
+import_map = "./functions/reactiver-compte/deno.json"
+entrypoint = "./functions/reactiver-compte/index.ts"
+
 [analytics]
 enabled = true
 port = 54327

@@ -55,11 +55,16 @@ select results_eq($$
      and has_function_privilege('service_role', p.oid, 'EXECUTE')
    order by 1
 $$, $$ values ('private.serveur_controler_cible'), ('private.serveur_controler_creation_compte'),
+              ('private.serveur_controler_reactivation'), ('private.serveur_controler_relance'),
               ('private.serveur_creer_compte'), ('private.serveur_desactiver_compte'),
-              ('private.serveur_reinitialiser_2fa'), ('public.serveur_controler_cible'),
-              ('public.serveur_controler_creation_compte'), ('public.serveur_creer_compte'),
-              ('public.serveur_desactiver_compte'), ('public.serveur_reinitialiser_2fa') $$,
-  'service_role exécute exactement les 10 fonctions serveur des comptes');
+              ('private.serveur_reactiver_compte'), ('private.serveur_reinitialiser_2fa'),
+              ('private.serveur_relancer_invitation'),
+              ('public.serveur_controler_cible'), ('public.serveur_controler_creation_compte'),
+              ('public.serveur_controler_reactivation'), ('public.serveur_controler_relance'),
+              ('public.serveur_creer_compte'), ('public.serveur_desactiver_compte'),
+              ('public.serveur_reactiver_compte'), ('public.serveur_reinitialiser_2fa'),
+              ('public.serveur_relancer_invitation') $$,
+  'service_role exécute exactement les 18 fonctions serveur des comptes');
 select schema_privs_are('private', 'service_role', array['USAGE']::name[],
   'service_role a seulement usage sur le schéma private');
 select is_empty($$

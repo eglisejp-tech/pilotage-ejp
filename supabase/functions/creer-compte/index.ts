@@ -5,24 +5,11 @@
 // transaction. Si la base refuse après l'invitation, l'utilisateur Auth créé est supprimé.
 import { appelerBase } from '../_shared/base.ts'
 import { consigner, ErreurFonction } from '../_shared/http.ts'
+import { inviter } from '../_shared/invitation.ts'
 import { schemaCreerCompte } from '../_shared/schemas.ts'
 import { servir } from '../_shared/servir.ts'
 
 const FONCTION = 'creer-compte'
-
-// Adresse de l'application (variable URL_APPLICATION des secrets des fonctions). Sans elle,
-// Auth renvoie vers son Site URL, qui est déjà l'adresse de l'application.
-function adresseAcces(): string | undefined {
-  const deno = (globalThis as { Deno?: { env: { get(nom: string): string | undefined } } }).Deno
-  const base = deno?.env.get('URL_APPLICATION')
-  if (!base) return undefined
-  try {
-    const url = new URL('/acces', base)
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : undefined
-  } catch {
-    return undefined
-  }
-}
 
 export default servir({
   nom: FONCTION,
@@ -43,17 +30,7 @@ export default servir({
     })
 
     // 2. Invitation par email (lien vers /acces).
-    const redirectTo = adresseAcces()
-    const { data, error } = await appelant.admin.auth.admin.inviteUserByEmail(
-      demande.email,
-      redirectTo ? { redirectTo } : undefined,
-    )
-    if (error || !data.user) {
-      if (error?.code === 'email_exists') throw new ErreurFonction(409, 'adresse_deja_utilisee')
-      consigner(FONCTION, 'invitation', error?.code)
-      throw new ErreurFonction(500, 'invitation_non_envoyee')
-    }
-    const utilisateur = data.user.id
+    const utilisateur = await inviter(appelant.admin, FONCTION, demande.email)
 
     // 3. Ministère, compte et journal, au nom de l'appelant.
     try {

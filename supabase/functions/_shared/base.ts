@@ -10,6 +10,10 @@ export type FonctionServeur =
   | 'serveur_creer_compte'
   | 'serveur_desactiver_compte'
   | 'serveur_reinitialiser_2fa'
+  | 'serveur_controler_relance'
+  | 'serveur_relancer_invitation'
+  | 'serveur_controler_reactivation'
+  | 'serveur_reactiver_compte'
 
 const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['appelant_non_autorise', [403, 'acces_refuse']],
@@ -23,6 +27,8 @@ const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['nom_ministere_deja_pris', [409, 'nom_ministere_deja_pris']],
   ['berger_deja_actif', [409, 'berger_deja_actif']],
   ['compte_desactive', [409, 'compte_desactive']],
+  ['compte_actif', [409, 'compte_actif']],
+  ['invitation_deja_acceptee', [409, 'invitation_deja_acceptee']],
 ])
 
 export function traduireErreurBase(erreur: { code?: string; message?: string }): ErreurFonction {
