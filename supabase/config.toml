@@ -301,8 +301,9 @@ max_enrolled_factors = 10
 
 # Control MFA via App Authenticator (TOTP)
 [auth.mfa.totp]
-enroll_enabled = false
-verify_enabled = false
+# Pilotage EJP : double authentification obligatoire pour tous les comptes (BRIEF, section 8).
+enroll_enabled = true
+verify_enabled = true
 
 # Configure MFA via Phone Messaging
 [auth.mfa.phone]
@@ -385,6 +386,28 @@ deno_version = 2
 
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
+
+# Pilotage EJP : fonctions de comptes (BRIEF, section 8, « Les Edge Functions »). Appelées
+# seulement avec le JWT d'un utilisateur : la plateforme vérifie le JWT avant le code
+# (verify_jwt), puis chaque fonction le vérifie de nouveau avec @supabase/server, exige aal2 et
+# un compte actif de l'administration de l'église.
+[functions.creer-compte]
+enabled = true
+verify_jwt = true
+import_map = "./functions/creer-compte/deno.json"
+entrypoint = "./functions/creer-compte/index.ts"
+
+[functions.desactiver-compte]
+enabled = true
+verify_jwt = true
+import_map = "./functions/desactiver-compte/deno.json"
+entrypoint = "./functions/desactiver-compte/index.ts"
+
+[functions.reinitialiser-2fa]
+enabled = true
+verify_jwt = true
+import_map = "./functions/reinitialiser-2fa/deno.json"
+entrypoint = "./functions/reinitialiser-2fa/index.ts"
 
 [analytics]
 enabled = true

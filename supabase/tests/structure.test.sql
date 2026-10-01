@@ -123,8 +123,11 @@ $$, 'aucune fonction de public ni de private n''est exécutable par public');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace)
-     and (has_function_privilege('anon', p.oid, 'EXECUTE') or has_function_privilege('service_role', p.oid, 'EXECUTE'))
-$$, 'aucune fonction de public ni de private n''est exécutable par anon ou service_role');
+     and (has_function_privilege('anon', p.oid, 'EXECUTE')
+          or (has_function_privilege('service_role', p.oid, 'EXECUTE')
+              and p.proname not in ('serveur_controler_creation_compte', 'serveur_controler_cible',
+                                    'serveur_creer_compte', 'serveur_desactiver_compte', 'serveur_reinitialiser_2fa')))
+$$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
 select results_eq($$
   select p.proname::text collate "default" from pg_proc p
    where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'EXECUTE')

@@ -65,3 +65,28 @@ jobs:
           name: rapport-playwright
           path: playwright-report/
           retention-days: 7
+
+  fonctions:
+    name: Edge Functions de comptes (pile locale)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      # Auth, API, base, boîte mail locale et edge runtime (qui sert supabase/functions) ;
+      # les services inutiles à ces tests restent arrêtés.
+      - run: npx supabase start -x studio,postgres-meta,imgproxy,storage-api,realtime,logflare,vector,supavisor
+      # Adresse et clés de la pile locale, sans les guillemets de la sortie env.
+      - name: Environnement de la pile locale
+        run: |
+          npx supabase status -o env \
+            | sed -E 's/^([A-Z0-9_]+)="(.*)"$/\1=\2/' \
+            | grep -E '^(API_URL|PUBLISHABLE_KEY|SECRET_KEY)=' >> "$GITHUB_ENV"
+      - run: npm run test:fonctions
+      - name: Journal de l'edge runtime
+        if: failure()
+        run: docker logs "$(docker ps -q --filter name=supabase_edge_runtime)" 2>&1 | tail -n 200
