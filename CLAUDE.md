@@ -18,7 +18,7 @@ Outil web temporaire de prise d'information pour le berger et le conseil de l'EJ
 - Une étape du plan (`BRIEF.md`, section 13) à la fois. Mode plan d'abord, code ensuite.
 - Ne change pas de stack, de dépendance majeure ou de modèle de données sans demander.
 - Si une règle métier est ambiguë, arrête-toi et pose la question. N'invente pas. Les propositions « Proposé » de `docs/decisions.md` s'appliquent en attendant la réponse de la coordination.
-- Un commit par étape, en français, après `/verifier` au vert et l'accord de la personne. Tu ne pousses jamais (`git push` est refusé) : la personne pousse à la main vers le dépôt de l'église.
+- Un commit par étape, en français, après `/verifier` au vert et l'accord de la personne. Tu pousses les branches d'étape par `git push -u origin etape-<nom>`, seul dans la commande (hook `.claude/hooks/garde-push.sh`). Tu ne pousses `main` (`git push origin main`, seul dans la commande) qu'avec l'accord écrit de la personne dans la conversation, pour ce push précis ; le hook demande en plus sa confirmation. Tout autre push est refusé (push forcé, refspec `a:b`, `--all`, `--tags`, `--delete`).
 - Une migration suivie par git est figée : pour la changer, crée une nouvelle migration. Écris les fichiers avec Edit et Write, jamais par une redirection du shell (les hooks ne la verraient pas).
 
 ## Règles métier à ne jamais casser

@@ -34,14 +34,15 @@
       "Bash(git diff *)",
       "Bash(git log *)",
       "Bash(git show *)",
-      "Bash(git ls-files *)"
+      "Bash(git ls-files *)",
+      "Bash(git push -u origin etape-*)",
+      "Bash(git push origin etape-*)"
     ],
     "deny": [
       "Read(.env)",
       "Read(.env.*)",
       "Read(!.env.example)",
       "Read(~/.supabase/**)",
-      "Bash(git push *)",
       "Bash(supabase *)",
       "Bash(supabase db push *)",
       "Bash(npx supabase db push *)",
@@ -69,6 +70,16 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/garde-push.sh\"",
             "timeout": 30
           }
         ]
