@@ -85,14 +85,24 @@ describe("contrôle de l'appelant", () => {
     }
   })
 
-  it('refuse sans JWT ou avec un JWT illisible (401)', async () => {
+  it('refuse sans JWT, avec un JWT illisible, modifié ou une clé à sa place (401)', async () => {
+    // verify_jwt = false : c'est la fonction qui répond, avec son corps et ses en-têtes CORS.
+    const [entete, charge, signature] = sessionAdmin.jeton.split('.')
+    const revendications = JSON.parse(Buffer.from(charge ?? '', 'base64url').toString('utf8'))
+    const modifie = [
+      entete,
+      Buffer.from(JSON.stringify({ ...revendications, exp: revendications.exp + 3600 })).toString(
+        'base64url',
+      ),
+      signature,
+    ].join('.')
+    const { clePublique } = environnement()
     for (const fonction of FONCTIONS) {
-      const sansJeton = await appeler(fonction, { user_id: randomUUID() })
-      expect(sansJeton.statut).toBe(401)
-      expect(sansFuite(sansJeton)).toBe(true)
-      const illisible = await appeler(fonction, { user_id: randomUUID() }, { jeton: 'abc.def.ghi' })
-      expect(illisible.statut).toBe(401)
-      expect(sansFuite(illisible)).toBe(true)
+      for (const jeton of [undefined, 'abc.def.ghi', modifie, clePublique]) {
+        const reponse = await appeler(fonction, { user_id: randomUUID() }, { jeton })
+        attendreErreur(reponse, 401, 'non_authentifie', [sessionAdmin.jeton])
+        expect(reponse.enTetes.get('access-control-allow-origin')).toBe('*')
+      }
     }
   })
 

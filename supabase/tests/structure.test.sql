@@ -128,7 +128,8 @@ select is_empty($$
               and p.proname not in ('serveur_controler_creation_compte', 'serveur_controler_cible',
                                     'serveur_creer_compte', 'serveur_desactiver_compte', 'serveur_reinitialiser_2fa',
                                     'serveur_controler_relance', 'serveur_relancer_invitation',
-                                    'serveur_controler_reactivation', 'serveur_reactiver_compte')))
+                                    'serveur_controler_reactivation', 'serveur_reactiver_compte',
+                                    'serveur_revoquer_sessions')))
 $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
 select results_eq($$
   select p.proname::text collate "default" from pg_proc p

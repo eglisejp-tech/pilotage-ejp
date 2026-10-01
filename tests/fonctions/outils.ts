@@ -165,6 +165,7 @@ export async function connecterEnAal2(compte: CompteDeTest): Promise<Session> {
 
 export interface Reponse {
   statut: number
+  enTetes: Headers
   texte: string
   corps: unknown
 }
@@ -195,7 +196,7 @@ export async function appeler(
   } catch {
     lu = null
   }
-  return { statut: reponse.status, texte, corps: lu }
+  return { statut: reponse.status, enTetes: reponse.headers, texte, corps: lu }
 }
 
 // Rien d'interne dans une réponse : ni clé, ni jeton, ni adresse, ni trace de la base.

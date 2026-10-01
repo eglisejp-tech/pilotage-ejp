@@ -14,6 +14,7 @@ export type FonctionServeur =
   | 'serveur_relancer_invitation'
   | 'serveur_controler_reactivation'
   | 'serveur_reactiver_compte'
+  | 'serveur_revoquer_sessions'
 
 const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['appelant_non_autorise', [403, 'acces_refuse']],

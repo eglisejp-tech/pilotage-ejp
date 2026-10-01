@@ -3,7 +3,7 @@
 -- invitation en attente, compte désactivé, conflits, effets et journal au nom de l'appelant.
 begin;
 
-select plan(19);
+select plan(21);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -39,6 +39,12 @@ update ctx set berger = tests.creer_compte('essai-rr-berger@exemple.test', 'berg
 update auth.users set email_confirmed_at = now() where id = (select confirme from ctx);
 update public.compte set desactive_le = now() where user_id in ((select inactif from ctx), (select cm from ctx));
 update public.ministere set desactive_le = now() where id = (select m from ctx);
+-- Ministère actif dont l'ancien compte est désactivé et le nouveau actif.
+alter table ctx add column m2 uuid, add column cm2a uuid, add column cm2b uuid;
+update ctx set m2 = tests.creer_ministere('Essai Relance Doublon');
+update ctx set cm2a = tests.creer_compte('essai-rr-doublon-a@exemple.test', 'ministere', m2);
+update public.compte set desactive_le = now() where user_id = (select cm2a from ctx);
+update ctx set cm2b = tests.creer_compte('essai-rr-doublon-b@exemple.test', 'ministere', m2);
 grant select on ctx to service_role, authenticated;
 
 -- L'administration, même en aal2, n'appelle pas ces fonctions directement
@@ -81,6 +87,10 @@ select throws_ok($$ select public.serveur_reactiver_compte((select admin from ct
   'P0001', 'compte_actif', 'un compte déjà réactivé est refusé');
 select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select ancien_berger from ctx)) $$,
   'P0001', 'berger_deja_actif', 'l''ancien berger n''est pas réactivé tant qu''un berger est actif');
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select admin from ctx)) $$,
+  'P0001', 'propre_compte', 'l''administration ne réactive pas son propre compte');
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select cm2a from ctx)) $$,
+  'P0001', 'ministere_a_deja_un_compte', 'l''ancien compte n''est pas réactivé quand son ministère a un compte actif');
 reset role;
 
 select results_eq($$
