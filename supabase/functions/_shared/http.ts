@@ -15,6 +15,7 @@ export type CodeErreur =
   | 'requete_invalide'
   | 'methode_non_autorisee'
   | 'non_authentifie'
+  | 'session_revoquee'
   | 'double_authentification_requise'
   | 'acces_refuse'
   | 'type_interdit'

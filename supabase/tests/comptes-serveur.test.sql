@@ -41,7 +41,15 @@ select tests.creer_compte('essai-admin@exemple.test', 'admin_eglise') as admin,
        pg_temp.utilisateur('essai-u6@exemple.test') as u6,
        pg_temp.utilisateur('essai-u7@exemple.test') as u7,
        gen_random_uuid() as s2,
-       gen_random_uuid() as s5;
+       gen_random_uuid() as s5,
+       gen_random_uuid() as sa,
+       gen_random_uuid() as sc,
+       gen_random_uuid() as si;
+-- Sessions aal2 des appelants (la base exige la session de l'appelant, décision T15).
+insert into auth.sessions (id, user_id, aal)
+select sa, admin, 'aal2'::auth.aal_level from ctx
+union all select sc, conseil, 'aal2'::auth.aal_level from ctx
+union all select si, admin_inactif, 'aal2'::auth.aal_level from ctx;
 update public.compte set desactive_le = now() where user_id = (select admin_inactif from ctx);
 -- Un seul berger actif : ceux du jeu d'exemple sont désactivés dans cette transaction.
 update public.compte set desactive_le = now() where type = 'berger' and desactive_le is null;
@@ -74,87 +82,87 @@ $$, 'les fonctions serveur security definer sont toutes dans private');
 
 -- L'administration, même en aal2, n'appelle pas ces fonctions directement
 select tests.se_connecter((select admin from ctx), 'aal2');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'conseil') $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_creer_compte');
-select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select conseil from ctx)) $$,
+select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), (select conseil from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_desactiver_compte');
-select throws_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select conseil from ctx)) $$,
+select throws_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select sa from ctx), (select conseil from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_reinitialiser_2fa');
 select tests.deconnecter();
 
 -- Appelant : un compte actif de l'administration, sinon 42501
 set local role service_role;
-select throws_ok($$ select public.serveur_creer_compte((select conseil from ctx), (select u7 from ctx), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte((select conseil from ctx), (select sc from ctx), (select u7 from ctx), 'conseil') $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne crée pas de compte');
-select throws_ok($$ select public.serveur_creer_compte((select admin_inactif from ctx), (select u7 from ctx), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin_inactif from ctx), (select si from ctx), (select u7 from ctx), 'conseil') $$,
   '42501', 'appelant_non_autorise', 'une administration désactivée ne crée pas de compte');
-select throws_ok($$ select public.serveur_creer_compte(null, (select u7 from ctx), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte(null, null, (select u7 from ctx), 'conseil') $$,
   '42501', 'appelant_non_autorise', 'sans appelant, rien n''est créé');
-select throws_ok($$ select public.serveur_desactiver_compte((select conseil from ctx), (select u1 from ctx)) $$,
+select throws_ok($$ select public.serveur_desactiver_compte((select conseil from ctx), (select sc from ctx), (select u1 from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne désactive pas de compte');
-select throws_ok($$ select public.serveur_reinitialiser_2fa((select conseil from ctx), (select u1 from ctx)) $$,
+select throws_ok($$ select public.serveur_reinitialiser_2fa((select conseil from ctx), (select sc from ctx), (select u1 from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne réinitialise pas la double authentification');
 
 -- Création : contrôles
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'admin_eglise') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'admin_eglise') $$,
   'P0001', 'type_interdit', 'creer-compte refuse le type admin_eglise');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'conseil',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'conseil',
                                                        p_ministere_nom => 'Essai') $$,
   'P0001', 'requete_invalide', 'un compte du conseil ne porte pas de ministère');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere') $$,
   'P0001', 'requete_invalide', 'un compte de ministère demande un ministère existant ou un nouveau nom');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), gen_random_uuid(), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), gen_random_uuid(), 'conseil') $$,
   'P0001', 'compte_inconnu', 'l''utilisateur Auth doit exister');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere',
                                                        p_ministere_id => gen_random_uuid()) $$,
   'P0001', 'ministere_inconnu', 'un ministère inconnu est refusé');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere',
                                                        p_ministere_nom => repeat('n', 51)) $$,
   'P0001', 'requete_invalide', 'nom de ministère de 51 caractères refusé');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere',
                                                        p_ministere_nom => 'Essai Comptes Long',
                                                        p_ministere_description => repeat('d', 281)) $$,
   'P0001', 'requete_invalide', 'description de 281 caractères refusée');
 
 -- Création : conseil et EJP Tech, numéro suivant jamais réutilisé
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u1 from ctx), 'conseil') $$,
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u1 from ctx), 'conseil') $$,
   'création d''un compte du conseil');
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u2 from ctx), 'conseil') $$,
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u2 from ctx), 'conseil') $$,
   'création d''un deuxième compte du conseil');
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u3 from ctx), 'admin_plateforme') $$,
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u3 from ctx), 'admin_plateforme') $$,
   'création d''un compte EJP Tech');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u1 from ctx), 'conseil') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u1 from ctx), 'conseil') $$,
   'P0001', 'adresse_deja_utilisee', 'un utilisateur qui a déjà un compte est refusé');
 
 -- Création : nouveau ministère, puis ministère existant sans compte actif
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u4 from ctx), 'ministere',
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u4 from ctx), 'ministere',
                                                       p_ministere_nom => '  Essai Comptes Nouveau  ',
                                                       p_ministere_description => '  ') $$,
   'création d''un compte de ministère avec un nouveau ministère');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere',
                                                        p_ministere_nom => 'essai comptes NOUVEAU') $$,
   'P0001', 'nom_ministere_deja_pris', 'un nom de ministère déjà pris est refusé (casse et espaces ignorés)');
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u5 from ctx), 'ministere',
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u5 from ctx), 'ministere',
                                                       p_ministere_id => (select m_a from ctx)) $$,
   'création du compte d''un ministère existant sans compte');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'ministere',
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'ministere',
                                                        p_ministere_id => (select m_a from ctx)) $$,
   'P0001', 'ministere_a_deja_un_compte', 'un ministère qui a déjà un compte actif est refusé');
 
 -- Création : un seul berger actif
-select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u6 from ctx), 'berger') $$,
+select lives_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u6 from ctx), 'berger') $$,
   'création du compte du berger');
-select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select u7 from ctx), 'berger') $$,
+select throws_ok($$ select public.serveur_creer_compte((select admin from ctx), (select sa from ctx), (select u7 from ctx), 'berger') $$,
   'P0001', 'berger_deja_actif', 'un deuxième berger actif est refusé');
 
 -- Contrôles préalables (sans écriture)
-select lives_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), 'essai-u7@exemple.test',
+select lives_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), (select sa from ctx), 'essai-u7@exemple.test',
                                                                    'conseil') $$,
   'contrôle préalable accepté pour un compte du conseil');
-select throws_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), 'essai-u7@exemple.test',
+select throws_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), (select sa from ctx), 'essai-u7@exemple.test',
                                                                     'berger') $$,
   'P0001', 'berger_deja_actif', 'contrôle préalable refusé pour un deuxième berger');
-select throws_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), ' ESSAI-U1@exemple.test ',
+select throws_ok($$ select public.serveur_controler_creation_compte((select admin from ctx), (select sa from ctx), ' ESSAI-U1@exemple.test ',
                                                                     'conseil') $$,
   'P0001', 'adresse_deja_utilisee', 'contrôle préalable refusé pour une adresse qui a déjà un compte');
 reset role;
@@ -202,21 +210,21 @@ insert into auth.refresh_tokens (token, user_id, session_id, revoked)
 values ('essai-jeton-u5', (select u5 from ctx)::text, (select s5 from ctx), false);
 
 set local role service_role;
-select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select admin from ctx)) $$,
+select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
   'P0001', 'propre_compte', 'l''administration ne désactive pas son propre compte');
-select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), gen_random_uuid()) $$,
+select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), gen_random_uuid()) $$,
   'P0001', 'compte_inconnu', 'compte inconnu refusé');
-select lives_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select u5 from ctx)) $$,
+select lives_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), (select u5 from ctx)) $$,
   'désactivation d''un compte de ministère');
-select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select u5 from ctx)) $$,
+select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), (select u5 from ctx)) $$,
   'P0001', 'compte_desactive', 'un compte déjà désactivé est refusé');
-select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), (select u5 from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), (select sa from ctx), (select u5 from ctx)) $$,
   'P0001', 'compte_desactive', 'contrôle préalable refusé pour un compte désactivé');
-select lives_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select u1 from ctx)) $$,
+select lives_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select sa from ctx), (select u1 from ctx)) $$,
   'désactivation d''un compte du conseil');
-select throws_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select admin from ctx)) $$,
+select throws_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
   'P0001', 'propre_compte', 'l''administration ne réinitialise pas sa propre double authentification');
-select lives_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select u2 from ctx)) $$,
+select lives_ok($$ select public.serveur_reinitialiser_2fa((select admin from ctx), (select sa from ctx), (select u2 from ctx)) $$,
   'réinitialisation de la double authentification d''un compte du conseil');
 reset role;
 

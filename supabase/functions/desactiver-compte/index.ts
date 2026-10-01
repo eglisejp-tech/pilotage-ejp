@@ -19,10 +19,10 @@ export async function desactiverCompte(
   { user_id: cible }: DemandeCibleCompte,
   appelant: Appelant,
 ): Promise<void> {
-  const parametres = { p_appelant: appelant.id, p_user_id: cible }
+  const parametres = { p_user_id: cible }
 
   // 1. Contrôles sans écriture : compte existant, actif, autre que l'appelant.
-  await appelerBase(appelant.admin, FONCTION, 'serveur_controler_cible', parametres)
+  await appelerBase(appelant, FONCTION, 'serveur_controler_cible', parametres)
 
   // 2. Bannissement dans Auth : plus de connexion ni de rafraîchissement de session.
   const { error } = await appelant.admin.auth.admin.updateUserById(cible, {
@@ -35,7 +35,7 @@ export async function desactiverCompte(
 
   // 3. Désactivation, sessions supprimées et journal, au nom de l'appelant.
   try {
-    await appelerBase(appelant.admin, FONCTION, 'serveur_desactiver_compte', parametres)
+    await appelerBase(appelant, FONCTION, 'serveur_desactiver_compte', parametres)
   } catch (erreur) {
     // Le bannissement n'est levé que si le compte est resté actif en base.
     const { data, error: erreurLecture } = await appelant.admin

@@ -10,6 +10,9 @@ import { consigner, ErreurFonction } from './http.ts'
 export interface Appelant {
   // auth.users.id de l'administration qui appelle : il signe la ligne de journal.
   id: string
+  // Revendication session_id du JWT vérifié : la base exige que cette session existe encore,
+  // à l'appelant et en aal2 (décision T15).
+  session: string
   // Client de la clé secrète (contourne la RLS) : seulement après les contrôles ci-dessous.
   admin: SupabaseClient
 }
@@ -35,7 +38,8 @@ export async function verifierAppelant(requete: Request, fonction: string): Prom
   if (
     !revendications ||
     revendications.role !== 'authenticated' ||
-    !identifiant.safeParse(revendications.sub).success
+    !identifiant.safeParse(revendications.sub).success ||
+    !identifiant.safeParse(revendications['session_id']).success
   ) {
     throw new ErreurFonction(401, 'non_authentifie')
   }
@@ -57,5 +61,5 @@ export async function verifierAppelant(requete: Request, fonction: string): Prom
   if (!compte.success || compte.data.type !== 'admin_eglise' || compte.data.desactive_le !== null) {
     throw new ErreurFonction(403, 'acces_refuse')
   }
-  return { id: revendications.sub, admin }
+  return { id: revendications.sub, session: String(revendications['session_id']), admin }
 }

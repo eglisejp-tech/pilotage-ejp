@@ -1,7 +1,9 @@
-// Appel des fonctions serveur de la base (migration comptes_fonctions_serveur), réservées à la
-// clé secrète. Leurs refus portent un code court, traduit ici en réponse HTTP ; toute autre
-// erreur devient 500 sans détail.
-import type { SupabaseClient } from '@supabase/supabase-js'
+// Appel des fonctions serveur de la base (migrations comptes_*), réservées à la clé secrète.
+// Chaque appel porte l'identifiant de l'appelant et sa session (p_appelant, p_session) : la base
+// vérifie de nouveau son compte et exige que sa session existe encore en aal2 (décision T15).
+// Les refus portent un code court, traduit ici en réponse HTTP ; toute autre erreur devient 500
+// sans détail.
+import type { Appelant } from './appelant.ts'
 import { consigner, ErreurFonction, type CodeErreur, type StatutErreur } from './http.ts'
 
 export type FonctionServeur =
@@ -18,6 +20,7 @@ export type FonctionServeur =
 
 const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['appelant_non_autorise', [403, 'acces_refuse']],
+  ['session_revoquee', [401, 'session_revoquee']],
   ['requete_invalide', [400, 'requete_invalide']],
   ['type_interdit', [400, 'type_interdit']],
   ['ministere_inconnu', [400, 'ministere_inconnu']],
@@ -41,12 +44,16 @@ export function traduireErreurBase(erreur: { code?: string; message?: string }):
 }
 
 export async function appelerBase(
-  admin: SupabaseClient,
+  appelant: Appelant,
   fonction: string,
   serveur: FonctionServeur,
   parametres: Record<string, unknown>,
 ): Promise<void> {
-  const { error } = await admin.rpc(serveur, parametres)
+  const { error } = await appelant.admin.rpc(serveur, {
+    ...parametres,
+    p_appelant: appelant.id,
+    p_session: appelant.session,
+  })
   if (!error) return
   const traduite = traduireErreurBase(error)
   if (traduite.statut === 500) consigner(fonction, serveur, error.code)

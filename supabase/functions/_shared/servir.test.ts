@@ -28,6 +28,7 @@ async function jeton(revendications: Record<string, unknown>, cle = cleDeTest): 
   const charge = base64url(
     JSON.stringify({
       sub: '0b6c7d1e-2f3a-4b5c-8d6e-7f8091a2b3c4',
+      session_id: '5d2e8f10-6a4b-4c3d-9e2f-1a0b9c8d7e6f',
       aud: 'authenticated',
       role: 'authenticated',
       aal: 'aal2',
@@ -120,6 +121,8 @@ describe('servir', () => {
     )
     const anonyme = await jeton({ role: 'anon' })
     await attendreErreur(await fonction.fetch(requete('POST', anonyme)), 401, 'non_authentifie')
+    const sansSession = await jeton({ session_id: undefined })
+    await attendreErreur(await fonction.fetch(requete('POST', sansSession)), 401, 'non_authentifie')
     await attendreErreur(
       await fonction.fetch(requete('POST', 'sb_publishable_essai')),
       401,
@@ -224,6 +227,7 @@ describe('servir', () => {
       expect(action.mock.calls[0]?.[0]).toEqual(JSON.parse(corpsValide))
       expect(action.mock.calls[0]?.[1]).toMatchObject({
         id: '0b6c7d1e-2f3a-4b5c-8d6e-7f8091a2b3c4',
+        session: '5d2e8f10-6a4b-4c3d-9e2f-1a0b9c8d7e6f',
       })
     } finally {
       vi.unstubAllGlobals()

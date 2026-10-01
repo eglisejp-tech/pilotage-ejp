@@ -14,12 +14,14 @@ function clientFactice(
   compteApres: { desactive_le: string | null } | null = { desactive_le: null },
 ) {
   const appels: string[] = []
+  const parametresRpc: Record<string, unknown>[] = []
   const erreurAuth = (etape: string) =>
     etape in echecs ? { code: 'unexpected_failure', status: 500 } : null
   const client = {
-    rpc: async (nom: string) => {
+    rpc: async (nom: string, parametres: Record<string, unknown>) => {
       const etape = `rpc:${nom}`
       appels.push(etape)
+      parametresRpc.push(parametres)
       const message = echecs[etape]
       return { data: null, error: message ? { code: 'P0001', message } : null }
     },
@@ -57,7 +59,7 @@ function clientFactice(
       },
     },
   } as unknown as SupabaseClient
-  return { appelant: { id: 'appelant', admin: client }, appels }
+  return { appelant: { id: 'appelant', session: 'session', admin: client }, appels, parametresRpc }
 }
 
 beforeEach(() => {
@@ -71,7 +73,7 @@ describe('reinitialiser-2fa', () => {
   const demande = { user_id: CIBLE }
 
   it('mot de passe, sessions, facteurs, puis sessions et journal, dans cet ordre', async () => {
-    const { appelant, appels } = clientFactice()
+    const { appelant, appels, parametresRpc } = clientFactice()
     await reinitialiserDoubleAuthentification(demande, appelant)
     expect(appels).toEqual([
       'rpc:serveur_controler_cible',
@@ -82,6 +84,21 @@ describe('reinitialiser-2fa', () => {
       'suppression_facteur:f2',
       'rpc:serveur_reinitialiser_2fa',
     ])
+    // Chaque appel à la base porte l'appelant et sa session (décision T15).
+    expect(parametresRpc).toEqual(
+      Array(3).fill({ p_appelant: 'appelant', p_session: 'session', p_user_id: CIBLE }),
+    )
+  })
+
+  it('une session révoquée en base donne 401 session_revoquee, avant Auth', async () => {
+    const { appelant, appels } = clientFactice({
+      'rpc:serveur_controler_cible': 'session_revoquee',
+    })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 401,
+      code: 'session_revoquee',
+    })
+    expect(appels).toEqual(['rpc:serveur_controler_cible'])
   })
 
   it('un refus de la base arrête tout avant Auth', async () => {

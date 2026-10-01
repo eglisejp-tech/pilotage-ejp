@@ -45,51 +45,56 @@ update ctx set m2 = tests.creer_ministere('Essai Relance Doublon');
 update ctx set cm2a = tests.creer_compte('essai-rr-doublon-a@exemple.test', 'ministere', m2);
 update public.compte set desactive_le = now() where user_id = (select cm2a from ctx);
 update ctx set cm2b = tests.creer_compte('essai-rr-doublon-b@exemple.test', 'ministere', m2);
+-- Sessions aal2 des appelants (la base exige la session de l'appelant, décision T15).
+alter table ctx add column sa uuid default gen_random_uuid(), add column sc uuid default gen_random_uuid();
+insert into auth.sessions (id, user_id, aal)
+select sa, admin, 'aal2'::auth.aal_level from ctx
+union all select sc, conseil, 'aal2'::auth.aal_level from ctx;
 grant select on ctx to service_role, authenticated;
 
 -- L'administration, même en aal2, n'appelle pas ces fonctions directement
 select tests.se_connecter((select admin from ctx), 'aal2');
-select throws_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select invite from ctx)) $$,
+select throws_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_relancer_invitation');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select cm from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_reactiver_compte');
 select tests.deconnecter();
 
 set local role service_role;
 -- Appelant : un compte actif de l'administration
-select throws_ok($$ select public.serveur_relancer_invitation((select conseil from ctx), (select invite from ctx)) $$,
+select throws_ok($$ select public.serveur_relancer_invitation((select conseil from ctx), (select sc from ctx), (select invite from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne relance pas d''invitation');
-select throws_ok($$ select public.serveur_reactiver_compte((select conseil from ctx), (select cm from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select conseil from ctx), (select sc from ctx), (select cm from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne réactive pas de compte');
 
 -- Relance : invitation encore en attente, compte actif, autre que l'appelant
-select lives_ok($$ select public.serveur_controler_relance((select admin from ctx), (select invite from ctx)) $$,
+select lives_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'contrôle de relance accepté pour une invitation en attente');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select confirme from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select confirme from ctx)) $$,
   'P0001', 'invitation_deja_acceptee', 'relance refusée pour une adresse déjà confirmée');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select admin from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
   'P0001', 'propre_compte', 'relance refusée pour le compte de l''appelant');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select inactif from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select inactif from ctx)) $$,
   'P0001', 'compte_desactive', 'relance refusée pour un compte désactivé');
-select lives_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select invite from ctx)) $$,
+select lives_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'relance enregistrée');
 
 -- Réactivation : compte désactivé seulement, sans conflit
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select invite from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'P0001', 'compte_actif', 'un compte actif n''est pas réactivé');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), gen_random_uuid()) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), gen_random_uuid()) $$,
   'P0001', 'compte_inconnu', 'compte inconnu refusé');
-select lives_ok($$ select public.serveur_controler_reactivation((select admin from ctx), (select cm from ctx)) $$,
+select lives_ok($$ select public.serveur_controler_reactivation((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'contrôle de réactivation accepté pour un compte de ministère désactivé');
-select lives_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select cm from ctx)) $$,
+select lives_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'réactivation d''un compte de ministère');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select cm from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'P0001', 'compte_actif', 'un compte déjà réactivé est refusé');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select ancien_berger from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select ancien_berger from ctx)) $$,
   'P0001', 'berger_deja_actif', 'l''ancien berger n''est pas réactivé tant qu''un berger est actif');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select admin from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
   'P0001', 'propre_compte', 'l''administration ne réactive pas son propre compte');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select cm2a from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm2a from ctx)) $$,
   'P0001', 'ministere_a_deja_un_compte', 'l''ancien compte n''est pas réactivé quand son ministère a un compte actif');
 reset role;
 

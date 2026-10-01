@@ -16,10 +16,7 @@ export default servir({
   async action({ user_id: cible }, appelant) {
     // 1. Contrôles sans écriture : compte existant, actif, autre que l'appelant, invitation en
     // attente.
-    await appelerBase(appelant.admin, FONCTION, 'serveur_controler_relance', {
-      p_appelant: appelant.id,
-      p_user_id: cible,
-    })
+    await appelerBase(appelant, FONCTION, 'serveur_controler_relance', { p_user_id: cible })
 
     // 2. Adresse du compte, lue dans Auth seulement (aucune table publique ne la garde).
     const { data, error } = await appelant.admin.auth.admin.getUserById(cible)
@@ -46,9 +43,6 @@ export default servir({
     }
 
     // 4. Journal, au nom de l'appelant.
-    await appelerBase(appelant.admin, FONCTION, 'serveur_relancer_invitation', {
-      p_appelant: appelant.id,
-      p_user_id: cible,
-    })
+    await appelerBase(appelant, FONCTION, 'serveur_relancer_invitation', { p_user_id: cible })
   },
 })

@@ -153,6 +153,34 @@ describe("contrôle de l'appelant", () => {
     expect(await utilisateurParEmail(email)).toBeUndefined()
   })
 
+  it('refuse un jeton encore valide dont la session a été supprimée (401, décision T15)', async () => {
+    const autre = await creerCompteDeTest('admin_eglise', {
+      libelle: "Administration de l'église",
+    })
+    const session = await connecterEnAal2(autre)
+    // Session vivante : les contrôles de la base passent (compte inconnu, mais appelant accepté).
+    attendreErreur(
+      await appeler('desactiver-compte', { user_id: randomUUID() }, { jeton: session.jeton }),
+      400,
+      'compte_inconnu',
+    )
+    // Déconnexion : Auth supprime la session, le jeton d'accès reste signé et non expiré.
+    const { error } = await session.client.auth.signOut({ scope: 'local' })
+    expect(error).toBeNull()
+    for (const fonction of FONCTIONS) {
+      const corps =
+        fonction === 'creer-compte'
+          ? { type: 'conseil', email: adresseDeTest('essai-session') }
+          : { user_id: randomUUID() }
+      attendreErreur(
+        await appeler(fonction, corps, { jeton: session.jeton }),
+        401,
+        'session_revoquee',
+        [session.jeton],
+      )
+    }
+  })
+
   it('refuse une autre méthode que POST (405)', async () => {
     for (const fonction of FONCTIONS) {
       attendreErreur(

@@ -17,10 +17,7 @@ export default servir({
   async action({ user_id: cible }, appelant) {
     // 1. Contrôles sans écriture : compte existant, désactivé, autre que l'appelant, sans
     // conflit (un seul berger actif, un seul compte actif par ministère).
-    await appelerBase(appelant.admin, FONCTION, 'serveur_controler_reactivation', {
-      p_appelant: appelant.id,
-      p_user_id: cible,
-    })
+    await appelerBase(appelant, FONCTION, 'serveur_controler_reactivation', { p_user_id: cible })
 
     // 2. Levée du bannissement dans Auth.
     const { error } = await appelant.admin.auth.admin.updateUserById(cible, {
@@ -33,10 +30,7 @@ export default servir({
 
     // 3. Réactivation et journal, au nom de l'appelant.
     try {
-      await appelerBase(appelant.admin, FONCTION, 'serveur_reactiver_compte', {
-        p_appelant: appelant.id,
-        p_user_id: cible,
-      })
+      await appelerBase(appelant, FONCTION, 'serveur_reactiver_compte', { p_user_id: cible })
     } catch (erreur) {
       // Le compte est rebanni s'il est resté désactivé en base.
       const { data, error: erreurLecture } = await appelant.admin

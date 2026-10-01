@@ -28,10 +28,10 @@ export async function reinitialiserDoubleAuthentification(
   { user_id: cible }: DemandeCibleCompte,
   appelant: Appelant,
 ): Promise<void> {
-  const parametres = { p_appelant: appelant.id, p_user_id: cible }
+  const parametres = { p_user_id: cible }
 
   // 0. Contrôles sans écriture : compte existant, actif, autre que l'appelant.
-  await appelerBase(appelant.admin, FONCTION, 'serveur_controler_cible', parametres)
+  await appelerBase(appelant, FONCTION, 'serveur_controler_cible', parametres)
 
   // 1. Nouveau mot de passe aléatoire : l'ancien, partagé, ne sert plus.
   const { error: erreurMotDePasse } = await appelant.admin.auth.admin.updateUserById(cible, {
@@ -43,7 +43,7 @@ export async function reinitialiserDoubleAuthentification(
   }
 
   // 2. Sessions supprimées avant de toucher aux facteurs.
-  await appelerBase(appelant.admin, FONCTION, 'serveur_revoquer_sessions', parametres)
+  await appelerBase(appelant, FONCTION, 'serveur_revoquer_sessions', parametres)
 
   // 3. Tous les facteurs du compte, vérifiés ou non (seul TOTP est ouvert).
   const { data, error } = await appelant.admin.auth.admin.mfa.listFactors({ userId: cible })
@@ -63,7 +63,7 @@ export async function reinitialiserDoubleAuthentification(
   }
 
   // 4. Sessions supprimées de nouveau (ouvertes entre-temps) et journal, au nom de l'appelant.
-  await appelerBase(appelant.admin, FONCTION, 'serveur_reinitialiser_2fa', parametres)
+  await appelerBase(appelant, FONCTION, 'serveur_reinitialiser_2fa', parametres)
 }
 
 export default servir({

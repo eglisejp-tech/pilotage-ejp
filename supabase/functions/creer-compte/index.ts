@@ -21,8 +21,7 @@ export default servir({
     const description = ministere && 'nom' in ministere ? (ministere.description ?? null) : null
 
     // 1. Contrôles sans écriture : rien n'est envoyé si la création doit être refusée.
-    await appelerBase(appelant.admin, FONCTION, 'serveur_controler_creation_compte', {
-      p_appelant: appelant.id,
+    await appelerBase(appelant, FONCTION, 'serveur_controler_creation_compte', {
       p_email: demande.email,
       p_type: demande.type,
       p_ministere_id: ministereId,
@@ -34,8 +33,7 @@ export default servir({
 
     // 3. Ministère, compte et journal, au nom de l'appelant.
     try {
-      await appelerBase(appelant.admin, FONCTION, 'serveur_creer_compte', {
-        p_appelant: appelant.id,
+      await appelerBase(appelant, FONCTION, 'serveur_creer_compte', {
         p_user_id: utilisateur,
         p_type: demande.type,
         p_ministere_id: ministereId,
