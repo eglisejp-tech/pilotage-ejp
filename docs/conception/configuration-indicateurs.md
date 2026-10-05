@@ -13,8 +13,9 @@ responsable du 5 et du 6 octobre 2026 :
   comprises** (décidé), ni par l'administration ni sur sa demande écrite (4.3). Les chiffres et les
   événements ne se valident pas ;
 - toute création par un ministère porte un texte **« Pourquoi cet indicateur ? »** (10 à 280
-  caractères, rappel « N'écrivez aucun nom ni information personnelle. »), lu par EJP Tech pour
-  décider, jamais recopié dans le journal (4.3, 7.3) ;
+  caractères, sans rappel sur les données personnelles : exception voulue par la personne
+  responsable, 6 octobre 2026), lu par EJP Tech pour décider, jamais recopié dans le journal (4.3,
+  7.3) ;
 - tant qu'il attend, l'ajout est **visible du berger et du conseil**, marqué « à valider », il se
   saisit déjà et ses valeurs n'entrent dans aucune somme ; refusé (motif de 10 à 280 caractères),
   il passe dans « Retirés » sans valeur (2, 4.4, 4.5) ;
@@ -491,9 +492,9 @@ suite : ces conditions et les options qui les comparaient sont abandonnées.
   compte écrit par lui (lot 2) et remplaçant (lot 2). Un indicateur ajouté par l'administration ou
   par EJP Tech est actif tout de suite.
 - **« Pourquoi cet indicateur ? »** : champ obligatoire de chaque création par un ministère, 10 à
-  280 caractères, avec le rappel « N'écrivez aucun nom ni information personnelle. ». EJP Tech le
-  lit pour décider ; il n'est jamais recopié dans le journal ; proposé, seuls le ministère et EJP
-  Tech le lisent (V1 de la validation). Il vit dans une demande (`demande_indicateur`,
+  280 caractères, sans rappel sur les données personnelles (exception voulue par la personne
+  responsable, 6 octobre 2026). EJP Tech le lit pour décider ; il n'est jamais recopié dans le
+  journal ; seuls le ministère et EJP Tech le lisent (V1 de la validation, décidé). Il vit dans une demande (`demande_indicateur`,
   `validation-metier.md`, 6.2), pas dans `indicateur`.
 - **Tant qu'il attend** : visible du berger et du conseil, marqué « à valider par EJP Tech » ; il
   se saisit déjà, et ses valeurs s'affichent marquées, hors de toute somme et de tout calcul ; il
@@ -991,9 +992,11 @@ règle.
 Quatre couches, de la plus tôt à la plus tard :
 
 1. Le rappel, une seule fois, sous le premier champ libre de chaque panneau (ajout, correction,
-   calcul, remplacement). Pour un ministère, le premier champ libre d'un ajout est « Pourquoi cet
-   indicateur ? » (7.3) : « N'écrivez aucun nom ni information personnelle. Les champs libres sont
-   relus par EJP Tech. » Pour l'administration : « N'écrivez aucun nom ni
+   calcul, remplacement). Pour un ministère, « Pourquoi cet indicateur ? » (7.3) n'a **aucun
+   rappel** (exception voulue par la personne responsable, 6 octobre 2026) : dans la suggestion,
+   c'est le seul champ libre et il reste sans rappel ; dans un indicateur écrit, le rappel « N'écrivez
+   aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech. » se place sous
+   le premier champ, le nom, pas sous « Pourquoi ». Pour l'administration : « N'écrivez aucun nom ni
    information personnelle. » (règle 9 : ses textes ne passent pas en relecture). Proposé, pour
    EJP Tech : la même phrase que l'administration, car EJP Tech est le relecteur ; la règle 9 ne le
    nomme pas (Q10).
@@ -1138,14 +1141,14 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
   2. « Suggestions » : les suggestions absentes de la fiche, avec rythme et définition, et un
      bouton « Choisir » chacune, qui ouvre le champ « Pourquoi cet indicateur ? » (280, compteur,
      aide « Ce que ce chiffre vous aidera à voir ou à décider. EJP Tech le lit avant de valider. »,
-     et dessous « N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par
-     EJP Tech. ») et le bouton « Envoyer pour validation ». Le message dépend du rythme :
+     et aucun rappel dessous : exception voulue) et le bouton « Envoyer pour validation ». Le message dépend du rythme :
      « « Demandes reçues » envoyé pour validation : vous pouvez déjà le saisir dans vos chiffres du
      mois. » ou « ... dans le formulaire du dimanche. » (dimanche et à ce jour).
   3. Au lot 1, dessous : « Rien ne convient ? Demandez un indicateur à l'administration de
      l'église. » Au lot 2, ce lien devient « Rien ne convient ? Écrire votre indicateur », qui ouvre
-     quatre champs : « Pourquoi cet indicateur ? » (280, compteur, l'aide ci-dessus, et dessous le
-     rappel, qui ne s'écrit qu'une fois) ; « Ce que vous comptez » (60, compteur, exemples
+     quatre champs : « Pourquoi cet indicateur ? » (280, compteur, l'aide ci-dessus, sans
+     rappel dessous) ; « Ce que vous comptez » (60, compteur, avec dessous le rappel, qui ne
+     s'écrit qu'une fois, exemples
      « Publications, Demandes reçues, Projets en cours ») ; « Ce qu'on compte exactement » (140,
      aide « Ce qui compte et ce qui ne compte pas, pour que tout le ministère compte pareil. ») ;
      « Quand le saisir » (trois boutons radio et leur aide).

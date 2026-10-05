@@ -3,7 +3,8 @@
 Statut : **principe décidé (T30 de `docs/decisions.md`, décisions du 5 et du 6 octobre 2026),
 conception à l'étude, non appliquée**. Rien n'est codé, aucune migration n'est écrite, `BRIEF.md`
 n'est pas modifié sur cette branche. Une session ne construit rien à partir de ce document tant que
-la personne responsable n'a pas répondu aux questions de la section 8.
+la personne responsable a répondu aux questions de la section 8 le 6 octobre 2026 (recommandations
+acceptées, et mentions sur les événements dans la V1 de l'outil, section 4.7).
 Date : 5 octobre 2026, réécrit le 6 octobre 2026 après les décisions de la personne responsable,
 qui réduisent la validation aux indicateurs créés par les ministères (section 9 : ce qui est
 retiré).
@@ -35,9 +36,10 @@ anciens, dit autre chose.
 
 1. **Indicateurs** : EJP Tech valide seulement la création d'un indicateur par un ministère,
    suggestions comprises. Le ministère écrit pourquoi il veut cet indicateur, dans le champ
-   « Pourquoi cet indicateur ? » (10 à 280 caractères, rappel « N'écrivez aucun nom ni information
-   personnelle. ») ; ce texte n'est jamais recopié dans le journal, et EJP Tech le lit pour
-   décider. Tant qu'il n'est pas validé, l'indicateur se saisit déjà ; ses valeurs restent marquées
+   « Pourquoi cet indicateur ? » (10 à 280 caractères, **sans rappel sur les données personnelles** :
+   exception voulue par la personne responsable à la règle « un rappel par formulaire, sous le
+   premier champ libre » de CLAUDE.md) ; ce texte n'est lu que par le ministère qui l'a écrit et par
+   EJP Tech, il n'est jamais recopié dans le journal, et EJP Tech le lit pour décider. Tant qu'il n'est pas validé, l'indicateur se saisit déjà ; ses valeurs restent marquées
    « à valider » et hors de toute somme. Un refus porte un motif de 10 à 280 caractères.
 2. **Correction du nom** : tant que l'indicateur attend EJP Tech, le ministère corrige librement
    une faute dans son nom. Une fois l'indicateur validé, sa correction repart à EJP Tech, sans
@@ -52,10 +54,17 @@ anciens, dit autre chose.
    en dehors de l'outil, et le ministère reporte le statut.
 5. **Alerte** (nouveau) : une alerte dans l'outil signale un événement encore « En attente de
    validation » (`attente_validation`) dont la date tombe dans les 3 jours ou est passée. Elle
-   s'adresse au berger, au conseil, au ministère qui porte l'événement et à EJP Tech, qui lit tout.
-   Elle s'arrête quand le ministère change le statut. Pas d'email en V1 (il pourrait rejoindre P14).
-   La personne responsable a aussi parlé de « la personne taguée » : les mentions n'existent
-   aujourd'hui que sur les points d'attention (question V7).
+   s'adresse au berger, au conseil, au ministère qui porte l'événement, aux ministères mentionnés
+   sur l'événement (décision 6) et à EJP Tech, qui lit tout. Elle commence 3 jours avant la date et
+   dure jusqu'au changement de statut ou de date ; un brouillon n'alerte jamais. Elle n'est montrée
+   ni à l'administration de l'église ni aux autres ministères. Pas d'email en V1 (il pourrait
+   rejoindre P14).
+6. **Mentions sur les événements** (6 octobre 2026) : elles font partie de la V1 de l'outil, pas
+   d'une option plus tardive. Un ministère mentionne d'autres ministères sur son événement, comme
+   sur un point d'attention ; les ministères mentionnés lisent cet événement et reçoivent l'alerte.
+   Conception et effort (2 à 3 jours) : 4.7 et section 7. Décision T32 de `docs/decisions.md`.
+7. **Réponses aux questions de la section 8** : recommandations acceptées pour V1 à V6 et V8 ; V7
+   tranchée par la décision 6 (oui, au lieu de la recommandation « non »).
 
 ### Ce qui ne change pas
 
@@ -144,17 +153,18 @@ Non fonctionnelles :
 ### 2.2 « Pourquoi cet indicateur ? »
 
 - Champ obligatoire, de 10 à 280 caractères après `btrim`, avec compteur. Aide : « Ce que ce chiffre
-  vous aidera à voir ou à décider. EJP Tech le lit avant de valider. » Sous le champ : « N'écrivez
-  aucun nom ni information personnelle. », suivi, comme tout rappel d'un ministère, de « Les champs
-  libres sont relus par EJP Tech. » (configuration, 6.3). Les refus de `private.verifier_texte`
-  pour les données personnelles (« @ », « http », 5 chiffres de suite, civilité suivie d'un nom)
-  valent aussi pour lui (configuration, 6.1).
-- Le rappel ne s'écrit qu'une fois par formulaire, sous le premier champ libre. Au lot 1, le
-  « Pourquoi » est le seul champ libre du panneau. Au lot 2, il vient en premier, avant « Ce que
-  vous comptez », pour que le rappel unique soit sous lui comme le demande la décision.
+  vous aidera à voir ou à décider. EJP Tech le lit avant de valider. » **Aucun rappel sur les
+  données personnelles sous ce champ** : c'est une exception explicite, voulue par la personne
+  responsable (6 octobre 2026), à la règle de CLAUDE.md « un rappel par formulaire, sous le premier
+  champ libre ». Les refus de `private.verifier_texte` pour les données personnelles (« @ »,
+  « http », 5 chiffres de suite, civilité suivie d'un nom) valent toujours pour lui
+  (configuration, 6.1).
+- Formulaire de suggestion (lot 1) : « Pourquoi » est le seul champ libre, et il n'a pas de rappel.
+  Formulaire d'un indicateur écrit (lot 2) : le rappel reste sous le premier champ, le nom (« Ce que
+  vous comptez »), pas sous « Pourquoi » ; le champ « Pourquoi » peut rester en premier.
 - Il vit dans `demande_indicateur.pourquoi` et n'est recopié nulle part : ni dans le journal, ni dans
   `indicateur`, ni dans `validation`.
-- **Lecteurs** (proposé, V1) : le ministère qui l'a écrit et EJP Tech. Ni le berger, ni le conseil,
+- **Lecteurs** (décidé le 6 octobre 2026, V1) : le ministère qui l'a écrit et EJP Tech. Ni le berger, ni le conseil,
   ni l'administration de l'église. Raisons : la décision dit qu'EJP Tech le lit pour décider ; un
   texte libre lu par moins de profils expose moins ; le berger lit déjà le libellé et la définition.
 - **Relecture** : la validation vaut relecture. EJP Tech lit le « Pourquoi » en décidant, et peut le
@@ -463,10 +473,11 @@ Exemples, aujourd'hui mardi 6 octobre :
 | Berger, conseil                 | ceux de tous les ministères                                             | « Cette semaine » (bloc « Événements à confirmer »), fiches (04)                |
 | EJP Tech                        | ceux de tous les ministères, en lecture seule                           | « Cette semaine » (contenu du berger, T28), fiches                              |
 | Administration de l'église      | rien : elle ne lit pas les événements (BRIEF, section 7)                |                                                                                 |
+| Ministère mentionné             | l'événement qui le mentionne, en lecture seule (4.7)                    | accueil (« Vos saisies »), calendrier de « Ma fiche » : « Mentionné par X »     |
 | Autres ministères               | rien : « Prochain événement » ne montre pas le statut, et ne change pas |                                                                                 |
 
 La lecture suit la RLS déjà en place sur `evenement` et `evenement_etat` (`private.lit_tout()` ou le
-ministère de l'événement) : aucun droit nouveau.
+ministère de l'événement), élargie aux ministères mentionnés par les mentions d'événement (4.7).
 
 ### 4.4 Où elle s'affiche
 
@@ -538,26 +549,28 @@ order by e.id, x.saisi_le desc, x.id desc;
   l'interface à partir de `jours`, par une fonction pure de `src/lib/metier/` testée par Vitest,
   jamais à partir de la date du navigateur.
 
-### 4.7 Mentions sur les événements (question V7)
+### 4.7 Mentions sur les événements (décidé : dans la V1 de l'outil)
 
-Aujourd'hui, les mentions (« tags ») n'existent que sur les points d'attention (`point_mention`) :
-un événement n'a pas de ministère mentionné. Ajouter des mentions aux événements serait une
-nouveauté :
+Décidé le 6 octobre 2026 (T32) : les mentions sur les événements font partie de la V1, avec les
+événements (étape 4, « Ajouter un événement (11) »). Aujourd'hui, les mentions (« tags ») n'existent
+que sur les points d'attention (`point_mention`). La conception ci-dessous est celle à construire :
 
 - une table `evenement_mention`, en ajout seulement, fixée à la création comme les mentions d'un
   point ; `ajouter_evenement` gagne `p_mentions uuid[]` ; le formulaire 11 gagne les cases à cocher
   des ministères actifs ;
 - un ministère mentionné lirait l'événement et ses états : la règle « un ministère ne voit que sa
   fiche, la vue de l'église et les points qu'il a créés ou qui le mentionnent » (BRIEF, section 7,
-  et P06) s'élargit, ce que la coordination doit confirmer ;
+  et P06) s'élargit, ce que la coordination doit confirmer ; une fonction `security definer` de
+  `private` lit les événements mentionnant mon ministère, pour éviter la récursion de politique,
+  comme pour les points ;
 - l'alerte s'afficherait aussi chez le ministère mentionné, en lecture seule (« Mentionné par
   Communication »), puisque seul le ministère qui porte l'événement reporte son statut (règle 14) ;
-- tests : matrice, politiques de lecture élargies, `ajouter_evenement`, parcours e2e.
+- une ligne de journal pour les mentions de l'événement (jamais le nom saisi, comme `point_cree`) ;
+- tests : matrice, politiques de lecture élargies, `ajouter_evenement`, parcours e2e (un ministère
+  mentionné lit l'événement et voit l'alerte, un autre ministère ne voit rien).
 
-Coût : 2 à 3 jours. Recommandation : pas en V1. Le ministère mentionné ne pourrait rien faire du
-statut ; le besoin de prévenir un autre ministère est déjà couvert par un point d'attention qui le
-mentionne (le jeu d'exemple en a un : « Salle pour la soirée de louange », @coordination) ; à
-revoir après un mois d'usage.
+Coût : 2 à 3 jours. La recommandation initiale était « pas en V1 » ; la personne responsable a
+décidé le contraire le 6 octobre 2026, et le coût est repris au phasage (section 7).
 
 ## 5. Écrans
 
@@ -610,7 +623,8 @@ nombres s'écrivent en texte.
   saisir. » ; bouton « Envoyer pour validation ».
 - **Écrire votre indicateur** (lot 2) : « Pourquoi cet indicateur ? » d'abord, avec le rappel, puis
   « Ce que vous comptez », « Ce qu'on compte exactement » et « Quand le saisir » (configuration,
-  7.3) ; la phrase « Vous pourrez corriger une faute dans le nom : librement avant la validation,
+  7.3). Le rappel sur les données personnelles reste sous le premier champ de nom, pas sous
+  « Pourquoi » ; la phrase « Vous pourrez corriger une faute dans le nom : librement avant la validation,
   puis avec l'accord d'EJP Tech. » remplace « il ne se corrige plus ensuite ».
 - **Sur un ajout à valider** : « Corriger le nom » (lot 2, le changement est immédiat) et « Retirer
   la demande ».
@@ -870,10 +884,11 @@ production, qui démarre vide, pas avant le 5e dimanche après la mise en servic
 | Étape 6, ou avec « Mes indicateurs »           | bloc « À valider » de l'écran Indicateurs, fenêtre « Refuser », champ « Pourquoi », phrase de la Modération, alerte de l'administration                        | 1 à 1,5                                               |
 | Après la mise en service, avant le 5e dimanche | `chiffres_inhabituels`, fenêtre « Vérifiez ce chiffre » dans 08, 09 et « Chiffres du mois »                                                                    | 1,5 à 2,5                                             |
 | Lot 2 de la configuration, s'il est confirmé   | `validation_corrections`, « Corriger le nom », corrections dans le bloc « À valider »                                                                          | 1                                                     |
-| Si V7 reçoit oui                               | mentions sur les événements (4.7)                                                                                                                              | 2 à 3                                                 |
+| Étape 4, avec les événements (V1, décidé)      | mentions sur les événements (4.7) : `evenement_mention`, droits de lecture, pgTAP, champ du formulaire 11, ligne de journal, alerte étendue                    | 2 à 3                                                 |
 
-- **Total** : 3,5 à 4 jours avant la mise en service (au lieu de 6) ; 2,5 à 3,5 jours ensuite (au
-  lieu de 4,5 à 5,5), plus 2 à 3 jours si V7 reçoit oui. La réduction vient de ce qui est retiré
+- **Total** : 5,5 à 7 jours avant la mise en service (3,5 à 4 jours, plus 2 à 3 jours de mentions
+  sur les événements, décidées le 6 octobre) ; 2,5 à 3,5 jours ensuite (au lieu de 4,5 à 5,5). La
+  réduction vient de ce qui est retiré
   (section 9) : validation des événements et des chiffres, reprise des vues de l'étape 3, écran
   « À valider » à part.
 - **Repli** : avant la mise en service, la validation des ajouts et l'alerte ; la confirmation des
@@ -889,6 +904,12 @@ production, qui démarre vide, pas avant le 5e dimanche après la mise en servic
 Chaque question se répond par oui ou non ; la recommandation suit. Les questions de la version du
 5 octobre (V1 à V30) sont retirées : la décision du 6 octobre y répond ou les rend sans objet
 (section 9). Celles-ci sont renumérotées V1 à V8.
+
+**Réponses de la personne responsable (6 octobre 2026)** : recommandation acceptée pour V1, V2,
+V3, V4, V5, V6 et V8 ; V7 : **oui**, les mentions sur les événements entrent dans la V1 de l'outil
+(contraire de la recommandation écrite ci-dessous, gardée pour mémoire). Pour V1, le « Pourquoi »
+n'a en plus aucun rappel sur les données personnelles (2.2). Pour V6, l'alerte atteint aussi les
+ministères mentionnés (4.3).
 
 - **V1** : le « Pourquoi cet indicateur ? » est-il lu seulement par le ministère qui l'a écrit et par
   EJP Tech, et pas par le berger, le conseil ni l'administration de l'église ? Recommandation : oui
