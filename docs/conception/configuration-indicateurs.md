@@ -3,15 +3,32 @@
 Statut : **à l'étude, non appliqué** (décision T29 de `docs/decisions.md`). Rien n'est codé, aucune
 migration n'est écrite, `BRIEF.md` n'est pas modifié. Une session ne construit rien à partir de ce
 document tant qu'EJP Tech et la coordination n'ont pas répondu aux questions de la section 10.
-Date : 5 octobre 2026, revue appliquée le même jour.
-Revu par T30 (validation métier par EJP Tech) : la validation des ajouts des ministères revient à
-EJP Tech seul, et un ajout en attente est visible du berger et du conseil. Là où
-`docs/conception/validation-metier.md` diffère (2, 4.3 à 4.5, 5.2, 5.8, 5.10, 6.2, 7.1, 8.1 et
-8.2), il remplace ce document.
+Date : 5 octobre 2026, revue appliquée le même jour, puis alignée sur T30 le même jour.
+
+Alignement sur T30 (validation métier par EJP Tech, `docs/conception/validation-metier.md`) et
+sur les décisions de la personne responsable du 5 octobre 2026 :
+
+- tout indicateur créé par un ministère est validé par **EJP Tech seul**, ni par l'administration
+  ni sur sa demande écrite (4.3) ; proposé : les suggestions aussi (V1 de la validation) ;
+- tant qu'il attend, l'ajout est **visible du berger et du conseil**, marqué « à valider », et
+  n'entre dans aucune somme ; il se saisit déjà (V2 de la validation) ; refusé, il passe dans
+  « Retirés » sans valeur (2, 4.4, 4.5) ;
+- EJP Tech configure sur l'écran Indicateurs comme l'administration ; pour les gestes autres que
+  la validation, la procédure reste une question à la coordination (Q13) ;
+- la validation vaut relecture : un ministère ne corrige plus ses textes (il retire sa demande ou
+  remplace), et les textes d'indicateur ne passent plus par la Modération (4.6, 6.3, 7.6) ;
+- les questions auxquelles la personne responsable a répondu sont retirées et la liste est
+  renumérotée (section 10).
+
+Là où `validation-metier.md` dit plus (modèle de `validation`, écran « À valider », totaux), il
+fait foi.
+
+Numérotation : T26 à T30 de cette branche changent de numéro à la fusion (tableau « Numérotation à
+la fusion » en tête de `docs/decisions.md`).
 
 Sources : `docs/conception/kpi-ministeres.md` (analyse des 185 demandes, annexe et questions),
 `docs/sources/kpi-coordination-2026-10.md` (les « lignes » citées sont celles de ce fichier),
-`docs/decisions.md` (P06, P07, P15 à P30, T26 à T28), `BRIEF.md` (sections 2 à 4, 6, 7 et 9). Ce
+`docs/decisions.md` (P06, P07, P15 à P30, T26 à T30), `BRIEF.md` (sections 2 à 4, 6, 7 et 9). Ce
 document fait la synthèse de trois conceptions étudiées et de deux évaluations indépendantes
 (section 11). Là où `kpi-ministeres.md` (3.7 à 3.9 et 6) diffère, ce document le remplace (T29).
 
@@ -26,37 +43,42 @@ document fait la synthèse de trois conceptions étudiées et de deux évaluatio
 - La première proposition (un formulaire : nom, saisi ou calculé, fréquence, unité, visibilité,
   une case « sensible » et quelques avertissements sur le nom) n'était pas assez mûre.
 - EJP Tech voit tous les chiffres, en lecture seule (T28).
+- Décision du 5 octobre 2026 (T30) : EJP Tech seul valide ce que les ministères soumettent, dont
+  les indicateurs qu'ils créent ; tant qu'un ajout attend, le berger et le conseil le voient,
+  marqué « à valider », et il n'entre dans aucun total.
 
 ### Ce qui existe et ce que cette conception change
 
-| Décision          | Contenu aujourd'hui                                                                                 | Effet de cette conception                                                                                                        |
-| ----------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| BRIEF, section 4  | indicateurs propres créés par migration, deux natures, plafond de 9999                              | créés à l'écran après une première vague ; trois rythmes ; plafond par sorte de nombre                                           |
-| BRIEF, section 11 | « écran de création des indicateurs propres » hors de la V1                                         | rouvert à la demande d'EJP Tech (lot 1)                                                                                          |
-| P06               | l'administration de l'église ne voit ni les fiches ni les points                                    | elle voit aussi les définitions et l'usage des indicateurs propres (« saisi 4 mois sur 5 »), jamais une valeur                   |
-| P08               | indicateurs propres créés par EJP Tech par migration, deux natures                                  | première vague par migration, puis l'écran ; trois rythmes                                                                       |
-| P16               | nature « mois »                                                                                     | reprise : mois en cours et deux précédents à l'écran ; la base borne aussi les mois trop anciens (3.1)                           |
-| P19               | table `indicateur_calcul` écrite par migration                                                      | remplacée : un calcul est une ligne d'`indicateur` qui ne se saisit pas                                                          |
-| P22               | indicateurs sensibles, valeur absente du journal                                                    | reprise ; plus aucune valeur d'indicateur propre au journal ; lecture des lignes brutes proposée en 3.7                          |
-| P29               | migration `journal_administration_chiffres` ; écran de configuration en phase 3                     | migration inutile ; l'écran passe au lot 1                                                                                       |
-| T26               | colonnes `unite`, `valeur_max`, `groupe`, `sensible`                                                | `unite` et `sensible` gardées ; plafond fixé par sorte de nombre ; pas de `groupe` (3.5) ; ni « jours », ni « minutes » en V1    |
-| T27               | catalogue `private.indicateur_modele`, matérialisé par un trigger sur `ministere` ; lots successifs | catalogue `private.indicateur_prevu` (5.5) ; un bouton « Créer » remplace le trigger ; plus de lot après la première vague       |
-| T28               | EJP Tech lit tous les chiffres                                                                      | EJP Tech configure sur l'écran Indicateurs (sur demande écrite de l'administration pour certains gestes, 2), lit, ne saisit rien |
+| Décision          | Contenu aujourd'hui                                                                                 | Effet de cette conception                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| BRIEF, section 4  | indicateurs propres créés par migration, deux natures, plafond de 9999                              | créés à l'écran après une première vague ; trois rythmes ; plafond par sorte de nombre                                                                |
+| BRIEF, section 11 | « écran de création des indicateurs propres » hors de la V1                                         | rouvert à la demande d'EJP Tech (lot 1)                                                                                                               |
+| P06               | l'administration de l'église ne voit ni les fiches ni les points                                    | elle voit aussi les définitions et l'usage des indicateurs propres (« saisi 4 mois sur 5 »), jamais une valeur                                        |
+| P08               | indicateurs propres créés par EJP Tech par migration, deux natures                                  | première vague par migration, puis l'écran ; trois rythmes                                                                                            |
+| P16               | nature « mois »                                                                                     | reprise : mois en cours et deux précédents à l'écran ; la base borne aussi les mois trop anciens (3.1)                                                |
+| P19               | table `indicateur_calcul` écrite par migration                                                      | remplacée : un calcul est une ligne d'`indicateur` qui ne se saisit pas                                                                               |
+| P22               | indicateurs sensibles, valeur absente du journal                                                    | reprise ; plus aucune valeur d'indicateur propre au journal ; lecture des lignes brutes proposée en 3.7                                               |
+| P29               | migration `journal_administration_chiffres` ; écran de configuration en phase 3                     | migration inutile ; l'écran passe au lot 1                                                                                                            |
+| T26               | colonnes `unite`, `valeur_max`, `groupe`, `sensible`                                                | `unite` et `sensible` gardées ; plafond fixé par sorte de nombre ; pas de `groupe` (3.5) ; ni « jours », ni « minutes » en V1                         |
+| T27               | catalogue `private.indicateur_modele`, matérialisé par un trigger sur `ministere` ; lots successifs | catalogue `private.indicateur_prevu` (5.5) ; un bouton « Créer » remplace le trigger ; plus de lot après la première vague                            |
+| T28               | EJP Tech lit tous les chiffres                                                                      | EJP Tech configure sur l'écran Indicateurs comme l'administration (procédure des gestes autres que la validation : Q13), lit, ne saisit rien          |
+| T30               | EJP Tech seul valide les indicateurs créés par les ministères ; un ajout à valider est visible      | toute création d'un ministère naît « à valider » (4.3) ; visible du berger et du conseil ; refusée, sans valeur ; plus de correction par le ministère |
 
 ### Exigences
 
-| Code | Exigence                                                                                                                                                  |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| F1   | L'administration ajoute, corrige, remplace et retire les indicateurs de tout ministère à l'écran, sans migration ; EJP Tech aussi, selon la règle de 2.   |
-| F2   | La première vague (indicateurs prévus par la coordination) s'écrit une fois par migration dans un catalogue, puis se crée en un clic par ministère.       |
-| F3   | Un ministère ajoute des indicateurs à lui, dans des limites que la base impose : une suggestion au lot 1, un compte écrit par lui au lot 2.               |
-| F4   | Une valeur calculée (taux, moyenne, somme de l'année) ne se saisit jamais.                                                                                |
-| F5   | Une valeur saisie garde pour toujours son sens : libellé et définition ne se corrigent que tant que rien n'est saisi ; ensuite, on remplace l'indicateur. |
-| F6   | Tout total s'affiche avec sa complétude, y compris dans le temps (« 9 mois sur 9 »).                                                                      |
-| F7   | Aucun nom ni information personnelle dans un libellé ou une définition ; les textes écrits par un ministère (lot 2) sont relus par EJP Tech.              |
-| F8   | Chaque geste écrit une seule ligne de journal, sans texte libre ni valeur d'indicateur propre.                                                            |
-| F9   | L'administration de l'église voit les définitions et l'usage, jamais la valeur d'un indicateur propre (P06 revue).                                        |
-| F10  | Les règles vivent dans la base ; l'écran les interroge au lieu de les recopier.                                                                           |
+| Code | Exigence                                                                                                                                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1   | L'administration ajoute, corrige, remplace et retire les indicateurs de tout ministère à l'écran, sans migration ; EJP Tech aussi (procédure : Q13).                                  |
+| F2   | La première vague (indicateurs prévus par la coordination) s'écrit une fois par migration dans un catalogue, puis se crée en un clic par ministère.                                   |
+| F3   | Un ministère ajoute des indicateurs à lui, dans des limites que la base impose : une suggestion au lot 1, un compte écrit par lui au lot 2 ; EJP Tech seul valide chaque ajout (T30). |
+| F3b  | Tant qu'un ajout attend, le berger et le conseil le voient, marqué « à valider » ; ses valeurs n'entrent dans aucune somme (T30).                                                     |
+| F4   | Une valeur calculée (taux, moyenne, somme de l'année) ne se saisit jamais.                                                                                                            |
+| F5   | Une valeur saisie garde pour toujours son sens : libellé et définition ne se corrigent que tant que rien n'est saisi ; ensuite, on remplace l'indicateur.                             |
+| F6   | Tout total s'affiche avec sa complétude, y compris dans le temps (« 9 mois sur 9 »).                                                                                                  |
+| F7   | Aucun nom ni information personnelle dans un libellé ou une définition ; les textes d'un ministère sont lus par EJP Tech quand il valide l'ajout.                                     |
+| F8   | Chaque geste écrit une seule ligne de journal, sans texte libre ni valeur d'indicateur propre.                                                                                        |
+| F9   | L'administration de l'église voit les définitions et l'usage, jamais la valeur d'un indicateur propre (P06 revue).                                                                    |
+| F10  | Les règles vivent dans la base ; l'écran les interroge au lieu de les recopier.                                                                                                       |
 
 Non fonctionnelles :
 
@@ -76,13 +98,15 @@ Non fonctionnelles :
 ### Deux lots
 
 Presque toute la complexité vient des libellés libres écrits par les ministères : mots refusés,
-validation, correction, relecture. Ils passent donc après la mise en service.
+limites, validation. Ils passent donc après la mise en service. La validation par EJP Tech, elle,
+existe dès le lot 1 pour les suggestions qu'un ministère ajoute (si V1 de la validation est
+retenue) : elle est construite avec la validation métier (`validation-metier.md`, section 9).
 
-| Lot                                      | Quand                                                  | Contenu                                                                                                                                                                                                                                                                                                                         |
-| ---------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Lot 1                                    | avant la mise en service (V1)                          | première vague ; écran Indicateurs (ajouter, calcul, corriger tant que rien n'est saisi, remplacer, retirer, retirer pour confidentialité, usage) ; « Mes indicateurs » du ministère limité aux suggestions, en un clic, sans texte libre ; fiche, sommes, courbes, calculs ; « Chiffres du mois » ; journal sans valeur propre |
-| Lot 2                                    | après la mise en service, si EJP Tech le confirme (Q1) | comptes écrits par un ministère (libellé et définition libres) : mots refusés aux ministères, validation (état « en attente »), correction par le ministère, relecture et masquage de ces textes, limite sur 30 jours, « Rendre officiel », jeu des 185 libellés, alerte de valeur inhabituelle                                 |
-| Plus tard, si la coordination le demande | sans date                                              | sorte « minutes » (K22), courbe d'un « à ce jour » et du total de l'église (3.4), calcul sur un chiffre commun (K8)                                                                                                                                                                                                             |
+| Lot                                      | Quand                                                  | Contenu                                                                                                                                                                                                                                                                                                                                                                    |
+| ---------------------------------------- | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Lot 1                                    | avant la mise en service (V1)                          | première vague ; écran Indicateurs (ajouter, calcul, corriger tant que rien n'est saisi, remplacer, retirer, retirer pour confidentialité, usage) ; « Mes indicateurs » du ministère limité aux suggestions, en un clic, sans texte libre, chaque ajout à valider par EJP Tech (T30) ; fiche, sommes, courbes, calculs ; « Chiffres du mois » ; journal sans valeur propre |
+| Lot 2                                    | après la mise en service, si EJP Tech le confirme (Q1) | comptes écrits par un ministère (libellé et définition libres), à valider par EJP Tech comme tout ajout : mots refusés aux ministères, limite sur 30 jours, « Rendre officiel », jeu des 185 libellés (l'alerte de valeur inhabituelle devient la règle du lot V2 de la validation)                                                                                        |
+| Plus tard, si la coordination le demande | sans date                                              | sorte « minutes » (K22), courbe d'un « à ce jour » et du total de l'église (3.4), calcul sur un chiffre commun (K8)                                                                                                                                                                                                                                                        |
 
 Au lot 1, un ministère qui veut un chiffre absent des suggestions le demande à l'administration de
 l'église, qui le crée à l'écran le jour même. Le lot 2 s'ajoute par une migration de plus, sans
@@ -102,11 +126,12 @@ Huit mots suffisent à l'écran :
 - **Calcul** : un taux ou une moyenne de deux indicateurs du même ministère. Il ne se saisit pas.
 - **Prévus** : les indicateurs que la coordination a choisis pour un ministère (première vague).
 - **Suggestions** : quelques indicateurs déjà définis, utiles à plusieurs ministères (« Événements
-  couverts »), qu'un ministère ajoute en un clic.
+  couverts »), qu'un ministère ajoute en un clic, puis qu'EJP Tech valide (si V1).
 - **Retirer** : le geste qui arrête un indicateur ; ses saisies restent.
 
 Mentions affichées : « Ajouté par Kumi le 12 oct. », « Sensible : mois écoulés seulement »,
-« Libellé corrigé le 14 oct. », « Retiré le 3 nov. » et, au lot 2, « En attente de validation ».
+« Libellé corrigé le 14 oct. », « Retiré le 3 nov. », « À valider par EJP Tech depuis 2 jours »
+et « Refusé le 8 oct. ».
 
 Refusé, parce qu'aucune demande ne l'exige ou qu'une convention suffit : groupe ou rubrique, nature
 « semaine », « trimestre », « année » ou « jour », formule libre, plafond libre, ordre manuel,
@@ -124,33 +149,38 @@ C1 à C3 de `kpi-ministeres.md`) :
   depuis janvier, avec sa complétude. Un stock (membres, inscrits, articles en réserve) se saisit
   « à ce jour » : la somme de ses mois n'aurait pas de sens.
 - **R4** : le sens est figé. Rythme, sorte de nombre, ministère, case sensible et calcul ne
-  changent jamais. Libellé et définition se corrigent tant que rien n'est saisi (4.6).
+  changent jamais. Libellé et définition se corrigent tant que rien n'est saisi, par
+  l'administration ou EJP Tech seulement (4.6).
 - **R5** : toute valeur saisie est un entier positif ou nul ; aucune décimale ne se saisit.
 - **R6** : la fiche range les indicateurs par rythme, puis par ordre alphabétique : les lignes
   d'un même dispositif se suivent.
 
 ### Qui fait quoi
 
-| Geste                                                            | Administration de l'église        | EJP Tech                               | Ministère                                    | Berger et conseil                   |
-| ---------------------------------------------------------------- | --------------------------------- | -------------------------------------- | -------------------------------------------- | ----------------------------------- |
-| Créer les indicateurs prévus d'un ministère                      | oui                               | oui                                    | non                                          | non                                 |
-| Ajouter un indicateur (compte, grand compte, euros, sensible)    | oui, sur toute fiche active       | sur demande écrite de l'administration | non ; lot 2 : un compte simple, sur sa fiche | non                                 |
-| Ajouter une suggestion                                           | oui                               | oui                                    | sur sa fiche, dans ses limites               | non                                 |
-| Ajouter un calcul                                                | oui                               | sur demande écrite de l'administration | non (il le demande)                          | non                                 |
-| Corriger un libellé ou une définition, tant que rien n'est saisi | tous, sauf communs et suggestions | idem                                   | lot 2 : ses comptes écrits par lui           | non                                 |
-| Remplacer ou retirer, avec un motif                              | tous, sauf les communs            | sur demande écrite de l'administration | ses ajouts, sauf la source d'un calcul       | non                                 |
-| Retirer pour confidentialité                                     | tous, sauf les communs            | idem                                   | non                                          | non                                 |
-| Valider ou refuser un ajout en attente (lot 2)                   | oui                               | selon Q15                              | non                                          | non                                 |
-| Rendre officiel l'ajout d'un ministère (lot 2)                   | oui                               | sur demande écrite de l'administration | non                                          | non                                 |
-| Relire ou masquer le texte d'un ministère (lot 2)                | non                               | oui (modération)                       | non                                          | non                                 |
-| Lire les définitions                                             | toutes                            | toutes                                 | les communs et les siennes                   | toutes, sauf un ajout jamais validé |
-| Lire les valeurs                                                 | chiffres communs seulement        | toutes, en lecture (T28)               | les siennes                                  | toutes                              |
-| Lire l'usage (« saisi 4 mois sur 5 », sans valeur)               | oui                               | oui                                    | le sien                                      | sur la fiche                        |
+| Geste                                                            | Administration de l'église        | EJP Tech                              | Ministère                                                            | Berger et conseil                                                       |
+| ---------------------------------------------------------------- | --------------------------------- | ------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Créer les indicateurs prévus d'un ministère                      | oui                               | oui                                   | non                                                                  | non                                                                     |
+| Ajouter un indicateur (compte, grand compte, euros, sensible)    | oui, sur toute fiche active       | oui (procédure : Q13)                 | non ; lot 2 : un compte simple, sur sa fiche, à valider              | non                                                                     |
+| Ajouter une suggestion                                           | oui                               | oui                                   | sur sa fiche, dans ses limites, à valider (si V1)                    | non                                                                     |
+| Ajouter un calcul                                                | oui                               | oui (procédure : Q13)                 | non (il le demande)                                                  | non                                                                     |
+| Corriger un libellé ou une définition, tant que rien n'est saisi | tous, sauf communs et suggestions | idem                                  | non : il retire sa demande, ou remplace (T30)                        | non                                                                     |
+| Remplacer ou retirer, avec un motif                              | tous, sauf les communs            | oui (procédure : Q13)                 | ses ajouts, sauf la source d'un calcul ; un remplaçant est à valider | non                                                                     |
+| Retirer pour confidentialité                                     | tous, sauf les communs            | idem                                  | non                                                                  | non                                                                     |
+| Valider ou refuser l'ajout d'un ministère                        | non                               | oui, seul (T30), depuis « À valider » | non                                                                  | non ; il voit l'ajout, marqué « à valider »                             |
+| Rendre officiel l'ajout d'un ministère (lot 2)                   | oui                               | oui (procédure : Q13)                 | non                                                                  | non                                                                     |
+| Lire le texte d'un ajout avant de décider                        | oui, sans décider                 | oui : la validation vaut relecture    | les siens                                                            | oui                                                                     |
+| Lire les définitions                                             | toutes                            | toutes                                | les communs et les siennes                                           | toutes, ajouts à valider compris                                        |
+| Lire les valeurs                                                 | chiffres communs seulement        | toutes, en lecture (T28)              | les siennes                                                          | toutes ; marquées pour un ajout à valider ; jamais pour un ajout refusé |
+| Lire l'usage (« saisi 4 mois sur 5 », sans valeur)               | oui                               | oui                                   | le sien                                                              | sur la fiche                                                            |
 
-« Sur demande écrite de l'administration » est une règle de procédure, comme P07 et T27 : EJP Tech
-demande, l'église décide. La base laisse les deux profils agir, car EJP Tech a demandé un écran
-commun. Si la coordination le préfère (Q15), les fonctions réservent ces gestes à l'administration :
-un contrôle de plus dans chacune, sans autre changement.
+La validation d'un ajout de ministère revient à EJP Tech seul, sans demande de l'administration
+(T30, décidé). Pour les autres gestes qui changent ce qui est suivi (ajouter un grand compte, des
+euros, un indicateur sensible ou un calcul, remplacer, retirer, rendre officiel), la base laisse
+les deux profils agir, car l'écran est commun. La procédure n'est pas décidée : EJP Tech agit-il
+de lui-même, comme l'administration, ou sur sa demande écrite, comme pour P07 (EJP Tech demande,
+l'église décide) ? C'est la question Q13. Si la coordination choisit la demande écrite, les
+fonctions peuvent réserver ces gestes à l'administration : un contrôle de plus dans chacune, sans
+autre changement.
 
 Les chiffres communs, le catalogue et la liste des mots refusés ne changent que par une migration
 d'EJP Tech. Écrire une définition n'est pas saisir un chiffre : EJP Tech ne saisit toujours rien au
@@ -160,24 +190,28 @@ nom d'un ministère (T28).
 
 ```mermaid
 stateDiagram-v2
-  state "En attente de validation (lot 2)" as attente
+  state "À valider par EJP Tech" as attente
   state "Actif" as actif
   state "Retiré" as retire
-  [*] --> actif : prévus, ajout de l'administration, suggestion, compte d'un ministère sans validation
-  [*] --> attente : compte écrit par un ministère qui doit être validé (4.3)
-  attente --> actif : validé par l'administration
-  attente --> retire : refusé, ou retiré par le ministère (jamais publié)
-  actif --> actif : texte corrigé tant que rien n'est saisi, rendu officiel (lot 2)
-  actif --> retire : retiré avec un motif, remplacé, retiré pour confidentialité, libellé masqué, source d'un calcul retirée
+  [*] --> actif : prévus, ajout de l'administration ou d'EJP Tech
+  [*] --> attente : ajout d'un ministère (suggestion si V1, compte écrit au lot 2), remplaçant compris
+  attente --> actif : validé par EJP Tech
+  attente --> retire : refusé par EJP Tech, ou demande retirée par le ministère
+  actif --> actif : texte corrigé par l'administration ou EJP Tech tant que rien n'est saisi, rendu officiel (lot 2)
+  actif --> retire : retiré avec un motif, remplacé, retiré pour confidentialité, source d'un calcul retirée
   retire --> [*]
 ```
 
 - **Actif** : proposé à la saisie, affiché sur la fiche, compté dans les limites.
-- **En attente** (lot 2) : ni saisi ni lu par le berger et le conseil ; compté dans les limites du
-  ministère. Une fois validé, le ministère rattrape les périodes passées depuis l'ajout.
-- **Jamais publié** (lot 2) : un ajout né en attente puis refusé, ou retiré par le ministère avant
-  la validation, reste illisible pour le berger et le conseil, dans `indicateur` comme dans le
-  journal (colonnes `ne_en_attente` et `valide_le`, 5.2 et 8.1).
+- **À valider** (T30) : visible du berger et du conseil, marqué « à valider par EJP Tech » ; il se
+  saisit déjà, et ses valeurs s'affichent marquées, sans somme de l'année ni calcul (V2 de la
+  validation) ; compté dans les limites du ministère. EJP Tech décide dans « À valider »
+  (`validation-metier.md`, 7.1).
+- **Refusé** : retiré avec le motif de retrait « Refusé », posé par la base, et le motif écrit par
+  EJP Tech (une ligne de `validation`). Ses valeurs ne s'affichent plus sur aucune fiche ; le
+  ministère, le berger et le conseil lisent la date et le motif sous « Retirés ».
+- **Demande retirée** : un ajout retiré par le ministère avant la décision suit la règle d'un
+  retrait ordinaire (ci-dessous).
 - **Retiré** : définitif, comme un point traité. Plus de saisie ; l'historique reste sur la fiche
   sous « Retirés ». Un indicateur retiré sans aucune saisie disparaît des fiches et des limites (un
   calcul compte les saisies de ses sources), mais sa ligne reste en base : le journal le cite
@@ -204,7 +238,7 @@ stateDiagram-v2
   indicateur sensible, le mois en cours ; toutes ces bornes se calculent à partir de
   `private.aujourdhui()`. Si la réponse à K3 le demande, la borne devient le 1er janvier de l'année
   de création de l'indicateur. La saisie la plus récente d'un mois fait foi.
-- Proposé (Q21) : le mois en cours s'affiche à part (« Octobre en cours : 5 ») ; il n'entre ni
+- Proposé (Q19) : le mois en cours s'affiche à part (« Octobre en cours : 5 ») ; il n'entre ni
   dans la somme ni dans la complétude, qui ne comptent que les mois finis.
 
 ### 3.2 Sortes de nombre et bornes
@@ -221,7 +255,7 @@ sortes couvrent toutes les demandes de la V1.
 - Les chiffres communs restent des comptes (9 999).
 - **Minutes** : pas en V1. Si la coordination retient le retard du début du culte (K22, l. 42),
   une petite migration ajoute la sorte « minutes » (plafond 999) ; proposé : sans somme de
-  l'année. Ce qu'on saisit quand le culte commence en avance reste à trancher (Q23).
+  l'année. Ce qu'on saisit quand le culte commence en avance reste à trancher (Q20).
 - Abandonné : l'unité « jours » de T26. Les trois délais demandés (Film l. 77, Tech l. 86,
   Entretien l. 212) se suivent objet par objet ; ils deviennent des comptes ou sont retirés (P21).
 
@@ -235,7 +269,7 @@ compte partagé comptent différemment.
 
 - Exemple de forme, pour « Stock disponible » : « Articles du merch en réserve le jour de la
   saisie, toutes tailles confondues. » Le contenu exact vient des réponses des ministères
-  (question Q19).
+  (question Q17).
 - Pour les chiffres communs, la définition reprend les aides de l'écran 08 (« Les STARs qui ont
   servi dans votre ministère ce dimanche. Si personne n'a servi, enregistrez 0. »).
 
@@ -284,7 +318,7 @@ Trois mécanismes, dont deux automatiques :
 **Complétude dans le temps** (règle 13 du BRIEF, à compléter à la confirmation) :
 
 - Une période est finie jusqu'au dimanche de référence, ou si le mois est avant le mois en cours.
-- Proposé (Q21) : la somme part de la plus récente de deux dates, le 1er janvier ou la période qui
+- Proposé (Q19) : la somme part de la plus récente de deux dates, le 1er janvier ou la période qui
   contient l'ajout de l'indicateur (`(cree_le at time zone 'Europe/Paris')::date`). Si le
   ministère a rattrapé une période plus ancienne de l'année, le départ recule jusqu'à elle. L'écran
   nomme toujours le départ : « Depuis janvier », « Depuis juillet », « Depuis le dimanche 6
@@ -313,7 +347,7 @@ activité se calcule :
 
 ### 3.7 Domaines sensibles
 
-- Case « Domaine sensible », posée par l'administration (ou par EJP Tech sur sa demande écrite).
+- Case « Domaine sensible », posée par l'administration ou par EJP Tech (procédure : Q13).
   Elle impose le rythme « mois » et la sorte « compte », et interdit tout calcul sur l'indicateur.
   La base impose qu'un indicateur qui en remplace un sensible soit sensible.
 - 11 demandes : Santé (prises en charge, interventions, incidents avec intervention, orientations,
@@ -322,7 +356,7 @@ activité se calcule :
   et enfants déjà venus (Prodiges Junior, l. 279 et 284).
 - Saisie des mois écoulés seulement (P22) : la base refuse le mois en cours. La fiche montre la
   valeur du mois, jamais la suite des saisies ; le journal ne porte aucune valeur (5.10).
-- **Lecture des lignes brutes** (proposé, à confirmer par EJP Tech, Q10) : `kpi-ministeres.md`
+- **Lecture des lignes brutes** (proposé, à confirmer par EJP Tech, Q9) : `kpi-ministeres.md`
   (4.2) prévoyait de fixer à l'étape 4a une lecture par la vue du mois seulement. Cette conception
   propose de laisser les lignes de `mesure` lisibles par l'API pour le ministère, le berger, le
   conseil et EJP Tech, comme pour tout indicateur. Raison : le mois est clos avant toute saisie,
@@ -331,14 +365,17 @@ activité se calcule :
   le seuil et la lecture directe des lignes sensibles se ferme (5.6).
 - Lus par le ministère, le berger, le conseil et EJP Tech (T28) ; jamais par l'administration,
   jamais sur la vue de l'église, jamais dans un email (P14).
-- Lot 2 : un ministère qui suit un domaine sensible fait valider les comptes qu'il écrit (4.3).
+- Un ministère ne crée jamais un indicateur sensible (4.1) ; tout ce qu'il ajoute est validé par
+  EJP Tech (4.3). Proposé (V15 de la validation) : les indicateurs sensibles restent hors de la
+  détection des chiffres inhabituels, pour qu'aucune référence « d'habitude » ni aucun motif libre
+  ne s'affiche sur eux.
 - Un chiffre jugé sensible après coup (« Interventions » saisi chaque dimanche sans la case) se
   retire pour confidentialité (4.6, 6.3).
 
 ### 3.8 Chiffres financiers
 
-Pas de marque à part : la sorte « euros » suffit. Elle est réservée à l'administration (et à EJP
-Tech sur sa demande), avec les mêmes lecteurs que tout indicateur propre ; l'administration ne voit
+Pas de marque à part : la sorte « euros » suffit. Elle est réservée à l'administration et à EJP
+Tech (procédure : Q13), avec les mêmes lecteurs que tout indicateur propre ; l'administration ne voit
 pas la valeur, sauf si K6b le décide (P23). La marge (l. 157) attend des coûts que personne ne
 saisit ; le budget de Production (l. 166) devient un point d'attention. La comptabilité de l'église
 fait foi.
@@ -394,108 +431,105 @@ Il ne crée jamais un indicateur sensible, un grand compte, des euros ni un calc
 demandent à l'administration de l'église, en dehors de l'outil comme aujourd'hui. Au lot 1, il
 demande de la même façon un chiffre absent des suggestions.
 
+Chaque ajout d'un ministère naît « à valider » et EJP Tech seul le valide ou le refuse (4.3, T30).
+Le ministère ne corrige jamais le texte d'un indicateur qu'il a créé : avant la décision, il
+retire sa demande et en envoie une autre ; après, il le remplace, et le remplaçant repasse en
+validation (V3 de la validation). Ainsi, ce qu'EJP Tech a validé ne change pas ensuite.
+
 ### 4.2 Limites et raisons
 
 Toutes sont vérifiées par la base, sous un verrou `for update` sur la ligne du ministère (deux
 personnes du compte partagé peuvent cliquer en même temps). Les dates se calculent à l'heure de
 Paris.
 
-| Limite                                                         | Lot | Valeur proposée | Raison                                                                        | Message                                                                                                       |
-| -------------------------------------------------------------- | --- | --------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Ajouts du ministère actifs ou en attente                       | 1   | 3               | la charge de saisie ; avec les 6 prévus au plus (K13), la saisie reste courte | « Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre. »                       |
-| Indicateurs d'une fiche, actifs ou en attente, calculs compris | 1   | 12              | la lecture du berger ; MCAD demande 19 KPI, Kumi 13, MPI et MDS 12            | « Votre fiche compte déjà 12 indicateurs. Demandez à l'administration de l'église d'en retirer un. »          |
-| Source d'un calcul                                             | 1   | non retirable   | un calcul de l'administration ne disparaît pas sans elle                      | « Ce chiffre sert au calcul « Taux de résolution » : demandez à l'administration de l'église de le retirer. » |
-| Sorte de nombre                                                | 1   | compte          | les grands nombres et les montants demandent un choix de l'église             | aucun : le choix n'est pas proposé                                                                            |
-| Ajouts du ministère sur 30 jours, retirés compris              | 2   | 3               | ajouter puis retirer en boucle casse les courbes                              | « Vous avez ajouté 3 indicateurs ces 30 derniers jours. Vous pourrez en ajouter un autre à partir du 4 nov. » |
-| Corrections d'un même indicateur                               | 2   | 3               | chaque correction repasse en relecture                                        | « Cet indicateur a déjà été corrigé 3 fois. Pour compter autre chose, remplacez-le. »                         |
-| Mots refusés aux ministères                                    | 2   | 6.1             | 6.1                                                                           | message de la famille de mots                                                                                 |
+| Limite                                                                 | Lot | Valeur proposée | Raison                                                                                                          | Message                                                                                                       |
+| ---------------------------------------------------------------------- | --- | --------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Ajouts du ministère actifs ou à valider                                | 1   | 3               | la charge de saisie ; avec les 6 prévus au plus (K13), la saisie reste courte                                   | « Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre. »                       |
+| Indicateurs d'une fiche, actifs ou à valider, calculs compris          | 1   | 12              | la lecture du berger ; MCAD demande 19 KPI, Kumi 13, MPI et MDS 12                                              | « Votre fiche compte déjà 12 indicateurs. Demandez à l'administration de l'église d'en retirer un. »          |
+| Source d'un calcul                                                     | 1   | non retirable   | un calcul de l'administration ne disparaît pas sans elle                                                        | « Ce chiffre sert au calcul « Taux de résolution » : demandez à l'administration de l'église de le retirer. » |
+| Sorte de nombre                                                        | 1   | compte          | les grands nombres et les montants demandent un choix de l'église                                               | aucun : le choix n'est pas proposé                                                                            |
+| Ajouts du ministère sur 30 jours, retirés compris, refusés non compris | 2   | 3               | ajouter puis retirer en boucle casse les courbes ; un refus d'EJP Tech ne coûte pas de place au ministère (T30) | « Vous avez ajouté 3 indicateurs ces 30 derniers jours. Vous pourrez en ajouter un autre à partir du 4 nov. » |
+| Mots refusés aux ministères                                            | 2   | 6.1             | 6.1                                                                                                             | message de la famille de mots                                                                                 |
 
 La date « à partir du 4 nov. » est celle du plus ancien des trois ajouts, plus 30 jours, à l'heure
-de Paris. Ces valeurs sont des choix, pas des mesures (question Q3). L'administration et EJP Tech ne
+de Paris. Ces valeurs sont des choix, pas des mesures (question Q2). L'administration et EJP Tech ne
 sont tenus que par la limite de 12 par fiche. Un remplacement ne compte pas l'indicateur qu'il
 remplace (5.8).
 
-### 4.3 Validation ou non (lot 2)
+### 4.3 Validation par EJP Tech (T30)
 
-| Option                                                  | Pour                                                                                    | Contre                                                                                                                                           |
-| ------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A. Aucune validation, relecture après coup par EJP Tech | rien n'attend ; peu de code                                                             | un libellé anodin peut être sensible dans son contexte : « Interventions » l'est chez Santé, pas chez Sécurité ; la liste de mots ne le voit pas |
-| **B. Validation seulement dans les cas à risque**       | protège les cinq domaines de P22 ; aucun réglage : la base le déduit ; file très courte | une file à ouvrir, sans notification ; un état de plus                                                                                           |
-| C. Validation de tout ajout                             | rien n'est lu avant d'être vu                                                           | file sur le seul compte de l'administration ; le BRIEF exclut les notifications, une demande attendrait sans que personne la voie                |
-| D. Aucun ajout pour un ministère sensible               | le plus simple                                                                          | Kumi et Eagles perdent toute autonomie pour des chiffres anodins (Pages Roses, activités)                                                        |
+Décidé par la personne responsable le 5 octobre 2026 : **tout indicateur créé par un ministère est
+validé par EJP Tech seul**, ni par l'administration, ni sur sa demande. La revue précédente
+proposait une validation par l'administration dans quatre cas à risque (ministère d'un domaine
+sensible, prévus pas encore créés, mot de la famille « sensible ») et laissait les autres ajouts
+actifs tout de suite : ces conditions et les options qui les comparaient sont abandonnées.
 
-**Recommandation : B.** Un compte écrit par un ministère naît « En attente de validation » quand
-l'une de ces conditions est vraie ; la base les vérifie toutes :
+- **Ce qui naît « à valider »** : un compte écrit par un ministère (lot 2) et son remplaçant ;
+  proposé, une suggestion ajoutée par un ministère aussi (V1 de la validation). Un indicateur
+  ajouté par l'administration ou par EJP Tech est actif tout de suite.
+- **Tant qu'il attend** : visible du berger et du conseil, marqué « à valider par EJP Tech » ; il
+  se saisit déjà, et ses valeurs s'affichent marquées, hors de toute somme et de tout calcul (V2 de
+  la validation) ; il compte dans les limites du ministère (4.2). Le ministère n'attend donc pas
+  EJP Tech pour suivre son chiffre.
+- **Où se décide** : dans l'écran « À valider » d'EJP Tech (`validation-metier.md`, 7.1). L'écran
+  Indicateurs montre l'attente, sans bouton de décision (7.1, V4 de la validation).
+- **Ce que regarde EJP Tech** : utilité pour le ministère, pas de doublon d'un chiffre commun ou
+  d'un autre indicateur, libellé et définition clairs, aucun nom, pas un domaine sensible. Les
+  indices de `verifier_libelle` l'aident (« Libellé proche : Activités réalisées, dans les
+  suggestions » ; un mot de la famille « sensible »). La validation vaut relecture : ces textes ne
+  passent plus par la Modération (6.3).
+- **Validé** : actif, sans autre changement. **Refusé** : retiré avec le motif de retrait
+  « Refusé », posé par la base, et le motif écrit par EJP Tech, de 10 à 280 caractères ; ses
+  valeurs ne s'affichent plus ; un refus ne compte pas dans la limite sur 30 jours (4.2).
+- **Coût à la mise en service** : si V1 est retenue, la file peut recevoir jusqu'à 66 ajouts la
+  première semaine (3 par ministère, 22 ministères), une borne haute.
 
-1. les prévus du ministère ne sont pas encore créés (aucune ligne de journal
-   `indicateurs_prevus_crees` pour lui, 5.10) : un ministère créé après la mise en service ne
-   publie rien avant que l'administration ait choisi son modèle, sans dépendre de l'ordre des
-   gestes. Le journal, en ajout seulement et écrit par les fonctions, sert déjà de référence pour
-   la fraîcheur (règle 6) ;
-2. le ministère a un indicateur sensible actif, ou retiré avec au moins une saisie ;
-3. le modèle du catalogue d'un de ses indicateurs actifs ou saisis compte une ligne sensible ;
-4. le texte touche la famille de mots « sensible » (6.1), quel que soit le ministère :
-   « Interventions » part en validation chez Sécurité comme chez Santé, au lieu d'être refusé ou
-   publié.
-
-Un indicateur sensible retiré sans saisie (case cochée par erreur, modèle appliqué au mauvais
-ministère) ne compte pas : la validation ne devient pas définitive par erreur. Santé, Social, Kumi,
-Eagles et Prodiges Junior sont concernés dès que leurs prévus sont créés. Si la coordination retire
-tout indicateur sensible des six d'un de ces ministères (K13, K5, K56b), seules les conditions 3 et
-4 jouent : Q22 le demande. Dans ces cas :
-
-- une **suggestion** s'ajoute toujours tout de suite (sa définition est déjà relue) ;
-- un **compte écrit par le ministère** attend. Il n'est ni saisi ni lu par le berger et le
-  conseil, et ne le sera jamais s'il n'est pas validé : refusé, ou retiré par le ministère avant la
-  validation, il reste illisible pour eux. L'administration le valide ou le refuse, avec un motif,
-  depuis l'écran Indicateurs ; la Modération d'EJP Tech affiche « 1 ajout attend une validation »,
-  ce qui le met dans la relecture hebdomadaire. Le ministère rattrape ensuite les périodes passées :
-  rien n'est perdu si la validation arrive dans la semaine.
-
-Pour tous les autres ministères, l'ajout est actif tout de suite et EJP Tech relit son libellé et
-sa définition dans la file de modération (écran 15). Le berger peut lire le libellé avant la
-relecture : c'est le risque que le BRIEF accepte déjà pour les points d'attention, ici réduit par
-un texte plus court et filtré (6.1). Alternative si EJP Tech veut moins de code : A, avec la
-famille de mots « sensible » refusée aux ministères (questions Q2 et Q14).
+Le berger peut lire le libellé d'un ajout avant la décision d'EJP Tech : c'est le risque que le
+BRIEF accepte déjà pour les points d'attention, ici réduit par un texte plus court, filtré (6.1) et
+lu par EJP Tech dans la semaine.
 
 ### 4.4 Visibilité
 
-| Profil                     | Définition d'un ajout                          | Valeurs               |
-| -------------------------- | ---------------------------------------------- | --------------------- |
-| Le ministère lui-même      | oui, dans tous les états                       | oui                   |
-| Berger, conseil            | oui, sauf un ajout en attente ou jamais validé | oui, sur la fiche     |
-| EJP Tech                   | oui                                            | oui, en lecture (T28) |
-| Administration de l'église | oui, avec l'usage                              | non (P06)             |
-| Autres ministères          | non : ni le libellé ni la valeur               | non                   |
-| Vue de l'église, emails    | jamais (P30, P14)                              | jamais                |
+| Profil                     | Définition d'un ajout                                                                      | Valeurs                                                                            |
+| -------------------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| Le ministère lui-même      | oui, dans tous les états                                                                   | oui                                                                                |
+| Berger, conseil            | oui, ajouts à valider compris (marqués) ; un ajout refusé sous « Retirés », avec son motif | oui, sur la fiche ; marquées pour un ajout à valider ; jamais pour un ajout refusé |
+| EJP Tech                   | oui                                                                                        | oui, en lecture (T28)                                                              |
+| Administration de l'église | oui, avec l'usage                                                                          | non (P06)                                                                          |
+| Autres ministères          | non : ni le libellé ni la valeur                                                           | non                                                                                |
+| Vue de l'église, emails    | jamais (P30, P14)                                                                          | jamais                                                                             |
 
 Aujourd'hui, un ministère lit les libellés des indicateurs propres de tous les autres : la lecture
-se resserre aux communs et aux siens (question Q4).
+se resserre aux communs et aux siens (question Q3).
 
 ### 4.5 Ce que voit le berger
 
 Sur la fiche du ministère (04), un ajout du ministère s'affiche comme les autres indicateurs, à sa
 place dans le rythme, avec la mention discrète « Ajouté par Kumi le 12 oct. ». Il a sa valeur, sa
-courbe, sa somme de l'année et sa complétude. Un ajout en attente ou jamais validé n'apparaît ni
-sur la fiche ni dans le journal. Rien ne change dans « Cette semaine », la phrase de la fiche ni la
-vue de l'église.
+courbe, sa somme de l'année et sa complétude. Un ajout à valider apparaît à sa place, marqué « à
+valider par EJP Tech depuis 2 jours », avec ses valeurs s'il en a, sans somme de l'année, sans
+courbe ni calcul : il n'entre dans aucun total (T30). Un ajout refusé passe sous « Retirés », avec
+« Refusé le 8 oct. : « motif ». », sans valeur. Rien ne change dans « Cette semaine », la phrase de
+la fiche ni la vue de l'église.
 
 ### 4.6 Faire évoluer : corriger, remplacer, retirer, rendre officiel
 
-| Geste                                           | Qui                                                                                                                                    | Effet                                                                                                                                                                                                                                                                 |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Corriger le libellé et la définition            | l'administration (EJP Tech idem) pour tous, sauf les communs et les suggestions ; lot 2 : le ministère pour ses comptes écrits par lui | permis tant qu'aucune valeur n'est saisie (pour un calcul : aucune valeur de ses sources), donc aucune saisie ne change de sens. Lot 2 : le texte d'un ministère repasse en relecture. « Libellé corrigé le 14 oct. » sur la fiche                                    |
-| Remplacer                                       | l'administration (EJP Tech sur sa demande écrite) ; lot 2 : le ministère pour ses ajouts non officiels                                 | pour changer de rythme, de sorte ou de sens, ou de texte après une saisie : un nouvel indicateur et le retrait de l'ancien dans la même transaction. Deux courbes, jamais fusionnées : « Remplace « Problèmes signalés » (chaque dimanche, jusqu'au 31 oct.) » (K45a) |
-| Retirer, avec un motif                          | l'administration (EJP Tech sur sa demande écrite) ; le ministère pour ses ajouts, sauf la source d'un calcul                           | plus de saisie ; historique gardé ; un calcul qui en dépend est retiré avec lui                                                                                                                                                                                       |
-| Retirer pour confidentialité                    | administration, EJP Tech                                                                                                               | pour un chiffre jugé sensible après coup : libellé et définition masqués (« [retiré pour confidentialité] »), indicateur retiré et absent des fiches avec ses valeurs, une seule ligne de journal (6.3)                                                               |
-| Rendre officiel (lot 2)                         | l'administration (EJP Tech sur sa demande écrite)                                                                                      | l'ajout devient un indicateur de l'église : il ne compte plus dans les 3 ajouts du ministère, et le ministère ne peut plus le retirer. Valeurs et sens inchangés                                                                                                      |
-| Proposer comme suggestion à tous les ministères | EJP Tech, par migration, sur demande de l'administration                                                                               | une ligne de plus au catalogue ; les indicateurs existants ne changent pas                                                                                                                                                                                            |
+| Geste                                           | Qui                                                                                                                                                                    | Effet                                                                                                                                                                                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Corriger le libellé et la définition            | l'administration et EJP Tech pour tous, sauf les communs et les suggestions ; jamais le ministère (T30 : avant la décision, il retire sa demande ; après, il remplace) | permis tant qu'aucune valeur n'est saisie (pour un calcul : aucune valeur de ses sources), donc aucune saisie ne change de sens. Sur un ajout à valider, EJP Tech décide sur le texte actuel. « Libellé corrigé le 14 oct. » sur la fiche                             |
+| Remplacer                                       | l'administration et EJP Tech (procédure : Q13) ; lot 2 : le ministère pour ses ajouts non officiels, et le remplaçant est à valider                                    | pour changer de rythme, de sorte ou de sens, ou de texte après une saisie : un nouvel indicateur et le retrait de l'ancien dans la même transaction. Deux courbes, jamais fusionnées : « Remplace « Problèmes signalés » (chaque dimanche, jusqu'au 31 oct.) » (K45a) |
+| Retirer, avec un motif                          | l'administration et EJP Tech (procédure : Q13) ; le ministère pour ses ajouts, sauf la source d'un calcul (pour un ajout à valider : « Retirer la demande »)           | plus de saisie ; historique gardé ; un calcul qui en dépend est retiré avec lui                                                                                                                                                                                       |
+| Retirer pour confidentialité                    | administration, EJP Tech                                                                                                                                               | pour un chiffre jugé sensible après coup : libellé et définition masqués (« [retiré pour confidentialité] »), indicateur retiré et absent des fiches avec ses valeurs, une seule ligne de journal (6.3)                                                               |
+| Rendre officiel (lot 2)                         | l'administration et EJP Tech (procédure : Q13)                                                                                                                         | l'ajout devient un indicateur de l'église : il ne compte plus dans les 3 ajouts du ministère, et le ministère ne peut plus le retirer. Valeurs et sens inchangés                                                                                                      |
+| Proposer comme suggestion à tous les ministères | EJP Tech, par migration, sur demande de l'administration                                                                                                               | une ligne de plus au catalogue ; les indicateurs existants ne changent pas                                                                                                                                                                                            |
 
 Motifs de retrait (liste fermée) : « N'est plus suivi », « Doublon d'un autre chiffre », « Créé
 par erreur » (tous) ; « Se calcule à partir d'autres chiffres », « Déjà compté par un chiffre
 commun », « Domaine sensible : à créer par l'administration », « Hors des règles de l'outil »
-(administration et EJP Tech, aussi pour un refus). Quatre motifs sont posés par la base :
-« Remplacé », « Confidentialité », « Texte masqué par EJP Tech », « Chiffre source retiré ».
+(administration et EJP Tech). Quatre motifs sont posés par la base : « Remplacé »,
+« Confidentialité », « Chiffre source retiré » et « Refusé » (par `valider_indicateur`, T30, avec
+le motif écrit par EJP Tech dans `validation`). « Texte masqué par EJP Tech » disparaît : un texte
+validé qui pose problème se retire pour confidentialité (6.3).
 
 ## 5. Modèle de données
 
@@ -504,15 +538,16 @@ commun », « Domaine sensible : à créer par l'administration », « Hors des 
 Toutes nouvelles ; aucune migration suivie par git n'est modifiée. La migration T28 (lecture des
 chiffres par EJP Tech) passe avant.
 
-| Migration                   | Lot | Contenu                                                                                                                                                                                   | Tests pgTAP principaux                                                                                               |
-| --------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `indicateurs_definition`    | 1   | colonnes et contraintes d'`indicateur` (5.2) ; définitions des communs ; contrôle de `mesure.valeur` ; `private.normaliser` ; trigger `controler_indicateur` ; `controler_mesure` réécrit | sens figé même pour le propriétaire, structure seulement, aucune suppression, plafonds, mois, calcul jamais saisi    |
-| `indicateurs_lexique`       | 1   | table `private.terme`, fonction `private.verifier_texte`, fonction publique `verifier_libelle`                                                                                            | familles de l'administration, voisins acceptés, contrôle de l'appelant                                               |
-| `indicateurs_catalogue`     | 1   | table `private.indicateur_prevu`, vues `v_catalogue` et `v_suggestions`                                                                                                                   | catalogue illisible en direct, vues réservées aux bons profils                                                       |
-| `indicateurs_lectures`      | 1   | `v_mesure_periode`, `v_indicateur_suivi`, `v_calcul`, `v_usage_indicateurs`, `limites_indicateurs`                                                                                        | sommes, complétude dans le temps, « Non calculé », usage sans valeur                                                 |
-| `indicateurs_fonctions`     | 1   | fonctions du lot 1 (5.8), politiques, journal (5.10)                                                                                                                                      | matrice, limites, correction, retrait, remplacement, confidentialité, journal sans texte ni valeur                   |
-| `indicateurs_vague_1`       | 1   | lignes du catalogue validées par la coordination (5.11)                                                                                                                                   | création des prévus d'un ministère, sans doublon                                                                     |
-| `indicateurs_ajouts_libres` | 2   | état « en attente », colonnes du lot 2 (5.2), fonctions et politiques du lot 2, modération de la cible `indicateur`                                                                       | validation, ajout jamais validé illisible, correction par le ministère, relecture, mots des ministères, 185 libellés |
+| Migration                   | Lot | Contenu                                                                                                                                                                                   | Tests pgTAP principaux                                                                                            |
+| --------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `indicateurs_definition`    | 1   | colonnes et contraintes d'`indicateur` (5.2) ; définitions des communs ; contrôle de `mesure.valeur` ; `private.normaliser` ; trigger `controler_indicateur` ; `controler_mesure` réécrit | sens figé même pour le propriétaire, structure seulement, aucune suppression, plafonds, mois, calcul jamais saisi |
+| `indicateurs_lexique`       | 1   | table `private.terme`, fonction `private.verifier_texte`, fonction publique `verifier_libelle`                                                                                            | familles de l'administration, voisins acceptés, contrôle de l'appelant                                            |
+| `indicateurs_catalogue`     | 1   | table `private.indicateur_prevu`, vues `v_catalogue` et `v_suggestions`                                                                                                                   | catalogue illisible en direct, vues réservées aux bons profils                                                    |
+| `indicateurs_lectures`      | 1   | `v_mesure_periode`, `v_indicateur_suivi`, `v_calcul`, `v_usage_indicateurs`, `limites_indicateurs`                                                                                        | sommes, complétude dans le temps, « Non calculé », usage sans valeur                                              |
+| `indicateurs_fonctions`     | 1   | fonctions du lot 1 (5.8), politiques, journal (5.10)                                                                                                                                      | matrice, limites, correction, retrait, remplacement, confidentialité, journal sans texte ni valeur                |
+| `indicateurs_vague_1`       | 1   | lignes du catalogue validées par la coordination (5.11)                                                                                                                                   | création des prévus d'un ministère, sans doublon                                                                  |
+| `validation_indicateurs`    | 1   | de la validation (`validation-metier.md`, 8.1) : état « en attente », `valider_indicateur` par EJP Tech, motif « Refusé », lecture de l'attente par le berger et le conseil               | ajout d'un ministère à valider, saisi, validé, refusé ; une seule ligne de journal                                |
+| `indicateurs_ajouts_libres` | 2   | colonne `officiel_le` (5.2), fonctions et politiques du lot 2 (compte écrit par un ministère, à valider ; limite sur 30 jours ; « Rendre officiel »)                                      | compte écrit à valider, mots des ministères, 185 libellés, limite sur 30 jours                                    |
 
 ### 5.2 La table `indicateur`
 
@@ -539,7 +574,7 @@ alter table public.indicateur
   add column texte_le timestamptz not null default now(),        -- dernière écriture des textes
   add column texte_par uuid references public.compte (user_id),  -- auteur des textes actuels
   add column retire_le timestamptz,
-  add column retrait_motif text;                                  -- liste fermée de 4.6
+  add column retrait_motif text;                                  -- liste fermée de 4.6, ou motif posé par la base
 -- la migration pose origine ('commun' si ministere_id est nul, sinon 'eglise') et la définition
 -- de chaque ligne existante (les trois communs), puis :
 alter table public.indicateur
@@ -559,35 +594,43 @@ alter table public.mesure drop constraint mesure_valeur_check,
   add constraint mesure_valeur_check check (valeur between 0 and 9999999);
 ```
 
-Au lot 2, `indicateurs_ajouts_libres` ajoute :
+Dès le lot 1, la migration `validation_indicateurs` de la validation ajoute l'état « à valider » :
 
 ```sql
 alter table public.indicateur
   drop constraint indicateur_etat_check,
   add constraint indicateur_etat_check check (etat in ('en_attente', 'actif', 'retire')),
-  add column ne_en_attente boolean not null default false,  -- figé à la création
-  add column valide_le timestamptz,                         -- posé par valider_indicateur
+  add check (etat <> 'en_attente' or origine = 'ministere');
+```
+
+Au lot 2, `indicateurs_ajouts_libres` ajoute seulement :
+
+```sql
+alter table public.indicateur
   add column officiel_le timestamptz,                       -- posé par rendre_officiel
-  add check (etat <> 'en_attente' or (origine = 'ministere' and ne_en_attente)),
-  add check (valide_le is null or ne_en_attente),
   add check (officiel_le is null or origine = 'eglise');
 ```
 
-- `actif` reste : la politique d'ajout de `mesure` et les tests existants le lisent.
+- La décision d'EJP Tech est une ligne de `validation` (`validation-metier.md`, 8.2) : ni
+  colonne `valide_le`, ni colonne `ne_en_attente`. Un ajout refusé est un retiré dont
+  `retrait_motif` vaut « Refusé ».
+- `actif` reste : les tests existants le lisent. La politique d'ajout de `mesure` accepte un
+  indicateur actif ou à valider (`etat in ('actif', 'en_attente')`, V2 de la validation).
 - `private.normaliser(text)`, `immutable` : minuscules, accents retirés par `translate`, tout signe
   qui n'est ni une lettre ni un chiffre remplacé par une espace, espaces réduits, « nombre de » de
   tête retiré. « Nombre de projets en cours » et « Projets en cours » se confondent ; un libellé
   retiré peut renaître. Les contrôles qui ont besoin des signes (« @ », « % », « € », 6.1) lisent
   le texte brut avant.
-- `texte_par` : une correction faite par l'administration lui est attribuée ; elle ne passe donc
-  pas en relecture (règle 9).
+- `texte_par` : l'auteur des textes actuels. Une correction ne peut venir que de l'administration
+  ou d'EJP Tech (T30) ; elle ne passe pas en relecture (règle 9, Q10).
 - `ordre` ne sert plus qu'aux communs : les autres se rangent par rythme et par ordre alphabétique.
 
 ### 5.3 Les saisies : `controler_mesure` réécrit
 
 Le trigger `before insert` de `mesure` (une nouvelle version, même nom) refuse, dans l'ordre :
 
-1. un indicateur qui n'est pas actif : « « Problèmes signalés » n'est plus proposé à la saisie. »
+1. un indicateur qui n'est ni actif ni à valider : « « Problèmes signalés » n'est plus proposé à
+   la saisie. »
    (le message nomme l'indicateur ; comme l'envoi est un seul insert, l'écran recharge le
    formulaire en gardant les valeurs tapées) ;
 2. un calcul : « Ce chiffre se calcule : il ne se saisit pas. » (la politique d'ajout exige aussi
@@ -612,16 +655,16 @@ vivent dans `private.verifier_texte`, appelée par les fonctions de l'API (5.8).
   rythme compatible, ni communes ni sensibles ; un calcul prend le rythme de son haut ; le
   remplaçant d'un indicateur sensible est sensible.
 - **À la mise à jour**, seuls passent :
-  - `actif` vers `retire` (lot 2 : `en_attente` vers `actif` ou `retire`, et `valide_le`), avec
-    `retire_le` et le motif ;
+  - `actif` vers `retire`, et `en_attente` vers `actif` (validé) ou `retire` (refusé, ou demande
+    retirée), avec `retire_le` et le motif ;
   - lot 2 : `origine` de `ministere` vers `eglise`, avec `officiel_le` ;
   - un nouveau libellé ou une nouvelle définition, contrôlés comme à l'ajout, si aucune valeur
     n'est saisie pour l'indicateur (pour un calcul : pour ses sources) et si son modèle n'est pas
     une suggestion ; `texte_le` prend l'heure et `texte_par` le compte ;
-  - le masquage : un texte remplacé par « [texte masqué par EJP Tech] » ou « [retiré pour
-    confidentialité] », seulement si `private.masquer_texte` ou le retrait pour confidentialité a
-    posé dans la transaction `set_config('pilotage.masquage', 'oui', true)`. Masquer le libellé
-    exige le passage à « retiré » dans la même mise à jour ;
+  - le masquage : les deux textes remplacés par « [retiré pour confidentialité] », seulement si le
+    retrait pour confidentialité a posé dans la transaction
+    `set_config('pilotage.masquage', 'oui', true)`, avec le passage à « retiré » dans la même
+    mise à jour (`masquer_texte` ne vise plus `indicateur`, 6.3) ;
   - dans une migration seulement, qui pose `set_config('pilotage.migration', 'oui', true)`, le
     libellé ou la définition d'un chiffre commun.
 - **Tout le reste est refusé** : ministère, code, rythme, sorte, sensible, calcul, sources,
@@ -671,18 +714,20 @@ valeur obtient `null`.
 - `v_indicateur_suivi` : pour chaque indicateur lisible, la dernière valeur et sa période, la
   valeur du mois en cours (sauf sensible), la série (10 dimanches ou 12 mois, trous à `null`), la
   somme de l'année, son départ, les périodes saisies et attendues, et l'alerte « plus de 30 jours »
-  d'un « à ce jour » (règle 13). Elle écarte un retiré sans saisie et un retiré pour
-  confidentialité ; elle garde un calcul retiré dont les sources ont des saisies.
+  d'un « à ce jour » (règle 13). Elle écarte un retiré sans saisie, un retiré pour
+  confidentialité et un ajout refusé ; elle garde un calcul retiré dont les sources ont des
+  saisies. Pour un ajout à valider, elle rend les valeurs et l'état « à valider », sans somme de
+  l'année (T30).
 - `v_calcul` : pour chaque calcul, la dernière période finie (haut, bas, date du bas « à ce jour »,
   résultat) et l'année, avec la complétude.
 - `v_usage_indicateurs` (administration et EJP Tech, par une fonction `private`) : périodes
   saisies, périodes attendues, date de la dernière saisie, « jamais saisi ». Jamais une valeur.
 - `public.limites_indicateurs(p_ministere_id)` : `exige_aal2()` en tête ; un ministère n'interroge
-  que sa fiche, sinon 42501 avec le message d'un objet absent (un autre ministère n'apprend pas
-  qu'une fiche demande une validation) ; l'administration et EJP Tech interrogent toute fiche ; le
-  berger et le conseil sont refusés. Elle rend les ajouts actifs ou en attente, le total de la
-  fiche et, au lot 2, les ajouts des 30 derniers jours, la date de la prochaine place (heure de
-  Paris) et la validation requise. Le panneau d'ajout s'en sert au lieu de recopier les limites.
+  que sa fiche, sinon 42501 avec le message d'un objet absent (un autre ministère n'apprend
+  rien de ses limites) ; l'administration et EJP Tech interrogent toute fiche ; le berger et le
+  conseil sont refusés. Elle rend les ajouts actifs ou à valider, le total de la fiche et, au lot
+  2, les ajouts des 30 derniers jours (refusés non compris) et la date de la prochaine place
+  (heure de Paris). Le panneau d'ajout s'en sert au lieu de recopier les limites.
 - **Seuil K5c**, s'il est retenu : appliqué dans `v_mesure_periode`, qui lit alors les lignes
   sensibles par une fonction `private` ; la politique de lecture de `mesure` ne rend plus ces
   lignes qu'à EJP Tech (export de fin de vie, P13).
@@ -709,16 +754,15 @@ affichée telle quelle. Aucun SQL dynamique.
 
 | Fonction                                                                                                                               | Lot                     | Appelant                                                                              | Écrit                                                                                                                                           |
 | -------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `creer_indicateur(p_ministere_id, p_libelle, p_definition, p_nature, p_unite, p_sensible, p_pas_sensible, p_remplace_id) returns uuid` | 1 (2 pour un ministère) | administration, EJP Tech ; lot 2 : ministère sur sa fiche (compte, non sensible)      | `indicateur` (actif, ou en attente au lot 2), retrait de l'ancien si remplacement, journal                                                      |
-| `ajouter_suggestion(p_ministere_id, p_code) returns uuid`                                                                              | 1                       | ministère sur sa fiche, administration, EJP Tech                                      | `indicateur` actif, journal                                                                                                                     |
+| `creer_indicateur(p_ministere_id, p_libelle, p_definition, p_nature, p_unite, p_sensible, p_pas_sensible, p_remplace_id) returns uuid` | 1 (2 pour un ministère) | administration, EJP Tech ; lot 2 : ministère sur sa fiche (compte, non sensible)      | `indicateur` (actif ; à valider pour un ministère), retrait de l'ancien si remplacement, journal                                                |
+| `ajouter_suggestion(p_ministere_id, p_code) returns uuid`                                                                              | 1                       | ministère sur sa fiche, administration, EJP Tech                                      | `indicateur` actif ; à valider pour un ministère (si V1 de la validation), journal                                                              |
 | `creer_calcul(p_libelle, p_definition, p_type, p_haut_id, p_bas_id, p_remplace_id) returns uuid`                                       | 1                       | administration, EJP Tech                                                              | `indicateur` (calcul), retrait de l'ancien si remplacement, journal                                                                             |
 | `creer_indicateurs_prevus(p_ministere_id, p_modele) returns integer`                                                                   | 1                       | administration, EJP Tech                                                              | les lignes manquantes du modèle, tout ou rien ; une ligne de journal s'il en crée au moins une, ou pour « aucun » la première fois ; rien sinon |
-| `corriger_indicateur(p_indicateur_id, p_libelle, p_definition) returns void`                                                           | 1 (2 pour un ministère) | selon 4.6                                                                             | textes, `texte_le`, `texte_par`, journal                                                                                                        |
+| `corriger_indicateur(p_indicateur_id, p_libelle, p_definition) returns void`                                                           | 1                       | administration, EJP Tech ; jamais un ministère (T30)                                  | textes, `texte_le`, `texte_par`, journal                                                                                                        |
 | `retirer_indicateur(p_indicateur_id, p_motif) returns integer`                                                                         | 1                       | selon 4.6 ; motif « confidentialité » réservé à l'administration et à EJP Tech        | état, textes masqués pour la confidentialité, journal ; rend le nombre de calculs retirés avec lui                                              |
 | `verifier_libelle(p_libelle, p_nature, p_ministere_id) returns table (famille, message, bloquant)`                                     | 1                       | ministère sur sa fiche, administration, EJP Tech (contrôles de `limites_indicateurs`) | rien                                                                                                                                            |
-| `valider_indicateur(p_indicateur_id, p_decision, p_motif) returns void`                                                                | 2                       | administration ; EJP Tech selon Q15                                                   | état, `valide_le`, journal                                                                                                                      |
-| `rendre_officiel(p_indicateur_id) returns void`                                                                                        | 2                       | administration, EJP Tech (sur sa demande écrite, 2)                                   | origine, journal                                                                                                                                |
-| `masquer_texte`, `marquer_relu`, `v_textes_a_relire`                                                                                   | 2                       | EJP Tech                                                                              | gagnent la cible `indicateur` (libellé, définition), avec les règles de 6.3                                                                     |
+| `valider_indicateur(p_indicateur_id, p_decision, p_motif) returns void`                                                                | 1 (avec la validation)  | EJP Tech seul (T30)                                                                   | `validation`, état (actif, ou retiré avec le motif « Refusé »), une seule ligne de journal (`validation-metier.md`, 8.4)                        |
+| `rendre_officiel(p_indicateur_id) returns void`                                                                                        | 2                       | administration, EJP Tech (procédure : Q13)                                            | origine, journal                                                                                                                                |
 
 Contrôles d'un ajout (`creer_indicateur`, `ajouter_suggestion`, `creer_calcul`), dans l'ordre :
 
@@ -736,33 +780,32 @@ Contrôles d'un ajout (`creer_indicateur`, `ajouter_suggestion`, `creer_calcul`)
    ce n'est pas un domaine sensible ;
 6. doublon normalisé sur la fiche, l'indicateur remplacé mis à part ;
 7. rythme et sorte ;
-8. retrait de l'indicateur remplacé (motif « Remplacé »), insertion (en attente au lot 2, selon
+8. retrait de l'indicateur remplacé (motif « Remplacé »), insertion (à valider pour un ministère,
    4.3), une ligne de journal.
 
-Contrôles d'une correction : profil (4.6) ; pour un ministère, son compte écrit par lui
-(`origine = 'ministere'`, `modele_code` nul) et trois corrections au plus, comptées dans le
-journal ; aucune valeur saisie (pour un calcul, de ses sources) ; pas une suggestion ;
-`private.verifier_texte`. Contrôles d'un retrait par un ministère : son ajout non officiel, qui
-n'est pas la source d'un calcul actif.
+Contrôles d'une correction : administration ou EJP Tech (un ministère reçoit 42501) ; aucune
+valeur saisie (pour un calcul, de ses sources) ; pas une suggestion ; `private.verifier_texte`.
+Contrôles d'un retrait par un ministère : son ajout non officiel, qui n'est pas la source d'un
+calcul actif ; pour un ajout à valider, la fonction l'appelle « demande retirée ».
 
 ### 5.9 Ce qui change sur `indicateur`, et seulement cela
 
 `indicateur` n'est pas dans la liste des tables en ajout seulement (règle 1), mais ses
-changements restent bornés, faits par les fonctions ci-dessus et tracés au journal : l'état (vers
-actif ou retiré), au lot 2 l'origine (vers « église ») et `valide_le`, le masquage d'un texte, et
-la correction d'un texte tant que rien n'est saisi. Le trigger de 5.4 refuse tout le reste, même
+changements restent bornés, faits par les fonctions ci-dessus et tracés au journal : l'état (d'à
+valider vers actif ou retiré, d'actif vers retiré), au lot 2 l'origine (vers « église »), le
+masquage des deux textes par le retrait pour confidentialité, et la correction d'un texte par
+l'administration ou EJP Tech tant que rien n'est saisi. Le trigger de 5.4 refuse tout le reste, même
 au propriétaire.
 
 ### 5.10 Journal
 
-| Code                       | Lot | Libellé (écran 06)             | `cible`, `cible_id` | `detail` (codes et nombres seulement)                                       | Détail affiché (exemple)                                                                    |
-| -------------------------- | --- | ------------------------------ | ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `indicateur_cree`          | 1   | A ajouté un indicateur         | indicateur          | `{"nature", "unite", "origine", "remplace"}`, et au lot 2 `"attente": true` | « Publications, chaque mois » ; « en attente de validation »                                |
-| `indicateurs_prevus_crees` | 1   | A créé les indicateurs prévus  | ministere           | `{"modele", "nombre": 6}` (code du catalogue, ou « aucun »)                 | « 6 indicateurs prévus pour Kumi » ; « aucun indicateur prévu pour Protocole »              |
-| `indicateur_corrige`       | 1   | A corrigé un indicateur        | indicateur          | `{"champs": ["libelle"]}`                                                   | « Publications, libellé corrigé »                                                           |
-| `indicateur_retire`        | 1   | A retiré un indicateur         | indicateur          | `{"motif", "avec_saisies": true, "calculs": 1}`                             | « Projets réalisés, motif : n'est plus suivi » ; « retiré pour confidentialité »            |
-| `indicateur_valide`        | 2   | A validé un indicateur         | indicateur          | `{"decision": "valide"}` ou `{"decision": "refuse", "motif"}`               | « Pages Roses : ateliers, validé » ; pour le berger et le conseil : « un ajout non publié » |
-| `indicateur_officiel`      | 2   | A rendu officiel un indicateur | indicateur          | `{}`                                                                        | « Campagnes »                                                                               |
+| Code                       | Lot | Libellé (écran 06)             | `cible`, `cible_id` | `detail` (codes et nombres seulement)                                                           | Détail affiché (exemple)                                                         |
+| -------------------------- | --- | ------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `indicateur_cree`          | 1   | A ajouté un indicateur         | indicateur          | `{"nature", "unite", "origine", "remplace"}`, et pour un ajout d'un ministère `"attente": true` | « Publications, chaque mois » ; « à valider »                                    |
+| `indicateurs_prevus_crees` | 1   | A créé les indicateurs prévus  | ministere           | `{"modele", "nombre": 6}` (code du catalogue, ou « aucun »)                                     | « 6 indicateurs prévus pour Kumi » ; « aucun indicateur prévu pour Protocole »   |
+| `indicateur_corrige`       | 1   | A corrigé un indicateur        | indicateur          | `{"champs": ["libelle"]}`                                                                       | « Publications, libellé corrigé »                                                |
+| `indicateur_retire`        | 1   | A retiré un indicateur         | indicateur          | `{"motif", "avec_saisies": true, "calculs": 1}`                                                 | « Projets réalisés, motif : n'est plus suivi » ; « retiré pour confidentialité » |
+| `indicateur_officiel`      | 2   | A rendu officiel un indicateur | indicateur          | `{}`                                                                                            | « Campagnes »                                                                    |
 
 - `ministere_id` est celui de l'indicateur. Le ministère lit les lignes de sa fiche, le berger et
   le conseil toutes, l'administration toutes (`journal_lisible_administration` accepte ces codes,
@@ -770,18 +813,20 @@ au propriétaire.
   la liste de sa politique de lecture). Comme toute action d'un compte de ministère, un ajout fait
   par le ministère compte pour sa fraîcheur (règle 6).
 - `detail` ne contient jamais un libellé ni une définition : l'écran lit le texte actuel par
-  `cible_texte`, que `v_journal` (`security_invoker`) calcule sous la RLS du lecteur. Pour un ajout
-  en attente ou jamais validé, le berger et le conseil obtiennent `null`, et l'écran écrit « un
-  ajout non publié ».
+  `cible_texte`, que `v_journal` (`security_invoker`) calcule sous la RLS du lecteur. Le berger et
+  le conseil lisent aussi le texte d'un ajout à valider (T30).
+- **Décision d'EJP Tech** : codes `element_valide` et `element_refuse` de la validation
+  (`validation-metier.md`, 3), une seule ligne par décision ; le code `indicateur_valide` de la
+  version précédente disparaît, et un refus n'écrit pas de ligne `indicateur_retire`.
 - **Saisies** : `journaliser_mesures` n'écrit plus la valeur d'un indicateur propre, seulement
   `indicateur_id` et `date_ref` (« Publications (septembre) »). Les chiffres communs gardent leur
   valeur. L'administration peut donc lire toutes les lignes `mesure_saisie` :
   `journal_lisible_administration` se simplifie, la migration `journal_administration_chiffres`
   (P29) devient inutile et le cas sensible du journal (P22) disparaît. Le berger lit les valeurs
-  sur la fiche (Q18).
-- **Modération** (lot 2) : `texte_relu` et `texte_masque` gagnent la cible `indicateur`. Masquer
-  un libellé retire l'indicateur dans la même transaction, en une seule ligne
-  (`{"champ": "libelle", "motif", "retire": true}`) ; masquer la définition ne le retire pas.
+  sur la fiche (Q16).
+- **Modération** : `texte_relu` et `texte_masque` ne gagnent pas la cible `indicateur`. EJP Tech
+  lit les textes d'un ministère en validant l'ajout (4.3) ; un texte validé qui pose problème se
+  retire pour confidentialité (6.3).
 
 ### 5.11 Première vague, suggestions et jeu d'exemple
 
@@ -805,10 +850,11 @@ au propriétaire.
   « Remplacé » par « Visuels livrés » (chaque mois) : le trigger ne contrôlant que la structure,
   son libellé passe. Puis « NA » (Intégration, dimanche) ; « Abonnés YouTube » (Communication,
   grand compte, à ce jour) ; « Demandes reçues » et « Demandes traitées » (Tech) avec leur taux ;
-  « Nouveaux enfants » (Prodiges Junior, sensible) ; une suggestion ajoutée par Social ;
-  « Interventions » (Sécurité, retiré pour confidentialité) ; un indicateur retiré avec des
-  saisies. Au lot 2 : « Colis distribués » (Social, écrit par le ministère), « Goûters servis »
-  (Prodiges Junior, en attente) et un ajout refusé.
+  « Nouveaux enfants » (Prodiges Junior, sensible) ; une suggestion ajoutée par Social et validée
+  par EJP Tech, une autre à valider ; « Interventions » (Sécurité, retiré pour confidentialité) ;
+  un indicateur retiré avec des saisies ; un ajout refusé avec son motif. Au lot 2 : « Colis
+  distribués » (Social, écrit par le ministère, validé) et « Goûters servis » (Prodiges Junior, à
+  valider, avec une valeur saisie).
 
 ## 6. Garde-fous
 
@@ -828,24 +874,24 @@ temps :
   « mobilisées », « prise en charge » trouve « Prises en charge » ; « moyenne » ne trouve pas
   « Moyens techniques ».
 
-| Contrôle                                                                                                                                                                                                                                                  | Pour qui                    | Lot | Message                                                                                                                                                                                               |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Libellé de 2 à 60 caractères, définition de 10 à 140                                                                                                                                                                                                      | tous (trigger)              | 1   | « Donnez un libellé de 2 à 60 caractères. », « Expliquez ce qu'on compte en 10 à 140 caractères. »                                                                                                    |
-| « @ », « http », « www », 5 chiffres ou plus de suite, civilité suivie d'un mot en majuscule (« Mme Durand », « Frère Paul »)                                                                                                                             | tous, libellé et définition | 1   | « N'écrivez aucun nom ni information personnelle. »                                                                                                                                                   |
-| « [ » ou « texte masqué »                                                                                                                                                                                                                                 | tous                        | 1   | « Les crochets et « texte masqué » sont réservés à la modération. »                                                                                                                                   |
-| Calcul : taux, pourcentage, %, moyenne, ratio, évolution, par événement, par session, par personne, délai moyen, temps moyen, panier moyen                                                                                                                | tous                        | 1   | « Un taux, une moyenne ou une évolution se calcule : ne le saisissez pas. »                                                                                                                           |
-| Cumul : cumul, cumulé, depuis le début, de l'année, depuis janvier, sur l'année (accepté en « à ce jour » : « Vues cumulées YouTube »)                                                                                                                    | tous                        | 1   | « La somme de l'année s'affiche toute seule : saisissez le chiffre de la période. »                                                                                                                   |
-| Période : ce mois, du mois, par mois, chaque mois, mensuel, mensuelle, par semaine, chaque semaine, cette semaine, de la semaine, hebdomadaire, chaque dimanche, du dimanche, par dimanche, ce dimanche, par an, par année, cette année, annuel, annuelle | tous                        | 1   | « Inutile d'écrire la période : choisissez le rythme plus bas. »                                                                                                                                      |
-| Doublon normalisé sur la fiche, ou libellé d'un chiffre commun                                                                                                                                                                                            | tous                        | 1   | « Votre fiche a déjà « Publications ». »                                                                                                                                                              |
-| Domaine sensible : santé, soin, médical, malade, maladie, hôpital, hospitalisation, prise en charge, PEC, écoute, accompagné, accompagnement, bénéficiaire, orientation, orienté, enfant, mineur, bébé, handicap, deuil, intervention, victime, détresse  | administration, EJP Tech    | 1   | bloquant sauf case « Domaine sensible » cochée ou « Ce n'est pas un domaine sensible » confirmé : « Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas. » |
-| Domaine sensible (même liste)                                                                                                                                                                                                                             | ministère                   | 2   | pas de refus : l'ajout part en validation (4.3), avec « Ce chiffre semble toucher la santé, l'accompagnement ou les enfants : l'administration de l'église le validera avant la saisie. »             |
-| Libellé d'une suggestion                                                                                                                                                                                                                                  | ministère                   | 2   | « Ce chiffre est dans les suggestions : ajoutez-le depuis la liste, il aura la même définition que dans les autres ministères. »                                                                      |
-| Argent : euro, €, argent, don, offrande, fonds, chiffre d'affaires, budget, marge, devis, coût, dépense, prix, montant                                                                                                                                    | ministère                   | 2   | « Un montant se demande à l'administration de l'église. »                                                                                                                                             |
-| Chiffres communs : STAR (hors « Prière des Stars »), mobilisé, bénévole, équipier, au service, en service, en FIJ                                                                                                                                         | ministère                   | 2   | « Ce chiffre est déjà compté par « STARs au service » ou « STARs actifs ». »                                                                                                                          |
-| Suivi de personnes : nom, prénom, liste, unique, parcours, revenu, déjà venu, retour, satisfaction                                                                                                                                                        | ministère                   | 2   | « L'outil compte, il ne suit pas les personnes : saisissez un total. »                                                                                                                                |
-| Limites de 4.2, sorte de nombre, rythme, ministère actif, remplacement (5.8)                                                                                                                                                                              | ministère                   | 1   | messages de 4.2 ; 42501 pour un remplacement interdit                                                                                                                                                 |
-| Sensible hors du mois, calcul entre deux ministères, sur un sensible, sur un chiffre commun ou entre rythmes incompatibles                                                                                                                                | administration, EJP Tech    | 1   | « Un indicateur sensible se saisit chaque mois. », « Ces deux chiffres ne se calculent pas ensemble. »                                                                                                |
-| Plafond par sorte, mois au 1er, mois futur, mois trop ancien, mois en cours si sensible, calcul jamais saisi                                                                                                                                              | toute saisie                | 1   | 5.3                                                                                                                                                                                                   |
+| Contrôle                                                                                                                                                                                                                                                  | Pour qui                    | Lot | Message                                                                                                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Libellé de 2 à 60 caractères, définition de 10 à 140                                                                                                                                                                                                      | tous (trigger)              | 1   | « Donnez un libellé de 2 à 60 caractères. », « Expliquez ce qu'on compte en 10 à 140 caractères. »                                                                                                                                                     |
+| « @ », « http », « www », 5 chiffres ou plus de suite, civilité suivie d'un mot en majuscule (« Mme Durand », « Frère Paul »)                                                                                                                             | tous, libellé et définition | 1   | « N'écrivez aucun nom ni information personnelle. »                                                                                                                                                                                                    |
+| « [ » ou « texte masqué »                                                                                                                                                                                                                                 | tous                        | 1   | « Les crochets et « texte masqué » sont réservés à la modération. »                                                                                                                                                                                    |
+| Calcul : taux, pourcentage, %, moyenne, ratio, évolution, par événement, par session, par personne, délai moyen, temps moyen, panier moyen                                                                                                                | tous                        | 1   | « Un taux, une moyenne ou une évolution se calcule : ne le saisissez pas. »                                                                                                                                                                            |
+| Cumul : cumul, cumulé, depuis le début, de l'année, depuis janvier, sur l'année (accepté en « à ce jour » : « Vues cumulées YouTube »)                                                                                                                    | tous                        | 1   | « La somme de l'année s'affiche toute seule : saisissez le chiffre de la période. »                                                                                                                                                                    |
+| Période : ce mois, du mois, par mois, chaque mois, mensuel, mensuelle, par semaine, chaque semaine, cette semaine, de la semaine, hebdomadaire, chaque dimanche, du dimanche, par dimanche, ce dimanche, par an, par année, cette année, annuel, annuelle | tous                        | 1   | « Inutile d'écrire la période : choisissez le rythme plus bas. »                                                                                                                                                                                       |
+| Doublon normalisé sur la fiche, ou libellé d'un chiffre commun                                                                                                                                                                                            | tous                        | 1   | « Votre fiche a déjà « Publications ». »                                                                                                                                                                                                               |
+| Domaine sensible : santé, soin, médical, malade, maladie, hôpital, hospitalisation, prise en charge, PEC, écoute, accompagné, accompagnement, bénéficiaire, orientation, orienté, enfant, mineur, bébé, handicap, deuil, intervention, victime, détresse  | administration, EJP Tech    | 1   | bloquant sauf case « Domaine sensible » cochée ou « Ce n'est pas un domaine sensible » confirmé : « Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas. »                                                  |
+| Domaine sensible (même liste)                                                                                                                                                                                                                             | ministère                   | 2   | pas de refus : avertissement « Ce chiffre semble toucher la santé, l'accompagnement ou les enfants. Un domaine sensible se demande à l'administration de l'église. EJP Tech vérifiera votre ajout. » ; EJP Tech voit l'indice dans « À valider » (4.3) |
+| Libellé d'une suggestion                                                                                                                                                                                                                                  | ministère                   | 2   | « Ce chiffre est dans les suggestions : ajoutez-le depuis la liste, il aura la même définition que dans les autres ministères. »                                                                                                                       |
+| Argent : euro, €, argent, don, offrande, fonds, chiffre d'affaires, budget, marge, devis, coût, dépense, prix, montant                                                                                                                                    | ministère                   | 2   | « Un montant se demande à l'administration de l'église. »                                                                                                                                                                                              |
+| Chiffres communs : STAR (hors « Prière des Stars »), mobilisé, bénévole, équipier, au service, en service, en FIJ                                                                                                                                         | ministère                   | 2   | « Ce chiffre est déjà compté par « STARs au service » ou « STARs actifs ». »                                                                                                                                                                           |
+| Suivi de personnes : nom, prénom, liste, unique, parcours, revenu, déjà venu, retour, satisfaction                                                                                                                                                        | ministère                   | 2   | « L'outil compte, il ne suit pas les personnes : saisissez un total. »                                                                                                                                                                                 |
+| Limites de 4.2, sorte de nombre, rythme, ministère actif, remplacement (5.8)                                                                                                                                                                              | ministère                   | 1   | messages de 4.2 ; 42501 pour un remplacement interdit                                                                                                                                                                                                  |
+| Sensible hors du mois, calcul entre deux ministères, sur un sensible, sur un chiffre commun ou entre rythmes incompatibles                                                                                                                                | administration, EJP Tech    | 1   | « Un indicateur sensible se saisit chaque mois. », « Ces deux chiffres ne se calculent pas ensemble. »                                                                                                                                                 |
+| Plafond par sorte, mois au 1er, mois futur, mois trop ancien, mois en cours si sensible, calcul jamais saisi                                                                                                                                              | toute saisie                | 1   | 5.3                                                                                                                                                                                                                                                    |
 
 La famille « commun » couvre les 12 demandes « Commun » de l'annexe (P26, K8). Les familles
 « calcul » et « cumul » couvrent les 18 demandes de la catégorie « Valeur calculée ». Les résultats
@@ -865,12 +911,10 @@ attendus sur les 185 libellés sont en 8.2.
   que si `private.mon_type()` est `admin_eglise` ou `admin_plateforme` : un ministère ne le reçoit
   jamais.
 
-Au lot 2, à la saisie, une fonction pure de l'interface (testée par Vitest) avertit sans bloquer :
-
-- valeur plus de trois fois au-dessus de la médiane des 6 dernières périodes (3 au moins) : « C'est
-  beaucoup plus que d'habitude (12 en général). Vérifiez avant d'enregistrer. » ;
-- 0 après 6 valeurs non nulles : « 0 alors que les 6 dernières valeurs ne l'étaient pas. Vérifiez
-  avant d'enregistrer. ».
+À la saisie, l'avertissement de valeur inhabituelle que prévoyait le lot 2 (une fonction pure de
+l'interface, sans suite) est remplacé par la règle de la base du lot V2 de la validation : la
+confirmation « Vérifiez ce chiffre » avant l'envoi, puis la validation par EJP Tech
+(`validation-metier.md`, 5). L'écran ne recopie plus de règle.
 
 ### 6.3 Données personnelles
 
@@ -881,27 +925,20 @@ Quatre couches, de la plus tôt à la plus tard :
    champs libres sont relus par EJP Tech. » Pour l'administration : « N'écrivez aucun nom ni
    information personnelle. » (règle 9 : ses textes ne passent pas en relecture). Proposé, pour
    EJP Tech : la même phrase que l'administration, car EJP Tech est le relecteur ; la règle 9 ne le
-   nomme pas (Q11).
+   nomme pas (Q10).
 2. Les refus de la base (6.1) et l'avertissement « ressemble à un prénom » (6.2).
-3. Lot 2 : la validation dans les cas à risque (4.3).
-4. Lot 2 : la relecture par EJP Tech de tout libellé et de toute définition écrits par un ministère
-   (écran 15), y compris après une correction. Pour la cible `indicateur`, la file suit ces règles,
-   qui changent `private.textes_a_relire` et `marquer_relu` :
-   - l'élément est « à relire » tant qu'aucune ligne de `moderation` n'a un `le` postérieur ou égal
-     à `indicateur.texte_le` (aujourd'hui, une seule décision par élément suffit à le dire relu) ;
-   - `marquer_relu` ne refuse (« Ce texte a déjà été relu. ») que si une telle ligne existe ;
-   - un élément relu reste 30 jours dans la file, comptés depuis `texte_le` à l'heure de Paris ;
-   - l'auteur est `texte_par` ; un texte écrit par l'administration ou EJP Tech n'entre pas dans
-     la file ;
-   - un ministère corrige trois fois au plus un même indicateur (4.2) ;
-   - « Masquer le texte » sur un libellé retire l'indicateur ; ses saisies restent sous « [texte
-     masqué par EJP Tech] ».
+3. La validation par EJP Tech de tout ajout d'un ministère (4.3, T30), qui vaut relecture : EJP
+   Tech lit le libellé et la définition en décidant. Le texte ne change plus ensuite, puisque le
+   ministère ne le corrige pas (4.6). La file de la Modération (écran 15) ne reçoit donc aucun
+   texte d'indicateur : `private.textes_a_relire` et `marquer_relu` ne changent pas.
+4. Le retrait pour confidentialité (ci-dessous), pour un texte validé qui pose problème après
+   coup : le libellé et la définition sont masqués ensemble, et l'indicateur est retiré.
 
 **Retirer pour confidentialité** (lot 1, administration et EJP Tech) : pour un chiffre jugé
 sensible après coup, comme « Interventions » saisi chaque dimanche sans la case. Le geste masque
 le libellé et la définition par « [retiré pour confidentialité] », retire l'indicateur et écrit une
 seule ligne de journal (motif « Confidentialité »). Ses valeurs ne s'affichent plus sur aucune
-fiche (`v_indicateur_suivi` l'écarte). Proposé (Q12) : la politique de lecture de `mesure` écarte
+fiche (`v_indicateur_suivi` l'écarte). Proposé (Q11) : la politique de lecture de `mesure` écarte
 aussi ses lignes, sauf pour EJP Tech (export de fin de vie, P13).
 
 Pas de liste de prénoms : trop fragile.
@@ -928,19 +965,16 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
 - **Adresse** : `/indicateurs`, nouvel onglet après « Sessions » (administration) et après
   « Modération » (EJP Tech).
 - **Contenu** :
-  - phrase : « 94 indicateurs actifs pour 22 ministères, dont 7 ajoutés par les ministères. » ; au
-    lot 2, « Un ajout attend une validation. » ;
-  - lot 2 : bloc « À valider (1) », s'il y a lieu : libellé, ministère, rythme, définition,
-    « depuis 3 jours », contrôles (« Libellé proche : Événements couverts, dans les suggestions ») ;
-    pour EJP Tech, sous le bloc, « Validez sur demande écrite de l'administration de l'église. »
-    (selon Q15) ;
+  - phrase : « 94 indicateurs actifs pour 22 ministères, dont 7 ajoutés par les ministères. » ;
+    s'il y a lieu, « 1 ajout attend la validation d'EJP Tech. », sans bouton ;
+  - pour EJP Tech, à côté de cette phrase, le lien « Ouvrir À valider » : la décision se prend
+    dans « À valider », jamais ici (V4 de la validation) ;
   - tableau : Ministère ; Indicateurs (« 8 sur 12, dont 1 ajouté par Kumi ») ; Prévus
     (« 6 à créer » et bouton « Créer », « Créés », « Aucun prévu » ou « À choisir ») ; Saisie
     (« 2 peu saisis » en orange avec le mot) ; Dernier changement (« 12 oct. »).
-- **Actions** : « Créer », ouvrir un ministère ; au lot 2, « Valider » et « Refuser » (motif en
-  boutons radio).
+- **Actions** : « Créer », ouvrir un ministère.
 - **États** : chargement ; aucun ministère (« Aucun ministère. Créez d'abord les ministères dans
-  Ministères et comptes. ») ; rien à valider (le bloc disparaît).
+  Ministères et comptes. ») ; rien à valider (la phrase disparaît).
 - L'écran 13 : la colonne « Indicateurs propres » devient un nombre et un lien vers cet écran ;
   la phrase « faites une demande à EJP Tech » est retirée.
 
@@ -949,15 +983,15 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
 - **Adresse** : `/indicateurs/:id`.
 - **Contenu** :
   - phrase : « Kumi suit 7 indicateurs sur 12 au plus : 6 prévus par la coordination et 1 ajouté
-    par Kumi. » ; au lot 2, « Ses ajouts écrits par lui passent par une validation (domaine
-    sensible). » ;
+    par Kumi. » ;
   - bloc « Prévus par la coordination » tant qu'il en reste à créer : la liste et le bouton
     « Créer ces 6 indicateurs » ; si le nom n'est pas reconnu, le choix « Choisir dans la liste de
     la coordination », avec « Aucun prévu » en dernier ;
   - sections « Chaque dimanche », « Chaque mois », « À ce jour », « Calculs », puis « Retirés »
     (repliée) ;
   - chaque ligne : libellé, définition, mentions (« grand compte », « en euros », « sensible : mois
-    écoulés seulement », « ajouté par Kumi le 12 oct. », au lot 2 « en attente depuis 2 jours ») et
+    écoulés seulement », « ajouté par Kumi le 12 oct. », « à valider par EJP Tech depuis 2
+    jours », avec pour EJP Tech le lien « Ouvrir À valider ») et
     usage (« Saisi 4 mois sur 5, dernier le 2 oct. », « Jamais saisi », « Peu saisi : 1 mois sur
     4 ») ;
   - pour EJP Tech seulement, le lien « Voir la fiche » (valeurs, T28).
@@ -1009,20 +1043,21 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
 - **Contenu** :
   - phrase : « Communication suit 7 indicateurs : 5 prévus par la coordination et 2 ajoutés par
     vous. Vous pouvez en ajouter 1 autre. » ;
-  - liste par rythme : libellé, origine, usage (« Saisi 4 mois sur 5 ») et, au lot 2, état (« En
-    attente de validation depuis 2 jours : vous pourrez le saisir dès qu'il sera validé, y compris
-    pour les périodes passées. », « Refusé le 8 oct. : domaine sensible, à créer par
-    l'administration. »).
-- **Actions** : « Ajouter un indicateur » ; sur ses ajouts, « Retirer » (motif : n'est plus suivi,
-  doublon, créé par erreur ; pour la source d'un calcul, le message de 4.2 à la place) et, au lot
-  2, « Corriger » (tant que rien n'est saisi, trois fois au plus).
+  - liste par rythme : libellé, origine, usage (« Saisi 4 mois sur 5 ») et état (« À valider par
+    EJP Tech depuis 2 jours. Vous pouvez déjà le saisir : le berger voit ses valeurs, marquées « à
+    valider ». », et, sous « Retirés », « Refusé le 8 oct. : « motif ». »).
+- **Actions** : « Ajouter un indicateur » ; sur un ajout à valider, « Retirer la demande » ; sur
+  ses ajouts validés, « Retirer » (motif : n'est plus suivi, doublon, créé par erreur ; pour la
+  source d'un calcul, le message de 4.2 à la place) et, au lot 2, « Remplacer » (le remplaçant est
+  à valider). Jamais « Corriger » (T30, V3 de la validation).
 - **Parcours d'ajout** (panneau) :
   1. Si une limite est atteinte, le panneau ne montre que l'explication et ce qu'il faut faire
      (messages de 4.2). Le bouton qui l'ouvre reste actif.
   2. « Suggestions » : les suggestions absentes de la fiche, avec rythme et définition, et un
-     bouton « Ajouter » chacune. Le message dépend du rythme : « « Demandes reçues » ajouté : il
-     apparaît dans vos chiffres du mois. » ou « ... il apparaît dans le formulaire du dimanche. »
-     (dimanche et à ce jour).
+     bouton « Envoyer pour validation » chacune (« Ajouter » si V1 n'est pas retenue). Le message
+     dépend du rythme : « « Demandes reçues » envoyé pour validation : vous pouvez déjà le saisir
+     dans vos chiffres du mois. » ou « ... dans le formulaire du dimanche. » (dimanche et à ce
+     jour).
   3. Au lot 1, dessous : « Rien ne convient ? Demandez un indicateur à l'administration de
      l'église. » Au lot 2, ce lien devient « Rien ne convient ? Écrire votre indicateur », qui ouvre
      trois champs : « Ce que vous comptez » (60, compteur, exemples « Publications, Demandes reçues,
@@ -1035,20 +1070,15 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
   5. Lot 2 : aperçu selon le rythme : « Dans le formulaire du mois : Publications, septembre 2026 »
      et « Sur votre fiche : Septembre 2026 : 14. Somme des mois depuis janvier : 112 (9 mois sur
      9). »
-  6. Lot 2 : texte « Le berger, le conseil et EJP Tech verront ce chiffre. Taux, moyennes et sommes
-     de l'année se calculent tout seuls. Pour la santé, l'accompagnement, les enfants ou l'argent,
-     demandez à l'administration de l'église. »
-  7. Lot 2 : bouton « Ajouter l'indicateur », ou « Envoyer pour validation » quand 4.3 l'exige,
-     avec la phrase « Kumi suit un domaine sensible : chaque ajout écrit par vous est validé par
-     l'administration de l'église avant la saisie. » (ou, pour un mot de la famille sensible, le
-     message de 6.1).
-  8. Réussite selon le rythme : « Indicateur ajouté : il apparaît dans vos chiffres du mois. » ou
-     « Indicateur ajouté : il apparaît dans le formulaire du dimanche. » ; au lot 2, « Envoyé pour
-     validation. Vous pourrez le saisir dès qu'il sera validé. »
-- **Panneau « Corriger »** (lot 2) : champs préremplis ; le rappel du ministère sous le premier ;
-  « Vous pouvez corriger le libellé et la définition tant que rien n'est saisi, trois fois au plus.
-  Pour compter autre chose ensuite, remplacez cet indicateur. » ; bouton « Enregistrer la
-  correction ». Dès la première valeur saisie, le bouton « Corriger » disparaît.
+  6. Lot 2 : texte « Le berger, le conseil et EJP Tech verront ce chiffre, marqué « à valider »
+     jusqu'à la décision d'EJP Tech. Taux, moyennes et sommes de l'année se calculent tout seuls.
+     Pour la santé, l'accompagnement, les enfants ou l'argent, demandez à l'administration de
+     l'église. »
+  7. Lot 2 : bouton « Envoyer pour validation », avec la phrase « EJP Tech vérifie chaque ajout.
+     En attendant, vous pouvez déjà le saisir. Vérifiez votre texte : il ne se corrige plus
+     ensuite. » (et, pour un mot de la famille sensible, l'avertissement de 6.1).
+  8. Réussite selon le rythme : « Envoyé pour validation. Vous pouvez déjà le saisir dans vos
+     chiffres du mois. » ou « ... dans le formulaire du dimanche. »
 - **États** : « Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et
   en FIJ se saisissent déjà chaque dimanche. » ; « Toutes les suggestions sont déjà sur votre
   fiche. ».
@@ -1067,11 +1097,13 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
   - champs vides, aide « Le total du mois. Si rien, enregistrez 0. » et la définition ;
   - sur le mois en cours, un indicateur sensible s'affiche sans champ : « Se saisit une fois le mois
     fini. » ;
-  - « Déjà saisi : 14, le 2 oct. Votre saisie la remplacera. » ; au lot 2, avertissements de 6.2 ;
-    un seul insert ; bouton « Enregistrer les chiffres du mois ».
+  - « Déjà saisi : 14, le 2 oct. Votre saisie la remplacera. » ; au lot V2 de la validation, la
+    confirmation « Vérifiez ce chiffre » (`validation-metier.md`, 5.5) ; un seul insert ; bouton
+    « Enregistrer les chiffres du mois ».
 - **« Vos saisies »** (accueil du ministère) gagne la ligne « Chiffres de septembre », « À faire »
   du 1er octobre jusqu'à ce que chaque indicateur du mois ait sa valeur de septembre.
-- Un calcul ou un indicateur en attente n'est jamais dans un formulaire.
+- Un calcul n'est jamais dans un formulaire. Un indicateur à valider y est, avec la mention « à
+  valider par EJP Tech » (V2 de la validation).
 
 ### 7.5 Fiche du ministère et vue du berger
 
@@ -1091,8 +1123,11 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
   janvier : 78 % (9 mois sur 9). » Avec un bas « à ce jour » de plus de 30 jours : « Taux de
   complétion : 40 % (12 sur 30 inscrits, relevé le 12 août). »
 - Un indicateur sensible : la valeur du mois fini seulement, sans « en cours ».
+- Un ajout à valider : à sa place, avec « à valider par EJP Tech depuis 2 jours » ; ses valeurs,
+  marquées, sans somme de l'année, sans courbe ni calcul (T30).
 - « Retirés (2) », replié, garde les valeurs ; un retiré sans saisie ou retiré pour confidentialité
-  n'y figure pas ; un calcul retiré y figure si ses sources ont des saisies.
+  n'y figure pas ; un calcul retiré y figure si ses sources ont des saisies ; un ajout refusé y
+  figure sans valeur, avec « Refusé le 8 oct. : « motif ». ».
 - Le ministère (12) a en plus « Saisir les chiffres du mois » et « Gérer mes indicateurs ».
 - **États** : « Pas encore saisi. » ; « Non calculé : demandes reçues de septembre non saisies. » ;
   aucun indicateur : « Ce ministère ne suit pas encore d'indicateur à lui. » (berger), « Votre
@@ -1101,28 +1136,28 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
 ### 7.6 Journal et modération
 
 - **Journal (06)** : les lignes de 5.10 ; « A saisi des chiffres » affiche « Publications
-  (septembre) » sans valeur pour un indicateur propre ; « un ajout non publié » pour le berger et
-  le conseil (lot 2).
-- **Modération (15)**, lot 2 : nouveau type d'élément « Indicateur de Kumi » (libellé, ce qu'on
-  compte), avec « Rien à signaler » et « Masquer le texte » ; champ « Libellé » ou « Définition ».
-  Un texte corrigé revient « à relire ». En tête, s'il y a lieu : « 1 ajout attend une
-  validation. » et le lien « Ouvrir Indicateurs ».
+  (septembre) » sans valeur pour un indicateur propre ; les décisions d'EJP Tech (« A validé »,
+  « A refusé ») sans le motif.
+- **Modération (15)** : aucun type d'élément « Indicateur » ; la validation vaut relecture (6.3).
+  En tête, s'il y a lieu : « 1 élément attend une validation. » et le lien « Ouvrir À valider »
+  (`validation-metier.md`, 7.5).
 
 ### 7.7 États et messages
 
-| Situation                                    | Texte                                                                                                                                       |
-| -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| Ajout réussi (ministère)                     | « Indicateur ajouté : il apparaît dans vos chiffres du mois. » (mois) ; « Indicateur ajouté : il apparaît dans le formulaire du dimanche. » |
-| Ajout en attente (lot 2)                     | « Envoyé pour validation. Vous pourrez le saisir dès qu'il sera validé. »                                                                   |
-| Validation (lot 2)                           | « Indicateur validé : Kumi peut le saisir. » ; refus : « Indicateur refusé. Kumi verra le motif. »                                          |
-| Retrait                                      | « Indicateur retiré, ses saisies restent sur la fiche. » ; sans saisie : « Indicateur retiré. »                                             |
-| Retrait pour confidentialité                 | « Indicateur retiré pour confidentialité. »                                                                                                 |
-| Retrait d'une source par un ministère        | « Ce chiffre sert au calcul « Taux de résolution » : demandez à l'administration de l'église de le retirer. »                               |
-| Correction refusée                           | « Cet indicateur a déjà une valeur saisie : il ne se corrige plus. Pour compter autre chose, remplacez-le. »                                |
-| Saisie au-dessus du plafond                  | « Entre 0 et 9 999. » (compte) ; « Entre 0 et 9 999 999. » (grand compte, euros)                                                            |
-| Saisie d'un mois futur                       | « Ce mois n'est pas encore commencé. »                                                                                                      |
-| Saisie d'un mois trop ancien                 | « Ce mois est trop ancien pour être saisi. »                                                                                                |
-| Page réservée (ministère sur `/indicateurs`) | « Cette page n'est pas disponible avec votre compte. », aucune requête                                                                      |
+| Situation                                    | Texte                                                                                                                              |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Ajout envoyé (ministère)                     | « Envoyé pour validation. Vous pouvez déjà le saisir dans vos chiffres du mois. » (mois) ; « ... dans le formulaire du dimanche. » |
+| Ajout réussi (administration, EJP Tech)      | « Indicateur ajouté. »                                                                                                             |
+| Décision d'EJP Tech                          | « Indicateur validé. » ; refus : « Indicateur refusé. Kumi verra le motif. »                                                       |
+| Correction par un ministère                  | « Retirez votre demande et envoyez-en une autre, ou remplacez l'indicateur. »                                                      |
+| Retrait                                      | « Indicateur retiré, ses saisies restent sur la fiche. » ; sans saisie : « Indicateur retiré. »                                    |
+| Retrait pour confidentialité                 | « Indicateur retiré pour confidentialité. »                                                                                        |
+| Retrait d'une source par un ministère        | « Ce chiffre sert au calcul « Taux de résolution » : demandez à l'administration de l'église de le retirer. »                      |
+| Correction refusée                           | « Cet indicateur a déjà une valeur saisie : il ne se corrige plus. Pour compter autre chose, remplacez-le. »                       |
+| Saisie au-dessus du plafond                  | « Entre 0 et 9 999. » (compte) ; « Entre 0 et 9 999 999. » (grand compte, euros)                                                   |
+| Saisie d'un mois futur                       | « Ce mois n'est pas encore commencé. »                                                                                             |
+| Saisie d'un mois trop ancien                 | « Ce mois est trop ancien pour être saisi. »                                                                                       |
+| Page réservée (ministère sur `/indicateurs`) | « Cette page n'est pas disponible avec votre compte. », aucune requête                                                             |
 
 Nouvelles adresses, à ajouter au tableau du BRIEF avec leur garde : `/indicateurs` et
 `/indicateurs/:id` (administration, EJP Tech), `/ma-fiche/indicateurs` et `/saisir/mois`
@@ -1132,22 +1167,21 @@ Nouvelles adresses, à ajouter au tableau du BRIEF avec leur garde : `/indicateu
 
 ### 8.1 Matrice des droits
 
-| Objet                                              | Ministère                                        | Berger, conseil                                                                | Administration                         | EJP Tech                        | `aal1`, anonyme |
-| -------------------------------------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------- | ------------------------------- | --------------- |
-| `indicateur` (lecture)                             | les communs et les siens, tous états             | tous, sauf `etat = 'en_attente'` et sauf `ne_en_attente and valide_le is null` | tous                                   | tous                            | rien            |
-| `indicateur` (écriture)                            | par fonctions seulement (4.6)                    | rien                                                                           | par fonctions                          | par fonctions                   | rien            |
-| `mesure` (ajout)                                   | le sien, indicateur actif et non calculé         | rien                                                                           | rien                                   | rien                            | rien            |
-| `mesure` (lecture)                                 | inchangée                                        | inchangée                                                                      | communs seulement                      | tout (T28)                      | rien            |
-| `v_mesure_periode`                                 | comme `mesure`                                   | comme `mesure`                                                                 | communs seulement                      | tout                            | rien            |
-| `v_indicateur_suivi`, `v_calcul`                   | les communs et les siens, avec valeurs           | lignes lisibles d'`indicateur`, avec valeurs                                   | toutes les lignes, valeurs des communs | toutes les lignes, avec valeurs | rien            |
-| `v_catalogue`                                      | rien                                             | rien                                                                           | oui                                    | oui                             | rien            |
-| `v_suggestions`                                    | pour sa fiche                                    | rien                                                                           | oui                                    | oui                             | rien            |
-| `v_usage_indicateurs`                              | rien                                             | rien                                                                           | oui                                    | oui                             | rien            |
-| `limites_indicateurs`, `verifier_libelle`          | sa fiche seulement, sans indice entre ministères | refusé (42501)                                                                 | toute fiche, avec indices              | toute fiche, avec indices       | refusé          |
-| fonctions d'écriture (5.8)                         | selon 4.6                                        | refusé (42501)                                                                 | selon 2                                | selon 2                         | refusé          |
-| `journal`, codes `indicateur_*` et `indicateurs_*` | lignes de sa fiche                               | toutes ; texte nul pour un ajout en attente ou jamais validé                   | toutes (aucune valeur)                 | toutes (journal technique)      | rien            |
-| `moderation`, cible `indicateur` (lot 2)           | rien                                             | rien                                                                           | rien                                   | oui                             | rien            |
-| `private.indicateur_prevu`, `private.terme`        | rien                                             | rien                                                                           | rien (vue `v_catalogue`)               | rien (vue `v_catalogue`)        | rien            |
+| Objet                                              | Ministère                                           | Berger, conseil                                                       | Administration                         | EJP Tech                                   | `aal1`, anonyme |
+| -------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | ------------------------------------------ | --------------- |
+| `indicateur` (lecture)                             | les communs et les siens, tous états                | tous, ajouts à valider compris (T30)                                  | tous                                   | tous                                       | rien            |
+| `indicateur` (écriture)                            | par fonctions seulement (4.6)                       | rien                                                                  | par fonctions                          | par fonctions                              | rien            |
+| `mesure` (ajout)                                   | le sien, indicateur actif ou à valider, non calculé | rien                                                                  | rien                                   | rien                                       | rien            |
+| `mesure` (lecture)                                 | inchangée                                           | inchangée                                                             | communs seulement                      | tout (T28)                                 | rien            |
+| `v_mesure_periode`                                 | comme `mesure`                                      | comme `mesure`                                                        | communs seulement                      | tout                                       | rien            |
+| `v_indicateur_suivi`, `v_calcul`                   | les communs et les siens, avec valeurs              | lignes lisibles d'`indicateur`, avec valeurs ; un ajout refusé écarté | toutes les lignes, valeurs des communs | toutes les lignes, avec valeurs            | rien            |
+| `v_catalogue`                                      | rien                                                | rien                                                                  | oui                                    | oui                                        | rien            |
+| `v_suggestions`                                    | pour sa fiche                                       | rien                                                                  | oui                                    | oui                                        | rien            |
+| `v_usage_indicateurs`                              | rien                                                | rien                                                                  | oui                                    | oui                                        | rien            |
+| `limites_indicateurs`, `verifier_libelle`          | sa fiche seulement, sans indice entre ministères    | refusé (42501)                                                        | toute fiche, avec indices              | toute fiche, avec indices                  | refusé          |
+| fonctions d'écriture (5.8)                         | selon 4.6 ; jamais `corriger_indicateur`            | refusé (42501)                                                        | selon 2 ; jamais `valider_indicateur`  | selon 2 ; `valider_indicateur`, seul (T30) | refusé          |
+| `journal`, codes `indicateur_*` et `indicateurs_*` | lignes de sa fiche                                  | toutes, ajouts à valider compris                                      | toutes (aucune valeur)                 | toutes (journal technique)                 | rien            |
+| `private.indicateur_prevu`, `private.terme`        | rien                                                | rien                                                                  | rien (vue `v_catalogue`)               | rien (vue `v_catalogue`)                   | rien            |
 
 Politique restrictive `aal2` sur `indicateur` comme ailleurs ; aucun GRANT `insert`, `update`,
 `delete` ni `truncate` sur `indicateur` ; rien pour `anon` ; chaque fonction commence par
@@ -1165,15 +1199,17 @@ Lot 1 :
 - **Sens figé** : `controler_indicateur` refuse un changement de rythme, de sorte, de ministère, de
   case sensible ou de source, et toute suppression, même au propriétaire ; correction refusée dès
   la première valeur saisie (pour un calcul, dès la première valeur d'une source) et sur une
-  suggestion ; `corriger_indicateur` avec « [texte masqué par EJP Tech] » refusé ; libellé masqué
-  sans retrait refusé ; définition d'un commun modifiable par une migration seulement ; « NA » et
+  suggestion ; `corriger_indicateur` avec « [retiré pour confidentialité] » refusé ; textes masqués
+  sans retrait refusés ; définition d'un commun modifiable par une migration seulement ; « NA » et
   « Visuels livrés ce mois » acceptés par le trigger.
 - **Ajouts d'un ministère** : suggestion acceptée sur sa fiche, refusée sur une autre (42501) ;
-  `creer_indicateur`, `creer_calcul` et `corriger_indicateur` refusés au ministère (42501, jusqu'au
-  lot 2) ; 4e ajout et 13e indicateur de la fiche refusés ;
-  retrait d'une source de calcul refusé ; berger, conseil et anonyme refusés ;
-  `limites_indicateurs` et `verifier_libelle` refusés sur la fiche d'un autre ministère, et sans
-  indice entre ministères.
+  suggestion ajoutée par un ministère née à valider (si V1 de la validation), saisissable, lue par
+  le berger et le conseil avec son état ; `creer_indicateur` et `creer_calcul` refusés au ministère
+  (42501, jusqu'au lot 2) ; `corriger_indicateur` toujours refusé au ministère (T30) ; 4e ajout et
+  13e indicateur de la fiche refusés, ajouts à valider compris ; retrait d'une source de calcul
+  refusé ; berger, conseil et anonyme refusés ; `limites_indicateurs` et `verifier_libelle` refusés
+  sur la fiche d'un autre ministère, et sans indice entre ministères. La validation elle-même est
+  testée avec la validation (`validation-metier.md`, 8.6).
 - **Remplacement** : un ministère ne remplace ni un prévu, ni l'ajout d'un autre ministère, ni un
   commun (42501) ; l'administration ne remplace pas un indicateur d'une autre fiche ; le remplaçant
   d'un sensible est sensible ; limites comptées sans l'indicateur remplacé (une fiche à 12 et un
@@ -1199,8 +1235,8 @@ Lot 1 :
   peut rien saisir.
 - **Journal et données personnelles** : une seule ligne par geste ; aucun libellé, aucune
   définition ni valeur propre dans `detail` ; `p_modele` du journal toujours un code du catalogue ;
-  un marqueur placé dans un libellé et une définition, une fois masqués, ne se trouve plus nulle
-  part (`indicateur`, `journal`, `moderation`).
+  un marqueur placé dans un libellé et une définition, une fois retirés pour confidentialité, ne se
+  trouve plus nulle part (`indicateur`, `journal`).
 
 Lot 2 :
 
@@ -1213,8 +1249,9 @@ Lot 2 :
   en cours »), libellé commun et libellé de suggestion refusés.
 - **Jeu des 185 libellés** : une table de test reprend chaque demande de l'annexe (colonne
   « Demande »), son rythme proposé et le résultat attendu quand un ministère la tape telle quelle :
-  acceptée, en validation, ou la famille qui la refuse. Attendus d'après 6.1, vérifiés sur une
-  maquette de la fonction : 100 refusées, 76 acceptées, 9 en validation.
+  acceptée (donc à valider par EJP Tech, avec ou sans l'indice « domaine sensible »), ou la famille
+  qui la refuse. Attendus d'après 6.1, vérifiés sur une maquette de la fonction : 100 refusées et
+  85 acceptées, dont 9 avec l'indice « domaine sensible ».
   - Les 18 « Valeur calculée » et les 12 « Commun » sont refusées.
   - Les « Conforme » hors communs sont acceptées, sauf, en connaissance de cause : lignes 16, 18,
     134, 164 et 269, refusées pour leur période (le ministère écrit « NA » et choisit « Chaque
@@ -1222,22 +1259,17 @@ Lot 2 :
     un mot de période est refusée, jamais nettoyée sans le dire.
   - Les « Non conforme » sont refusées, sauf les lignes 154 (« Articles les plus vendus ») et 216
     (« Besoins en matériels ») : un classement et une liste ne se reconnaissent pas à leurs mots ;
-    la définition obligatoire et la relecture les arrêtent.
-  - Les « Domaine sensible » partent en validation, sauf les lignes 194 et 206, refusées pour leur
-    période ; « Interventions » de Sécurité (l. 241) part aussi en validation.
-- **Validation** : un compte écrit par un ministère qui suit un sensible naît en attente, une
-  suggestion est active ; saisie refusée en attente ; validé, saisie acceptée y compris pour un
-  dimanche passé ; un ajout refusé, puis un ajout retiré par le ministère avant validation, restent
-  illisibles par le berger et le conseil dans `indicateur`, `v_journal` (`cible_texte` nul) et
-  `v_indicateur_suivi`, et lisibles par l'administration et EJP Tech ; ministère sans prévus
-  créés : en attente ; sensible retiré sans saisie : plus de validation ; texte de la famille
-  sensible chez un ministère non sensible : en attente ; validation refusée au ministère.
-- **Correction et relecture** : correction par le ministère acceptée sans saisie, refusée après la
-  première, refusée sur une suggestion ou un prévu (`modele_code` non nul), refusée à la
-  quatrième ; texte relu, puis corrigé, de retour dans `v_textes_a_relire`, puis relu à nouveau ;
-  texte corrigé par l'administration absent de la file.
-- **Limite sur 30 jours** : 4e ajout en 30 jours refusé (un retiré compris), date de la prochaine
-  place calculée à l'heure de Paris.
+    la définition obligatoire et la validation par EJP Tech les arrêtent.
+  - Les « Domaine sensible » sont acceptées avec l'indice « domaine sensible », sauf les lignes 194
+    et 206, refusées pour leur période ; « Interventions » de Sécurité (l. 241) porte aussi
+    l'indice.
+- **Comptes écrits** : un compte écrit par un ministère naît à valider, quel que soit le
+  ministère ; saisie acceptée en attente, valeurs hors des sommes ; validé : actif ; refusé :
+  retiré avec le motif « Refusé », valeurs absentes de `v_indicateur_suivi` pour le berger et le
+  conseil ; remplacement par le ministère : le remplaçant naît à valider ; correction par le
+  ministère refusée.
+- **Limite sur 30 jours** : 4e ajout en 30 jours refusé (un retiré compris, un refusé non compris),
+  date de la prochaine place calculée à l'heure de Paris.
 
 ### 8.3 Tests existants à reprendre
 
@@ -1249,42 +1281,48 @@ revus), `jeu-exemple` (nombre d'envois de Communication), `structure`, `rls-chif
 
 - **Vitest** : libellés des périodes (« Depuis juillet », « Octobre en cours »), phrases d'usage,
   message de réussite selon le rythme, plafond selon la sorte, schémas Zod (longueurs et rythmes
-  seulement : les mots restent dans la base) ; au lot 2, alerte de valeur inhabituelle.
+  seulement : les mots restent dans la base) ; mention « à valider par EJP Tech depuis 2 jours ».
 - **E2E** (1440, 834 et 390 px, audit axe), lot 1 :
   1. l'administration crée les prévus de Kumi, ajoute un calcul pour Tech, retire un indicateur
      avec un motif et en retire un autre pour confidentialité ;
-  2. Communication, qui n'a aucun ajout dans le jeu d'exemple, ajoute les suggestions « Demandes
+  2. Communication, qui n'a aucun ajout dans le jeu d'exemple, envoie les suggestions « Demandes
      reçues », « Événements couverts » et « Projets réalisés », lit le refus d'un quatrième ajout,
-     saisit les chiffres de septembre et retrouve « 1 mois sur 1 » sur sa fiche ;
+     saisit les chiffres de septembre ; le berger lit les ajouts « à valider » ; EJP Tech les
+     valide ; Communication retrouve « 1 mois sur 1 » sur sa fiche ;
   3. le berger lit un calcul et la mention « Ajouté par Communication » ;
   4. un ministère qui ouvre `/indicateurs` ne reçoit aucune donnée.
-- **E2E**, lot 2 : 5. Communication écrit « Campagnes », tente « Taux d'engagement » et lit le refus ; 6. Kumi envoie « Pages Roses : ateliers » pour validation, l'administration la valide, Kumi la
-  saisit ; un autre ajout refusé reste invisible du berger ; 7. EJP Tech masque un libellé : l'indicateur passe dans « Retirés ».
+- **E2E**, lot 2 :
+  - Communication écrit « Campagnes », tente « Taux d'engagement » et lit le refus ;
+  - Kumi envoie « Pages Roses : ateliers » et le saisit ; le berger le lit « à valider » ; EJP Tech
+    le valide dans « À valider » ; un autre ajout refusé passe sous « Retirés » sans valeur ;
+  - EJP Tech retire pour confidentialité un libellé validé : l'indicateur passe dans « Retirés ».
 
 ## 9. Chemin et phasage
 
-| Moment                                     | Contenu                                                                                                                                                           | Effort (jours de travail d'EJP Tech avec Claude Code) |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| Après l'étape 3                            | migration T28, déjà décidée                                                                                                                                       | déjà prévu                                            |
-| Étape 4a, nouvelle (lot 1)                 | les six migrations du lot 1 (5.1), `seed.sql`, pgTAP du lot 1, types, `src/data/`                                                                                 | 4 à 5                                                 |
-| Étape 4, fiche et saisies                  | fiche par rythme, sommes et complétude dans le temps, calculs, « Chiffres du mois », « Vos saisies », définitions sous les champs                                 | 3 à 4                                                 |
-| Étape 6, administration                    | écran Indicateurs et ses panneaux, usage, retrait pour confidentialité, journal, colonne de l'écran 13                                                            | 2 à 3                                                 |
-| Étape 6, ou juste après la mise en service | « Mes indicateurs » : suggestions et retrait                                                                                                                      | 1                                                     |
-| Étape 8, déploiement                       | ordre ci-dessous ; recette en préproduction avec 22 ministères fictifs                                                                                            | compris                                               |
-| Après la mise en service (lot 2, si Q1)    | `indicateurs_ajouts_libres`, comptes écrits par les ministères, validation, correction, relecture, limite sur 30 jours, « Rendre officiel », 185 libellés, alerte | 4 à 6                                                 |
+| Moment                                     | Contenu                                                                                                                                          | Effort (jours de travail d'EJP Tech avec Claude Code) |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Après l'étape 3                            | migration T28, déjà décidée                                                                                                                      | déjà prévu                                            |
+| Étape 4a, nouvelle (lot 1)                 | les six migrations du lot 1 (5.1), `seed.sql`, pgTAP du lot 1, types, `src/data/`                                                                | 4 à 5                                                 |
+| Étape 4, fiche et saisies                  | fiche par rythme, sommes et complétude dans le temps, calculs, « Chiffres du mois », « Vos saisies », définitions sous les champs                | 3 à 4                                                 |
+| Étape 6, administration                    | écran Indicateurs et ses panneaux, usage, retrait pour confidentialité, journal, colonne de l'écran 13                                           | 2 à 3                                                 |
+| Étape 6, ou juste après la mise en service | « Mes indicateurs » : suggestions et retrait                                                                                                     | 1                                                     |
+| Étape 8, déploiement                       | ordre ci-dessous ; recette en préproduction avec 22 ministères fictifs                                                                           | compris                                               |
+| Après la mise en service (lot 2, si Q1)    | `indicateurs_ajouts_libres`, comptes écrits par les ministères (à valider), mots refusés, limite sur 30 jours, « Rendre officiel », 185 libellés | 3 à 4                                                 |
 
 - **Total** : lot 1, 10 à 13 jours avant la mise en service (9 à 12 si « Mes indicateurs » vient
-  juste après) ; lot 2, 4 à 6 jours ensuite. Le plan de P29 (lots de migration, sans écran)
-  coûtait 6 à 9 jours : le lot 1 en coûte 3 à 4 de plus avant la mise en service. L'estimation
-  précédente (13 à 17 jours, dont 11 à 14 avant la mise en service) mettait presque tout avant ;
-  le découpage ajoute environ un jour (une migration et une recette de plus) mais repousse 4 à 6
-  jours après la mise en service.
+  juste après) ; lot 2, 3 à 4 jours ensuite. La validation des ajouts (état « à valider », écran
+  « À valider ») se compte avec la validation métier (`validation-metier.md`, section 9 : 1 jour
+  de plus à l'étape 4a) ; la correction par le ministère, la relecture des textes d'indicateur et
+  l'alerte de valeur inhabituelle sortent du lot 2, d'où 3 à 4 jours au lieu de 4 à 6. Le plan de
+  P29 (lots de migration, sans écran) coûtait 6 à 9 jours : le lot 1 en coûte 3 à 4 de plus avant
+  la mise en service. L'estimation précédente (13 à 17 jours, dont 11 à 14 avant la mise en
+  service) mettait presque tout avant.
 - **Repli** : lot 1 sans « Mes indicateurs » ; les ministères demandent tout à l'administration.
 - **Ordre de l'étape 8** : les migrations ; puis l'administration crée les 22 ministères ; puis
   « Créer » (ou « Aucun prévu ») sur chaque ligne de l'écran Indicateurs, de préférence avant
-  l'activation des comptes des ministères. Au lot 1, cet ordre n'est plus une protection : un
-  ministère n'écrit aucun texte. Au lot 2, la base l'impose : tant que les prévus d'un ministère ne
-  sont pas créés, ses ajouts écrits par lui naissent en attente (4.3). Si l'écran n'était pas prêt,
+  l'activation des comptes des ministères. Cet ordre n'est plus une protection, puisque tout ajout
+  d'un ministère est à valider (4.3) ; il évite seulement qu'EJP Tech reçoive des suggestions qu'un
+  prévu couvre déjà, et limite la file de la première semaine. Si l'écran n'était pas prêt,
   une migration ponctuelle appellerait la même fonction interne pour les ministères existants
   (noms normalisés), comme le « à défaut » de T27.
 - **Section 13 du BRIEF** : « 4a » s'ajoute entre 3 et 4 si T29 est confirmée ; 4 et 6 gagnent le
@@ -1298,74 +1336,73 @@ revus), `jeu-exemple` (nombre d'envois de Communication), `structure`, `rls-chif
 
 ### Risques
 
-| Risque                                                                                                    | Parade                                                                                                                                            |
-| --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| La liste de mots refuse à tort (« écoute » pour un chœur) ou laisse passer (« PEC » mal écrit, un prénom) | lot 2 seulement ; la famille sensible envoie en validation au lieu de refuser ; avertissement « prénom », relecture ; liste changée par migration |
-| Le berger lit un libellé avant la relecture d'EJP Tech (lot 2)                                            | même risque que les points d'attention, accepté par le BRIEF ; texte plus court et filtré ; validation dans les cas à risque                      |
-| Compte partagé : un ajout ou un retrait n'est imputable à personne                                        | limites, motif obligatoire, journal ; le ministère ne retire que ses ajouts                                                                       |
-| Désordre : 22 fiches de 12 lignes                                                                         | limites, usage et « peu saisi » visibles, suggestions communes                                                                                    |
-| Pas de notification : une validation attend qu'on ouvre l'écran (lot 2)                                   | file courte, signalée dans la Modération hebdomadaire ; rattrapage des périodes passées                                                           |
-| Une définition précisée après la première saisie demande un remplacement (deux courbes)                   | écrire les définitions de la vague 1 à partir des réponses K17 à K55 ; corriger avant la première saisie                                          |
-| Un retrait par erreur coupe une série (pas de réactivation)                                               | fenêtre de confirmation qui le dit ; l'ancienne série reste lisible sous « Retirés »                                                              |
-| Saisir le mois en cours puis le corriger donne des sommes provisoires                                     | le mois en cours reste hors de la somme et de la complétude                                                                                       |
-| Les tests de base ne tournent qu'en CI                                                                    | un seul trigger nouveau, fonctions sur le modèle de `marquer_traite`, matrice écrite en données                                                   |
-| 10 à 13 jours pour un outil temporaire (question C1 de `kpi-ministeres.md`)                               | lot 2 après la mise en service, seulement s'il est confirmé ; repli sans « Mes indicateurs »                                                      |
+| Risque                                                                                                    | Parade                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| La liste de mots refuse à tort (« écoute » pour un chœur) ou laisse passer (« PEC » mal écrit, un prénom) | lot 2 seulement ; la famille sensible avertit sans refuser ; avertissement « prénom » ; validation par EJP Tech ; liste changée par migration               |
+| Le berger lit un libellé avant la validation d'EJP Tech (T30)                                             | même risque que les points d'attention, accepté par le BRIEF ; texte plus court et filtré ; EJP Tech décide dans la semaine (alerte de 7 jours)             |
+| Compte partagé : un ajout ou un retrait n'est imputable à personne                                        | limites, motif obligatoire, journal ; le ministère ne retire que ses ajouts                                                                                 |
+| Désordre : 22 fiches de 12 lignes                                                                         | limites, usage et « peu saisi » visibles, suggestions communes                                                                                              |
+| Pas de notification : une validation attend qu'EJP Tech ouvre « À valider »                               | nombre dans l'onglet « À valider » ; l'ajout se saisit déjà ; alerte à l'administration après 7 jours ; deux comptes EJP Tech (`validation-metier.md`, 5.7) |
+| Une définition précisée après la première saisie demande un remplacement (deux courbes)                   | écrire les définitions de la vague 1 à partir des réponses K17 à K55 ; corriger avant la première saisie                                                    |
+| Un retrait par erreur coupe une série (pas de réactivation)                                               | fenêtre de confirmation qui le dit ; l'ancienne série reste lisible sous « Retirés »                                                                        |
+| Saisir le mois en cours puis le corriger donne des sommes provisoires                                     | le mois en cours reste hors de la somme et de la complétude                                                                                                 |
+| Les tests de base ne tournent qu'en CI                                                                    | un seul trigger nouveau, fonctions sur le modèle de `marquer_traite`, matrice écrite en données                                                             |
+| 10 à 13 jours pour un outil temporaire (question C1 de `kpi-ministeres.md`)                               | lot 2 après la mise en service, seulement s'il est confirmé ; repli sans « Mes indicateurs »                                                                |
 
 ### Questions pour EJP Tech
 
+Retirées le 5 octobre 2026, parce que la personne responsable y a répondu (T30) : l'ancienne Q2
+(validation seulement dans les cas à risque : remplacée par la validation de tout ajout, par EJP
+Tech seul), et, pour la coordination, les anciennes Q14 (acceptation par l'administration avant
+d'être visible) et Q22 (ministère sensible sans indicateur sensible). La liste est renumérotée ;
+les questions propres à la validation sont V1 à V30 de `validation-metier.md`.
+
 - **Q1** : lot 1 avant la mise en service (ajouts des ministères limités aux suggestions, en un
-  clic), lot 2 (comptes écrits par les ministères) après, s'il reste utile : d'accord ? Ou tout
-  avant la mise en service, ou pas de lot 2 ?
-- **Q2** : au lot 2, validation d'un compte écrit par un ministère seulement dans les cas de 4.3
-  (domaine sensible, prévus pas encore créés, mot de la famille « sensible ») : d'accord ? Sinon,
-  A, C ou D de 4.3 ?
-- **Q3** : limites de 3 ajouts par ministère et de 12 indicateurs par fiche (lot 1), de 3 ajouts
-  par 30 jours et de 3 corrections par indicateur (lot 2) ?
-- **Q4** : un ministère ne lit plus que les définitions des communs et des siennes ?
-- **Q5** : plafond fixé par sorte de nombre (compte, grand compte, euros), sans unité « jours » ni
+  clic, à valider par EJP Tech), lot 2 (comptes écrits par les ministères) après, s'il reste
+  utile : d'accord ? Ou tout avant la mise en service, ou pas de lot 2 ?
+- **Q2** : limites de 3 ajouts par ministère et de 12 indicateurs par fiche, ajouts à valider
+  compris (lot 1), et de 3 ajouts par 30 jours, retirés compris et refusés non compris (lot 2) ?
+- **Q3** : un ministère ne lit plus que les définitions des communs et des siennes ?
+- **Q4** : plafond fixé par sorte de nombre (compte, grand compte, euros), sans unité « jours » ni
   colonne `groupe`, et « minutes » seulement si K22 (modifie T26) ?
-- **Q6** : bouton « Créer » des prévus au lieu du trigger sur `ministere` (modifie T27) ?
-- **Q7** : retrait sans suppression ni réactivation, même sans saisie ?
-- **Q8** : libellé et définition corrigés seulement tant que rien n'est saisi, puis par
-  remplacement ?
-- **Q9** : « Mes indicateurs » (suggestions) avec l'étape 6, ou juste après la mise en service ?
-- **Q10** : les lignes brutes de `mesure` d'un indicateur sensible restent lisibles par l'API (3.7),
+- **Q5** : bouton « Créer » des prévus au lieu du trigger sur `ministere` (modifie T27) ?
+- **Q6** : retrait sans suppression ni réactivation, même sans saisie ?
+- **Q7** : libellé et définition corrigés seulement tant que rien n'est saisi, par
+  l'administration ou EJP Tech, puis par remplacement ? (Le ministère, lui, ne corrige jamais :
+  V3 de la validation.)
+- **Q8** : « Mes indicateurs » (suggestions) avec l'étape 6, ou juste après la mise en service ?
+- **Q9** : les lignes brutes de `mesure` d'un indicateur sensible restent lisibles par l'API (3.7),
   tant que la coordination ne retient pas le seuil « moins de 3 » (K5c) ?
-- **Q11** : les textes écrits par EJP Tech sur l'écran Indicateurs ne passent pas en relecture,
+- **Q10** : les textes écrits par EJP Tech sur l'écran Indicateurs ne passent pas en relecture,
   comme ceux de l'administration (la règle 9 ne nomme que l'administration) ?
-- **Q12** : un indicateur retiré pour confidentialité disparaît aussi de la lecture de `mesure` par
+- **Q11** : un indicateur retiré pour confidentialité disparaît aussi de la lecture de `mesure` par
   l'API, sauf pour EJP Tech (export de fin de vie) ?
 
 ### Questions pour la coordination
 
-- **Q13** : les ministères peuvent-ils ajouter jusqu'à 3 indicateurs à eux, visibles du berger et
-  du conseil avec la mention « Ajouté par le ministère » (questions C2 et C3 de
-  `kpi-ministeres.md`) ?
-- **Q14** : pour Santé, Social, Kumi, Eagles et Prodiges Junior, un indicateur écrit par le
-  ministère doit-il être accepté par l'administration de l'église avant d'être visible du berger
-  (lot 2) ?
-- **Q15** : qui décide des indicateurs ? Proposé : l'administration de l'église décide des gestes
-  qui changent ce qui est suivi (retirer, remplacer, valider ou refuser un ajout, rendre officiel,
-  indicateur sensible ou en euros, calcul) ; EJP Tech ne les fait que sur sa demande écrite (P07).
-  Ou bien EJP Tech peut-il les faire de lui-même ?
-- **Q16** : un indicateur prévu par la coordination peut-il être retiré ou remplacé par
+- **Q12** : les ministères peuvent-ils ajouter jusqu'à 3 indicateurs à eux, visibles du berger et
+  du conseil avec la mention « Ajouté par le ministère », marqués « à valider » jusqu'à la
+  décision d'EJP Tech (questions C2 et C3 de `kpi-ministeres.md`) ?
+- **Q13** : la validation des ajouts des ministères revient à EJP Tech seul (décidé, T30). Pour les
+  autres gestes qui changent ce qui est suivi (retirer, remplacer, rendre officiel, indicateur
+  sensible ou en euros, calcul), EJP Tech agit-il de lui-même, comme l'administration, ou
+  seulement sur sa demande écrite (P07 : EJP Tech demande, l'église décide) ?
+- **Q14** : un indicateur prévu par la coordination peut-il être retiré ou remplacé par
   l'administration de l'église sans votre accord ?
-- **Q17** : l'administration de l'église voit les définitions et l'usage (« saisi 4 mois sur 5 »),
+- **Q15** : l'administration de l'église voit les définitions et l'usage (« saisi 4 mois sur 5 »),
   jamais les valeurs : d'accord (P06) ?
-- **Q18** (aussi pour EJP Tech) : le journal ne montre plus aucune valeur d'indicateur propre ; le
+- **Q16** (aussi pour EJP Tech) : le journal ne montre plus aucune valeur d'indicateur propre ; le
   berger y lit « A saisi des chiffres : Publications (septembre) » et trouve la valeur sur la
   fiche. D'accord (P29) ?
-- **Q19** : qui écrit « Ce qu'on compte » des indicateurs prévus : la coordination, chaque
+- **Q17** : qui écrit « Ce qu'on compte » des indicateurs prévus : la coordination, chaque
   ministère, ou EJP Tech à partir des réponses K17 à K55 ?
-- **Q20** : la liste des suggestions de 5.11 convient-elle ?
-- **Q21** : la somme de l'année part du 1er janvier ; pour un indicateur ajouté en cours d'année,
+- **Q18** : la liste des suggestions de 5.11 convient-elle ?
+- **Q19** : la somme de l'année part du 1er janvier ; pour un indicateur ajouté en cours d'année,
   de son ajout, ou du plus ancien mois de l'année rattrapé ; le mois en cours n'y entre qu'une fois
   fini. D'accord (K2, K3) ?
-- **Q22** : si un ministère d'un domaine sensible n'a plus d'indicateur sensible dans ses six (K13,
-  K5, K56b), ses indicateurs écrits par lui doivent-ils encore être acceptés avant d'être visibles ?
-- **Q23** : si le retard du début du culte est retenu (K22), que saisit-on quand le culte commence
+- **Q20** : si le retard du début du culte est retenu (K22), que saisit-on quand le culte commence
   en avance : 0, ou une avance comptée à part ?
-- **Q24** : avant la vague 1, les réponses aux questions C1 à C3, K1, K5, K6, K7, K8, K13, K22 et
+- **Q21** : avant la vague 1, les réponses aux questions C1 à C3, K1, K5, K6, K7, K8, K13, K22 et
   K56 de `kpi-ministeres.md` (section 8) restent nécessaires : quand peut-on les avoir ?
 
 ## 11. Comparaison des trois conceptions étudiées
@@ -1383,7 +1420,7 @@ Défauts communs aux trois, et réponse de cette synthèse :
 
 - **Ajout seulement** : aucune suppression, aucun cache ; les seuls changements d'`indicateur` sont
   listés en 5.9 et contrôlés par un trigger.
-- **Lecture par l'administration** : définitions et usage, jamais une valeur (4.4, Q17).
+- **Lecture par l'administration** : définitions et usage, jamais une valeur (4.4, Q15).
 - **Complétude d'un indicateur ajouté en cours d'année** : règle unique, départ toujours nommé à
   l'écran (3.4).
 - **Désordre et nettoyage** : usage et « peu saisi » visibles par l'administration, retrait avec
@@ -1391,3 +1428,6 @@ Défauts communs aux trois, et réponse de cette synthèse :
 - **Effort** : cette synthèse gardait elle aussi une quinzaine de fonctions et six vues. La revue
   du 5 octobre l'a découpée en deux lots : le lot 1 (huit fonctions) avant la mise en service, le
   lot 2 (texte libre des ministères) seulement s'il est confirmé (section 9).
+- **Validation** : les trois conceptions confiaient la validation à l'administration, dans
+  certains cas. Depuis la décision de la personne responsable (T30), tout ajout d'un ministère est
+  validé par EJP Tech seul, et reste visible du berger et du conseil pendant l'attente (4.3).
