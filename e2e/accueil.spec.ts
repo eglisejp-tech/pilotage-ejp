@@ -54,8 +54,18 @@ test.describe('sans session', () => {
     await auditer(page)
   })
 
+  test("la page Conditions d'utilisation se lit sans connexion", async ({ page }) => {
+    await page.goto('/connexion')
+    await page.getByRole('link', { name: "Conditions d'utilisation" }).click()
+    await expect(page).toHaveURL(/\/conditions$/)
+    await expect(
+      page.getByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
+    ).toBeVisible()
+    await auditer(page)
+  })
+
   test('ne défile pas horizontalement', async ({ page }) => {
-    for (const adresse of ['/connexion', '/confidentialite', '/compte-desactive']) {
+    for (const adresse of ['/connexion', '/confidentialite', '/conditions', '/compte-desactive']) {
       await page.goto(adresse)
       const debordement = await page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,

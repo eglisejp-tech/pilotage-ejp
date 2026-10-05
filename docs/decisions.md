@@ -180,16 +180,16 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : l'offre gratuite de Supabase n'a ni sauvegarde, ni réglage de session, et se met en pause.
 - **Décision** : préproduction sur l'offre gratuite (données fictives) ; production sur l'offre Pro, région Paris ; front sur Netlify, offre gratuite. Comptes, organisations et moyens de paiement au nom de l'église.
 - **Origine** : Proposition EJP Tech
-- **Statut** : Proposé, à confirmer par la coordination
+- **Statut** : Proposé, à confirmer par la coordination. Front sur Netlify décidé par EJP Tech le 5 octobre 2026 : Vercel a été envisagé, mais son offre gratuite est réservée à un usage personnel. Projet Supabase de préproduction créé le 5 octobre 2026 (`ugbitornbspatpcowlvg`, région Paris, offre gratuite).
 - **BRIEF** : section 5
 
 ### P13. Données personnelles et fin de vie
 
 - **Date** : 30 septembre 2026
 - **Sujet** : l'outil traite des emails et révèle une appartenance religieuse ; il est temporaire.
-- **Décision** : inscription au registre des traitements, page « Confidentialité », sous-traitants sous contrat, aucun traceur. Fin de vie décidée par la coordination : annonce un mois avant, export final remis à la coordination, suppression des projets et des comptes de service, archivage du dépôt.
+- **Décision** : inscription au registre des traitements, page « Confidentialité », sous-traitants sous contrat, aucun traceur. Fin de vie décidée par la coordination : annonce au moins une semaine avant, export final remis à la coordination, suppression des projets et des comptes de service, archivage du dépôt.
 - **Origine** : Proposition EJP Tech
-- **Statut** : Proposé, à confirmer par la coordination
+- **Statut** : Décidé le 5 octobre 2026 par EJP Tech, la coordination n'ayant rien à ajouter ; le préavis passe d'un mois à au moins une semaine (voir T17)
 - **BRIEF** : section 7 (« Données personnelles »), section 13 (étape 8)
 
 ### P14. Calculs affichés
@@ -344,5 +344,14 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : le BRIEF demande `[auth.email] enable_signup = false` pour fermer l'inscription.
 - **Décision** : `[auth.email] enable_signup = true`. Raison : dans la CLI Supabase, cette clé active le fournisseur email lui-même. À false, toute connexion par mot de passe est refusée (`email_provider_disabled`), constaté sur la première CI de l'étape 2. L'inscription reste fermée par `[auth] enable_signup = false`. Sur les projets distants, même logique : fournisseur Email activé, « Allow new users to sign up » désactivé.
 - **Origine** : CI de l'étape 2 (constat technique), le BRIEF demandant de vérifier chaque nom de clé
-- **Statut** : Appliqué, à confirmer par la personne responsable
+- **Statut** : Décidé, confirmé par la personne responsable le 5 octobre 2026
 - **BRIEF** : section 8 (« Supabase, local », ligne 906) ; le BRIEF n'est pas modifié
+
+### T17. Conditions d'utilisation et politique de confidentialité
+
+- **Date** : 5 octobre 2026
+- **Sujet** : Google demande une politique de confidentialité pour publier la connexion Google ; le BRIEF ne prévoit pas de conditions d'utilisation.
+- **Décision** : nouvelle page publique `/conditions` (« Conditions d'utilisation »), reliée depuis l'écran 16, le pied de page et le menu, à côté de « Confidentialité ». Le texte de `/confidentialite` est complété : responsable (l'Église des Jeunes Prodiges, par son ministère EJP Tech, 21 rue des Vieilles Vignes, 77183 Croissy-Beaubourg), contact `eglisejp.tech@gmail.com`, bases légales (articles 6.1.f et 9.2.d du RGPD), sous-traitants et transferts hors UE, durées de conservation (vie de l'outil, journaux techniques au plus 1 an, sauvegardes 7 jours), droits et réclamation à la CNIL. Un départ d'une personne d'un compte partagé est signalé sans délai à l'administration de l'église et à EJP Tech.
+- **Origine** : EJP Tech, textes validés par la coordination
+- **Statut** : Décidé
+- **BRIEF** : section 7 (« Données personnelles »), section 9 (« Adresses ») ; le BRIEF n'est pas modifié, la route `/conditions` s'ajoute à son tableau des adresses

@@ -256,6 +256,18 @@ describe('routes', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Confidentialité' })).toBeInTheDocument()
   })
 
+  it("la page Conditions d'utilisation se lit sans connexion", () => {
+    installer({})
+    afficher('/conditions')
+    expect(
+      screen.getByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Confidentialité' })).toHaveAttribute(
+      'href',
+      '/confidentialite',
+    )
+  })
+
   it("affiche l'aperçu de « Cette semaine » en développement, selon le profil demandé", () => {
     afficher('/apercu/cette-semaine?profil=admin_eglise')
     expect(screen.getByRole('link', { name: "Administration de l'église" })).toHaveAttribute(

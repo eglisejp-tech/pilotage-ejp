@@ -14,6 +14,7 @@ import { Garde } from '@/features/session/Garde'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
 import { PageApplication } from '@/pages/PageApplication'
+import { PageConditions } from '@/pages/PageConditions'
 import { PageConfidentialite } from '@/pages/PageConfidentialite'
 import { PageIntrouvable } from '@/pages/PageIntrouvable'
 
@@ -42,6 +43,7 @@ export const routes: RouteObject[] = [
       ...routesDeDeveloppement,
       { path: '/acces', element: <PageAcces /> },
       { path: '/confidentialite', element: <PageConfidentialite /> },
+      { path: '/conditions', element: <PageConditions /> },
       { path: '/compte-desactive', element: <PageCompteDesactive /> },
       {
         element: <Garde zone="connexion" />,

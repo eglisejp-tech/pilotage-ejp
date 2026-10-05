@@ -23,12 +23,18 @@ export function MiseEnPage({ children, ...entete }: Proprietes) {
         <div className="mx-auto box-content max-w-contenu px-marge py-10">{children}</div>
       </main>
       <footer>
-        <div className="mx-auto box-content max-w-contenu px-marge pb-6">
+        <div className="mx-auto box-content flex max-w-contenu flex-wrap gap-x-6 px-marge pb-6">
           <Link
             to="/confidentialite"
             className="inline-flex min-h-cible items-center text-note text-encre-3 underline underline-offset-4"
           >
             Confidentialité
+          </Link>
+          <Link
+            to="/conditions"
+            className="inline-flex min-h-cible items-center text-note text-encre-3 underline underline-offset-4"
+          >
+            Conditions d'utilisation
           </Link>
         </div>
       </footer>
