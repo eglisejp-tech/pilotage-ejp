@@ -1,12 +1,244 @@
+<!doctype html>
 <!-- Invitation (Invite user). Le lien mène à /acces, qui demande un clic avant de consommer le
-     jeton : les antivirus de messagerie ouvrent les liens (BRIEF, section 8). -->
-<h2>Votre accès à Pilotage EJP</h2>
-<p>L'administration de l'Église des Jeunes Prodiges vous a créé un compte sur Pilotage EJP.</p>
-<p>
-  <a href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=invite">Ouvrir Pilotage EJP</a>
-</p>
-<p>
-  Vous choisirez votre mot de passe, puis vous activerez la double authentification avec une
-  application de votre téléphone. Ce lien reste valable 24 heures.
-</p>
-<p>Vous n'attendiez pas ce message ? Ignorez-le.</p>
+     jeton : les antivirus de messagerie ouvrent les liens (BRIEF, section 8).
+     Les messageries ignorent les variables CSS et les polices web : les valeurs de
+     src/styles/tokens.css sont recopiées en style en ligne (fond, papier, filet, encre, encre-2,
+     encre-3, nuit, lumière), avec les polices de repli des tokens. Aucune image ni ressource
+     externe : rien n'est chargé à l'ouverture du message. -->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Votre accès à Pilotage EJP</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f2f3f5">
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all">
+      Votre compte est prêt : choisissez votre mot de passe, puis activez la double
+      authentification.
+    </div>
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background-color: #f2f3f5"
+    >
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="max-width: 560px; background-color: #ffffff; border: 1px solid #dcdfe5"
+          >
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', serif;
+                    font-size: 22px;
+                    line-height: 1.2;
+                    color: #101828;
+                  "
+                >
+                  Pilotage EJP
+                </p>
+                <p
+                  style="
+                    margin: 4px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.4;
+                    color: #5f6b7e;
+                  "
+                >
+                  Église des Jeunes Prodiges
+                </p>
+                <div
+                  style="
+                    margin-top: 20px;
+                    border-top: 2px solid #101828;
+                    font-size: 0;
+                    line-height: 0;
+                  "
+                >
+                  &nbsp;
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <h1
+                  style="
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', serif;
+                    font-size: 28px;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    color: #101828;
+                  "
+                >
+                  Votre accès est prêt
+                </h1>
+                <p
+                  style="
+                    margin: 16px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 16px;
+                    line-height: 1.5;
+                    color: #3f4a5c;
+                  "
+                >
+                  L'administration de l'Église des Jeunes Prodiges vous a créé un compte sur
+                  Pilotage EJP. Deux étapes, quelques minutes :
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 32px 0 32px">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td
+                      valign="top"
+                      width="40"
+                      style="
+                        font-family: 'Arial Narrow', Arial, sans-serif;
+                        font-size: 30px;
+                        font-weight: 800;
+                        line-height: 1;
+                        color: #1b2e6b;
+                      "
+                    >
+                      1
+                    </td>
+                    <td
+                      valign="top"
+                      style="
+                        padding-bottom: 16px;
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                        font-size: 16px;
+                        line-height: 1.5;
+                        color: #101828;
+                      "
+                    >
+                      <strong>Choisissez votre mot de passe</strong><br />
+                      <span style="color: #3f4a5c">12 caractères au moins.</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td
+                      valign="top"
+                      width="40"
+                      style="
+                        font-family: 'Arial Narrow', Arial, sans-serif;
+                        font-size: 30px;
+                        font-weight: 800;
+                        line-height: 1;
+                        color: #1b2e6b;
+                      "
+                    >
+                      2
+                    </td>
+                    <td
+                      valign="top"
+                      style="
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                        font-size: 16px;
+                        line-height: 1.5;
+                        color: #101828;
+                      "
+                    >
+                      <strong>Activez la double authentification</strong><br />
+                      <span style="color: #3f4a5c"
+                        >Avec une application d'authentification sur votre téléphone.</span
+                      >
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color: #ffd23f">
+                      <a
+                        href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=invite"
+                        style="
+                          display: inline-block;
+                          padding: 15px 28px;
+                          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                          font-size: 16px;
+                          font-weight: 700;
+                          line-height: 1.2;
+                          color: #101828;
+                          text-decoration: none;
+                        "
+                        >Ouvrir Pilotage EJP</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 14px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Ce lien reste valable 24 heures.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 24px 32px 0 32px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Le bouton ne fonctionne pas ? Copiez cette adresse dans votre navigateur :<br />
+                  <a
+                    href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=invite"
+                    style="color: #1b2e6b; word-break: break-all"
+                    >{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=invite</a
+                  >
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 28px 32px">
+                <div style="border-top: 1px solid #dcdfe5; font-size: 0; line-height: 0">
+                  &nbsp;
+                </div>
+                <p
+                  style="
+                    margin: 16px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Vous n'attendiez pas ce message ? Ignorez-le.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
