@@ -44,6 +44,10 @@ export type CompteTest = {
   profil: 'ministere' | 'berger' | 'conseil' | 'admin_eglise' | 'admin_plateforme'
   email: string
   libelle: string
+  /**
+   * Accueil du profil. `titre` : l'écran, lu dans le titre de l'onglet (« Cette semaine, Pilotage
+   * EJP ») ; sur « / », le h1 est la phrase de la semaine (étape 3).
+   */
   accueil: { chemin: string; titre: string }
   onglets: string[]
   /** Adresse réservée à un autre profil. */

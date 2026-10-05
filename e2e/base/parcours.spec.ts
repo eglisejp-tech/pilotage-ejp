@@ -45,9 +45,8 @@ for (const compte of COMPTES_PROFILS) {
 
     test('arrive sur son accueil et ne voit que ses onglets', async ({ page }) => {
       await page.goto('/')
-      await expect(
-        page.getByRole('heading', { level: 1, name: compte.accueil.titre }),
-      ).toBeVisible()
+      // Le titre de l'onglet : sur « / », le h1 est la phrase de la semaine (étape 3).
+      await expect(page).toHaveTitle(`${compte.accueil.titre}, Pilotage EJP`)
       await expect(page).toHaveURL((url) => url.pathname === compte.accueil.chemin)
       await expect(page.getByRole('banner')).toContainText(compte.libelle)
       await ouvrirMenuSiBesoin(page)
@@ -76,9 +75,9 @@ for (const compte of COMPTES_PROFILS) {
     test('captures de l’en-tête et du menu', { tag: '@captures' }, async ({ page }) => {
       const largeur = page.viewportSize()?.width ?? 0
       await page.goto('/')
-      await expect(
-        page.getByRole('heading', { level: 1, name: compte.accueil.titre }),
-      ).toBeVisible()
+      await expect(page).toHaveTitle(`${compte.accueil.titre}, Pilotage EJP`)
+      await expect(page.getByRole('heading', { level: 1 })).toBeAttached()
+      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
       await page.evaluate(() => document.fonts.ready)
       const nom = `base-${compte.profil}-${largeur}`
       await page.screenshot({ path: `test-results/captures/${nom}-entete.png` })
@@ -131,7 +130,7 @@ test('un compte sans double authentification va vers l’activation et ne voit a
 test('« Se déconnecter » ferme la session de cet appareil', async ({ page }, infos) => {
   test.skip(infos.project.name !== 'ordinateur', 'Une vérification de code de plus suffit.')
   await seConnecter(page, COMPTE_DECONNEXION.email)
-  await expect(page.getByRole('heading', { level: 1, name: 'Cette semaine' })).toBeVisible()
+  await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
   await expect(page.getByRole('banner')).toContainText(COMPTE_DECONNEXION.libelle)
 
   await page.getByRole('banner').getByRole('button', { name: 'Se déconnecter' }).click()

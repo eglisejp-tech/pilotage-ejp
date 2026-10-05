@@ -9,7 +9,7 @@ interface Props {
 export function ValeurChiffre({ valeur }: Props) {
   if (valeur.etat !== 'saisie') {
     return (
-      <span className="text-sm text-encre-3">
+      <span className="text-sm whitespace-nowrap text-encre-3">
         {valeur.etat === 'vide' ? TEXTES_VIDES.chiffres.valeur : TEXTES_VIDES.chiffres.nonCalcule}
       </span>
     )

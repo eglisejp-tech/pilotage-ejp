@@ -10,7 +10,8 @@ preparation.describe.configure({ mode: 'serial' })
 for (const compte of COMPTES_PROFILS) {
   preparation(`${compte.profil} : mot de passe, puis code`, async ({ page }) => {
     await seConnecter(page, compte.email)
-    await expect(page.getByRole('heading', { level: 1, name: compte.accueil.titre })).toBeVisible()
+    // Le titre de l'onglet : sur « / », le h1 est la phrase de la semaine (étape 3).
+    await expect(page).toHaveTitle(`${compte.accueil.titre}, Pilotage EJP`)
     await expect(page).toHaveURL((url) => url.pathname === compte.accueil.chemin)
     await page.context().storageState({ path: fichierSession(compte.profil) })
   })

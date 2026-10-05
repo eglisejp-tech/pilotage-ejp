@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
+import { MessageVide } from './MessageVide'
 import { PointADecider } from './PointADecider'
 import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
@@ -35,7 +36,7 @@ export function ADecider({ points, lienTousLesPoints }: Props) {
         }
       />
       {affiches.length === 0 ? (
-        <p className="py-[18px] text-encre-2">{TEXTES_VIDES.aDecider.aucunPoint}</p>
+        <MessageVide>{TEXTES_VIDES.aDecider.aucunPoint}</MessageVide>
       ) : (
         <ol>
           {affiches.map((point) => (

@@ -42,17 +42,30 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
             >
               {ligne.libelle}
             </th>
-            <td className="w-px py-3 pr-2 text-right">
-              <ValeurChiffre valeur={ligne.valeur} />
-            </td>
-            <td className="w-px py-3 pr-3 text-sm xl:pr-4">
-              {ligne.ecart ? <EcartChiffre ecart={ligne.ecart} /> : null}
-            </td>
-            <td className="w-px py-3 pr-3 xl:pr-4">
-              {ligne.courbe ? (
-                <Courbe courbe={ligne.courbe} largeur={largeurCourbe} hauteur={26} />
-              ) : null}
-            </td>
+            {ligne.valeur.etat === 'saisie' ? (
+              <>
+                <td className="w-px py-3 pr-2 text-right">
+                  <ValeurChiffre valeur={ligne.valeur} />
+                </td>
+                <td className="w-px py-3 pr-3 text-sm xl:pr-4">
+                  {ligne.ecart ? <EcartChiffre ecart={ligne.ecart} /> : null}
+                </td>
+                <td className="w-px py-3 pr-3 xl:pr-4">
+                  {ligne.courbe ? (
+                    <Courbe courbe={ligne.courbe} largeur={largeurCourbe} hauteur={26} />
+                  ) : null}
+                </td>
+              </>
+            ) : (
+              // Sans valeur, ni écart ni courbe : la phrase prend leur place, sur une ligne, et la
+              // ligne garde la hauteur d'une ligne chiffrée (T22).
+              <td
+                colSpan={3}
+                className="h-[calc(var(--text-chiffre)+1.5rem)] py-3 pr-3 text-left xl:pr-4"
+              >
+                <ValeurChiffre valeur={ligne.valeur} />
+              </td>
+            )}
             <td
               className={`py-3 pr-3 text-sm ${ligne.dateSignalee ? 'font-semibold text-attention' : 'text-encre-3'}`}
             >
