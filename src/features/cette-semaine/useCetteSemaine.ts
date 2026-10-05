@@ -143,10 +143,12 @@ export function useCetteSemaine(
   const reessayer = () => {
     setEssai((precedent) => precedent + 1)
     // Une lecture sans réponse reste en cours : un simple refetch la rendrait telle quelle.
-    // resetQueries l'annule et la relance ; les lectures réussies gardent leurs données.
+    // resetQueries l'annule et la relance ; les lectures réussies gardent leurs données. Une
+    // lecture réussie sans ligne (v_semaine vide) est relue aussi : c'est elle qui fait l'erreur.
     void queryClient.resetQueries({
       predicate: (requete) =>
-        RACINES_CLES.includes(String(requete.queryKey[0])) && requete.state.status !== 'success',
+        RACINES_CLES.includes(String(requete.queryKey[0])) &&
+        (requete.state.status !== 'success' || requete.state.data === null),
     })
   }
 

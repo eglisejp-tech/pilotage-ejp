@@ -142,13 +142,25 @@ describe('useCetteSemaine', () => {
     expect(result.current.donnees?.carte).toBeNull()
   })
 
-  it('v_semaine sans ligne : erreur', async () => {
+  it('v_semaine sans ligne : erreur ; « Réessayer » la relit', async () => {
     const reponses = reponsesExemple()
-    reponses.v_semaine = { data: null, error: null }
-    courant.client = fauxRequete(reponses).client
+    const semaine = reponses.v_semaine
+    let vide = true
+    const faux = fauxRequete({
+      ...reponses,
+      v_semaine: () => (vide ? { data: null, error: null } : semaine!),
+    })
+    courant.client = faux.client
     const { result } = renderHook(() => useCetteSemaine(berger, null), { wrapper: enveloppe() })
     await waitFor(() => expect(result.current.erreur).toBe(true))
     expect(result.current.donnees).toBeNull()
+
+    vide = false
+    act(() => {
+      result.current.reessayer()
+    })
+    await waitFor(() => expect(result.current.donnees).not.toBeNull())
+    expect(faux.de('v_semaine')).toHaveLength(2)
   })
 
   it('sans réponse après 10 s : erreur ; « Réessayer » repasse en chargement', async () => {

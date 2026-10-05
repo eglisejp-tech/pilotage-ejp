@@ -5,6 +5,8 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
+import { construireCetteSemaine } from '@/features/cette-semaine/construire'
+import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -35,7 +37,15 @@ const LIBELLES: Record<TypeCompte, string> = {
 }
 
 function connecte(type: TypeCompte, niveau: 'aal1' | 'aal2' = 'aal2', facteurs: string[] = ['f1']) {
-  return installer({
+  return installer(scenarioDe(type, niveau, facteurs))
+}
+
+function scenarioDe(
+  type: TypeCompte,
+  niveau: 'aal1' | 'aal2' = 'aal2',
+  facteurs: string[] = ['f1'],
+): ScenarioSession {
+  return {
     utilisateur: { id: `u-${type}`, email: `${type}@exemple.test` },
     niveau: { currentLevel: niveau, nextLevel: facteurs.length > 0 ? 'aal2' : 'aal1' },
     compte: {
@@ -46,7 +56,7 @@ function connecte(type: TypeCompte, niveau: 'aal1' | 'aal2' = 'aal2', facteurs: 
       desactive_le: null,
     },
     facteursVerifies: facteurs,
-  })
+  }
 }
 
 function afficher(adresse: string) {
@@ -161,15 +171,43 @@ describe('routes', () => {
     },
   )
 
-  it('« Cette semaine » sans données : chargement ou bandeau « Réessayer », jamais une page blanche', async () => {
-    // Le faux client ne rend aucune ligne de v_semaine : chargement, puis erreur de page.
+  it('« Cette semaine » sans ligne de v_semaine : bandeau « Réessayer », jamais une page blanche', async () => {
     connecte('berger')
     afficher('/')
     await waitFor(() => expect(document.title).toBe('Cette semaine, Pilotage EJP'))
     expect(screen.getByRole('heading', { level: 1, name: 'Cette semaine' })).toBeInTheDocument()
-    const chargement = document.querySelector('[aria-busy="true"]')
-    const erreur = screen.queryByRole('alert')
-    expect(chargement ?? erreur).not.toBeNull()
+    expect(await screen.findByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+  })
+
+  it('« Cette semaine » du berger : les vues lues, construites et affichées (jeu d’exemple)', async () => {
+    const lectures = lecturesExemple()
+    installer({
+      ...scenarioDe('berger'),
+      lignes: {
+        v_semaine: [lectures.semaine],
+        indicateur: lectures.indicateurs,
+        v_total_dimanche: lectures.totauxDimanche,
+        v_ecart_dimanche: lectures.ecartsDimanche,
+        v_total_a_ce_jour: lectures.totauxACeJour,
+        v_pourcentage_fij: lectures.pourcentageFij ? [lectures.pourcentageFij] : [],
+        v_carte_fij: lectures.carteFij,
+        v_session_completude: lectures.sessions,
+        v_ecart_session: lectures.ecartsSessions,
+        v_participation_courante: lectures.participations,
+        v_tableau_ministeres: lectures.tableauMinisteres,
+        ministere: lectures.ministeres,
+        v_point: lectures.points?.points ?? [],
+        point_mention: lectures.points?.mentions ?? [],
+      },
+    })
+    afficher('/')
+    const attendu = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
+    const phrase = attendu.phrase.map((morceau) => morceau.texte).join('')
+    expect(await screen.findByRole('heading', { level: 1, name: phrase })).toBeInTheDocument()
+    expect(document.title).toBe('Cette semaine, Pilotage EJP')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'À décider' })).toBeInTheDocument()
   })
 
   it("adresse d'un autre profil : message neutre, et aucune requête au-delà du compte", async () => {

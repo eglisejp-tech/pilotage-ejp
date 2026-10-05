@@ -427,3 +427,21 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Plan de l'étape 3, décision de la personne responsable
 - **Statut** : Décidé
 - **BRIEF** : section 13 (étape 7) ; `LISEZMOI.md`, « États » ; le BRIEF n'est pas modifié
+
+### T26. Rendu des états de « Cette semaine »
+
+- **Date** : 5 octobre 2026
+- **Sujet** : `LISEZMOI.md` décrit le chargement, l'erreur de page et quelques états vides, sans dessin ; plusieurs détails restaient à fixer pour la vue de l'église.
+- **Décision** : le chargement montre les titres de section et les filets du profil, puis un seul « Chargement » à la place de la phrase après 300 ms ; l'erreur de page ne montre que le bandeau, sous un titre « Cette semaine » réservé aux lecteurs d'écran ; dix secondes sans réponse donnent l'erreur de page. La carte des FIJ sans valeur dessine huit carrés neutres en pointillés avec le seul code du département, sans aucun nombre. Une ligne de chiffres sans valeur porte « Pas encore de saisie » sur les colonnes valeur, écart et courbe. Sur téléphone, le résumé du ministère se déplie par « Tout voir », qui devient « Voir moins » une fois ouvert.
+- **Origine** : Plan de l'étape 3, choix de l'écran (lot B)
+- **Statut** : Proposé, à confirmer par EJP Tech
+- **BRIEF** : section 9 (« États à construire ») ; `LISEZMOI.md`, « États » ; le BRIEF n'est pas modifié
+
+### T27. Session de la phrase et du résumé du ministère
+
+- **Date** : 5 octobre 2026
+- **Sujet** : `?session=` (T20) choisit la session du bloc de la session ; la ligne secondaire de la phrase et la ligne « Dernière session » du résumé du ministère citent aussi une session.
+- **Décision** : seul le bloc de la session suit `?session=`. La ligne secondaire de la phrase et la ligne « Dernière session » du résumé citent toujours la session passée la plus récente, tous types confondus. Pour un rassemblement de type « autre », cette ligne n'a ni écart ni courbe : la base ne les calcule pas.
+- **Origine** : Plan de l'étape 3, choix des lectures (lot A)
+- **Statut** : Proposé, à confirmer par EJP Tech
+- **BRIEF** : section 9 (« Bloc de la session ») ; le BRIEF n'est pas modifié
