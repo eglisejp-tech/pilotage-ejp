@@ -46,5 +46,36 @@ describe('CarteFij', () => {
       screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
     ).toBeInTheDocument()
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+    expect(screen.queryByText(/\d+ FIJ/)).not.toBeInTheDocument()
+  })
+
+  it("garde la forme de la carte sans montrer de nombre, cachée aux lecteurs d'écran", () => {
+    render(<CarteFij carte={null} />)
+    const enAttente = screen.getByTestId('carte-en-attente')
+    expect(enAttente).toHaveAttribute('aria-hidden', 'true')
+    expect(enAttente.firstElementChild).toHaveClass('border-dashed', 'border-filet')
+    // Seuls les codes des départements, jamais une valeur.
+    expect(Array.from(enAttente.children, (carre) => carre.textContent)).toEqual([
+      '75',
+      '77',
+      '78',
+      '91',
+      '92',
+      '93',
+      '94',
+      '95',
+    ])
+  })
+
+  it('une carte sans aucune valeur se lit comme une carte vide', () => {
+    const departements = (carte?.departements ?? []).map((departement) => ({
+      ...departement,
+      valeur: null,
+    }))
+    render(<CarteFij carte={{ total: 0, departements }} />)
+    expect(
+      screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('0 FIJ')).not.toBeInTheDocument()
   })
 })

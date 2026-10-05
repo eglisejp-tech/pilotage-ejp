@@ -134,7 +134,9 @@ describe('routes', () => {
     async (type, titre, onglets) => {
       connecte(type)
       const routeur = afficher('/')
-      expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      // Le titre de l'onglet, pas le h1 : sur « / », le h1 est la phrase de la semaine.
+      await waitFor(() => expect(document.title).toBe(`${titre}, Pilotage EJP`))
+      await screen.findAllByRole('navigation', { name: 'Navigation principale' })
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
@@ -150,9 +152,25 @@ describe('routes', () => {
         'page',
       )
       expect(document.body.textContent).toContain(LIBELLES[type])
-      expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+      if (type === 'admin_plateforme') {
+        expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+      } else {
+        // « Cette semaine » est construit (étape 3) : plus de page d'attente.
+        expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
+      }
     },
   )
+
+  it('« Cette semaine » sans données : chargement ou bandeau « Réessayer », jamais une page blanche', async () => {
+    // Le faux client ne rend aucune ligne de v_semaine : chargement, puis erreur de page.
+    connecte('berger')
+    afficher('/')
+    await waitFor(() => expect(document.title).toBe('Cette semaine, Pilotage EJP'))
+    expect(screen.getByRole('heading', { level: 1, name: 'Cette semaine' })).toBeInTheDocument()
+    const chargement = document.querySelector('[aria-busy="true"]')
+    const erreur = screen.queryByRole('alert')
+    expect(chargement ?? erreur).not.toBeNull()
+  })
 
   it("adresse d'un autre profil : message neutre, et aucune requête au-delà du compte", async () => {
     const faux = connecte('ministere')
@@ -240,7 +258,7 @@ describe('routes', () => {
   it('« Se déconnecter » ferme la session de cet appareil seulement', async () => {
     const faux = connecte('conseil')
     afficher('/')
-    await screen.findByRole('heading', { level: 1, name: 'Cette semaine' })
+    await waitFor(() => expect(document.title).toBe('Cette semaine, Pilotage EJP'))
     faux.auth.getSession.mockResolvedValue({ data: { session: null }, error: null })
     await userEvent.click(screen.getAllByRole('button', { name: 'Se déconnecter' })[0]!)
     expect(faux.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })

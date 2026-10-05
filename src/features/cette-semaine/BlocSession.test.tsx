@@ -3,18 +3,20 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { BlocSession } from './BlocSession'
 import { exempleCetteSemaine } from './exemple'
-import type { DerniereSession } from './types'
+import type { DerniereSession, DonneesBlocSession } from './types'
 
-function afficher(session: DerniereSession | null) {
+function afficher(session: DerniereSession | DonneesBlocSession) {
+  const bloc: DonneesBlocSession = 'etat' in session ? session : { etat: 'session', session }
   render(
     <MemoryRouter>
-      <BlocSession session={session} />
+      <BlocSession bloc={bloc} />
     </MemoryRouter>,
   )
 }
 
-const bloc = exempleCetteSemaine('berger').session
-const batir = bloc.etat === 'session' ? bloc.session : null
+const exemple = exempleCetteSemaine('berger').session
+if (exemple.etat !== 'session') throw new Error("L'exemple doit avoir une session.")
+const batir = exemple.session
 
 describe('BlocSession', () => {
   it("donne le total sans double compte, sa complétude et le lien vers l'autre session", () => {
@@ -80,9 +82,54 @@ describe('BlocSession', () => {
     ).toBeInTheDocument()
   })
 
-  it("dit quand aucune session n'est déclarée", () => {
-    afficher(null)
-    expect(screen.getByRole('heading', { level: 2, name: 'Dernière session' })).toBeInTheDocument()
-    expect(screen.getByText('Aucune session déclarée.')).toBeInTheDocument()
+  it('sans ministère attendu : ni barre ni liste vides, le résumé le dit', () => {
+    afficher({
+      titre: 'Soirée des parents, samedi 17 octobre',
+      total: null,
+      saisis: 0,
+      attendus: 0,
+      apports: [],
+      noteDoubleCompte: null,
+      autres: [],
+    })
+    expect(screen.getByText('Aucun ministère attendu pour cette session.')).toBeInTheDocument()
+    expect(screen.queryByTestId('barre-session')).not.toBeInTheDocument()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
+  it("dit quand aucune session n'est déclarée, sous le titre et son filet", () => {
+    afficher({ etat: 'aucune_session' })
+    const region = screen.getByRole('region', { name: 'Dernière session' })
+    expect(within(region).getByText('Aucune session déclarée.')).toBeInTheDocument()
+    expect(within(region).queryByRole('link')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('barre-session')).not.toBeInTheDocument()
+  })
+
+  it('type de session jamais tenu : son nom, la phrase, et les liens vers les autres types', () => {
+    afficher({
+      etat: 'aucune_session_du_type',
+      type: 'anti_dispersion',
+      titre: 'Anti-Dispersion',
+      autres: [{ libelle: "Voir Bâtir l'Église", href: '/?session=batir' }],
+    })
+    const region = screen.getByRole('region', { name: 'Anti-Dispersion' })
+    expect(
+      within(region).getByText("Aucune session Anti-Dispersion pour l'instant."),
+    ).toBeInTheDocument()
+    expect(within(region).getByRole('link', { name: "Voir Bâtir l'Église" })).toHaveAttribute(
+      'href',
+      '/?session=batir',
+    )
+    expect(within(region).queryByText(/^\d+$/)).not.toBeInTheDocument()
+  })
+
+  it('autre rassemblement jamais tenu : sa propre phrase', () => {
+    afficher({
+      etat: 'aucune_session_du_type',
+      type: 'autre',
+      titre: 'Autre rassemblement',
+      autres: [],
+    })
+    expect(screen.getByText("Aucun autre rassemblement pour l'instant.")).toBeInTheDocument()
   })
 })

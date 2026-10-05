@@ -6,12 +6,26 @@ import { expect, test, type Page } from '@playwright/test'
 
 const profils = ['berger', 'ministere', 'admin_eglise'] as const
 type Profil = (typeof profils)[number]
+type Etat = 'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'chargement' | 'erreur'
 
-const adresse = (profil: Profil) => `/apercu/cette-semaine?profil=${profil}`
+const adresse = (profil: Profil, etat: Etat = 'semaine') =>
+  `/apercu/cette-semaine?profil=${profil}${etat === 'semaine' ? '' : `&etat=${etat}`}`
 
-async function ouvrir(page: Page, profil: Profil) {
-  await page.goto(adresse(profil))
+async function ouvrir(page: Page, profil: Profil, etat: Etat = 'semaine') {
+  await page.goto(adresse(profil, etat))
   await page.evaluate(() => document.fonts.ready)
+}
+
+/** Ministère sous 600 px : « Tout voir » déplie les blocs de l'église. */
+async function toutVoirSiBesoin(page: Page) {
+  const bouton = page.getByRole('button', { name: 'Tout voir' })
+  if (await bouton.isVisible()) {
+    await bouton.click()
+    await expect(page.getByRole('button', { name: 'Voir moins' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    )
+  }
 }
 
 const phraseBerger =
@@ -44,7 +58,8 @@ test.describe('Cette semaine, aperçu', () => {
       'Planning du trimestre à valider',
       'Salle pour la soirée de louange',
     ])
-    await expect(aDecider.getByRole('button', { name: 'Marquer traité' })).toHaveCount(3)
+    // « Marquer traité » arrive avec sa fenêtre à l'étape 5 (T19).
+    await expect(aDecider.getByRole('button')).toHaveCount(0)
     await expect(aDecider.getByText('avant le 28 sept., dépassée')).toBeVisible()
     await expect(aDecider.getByRole('link', { name: 'Tous les points' })).toHaveAttribute(
       'href',
@@ -96,7 +111,9 @@ test.describe('Cette semaine, aperçu', () => {
     await expect(ministeres.getByRole('row', { name: /^Intégration/ })).toContainText('Urgente')
   })
 
-  test('ministère : ni « À décider », ni surligneur, ni colonnes du conseil', async ({ page }) => {
+  test('ministère : ni « À décider », ni surligneur, ni colonnes du conseil', async ({
+    page,
+  }, testInfo) => {
     await ouvrir(page, 'ministere')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(phraseEglise)
     await expect(page.locator('mark')).toHaveCount(0)
@@ -105,6 +122,21 @@ test.describe('Cette semaine, aperçu', () => {
     await expect(
       page.getByRole('heading', { level: 2, name: "L'église cette semaine" }),
     ).toBeVisible()
+
+    if (testInfo.project.name === 'telephone') {
+      // Sous 600 px : trois chiffres, puis « Tout voir » (BRIEF section 9, maquette 07).
+      const eglise = page.getByRole('region', { name: "L'église cette semaine" })
+      await expect(eglise.getByRole('listitem')).toHaveCount(3)
+      await expect(page.getByRole('heading', { level: 2 })).toHaveCount(1)
+      await expect(page.getByRole('button', { name: 'Tout voir' })).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      )
+    } else {
+      await expect(page.getByRole('button', { name: 'Tout voir' })).toHaveCount(0)
+    }
+    await toutVoirSiBesoin(page)
+
     await expect(
       page.getByRole('heading', { level: 2, name: "Bâtir l'Église, samedi 26 septembre" }),
     ).toBeVisible()
@@ -134,9 +166,66 @@ test.describe('Cette semaine, aperçu', () => {
     ).toHaveCount(0)
   })
 
-  for (const profil of profils) {
-    test(`${profil} : aucune violation d'accessibilité détectée par axe`, async ({ page }) => {
-      await ouvrir(page, profil)
+  test('premier dimanche : chaque bloc garde sa place et dit ce qui manque', async ({ page }) => {
+    await ouvrir(page, 'berger', 'premier-dimanche')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      "Aucun ministère n'a encore saisi les chiffres du dimanche 27 sept.",
+    )
+    const chiffres = page.getByRole('region', { name: "Les chiffres de l'église" })
+    await expect(chiffres.getByText('Pas encore de saisie')).toHaveCount(6)
+    await expect(chiffres.getByRole('img')).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'À décider' })).toContainText(
+      'Aucun point ouvert.',
+    )
+    await expect(page.getByRole('region', { name: 'Dernière session' })).toContainText(
+      'Aucune session déclarée.',
+    )
+    const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
+    await expect(carte).toContainText("La carte s'affichera quand FIJ aura saisi ses chiffres.")
+    await expect(carte.getByTestId('carte-en-attente')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Les ministères' })).toContainText(
+      'Aucune saisie',
+    )
+  })
+
+  test('rassemblement jamais tenu : son titre, sa phrase, les liens vers les autres sessions', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'admin_eglise', 'session-jamais-tenue')
+    const session = page.getByRole('region', { name: 'Autre rassemblement' })
+    await expect(session).toContainText("Aucun autre rassemblement pour l'instant.")
+    await expect(session.getByRole('link', { name: 'Voir Anti-Dispersion' })).toBeVisible()
+  })
+
+  test('chargement : titres et filets tout de suite, « Chargement » après 300 ms', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'berger', 'chargement')
+    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Les ministères' })).toBeVisible()
+    await expect(
+      page.locator('[aria-busy="true"]').getByText('Chargement', { exact: true }),
+    ).toBeVisible()
+  })
+
+  test('erreur de page : bandeau et « Réessayer »', async ({ page }) => {
+    await ouvrir(page, 'berger', 'erreur')
+    await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+  })
+
+  const etatsAudites: [Profil, Etat][] = [
+    ...profils.map((profil): [Profil, Etat] => [profil, 'semaine']),
+    ['berger', 'premier-dimanche'],
+    ['ministere', 'premier-dimanche'],
+    ['berger', 'erreur'],
+  ]
+  for (const [profil, etat] of etatsAudites) {
+    test(`${profil}, ${etat} : aucune violation d'accessibilité détectée par axe`, async ({
+      page,
+    }) => {
+      await ouvrir(page, profil, etat)
+      await toutVoirSiBesoin(page)
       const resultat = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze()
@@ -168,11 +257,14 @@ test.describe('Cette semaine, aperçu', () => {
       test.skip(testInfo.project.name !== 'telephone', 'Largeurs de téléphone')
       await page.setViewportSize({ width: largeur, height: 800 })
       for (const profil of profils) {
-        await ouvrir(page, profil)
-        const debordement = await page.evaluate(
-          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        )
-        expect(debordement, profil).toBeLessThanOrEqual(0)
+        for (const etat of ['semaine', 'premier-dimanche', 'erreur'] as const) {
+          await ouvrir(page, profil, etat)
+          await toutVoirSiBesoin(page)
+          const debordement = await page.evaluate(
+            () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          )
+          expect(debordement, `${profil}, ${etat}`).toBeLessThanOrEqual(0)
+        }
       }
     })
   }
@@ -183,6 +275,29 @@ test.describe('Cette semaine, aperçu', () => {
       await ouvrir(page, profil)
       await page.screenshot({
         path: `test-results/captures/cette-semaine-${profil}-${largeur}.png`,
+        fullPage: true,
+      })
+      await ouvrir(page, profil, 'premier-dimanche')
+      await page.screenshot({
+        path: `test-results/captures/cette-semaine-${profil}-premier-dimanche-${largeur}.png`,
+        fullPage: true,
+      })
+    }
+    await ouvrir(page, 'ministere')
+    if (await page.getByRole('button', { name: 'Tout voir' }).isVisible()) {
+      await toutVoirSiBesoin(page)
+      await page.screenshot({
+        path: `test-results/captures/cette-semaine-ministere-tout-voir-${largeur}.png`,
+        fullPage: true,
+      })
+    }
+    for (const etat of ['chargement', 'erreur', 'session-jamais-tenue'] as const) {
+      await ouvrir(page, 'berger', etat)
+      if (etat === 'chargement') {
+        await page.locator('[aria-busy="true"]').getByText('Chargement', { exact: true }).waitFor()
+      }
+      await page.screenshot({
+        path: `test-results/captures/cette-semaine-berger-${etat}-${largeur}.png`,
         fullPage: true,
       })
     }

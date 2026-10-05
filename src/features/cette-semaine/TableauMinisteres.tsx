@@ -1,3 +1,4 @@
+import { ChampLibre } from './ChampLibre'
 import { IndicateurFraicheur } from './IndicateurFraicheur'
 import { NomMinistere } from './NomMinistere'
 import { couleursPriorite, libellesPriorite } from './priorites'
@@ -61,11 +62,7 @@ export function TableauMinisteres({ ministeres, avecColonnesConseil, idTitre }: 
               {ministere.prochainEvenement.etat === 'prevu' ? (
                 <>
                   {ministere.prochainEvenement.date},{' '}
-                  <span
-                    className={ministere.prochainEvenement.nom.masque ? 'text-encre-3' : undefined}
-                  >
-                    {ministere.prochainEvenement.nom.texte}
-                  </span>
+                  <ChampLibre texte={ministere.prochainEvenement.nom} />
                 </>
               ) : (
                 TEXTES_VIDES.ministeres.aucunEvenement
