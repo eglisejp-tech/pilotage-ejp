@@ -104,14 +104,14 @@ export async function lireEcartsSessions(): Promise<LigneVue<'v_ecart_session'>[
   return data
 }
 
-/** Saisie la plus récente de chaque ministère pour une session. */
+/** Saisie la plus récente de chaque ministère pour les sessions données (trois au plus). */
 export async function lireParticipations(
-  sessionId: string,
+  sessionIds: readonly string[],
 ): Promise<LigneVue<'v_participation_courante'>[]> {
   const { data, error } = await supabase()
     .from('v_participation_courante')
     .select('session_id, ministere_id, valeur, deja_comptes, compte_dans_total, saisi_le')
-    .eq('session_id', sessionId)
+    .in('session_id', sessionIds)
   if (error) throw error
   return data
 }

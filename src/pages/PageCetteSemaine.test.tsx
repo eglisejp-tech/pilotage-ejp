@@ -84,10 +84,13 @@ describe('PageCetteSemaine', () => {
       ])
       expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
 
+      // La zone d'annonce est là dès le départ, vide, pour que « Chargement » soit annoncé.
+      expect(screen.getByRole('status')).toBeEmptyDOMElement()
       act(() => vi.advanceTimersByTime(299))
       expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
       act(() => vi.advanceTimersByTime(1))
       expect(screen.getByText('Chargement')).toHaveClass('text-encre-3')
+      expect(screen.getByRole('status')).toHaveTextContent('Chargement')
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     })
 

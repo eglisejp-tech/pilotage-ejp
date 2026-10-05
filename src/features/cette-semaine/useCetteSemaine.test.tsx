@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { TypeSession } from '@/lib/metier/phrases'
 import { appelsDe, fauxRequete, type ReponseFausse } from '@/test/fauxRequete'
 import { lecturesExemple } from './lecturesExemple'
 import type { Lecteur } from './types'
@@ -86,7 +87,7 @@ describe('useCetteSemaine', () => {
     }
   })
 
-  it('lit les participations de la session affichée seulement', async () => {
+  it('lit en une fois les participations de la dernière session de chaque type', async () => {
     const faux = fauxRequete(reponsesExemple())
     courant.client = faux.client
     const { result } = renderHook(() => useCetteSemaine(berger, 'anti_dispersion'), {
@@ -95,7 +96,30 @@ describe('useCetteSemaine', () => {
     await waitFor(() => expect(result.current.donnees).not.toBeNull())
     const lectures = faux.de('v_participation_courante')
     expect(lectures).toHaveLength(1)
-    expect(appelsDe(lectures[0])[1]).toBe('eq("session_id", "s-a4")')
+    expect(appelsDe(lectures[0])[1]).toBe('in("session_id", ["s-b4","s-a4"])')
+  })
+
+  it('changer de session (?session=) ne relit rien et garde la vue affichée', async () => {
+    const faux = fauxRequete(reponsesExemple())
+    courant.client = faux.client
+    const { result, rerender } = renderHook(
+      ({ type }: { type: TypeSession | null }) => useCetteSemaine(berger, type),
+      { wrapper: enveloppe(), initialProps: { type: null as TypeSession | null } },
+    )
+    await waitFor(() => expect(result.current.donnees).not.toBeNull())
+    const session = result.current.donnees?.session
+    expect(session?.etat === 'session' && session.session.titre).toBe(
+      "Bâtir l'Église, samedi 26 septembre",
+    )
+
+    rerender({ type: 'anti_dispersion' })
+    // Aucun passage par le chargement : la vue reste montée, avec la session demandée.
+    expect(result.current.enChargement).toBe(false)
+    const autre = result.current.donnees?.session
+    expect(autre?.etat === 'session' && autre.session.titre).toBe(
+      'Anti-Dispersion, samedi 19 septembre',
+    )
+    expect(faux.de('v_participation_courante')).toHaveLength(1)
   })
 
   it('les écarts du dimanche sont lus pour le dimanche de v_semaine', async () => {
@@ -191,5 +215,46 @@ describe('useCetteSemaine', () => {
       await vi.advanceTimersByTimeAsync(0)
     })
     expect(result.current.donnees).not.toBeNull()
+  })
+
+  it('délai dépassé puis réponse : une nouvelle lecture repart en chargement, pas en erreur', async () => {
+    vi.useFakeTimers()
+    let libererCarte: (reponse: ReponseFausse) => void = () => undefined
+    courant.client = fauxRequete({
+      ...reponsesExemple(),
+      v_carte_fij: () =>
+        new Promise<ReponseFausse>((resoudre) => {
+          libererCarte = resoudre
+        }),
+      v_point: () => new Promise<ReponseFausse>(() => undefined),
+    }).client
+    const { result, rerender } = renderHook(
+      ({ lecteur }: { lecteur: Lecteur }) => useCetteSemaine(lecteur, null),
+      { wrapper: enveloppe(), initialProps: { lecteur: { profil: 'admin_eglise' } as Lecteur } },
+    )
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DELAI_MAX_CHARGEMENT)
+    })
+    expect(result.current.erreur).toBe(true)
+
+    // La réponse arrive après le délai : la vue s'affiche, sans « Réessayer ».
+    await act(async () => {
+      libererCarte({ data: [], error: null })
+      await vi.advanceTimersByTimeAsync(0)
+    })
+    expect(result.current.donnees).not.toBeNull()
+
+    // Une nouvelle lecture attend sa réponse (les points, lus pour le berger) : chargement, avec
+    // un nouveau délai de 10 s, et non une erreur tout de suite.
+    rerender({ lecteur: berger })
+    expect(result.current).toMatchObject({ enChargement: true, erreur: false })
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(DELAI_MAX_CHARGEMENT - 1)
+    })
+    expect(result.current.enChargement).toBe(true)
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1)
+    })
+    expect(result.current.erreur).toBe(true)
   })
 })

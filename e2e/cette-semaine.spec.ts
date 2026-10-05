@@ -166,6 +166,27 @@ test.describe('Cette semaine, aperçu', () => {
     ).toHaveCount(0)
   })
 
+  test('sans « À décider », la carte remonte à côté des chiffres à partir de 1024 px', async ({
+    page,
+  }, testInfo) => {
+    test.skip(testInfo.project.name !== 'ordinateur', 'Disposition propre au format ordinateur')
+    for (const profil of ['admin_eglise', 'ministere'] as const) {
+      await ouvrir(page, profil)
+      const titre = profil === 'ministere' ? "L'église cette semaine" : "Les chiffres de l'église"
+      const chiffres = await page.getByRole('region', { name: titre }).boundingBox()
+      const carte = await page.getByRole('region', { name: 'FIJ en Île-de-France' }).boundingBox()
+      const session = await page
+        .getByRole('region', { name: "Bâtir l'Église, samedi 26 septembre" })
+        .boundingBox()
+      if (!chiffres || !carte || !session) throw new Error(`${profil} : bloc absent`)
+      // La carte à droite des chiffres, à la même hauteur ; la session dessous, sur toute la largeur.
+      expect(carte.x, profil).toBeGreaterThan(chiffres.x + chiffres.width)
+      expect(Math.abs(carte.y - chiffres.y), profil).toBeLessThan(2)
+      expect(session.y, profil).toBeGreaterThan(chiffres.y + chiffres.height)
+      expect(session.width, profil).toBeGreaterThan(chiffres.width + carte.width)
+    }
+  })
+
   test('premier dimanche : chaque bloc garde sa place et dit ce qui manque', async ({ page }) => {
     await ouvrir(page, 'berger', 'premier-dimanche')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
@@ -178,7 +199,7 @@ test.describe('Cette semaine, aperçu', () => {
       'Aucun point ouvert.',
     )
     await expect(page.getByRole('region', { name: 'Dernière session' })).toContainText(
-      'Aucune session déclarée.',
+      "Aucune session déclarée.L'administration de l'église déclare les sessions.",
     )
     const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
     await expect(carte).toContainText("La carte s'affichera quand FIJ aura saisi ses chiffres.")

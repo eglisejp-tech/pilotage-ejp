@@ -15,7 +15,11 @@ import {
 import { lireMinisteres, lireTableauMinisteres } from '@/data/ministeres'
 import { lirePointsOuverts } from '@/data/points'
 import type { TypeSession } from '@/lib/metier/phrases'
-import { choisirSession, construireCetteSemaine, type LecturesCetteSemaine } from './construire'
+import {
+  construireCetteSemaine,
+  sessionsAffichables,
+  type LecturesCetteSemaine,
+} from './construire'
 import type { DonneesCetteSemaine, Lecteur } from './types'
 
 /** Sans réponse au bout de ce délai, l'écran affiche son erreur (LISEZMOI, « États »). */
@@ -53,8 +57,10 @@ export type ResultatCetteSemaine = {
 /**
  * Lit la vue « Cette semaine » (une requête par clé de LecturesCetteSemaine) et la construit avec
  * construireCetteSemaine. Les points ne sont lus que pour le berger et le conseil ; les
- * participations, pour la session affichée seulement. Les écarts du dimanche attendent la
- * semaine (leur clé porte le dimanche de référence : un nouveau dimanche relit tout seul).
+ * participations, pour la dernière session de chaque type (`?session=` choisit parmi elles sans
+ * relire). Les écarts du dimanche attendent la semaine (leur clé porte le dimanche de référence :
+ * un nouveau dimanche relit tout seul, et la page attend ces écarts plutôt que de mêler deux
+ * semaines).
  */
 export function useCetteSemaine(
   lecteur: Lecteur,
@@ -89,13 +95,15 @@ export function useCetteSemaine(
     queryKey: ['eglise', 'ecarts-sessions'],
     queryFn: lireEcartsSessions,
   })
-  const sessionAffichee =
-    sessions.data === undefined ? undefined : choisirSession(sessions.data, typeSession)
-  const idSession = sessionAffichee?.session_id
+  // Participations de la dernière session de chaque type (trois au plus), lues en une fois :
+  // `?session=` ne fait que choisir parmi elles, sans nouvelle lecture, et la page ne repasse
+  // pas par le chargement quand on change de session.
+  const idsSessions = sessions.data === undefined ? [] : sessionsAffichables(sessions.data)
+  const avecParticipations = idsSessions.length > 0
   const participations = useQuery({
-    queryKey: ['eglise', 'participations', idSession],
-    queryFn: () => lireParticipations(idSession ?? ''),
-    enabled: idSession !== undefined,
+    queryKey: ['eglise', 'participations', ...idsSessions],
+    queryFn: () => lireParticipations(idsSessions),
+    enabled: avecParticipations,
   })
   const tableauMinisteres = useQuery({
     queryKey: ['ministeres', 'tableau'],
@@ -122,8 +130,8 @@ export function useCetteSemaine(
     tableauMinisteres,
     ministeres,
   ]
-  // Sans session à afficher, il n'y a pas de participations à lire (liste vide).
-  if (idSession !== undefined) necessaires.push(participations)
+  // Sans session passée, il n'y a pas de participations à lire (liste vide).
+  if (avecParticipations) necessaires.push(participations)
   if (lirePoints) necessaires.push(points)
 
   const enEchec =
@@ -134,6 +142,9 @@ export function useCetteSemaine(
   const [essai, setEssai] = useState(0)
   const [essaiEnDelai, setEssaiEnDelai] = useState<number | null>(null)
   const enAttente = !pret && !enEchec
+  // Le délai vaut pour une attente. Une réponse arrivée après lui (ou un échec) clôt cette
+  // attente : la suivante repart avec son propre délai, au lieu de passer tout de suite en erreur.
+  if (!enAttente && essaiEnDelai !== null) setEssaiEnDelai(null)
   useEffect(() => {
     if (!enAttente) return
     const minuteur = setTimeout(() => setEssaiEnDelai(essai), DELAI_MAX_CHARGEMENT)
@@ -163,7 +174,7 @@ export function useCetteSemaine(
       carteFij: carteFij.data ?? [],
       sessions: sessions.data ?? [],
       ecartsSessions: ecartsSessions.data ?? [],
-      participations: idSession === undefined ? [] : (participations.data ?? []),
+      participations: avecParticipations ? (participations.data ?? []) : [],
       tableauMinisteres: tableauMinisteres.data ?? [],
       ministeres: ministeres.data ?? [],
       points: lirePoints ? (points.data ?? { points: [], mentions: [] }) : null,

@@ -445,3 +445,12 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Plan de l'étape 3, choix des lectures (lot A)
 - **Statut** : Proposé, à confirmer par EJP Tech
 - **BRIEF** : section 9 (« Bloc de la session ») ; le BRIEF n'est pas modifié
+
+### T28. Vue de l'église sans « À décider » ; liens de session pour tous les profils
+
+- **Date** : 5 octobre 2026
+- **Sujet** : sans « À décider » (administration de l'église, ministère), la colonne de droite à côté des chiffres restait vide à partir de 1024 px ; l'administration de l'église voit aussi les liens « Voir Anti-Dispersion » du bloc de la session, alors que sa vue est « sans action ».
+- **Décision** : sans « À décider », la carte des FIJ prend la colonne de droite à côté des chiffres à partir de 1024 px, et la session passe dessous, sur toute la largeur ; l'ordre de lecture ne change pas. À l'étape 4, « Vos points » prendra cette colonne pour le ministère, et la carte reviendra à côté de la session. Les liens vers les autres types de session (T20) restent pour tous les profils qui voient la vue de l'église, administration de l'église comprise : ils ne changent que la session affichée, ce ne sont pas des actions. Les participations de la dernière session de chaque type se lisent en une fois, pour que ces liens ne fassent pas repasser la page par le chargement.
+- **Origine** : Revue de l'étape 3
+- **Statut** : Proposé, à confirmer par EJP Tech
+- **BRIEF** : section 9 (« Vue de l'église selon le profil », « Bloc de la session ») ; `LISEZMOI.md`, « Écarts connus » ; le BRIEF n'est pas modifié

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { choisirSession, construireCetteSemaine } from './construire'
+import { choisirSession, construireCetteSemaine, sessionsAffichables } from './construire'
 import { exempleCetteSemaine, exemplePremierDimanche, MINISTERE_EXEMPLE } from './exemple'
 import { lecturesExemple, lecturesPremierDimanche } from './lecturesExemple'
 import { TEXTE_MASQUE, TEXTES_VIDES } from './textesVides'
@@ -273,6 +273,16 @@ describe('bloc de la session', () => {
     expect(choisirSession([], null)).toBeNull()
   })
 
+  it('sessionsAffichables : la dernière session de chaque type, toutes lues en une fois', () => {
+    const { sessions } = lecturesExemple()
+    expect(sessionsAffichables(sessions)).toEqual(['s-b4', 's-a4'])
+    expect(sessionsAffichables([])).toEqual([])
+    // Chaque choix de `?session=` tombe sur une session dont les participations sont lues.
+    for (const type of [null, 'batir', 'anti_dispersion'] as const) {
+      expect(sessionsAffichables(sessions)).toContain(choisirSession(sessions, type)?.session_id)
+    }
+  })
+
   it('la note du double compte quand des STARs sont saisis par deux ministères', () => {
     const lectures = lecturesExemple()
     const batir = lectures.sessions[0]
@@ -480,12 +490,12 @@ describe('états vides : cas particuliers', () => {
     })
   })
 
-  it('ministère sans session : le résumé garde sa troisième ligne vide', () => {
+  it('ministère sans session : le résumé garde sa troisième ligne vide, au libellé habituel', () => {
     const donnees = construireCetteSemaine(lecturesPremierDimanche(), ministere, null)
     const { resume } = donnees as DonneesMinistere
     expect(resume[2]).toMatchObject({
       id: 'derniere_session',
-      libelle: TEXTES_VIDES.session.titre,
+      libelle: "Présents à Bâtir l'Église",
       valeur: { etat: 'vide' },
       date: TEXTES_VIDES.chiffres.dateSansSession,
       completude: null,

@@ -117,12 +117,12 @@ describe("lectures de la vue de l'église", () => {
     ])
   })
 
-  it('lireParticipations : filtré sur la session', async () => {
+  it('lireParticipations : filtré sur les sessions données', async () => {
     const faux = brancher()
-    await lireParticipations('s-1')
+    await lireParticipations(['s-1', 's-2'])
     expect(appelsDe(faux.de('v_participation_courante')[0])).toEqual([
       'select("session_id, ministere_id, valeur, deja_comptes, compte_dans_total, saisi_le")',
-      'eq("session_id", "s-1")',
+      'in("session_id", ["s-1","s-2"])',
     ])
   })
 

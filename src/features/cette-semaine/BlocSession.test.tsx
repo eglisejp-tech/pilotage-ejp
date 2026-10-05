@@ -101,6 +101,9 @@ describe('BlocSession', () => {
     afficher({ etat: 'aucune_session' })
     const region = screen.getByRole('region', { name: 'Dernière session' })
     expect(within(region).getByText('Aucune session déclarée.')).toBeInTheDocument()
+    expect(
+      within(region).getByText("L'administration de l'église déclare les sessions."),
+    ).toBeInTheDocument()
     expect(within(region).queryByRole('link')).not.toBeInTheDocument()
     expect(screen.queryByTestId('barre-session')).not.toBeInTheDocument()
   })
@@ -131,5 +134,27 @@ describe('BlocSession', () => {
       autres: [],
     })
     expect(screen.getByText("Aucun autre rassemblement pour l'instant.")).toBeInTheDocument()
+    // D'autres sessions existent : pas de phrase sur qui les déclare.
+    expect(screen.queryByText(/déclare les sessions/)).not.toBeInTheDocument()
+  })
+
+  it('écrit les nombres à la française, comme le tableau des chiffres', () => {
+    afficher({
+      titre: "Bâtir l'Église, samedi 3 octobre",
+      total: 1050,
+      saisis: 2,
+      attendus: 2,
+      apports: [
+        { ministere: 'Jeunesse', valeur: 1000, saisis: 1200 },
+        { ministere: 'Social', valeur: 50, saisis: null },
+      ],
+      noteDoubleCompte: null,
+      autres: [],
+    })
+    // Les outils de test ramènent l'espace fine (U+202F) à une espace simple.
+    const region = screen.getByRole('region', { name: "Bâtir l'Église, samedi 3 octobre" })
+    expect(region).toHaveTextContent('1 050STARs présents')
+    expect(within(region).getByText('(1 200 saisis)')).toBeInTheDocument()
+    expect(screen.getByTestId('barre-session')).toHaveTextContent('1 000')
   })
 })

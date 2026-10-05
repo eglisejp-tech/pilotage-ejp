@@ -284,8 +284,8 @@ export interface DonneesMinistere extends DonneesEglise {
   profil: 'ministere'
   /**
    * Sous 600 px, avant « Tout voir » (BRIEF section 9) : STARs au service, STARs présents en
-   * FIJ, dernière session (id `derniere_session` ; sans session : libellé
-   * TEXTES_VIDES.session.titre, valeur vide, date TEXTES_VIDES.chiffres.dateSansSession).
+   * FIJ, dernière session (id `derniere_session` ; sans session : libellé « Présents à Bâtir
+   * l'Église », valeur vide, date TEXTES_VIDES.chiffres.dateSansSession).
    */
   resume: [LigneChiffre, LigneChiffre, LigneChiffre]
   ministeres: (LigneMinistere & { conseil: null })[]

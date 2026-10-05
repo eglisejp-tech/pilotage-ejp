@@ -36,10 +36,14 @@ export function ChargementCetteSemaine({ profil }: Props) {
     return () => clearTimeout(minuterie)
   }, [])
 
+  // La zone role="status" existe dès le départ, vide : « Chargement » y entre après 300 ms et
+  // les lecteurs d'écran l'annoncent (une zone ajoutée avec son texte ne l'est pas toujours).
   const ouverture = (
     <header className="min-h-16">
       <h1 className="sr-only">Cette semaine</h1>
-      {visible ? <p className="text-encre-3">{TEXTES_VIDES.page.chargement}</p> : null}
+      <p role="status" className="text-encre-3">
+        {visible ? TEXTES_VIDES.page.chargement : null}
+      </p>
     </header>
   )
 

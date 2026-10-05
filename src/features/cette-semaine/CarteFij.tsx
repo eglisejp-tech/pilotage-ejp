@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { nombre } from '@/lib/metier/texte'
 import { niveauTeinte, placesDepartements, teintesCarte } from './carte'
 import { MessageVide } from './MessageVide'
 import { TEXTES_VIDES } from './textesVides'
@@ -51,7 +52,7 @@ export function CarteFij({ carte }: Props) {
         titre="FIJ en Île-de-France"
         complement={
           carte && valeurs.length > 0 ? (
-            <span className="text-note text-encre-3">{carte.total} FIJ</span>
+            <span className="text-note text-encre-3">{nombre(carte.total)} FIJ</span>
           ) : null
         }
       />
@@ -84,11 +85,13 @@ export function CarteFij({ carte }: Props) {
                         : 'font-chiffres text-2xl leading-[0.9] font-extrabold tabular-nums lg:text-[29px]'
                     }
                   >
-                    {departement.valeur ?? TEXTES_VIDES.carte.departementSansValeur}
+                    {departement.valeur === null
+                      ? TEXTES_VIDES.carte.departementSansValeur
+                      : nombre(departement.valeur)}
                   </span>
                   <span className="sr-only">
                     {departement.nom} ({departement.code}) :{' '}
-                    {departement.valeur === null ? 'à saisir' : `${departement.valeur} FIJ`}
+                    {departement.valeur === null ? 'à saisir' : `${nombre(departement.valeur)} FIJ`}
                   </span>
                 </li>
               )

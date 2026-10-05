@@ -27,6 +27,21 @@ describe('CarteFij', () => {
     expect(within(region).getByText('29 FIJ')).toBeInTheDocument()
   })
 
+  it('écrit les nombres à la française (total et départements)', () => {
+    const grande = {
+      total: 1250,
+      departements: carte!.departements.map((departement, index) => ({
+        ...departement,
+        valeur: index === 0 ? 1200 : 7,
+      })),
+    }
+    render(<CarteFij carte={grande} />)
+    const region = screen.getByRole('region', { name: 'FIJ en Île-de-France' })
+    // Les outils de test ramènent l'espace fine (U+202F) à une espace simple.
+    expect(within(region).getByText('1 250 FIJ')).toBeInTheDocument()
+    expect(within(region).getAllByRole('listitem')[0]).toHaveTextContent('Paris (75) : 1 200 FIJ')
+  })
+
   it('place chaque carré comme sur la carte et le fonce selon son nombre de FIJ', () => {
     render(<CarteFij carte={carte} />)
     const carre = (nom: string) => screen.getByText(nom).closest('li')

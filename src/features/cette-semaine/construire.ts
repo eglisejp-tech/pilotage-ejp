@@ -85,7 +85,10 @@ export interface LecturesCetteSemaine {
   sessions: LigneVue<'v_session_completude'>[]
   /** ['eglise','ecarts-sessions'] */
   ecartsSessions: LigneVue<'v_ecart_session'>[]
-  /** ['eglise','participations',id] : la session affichée ; vide sans session. */
+  /**
+   * ['eglise','participations',...ids] : la dernière session de chaque type (sessionsAffichables),
+   * filtrées ici sur la session affichée ; vide sans session.
+   */
   participations: LigneVue<'v_participation_courante'>[]
   /** ['ministeres','tableau'] : ministères actifs. */
   tableauMinisteres: LigneVue<'v_tableau_ministeres'>[]
@@ -468,9 +471,18 @@ function resumeMinistere(
     throw new Error('Lignes de chiffres manquantes.')
   }
   const derniere = contexte.lectures.sessions[0]
+  // Sans aucune session, la ligne garde le libellé de la ligne Bâtir l'Église (celui qu'elle
+  // aura le plus souvent), et la date dit « Aucune session pour l'instant » : le libellé ne
+  // change pas d'un état à l'autre.
   const ligneDerniere =
     derniere === undefined
-      ? ligneSession('derniere_session', TEXTES_VIDES.session.titre, [], contexte, false)
+      ? ligneSession(
+          'derniere_session',
+          `Présents à ${LIBELLE_TYPE_SESSION.batir}`,
+          [],
+          contexte,
+          false,
+        )
       : ligneSession(
           'derniere_session',
           `Présents à ${nomSession(derniere.type, derniere.intitule)}`,
@@ -490,6 +502,18 @@ export function choisirSession(
 ): LigneSession | null {
   if (typeSession === null) return sessions[0] ?? null
   return sessions.find((session) => session.type === typeSession) ?? null
+}
+
+/**
+ * Les sessions que le bloc peut afficher, quel que soit `?session=` : la plus récente de chaque
+ * type, dans un ordre fixe. Leurs participations se lisent en une fois : changer de type ne relit
+ * rien et la page ne repasse pas par le chargement.
+ */
+export function sessionsAffichables(sessions: readonly LigneSession[]): string[] {
+  return TYPES_SESSION.flatMap((type) => {
+    const session = choisirSession(sessions, type)
+    return session === null ? [] : [session.session_id]
+  })
 }
 
 // T20 : un lien vers chaque autre type qui a une session passée.

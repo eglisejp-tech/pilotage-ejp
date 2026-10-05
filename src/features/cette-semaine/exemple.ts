@@ -520,7 +520,7 @@ export function exemplePremierDimanche(profil: ProfilVue): DonneesCetteSemaine {
       parId('en_fij'),
       ligneVide(
         'derniere_session',
-        TEXTES_VIDES.session.titre,
+        "Présents à Bâtir l'Église",
         TEXTES_VIDES.chiffres.dateSansSession,
         null,
       ),

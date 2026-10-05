@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
+import { nombre } from '@/lib/metier/texte'
 import { BarreSession } from './BarreSession'
 import { MessageVide } from './MessageVide'
 import { TEXTES_VIDES } from './textesVides'
@@ -14,7 +15,7 @@ function resume({ total, saisis, attendus }: DerniereSession) {
   if (total === null) return TEXTES_VIDES.session.resumeSansSaisie(attendus)
   const presents = total > 1 ? 'STARs présents' : 'STAR présent'
   const ministeres = saisis > 1 ? 'ministères' : 'ministère'
-  return `${presents}, selon ${saisis} ${ministeres} sur ${attendus}`
+  return `${presents}, selon ${nombre(saisis)} ${ministeres} sur ${nombre(attendus)}`
 }
 
 /** Liens vers les autres types de session qui en ont une passée (T20), à droite du titre. */
@@ -62,6 +63,12 @@ export function BlocSession({ bloc }: Props) {
             ? TEXTES_VIDES.session.aucuneSession
             : TEXTES_VIDES.session.aucuneSessionDuType[bloc.type]}
         </MessageVide>
+        {/* Aucune session du tout : la phrase suivante dit d'où viendra la première. */}
+        {sansType ? (
+          <p className="-mt-2.5 max-w-prose text-sm text-encre-2">
+            {TEXTES_VIDES.session.quiDeclare}
+          </p>
+        ) : null}
       </section>
     )
   }
@@ -85,7 +92,7 @@ export function BlocSession({ bloc }: Props) {
           </span>
         ) : (
           <span className="font-chiffres text-[clamp(60px,8vw,88px)] leading-[0.8] font-black tabular-nums">
-            {session.total}
+            {nombre(session.total)}
           </span>
         )}
         <span className="text-sm text-encre-2 min-[600px]:text-[15px] lg:text-base">
@@ -116,9 +123,9 @@ export function BlocSession({ bloc }: Props) {
                 </span>
               ) : (
                 <span className="tabular-nums">
-                  {apport.valeur}
+                  {nombre(apport.valeur)}
                   {apport.saisis !== null && apport.saisis !== apport.valeur ? (
-                    <span className="text-encre-3"> ({apport.saisis} saisis)</span>
+                    <span className="text-encre-3"> ({nombre(apport.saisis)} saisis)</span>
                   ) : null}
                 </span>
               )}

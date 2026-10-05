@@ -192,7 +192,8 @@ describe('VueCetteSemaine', () => {
       const lignes = within(region).getAllByRole('listitem')
       expect(lignes).toHaveLength(3)
       for (const ligne of lignes) expect(ligne).toHaveTextContent('Pas encore de saisie')
-      expect(lignes[2]).toHaveTextContent("Dernière sessionAucune session pour l'instant")
+      // Même libellé qu'avec des données : seule la ligne secondaire dit ce qui manque.
+      expect(lignes[2]).toHaveTextContent("Présents à Bâtir l'ÉgliseAucune session pour l'instant")
     })
 
     it('à partir de 600 px, les blocs sans « Tout voir »', () => {
