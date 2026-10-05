@@ -1,10 +1,11 @@
 # Journal des décisions : Pilotage EJP
 
-Une entrée par décision ou proposition. Trois statuts :
+Une entrée par décision ou proposition. Quatre statuts :
 
 - **Décidé** : tranché par la coordination et EJP Tech ; `BRIEF.md` l'applique.
 - **Proposé, à confirmer par la coordination** : règle métier proposée par EJP Tech après la revue du kit ; `BRIEF.md` l'applique en attendant la réponse.
 - **Proposé, à confirmer par EJP Tech** : choix technique proposé par la revue du kit ; `BRIEF.md` l'applique en attendant la validation.
+- **À l'étude, non appliqué (conception des KPI)** : proposition issue de l'analyse des KPI de la coordination (P15 à P30, T26 et T27, détail dans `docs/conception/kpi-ministeres.md`). Ni `BRIEF.md` ni le code ne l'appliquent, même en attendant la réponse : la règle « une proposition s'applique en attendant » ne vaut pas pour elle. Une session ne construit rien à partir d'elle tant que la coordination ou EJP Tech ne l'a pas confirmée. Une seule s'applique dès qu'EJP Tech la confirme : P30 (listes de noms bornées, étape 3).
 
 Quand une proposition est confirmée ou changée, mets à jour son statut ici, puis `BRIEF.md` (section 4 et la section citée). Questions encore ouvertes : la date de mise en ligne et l'existence d'une charte visuelle EJP.
 
@@ -213,55 +214,46 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 ### P15. Tri des KPI de la coordination
 
 - **Date** : 5 octobre 2026
-- **Sujet** : la coordination propose 185 demandes (176 KPI et 9 graphiques) pour 22 ministères ; le modèle ne connaît que des comptes entiers du dimanche ou à ce jour, et la liste V1 de P08 n'en comptait que six.
-- **Décision** : chaque demande devient un compte entier saisi par le ministère (indicateur propre), une valeur calculée (jamais saisie, avec sa complétude), un indicateur commun déjà existant, un point d'attention (texte), ou elle est retirée. Taux, moyennes, cumuls et évolutions se calculent toujours, comme le pourcentage FIJ. Libellés de 60 caractères au plus, raccourcis par EJP Tech. Analyse ligne à ligne, phases et questions K1 à K54 : `docs/conception/kpi-ministeres.md`.
+- **Sujet** : la coordination propose 185 demandes (176 KPI et 9 graphiques ; six lignes groupent plusieurs chiffres) pour 22 ministères ; le modèle ne connaît que des comptes entiers du dimanche ou à ce jour, et la liste V1 de P08 n'en comptait que six.
+- **Décision** : chaque demande devient un compte entier saisi par le ministère (indicateur propre), une valeur calculée (jamais saisie, avec sa complétude), un indicateur commun déjà existant, un point d'attention (texte), ou elle est retirée. Taux, moyennes, cumuls et évolutions se calculent toujours, comme le pourcentage FIJ. Libellés de 60 caractères au plus, raccourcis par EJP Tech. Classement ligne à ligne (annexe de la conception), phases et questions (C1 à C3, K1 à K57) : `docs/conception/kpi-ministeres.md`.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (C1 à C3 d'abord : l'outil est temporaire, la liste est-elle pour lui ?)
 - **BRIEF** : section 3 (règles 3, 4 et 9), section 4 (« Indicateurs propres ») ; le BRIEF n'est pas modifié
 
 ### P16. Nature « mois » pour les comptes par période
 
 - **Date** : 5 octobre 2026
-- **Sujet** : 65 demandes se comptent par semaine ou par mois. La convention du BRIEF (un indicateur « ce mois » saisi « à ce jour » et remis à zéro) date la valeur du jour de saisie : le total de septembre saisi le 2 octobre compterait pour octobre.
-- **Décision** : nouvelle nature « mois » : `date_ref` est le 1er jour du mois ; le formulaire propose le mois en cours et les deux précédents ; la base refuse un autre jour que le 1er et un mois futur (heure de Paris) ; la saisie la plus récente d'un mois fait foi ; total, cumul de l'année et complétude par mois. Un compte vraiment hebdomadaire reste « dimanche » (la semaine du lundi au dimanche). Pas de nature « année » : l'année se calcule. Nouvelle migration (contrôle de `indicateur.nature`, trigger `controler_mesure`, vues) et tests pgTAP ; `mesure` reste en ajout seulement.
+- **Sujet** : 68 demandes se comptent par semaine ou par mois. La convention du BRIEF (un indicateur « ce mois » saisi « à ce jour » et remis à zéro) date la valeur du jour de saisie : le total de septembre saisi le 2 octobre compterait pour octobre.
+- **Décision** : nouvelle nature « mois » : `date_ref` est le 1er jour du mois ; le formulaire propose le mois en cours et les deux précédents ; la base refuse un autre jour que le 1er et un mois futur (heure de Paris), et le mois en cours pour un indicateur sensible (P22) ; la saisie la plus récente d'un mois fait foi ; total, cumul de l'année et complétude par mois. Un compte vraiment hebdomadaire reste « dimanche » (la semaine du lundi au dimanche). Pas de nature « année » : l'année se calcule. Nouvelle migration (contrôle de `indicateur.nature`, trigger `controler_mesure`, vues) et tests pgTAP ; `mesure` reste en ajout seulement.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (période, K1) et par EJP Tech (modèle)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (période, K1) et par EJP Tech (modèle)
 - **BRIEF** : section 4 (« Indicateurs propres »), section 6 (`indicateur`, « Règles d'intégrité ») ; le BRIEF n'est pas modifié
 
 ### P17. Activités propres à un ministère
 
 - **Date** : 5 octobre 2026
-- **Sujet** : Welcome Prodiges, sessions de baptême, Prière des Stars, répétitions, activités de Kumi et d'Eagles se comptent par activité ; ce ne sont pas des sessions d'église.
-- **Décision** : en phase 1, nature « dimanche » si l'activité a lieu le dimanche, sinon comptes du mois (activités du mois, présents du mois). En phase 2, si la coordination confirme le besoin d'un chiffre par activité : nature « jour », une valeur par date d'aujourd'hui ou avant. Les sessions d'église (Bâtir l'Église, Anti-Dispersion, autre rassemblement) ne servent pas aux activités d'un seul ministère. Pas de table d'activités.
+- **Sujet** : Welcome Prodiges, sessions de baptême, Prière des Stars, répétitions, activités de Kumi et d'Eagles se comptent par activité. Hypothèse à vérifier : ce ne seraient pas des sessions d'église. Mais si la Prière des Stars ou Welcome Prodiges réunit les STARs de plusieurs ministères, la règle 5 du BRIEF et D2 les rangent parmi les rassemblements à déclarer (K35, K18).
+- **Décision** : en phase 1, nature « dimanche » si l'activité a lieu le dimanche, sinon comptes du mois (activités du mois, présents du mois). En phase 2, si la coordination confirme le besoin d'un chiffre par activité : nature « jour », une valeur par date d'aujourd'hui ou avant. Une activité d'un seul ministère ne se déclare pas comme session d'église ; un rassemblement qui réunit les STARs de plusieurs ministères se déclare comme session « Autre rassemblement » (règle 5, D2 : chaque ministère saisit ses présents, un STAR n'est compté qu'une fois). Pas de table d'activités.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K18, K21, K35, K42) et par EJP Tech (modèle)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K18, K21, K35, K42, K57) et par EJP Tech (modèle)
 - **BRIEF** : section 3 (règle 5), section 4, section 6 ; le BRIEF n'est pas modifié
-
-### P18. Unité, plafond et groupe d'un indicateur
-
-- **Date** : 5 octobre 2026
-- **Sujet** : vues, portée et montants dépassent 9999 ; aucune unité n'est prévue ; la liste range ses KPI en groupes (Captation, Audience, Prière des Stars, Badges).
-- **Décision** : trois colonnes sur `indicateur` : `unite` (nombre par défaut, euros, minutes, jours), `valeur_max` (9999 par défaut, contrôlée par le trigger de `mesure`, dont le contrôle devient « 0 ou plus ») et `groupe` (facultatif, pour la fiche et les formulaires). Aucune décimale : pourcentages et moyennes sont seulement calculés. Les durées et délais suivis objet par objet sont remplacés par des comptes ou retirés. L'heure de début du culte se saisit comme un retard en minutes chaque dimanche, si la coordination le confirme (K22).
-- **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par EJP Tech
-- **BRIEF** : section 6 (`indicateur`, `mesure`, « Règles d'intégrité ») ; le BRIEF n'est pas modifié
 
 ### P19. Valeurs calculées déclarées par migration
 
 - **Date** : 5 octobre 2026
-- **Sujet** : 29 demandes sont des cumuls, taux, moyennes ou évolutions ; un indicateur propre n'a pas de code, l'interface ne peut donc pas le nommer dans un calcul.
-- **Décision** : nouvelle table `indicateur_calcul` (ministère, libellé, type, numérateur, dénominateur, ordre), écrite par migration, lue comme `indicateur` (rien pour EJP Tech), et vue `v_calcul`. Trois types : cumul depuis le 1er janvier (heure de Paris), ratio de deux indicateurs du même ministère sur la même période, moyenne par activité (phase 2). Affichage avec complétude ; « Non calculé » si le dénominateur manque ou vaut zéro. Un taux sans dénominateur défini n'est pas créé.
+- **Sujet** : 23 demandes sont des cumuls, taux, moyennes ou évolutions ; un indicateur propre n'a pas de code, l'interface ne peut donc pas le nommer dans un calcul.
+- **Décision** : nouvelle table `indicateur_calcul` (ministère, libellé, type, numérateur, dénominateur, ordre), écrite par migration, lue comme `indicateur` (rien pour EJP Tech), et vue `v_calcul`. Trois types : cumul depuis le 1er janvier (heure de Paris), ratio de deux indicateurs du même ministère sur la même période, moyenne par activité (phase 2). Affichage avec complétude ; « Non calculé » si le dénominateur manque ou vaut zéro. Un taux sans dénominateur défini n'est pas créé. Complétude dans le temps : les périodes attendues (dimanches ou mois) depuis le 1er janvier ou depuis la création de l'indicateur, la plus récente des deux ; pour la moyenne par activité et la nature « jour », aucune complétude n'est possible (personne ne déclare les activités prévues, K57). La règle 13 du BRIEF, qui ne définit pas cette complétude dans le temps, sera complétée à la confirmation.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par EJP Tech (modèle) et par la coordination (dénominateurs et année, K2 à K4)
+- **Statut** : À l'étude, non appliqué ; à confirmer par EJP Tech (modèle) et par la coordination (dénominateurs, année et complétude, K2 à K4, K57)
 - **BRIEF** : section 3 (règles 3, 4 et 13), section 6 ; le BRIEF n'est pas modifié
 
 ### P20. Comptages d'événements
 
 - **Date** : 5 octobre 2026
 - **Sujet** : événements prévus, réalisés, annulés, reportés et couverts ; l'état « reporté » n'existe pas, et rien ne relie un événement aux ministères qui le couvrent.
-- **Décision** : réalisés = dernier état « Terminé » ; prévus = dernier état « Validé » ou « En préparation », daté d'aujourd'hui ou après ; annulés = dernier état « Annulé » ; reporté = date repoussée, lue dans l'historique de `evenement_etat`, sans nouvel état. Comptés par ministère et par mois, en phase 2. Un événement couvert par un autre ministère se compte par un compte du mois saisi par ce ministère, sans lien avec l'événement ni total de l'église.
+- **Décision** : réalisés = dernier état « Terminé » ; prévus = dernier état « Validé » ou « En préparation », daté d'aujourd'hui ou après ; annulés = dernier état « Annulé » ; reporté = date repoussée, lue dans l'historique de `evenement_etat`, sans nouvel état. Comptés par mois, en phase 2 : chaque ministère lit les siens, et Coordination, si elle compte ceux de tous (K11), ne lit que des totaux de l'église par mois, sans détail par ministère (P06). Un événement couvert par un autre ministère se compte par un compte du mois saisi par ce ministère, sans lien avec l'événement ni total de l'église.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K9 à K11)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K9 à K11)
 - **BRIEF** : section 3 (règle 14), section 6 (`evenement_etat`), section 11 ; le BRIEF n'est pas modifié
 
 ### P21. Suivi de personnes remplacé par des comptes
@@ -270,17 +262,17 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : taux de retour, de conversion et de perte des NA, parcours vers la FIJ, participants uniques, parcours du jeune, enfants revenus, nouveaux bénéficiaires ou participants, satisfaction : tous supposent de reconnaître une personne d'une fois à l'autre.
 - **Décision** : l'outil ne suit aucune personne. Chaque KPI devient un compte agrégé saisi par le ministère (par exemple « NA revenus ce dimanche »), et un taux éventuel est un ratio de totaux, présenté comme tel ; sinon il est retiré. Le comptage se fait hors de l'outil ; l'outil ne reçoit qu'un nombre.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K4)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K4)
 - **BRIEF** : section 3 (règle 9), section 7 (« Données personnelles ») ; le BRIEF n'est pas modifié
 
 ### P22. Domaines sensibles
 
 - **Date** : 5 octobre 2026
-- **Sujet** : Santé, Social, Call your sister (Kumi), la plate-forme d'écoute (Eagles) et Prodiges Junior : un petit nombre daté peut désigner une personne (santé, situation personnelle, mineurs ; article 9 du RGPD).
-- **Décision** : totaux par mois seulement, sans ventilation ni texte libre lié au chiffre ; visibles par le ministère, le berger et le conseil (règle des indicateurs propres), jamais sur la vue de l'église ni dans un email. Le seuil d'affichage des très petits nombres est laissé à la coordination (K5). Les pages Confidentialité et Conditions d'utilisation gagnent chacune une phrase.
+- **Sujet** : Santé, Social, Call your sister (Kumi), la plate-forme d'écoute (Eagles) et, pour les enfants, Prodiges Junior : un petit nombre daté peut désigner une personne (santé, situation personnelle, mineurs ; article 9 du RGPD). Comme `mesure` est en ajout seulement (`saisi_le`) et que le détail du journal (valeur, date) est lu par le berger et le conseil, deux saisies successives d'un mois en cours révèlent un écart au jour près (« 1 prise en charge entre le 4 et le 11 octobre »). Un total par mois ne suffit donc pas : il faut aussi que le mois soit clos.
+- **Décision** : colonne `indicateur.sensible` (migration). Pour ces indicateurs : nature « mois » seulement, et `controler_mesure` refuse le mois en cours (seuls les mois écoulés, heure de Paris, se saisissent) ; la fiche et le journal ne montrent que la valeur du mois, pas la suite des saisies, et le `detail` du journal n'a pas de valeur pour eux. Aucune ventilation, aucun texte libre lié au chiffre ; visibles par le ministère, le berger et le conseil (règle des indicateurs propres), jamais sur la vue de l'église, ni dans un email, ni dans la lecture du journal par l'administration. Prodiges Junior : « enfants présents » (gros nombres) se sépare de « nouveaux enfants » et « enfants déjà venus » ; ces deux derniers sont sensibles et se comptent par mois écoulé, les enfants présents se comptent chaque dimanche si la coordination l'accepte (K5). Le seuil d'affichage des très petits nombres est laissé à la coordination (K5). **P22 modifie P08** : l'indicateur « Enfants accueillis le dimanche » de la liste V1 (section 4 du BRIEF) n'existerait plus tel quel. Les pages Confidentialité et Conditions d'utilisation gagnent chacune une phrase, soumise à la validation de la coordination (voir K56 pour le registre).
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination
-- **BRIEF** : section 3 (règle 9), section 7 (« Données personnelles ») ; le BRIEF n'est pas modifié
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K5, K56)
+- **BRIEF** : section 3 (règle 9), section 4 (liste V1 de P08), section 7 (« Données personnelles ») ; le BRIEF n'est pas modifié
 
 ### P23. Chiffres financiers
 
@@ -288,7 +280,7 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : chiffre d'affaires, marge et panier moyen (Merch), fonds levés (Social), budget (Production).
 - **Décision** : retenus seulement si la coordination le veut (K6) : unité euros, arrondi à l'euro, plafond relevé, aucun nom de donateur ni de client ; visibles par le ministère, le berger et le conseil ; l'administration de l'église ne les voit pas, sauf décision contraire. La comptabilité de l'église fait foi en cas d'écart.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K6)
 - **BRIEF** : section 7 (« Choix de visibilité ») ; le BRIEF n'est pas modifié
 
 ### P24. Chiffres de plateformes externes
@@ -297,25 +289,25 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : vues, portée, abonnés, engagement, spectateurs du direct, Pages Roses, formulaire de recrutement.
 - **Décision** : saisis à la main, en « à ce jour » pour un stock (abonnés, vues cumulées) ou en « mois » pour un flux ; la plateforme se nomme dans le libellé ; la date de relevé est la date de saisie ; aucune connexion aux plateformes. L'engagement se calcule à partir de deux comptes. Un même chiffre n'est reporté que par un ministère (K7).
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K7)
 - **BRIEF** : section 4 ; le BRIEF n'est pas modifié
 
 ### P25. Ministère Tech et comptes EJP Tech
 
 - **Date** : 5 octobre 2026
 - **Sujet** : EJP Tech est à la fois l'administration de la plateforme, qui ne voit aucun chiffre, et un ministère qui a des KPI (Tech).
-- **Décision** : le ministère Tech a un compte de ministère, avec sa propre boîte mail partagée, distinct des comptes EJP Tech. Les comptes EJP Tech ne changent pas et ne voient toujours aucun chiffre ; le compte du ministère Tech voit ce que voit tout ministère. Les mêmes personnes ont deux comptes.
+- **Décision** : le ministère Tech a un compte de ministère, avec sa propre boîte mail partagée, distinct des comptes EJP Tech. Les comptes EJP Tech ne changent pas et ne voient toujours aucun chiffre ; le compte du ministère Tech voit ce que voit tout ministère (vue de l'église, sessions, carte des FIJ, sa fiche). Si ce sont des personnes d'EJP Tech qui tiennent ce compte, elles voient donc les chiffres de l'église et relisent les textes libres : la règle « EJP Tech ne voit aucun chiffre » (P06) est alors vidée en pratique. Cette conséquence est à faire accepter (K30) ; rien n'est posé sur qui tient le compte avant la réponse.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K30)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K30)
 - **BRIEF** : section 2, section 7 (« Choix de visibilité ») ; le BRIEF n'est pas modifié
 
 ### P26. Un chiffre, une source
 
 - **Date** : 5 octobre 2026
-- **Sujet** : plusieurs KPI recoupent les indicateurs communs ou ceux d'un autre ministère (STARs actifs et en service de MDS, mobilisés, bénévoles actifs, nouvelles intégrations, vues de Film et de MCAD).
-- **Décision** : STARs actifs et au service : seulement les indicateurs communs, saisis par chaque ministère (D1) ; MDS ne saisit pas un deuxième total de l'église. Mobilisés, équipiers, agents, animateurs et interprètes sont les STARs au service, sauf libellé « hors STARs ». Bénévoles actifs = STARs actifs. Nouveaux STARs : MDS seul. Lives et diffusions en direct : un seul indicateur. Vues : un seul ministère.
+- **Sujet** : plusieurs KPI recoupent les indicateurs communs ou ceux d'un autre ministère (STARs actifs et en service de MDS, mobilisés, bénévoles actifs, nouvelles intégrations, vues de Film et de MCAD). Un STAR n'est compté que dans son ministère principal (règle 4, P01) : une bénévole de Kumi dont le ministère principal est un autre n'est pas dans les actifs de Kumi, et « mobilisés » ne couvre que les dimanches alors que Santé, Sécurité, MCAD et Multilingue sont aussi mobilisés aux événements.
+- **Décision** : STARs actifs et au service : seulement les indicateurs communs, saisis par chaque ministère (D1) ; MDS ne saisit pas un deuxième total de l'église. **Hypothèses à vérifier avec chaque ministère (K8, K43, K44, K52)** : les mobilisés, équipiers, agents, animateurs et interprètes seraient les STARs au service du dimanche ; les bénévoles actifs de Kumi et d'Eagles seraient leurs STARs actifs ; les nouveaux STARs seraient comptés par MDS seul. Tant que le ministère n'a pas répondu, ces lignes sont classées « Commun » avec la mention « hypothèse », et celles de Kumi et d'Eagles sur les intégrations dans les équipes sont « À préciser » (K55). Lives et diffusions en direct : un seul indicateur. Vues : un seul ministère.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K8, K52)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination et par chaque ministère concerné (K8, K52, K55)
 - **BRIEF** : section 3 (règles 3 à 5), section 4 ; le BRIEF n'est pas modifié
 
 ### P27. Coordo FIJ et ministère FIJ
@@ -324,34 +316,25 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : Coordo FIJ demande des chiffres par département et chaque mardi ; le ministère FIJ saisit déjà la carte des 8 départements.
 - **Décision** : Coordo FIJ est le ministère FIJ (code `fij`), renommé par migration si la coordination le veut ; la carte reste telle quelle. Les autres chiffres par département ou du mardi attendent une liste précise et demanderaient une table par département et par date (phase 3).
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K46, K47)
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (K46, K47)
 - **BRIEF** : section 4 (`fij_departement`), section 6 ; le BRIEF n'est pas modifié
-
-### P28. Indicateurs créés par lots de migration
-
-- **Date** : 5 octobre 2026
-- **Sujet** : environ 90 indicateurs en phase 1 et jusqu'à 185 demandes ; les ministères sont créés par l'administration en production, et par `seed.sql` après les migrations en local et en CI.
-- **Décision** : création par migration (BRIEF), par lots, sur demande écrite de l'administration, sans écran de configuration en V1. Chaque lot rattache ses indicateurs par nom de ministère (unique et non modifiable dans l'outil), ne crée rien là où le ministère manque et signale les noms introuvables ; la préproduction porte les 22 noms et sert de recette. Un écran de configuration se réexamine après un mois d'usage.
-- **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par EJP Tech
-- **BRIEF** : section 4, section 6 (« Données de référence »), section 11 ; le BRIEF n'est pas modifié
 
 ### P29. Phasage des KPI
 
 - **Date** : 5 octobre 2026
 - **Sujet** : tout construire avant la mise en service la repousserait et chargerait les ministères de saisies.
-- **Décision** : phase 1, avec la mise en service : P16, P18 et P19 dans une nouvelle étape « 4a » avant l'étape 4 ; six indicateurs saisis au plus par ministère, choisis parmi les candidats de la conception (K13) ; journal de l'administration qui garde les chiffres communs d'un envoi mixte. Phase 2, après la mise en service : activités datées, comptages d'événements, lots suivants. Phase 3, si la coordination la confirme : grands graphiques, chiffres de ministères sur la vue de l'église, chiffres FIJ par département, couverture d'événements, écran de configuration.
+- **Décision** : phase 1, avec la mise en service : P16, T26, T27 et P19 dans une nouvelle étape « 4a » avant l'étape 4 (nom provisoire, absent de la section 13 du BRIEF) ; six indicateurs saisis au plus par ministère, choisis parmi les candidats de la conception (K13) ; lecture du journal par l'administration qui ne montre que les chiffres communs d'un envoi mixte (par une fonction et une vue, pas par la RLS). Cet ajout allonge le chemin vers la mise en service de 6 à 9 jours de travail (date toujours ouverte, section 4 du BRIEF) : à peser contre le caractère temporaire de l'outil (C1). Phase 2, après la mise en service : activités datées, comptages d'événements, lots suivants. Phase 3, si la coordination la confirme : grands graphiques, chiffres de ministères sur la vue de l'église, chiffres FIJ par département, couverture d'événements, écran de configuration.
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination et par EJP Tech
+- **Statut** : À l'étude, non appliqué ; à confirmer par la coordination (C1, K13) et par EJP Tech
 - **BRIEF** : section 13 ; le BRIEF n'est pas modifié
 
 ### P30. Vue de l'église à 22 ministères
 
 - **Date** : 5 octobre 2026
 - **Sujet** : l'étape 3 (vue de l'église) est en cours avec un jeu d'exemple de 8 ministères ; la liste en compte 22.
-- **Décision** : les indicateurs propres restent hors de la vue de l'église, sauf demande de la coordination (K12). L'étape 3 ne change ni le modèle ni le jeu d'exemple ; elle ajoute un test d'affichage à 22 ministères (tableau, barre de la session, listes de noms). Au-delà de trois noms, une liste devient « Coordination, Intégration, Social et 4 autres ministères ».
+- **Décision** : les indicateurs propres restent hors de la vue de l'église, sauf demande de la coordination (K12). L'étape 3 ne change ni le modèle ni le jeu d'exemple ; elle ajoute un test d'affichage à 22 ministères (tableau, barre de la session, listes de noms). Au-delà de trois noms, une liste devient « Coordination, Intégration, Social et 4 autres ministères » ; la liste complète reste lisible dans le tableau « Les ministères » et dans un libellé accessible (lecteur d'écran, tablette).
 - **Origine** : KPI de la coordination
-- **Statut** : Proposé, à confirmer par la coordination (K12) et par EJP Tech (listes de noms)
+- **Statut** : À l'étude, non appliqué ; la borne des listes de noms s'applique à l'étape 3 dès qu'EJP Tech la confirme, le reste attend la coordination (K12)
 - **BRIEF** : section 4, section 9 (« Phrase de la semaine », « Bloc de la session ») ; le BRIEF n'est pas modifié
 
 ## Propositions à confirmer par EJP Tech
@@ -508,3 +491,21 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : EJP Tech, textes validés par la coordination
 - **Statut** : Décidé
 - **BRIEF** : section 7 (« Données personnelles »), section 9 (« Adresses ») ; le BRIEF n'est pas modifié, la route `/conditions` s'ajoute à son tableau des adresses
+
+### T26. Unité, plafond, groupe et marque sensible d'un indicateur
+
+- **Date** : 5 octobre 2026
+- **Sujet** : vues, portée et montants dépassent 9999 ; aucune unité n'est prévue ; la liste range ses KPI en groupes (Captation, Audience, Prière des Stars, Badges) ; les domaines sensibles (P22) doivent être reconnus par la base.
+- **Décision** : quatre colonnes sur `indicateur` : `unite` (nombre par défaut, euros, minutes, jours), `valeur_max` (9999 par défaut, contrôlée par le trigger de `mesure`, dont le contrôle devient « 0 ou plus »), `groupe` (facultatif, pour la fiche et les formulaires) et `sensible` (faux par défaut ; P22). Aucune décimale : pourcentages et moyennes sont seulement calculés. Les durées et délais suivis objet par objet sont remplacés par des comptes ou retirés. L'heure de début du culte se saisit comme un retard en minutes chaque dimanche, si la coordination le confirme (K22).
+- **Origine** : KPI de la coordination
+- **Statut** : À l'étude, non appliqué ; à confirmer par EJP Tech
+- **BRIEF** : section 6 (`indicateur`, `mesure`, « Règles d'intégrité ») ; le BRIEF n'est pas modifié
+
+### T27. Indicateurs créés par lots de migration, avec un catalogue
+
+- **Date** : 5 octobre 2026
+- **Sujet** : environ 90 indicateurs en phase 1 et jusqu'à 185 demandes ; les ministères sont créés par l'administration en production après le déploiement, et par `seed.sql` après les migrations en local et en CI. Une migration qui cherche chaque ministère par son nom ne trouve donc rien en production à la mise en service, ne se rejoue jamais, ne peut pas être testée par pgTAP (la base est déjà chargée) et dépend d'un nom libre tapé à l'écran 13.
+- **Décision** : création par migration (BRIEF), par lots, sur demande écrite de l'administration, sans écran de configuration en V1. Chaque lot écrit un catalogue `private.indicateur_modele` (nom normalisé du ministère, libellé, nature, unité, plafond, groupe, sensible, ordre) ; une fonction `private` le matérialise, appelée par un trigger après chaque création de ministère et une fois par lot pour les ministères existants (noms comparés sans accents ni majuscules). `seed.sql` désactive ce trigger le temps de charger ses 8 ministères. Test pgTAP : créer un ministère du catalogue crée ses indicateurs. À défaut : écrire dans l'étape 8 l'ordre imposé (tous les ministères créés avant le lot) et une requête de contrôle à lancer après le push. Un écran de configuration se réexamine après un mois d'usage.
+- **Origine** : KPI de la coordination
+- **Statut** : À l'étude, non appliqué ; à confirmer par EJP Tech
+- **BRIEF** : section 4, section 6 (« Données de référence »), section 8 (amorçage), section 11 ; le BRIEF n'est pas modifié
