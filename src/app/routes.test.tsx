@@ -238,9 +238,13 @@ describe('routes', () => {
       await screen.findByRole('heading', { level: 1, name: 'Page introuvable' }),
     ).toBeInTheDocument()
     expect(screen.getByText("L'adresse est incomplète ou n'existe plus.")).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
-      'href',
-      '/moderation',
+    // La page s'affiche avant la fin de la lecture de la session : le lien vise « / », puis
+    // l'accueil du compte une fois la session connue.
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
+        'href',
+        '/moderation',
+      ),
     )
     expect(document.title).toBe('Page introuvable, Pilotage EJP')
   })
