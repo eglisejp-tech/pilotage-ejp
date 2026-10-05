@@ -4,6 +4,10 @@ Statut : **à l'étude, non appliqué** (décision T29 de `docs/decisions.md`). 
 migration n'est écrite, `BRIEF.md` n'est pas modifié. Une session ne construit rien à partir de ce
 document tant qu'EJP Tech et la coordination n'ont pas répondu aux questions de la section 10.
 Date : 5 octobre 2026, revue appliquée le même jour.
+Revu par T30 (validation métier par EJP Tech) : la validation des ajouts des ministères revient à
+EJP Tech seul, et un ajout en attente est visible du berger et du conseil. Là où
+`docs/conception/validation-metier.md` diffère (2, 4.3 à 4.5, 5.2, 5.8, 5.10, 6.2, 7.1, 8.1 et
+8.2), il remplace ce document.
 
 Sources : `docs/conception/kpi-ministeres.md` (analyse des 185 demandes, annexe et questions),
 `docs/sources/kpi-coordination-2026-10.md` (les « lignes » citées sont celles de ce fichier),
