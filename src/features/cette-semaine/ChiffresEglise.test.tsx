@@ -68,7 +68,7 @@ describe('ChiffresEglise', () => {
 
   it("écrit « Pas encore de saisie » à la place d'une valeur absente", () => {
     const [premiere] = chiffres
-    afficher([{ ...premiere!, valeur: null, ecart: undefined, courbe: undefined }])
+    afficher([{ ...premiere!, valeur: { etat: 'vide' }, ecart: null, courbe: null }])
     expect(screen.getByText('Pas encore de saisie')).toBeInTheDocument()
   })
 

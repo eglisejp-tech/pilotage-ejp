@@ -1,6 +1,8 @@
+import { ChampLibre } from './ChampLibre'
 import { IndicateurFraicheur } from './IndicateurFraicheur'
 import { NomMinistere } from './NomMinistere'
 import { couleursPriorite, libellesPriorite } from './priorites'
+import { TEXTES_VIDES } from './textesVides'
 import type { LigneMinistere } from './types'
 import { useLargeurMin } from './useLargeurMin'
 
@@ -56,16 +58,28 @@ export function TableauMinisteres({ ministeres, avecColonnesConseil, idTitre }: 
             <td className={cellule}>
               <IndicateurFraicheur fraicheur={ministere.fraicheur} />
             </td>
-            <td className={`${cellule} text-encre-2`}>{ministere.prochainEvenement}</td>
+            <td className={`${cellule} text-encre-2`}>
+              {ministere.prochainEvenement.etat === 'prevu' ? (
+                <>
+                  {ministere.prochainEvenement.date},{' '}
+                  <ChampLibre texte={ministere.prochainEvenement.nom} />
+                </>
+              ) : (
+                TEXTES_VIDES.ministeres.aucunEvenement
+              )}
+            </td>
             {colonnesConseil ? (
               <>
                 <td className={`${cellule} text-encre-2`}>
-                  {ministere.prochaineReunion ?? 'Non renseignée'}
+                  {ministere.conseil?.prochaineReunion ??
+                    TEXTES_VIDES.ministeres.reunionNonRenseignee}
                 </td>
                 <td
-                  className={`py-[13px] text-sm font-semibold ${ministere.pointOuvert ? couleursPriorite[ministere.pointOuvert] : 'text-encre-3'}`}
+                  className={`py-[13px] text-sm font-semibold ${ministere.conseil?.pointOuvert ? couleursPriorite[ministere.conseil.pointOuvert] : 'text-encre-3'}`}
                 >
-                  {ministere.pointOuvert ? libellesPriorite[ministere.pointOuvert] : 'Aucun'}
+                  {ministere.conseil?.pointOuvert
+                    ? libellesPriorite[ministere.conseil.pointOuvert]
+                    : TEXTES_VIDES.ministeres.aucunPointOuvert}
                 </td>
               </>
             ) : null}

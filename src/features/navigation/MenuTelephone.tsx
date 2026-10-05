@@ -18,7 +18,8 @@ const ID_MENU = 'menu-principal'
 /**
  * En-tête sous 1024 px (maquette 03, BRIEF_DESIGN section 7) : « Pilotage EJP », le libellé du
  * compte en dessous, et un bouton menu de 44 px. Le menu liste les onglets, puis le compte,
- * « Se déconnecter » et « Confidentialité ». Il se ferme avec Échap et à chaque changement de page.
+ * « Se déconnecter », « Confidentialité » et « Conditions d'utilisation ». Il se ferme avec Échap
+ * et à chaque changement de page.
  */
 export function MenuTelephone({
   libelleCompte,
@@ -112,6 +113,13 @@ export function MenuTelephone({
             className="inline-flex min-h-cible items-center text-sm text-encre-3 underline underline-offset-4"
           >
             Confidentialité
+          </Link>
+          <Link
+            to="/conditions"
+            onClick={fermer}
+            className="inline-flex min-h-cible items-center text-sm text-encre-3 underline underline-offset-4"
+          >
+            Conditions d'utilisation
           </Link>
         </div>
       </div>

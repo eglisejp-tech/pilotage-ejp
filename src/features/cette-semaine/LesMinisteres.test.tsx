@@ -101,4 +101,45 @@ describe('LesMinisteres', () => {
     expect(lignes[0]).toHaveTextContent('SocialIl y a 24 jours')
     expect(lignes[7]).toHaveTextContent('IntégrationHier')
   })
+
+  it('sans ministère actif : la phrase, ni tableau ni en-têtes vides', () => {
+    render(<LesMinisteres ministeres={[]} avecColonnesConseil />)
+    const region = screen.getByRole('region', { name: 'Les ministères' })
+    expect(within(region).getByText("Aucun ministère actif pour l'instant.")).toBeInTheDocument()
+    expect(within(region).queryByRole('table')).not.toBeInTheDocument()
+    expect(within(region).queryByText('Du moins récent au plus récent')).not.toBeInTheDocument()
+  })
+
+  it("cellules vides : « Aucun événement prévu », « Non renseignée », « Aucun » ; nom d'événement masqué en encre-3", () => {
+    const [premier] = exempleCetteSemaine('berger').ministeres
+    render(
+      <MemoryRouter>
+        <LesMinisteres
+          ministeres={[
+            {
+              ...premier!,
+              prochainEvenement: { etat: 'aucun' },
+              conseil: { prochaineReunion: null, pointOuvert: null },
+            },
+            {
+              ...premier!,
+              id: 'autre',
+              nom: 'Autre',
+              prochainEvenement: {
+                etat: 'prevu',
+                date: '14 nov.',
+                nom: { texte: '[texte masqué par EJP Tech]', masque: true },
+              },
+            },
+          ]}
+          avecColonnesConseil
+        />
+      </MemoryRouter>,
+    )
+    const [vide, masque] = screen.getAllByRole('row').slice(1)
+    expect(vide).toHaveTextContent('Aucun événement prévu')
+    expect(vide).toHaveTextContent('Non renseignée')
+    expect(within(vide!).getByText('Aucun')).toHaveClass('text-encre-3')
+    expect(within(masque!).getByText('[texte masqué par EJP Tech]')).toHaveClass('text-encre-3')
+  })
 })

@@ -4,4 +4,5 @@ export const adressesConnexion = {
   connexion: '/connexion',
   motDePasseOublie: '/connexion/mot-de-passe-oublie',
   confidentialite: '/confidentialite',
+  conditions: '/conditions',
 } as const

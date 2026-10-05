@@ -25,6 +25,7 @@ export type ProprietesEcranConnexion = {
   erreur?: string
   lienMotDePasseOublie?: string
   lienConfidentialite?: string
+  lienConditions?: string
 }
 
 /** Écran 16 : Google ou email et mot de passe. Pas d'inscription : l'église crée les comptes. */
@@ -35,6 +36,7 @@ export function EcranConnexion({
   erreur,
   lienMotDePasseOublie = adressesConnexion.motDePasseOublie,
   lienConfidentialite = adressesConnexion.confidentialite,
+  lienConditions = adressesConnexion.conditions,
 }: ProprietesEcranConnexion) {
   useTitrePage('Connexion')
   const {
@@ -114,7 +116,10 @@ export function EcranConnexion({
         . Un code de double authentification vous sera demandé ensuite.
       </p>
 
-      <Lien to={lienConfidentialite}>Confidentialité</Lien>
+      <div className="flex flex-wrap gap-x-6">
+        <Lien to={lienConfidentialite}>Confidentialité</Lien>
+        <Lien to={lienConditions}>Conditions d'utilisation</Lien>
+      </div>
     </ColonneConnexion>
   )
 }

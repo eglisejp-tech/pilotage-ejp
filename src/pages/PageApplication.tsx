@@ -1,8 +1,11 @@
+import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router'
+import { lecteurDuCompte } from '@/features/cette-semaine/lecteur'
 import { accueil, titrePour } from '@/features/navigation/profils'
 import type { AdresseApplication } from '@/features/navigation/profils'
 import { useCompteConnecte } from '@/features/session/contexte'
 import { PageAVenir } from '@/pages/PageAVenir'
+import { PageCetteSemaine } from '@/pages/PageCetteSemaine'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 type Proprietes = { adresse: AdresseApplication }
@@ -14,6 +17,7 @@ type Proprietes = { adresse: AdresseApplication }
 export function PageApplication({ adresse }: Proprietes) {
   const compte = useCompteConnecte()
   const { id } = useParams()
+  const lecteur = useMemo(() => lecteurDuCompte(compte), [compte])
 
   if (adresse.chemin === '/' && compte.type === 'admin_plateforme') {
     return <Navigate to={accueil(compte.type)} replace />
@@ -26,5 +30,8 @@ export function PageApplication({ adresse }: Proprietes) {
     return <Navigate to="/ma-fiche" replace />
   }
   if (!adresse.profils.includes(compte.type)) return <PageNonDisponible />
+  if (adresse.chemin === '/') {
+    return lecteur ? <PageCetteSemaine lecteur={lecteur} /> : <PageNonDisponible />
+  }
   return <PageAVenir titre={titrePour(adresse, compte.type)} etape={adresse.etape} />
 }

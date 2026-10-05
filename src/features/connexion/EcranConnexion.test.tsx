@@ -39,6 +39,10 @@ describe('EcranConnexion (maquette 16)', () => {
       'href',
       '/confidentialite',
     )
+    expect(screen.getByRole('link', { name: "Conditions d'utilisation" })).toHaveAttribute(
+      'href',
+      '/conditions',
+    )
     expect(screen.queryByText(/inscri/i)).not.toBeInTheDocument()
     expect(document.title).toBe('Connexion, Pilotage EJP')
   })

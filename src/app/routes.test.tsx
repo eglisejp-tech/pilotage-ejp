@@ -5,6 +5,8 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
+import { construireCetteSemaine } from '@/features/cette-semaine/construire'
+import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -35,7 +37,15 @@ const LIBELLES: Record<TypeCompte, string> = {
 }
 
 function connecte(type: TypeCompte, niveau: 'aal1' | 'aal2' = 'aal2', facteurs: string[] = ['f1']) {
-  return installer({
+  return installer(scenarioDe(type, niveau, facteurs))
+}
+
+function scenarioDe(
+  type: TypeCompte,
+  niveau: 'aal1' | 'aal2' = 'aal2',
+  facteurs: string[] = ['f1'],
+): ScenarioSession {
+  return {
     utilisateur: { id: `u-${type}`, email: `${type}@exemple.test` },
     niveau: { currentLevel: niveau, nextLevel: facteurs.length > 0 ? 'aal2' : 'aal1' },
     compte: {
@@ -46,7 +56,7 @@ function connecte(type: TypeCompte, niveau: 'aal1' | 'aal2' = 'aal2', facteurs: 
       desactive_le: null,
     },
     facteursVerifies: facteurs,
-  })
+  }
 }
 
 function afficher(adresse: string) {
@@ -134,7 +144,9 @@ describe('routes', () => {
     async (type, titre, onglets) => {
       connecte(type)
       const routeur = afficher('/')
-      expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      // Le titre de l'onglet, pas le h1 : sur « / », le h1 est la phrase de la semaine.
+      await waitFor(() => expect(document.title).toBe(`${titre}, Pilotage EJP`))
+      await screen.findAllByRole('navigation', { name: 'Navigation principale' })
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
@@ -150,9 +162,53 @@ describe('routes', () => {
         'page',
       )
       expect(document.body.textContent).toContain(LIBELLES[type])
-      expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+      if (type === 'admin_plateforme') {
+        expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+      } else {
+        // « Cette semaine » est construit (étape 3) : plus de page d'attente.
+        expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
+      }
     },
   )
+
+  it('« Cette semaine » sans ligne de v_semaine : bandeau « Réessayer », jamais une page blanche', async () => {
+    connecte('berger')
+    afficher('/')
+    await waitFor(() => expect(document.title).toBe('Cette semaine, Pilotage EJP'))
+    expect(screen.getByRole('heading', { level: 1, name: 'Cette semaine' })).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+  })
+
+  it('« Cette semaine » du berger : les vues lues, construites et affichées (jeu d’exemple)', async () => {
+    const lectures = lecturesExemple()
+    installer({
+      ...scenarioDe('berger'),
+      lignes: {
+        v_semaine: [lectures.semaine],
+        indicateur: lectures.indicateurs,
+        v_total_dimanche: lectures.totauxDimanche,
+        v_ecart_dimanche: lectures.ecartsDimanche,
+        v_total_a_ce_jour: lectures.totauxACeJour,
+        v_pourcentage_fij: lectures.pourcentageFij ? [lectures.pourcentageFij] : [],
+        v_carte_fij: lectures.carteFij,
+        v_session_completude: lectures.sessions,
+        v_ecart_session: lectures.ecartsSessions,
+        v_participation_courante: lectures.participations,
+        v_tableau_ministeres: lectures.tableauMinisteres,
+        ministere: lectures.ministeres,
+        v_point: lectures.points?.points ?? [],
+        point_mention: lectures.points?.mentions ?? [],
+      },
+    })
+    afficher('/')
+    const attendu = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
+    const phrase = attendu.phrase.map((morceau) => morceau.texte).join('')
+    expect(await screen.findByRole('heading', { level: 1, name: phrase })).toBeInTheDocument()
+    expect(document.title).toBe('Cette semaine, Pilotage EJP')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'À décider' })).toBeInTheDocument()
+  })
 
   it("adresse d'un autre profil : message neutre, et aucune requête au-delà du compte", async () => {
     const faux = connecte('ministere')
@@ -182,9 +238,13 @@ describe('routes', () => {
       await screen.findByRole('heading', { level: 1, name: 'Page introuvable' }),
     ).toBeInTheDocument()
     expect(screen.getByText("L'adresse est incomplète ou n'existe plus.")).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
-      'href',
-      '/moderation',
+    // La page s'affiche avant la fin de la lecture de la session : le lien vise « / », puis
+    // l'accueil du compte une fois la session connue.
+    await waitFor(() =>
+      expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
+        'href',
+        '/moderation',
+      ),
     )
     expect(document.title).toBe('Page introuvable, Pilotage EJP')
   })
@@ -240,7 +300,7 @@ describe('routes', () => {
   it('« Se déconnecter » ferme la session de cet appareil seulement', async () => {
     const faux = connecte('conseil')
     afficher('/')
-    await screen.findByRole('heading', { level: 1, name: 'Cette semaine' })
+    await waitFor(() => expect(document.title).toBe('Cette semaine, Pilotage EJP'))
     faux.auth.getSession.mockResolvedValue({ data: { session: null }, error: null })
     await userEvent.click(screen.getAllByRole('button', { name: 'Se déconnecter' })[0]!)
     expect(faux.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
@@ -254,6 +314,18 @@ describe('routes', () => {
     installer({})
     afficher('/confidentialite')
     expect(screen.getByRole('heading', { level: 1, name: 'Confidentialité' })).toBeInTheDocument()
+  })
+
+  it("la page Conditions d'utilisation se lit sans connexion", () => {
+    installer({})
+    afficher('/conditions')
+    expect(
+      screen.getByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Confidentialité' })).toHaveAttribute(
+      'href',
+      '/confidentialite',
+    )
   })
 
   it("affiche l'aperçu de « Cette semaine » en développement, selon le profil demandé", () => {

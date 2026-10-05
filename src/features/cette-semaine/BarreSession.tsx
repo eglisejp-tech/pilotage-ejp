@@ -1,3 +1,5 @@
+import { nombre } from '@/lib/metier/texte'
+import { TEXTES_VIDES } from './textesVides'
 import type { ApportSession } from './types'
 
 interface Props {
@@ -29,7 +31,7 @@ export function BarreSession({ apports }: Props) {
             className="flex min-w-0 basis-0 items-center overflow-hidden border-2 border-dashed border-attention px-1.5"
           >
             <span className="hidden truncate text-note font-semibold text-attention lg:inline">
-              À saisir
+              {TEXTES_VIDES.session.apportManquant}
             </span>
           </div>
         ) : (
@@ -38,7 +40,7 @@ export function BarreSession({ apports }: Props) {
             style={{ flexGrow: Math.max(apport.valeur, 0.5) }}
             className="flex min-w-0 basis-0 items-center overflow-hidden bg-nuit pl-1.5 font-chiffres text-base font-extrabold text-papier tabular-nums"
           >
-            {apport.valeur}
+            {nombre(apport.valeur)}
           </div>
         ),
       )}

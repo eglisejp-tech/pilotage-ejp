@@ -1,17 +1,23 @@
+import { TEXTES_VIDES } from './textesVides'
+import type { ValeurAffichee } from './types'
+
 interface Props {
-  valeur: string | null
-  unite?: string
+  valeur: ValeurAffichee
 }
 
-/** Valeur d'un chiffre de l'église, en Big Shoulders à chasse fixe. */
-export function ValeurChiffre({ valeur, unite }: Props) {
-  if (valeur === null) {
-    return <span className="text-sm text-encre-3">Pas encore de saisie</span>
+/** Valeur d'un chiffre de l'église, en Big Shoulders à chasse fixe, ou son état vide. */
+export function ValeurChiffre({ valeur }: Props) {
+  if (valeur.etat !== 'saisie') {
+    return (
+      <span className="text-sm whitespace-nowrap text-encre-3">
+        {valeur.etat === 'vide' ? TEXTES_VIDES.chiffres.valeur : TEXTES_VIDES.chiffres.nonCalcule}
+      </span>
+    )
   }
   return (
     <span className="font-chiffres text-chiffre leading-none font-extrabold whitespace-nowrap tabular-nums">
-      {valeur}
-      {unite ? <span className="ml-0.5 text-[0.5em]">{unite}</span> : null}
+      {valeur.texte}
+      {valeur.unite ? <span className="ml-0.5 text-[0.5em]">{valeur.unite}</span> : null}
     </span>
   )
 }

@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { ChampLibre } from './ChampLibre'
 import { couleursPriorite, libellesPriorite } from './priorites'
 import type { PointADecider as DonneesPoint } from './types'
 
@@ -8,8 +9,8 @@ interface Props {
 
 /**
  * Un point de « À décider » : priorité, ministère et échéance, titre, description (cachée sur
- * téléphone, comme la maquette 03), action attendue, mentions, puis « Marquer traité ».
- * Le bouton est une action secondaire : sa fenêtre arrive avec l'étape 5.
+ * téléphone, comme la maquette 03), action attendue et mentions. « Marquer traité » arrive avec
+ * sa fenêtre à l'étape 5 : pas de bouton sans effet d'ici là (docs/decisions.md, T19).
  */
 export function PointADecider({ point }: Props) {
   const idTitre = useId()
@@ -38,36 +39,34 @@ export function PointADecider({ point }: Props) {
         </p>
       </div>
       <h3 id={idTitre} className="font-lecture text-[22px] leading-tight font-medium">
-        {point.titre}
+        <ChampLibre texte={point.titre} />
       </h3>
       {point.description ? (
         <p className="hidden text-[15px] leading-normal text-encre-2 min-[600px]:block">
-          {point.description}
+          <ChampLibre texte={point.description} />
         </p>
       ) : null}
-      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-        {avecAttendu ? (
-          <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
-            {point.attendu ? (
-              <span>
-                Attendu : <strong className="text-encre">{point.attendu}</strong>
-              </span>
-            ) : null}
-            {point.mentions.map((mention) => (
-              <span key={mention} className="bg-nuit-pale px-1.5 py-px text-note text-nuit">
-                @{mention}
-              </span>
-            ))}
-          </p>
-        ) : null}
-        <button
-          type="button"
-          aria-describedby={idTitre}
-          className="inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond"
-        >
-          Marquer traité
-        </button>
-      </div>
+      {avecAttendu ? (
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
+          {point.attendu ? (
+            <span>
+              Attendu :{' '}
+              <strong className="text-encre">
+                <ChampLibre texte={point.attendu} />
+              </strong>
+            </span>
+          ) : null}
+          {/* Nom complet du ministère mentionné, sur une seule ligne : « @Prodiges Junior » (T24). */}
+          {point.mentions.map((mention) => (
+            <span
+              key={mention}
+              className="bg-nuit-pale px-1.5 py-px text-note whitespace-nowrap text-nuit"
+            >
+              @{mention}
+            </span>
+          ))}
+        </p>
+      ) : null}
     </article>
   )
 }

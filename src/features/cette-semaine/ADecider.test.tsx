@@ -2,9 +2,10 @@ import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ADecider } from './ADecider'
-import { exempleCetteSemaine } from './exemple'
+import { exempleCetteSemaine, pointsOuvertsExemple } from './exemple'
 
-const { aDecider, lienTousLesPoints } = exempleCetteSemaine('berger')
+const aDecider = pointsOuvertsExemple
+const { lienTousLesPoints } = exempleCetteSemaine('berger').aDecider
 
 function afficher(points = aDecider) {
   render(
@@ -42,16 +43,40 @@ describe('ADecider', () => {
     expect(premier).toHaveTextContent('Attendu : Décision du conseil sur le budget')
     expect(deuxieme).toHaveTextContent('Priorité Haute')
     expect(within(deuxieme!).getByText('avant le 28 sept., dépassée')).toHaveClass('text-alerte')
-    expect(within(troisieme!).getByText('@coordination')).toBeInTheDocument()
+    expect(within(troisieme!).getByText('@Coordination')).toBeInTheDocument()
   })
 
-  it('propose « Marquer traité » sur chaque point, décrit par son titre, en action secondaire', () => {
+  it("n'affiche pas « Marquer traité » avant sa fenêtre (étape 5, T19)", () => {
     const region = afficher()
-    const boutons = within(region).getAllByRole('button', { name: 'Marquer traité' })
-    expect(boutons).toHaveLength(3)
-    expect(boutons[0]).toHaveAccessibleDescription('Financement de Welcome Prodiges')
-    expect(boutons[0]).toHaveClass('bg-papier', 'min-h-cible')
-    expect(boutons[0]).not.toHaveClass('bg-lumiere')
+    expect(within(region).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('écrit le nom complet du ministère mentionné, sur une ligne (T24)', () => {
+    const [premier] = aDecider
+    const region = afficher([{ ...premier!, mentions: ['Prodiges Junior'] }])
+    expect(within(region).getByText('@Prodiges Junior')).toHaveClass('whitespace-nowrap')
+  })
+
+  it('montre en encre-3 un texte masqué par EJP Tech, et lui seul', () => {
+    const [premier] = aDecider
+    const masque = { texte: '[texte masqué par EJP Tech]', masque: true }
+    const region = afficher([
+      { ...premier!, titre: masque, attendu: { texte: 'Décider', masque: false } },
+    ])
+    expect(within(region).getByRole('heading', { level: 3 }).firstElementChild).toHaveClass(
+      'text-encre-3',
+    )
+    expect(within(region).getByText('Décider')).not.toHaveClass('text-encre-3')
+  })
+
+  it('sans échéance, ni description, ni action attendue : la ligne du ministère seule', () => {
+    const [premier] = aDecider
+    const region = afficher([
+      { ...premier!, echeance: null, description: null, attendu: null, mentions: [] },
+    ])
+    const point = within(region).getByRole('article')
+    expect(point).not.toHaveTextContent('avant le')
+    expect(point).not.toHaveTextContent('Attendu')
   })
 
   it("dit quand aucun point n'est ouvert", () => {

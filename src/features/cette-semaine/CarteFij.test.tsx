@@ -27,6 +27,21 @@ describe('CarteFij', () => {
     expect(within(region).getByText('29 FIJ')).toBeInTheDocument()
   })
 
+  it('écrit les nombres à la française (total et départements)', () => {
+    const grande = {
+      total: 1250,
+      departements: carte!.departements.map((departement, index) => ({
+        ...departement,
+        valeur: index === 0 ? 1200 : 7,
+      })),
+    }
+    render(<CarteFij carte={grande} />)
+    const region = screen.getByRole('region', { name: 'FIJ en Île-de-France' })
+    // Les outils de test ramènent l'espace fine (U+202F) à une espace simple.
+    expect(within(region).getByText('1 250 FIJ')).toBeInTheDocument()
+    expect(within(region).getAllByRole('listitem')[0]).toHaveTextContent('Paris (75) : 1 200 FIJ')
+  })
+
   it('place chaque carré comme sur la carte et le fonce selon son nombre de FIJ', () => {
     render(<CarteFij carte={carte} />)
     const carre = (nom: string) => screen.getByText(nom).closest('li')
@@ -46,5 +61,36 @@ describe('CarteFij', () => {
       screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
     ).toBeInTheDocument()
     expect(screen.queryByRole('listitem')).not.toBeInTheDocument()
+    expect(screen.queryByText(/\d+ FIJ/)).not.toBeInTheDocument()
+  })
+
+  it("garde la forme de la carte sans montrer de nombre, cachée aux lecteurs d'écran", () => {
+    render(<CarteFij carte={null} />)
+    const enAttente = screen.getByTestId('carte-en-attente')
+    expect(enAttente).toHaveAttribute('aria-hidden', 'true')
+    expect(enAttente.firstElementChild).toHaveClass('border-dashed', 'border-filet')
+    // Seuls les codes des départements, jamais une valeur.
+    expect(Array.from(enAttente.children, (carre) => carre.textContent)).toEqual([
+      '75',
+      '77',
+      '78',
+      '91',
+      '92',
+      '93',
+      '94',
+      '95',
+    ])
+  })
+
+  it('une carte sans aucune valeur se lit comme une carte vide', () => {
+    const departements = (carte?.departements ?? []).map((departement) => ({
+      ...departement,
+      valeur: null,
+    }))
+    render(<CarteFij carte={{ total: 0, departements }} />)
+    expect(
+      screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('0 FIJ')).not.toBeInTheDocument()
   })
 })
