@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
+import { accueil } from '@/features/navigation/profils'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -59,6 +60,30 @@ function scenarioDe(
   }
 }
 
+/** Session du profil et lignes du jeu d'exemple pour chaque lecture de « Cette semaine ». */
+function installerVueDeLEglise(type: TypeCompte) {
+  const lectures = lecturesExemple()
+  return installer({
+    ...scenarioDe(type),
+    lignes: {
+      v_semaine: [lectures.semaine],
+      indicateur: lectures.indicateurs,
+      v_total_dimanche: lectures.totauxDimanche,
+      v_ecart_dimanche: lectures.ecartsDimanche,
+      v_total_a_ce_jour: lectures.totauxACeJour,
+      v_pourcentage_fij: lectures.pourcentageFij ? [lectures.pourcentageFij] : [],
+      v_carte_fij: lectures.carteFij,
+      v_session_completude: lectures.sessions,
+      v_ecart_session: lectures.ecartsSessions,
+      v_participation_courante: lectures.participations,
+      v_tableau_ministeres: lectures.tableauMinisteres,
+      ministere: lectures.ministeres,
+      v_point: lectures.points?.points ?? [],
+      point_mention: lectures.points?.mentions ?? [],
+    },
+  })
+}
+
 function afficher(adresse: string) {
   const routeur = createMemoryRouter(routes, { initialEntries: [adresse] })
   render(
@@ -76,6 +101,10 @@ afterEach(() => {
 })
 
 const navigation = () => screen.getAllByRole('navigation', { name: 'Navigation principale' })
+
+/** Boutons et liens d'action qu'EJP Tech ne doit jamais voir (T29, lecture seule). */
+const BOUTONS_D_ACTION =
+  /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Déclarer|Modifier|Mettre à jour/
 
 describe('routes', () => {
   it("sans session : l'accueil renvoie vers la connexion, sans aucune requête de données", async () => {
@@ -138,12 +167,12 @@ describe('routes', () => {
       'Cette semaine',
       ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Journal'],
     ],
-    ['admin_plateforme', 'Modération', ['Modération', 'Journal technique']],
+    ['admin_plateforme', 'Modération', ['Modération', 'Cette semaine', 'Journal technique']],
   ])(
     '%s en aal2 : son accueil, ses onglets seulement, son libellé',
     async (type, titre, onglets) => {
       connecte(type)
-      const routeur = afficher('/')
+      const routeur = afficher(accueil(type))
       // Le titre de l'onglet, pas le h1 : sur « / », le h1 est la phrase de la semaine.
       await waitFor(() => expect(document.title).toBe(`${titre}, Pilotage EJP`))
       await screen.findAllByRole('navigation', { name: 'Navigation principale' })
@@ -181,26 +210,7 @@ describe('routes', () => {
   })
 
   it('« Cette semaine » du berger : les vues lues, construites et affichées (jeu d’exemple)', async () => {
-    const lectures = lecturesExemple()
-    installer({
-      ...scenarioDe('berger'),
-      lignes: {
-        v_semaine: [lectures.semaine],
-        indicateur: lectures.indicateurs,
-        v_total_dimanche: lectures.totauxDimanche,
-        v_ecart_dimanche: lectures.ecartsDimanche,
-        v_total_a_ce_jour: lectures.totauxACeJour,
-        v_pourcentage_fij: lectures.pourcentageFij ? [lectures.pourcentageFij] : [],
-        v_carte_fij: lectures.carteFij,
-        v_session_completude: lectures.sessions,
-        v_ecart_session: lectures.ecartsSessions,
-        v_participation_courante: lectures.participations,
-        v_tableau_ministeres: lectures.tableauMinisteres,
-        ministere: lectures.ministeres,
-        v_point: lectures.points?.points ?? [],
-        point_mention: lectures.points?.mentions ?? [],
-      },
-    })
+    installerVueDeLEglise('berger')
     afficher('/')
     const attendu = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
     const phrase = attendu.phrase.map((morceau) => morceau.texte).join('')
@@ -209,6 +219,47 @@ describe('routes', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'À décider' })).toBeInTheDocument()
   })
+
+  it('EJP Tech sur « / » : la vue du berger, en lecture seule, sans aucun bouton d’action (T29)', async () => {
+    const faux = installerVueDeLEglise('admin_plateforme')
+    const routeur = afficher('/')
+    const berger = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
+    const phrase = berger.phrase.map((morceau) => morceau.texte).join('')
+    expect(await screen.findByRole('heading', { level: 1, name: phrase })).toBeInTheDocument()
+    expect(routeur.state.location.pathname).toBe('/')
+    expect(document.title).toBe('Cette semaine, Pilotage EJP')
+    expect(within(navigation()[0]!).getByRole('link', { name: 'Cette semaine' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    // Les points sont lus, comme pour le berger.
+    expect(faux.tables).toEqual(expect.arrayContaining(['v_point', 'point_mention']))
+    const aDecider = screen.getByRole('region', { name: 'À décider' })
+    expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)
+    // Étape 5 : « Marquer traité » ne doit jamais apparaître pour EJP Tech.
+    expect(within(aDecider).queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+    expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
+  })
+
+  // Garde des étapes 4 et 5 : ces écrans s'ouvrent à EJP Tech pour la lecture (LECTEURS), mais
+  // leurs boutons d'action suivent estDecideur ou le lien du ministère au point, jamais ce droit.
+  it.each([
+    ['/ministeres', 'Ministères'],
+    ['/ministeres/m-communication', 'Fiche du ministère'],
+    ['/points?vue=ouverts', "Points d'attention"],
+  ])(
+    'EJP Tech sur %s : écran de lecture du berger, sans « Marquer traité », « Changer le statut » ni saisie (T29)',
+    async (adresse, titre) => {
+      connecte('admin_plateforme')
+      const routeur = afficher(adresse)
+      expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
+      expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+      expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
+      expect(within(screen.getByRole('main')).queryByRole('button')).toBeNull()
+    },
+  )
 
   it("adresse d'un autre profil : message neutre, et aucune requête au-delà du compte", async () => {
     const faux = connecte('ministere')
@@ -314,6 +365,10 @@ describe('routes', () => {
     installer({})
     afficher('/confidentialite')
     expect(screen.getByRole('heading', { level: 1, name: 'Confidentialité' })).toBeInTheDocument()
+    // Qui voit les données : EJP Tech lit tout, en lecture (T29).
+    expect(
+      screen.getByText(/EJP Tech voit l'ensemble en lecture, pour administrer l'outil/),
+    ).toBeInTheDocument()
   })
 
   it("la page Conditions d'utilisation se lit sans connexion", () => {

@@ -1,5 +1,6 @@
 import { matchPath } from 'react-router'
 import type { TypeCompte } from '@/lib/base'
+import { DECIDEURS, LECTEURS } from '@/lib/metier/droits'
 
 // Navigation par profil (BRIEF sections 2 et 9, maquette 00) et table des adresses de
 // l'application. Un profil ne voit jamais les onglets d'un autre ; chaque adresse déclare ses
@@ -33,13 +34,15 @@ export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
     { libelle: 'Sessions', chemin: '/sessions' },
     { libelle: 'Journal', chemin: '/journal' },
   ],
+  // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29).
   admin_plateforme: [
     { libelle: 'Modération', chemin: '/moderation' },
+    { libelle: 'Cette semaine', chemin: '/' },
     { libelle: 'Journal technique', chemin: '/journal-technique' },
   ],
 }
 
-/** Accueil du profil : son premier onglet (EJP Tech est renvoyé vers /moderation). */
+/** Accueil du profil : son premier onglet (/moderation pour EJP Tech). */
 export function accueil(type: TypeCompte): string {
   return ONGLETS[type][0]?.chemin ?? '/'
 }
@@ -54,9 +57,12 @@ export type AdresseApplication = {
   etape: number
 }
 
-const LECTEURS: readonly TypeCompte[] = ['berger', 'conseil']
-
-/** Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5. */
+/**
+ * Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5.
+ * Les adresses de lecture du berger s'ouvrent à LECTEURS (berger, conseil, et EJP Tech en
+ * lecture seule, T29) ; leurs boutons d'action se montrent par estDecideur
+ * (src/lib/metier/droits.ts), jamais par ce droit d'adresse.
+ */
 export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   {
     chemin: '/',
@@ -73,9 +79,10 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
     titre: "Points d'attention",
     etape: 5,
   },
+  // EJP Tech lit le journal complet par son onglet « Journal technique » (étape 6).
   {
     chemin: '/journal',
-    profils: ['ministere', ...LECTEURS, 'admin_eglise'],
+    profils: ['ministere', ...DECIDEURS, 'admin_eglise'],
     titre: 'Journal',
     etape: 6,
   },

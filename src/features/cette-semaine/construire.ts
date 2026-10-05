@@ -15,6 +15,7 @@ import {
   jourDeParis,
   type DateIso,
 } from '@/lib/metier/dates'
+import { enLectureSeule } from '@/lib/metier/droits'
 import { ecartEglise, type Comparaison } from '@/lib/metier/ecarts'
 import { fraicheur, trierParFraicheur, type EtatFraicheur } from '@/lib/metier/fraicheur'
 import {
@@ -94,7 +95,7 @@ export interface LecturesCetteSemaine {
   tableauMinisteres: LigneVue<'v_tableau_ministeres'>[]
   /** ['ministeres','liste'] : tous, désactivés compris (créateurs et mentions « (désactivé) »). */
   ministeres: Pick<LigneTable<'ministere'>, 'id' | 'code' | 'nom' | 'desactive_le'>[]
-  /** ['points','ouverts'] : berger et conseil seulement, null pour les autres profils. */
+  /** ['points','ouverts'] : berger, conseil et EJP Tech seulement, null pour les autres profils. */
   points: { points: LigneVue<'v_point'>[]; mentions: LigneTable<'point_mention'>[] } | null
 }
 
@@ -742,7 +743,9 @@ export function construireCetteSemaine(
 
   switch (lecteur.profil) {
     case 'berger':
-    case 'conseil': {
+    case 'conseil':
+    case 'admin_plateforme': {
+      // EJP Tech lit la vue du berger, en lecture seule (T29).
       const phrase = phraseDeLaSemaine({
         ...donneesPhrase,
         nbPointsEnAttenteDeDecision: compterEnAttenteDeDecision(lectures.points?.points ?? []),
@@ -750,6 +753,7 @@ export function construireCetteSemaine(
       return {
         ...commun,
         profil: lecteur.profil,
+        lectureSeule: enLectureSeule(lecteur.profil),
         phrase: morceaux(phrase.principale),
         ligneSecondaire: phrase.secondaire,
         aDecider: aDecider(contexte),

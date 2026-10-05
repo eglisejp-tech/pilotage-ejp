@@ -36,6 +36,7 @@ const LECTEURS: Record<ProfilVue, Lecteur> = {
   berger: { profil: 'berger' },
   conseil: { profil: 'conseil' },
   admin_eglise: { profil: 'admin_eglise' },
+  admin_plateforme: { profil: 'admin_plateforme' },
   ministere: { profil: 'ministere', ministereId: 'com' },
 }
 
@@ -92,6 +93,17 @@ describe('PageCetteSemaine', () => {
       expect(screen.getByText('Chargement')).toHaveClass('text-encre-3')
       expect(screen.getByRole('status')).toHaveTextContent('Chargement')
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('EJP Tech : les blocs du berger, « À décider » compris (T29)', () => {
+      afficher('admin_plateforme')
+      expect(titres()).toEqual([
+        "Les chiffres de l'église",
+        'À décider',
+        'Dernière session',
+        'FIJ en Île-de-France',
+        'Les ministères',
+      ])
     })
 
     it("administration de l'église : les blocs de l'église, sans « À décider »", () => {
@@ -176,7 +188,7 @@ describe('PageCetteSemaine', () => {
   })
 
   describe('vue, selon le profil', () => {
-    it.each<ProfilVue>(['berger', 'conseil'])(
+    it.each<ProfilVue>(['berger', 'conseil', 'admin_plateforme'])(
       '%s : surligneur, « À décider », cinq colonnes, chaque nom ouvre la fiche',
       (profil) => {
         hook.mockReturnValue(pret(exempleCetteSemaine(profil)))
@@ -193,6 +205,22 @@ describe('PageCetteSemaine', () => {
         expect(screen.queryByRole('button', { name: 'Marquer traité' })).not.toBeInTheDocument()
       },
     )
+
+    it('EJP Tech : le contenu du berger, en lecture seule, sans aucun bouton d’action (T29)', () => {
+      hook.mockReturnValue(pret(exempleCetteSemaine('admin_plateforme')))
+      afficher('admin_plateforme')
+      expect(hook).toHaveBeenCalledWith({ profil: 'admin_plateforme' }, null)
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision.",
+      )
+      const aDecider = screen.getByRole('region', { name: 'À décider' })
+      expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)
+      // Garde de l'étape 5 : « Marquer traité » ne doit jamais apparaître pour EJP Tech, ni
+      // aucun autre bouton d'action ou de saisie.
+      expect(within(aDecider).queryByRole('button')).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    })
 
     it('ministère : « L’église cette semaine », trois colonnes, seul son nom ouvre « Ma fiche »', () => {
       hook.mockReturnValue(pret(exempleCetteSemaine('ministere')))
@@ -221,7 +249,7 @@ describe('PageCetteSemaine', () => {
   })
 
   describe('états vides (premier dimanche, T22)', () => {
-    it.each<ProfilVue>(['berger', 'conseil', 'ministere', 'admin_eglise'])(
+    it.each<ProfilVue>(['berger', 'conseil', 'ministere', 'admin_eglise', 'admin_plateforme'])(
       '%s : chaque bloc garde son titre et dit ce qui manque',
       (profil) => {
         hook.mockReturnValue(pret(exemplePremierDimanche(profil)))
@@ -246,7 +274,7 @@ describe('PageCetteSemaine', () => {
         ).toBeInTheDocument()
         const ministeres = screen.getByRole('region', { name: 'Les ministères' })
         expect(within(ministeres).getAllByText('Aucune saisie')).toHaveLength(8)
-        if (profil === 'berger' || profil === 'conseil') {
+        if (profil === 'berger' || profil === 'conseil' || profil === 'admin_plateforme') {
           expect(
             within(screen.getByRole('region', { name: 'À décider' })).getByText(
               'Aucun point ouvert.',

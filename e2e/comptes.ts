@@ -93,7 +93,7 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'ejptech1@exemple.test',
     libelle: 'EJP Tech, compte 1',
     accueil: { chemin: '/moderation', titre: 'Modération' },
-    onglets: ['Modération', 'Journal technique'],
+    onglets: ['Modération', 'Cette semaine', 'Journal technique'],
     adresseInterdite: '/ma-fiche',
   },
 ]

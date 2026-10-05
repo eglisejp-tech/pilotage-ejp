@@ -63,14 +63,17 @@ describe('useCetteSemaine', () => {
     expect(donnees?.chiffres[0]?.valeur).toEqual({ etat: 'saisie', texte: '52', unite: null })
   })
 
-  it('lit les points pour le berger et le conseil seulement', async () => {
-    const faux = fauxRequete(reponsesExemple())
-    courant.client = faux.client
-    const { result } = renderHook(() => useCetteSemaine({ profil: 'conseil' }, null), {
-      wrapper: enveloppe(),
-    })
-    await waitFor(() => expect(result.current.donnees).not.toBeNull())
-    expect(faux.de('v_point')).toHaveLength(1)
+  it('lit les points pour le berger, le conseil et EJP Tech seulement', async () => {
+    for (const lecteur of [{ profil: 'conseil' }, { profil: 'admin_plateforme' }] as const) {
+      const faux = fauxRequete(reponsesExemple())
+      courant.client = faux.client
+      const { result } = renderHook(() => useCetteSemaine(lecteur, null), {
+        wrapper: enveloppe(),
+      })
+      await waitFor(() => expect(result.current.donnees).not.toBeNull())
+      expect(faux.de('v_point')).toHaveLength(1)
+      expect(result.current.donnees?.profil).toBe(lecteur.profil)
+    }
 
     for (const lecteur of [
       { profil: 'admin_eglise' },

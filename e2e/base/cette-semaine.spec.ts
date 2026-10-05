@@ -5,12 +5,13 @@ import { fichierSession, suivreRequetesDeDonnees } from '../comptes.ts'
 import type { CompteTest } from '../comptes.ts'
 
 // « Cette semaine » avec la base locale et le jeu d'exemple (job « e2e » de la CI, E2E_BASE=1),
-// pour chaque profil qui a la vue de l'église (BRIEF sections 9 et 13). Le jeu d'exemple suit le
-// dimanche de référence : aucune vérification ne dépend de la date du jour (ni « 27 sept. », ni
-// numéro de semaine), seulement des nombres et des phrases qui en sont indépendants.
+// pour chaque profil qui a la vue de l'église (BRIEF sections 9 et 13), EJP Tech compris (en
+// lecture seule, T29). Le jeu d'exemple suit le dimanche de référence : aucune vérification ne
+// dépend de la date du jour (ni « 27 sept. », ni numéro de semaine), seulement des nombres et des
+// phrases qui en sont indépendants.
 
-type Profil = Exclude<CompteTest['profil'], 'admin_plateforme'>
-const PROFILS: Profil[] = ['berger', 'conseil', 'ministere', 'admin_eglise']
+type Profil = CompteTest['profil']
+const PROFILS: Profil[] = ['berger', 'conseil', 'ministere', 'admin_eglise', 'admin_plateforme']
 
 const phraseSemaine =
   "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
@@ -37,7 +38,8 @@ async function toutVoirSiBesoin(page: Page) {
   }
 }
 
-for (const profil of ['berger', 'conseil'] as const) {
+// EJP Tech lit la même vue que le berger, en lecture seule (T29).
+for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
   test.describe(`${profil} : la vue de la semaine`, () => {
     test.use({ storageState: fichierSession(profil) })
 

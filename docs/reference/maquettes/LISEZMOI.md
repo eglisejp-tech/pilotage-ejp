@@ -63,7 +63,7 @@ Chaque écran doit fonctionner de 360 px à 1440 px. Pour les formats non dessin
 | FIJ par département | 08 | 8 champs, total en direct, ministère FIJ seulement |
 | Choisir la session | liste de 48 px par ligne | Quand plusieurs sessions attendent la saisie |
 | Ministères (berger, conseil) | bloc « Les ministères » de 01 | Description sous le nom, chaque nom ouvre la fiche |
-| Journal technique (EJP Tech) | 06 | Actions techniques seulement, sans filtre Compte |
+| Journal technique (EJP Tech) | 06 | Comme le Journal du berger : tout le journal, en lecture (`docs/decisions.md`, T29) |
 | Ajouter un ministère, ajouter un compte, confirmations (13) | colonne « Déclarer une session » de 14 | États des comptes : Invitation envoyée, À activer, Activée, Désactivé |
 | Accès par lien, Choisissez votre mot de passe, Mot de passe oublié, Nouveau mot de passe | 16 à 18 | Même colonne de 390 à 440 px |
 | Page non disponible, page introuvable | 16 à 18 | Titre, une phrase, bouton « Revenir à l'accueil » |
@@ -72,6 +72,7 @@ Chaque écran doit fonctionner de 360 px à 1440 px. Pour les formats non dessin
 Vues d'un profil déduites d'un autre :
 - **Conseil** : identique au berger (01 à 06), seul le nom du compte change.
 - **Ministère, Cette semaine** : l'ouverture de 07 (phrase de ce qu'il reste à faire, bouton principal, « Vos saisies », « Vos points »), puis les blocs de l'église de 01, **sans « À décider »** et sans les colonnes « Prochaine réunion » et « Point ouvert » du tableau des ministères. Même contenu à toutes les tailles ; à partir de 1024 px, « Vos points » prend la colonne de droite (`BRIEF.md`, section 9).
+- **EJP Tech, Cette semaine** : identique au berger (01 à 03), en lecture seule : aucun bouton d'action, ni « Marquer traité », ni « Changer le statut », ni saisie. Ses autres écrans de lecture (Ministères, 04, 05) suivent la même règle (`docs/decisions.md`, T29).
 - **Administration de l'église, Cette semaine** : l'ouverture de 01 (numéro de semaine, phrase sans les points ni surligneur), puis les blocs de l'église, sans « À décider », sans les colonnes « Prochaine réunion » et « Point ouvert », sans action.
 - **Mes points, Mon journal** du ministère : mêmes écrans que 05 et 06 ; Mes points montre les points créés par le ministère ou qui le mentionnent, Mon journal les lignes de son ministère et de son compte, sans filtre « Compte ».
 
@@ -79,6 +80,7 @@ Vues d'un profil déduites d'un autre :
 
 Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 - **00** : la planche dit du ministère « Marquer traité ses propres points ». Lis : « Marquer traités ses points et ceux qui le mentionnent, avec un commentaire ».
+- **00, EJP Tech** : la planche montre EJP Tech sans les chiffres, avec deux onglets. EJP Tech lit maintenant tout comme le berger, en lecture seule, et a l'onglet « Cette semaine » entre « Modération » (son accueil) et « Journal technique » (`docs/decisions.md`, T29).
 - **07 et 12** : la phrase « Seuls Intégration, le berger et le conseil peuvent le marquer traité. » est remplacée par « Mentionné par Intégration. », suivie des boutons « Changer le statut » et « Marquer traité » (décision du 30 septembre 2026).
 - **07** : la ligne « Le dimanche midi, ce bouton devient « Saisir les chiffres du dimanche » » est une note de conception : ne l'affiche pas.
 - **09** : ajoute le second compteur « Dont déjà comptés par leur ministère principal » (0 par défaut) et la ligne « Comptés dans le total de l'église : 11. ». Le compteur des présents est un vrai champ numérique entre moins et plus, comme dans 08.

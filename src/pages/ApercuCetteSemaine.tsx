@@ -11,6 +11,7 @@ const profils: { valeur: ProfilVue; libelle: string }[] = [
   { valeur: 'conseil', libelle: 'Conseil' },
   { valeur: 'ministere', libelle: 'Ministère (Communication)' },
   { valeur: 'admin_eglise', libelle: "Administration de l'église" },
+  { valeur: 'admin_plateforme', libelle: 'EJP Tech' },
 ]
 
 type EtatApercu = 'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'chargement' | 'erreur'
@@ -52,7 +53,7 @@ const classeLien =
 
 /**
  * Aperçu de développement de la vue « Cette semaine » avec les données d'exemple, sans base.
- * Adresse : /apercu/cette-semaine?profil=berger|conseil|ministere|admin_eglise
+ * Adresse : /apercu/cette-semaine?profil=berger|conseil|ministere|admin_eglise|admin_plateforme
  * (et &session=anti-dispersion, &etat=premier-dimanche|session-jamais-tenue|chargement|erreur).
  * Enregistrée seulement en développement (src/app/routes.tsx).
  */

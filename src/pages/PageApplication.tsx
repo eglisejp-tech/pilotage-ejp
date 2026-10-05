@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Navigate, useParams } from 'react-router'
 import { lecteurDuCompte } from '@/features/cette-semaine/lecteur'
-import { accueil, titrePour } from '@/features/navigation/profils'
+import { titrePour } from '@/features/navigation/profils'
 import type { AdresseApplication } from '@/features/navigation/profils'
 import { useCompteConnecte } from '@/features/session/contexte'
 import { PageAVenir } from '@/pages/PageAVenir'
@@ -12,16 +12,15 @@ type Proprietes = { adresse: AdresseApplication }
 
 /**
  * Écran d'une adresse de l'application : le type de compte est vérifié avant tout affichage et
- * tout appel de données. Les écrans pas encore construits affichent leur étape.
+ * tout appel de données. Les écrans pas encore construits affichent leur étape. « / » est
+ * « Cette semaine » pour tous les profils, EJP Tech compris (en lecture seule, T29), même si
+ * l'accueil d'EJP Tech après la connexion reste /moderation.
  */
 export function PageApplication({ adresse }: Proprietes) {
   const compte = useCompteConnecte()
   const { id } = useParams()
   const lecteur = useMemo(() => lecteurDuCompte(compte), [compte])
 
-  if (adresse.chemin === '/' && compte.type === 'admin_plateforme') {
-    return <Navigate to={accueil(compte.type)} replace />
-  }
   if (
     adresse.chemin === '/ministeres/:id' &&
     compte.type === 'ministere' &&

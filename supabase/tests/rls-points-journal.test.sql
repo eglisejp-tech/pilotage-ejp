@@ -3,7 +3,8 @@
 -- journal est écrit par les triggers et les fonctions, avec les bons codes d'action et sans
 -- texte libre, et personne ne le modifie ; la modération, réservée à EJP Tech, remplace le
 -- seul champ visé et écrit une ligne de moderation et une ligne de journal ; EJP Tech lit les
--- textes libres (file de relecture) mais aucun chiffre.
+-- textes libres (file de relecture) et, en lecture seule, tout ce que lit le berger
+-- (docs/decisions.md, T29).
 begin;
 
 select plan(73);
@@ -262,17 +263,19 @@ select is(tests.lire((select berger from ctx), 'aal2',
   'select j.cible_texte from public.v_journal j where j.cible_id = (select ev from ctx) and j.action = ''evenement_ajoute'''),
   '[{"cible_texte": "[texte masqué par EJP Tech]"}]'::jsonb,
   'journal : l''écran lit le texte actuel de l''objet, donc masqué');
-select is(tests.compter((select tech from ctx), 'aal2',
-  'select 1 from public.v_journal j where j.action not in (''ministere_cree'', ''compte_cree'', ''invitation_relancee'',
-     ''compte_desactive'', ''compte_reactive'', ''double_auth_reinitialisee'', ''texte_relu'', ''texte_masque'')'), 0,
-  'EJP Tech ne lit que les actions techniques du journal');
 select is(tests.lire((select tech from ctx), 'aal2',
-  'select j.action, j.cible_texte from public.v_journal j where j.cible_id = (select pt1 from ctx)'),
-  '[{"action": "texte_masque", "cible_texte": null}]'::jsonb,
-  'EJP Tech lit la ligne texte_masque du point, sans le titre du point (lu sous RLS)');
+  'select * from public.v_journal j where j.cible_id in (select id from objets)'),
+  tests.lire((select berger from ctx), 'aal2',
+  'select * from public.v_journal j where j.cible_id in (select id from objets)'),
+  'EJP Tech lit le même journal que le berger, points, événements et réunions compris (T29)');
+select is(tests.lire((select tech from ctx), 'aal2',
+  'select j.action, j.cible_texte from public.v_journal j where j.cible_id = (select pt1 from ctx) and j.action = ''texte_masque'''),
+  '[{"action": "texte_masque", "cible_texte": "Journal point 1"}]'::jsonb,
+  'EJP Tech lit la ligne texte_masque du point avec le titre du point (lu sous RLS)');
 
--- EJP Tech ne lit aucun chiffre, ni les points, événements et réunions hors de sa file.
-create function pg_temp.sans_chiffres() returns setof text
+-- EJP Tech lit les chiffres, les points, les événements et les réunions comme le berger, en
+-- lecture seule (T29).
+create function pg_temp.comme_le_berger() returns setof text
 language plpgsql as $$
 declare
   v_relation text;
@@ -282,15 +285,16 @@ begin
     'v_carte_fij', 'v_participation_courante', 'v_session_completude', 'v_ecart_dimanche', 'v_ecart_session',
     'v_tableau_ministeres', 'v_point', 'v_evenement', 'v_prochaine_reunion']
   loop
-    return next is(tests.compter((select tech from ctx), 'aal2', format('select 1 from public.%I', v_relation)), 0,
-      format('EJP Tech ne lit aucune ligne de %s', v_relation));
+    return next is(tests.lire((select tech from ctx), 'aal2', format('select * from public.%I', v_relation)),
+      tests.lire((select berger from ctx), 'aal2', format('select * from public.%I', v_relation)),
+      format('EJP Tech lit les mêmes lignes de %s que le berger', v_relation));
   end loop;
 end $$;
 
-select * from pg_temp.sans_chiffres();
-select is(tests.compter((select tech from ctx), 'aal2',
-  'select 1 from public.v_pourcentage_fij v where v.nb_ministeres > 0 or v.actifs is not null or v.en_fij is not null'), 0,
-  'EJP Tech ne lit aucun chiffre de v_pourcentage_fij');
+select * from pg_temp.comme_le_berger();
+select is(tests.lire((select tech from ctx), 'aal2', 'select * from public.v_pourcentage_fij'),
+  tests.lire((select berger from ctx), 'aal2', 'select * from public.v_pourcentage_fij'),
+  'EJP Tech lit le même pourcentage FIJ que le berger');
 select is(tests.compter((select berger from ctx), 'aal2',
   'select 1 from public.mesure m where m.ministere_id = (select a_m from ctx)'), 1,
   'le chiffre saisi par A existe bien : le berger le lit');

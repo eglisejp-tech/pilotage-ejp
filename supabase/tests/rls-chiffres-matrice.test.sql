@@ -5,6 +5,7 @@
 -- participation. Profils : ministère (Communication), ministère FIJ, berger, conseil,
 -- administration de l'église, EJP Tech, ministère désactivé et anonyme, en aal1 et en aal2 ;
 -- service_role (clé secrète des Edge Functions) pour les tables de saisie en ajout seul.
+-- EJP Tech lit ce que lit le berger et n'ajoute rien (docs/decisions.md, T29).
 -- Résultat d'une lecture : le nombre de lignes lues. Résultat d'une écriture : « accepté » ou
 -- le code d'erreur (42501 : droit absent ou refus de la RLS). Update et delete sont refusés à
 -- tous, sur toutes les tables (règle 1). Chaque essai tourne dans une sous-transaction annulée.
@@ -64,10 +65,11 @@ union all select 6, 'admin_plateforme', 'EJP Tech', c.ejptech, c.com_m from ctx 
 union all select 7, 'desactive', 'ministère désactivé', c.des, c.des_m from ctx c
 union all select 8, 'anonyme', 'anonyme', null, c.com_m from ctx c;
 
--- Mesure : tout pour le berger et le conseil ; les indicateurs communs de tous et ses
--- indicateurs propres pour un ministère ; les indicateurs communs pour l'administration.
+-- Mesure : tout pour le berger, le conseil et EJP Tech (lecture seule, T29) ; les indicateurs
+-- communs de tous et ses indicateurs propres pour un ministère ; les indicateurs communs pour
+-- l'administration.
 update profil p set mesures = case
-    when p.code in ('berger', 'conseil') then (select count(*) from public.mesure)
+    when p.code in ('berger', 'conseil', 'admin_plateforme') then (select count(*) from public.mesure)
     when p.code in ('ministere', 'ministere_fij') then
       (select count(*) from public.mesure m join public.indicateur i on i.id = m.indicateur_id
         where i.ministere_id is null or m.ministere_id = p.cible)
@@ -147,7 +149,6 @@ select (row_number() over (order by t.ordre, o.ordre, p.ordre, a.aal))::integer 
          else (case
                  when a.aal = 'aal1' or p.code = 'desactive' then (case when t.nom = 'compte' then 1 else 0 end)
                  when t.nom in ('ministere', 'compte') then t.total
-                 when p.code = 'admin_plateforme' then 0
                  when t.nom = 'mesure' then p.mesures
                  else t.total
                end)::text || ' lignes'

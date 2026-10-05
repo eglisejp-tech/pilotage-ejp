@@ -17,13 +17,13 @@ interface Props {
  * Vue de l'église « Cette semaine » (maquettes 01, 02, 03), selon le profil (BRIEF, section 9) :
  * - berger et conseil : phrase surlignée, « À décider », colonnes « Prochaine réunion » et
  *   « Point ouvert » ;
+ * - EJP Tech : le même contenu, en lecture seule, sans aucun bouton d'action (T29) ;
  * - ministère et administration de l'église : ni « À décider », ni surligneur, ni ces colonnes ;
  * - ministère sous 600 px : trois chiffres et « Tout voir », qui déplie le reste sur place.
  * Sur téléphone, « À décider » remonte juste après la phrase quand un point ouvert est urgent.
  */
 export function VueCetteSemaine({ donnees }: Props) {
-  const decision =
-    donnees.profil === 'berger' || donnees.profil === 'conseil' ? donnees.aDecider : null
+  const decision = 'aDecider' in donnees ? donnees.aDecider : null
   const telephone = !useLargeurMin(600)
 
   const ouverture = (

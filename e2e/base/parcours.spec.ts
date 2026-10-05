@@ -44,7 +44,9 @@ for (const compte of COMPTES_PROFILS) {
     test.use({ storageState: fichierSession(compte.profil) })
 
     test('arrive sur son accueil et ne voit que ses onglets', async ({ page }) => {
-      await page.goto('/')
+      // L'arrivée après la connexion est vérifiée par le projet « connexion » ; « / » est
+      // « Cette semaine » pour tous, EJP Tech compris (T29), dont l'accueil reste /moderation.
+      await page.goto(compte.accueil.chemin)
       // Le titre de l'onglet : sur « / », le h1 est la phrase de la semaine (étape 3).
       await expect(page).toHaveTitle(`${compte.accueil.titre}, Pilotage EJP`)
       await expect(page).toHaveURL((url) => url.pathname === compte.accueil.chemin)
@@ -74,7 +76,7 @@ for (const compte of COMPTES_PROFILS) {
 
     test('captures de l’en-tête et du menu', { tag: '@captures' }, async ({ page }) => {
       const largeur = page.viewportSize()?.width ?? 0
-      await page.goto('/')
+      await page.goto(compte.accueil.chemin)
       await expect(page).toHaveTitle(`${compte.accueil.titre}, Pilotage EJP`)
       await expect(page.getByRole('heading', { level: 1 })).toBeAttached()
       await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
