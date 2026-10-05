@@ -15,7 +15,7 @@ export function ListeChiffres({ lignes }: Props) {
   return (
     <ul>
       {lignes.map((ligne) => {
-        const aSignaler = ligne.dateSignalee || !ligne.complet
+        const aSignaler = ligne.dateSignalee || ligne.completude?.complet === false
         return (
           <li
             key={ligne.id}
@@ -26,15 +26,19 @@ export function ListeChiffres({ lignes }: Props) {
               <span
                 className={`text-note ${aSignaler ? 'font-semibold text-attention' : 'text-encre-3'}`}
               >
-                {ligne.dateCourte ?? ligne.date},{' '}
-                <span className="whitespace-nowrap">{ligne.completude}</span>
+                {ligne.dateCourte ?? ligne.date}
+                {ligne.completude ? (
+                  <>
+                    , <span className="whitespace-nowrap">{ligne.completude.texte}</span>
+                  </>
+                ) : null}
               </span>
             </div>
             <div>
               {ligne.courbe ? <Courbe courbe={ligne.courbe} largeur={72} hauteur={22} /> : null}
             </div>
             <div className="flex flex-col items-end text-right">
-              <ValeurChiffre valeur={ligne.valeur} unite={ligne.unite} />
+              <ValeurChiffre valeur={ligne.valeur} />
               {ligne.ecart ? <EcartChiffre ecart={ligne.ecart} className="text-note" /> : null}
             </div>
           </li>

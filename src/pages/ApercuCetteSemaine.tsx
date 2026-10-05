@@ -46,7 +46,7 @@ export function ApercuCetteSemaine() {
           ))}
         </ul>
       </nav>
-      <VueCetteSemaine profil={profil} donnees={exempleCetteSemaine(profil, session)} />
+      <VueCetteSemaine donnees={exempleCetteSemaine(profil, session)} />
     </>
   )
 }

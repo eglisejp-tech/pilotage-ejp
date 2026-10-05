@@ -43,7 +43,7 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
               {ligne.libelle}
             </th>
             <td className="w-px py-3 pr-2 text-right">
-              <ValeurChiffre valeur={ligne.valeur} unite={ligne.unite} />
+              <ValeurChiffre valeur={ligne.valeur} />
             </td>
             <td className="w-px py-3 pr-3 text-sm xl:pr-4">
               {ligne.ecart ? <EcartChiffre ecart={ligne.ecart} /> : null}
@@ -59,9 +59,9 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
               {ligne.date}
             </td>
             <td
-              className={`w-px py-3 text-right text-sm font-semibold whitespace-nowrap ${ligne.complet ? 'text-encre-3' : 'text-attention'}`}
+              className={`w-px py-3 text-right text-sm font-semibold whitespace-nowrap ${ligne.completude?.complet === false ? 'text-attention' : 'text-encre-3'}`}
             >
-              {ligne.completude}
+              {ligne.completude?.texte}
             </td>
           </tr>
         ))}

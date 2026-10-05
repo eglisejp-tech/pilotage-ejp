@@ -13,7 +13,8 @@ function afficher(session: DerniereSession | null) {
   )
 }
 
-const batir = exempleCetteSemaine('berger').session!
+const bloc = exempleCetteSemaine('berger').session
+const batir = bloc.etat === 'session' ? bloc.session : null
 
 describe('BlocSession', () => {
   it("donne le total sans double compte, sa complétude et le lien vers l'autre session", () => {
@@ -32,18 +33,18 @@ describe('BlocSession', () => {
     expect(barre).toHaveAttribute('aria-hidden', 'true')
     expect(barre.querySelectorAll('[data-a-saisir]')).toHaveLength(2)
     expect(barre.children).toHaveLength(8)
-    expect(screen.getByText('Intégration, Coordination')).toHaveClass('text-attention')
+    expect(screen.getByText('Coordination, Intégration')).toHaveClass('text-attention')
 
     const apports = screen.getAllByRole('listitem').filter((item) => !item.querySelector('a'))
     expect(apports.map((item) => item.textContent)).toEqual([
       'Communication13',
-      'IntégrationÀ saisir',
-      'CoordinationÀ saisir',
       'Jeunesse13',
-      'Social7',
       'FIJ10',
       'Prodiges Junior8',
       'EJP Formation7',
+      'Social7',
+      'CoordinationÀ saisir',
+      'IntégrationÀ saisir',
     ])
   })
 
@@ -61,6 +62,22 @@ describe('BlocSession', () => {
     expect(screen.getByText('STAR présent, selon 1 ministère sur 3')).toBeInTheDocument()
     expect(screen.getByText('(3 saisis)')).toBeInTheDocument()
     expect(screen.getByText(/ne sont comptés qu'une fois/)).toBeInTheDocument()
+  })
+
+  it("remplace le total par « Pas encore de saisie » quand personne n'a saisi", () => {
+    afficher({
+      titre: "Bâtir l'Église, samedi 3 octobre",
+      total: null,
+      saisis: 0,
+      attendus: 8,
+      apports: [{ ministere: 'Jeunesse', valeur: null, saisis: null }],
+      noteDoubleCompte: null,
+      autres: [],
+    })
+    expect(screen.getByText('Pas encore de saisie')).toBeInTheDocument()
+    expect(
+      screen.getByText("Aucun des 8 ministères attendus n'a encore saisi."),
+    ).toBeInTheDocument()
   })
 
   it("dit quand aucune session n'est déclarée", () => {

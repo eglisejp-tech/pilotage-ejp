@@ -355,3 +355,75 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : EJP Tech, textes validés par la coordination
 - **Statut** : Décidé
 - **BRIEF** : section 7 (« Données personnelles »), section 9 (« Adresses ») ; le BRIEF n'est pas modifié, la route `/conditions` s'ajoute à son tableau des adresses
+
+### T18. Accueil du ministère construit à l'étape 4
+
+- **Date** : 5 octobre 2026
+- **Sujet** : l'ouverture de la maquette 07 (ce qu'il reste à saisir, bouton principal jaune, « Vos saisies », « Vos points ») dépend des saisies et de la fiche du ministère, qui arrivent à l'étape 4.
+- **Décision** : l'étape 3 ne construit pas cette ouverture ; elle vient à l'étape 4 avec la fiche du ministère. En attendant, le ministère voit sur `/` le numéro de semaine et la phrase de l'église (parties A et B et la ligne secondaire, sans surligneur, comme l'administration de l'église), puis « L'église cette semaine » : sous 600 px, trois chiffres et le bouton « Tout voir ».
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 9 (« Accueil du ministère », « Vue de l'église selon le profil ») ; le BRIEF n'est pas modifié
+
+### T19. « Marquer traité » caché dans « À décider » jusqu'à l'étape 5
+
+- **Date** : 5 octobre 2026
+- **Sujet** : la fenêtre « Marquer traité » et l'appel de `marquer_traite` arrivent à l'étape 5.
+- **Décision** : jusqu'à l'étape 5, les points de « À décider » s'affichent sans le bouton « Marquer traité » : aucun bouton sans effet. Le bouton revient à l'étape 5, avec sa fenêtre.
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 9 (« Ordre de « À décider » ») ; le BRIEF n'est pas modifié
+
+### T20. Liens vers les autres types de session
+
+- **Date** : 5 octobre 2026
+- **Sujet** : le bloc de la session donne un lien vers chaque autre type qui a une session passée, sans dire où il mène.
+- **Décision** : « Voir Anti-Dispersion » mène à `/?session=anti_dispersion` et « Voir les autres rassemblements » à `/?session=autre` ; chaque adresse montre, dans le bloc de la session, la session passée la plus récente de ce type. Sans paramètre, le bloc montre la dernière session passée, tous types confondus. Le lien vers Bâtir l'Église, quand un autre type est affiché, suit la même forme (`/?session=batir`).
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 9 (« Bloc de la session ») ; le BRIEF n'est pas modifié
+
+### T21. Ordre des apports dans le bloc de la session
+
+- **Date** : 5 octobre 2026
+- **Sujet** : le BRIEF ne fixe pas l'ordre des ministères dans la barre et la liste des apports.
+- **Décision** : les apports se rangent par apport décroissant, à égalité par nom (ordre alphabétique) ; les ministères attendus qui n'ont pas saisi (« À saisir ») viennent en dernier, par nom.
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 9 (« Bloc de la session ») ; le BRIEF n'est pas modifié
+
+### T22. États vides
+
+- **Date** : 5 octobre 2026
+- **Sujet** : `LISEZMOI.md` donne quelques états vides (premier dimanche, aucun point ouvert) ; d'autres blocs peuvent manquer de données sans texte prévu.
+- **Décision** : tout bloc qui peut manquer de données affiche un état vide écrit, jamais un blanc ni un zéro trompeur. Les textes de la vue de l'église sont réunis dans `src/features/cette-semaine/textesVides.ts` : ceux de `LISEZMOI.md` et du BRIEF quand ils existent, sinon des textes proposés dans le même style. Un type de session qui n'a encore jamais eu lieu garde sa ligne dans les chiffres, avec « Pas encore de saisie ». Les écrans des étapes suivantes suivent la même pratique.
+- **Origine** : Plan de l'étape 3, demande de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 9 (« États à construire ») ; `LISEZMOI.md`, « États » ; le BRIEF n'est pas modifié
+
+### T23. Écart d'une session : date de la session précédente
+
+- **Date** : 5 octobre 2026
+- **Sujet** : l'étiquette accessible de l'écart d'une session disait « par rapport à la session précédente ».
+- **Décision** : l'étiquette nomme la session précédente du même type par sa date : « +1 par rapport à la session du 29 août, pour les 6 ministères qui ont saisi les deux fois ».
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 3 (règle 12) ; le BRIEF n'est pas modifié
+
+### T24. Mention d'un ministère au nom en plusieurs mots
+
+- **Date** : 5 octobre 2026
+- **Sujet** : une mention s'écrit « @nom », et certains noms ont plusieurs mots.
+- **Décision** : l'étiquette d'une mention reprend le nom complet du ministère, tel qu'il est écrit : « @Prodiges Junior » ; un ministère désactivé garde sa mention, suivie de « (désactivé) » (« @Social (désactivé) », que la règle 7 écrit « @social (désactivé) »).
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 3 (règle 7), section 9 ; le BRIEF n'est pas modifié
+
+### T25. Bandeau « Hors ligne » à l'étape 7
+
+- **Date** : 5 octobre 2026
+- **Sujet** : `LISEZMOI.md` prévoit le bandeau « Pas de connexion internet. Les chiffres affichés peuvent dater. » sur toute page.
+- **Décision** : le bandeau arrive à l'étape 7 (« Finitions », erreurs réseau). À l'étape 3, une lecture en échec affiche le bandeau d'erreur de page et « Réessayer ».
+- **Origine** : Plan de l'étape 3, décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 13 (étape 7) ; `LISEZMOI.md`, « États » ; le BRIEF n'est pas modifié

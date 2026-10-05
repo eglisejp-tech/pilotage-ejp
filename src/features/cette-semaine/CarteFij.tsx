@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { niveauTeinte, placesDepartements, teintesCarte } from './carte'
+import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { DonneesCarteFij } from './types'
 
@@ -30,7 +31,7 @@ export function CarteFij({ carte }: Props) {
         }
       />
       {carte === null || valeurs.length === 0 ? (
-        <p className="text-encre-2">La carte s'affichera quand FIJ aura saisi ses chiffres.</p>
+        <p className="text-encre-2">{TEXTES_VIDES.carte.vide}</p>
       ) : (
         <>
           <ul className="grid w-full max-w-[346px] grid-cols-5 gap-1 lg:max-w-[380px]">
@@ -58,7 +59,7 @@ export function CarteFij({ carte }: Props) {
                         : 'font-chiffres text-2xl leading-[0.9] font-extrabold tabular-nums lg:text-[29px]'
                     }
                   >
-                    {departement.valeur ?? 'À saisir'}
+                    {departement.valeur ?? TEXTES_VIDES.carte.departementSansValeur}
                   </span>
                   <span className="sr-only">
                     {departement.nom} ({departement.code}) :{' '}

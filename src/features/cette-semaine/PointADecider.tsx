@@ -37,12 +37,17 @@ export function PointADecider({ point }: Props) {
           ) : null}
         </p>
       </div>
-      <h3 id={idTitre} className="font-lecture text-[22px] leading-tight font-medium">
-        {point.titre}
+      <h3
+        id={idTitre}
+        className={`font-lecture text-[22px] leading-tight font-medium ${point.titre.masque ? 'text-encre-3' : ''}`}
+      >
+        {point.titre.texte}
       </h3>
       {point.description ? (
-        <p className="hidden text-[15px] leading-normal text-encre-2 min-[600px]:block">
-          {point.description}
+        <p
+          className={`hidden text-[15px] leading-normal min-[600px]:block ${point.description.masque ? 'text-encre-3' : 'text-encre-2'}`}
+        >
+          {point.description.texte}
         </p>
       ) : null}
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
@@ -50,7 +55,10 @@ export function PointADecider({ point }: Props) {
           <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
             {point.attendu ? (
               <span>
-                Attendu : <strong className="text-encre">{point.attendu}</strong>
+                Attendu :{' '}
+                <strong className={point.attendu.masque ? 'text-encre-3' : 'text-encre'}>
+                  {point.attendu.texte}
+                </strong>
               </span>
             ) : null}
             {point.mentions.map((mention) => (

@@ -2,9 +2,10 @@ import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ADecider } from './ADecider'
-import { exempleCetteSemaine } from './exemple'
+import { exempleCetteSemaine, pointsOuvertsExemple } from './exemple'
 
-const { aDecider, lienTousLesPoints } = exempleCetteSemaine('berger')
+const aDecider = pointsOuvertsExemple
+const { lienTousLesPoints } = exempleCetteSemaine('berger').aDecider
 
 function afficher(points = aDecider) {
   render(
@@ -42,7 +43,7 @@ describe('ADecider', () => {
     expect(premier).toHaveTextContent('Attendu : Décision du conseil sur le budget')
     expect(deuxieme).toHaveTextContent('Priorité Haute')
     expect(within(deuxieme!).getByText('avant le 28 sept., dépassée')).toHaveClass('text-alerte')
-    expect(within(troisieme!).getByText('@coordination')).toBeInTheDocument()
+    expect(within(troisieme!).getByText('@Coordination')).toBeInTheDocument()
   })
 
   it('propose « Marquer traité » sur chaque point, décrit par son titre, en action secondaire', () => {

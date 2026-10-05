@@ -2,14 +2,14 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { simulerLargeur } from '@/test/largeur'
-import { exempleCetteSemaine } from './exemple'
+import { exempleCetteSemaine, exemplePremierDimanche } from './exemple'
 import type { DonneesCetteSemaine, ProfilVue } from './types'
 import { VueCetteSemaine } from './VueCetteSemaine'
 
 function afficher(profil: ProfilVue, donnees: DonneesCetteSemaine = exempleCetteSemaine(profil)) {
   const rendu = render(
     <MemoryRouter>
-      <VueCetteSemaine profil={profil} donnees={donnees} />
+      <VueCetteSemaine donnees={donnees} />
     </MemoryRouter>,
   )
   const titres = screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent)
@@ -75,9 +75,28 @@ describe('VueCetteSemaine', () => {
     const donnees = exempleCetteSemaine('berger')
     const sansUrgence = {
       ...donnees,
-      aDecider: donnees.aDecider.filter((point) => point.priorite !== 'urgente'),
+      aDecider: {
+        ...donnees.aDecider,
+        points: donnees.aDecider.points.filter((point) => point.priorite !== 'urgente'),
+        urgent: false,
+      },
     }
     const { titres } = afficher('berger', sansUrgence)
     expect(titres.slice(0, 2)).toEqual(["Les chiffres de l'église", 'À décider'])
   })
+
+  it.each<ProfilVue>(['berger', 'conseil', 'ministere', 'admin_eglise'])(
+    '%s, premier dimanche : chaque bloc dit ce qui manque',
+    (profil) => {
+      afficher(profil, exemplePremierDimanche(profil))
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        "Aucun ministère n'a encore saisi les chiffres du dimanche 27 sept.",
+      )
+      expect(screen.getAllByText('Pas encore de saisie')).toHaveLength(6)
+      expect(screen.getByText('Aucune session déclarée.')).toBeInTheDocument()
+      expect(
+        screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
+      ).toBeInTheDocument()
+    },
+  )
 })

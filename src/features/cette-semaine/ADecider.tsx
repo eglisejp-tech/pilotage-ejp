@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
 import { PointADecider } from './PointADecider'
+import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { PointADecider as DonneesPoint } from './types'
 
@@ -34,7 +35,7 @@ export function ADecider({ points, lienTousLesPoints }: Props) {
         }
       />
       {affiches.length === 0 ? (
-        <p className="py-[18px] text-encre-2">Aucun point ouvert.</p>
+        <p className="py-[18px] text-encre-2">{TEXTES_VIDES.aDecider.aucunPoint}</p>
       ) : (
         <ol>
           {affiches.map((point) => (

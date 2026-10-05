@@ -4,7 +4,8 @@ import type { MorceauPhrase, Semaine } from './types'
 interface Props {
   semaine: Semaine
   phrase: MorceauPhrase[]
-  ligneSecondaire?: string
+  /** Null : rien à signaler, la ligne ne s'affiche pas. */
+  ligneSecondaire: string | null
   surligner: boolean
 }
 

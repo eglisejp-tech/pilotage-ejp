@@ -1,3 +1,4 @@
+import { TEXTES_VIDES } from './textesVides'
 import type { ApportSession } from './types'
 
 interface Props {
@@ -29,7 +30,7 @@ export function BarreSession({ apports }: Props) {
             className="flex min-w-0 basis-0 items-center overflow-hidden border-2 border-dashed border-attention px-1.5"
           >
             <span className="hidden truncate text-note font-semibold text-attention lg:inline">
-              À saisir
+              {TEXTES_VIDES.session.apportManquant}
             </span>
           </div>
         ) : (

@@ -25,7 +25,7 @@ describe('OuvertureSemaine', () => {
 
   it("donne le numéro de semaine en une phrase aux lecteurs d'écran", () => {
     const { semaine, phrase } = exempleCetteSemaine('berger')
-    render(<OuvertureSemaine semaine={semaine} phrase={phrase} surligner />)
+    render(<OuvertureSemaine semaine={semaine} phrase={phrase} ligneSecondaire={null} surligner />)
     expect(screen.getByText('Semaine 39, du 21 au 27 sept.')).toHaveClass('sr-only')
   })
 
@@ -35,6 +35,7 @@ describe('OuvertureSemaine', () => {
       <OuvertureSemaine
         semaine={semaine}
         phrase={[{ texte: 'Un point ' }, { texte: 'attend', aDecider: true }, { texte: '.' }]}
+        ligneSecondaire={null}
         surligner={false}
       />,
     )

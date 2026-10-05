@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
 import { BarreSession } from './BarreSession'
+import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { DerniereSession } from './types'
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 function resume({ total, saisis, attendus }: DerniereSession) {
+  if (total === null) return TEXTES_VIDES.session.resumeSansSaisie(attendus)
   const presents = total > 1 ? 'STARs présents' : 'STAR présent'
   const ministeres = saisis > 1 ? 'ministères' : 'ministère'
   return `${presents}, selon ${saisis} ${ministeres} sur ${attendus}`
@@ -25,8 +27,8 @@ export function BlocSession({ session }: Props) {
   if (session === null) {
     return (
       <section aria-labelledby={idTitre} className="flex min-w-0 flex-col gap-4">
-        <TitreSection id={idTitre} titre="Dernière session" />
-        <p className="text-encre-2">Aucune session déclarée.</p>
+        <TitreSection id={idTitre} titre={TEXTES_VIDES.session.titre} />
+        <p className="text-encre-2">{TEXTES_VIDES.session.aucuneSession}</p>
       </section>
     )
   }
@@ -58,9 +60,13 @@ export function BlocSession({ session }: Props) {
         }
       />
       <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 min-[600px]:gap-x-4">
-        <span className="font-chiffres text-[clamp(60px,8vw,88px)] leading-[0.8] font-black tabular-nums">
-          {session.total}
-        </span>
+        {session.total === null ? (
+          <span className="text-encre-3">{TEXTES_VIDES.session.totalSansSaisie}</span>
+        ) : (
+          <span className="font-chiffres text-[clamp(60px,8vw,88px)] leading-[0.8] font-black tabular-nums">
+            {session.total}
+          </span>
+        )}
         <span className="text-sm text-encre-2 min-[600px]:text-[15px] lg:text-base">
           {resume(session)}
         </span>
@@ -82,11 +88,13 @@ export function BlocSession({ session }: Props) {
           >
             <span>{apport.ministere}</span>
             {apport.valeur === null ? (
-              <span className="font-bold text-attention">À saisir</span>
+              <span className="font-bold text-attention">
+                {TEXTES_VIDES.session.apportManquant}
+              </span>
             ) : (
               <span className="tabular-nums">
                 {apport.valeur}
-                {apport.saisis !== undefined && apport.saisis !== apport.valeur ? (
+                {apport.saisis !== null && apport.saisis !== apport.valeur ? (
                   <span className="text-encre-3"> ({apport.saisis} saisis)</span>
                 ) : null}
               </span>

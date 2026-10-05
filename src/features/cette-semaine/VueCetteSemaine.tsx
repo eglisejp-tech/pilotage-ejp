@@ -4,11 +4,10 @@ import { CarteFij } from './CarteFij'
 import { ChiffresEglise } from './ChiffresEglise'
 import { LesMinisteres } from './LesMinisteres'
 import { OuvertureSemaine } from './OuvertureSemaine'
-import type { DonneesCetteSemaine, ProfilVue } from './types'
+import type { DonneesCetteSemaine } from './types'
 import { useLargeurMin } from './useLargeurMin'
 
 interface Props {
-  profil: ProfilVue
   donnees: DonneesCetteSemaine
 }
 
@@ -26,14 +25,14 @@ const deuxColonnes =
  * session, les départements, les ministères. Sur téléphone, « À décider » remonte juste après
  * la phrase quand un point ouvert est urgent.
  */
-export function VueCetteSemaine({ profil, donnees }: Props) {
-  const avecDecision = profil === 'berger' || profil === 'conseil'
+export function VueCetteSemaine({ donnees }: Props) {
+  const decision =
+    donnees.profil === 'berger' || donnees.profil === 'conseil' ? donnees.aDecider : null
   const telephone = !useLargeurMin(600)
-  const urgent = donnees.aDecider.some((point) => point.priorite === 'urgente')
-  const aDeciderEnTete = avecDecision && telephone && urgent
+  const aDeciderEnTete = decision !== null && telephone && decision.urgent
 
-  const aDecider = avecDecision ? (
-    <ADecider points={donnees.aDecider} lienTousLesPoints={donnees.lienTousLesPoints} />
+  const aDecider = decision ? (
+    <ADecider points={decision.points} lienTousLesPoints={decision.lienTousLesPoints} />
   ) : null
 
   return (
@@ -42,12 +41,14 @@ export function VueCetteSemaine({ profil, donnees }: Props) {
         semaine={donnees.semaine}
         phrase={donnees.phrase}
         ligneSecondaire={donnees.ligneSecondaire}
-        surligner={avecDecision}
+        surligner={decision !== null}
       />
       {aDeciderEnTete ? aDecider : null}
       <div className={`grid items-start gap-9 min-[600px]:gap-11 ${deuxColonnes}`}>
         <ChiffresEglise
-          titre={profil === 'ministere' ? "L'église cette semaine" : "Les chiffres de l'église"}
+          titre={
+            donnees.profil === 'ministere' ? "L'église cette semaine" : "Les chiffres de l'église"
+          }
           lignes={donnees.chiffres}
           note={donnees.noteChiffres}
         />
@@ -56,10 +57,13 @@ export function VueCetteSemaine({ profil, donnees }: Props) {
       <div
         className={`grid items-start gap-9 min-[600px]:gap-11 md:grid-cols-[minmax(0,1fr)_17.5rem] md:gap-x-10 ${deuxColonnes}`}
       >
-        <BlocSession session={donnees.session} />
+        {/* TODO lot B : état « aucune_session_du_type » (TEXTES_VIDES.session.aucuneSessionDuType). */}
+        <BlocSession
+          session={donnees.session.etat === 'session' ? donnees.session.session : null}
+        />
         <CarteFij carte={donnees.carte} />
       </div>
-      <LesMinisteres ministeres={donnees.ministeres} avecColonnesConseil={avecDecision} />
+      <LesMinisteres ministeres={donnees.ministeres} avecColonnesConseil={decision !== null} />
     </div>
   )
 }
