@@ -507,5 +507,14 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Sujet** : environ 90 indicateurs en phase 1 et jusqu'à 185 demandes ; les ministères sont créés par l'administration en production après le déploiement, et par `seed.sql` après les migrations en local et en CI. Une migration qui cherche chaque ministère par son nom ne trouve donc rien en production à la mise en service, ne se rejoue jamais, ne peut pas être testée par pgTAP (la base est déjà chargée) et dépend d'un nom libre tapé à l'écran 13.
 - **Décision** : création par migration (BRIEF), par lots, sur demande écrite de l'administration, sans écran de configuration en V1. Chaque lot écrit un catalogue `private.indicateur_modele` (nom normalisé du ministère, libellé, nature, unité, plafond, groupe, sensible, ordre) ; une fonction `private` le matérialise, appelée par un trigger après chaque création de ministère et une fois par lot pour les ministères existants (noms comparés sans accents ni majuscules). `seed.sql` désactive ce trigger le temps de charger ses 8 ministères. Test pgTAP : créer un ministère du catalogue crée ses indicateurs. À défaut : écrire dans l'étape 8 l'ordre imposé (tous les ministères créés avant le lot) et une requête de contrôle à lancer après le push. Un écran de configuration se réexamine après un mois d'usage.
 - **Origine** : KPI de la coordination
-- **Statut** : À l'étude, non appliqué ; à confirmer par EJP Tech
+- **Statut** : À l'étude, non appliqué ; à confirmer par EJP Tech. À revoir : EJP Tech demande un écran de configuration et la possibilité, encadrée, pour un ministère de créer ses propres indicateurs (conception en cours, 5 octobre 2026)
 - **BRIEF** : section 4, section 6 (« Données de référence »), section 8 (amorçage), section 11 ; le BRIEF n'est pas modifié
+
+### T28. EJP Tech voit les chiffres
+
+- **Date** : 5 octobre 2026
+- **Sujet** : le BRIEF (section 2, profils) dit que l'administration de la plateforme (EJP Tech) « ne voit aucun chiffre ».
+- **Décision** : EJP Tech voit tous les chiffres, en lecture, pour administrer la plateforme : vue de l'église, fiches des ministères, indicateurs propres. Il ne saisit rien au nom d'un ministère et ne décide pas des points. Les chiffres des domaines sensibles suivent les mêmes règles que pour le berger (T26).
+- **Origine** : décision de la personne responsable (EJP Tech)
+- **Statut** : Décidé ; à appliquer juste après l'étape 3. Effets : nouvelle migration des droits (politiques RLS de lecture pour `admin_plateforme`), matrice et tests pgTAP mis à jour, navigation du profil EJP Tech (accès à la vue de l'église et aux fiches), page Confidentialité (« sans voir les chiffres » est retiré), CLAUDE.md (« Un ministère ne voit que... » inchangé, la phrase sur EJP Tech est corrigée)
+- **BRIEF** : section 2 (profils), section 7 (matrice des droits) ; le BRIEF n'est pas modifié
