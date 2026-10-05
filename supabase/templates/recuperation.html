@@ -1,14 +1,198 @@
+<!doctype html>
 <!-- Mot de passe oublié (Reset password). Même principe que l'invitation : le lien mène à /acces,
-     qui demande un clic avant de consommer le jeton (BRIEF, section 8). -->
-<h2>Nouveau mot de passe pour Pilotage EJP</h2>
-<p>Une demande de nouveau mot de passe a été faite pour ce compte.</p>
-<p>
-  <a href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=recovery"
-    >Choisir un nouveau mot de passe</a
-  >
-</p>
-<p>
-  Si la double authentification est déjà activée, son code vous sera demandé avant le nouveau mot de
-  passe. Ce lien reste valable 24 heures.
-</p>
-<p>Vous n'avez rien demandé ? Ignorez ce message : votre mot de passe ne change pas.</p>
+     qui demande un clic avant de consommer le jeton (BRIEF, section 8).
+     Style en ligne recopié de src/styles/tokens.css, comme dans invitation.html. Aucune image ni
+     ressource externe : rien n'est chargé à l'ouverture du message. -->
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Nouveau mot de passe pour Pilotage EJP</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f2f3f5">
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all">
+      Choisissez un nouveau mot de passe pour Pilotage EJP. Le lien reste valable 24 heures.
+    </div>
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      style="background-color: #f2f3f5"
+    >
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table
+            role="presentation"
+            width="100%"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="max-width: 560px; background-color: #ffffff; border: 1px solid #dcdfe5"
+          >
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', serif;
+                    font-size: 22px;
+                    line-height: 1.2;
+                    color: #101828;
+                  "
+                >
+                  Pilotage EJP
+                </p>
+                <p
+                  style="
+                    margin: 4px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.4;
+                    color: #5f6b7e;
+                  "
+                >
+                  Église des Jeunes Prodiges
+                </p>
+                <div
+                  style="
+                    margin-top: 20px;
+                    border-top: 2px solid #101828;
+                    font-size: 0;
+                    line-height: 0;
+                  "
+                >
+                  &nbsp;
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <h1
+                  style="
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', serif;
+                    font-size: 28px;
+                    font-weight: 500;
+                    line-height: 1.2;
+                    color: #101828;
+                  "
+                >
+                  Nouveau mot de passe
+                </h1>
+                <p
+                  style="
+                    margin: 16px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 16px;
+                    line-height: 1.5;
+                    color: #3f4a5c;
+                  "
+                >
+                  Une demande de nouveau mot de passe a été faite pour votre compte Pilotage EJP.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 20px 32px 0 32px">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td
+                      style="
+                        padding: 4px 0 4px 16px;
+                        border-left: 3px solid #1b2e6b;
+                        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                        font-size: 15px;
+                        line-height: 1.5;
+                        color: #101828;
+                      "
+                    >
+                      Si la double authentification est déjà activée, son code vous sera demandé
+                      avant le nouveau mot de passe.
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 0 32px">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td style="background-color: #ffd23f">
+                      <a
+                        href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=recovery"
+                        style="
+                          display: inline-block;
+                          padding: 15px 28px;
+                          font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                          font-size: 16px;
+                          font-weight: 700;
+                          line-height: 1.2;
+                          color: #101828;
+                          text-decoration: none;
+                        "
+                        >Choisir un nouveau mot de passe</a
+                      >
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 14px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Ce lien reste valable 24 heures.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 24px 32px 0 32px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Le bouton ne fonctionne pas ? Copiez cette adresse dans votre navigateur :<br />
+                  <a
+                    href="{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=recovery"
+                    style="color: #1b2e6b; word-break: break-all"
+                    >{{ .SiteURL }}/acces?token_hash={{ .TokenHash }}&amp;type=recovery</a
+                  >
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 28px 32px 28px 32px">
+                <div style="border-top: 1px solid #dcdfe5; font-size: 0; line-height: 0">
+                  &nbsp;
+                </div>
+                <p
+                  style="
+                    margin: 16px 0 0 0;
+                    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+                    font-size: 13px;
+                    line-height: 1.5;
+                    color: #5f6b7e;
+                  "
+                >
+                  Vous n'avez rien demandé ? Ignorez ce message : votre mot de passe ne change pas.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
