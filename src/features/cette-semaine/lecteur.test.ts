@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { lecteurDuCompte, typeSessionDeLAdresse } from './lecteur'
+import { lecteurDuCompte, typeSessionDeLAdresse, voitADecider } from './lecteur'
 
 describe('lecteurDuCompte', () => {
-  it('berger, conseil et administration de l’église lisent la vue sous leur profil', () => {
+  it('berger, conseil, administration de l’église et EJP Tech lisent la vue sous leur profil', () => {
     expect(lecteurDuCompte({ type: 'berger', ministereId: null })).toEqual({ profil: 'berger' })
     expect(lecteurDuCompte({ type: 'conseil', ministereId: null })).toEqual({ profil: 'conseil' })
     expect(lecteurDuCompte({ type: 'admin_eglise', ministereId: null })).toEqual({
       profil: 'admin_eglise',
+    })
+    expect(lecteurDuCompte({ type: 'admin_plateforme', ministereId: null })).toEqual({
+      profil: 'admin_plateforme',
     })
   })
 
@@ -17,9 +20,18 @@ describe('lecteurDuCompte', () => {
     })
   })
 
-  it('EJP Tech et un ministère sans ministère : aucune vue', () => {
-    expect(lecteurDuCompte({ type: 'admin_plateforme', ministereId: null })).toBeNull()
+  it('un ministère sans ministère : aucune vue', () => {
     expect(lecteurDuCompte({ type: 'ministere', ministereId: null })).toBeNull()
+  })
+})
+
+describe('voitADecider', () => {
+  it('berger, conseil et EJP Tech (lecture seule, T29) ; ni le ministère ni l’administration', () => {
+    expect(voitADecider('berger')).toBe(true)
+    expect(voitADecider('conseil')).toBe(true)
+    expect(voitADecider('admin_plateforme')).toBe(true)
+    expect(voitADecider('ministere')).toBe(false)
+    expect(voitADecider('admin_eglise')).toBe(false)
   })
 })
 

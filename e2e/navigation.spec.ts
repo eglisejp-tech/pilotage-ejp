@@ -29,7 +29,7 @@ const PROFILS = [
   {
     profil: 'admin_plateforme',
     libelle: 'EJP Tech, compte 1',
-    onglets: ['Modération', 'Journal technique'],
+    onglets: ['Modération', 'Cette semaine', 'Journal technique'],
   },
 ] as const
 

@@ -83,6 +83,16 @@ describe('destination', () => {
     expect(destination(connecte('ministere'), 'mot-de-passe', contexte())).toBe('/')
   })
 
+  it('EJP Tech : /moderation après la connexion, même demandée depuis « / » (T29)', () => {
+    // « / » n'est jamais gardé comme adresse de retour : l'accueil du profil décide.
+    expect(destination(anonyme, 'application', contexte({ adresse: '/' }))).toBe('/connexion')
+    expect(destination(connecte('admin_plateforme'), 'connexion', contexte())).toBe('/moderation')
+    expect(destination(connecte('admin_plateforme'), 'application', contexte())).toBeNull()
+    expect(
+      destination(connecte('admin_plateforme'), 'connexion', contexte({ retour: '/points' })),
+    ).toBe('/points')
+  })
+
   it("lien d'invitation ou de récupération : le mot de passe d'abord, le code avant s'il existe", () => {
     const enAttente = contexte({ motDePasseAChoisir: true })
     expect(destination(activation, 'mot-de-passe', enAttente)).toBeNull()
@@ -120,6 +130,6 @@ describe('retourValide', () => {
       expect(retourValide(retour, 'berger')).toBeNull()
     }
     expect(retourValide('/comptes', 'ministere')).toBeNull()
-    expect(retourValide('/', 'admin_plateforme')).toBeNull()
+    expect(retourValide('/journal', 'admin_plateforme')).toBeNull()
   })
 })

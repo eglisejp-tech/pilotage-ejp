@@ -79,6 +79,7 @@ Vues d'un profil déduites d'un autre :
 
 Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 - **00** : la planche dit du ministère « Marquer traité ses propres points ». Lis : « Marquer traités ses points et ceux qui le mentionnent, avec un commentaire ».
+- **00, EJP Tech** : la planche montre EJP Tech sans les chiffres, avec deux onglets. EJP Tech lit maintenant tout comme le berger, en lecture seule, et a l'onglet « Cette semaine » entre « Modération » (son accueil) et « Journal technique » (`docs/decisions.md`, T29).
 - **07 et 12** : la phrase « Seuls Intégration, le berger et le conseil peuvent le marquer traité. » est remplacée par « Mentionné par Intégration. », suivie des boutons « Changer le statut » et « Marquer traité » (décision du 30 septembre 2026).
 - **07** : la ligne « Le dimanche midi, ce bouton devient « Saisir les chiffres du dimanche » » est une note de conception : ne l'affiche pas.
 - **09** : ajoute le second compteur « Dont déjà comptés par leur ministère principal » (0 par défaut) et la ligne « Comptés dans le total de l'église : 11. ». Le compteur des présents est un vrai champ numérique entre moins et plus, comme dans 08.

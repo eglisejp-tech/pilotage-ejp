@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react'
 import { GrilleCetteSemaine } from './GrilleCetteSemaine'
+import { voitADecider } from './lecteur'
 import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { ProfilVue } from './types'
@@ -66,11 +67,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
             titre={profil === 'ministere' ? "L'église cette semaine" : "Les chiffres de l'église"}
           />
         }
-        aDecider={
-          profil === 'berger' || profil === 'conseil' ? (
-            <SectionEnAttente titre="À décider" />
-          ) : null
-        }
+        aDecider={voitADecider(profil) ? <SectionEnAttente titre="À décider" /> : null}
         aDeciderEnTete={false}
         session={<SectionEnAttente titre={TEXTES_VIDES.session.titre} />}
         carte={<SectionEnAttente titre="FIJ en Île-de-France" />}

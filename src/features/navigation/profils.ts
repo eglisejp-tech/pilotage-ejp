@@ -33,13 +33,15 @@ export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
     { libelle: 'Sessions', chemin: '/sessions' },
     { libelle: 'Journal', chemin: '/journal' },
   ],
+  // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29).
   admin_plateforme: [
     { libelle: 'Modération', chemin: '/moderation' },
+    { libelle: 'Cette semaine', chemin: '/' },
     { libelle: 'Journal technique', chemin: '/journal-technique' },
   ],
 }
 
-/** Accueil du profil : son premier onglet (EJP Tech est renvoyé vers /moderation). */
+/** Accueil du profil : son premier onglet (/moderation pour EJP Tech). */
 export function accueil(type: TypeCompte): string {
   return ONGLETS[type][0]?.chemin ?? '/'
 }
@@ -54,7 +56,14 @@ export type AdresseApplication = {
   etape: number
 }
 
-const LECTEURS: readonly TypeCompte[] = ['berger', 'conseil']
+/** Berger et conseil : ils lisent tout et marquent un point traité. */
+const DECIDEURS: readonly TypeCompte[] = ['berger', 'conseil']
+
+/**
+ * Profils qui lisent tout : le berger, le conseil, et EJP Tech en lecture seule (T29). EJP Tech
+ * a les écrans de lecture du berger, sans aucune action (ni « Marquer traité », ni statut).
+ */
+const LECTEURS: readonly TypeCompte[] = [...DECIDEURS, 'admin_plateforme']
 
 /** Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5. */
 export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
@@ -73,9 +82,10 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
     titre: "Points d'attention",
     etape: 5,
   },
+  // EJP Tech lit le journal complet par son onglet « Journal technique » (étape 6).
   {
     chemin: '/journal',
-    profils: ['ministere', ...LECTEURS, 'admin_eglise'],
+    profils: ['ministere', ...DECIDEURS, 'admin_eglise'],
     titre: 'Journal',
     etape: 6,
   },

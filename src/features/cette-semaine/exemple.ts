@@ -377,10 +377,12 @@ function pourProfil(profil: ProfilVue, contenu: Contenu): DonneesCetteSemaine {
     conseil: null,
   }))
 
-  if (profil === 'berger' || profil === 'conseil') {
+  // EJP Tech : le contenu du berger, en lecture seule (T29).
+  if (profil === 'berger' || profil === 'conseil' || profil === 'admin_plateforme') {
     return {
       ...commun,
       profil,
+      lectureSeule: profil === 'admin_plateforme',
       phrase: contenu.phraseSemaine,
       aDecider: {
         points: contenu.aDecider.slice(0, 3),
@@ -418,7 +420,7 @@ function ligne(id: LigneChiffre['id']): LigneChiffre {
 
 /** Données d'exemple pour un profil, avec la dernière session ou Anti-Dispersion. */
 export function exempleCetteSemaine(
-  profil: 'berger' | 'conseil',
+  profil: 'berger' | 'conseil' | 'admin_plateforme',
   session?: SessionExemple,
 ): DonneesBergerConseil
 export function exempleCetteSemaine(
@@ -499,7 +501,9 @@ const chiffresPremierDimanche: LigneChiffre[] = [
 ]
 
 /** Les états vides de la vue, le mercredi 30 septembre 2026, avant la première saisie. */
-export function exemplePremierDimanche(profil: 'berger' | 'conseil'): DonneesBergerConseil
+export function exemplePremierDimanche(
+  profil: 'berger' | 'conseil' | 'admin_plateforme',
+): DonneesBergerConseil
 export function exemplePremierDimanche(profil: 'admin_eglise'): DonneesAdministration
 export function exemplePremierDimanche(profil: 'ministere'): DonneesMinistere
 export function exemplePremierDimanche(profil: ProfilVue): DonneesCetteSemaine

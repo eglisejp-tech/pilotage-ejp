@@ -22,7 +22,7 @@ afterEach(() => {
 })
 
 describe('VueCetteSemaine', () => {
-  it.each<ProfilVue>(['berger', 'conseil'])(
+  it.each<ProfilVue>(['berger', 'conseil', 'admin_plateforme'])(
     '%s : phrase surlignée, « À décider » sans « Marquer traité » (T19), colonnes du conseil',
     (profil) => {
       const { container, titres } = afficher(profil)
@@ -44,6 +44,18 @@ describe('VueCetteSemaine', () => {
       for (const lien of liens) expect(lien.getAttribute('href')).toMatch(/^\/ministeres\//)
     },
   )
+
+  it('EJP Tech : la vue du berger, en lecture seule, sans bouton d’action (T29)', () => {
+    const donnees = exempleCetteSemaine('admin_plateforme')
+    expect(donnees.lectureSeule).toBe(true)
+    expect(exempleCetteSemaine('berger').lectureSeule).toBe(false)
+    afficher('admin_plateforme', donnees)
+    const aDecider = screen.getByRole('region', { name: 'À décider' })
+    // Garde de l'étape 5 : le bouton « Marquer traité » ne s'affiche jamais pour EJP Tech.
+    expect(within(aDecider).queryByRole('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Tous les points' })).toBeInTheDocument()
+  })
 
   it('ministère : ni « À décider », ni surligneur, ni colonnes du conseil', () => {
     const { container, titres } = afficher('ministere')
@@ -92,7 +104,7 @@ describe('VueCetteSemaine', () => {
     expect(titres.slice(0, 2)).toEqual(["Les chiffres de l'église", 'À décider'])
   })
 
-  it.each<ProfilVue>(['berger', 'conseil', 'ministere', 'admin_eglise'])(
+  it.each<ProfilVue>(['berger', 'conseil', 'ministere', 'admin_eglise', 'admin_plateforme'])(
     '%s, premier dimanche : chaque bloc dit ce qui manque',
     (profil) => {
       afficher(profil, exemplePremierDimanche(profil))
@@ -106,7 +118,7 @@ describe('VueCetteSemaine', () => {
       ).toBeInTheDocument()
       expect(screen.getAllByText('Aucune saisie')).toHaveLength(8)
       expect(screen.getAllByText('Aucun événement prévu')).toHaveLength(8)
-      if (profil === 'berger' || profil === 'conseil') {
+      if (profil === 'berger' || profil === 'conseil' || profil === 'admin_plateforme') {
         expect(screen.getByText('Aucun point ouvert.')).toBeInTheDocument()
       }
     },

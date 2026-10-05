@@ -128,6 +128,7 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Proposition EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination
 - **BRIEF** : sections 2, 7 et 9
+- **Mise à jour** : 5 octobre 2026, la partie EJP Tech est remplacée par T29 (EJP Tech lit tout comme le berger, en lecture seule).
 
 ### P07. Création des comptes
 
@@ -454,3 +455,21 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 - **Origine** : Revue de l'étape 3
 - **Statut** : Proposé, à confirmer par EJP Tech
 - **BRIEF** : section 9 (« Vue de l'église selon le profil », « Bloc de la session ») ; `LISEZMOI.md`, « Écarts connus » ; le BRIEF n'est pas modifié
+
+### T29. EJP Tech lit tout comme le berger
+
+- **Date** : 5 octobre 2026
+- **Sujet** : EJP Tech ne faisait que des actions techniques (modération, journal technique) et ne voyait aucun chiffre. Pour aider un ministère en difficulté, et pour la validation métier (T30), il doit voir ce que voit le berger.
+- **Décision** : EJP Tech (`admin_plateforme`) lit tout comme le berger, en lecture seule : indicateurs, saisies, carte des FIJ, sessions et ministères attendus, présences, événements et leurs états, réunions, points d'attention avec leurs mentions et leurs suivis, journal complet, tableau des ministères avec la prochaine réunion et le point ouvert. Il ne reçoit aucune action du berger ni du conseil : ni « Marquer traité », ni changement de statut, ni saisie pour un ministère, ni déclaration de session. La modération reste à EJP Tech seul ; l'état des comptes reste à l'administration de l'église seule. Dans la base, `private.lit_tout()` (berger, conseil, EJP Tech) ouvre les lectures, et `private.est_decideur()` (berger, conseil) décide toujours des actions. Écrans : l'accueil d'EJP Tech reste « Modération », et ses onglets deviennent « Modération », « Cette semaine », « Journal technique ». Sur « Cette semaine », EJP Tech voit le contenu du berger (phrase, « À décider », colonnes « Prochaine réunion » et « Point ouvert », chaque nom ouvre la fiche), sans aucun bouton d'action (`lectureSeule`). Il a aussi les adresses de lecture du berger (`/ministeres`, `/ministeres/:id`, `/points`), sans action, à mesure qu'elles se construisent (étapes 4 et 5). Le journal complet se lira dans son onglet « Journal technique » (étape 6) : l'adresse `/journal` reste celle des autres profils. La page Confidentialité le dit : « EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs libres. »
+- **Origine** : décision de la personne responsable
+- **Statut** : Décidé
+- **BRIEF** : section 2 (profils et onglets : « Ne voit aucun chiffre » est dépassé), section 6 (`v_tableau_ministeres`), section 7 (matrice des droits : la colonne EJP Tech lit comme le berger, et seul EJP Tech lit `moderation` ; « EJP Tech ne voit aucun chiffre » et, dans les tests obligatoires, « EJP Tech reçoit zéro ligne de chiffres » sont dépassés), section 9 (« EJP Tech n'a pas de vue de l'église », adresse `/`) ; P06 ; migration `20261005172228_droits_lecture_ejp_tech.sql` ; `LISEZMOI.md`, « Écarts connus » ; le BRIEF n'est pas modifié
+
+### T30. Validation métier par EJP Tech
+
+- **Date** : 5 octobre 2026
+- **Sujet** : EJP Tech ne doit pas faire que des actions techniques : quand c'est nécessaire, il valide aussi, sur le fond, ce que les ministères soumettent.
+- **Décision** : principe seulement, rien n'est construit. EJP Tech seul valide, dans l'outil, les indicateurs créés par les ministères, les événements et les chiffres inhabituels (liste à compléter par la conception). Tant qu'un élément n'est pas validé, le berger et le conseil le voient, marqué « à valider », et il n'entre dans aucun total. Ce principe change la règle 14 (« la validation se fait en dehors de l'outil ») et retire « validation dans l'outil » de la liste hors périmètre de la première version. La conception reste à faire : modèle de données, droits, écrans, définition d'un chiffre inhabituel, effet sur la complétude.
+- **Origine** : décision de la personne responsable
+- **Statut** : Décidé (principe), conception à faire
+- **BRIEF** : section 2 (profils), section 3 (règle 14), section 7 (matrice des droits), section 11 (hors périmètre : « validation dans l'outil ») ; le BRIEF n'est pas modifié

@@ -33,10 +33,25 @@ describe('navigation par profil', () => {
     ])
     expect(ONGLETS.admin_plateforme.map((o) => o.libelle)).toEqual([
       'Modération',
+      'Cette semaine',
       'Journal technique',
     ])
     expect(accueil('admin_plateforme')).toBe('/moderation')
     expect(accueil('ministere')).toBe('/')
+  })
+
+  it('EJP Tech lit les écrans de lecture du berger, sans ses écrans à lui (T29)', () => {
+    for (const chemin of ['/', '/ministeres', '/ministeres/m1', '/points']) {
+      expect(profilAutorise(chemin, 'admin_plateforme'), chemin).toBe(true)
+      expect(profilAutorise(chemin, 'berger'), chemin).toBe(true)
+    }
+    for (const chemin of ['/journal', '/ma-fiche', '/comptes', '/sessions']) {
+      expect(profilAutorise(chemin, 'admin_plateforme'), chemin).toBe(false)
+    }
+    expect(profilAutorise('/moderation', 'berger')).toBe(false)
+    expect(profilAutorise('/journal-technique', 'berger')).toBe(false)
+    const accueilEglise = trouverAdresse('/')
+    expect(accueilEglise && titrePour(accueilEglise, 'admin_plateforme')).toBe('Cette semaine')
   })
 
   it('chaque onglet mène à une adresse autorisée pour son profil', () => {
@@ -52,7 +67,7 @@ describe('navigation par profil', () => {
     expect(profilAutorise('/ma-fiche', 'conseil')).toBe(false)
     expect(profilAutorise('/ministeres/m1', 'ministere')).toBe(false)
     expect(profilAutorise('/moderation', 'admin_eglise')).toBe(false)
-    expect(profilAutorise('/', 'admin_plateforme')).toBe(false)
+    expect(profilAutorise('/ma-fiche', 'admin_plateforme')).toBe(false)
     expect(profilAutorise('/journal', 'admin_plateforme')).toBe(false)
     expect(profilAutorise('/points', 'admin_eglise')).toBe(false)
     expect(profilAutorise('/inconnu', 'berger')).toBe(false)

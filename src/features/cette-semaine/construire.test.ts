@@ -7,6 +7,7 @@ import type { DonneesBergerConseil, DonneesCetteSemaine, DonneesMinistere, Lecte
 
 const berger: Lecteur = { profil: 'berger' }
 const conseil: Lecteur = { profil: 'conseil' }
+const ejpTech: Lecteur = { profil: 'admin_plateforme' }
 const admin: Lecteur = { profil: 'admin_eglise' }
 const ministere: Lecteur = { profil: 'ministere', ministereId: MINISTERE_EXEMPLE }
 
@@ -17,7 +18,13 @@ function parId(donnees: DonneesCetteSemaine, id: string) {
 }
 
 function bergerConseil(donnees: DonneesCetteSemaine): DonneesBergerConseil {
-  if (donnees.profil !== 'berger' && donnees.profil !== 'conseil') throw new Error('profil')
+  if (
+    donnees.profil !== 'berger' &&
+    donnees.profil !== 'conseil' &&
+    donnees.profil !== 'admin_plateforme'
+  ) {
+    throw new Error('profil')
+  }
   return donnees
 }
 
@@ -171,10 +178,27 @@ describe("un profil, la même vue que l'exemple de l'aperçu", () => {
     }
   }
 
-  it.each([berger, conseil] as const)('%j : cinq colonnes, À décider, fiches', (lecteur) => {
-    const construit = construireCetteSemaine(lecturesExemple(), lecteur, null)
-    expect(sansLiens(construit)).toEqual(sansLiens(exempleCetteSemaine(lecteur.profil)))
-    expect(construit.ministeres.every((m) => m.href?.startsWith('/ministeres/'))).toBe(true)
+  it.each([berger, conseil, ejpTech] as const)(
+    '%j : cinq colonnes, À décider, fiches',
+    (lecteur) => {
+      const construit = construireCetteSemaine(lecturesExemple(), lecteur, null)
+      expect(sansLiens(construit)).toEqual(sansLiens(exempleCetteSemaine(lecteur.profil)))
+      expect(construit.ministeres.every((m) => m.href?.startsWith('/ministeres/'))).toBe(true)
+    },
+  )
+
+  it('EJP Tech : le contenu du berger, seuls le profil et la lecture seule changent (T29)', () => {
+    const duBerger = bergerConseil(construireCetteSemaine(lecturesExemple(), berger, null))
+    const dEjpTech = bergerConseil(construireCetteSemaine(lecturesExemple(), ejpTech, null))
+    expect(duBerger.lectureSeule).toBe(false)
+    expect(dEjpTech.lectureSeule).toBe(true)
+    expect(dEjpTech.profil).toBe('admin_plateforme')
+    expect({ ...dEjpTech, profil: 'berger', lectureSeule: false }).toEqual(duBerger)
+    expect(dEjpTech.aDecider.points).toHaveLength(3)
+    expect(dEjpTech.ministeres.every((m) => m.conseil !== null)).toBe(true)
+    expect(
+      bergerConseil(construireCetteSemaine(lecturesExemple(), conseil, null)).lectureSeule,
+    ).toBe(false)
   })
 
   it('administration : sans C ni surligneur, sans lien ni colonnes du conseil, sans À décider', () => {

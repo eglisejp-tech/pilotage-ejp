@@ -1,13 +1,13 @@
--- Vues de lecture des chiffres (BRIEF, sections 3, 6 et 7). Un ministère, le conseil et
--- l'administration obtiennent les mêmes totaux, la même complétude et la même fraîcheur que le
--- berger ; EJP Tech, un compte en aal1 et un compte désactivé n'obtiennent aucune ligne ;
--- l'anonyme n'a aucun droit. Pourcentage FIJ calculé à partir des sommes (règle 4), jamais une
+-- Vues de lecture des chiffres (BRIEF, sections 3, 6 et 7). Un ministère, le conseil,
+-- l'administration et EJP Tech (lecture seule, docs/decisions.md, T29) obtiennent les mêmes
+-- totaux, la même complétude et la même fraîcheur que le berger ; un compte en aal1 et un compte
+-- désactivé n'obtiennent aucune ligne ; l'anonyme n'a aucun droit. Pourcentage FIJ calculé à partir des sommes (règle 4), jamais une
 -- moyenne de pourcentages ; complétude des dimanches et des valeurs « à ce jour » (règle 13) ;
 -- un ministère désactivé sort des totaux du moment mais garde ses chiffres dans les courbes
 -- des dimanches où il était actif.
 begin;
 
-select plan(134);
+select plan(137);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -154,9 +154,12 @@ select is(tests.compter((select admin from ctx), 'aal2',
 select is(tests.compter((select berger from ctx), 'aal2',
     'select * from public.v_derniere_mesure where code is null'), 2,
   'v_derniere_mesure : le berger lit les indicateurs propres de Communication et de Jeunesse');
+select is(tests.lire((select ejptech from ctx), 'aal2', 'select * from public.v_derniere_mesure where code is null'),
+  tests.lire((select berger from ctx), 'aal2', 'select * from public.v_derniere_mesure where code is null'),
+  'v_derniere_mesure : EJP Tech lit les indicateurs propres comme le berger (T29)');
 
--- Tableau des ministères : ministères actifs ; réunion et point ouvert pour le berger et le
--- conseil seulement
+-- Tableau des ministères : ministères actifs ; réunion et point ouvert pour le berger, le
+-- conseil et EJP Tech seulement
 select is(tests.compter((select berger from ctx), 'aal2', 'select * from public.v_tableau_ministeres'), 13,
   'le tableau des ministères liste les 13 ministères actifs, pas le ministère désactivé');
 select is(tests.compter((select com from ctx), 'aal2',
@@ -168,9 +171,14 @@ select is(tests.compter((select admin from ctx), 'aal2',
 select ok(tests.compter((select berger from ctx), 'aal2',
     'select * from public.v_tableau_ministeres where prochaine_reunion_date is not null or prochaine_reunion_heure is not null or point_ouvert_priorite is not null') > 0,
   'le berger les reçoit');
+select is(tests.lire((select ejptech from ctx), 'aal2', 'select * from public.v_tableau_ministeres'),
+  tests.lire((select berger from ctx), 'aal2', 'select * from public.v_tableau_ministeres'),
+  'EJP Tech reçoit le tableau du berger, prochaine réunion et point ouvert compris (T29)');
+select is(tests.compter((select ejptech from ctx), 'aal1', 'select * from public.v_tableau_ministeres'), 0,
+  'EJP Tech en aal1 ne reçoit aucune ligne du tableau');
 
--- Chaque vue, pour chaque profil : les mêmes lignes que le berger (indicateurs communs), rien
--- pour EJP Tech, en aal1 ni pour un compte désactivé ; l'anonyme n'a aucun droit.
+-- Chaque vue, pour chaque profil : les mêmes lignes que le berger (indicateurs communs), EJP
+-- Tech compris ; rien en aal1 ni pour un compte désactivé ; l'anonyme n'a aucun droit.
 create temp table vue (ordre integer primary key, nom text not null, requete text not null);
 insert into vue (ordre, nom, requete) values
   (1, 'v_derniere_mesure', 'select * from public.v_derniere_mesure where code is not null'),
@@ -228,8 +236,8 @@ begin
       format('%s : le conseil lit la même chose que le berger', v.nom));
     return next is(tests.lire(c.admin, 'aal2', v.requete), v_berger,
       format('%s : l''administration lit la même chose que le berger', v.nom));
-    return next is(tests.compter(c.ejptech, 'aal2', v.requete), 0,
-      format('%s : EJP Tech ne lit aucune ligne', v.nom));
+    return next is(tests.lire(c.ejptech, 'aal2', v.requete), v_berger,
+      format('%s : EJP Tech lit la même chose que le berger', v.nom));
     return next is(tests.compter(c.com, 'aal1', v.requete), 0,
       format('%s : aucune ligne pour un ministère en aal1', v.nom));
     return next is(tests.compter(c.berger, 'aal1', v.requete), 0,

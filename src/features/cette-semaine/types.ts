@@ -11,12 +11,16 @@
 
 import type { TypeSession } from '@/lib/metier/phrases'
 
-/** Profils qui voient la vue de l'église. EJP Tech n'en a pas : il arrive sur /moderation. */
-export type ProfilVue = 'berger' | 'conseil' | 'ministere' | 'admin_eglise'
+/**
+ * Profils qui voient la vue de l'église. EJP Tech (`admin_plateforme`) la lit comme le berger,
+ * en lecture seule (docs/decisions.md, T29) ; son accueil reste /moderation.
+ */
+export type ProfilVue = 'berger' | 'conseil' | 'ministere' | 'admin_eglise' | 'admin_plateforme'
 
 /** Qui lit la vue. Un compte de ministère vient avec son ministère (son nom ouvre « Ma fiche »). */
 export type Lecteur =
-  { profil: 'berger' | 'conseil' | 'admin_eglise' } | { profil: 'ministere'; ministereId: string }
+  | { profil: 'berger' | 'conseil' | 'admin_eglise' | 'admin_plateforme' }
+  | { profil: 'ministere'; ministereId: string }
 
 export type Priorite = 'urgente' | 'haute' | 'normale'
 
@@ -135,7 +139,7 @@ export interface PointADecider {
   mentions: string[]
 }
 
-/** Bloc « À décider » (berger et conseil). */
+/** Bloc « À décider » (berger et conseil ; EJP Tech en lecture seule). */
 export interface DonneesADecider {
   /**
    * Les trois premiers points ouverts dans l'ordre de « À décider » (selectionADecider).
@@ -225,7 +229,7 @@ export type ProchainEvenement =
   /** « 14 nov. » et le nom de l'événement : « 14 nov., Collecte d'hiver ». */
   | { etat: 'prevu'; date: string; nom: TexteLibre }
 
-/** Colonnes « Prochaine réunion » et « Point ouvert », berger et conseil seulement. */
+/** Colonnes « Prochaine réunion » et « Point ouvert », berger, conseil et EJP Tech seulement. */
 export interface ColonnesConseil {
   /** « 6 oct. » ; null : TEXTES_VIDES.ministeres.reunionNonRenseignee. */
   prochaineReunion: string | null
@@ -237,7 +241,7 @@ export interface ColonnesConseil {
 export interface LigneMinistere {
   id: string
   nom: string
-  /** Fiche du ministère (berger, conseil), « Ma fiche » (le ministère lui-même), sinon null. */
+  /** Fiche du ministère (berger, conseil, EJP Tech), « Ma fiche » (le ministère lui-même), sinon null. */
   href: string | null
   fraicheur: Fraicheur
   prochainEvenement: ProchainEvenement
@@ -245,7 +249,7 @@ export interface LigneMinistere {
   conseil: ColonnesConseil | null
 }
 
-/** Blocs de l'église, communs aux quatre profils. */
+/** Blocs de l'église, communs aux cinq profils. */
 interface DonneesEglise {
   semaine: Semaine
   /**
@@ -266,9 +270,17 @@ interface DonneesEglise {
   ministeres: LigneMinistere[]
 }
 
-/** Berger et conseil : surligneur, « À décider », chaque nom ouvre la fiche, cinq colonnes. */
+/**
+ * Berger et conseil : surligneur, « À décider », chaque nom ouvre la fiche, cinq colonnes.
+ * EJP Tech voit le même contenu, en lecture seule (T29).
+ */
 export interface DonneesBergerConseil extends DonneesEglise {
-  profil: 'berger' | 'conseil'
+  profil: 'berger' | 'conseil' | 'admin_plateforme'
+  /**
+   * Vrai pour EJP Tech : aucune action, ni « Marquer traité » ni changement de statut. À
+   * l'étape 5, le bouton « Marquer traité » de « À décider » ne s'affiche que si ce champ est faux.
+   */
+  lectureSeule: boolean
   aDecider: DonneesADecider
   ministeres: (LigneMinistere & { href: string; conseil: ColonnesConseil })[]
 }

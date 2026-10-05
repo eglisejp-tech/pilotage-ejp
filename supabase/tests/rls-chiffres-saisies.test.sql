@@ -4,10 +4,10 @@
 -- session et contrainte des déjà comptés ; tables en ajout seul, même pour l'auteur de la ligne.
 -- Double comptage (D2, règle 5) : total d'une session = somme, sur la saisie la plus récente
 -- de chaque ministère, des présents moins les déjà comptés ; complétude et manquants
--- identiques pour chaque profil ; rien pour EJP Tech ni en aal1.
+-- identiques pour chaque profil, EJP Tech compris (lecture seule, T29) ; rien en aal1.
 begin;
 
-select plan(51);
+select plan(53);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -154,6 +154,9 @@ select is(tests.compter((select berger from ctx), 'aal2',
 select is(tests.compter((select conseil from ctx), 'aal2',
     'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 6,
   'le conseil lit les chiffres de tous les indicateurs propres');
+select is(tests.compter((select ejptech from ctx), 'aal2',
+    'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 6,
+  'EJP Tech lit les chiffres de tous les indicateurs propres, comme le berger (T29)');
 select is(tests.compter((select admin from ctx), 'aal2',
     'select * from public.indicateur i where i.ministere_id is not null'), 2,
   'l''administration lit la liste des indicateurs propres (écran 13), sans leurs chiffres');
@@ -262,7 +265,7 @@ select is(tests.lire((select berger from ctx), 'aal2',
   '[{"total": 13, "total_saisi": 21}]'::jsonb,
   'total de la session : 13 (7 + 6 + 0) pour 21 présents saisis');
 
--- Mêmes totaux et même complétude pour chaque profil ; rien pour EJP Tech ni en aal1
+-- Mêmes totaux et même complétude pour chaque profil, EJP Tech compris ; rien en aal1
 select is(tests.lire((select a from ctx), 'aal2',
     'select * from public.v_session_completude where session_id in (select s1 from ctx union all select s2 from ctx)'),
   tests.lire((select berger from ctx), 'aal2',
@@ -278,10 +281,20 @@ select is(tests.lire((select admin from ctx), 'aal2',
   tests.lire((select berger from ctx), 'aal2',
     'select * from public.v_session_completude where session_id in (select s1 from ctx union all select s2 from ctx)'),
   'l''administration obtient les mêmes totaux que le berger');
-select is(tests.compter((select ejptech from ctx), 'aal2', 'select * from public.v_session_completude'), 0,
-  'EJP Tech ne lit aucune session');
-select is(tests.compter((select ejptech from ctx), 'aal2', 'select * from public.v_participation_courante'), 0,
-  'EJP Tech ne lit aucune présence');
+select is(tests.lire((select ejptech from ctx), 'aal2',
+    'select * from public.v_session_completude where session_id in (select s1 from ctx union all select s2 from ctx)'),
+  tests.lire((select berger from ctx), 'aal2',
+    'select * from public.v_session_completude where session_id in (select s1 from ctx union all select s2 from ctx)'),
+  'EJP Tech obtient les mêmes totaux que le berger (lecture seule, T29)');
+select is(tests.lire((select ejptech from ctx), 'aal2', 'select * from public.v_participation_courante'),
+  tests.lire((select berger from ctx), 'aal2', 'select * from public.v_participation_courante'),
+  'EJP Tech lit les mêmes présences que le berger');
+select tests.se_connecter((select ejptech from ctx), 'aal2');
+select throws_ok($$
+  insert into public.participation (session_id, ministere_id, valeur, deja_comptes)
+  select ctx.s1, ctx.a_m, 3, 0 from ctx
+$$, '42501', null, 'EJP Tech ne saisit aucune présence');
+select tests.deconnecter();
 select is(tests.compter((select a from ctx), 'aal1',
     'select * from public.v_session_completude where session_id in (select s1 from ctx union all select s2 from ctx)'), 0,
   'en aal1, un ministère ne lit aucune session');

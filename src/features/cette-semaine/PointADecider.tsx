@@ -10,7 +10,8 @@ interface Props {
 /**
  * Un point de « À décider » : priorité, ministère et échéance, titre, description (cachée sur
  * téléphone, comme la maquette 03), action attendue et mentions. « Marquer traité » arrive avec
- * sa fenêtre à l'étape 5 : pas de bouton sans effet d'ici là (docs/decisions.md, T19).
+ * sa fenêtre à l'étape 5 : pas de bouton sans effet d'ici là (docs/decisions.md, T19). Il ne
+ * s'affichera jamais quand la vue est en lecture seule (EJP Tech, `lectureSeule`, T29).
  */
 export function PointADecider({ point }: Props) {
   const idTitre = useId()

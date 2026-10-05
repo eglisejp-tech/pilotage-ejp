@@ -9,7 +9,7 @@
 -- delete ou droit absent, erreur 42501 ; en aal1, zéro ligne et aucune écriture.
 begin;
 
-select plan(496);
+select plan(497);
 
 -- Jeu d'essai : trois ministères et un compte par profil (tests.creer_compte désactive le
 -- berger du jeu d'exemple dans cette transaction).
@@ -89,7 +89,9 @@ cross join lateral (values
 -- evenement_ajoute des deux événements, reunion_saisie de A (ministère A) ; texte_relu de
 -- l'événement de B (ministère B). L'administration de l'église ne lit aucune ligne de journal
 -- sur les points, les événements et les réunions (private.journal_lisible_administration) :
--- elle lit seulement la ligne technique texte_relu, comme EJP Tech.
+-- elle lit seulement la ligne technique texte_relu. EJP Tech lit tout ce que lit le berger, en
+-- lecture seule (docs/decisions.md, T29) : ses ajouts restent refusés ; seul EJP Tech lit la
+-- modération.
 -- Pour tous les profils : update et delete refusés (42501). En aal1 : zéro ligne, écritures
 -- refusées (42501). Anonyme : 42501 partout, il n'a aucun droit.
 create temp table matrice as
@@ -97,39 +99,39 @@ select x.ordre, x.nom_table, x.lecture, x.ajout, x.filtre, x.colonne, x.requete_
 from ctx
 cross join lateral (values
   (1, 'point_attention',
-      '{2, 1, 0, 2, 2, 0, 0}'::int[],
+      '{2, 1, 0, 2, 2, 0, 2}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('id in (%L, %L)', ctx.p1, ctx.p2), 'titre',
       format('insert into public.point_attention (ministere_id, titre) values (%L, %L)', ctx.a_m, 'Ajout direct')),
   (2, 'point_mention',
-      '{1, 1, 0, 1, 1, 0, 0}'::int[],
+      '{1, 1, 0, 1, 1, 0, 1}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('point_id in (%L, %L)', ctx.p1, ctx.p2), 'ministere_id',
       format('insert into public.point_mention (point_id, ministere_id) values (%L, %L)', ctx.p2, ctx.c_m)),
   (3, 'point_suivi',
-      '{2, 1, 0, 2, 2, 0, 0}'::int[],
+      '{2, 1, 0, 2, 2, 0, 2}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('point_id in (%L, %L)', ctx.p1, ctx.p2), 'statut',
       format('insert into public.point_suivi (point_id, statut) values (%L, %L)', ctx.p2, 'en_cours')),
   (4, 'evenement',
-      '{1, 1, 0, 2, 2, 0, 0}'::int[],
+      '{1, 1, 0, 2, 2, 0, 2}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('id in (%L, %L)', ctx.ev_a, ctx.ev_b), 'titre',
       format('insert into public.evenement (ministere_id, titre) values (%L, %L)', ctx.a_m, 'Ajout direct')),
   (5, 'evenement_etat',
-      '{1, 1, 0, 2, 2, 0, 0}'::int[],
+      '{1, 1, 0, 2, 2, 0, 2}'::int[],
       '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('evenement_id in (%L, %L)', ctx.ev_a, ctx.ev_b), 'statut',
       format('insert into public.evenement_etat (evenement_id, date, statut) values (%L, %L, %L)',
              ctx.ev_a, private.aujourdhui() + 12, 'valide')),
   (6, 'reunion',
-      '{1, 0, 0, 1, 1, 0, 0}'::int[],
+      '{1, 0, 0, 1, 1, 0, 1}'::int[],
       '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('id = %L', ctx.reunion_a), 'objet',
       format('insert into public.reunion (ministere_id, date, heure) values (%L, %L, %L)',
              ctx.a_m, private.aujourdhui() + 2, '19:00')),
   (7, 'journal',
-      '{4, 2, 0, 6, 6, 1, 1}'::int[],
+      '{4, 2, 0, 6, 6, 1, 6}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('cible_id in (%L, %L, %L, %L, %L)', ctx.p1, ctx.p2, ctx.ev_a, ctx.ev_b, ctx.reunion_a), 'detail',
       format('insert into public.journal (compte, ministere_id, action, cible, cible_id) values (%L, %L, %L, %L, %L)',
@@ -247,6 +249,11 @@ select is(tests.lire((select berger from ctx), 'aal2',
 select is(tests.compter((select b from ctx), 'aal2',
   'select 1 from public.v_journal j where j.cible_id = (select p1 from ctx)'), 0,
   'la mention ne donne pas accès au journal du ministère créateur');
+select is(tests.lire((select tech from ctx), 'aal2',
+  'select v.* from public.v_point v where v.id in (select p1 from ctx union all select p2 from ctx)'),
+  tests.lire((select berger from ctx), 'aal2',
+  'select v.* from public.v_point v where v.id in (select p1 from ctx union all select p2 from ctx)'),
+  'EJP Tech lit les points et leur statut comme le berger, en lecture seule (T29)');
 
 select * from finish();
 rollback;

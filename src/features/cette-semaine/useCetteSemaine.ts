@@ -20,6 +20,7 @@ import {
   sessionsAffichables,
   type LecturesCetteSemaine,
 } from './construire'
+import { voitADecider } from './lecteur'
 import type { DonneesCetteSemaine, Lecteur } from './types'
 
 /** Sans réponse au bout de ce délai, l'écran affiche son erreur (LISEZMOI, « États »). */
@@ -56,7 +57,7 @@ export type ResultatCetteSemaine = {
 
 /**
  * Lit la vue « Cette semaine » (une requête par clé de LecturesCetteSemaine) et la construit avec
- * construireCetteSemaine. Les points ne sont lus que pour le berger et le conseil ; les
+ * construireCetteSemaine. Les points ne sont lus que pour le berger, le conseil et EJP Tech ; les
  * participations, pour la dernière session de chaque type (`?session=` choisit parmi elles sans
  * relire). Les écarts du dimanche attendent la semaine (leur clé porte le dimanche de référence :
  * un nouveau dimanche relit tout seul, et la page attend ces écarts plutôt que de mêler deux
@@ -67,7 +68,7 @@ export function useCetteSemaine(
   typeSession: TypeSession | null,
 ): ResultatCetteSemaine {
   const queryClient = useQueryClient()
-  const lirePoints = lecteur.profil === 'berger' || lecteur.profil === 'conseil'
+  const lirePoints = voitADecider(lecteur.profil)
 
   const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
   const dimanche = semaine.data?.dimanche

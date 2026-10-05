@@ -16,7 +16,7 @@ interface Props {
   lienTousLesPoints: string
 }
 
-/** Bloc « À décider » du berger et du conseil. */
+/** Bloc « À décider » du berger et du conseil (et d'EJP Tech, en lecture seule). */
 export function ADecider({ points, lienTousLesPoints }: Props) {
   const idTitre = useId()
   const affiches = points.slice(0, POINTS_A_DECIDER_AFFICHES)

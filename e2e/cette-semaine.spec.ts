@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test'
 // Vue « Cette semaine » (maquettes 01, 02, 03) sur l'aperçu de développement, avec les données
 // d'exemple (aucune base). Trois formats par les projets Playwright : 1440, 834 et 390 px.
 
-const profils = ['berger', 'ministere', 'admin_eglise'] as const
+const profils = ['berger', 'ministere', 'admin_eglise', 'admin_plateforme'] as const
 type Profil = (typeof profils)[number]
 type Etat = 'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'chargement' | 'erreur'
 
@@ -227,6 +227,19 @@ test.describe('Cette semaine, aperçu', () => {
     await expect(
       page.locator('[aria-busy="true"]').getByText('Chargement', { exact: true }),
     ).toBeVisible()
+  })
+
+  test('EJP Tech : le contenu du berger, en lecture seule, sans aucun bouton (T29)', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'admin_plateforme')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(phraseBerger)
+    await expect(page.locator('h1 mark')).toHaveText('un point attend votre décision')
+    const aDecider = page.getByRole('region', { name: 'À décider' })
+    await expect(aDecider.getByRole('heading', { level: 3 })).toHaveCount(3)
+    // Garde de l'étape 5 : ni « Marquer traité » ni aucun autre bouton pour EJP Tech.
+    await expect(page.getByRole('main').getByRole('button')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Marquer traité/ })).toHaveCount(0)
   })
 
   test('erreur de page : bandeau et « Réessayer »', async ({ page }) => {

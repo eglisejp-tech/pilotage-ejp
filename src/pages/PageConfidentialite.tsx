@@ -64,7 +64,8 @@ export function PageConfidentialite() {
           <p>
             Les comptes de l'église, chacun selon son profil : un ministère voit sa fiche, la vue de
             l'église et les points qui le concernent ; le berger et le conseil voient l'ensemble ;
-            EJP Tech relit les champs libres et le journal technique, sans voir les chiffres.
+            EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs
+            libres.
           </p>
         </PartieTexte>
         <PartieTexte titre="Sous-traitants">
