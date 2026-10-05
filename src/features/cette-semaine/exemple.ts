@@ -4,6 +4,7 @@
 // Sert à l'aperçu de développement (/apercu/cette-semaine) et aux tests. `exemplePremierDimanche`
 // montre les états vides du même jour, avant toute saisie (LISEZMOI, « Premier dimanche »).
 
+import { enLectureSeule } from '@/lib/metier/droits'
 import { comparerNoms } from '@/lib/metier/texte'
 import { TEXTES_VIDES } from './textesVides'
 import type {
@@ -382,7 +383,7 @@ function pourProfil(profil: ProfilVue, contenu: Contenu): DonneesCetteSemaine {
     return {
       ...commun,
       profil,
-      lectureSeule: profil === 'admin_plateforme',
+      lectureSeule: enLectureSeule(profil),
       phrase: contenu.phraseSemaine,
       aDecider: {
         points: contenu.aDecider.slice(0, 3),

@@ -277,8 +277,9 @@ interface DonneesEglise {
 export interface DonneesBergerConseil extends DonneesEglise {
   profil: 'berger' | 'conseil' | 'admin_plateforme'
   /**
-   * Vrai pour EJP Tech : aucune action, ni « Marquer traité » ni changement de statut. À
-   * l'étape 5, le bouton « Marquer traité » de « À décider » ne s'affiche que si ce champ est faux.
+   * Vrai pour EJP Tech (`enLectureSeule`, src/lib/metier/droits.ts) : aucune action, ni « Marquer
+   * traité » ni changement de statut. À l'étape 5, le bouton « Marquer traité » de « À décider »
+   * ne s'affiche que si ce champ est faux, c'est-à-dire pour un décideur (`estDecideur`).
    */
   lectureSeule: boolean
   aDecider: DonneesADecider

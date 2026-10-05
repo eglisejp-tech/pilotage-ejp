@@ -102,6 +102,10 @@ afterEach(() => {
 
 const navigation = () => screen.getAllByRole('navigation', { name: 'Navigation principale' })
 
+/** Boutons et liens d'action qu'EJP Tech ne doit jamais voir (T29, lecture seule). */
+const BOUTONS_D_ACTION =
+  /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Déclarer|Modifier|Mettre à jour/
+
 describe('routes', () => {
   it("sans session : l'accueil renvoie vers la connexion, sans aucune requête de données", async () => {
     const faux = installer({})
@@ -234,9 +238,28 @@ describe('routes', () => {
     expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)
     // Étape 5 : « Marquer traité » ne doit jamais apparaître pour EJP Tech.
     expect(within(aDecider).queryByRole('button')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Saisir|Enregistrer|Ajouter|Déclarer/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+    expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
   })
+
+  // Garde des étapes 4 et 5 : ces écrans s'ouvrent à EJP Tech pour la lecture (LECTEURS), mais
+  // leurs boutons d'action suivent estDecideur ou le lien du ministère au point, jamais ce droit.
+  it.each([
+    ['/ministeres', 'Ministères'],
+    ['/ministeres/m-communication', 'Fiche du ministère'],
+    ['/points?vue=ouverts', "Points d'attention"],
+  ])(
+    'EJP Tech sur %s : écran de lecture du berger, sans « Marquer traité », « Changer le statut » ni saisie (T29)',
+    async (adresse, titre) => {
+      connecte('admin_plateforme')
+      const routeur = afficher(adresse)
+      expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
+      expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+      expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
+      expect(within(screen.getByRole('main')).queryByRole('button')).toBeNull()
+    },
+  )
 
   it("adresse d'un autre profil : message neutre, et aucune requête au-delà du compte", async () => {
     const faux = connecte('ministere')

@@ -51,9 +51,11 @@ describe('VueCetteSemaine', () => {
     expect(exempleCetteSemaine('berger').lectureSeule).toBe(false)
     afficher('admin_plateforme', donnees)
     const aDecider = screen.getByRole('region', { name: 'À décider' })
-    // Garde de l'étape 5 : le bouton « Marquer traité » ne s'affiche jamais pour EJP Tech.
+    // Garde de l'étape 5 : ni « Marquer traité » ni « Changer le statut » pour EJP Tech.
     expect(within(aDecider).queryByRole('button')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: /Marquer traité|Changer le statut/ }),
+    ).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Tous les points' })).toBeInTheDocument()
   })
 

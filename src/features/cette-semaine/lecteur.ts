@@ -1,4 +1,5 @@
 import type { Compte } from '@/data/compte'
+import { litTout } from '@/lib/metier/droits'
 import type { TypeSession } from '@/lib/metier/phrases'
 import type { Lecteur, ProfilVue } from './types'
 
@@ -23,7 +24,7 @@ export function lecteurDuCompte(compte: Pick<Compte, 'type' | 'ministereId'>): L
  * en lecture seule (T29). Ni le ministère (jusqu'à l'étape 4) ni l'administration de l'église.
  */
 export function voitADecider(profil: ProfilVue): boolean {
-  return profil === 'berger' || profil === 'conseil' || profil === 'admin_plateforme'
+  return litTout(profil)
 }
 
 const TYPES_SESSION: readonly TypeSession[] = ['batir', 'anti_dispersion', 'autre']

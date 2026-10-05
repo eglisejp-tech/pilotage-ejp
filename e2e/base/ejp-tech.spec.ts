@@ -22,6 +22,10 @@ const phraseSemaine =
 
 const navigation = (page: Page) => page.getByRole('navigation', { name: 'Navigation principale' })
 
+/** Boutons et liens d'action qu'EJP Tech ne voit jamais (T29, lecture seule). */
+const ACTIONS =
+  /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Déclarer|Modifier|Mettre à jour/
+
 /** Depuis la modération, l'onglet « Cette semaine » (dans le menu sous 1024 px). */
 async function ouvrirCetteSemaine(page: Page) {
   await expect(page).toHaveTitle('Modération, Pilotage EJP')
@@ -103,4 +107,30 @@ test.describe('EJP Tech : « Cette semaine » à chaque format', () => {
       'page',
     )
   })
+
+  // Garde des étapes 4 et 5 : les écrans de lecture du berger s'ouvrent à EJP Tech, sans aucune
+  // action (ni « Marquer traité », ni « Changer le statut », ni saisie).
+  test('les écrans de lecture du berger (ministères, fiche, points) restent sans action', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await verifierLectureSeule(page)
+    await page.getByRole('region', { name: 'Les ministères' }).getByRole('link').first().click()
+    await expect(page).toHaveURL((url) => url.pathname.startsWith('/ministeres/'))
+    await verifierSansAction(page, 'Fiche du ministère, Pilotage EJP')
+
+    await page.goto('/ministeres')
+    await verifierSansAction(page, 'Ministères, Pilotage EJP')
+    await page.goto('/points?vue=ouverts')
+    await verifierSansAction(page, "Points d'attention, Pilotage EJP")
+  })
 })
+
+/** Un écran de lecture pour EJP Tech : son titre, aucun bouton ni lien d'action. */
+async function verifierSansAction(page: Page, titre: string) {
+  await expect(page).toHaveTitle(titre)
+  await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
+  const contenu = page.getByRole('main')
+  await expect(contenu.getByRole('button', { name: ACTIONS })).toHaveCount(0)
+  await expect(contenu.getByRole('link', { name: ACTIONS })).toHaveCount(0)
+}

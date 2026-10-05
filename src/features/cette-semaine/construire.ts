@@ -15,6 +15,7 @@ import {
   jourDeParis,
   type DateIso,
 } from '@/lib/metier/dates'
+import { enLectureSeule } from '@/lib/metier/droits'
 import { ecartEglise, type Comparaison } from '@/lib/metier/ecarts'
 import { fraicheur, trierParFraicheur, type EtatFraicheur } from '@/lib/metier/fraicheur'
 import {
@@ -752,7 +753,7 @@ export function construireCetteSemaine(
       return {
         ...commun,
         profil: lecteur.profil,
-        lectureSeule: lecteur.profil === 'admin_plateforme',
+        lectureSeule: enLectureSeule(lecteur.profil),
         phrase: morceaux(phrase.principale),
         ligneSecondaire: phrase.secondaire,
         aDecider: aDecider(contexte),

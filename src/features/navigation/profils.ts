@@ -1,5 +1,6 @@
 import { matchPath } from 'react-router'
 import type { TypeCompte } from '@/lib/base'
+import { DECIDEURS, LECTEURS } from '@/lib/metier/droits'
 
 // Navigation par profil (BRIEF sections 2 et 9, maquette 00) et table des adresses de
 // l'application. Un profil ne voit jamais les onglets d'un autre ; chaque adresse déclare ses
@@ -56,16 +57,12 @@ export type AdresseApplication = {
   etape: number
 }
 
-/** Berger et conseil : ils lisent tout et marquent un point traité. */
-const DECIDEURS: readonly TypeCompte[] = ['berger', 'conseil']
-
 /**
- * Profils qui lisent tout : le berger, le conseil, et EJP Tech en lecture seule (T29). EJP Tech
- * a les écrans de lecture du berger, sans aucune action (ni « Marquer traité », ni statut).
+ * Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5.
+ * Les adresses de lecture du berger s'ouvrent à LECTEURS (berger, conseil, et EJP Tech en
+ * lecture seule, T29) ; leurs boutons d'action se montrent par estDecideur
+ * (src/lib/metier/droits.ts), jamais par ce droit d'adresse.
  */
-const LECTEURS: readonly TypeCompte[] = [...DECIDEURS, 'admin_plateforme']
-
-/** Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5. */
 export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   {
     chemin: '/',
