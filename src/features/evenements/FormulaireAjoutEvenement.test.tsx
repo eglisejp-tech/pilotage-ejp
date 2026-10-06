@@ -102,7 +102,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
   })
 
   it('envoi : valeurs nettoyées, message de réussite, formulaire vidé', async () => {
-    const envoyer = vi.fn((_: AjoutEvenement) => Promise.resolve())
+    const envoyer = vi.fn<(evenement: AjoutEvenement) => Promise<void>>(() => Promise.resolve())
     afficher(envoyer)
     await remplir('2026-10-10')
     await userEvent.click(bouton())
