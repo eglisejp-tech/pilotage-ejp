@@ -21,10 +21,10 @@ export interface MoisPropose {
   enCours: boolean
 }
 
-/** Options communes : un indicateur sensible ne se saisit jamais pour le mois en cours (P42). */
-export interface OptionsMois {
-  sensible?: boolean
-}
+// Décision de la personne responsable du 6 octobre 2026 : un indicateur sensible se saisit aussi
+// pour le mois en cours. Les mois saisissables sont donc les mêmes pour tout indicateur ; il n'y a
+// plus d'option « sensible ». Les protections des sensibles (« moins de 3 », lecteurs) sont celles
+// de la base (lot B2), pas celles de la période.
 
 const FORMAT_MOIS = /^(\d{4})-(0[1-9]|1[0-2])$/
 
@@ -86,31 +86,26 @@ export function premierMoisPermis(aujourdhui: DateIso): Mois {
   return ecrireMois(lireMois(moisDe(aujourdhui)).annee - 1, 1)
 }
 
-/** Dernier mois qu'on peut saisir : le mois en cours, ou le dernier mois fini pour un sensible. */
-export function dernierMoisPermis(aujourdhui: DateIso, options: OptionsMois = {}): Mois {
-  const courant = moisDe(aujourdhui)
-  return options.sensible ? ajouterMois(courant, -1) : courant
+/** Dernier mois qu'on peut saisir : le mois en cours, pour tout indicateur, sensible compris. */
+export function dernierMoisPermis(aujourdhui: DateIso): Mois {
+  return moisDe(aujourdhui)
 }
 
 function moisPropose(mois: Mois, aujourdhui: DateIso): MoisPropose {
   return { mois, libelle: libelleMois(mois), enCours: mois === moisDe(aujourdhui) }
 }
 
-/**
- * Mois proposés d'abord (K1a, K5b) : le mois en cours et les deux précédents, du plus récent au
- * plus ancien ; pour un sensible, les deux derniers mois finis seulement.
- */
-export function moisProposes(aujourdhui: DateIso, options: OptionsMois = {}): MoisPropose[] {
-  const dernier = dernierMoisPermis(aujourdhui, options)
-  const nombreProposes = options.sensible ? 2 : 3
-  return Array.from({ length: nombreProposes }, (_, rang) =>
+/** Mois proposés d'abord (K1a) : le mois en cours et les deux précédents, du plus récent au plus ancien. */
+export function moisProposes(aujourdhui: DateIso): MoisPropose[] {
+  const dernier = dernierMoisPermis(aujourdhui)
+  return Array.from({ length: 3 }, (_, rang) =>
     moisPropose(ajouterMois(dernier, -rang), aujourdhui),
   )
 }
 
 /** Tous les mois qu'on peut saisir pour un rattrapage (« Choisir un autre mois »), du plus récent. */
-export function moisDeRattrapage(aujourdhui: DateIso, options: OptionsMois = {}): MoisPropose[] {
-  const dernier = dernierMoisPermis(aujourdhui, options)
+export function moisDeRattrapage(aujourdhui: DateIso): MoisPropose[] {
+  const dernier = dernierMoisPermis(aujourdhui)
   const premier = premierMoisPermis(aujourdhui)
   const liste: MoisPropose[] = []
   for (let mois = dernier; mois >= premier; mois = ajouterMois(mois, -1)) {
@@ -120,24 +115,18 @@ export function moisDeRattrapage(aujourdhui: DateIso, options: OptionsMois = {})
 }
 
 /** Ce mois se saisit-il aujourd'hui (ni futur, ni avant le 1er janvier de l'an dernier) ? */
-export function moisEstPermis(mois: Mois, aujourdhui: DateIso, options: OptionsMois = {}): boolean {
+export function moisEstPermis(mois: Mois, aujourdhui: DateIso): boolean {
   return (
-    estMois(mois) &&
-    mois >= premierMoisPermis(aujourdhui) &&
-    mois <= dernierMoisPermis(aujourdhui, options)
+    estMois(mois) && mois >= premierMoisPermis(aujourdhui) && mois <= dernierMoisPermis(aujourdhui)
   )
 }
 
 /**
  * Mois choisi d'abord : le dernier mois fini qui n'a pas encore de saisie parmi les mois proposés,
- * sinon le mois en cours, ou le dernier mois fini pour un sensible.
+ * sinon le mois en cours.
  */
-export function moisParDefaut(
-  aujourdhui: DateIso,
-  dejaSaisis: ReadonlySet<Mois>,
-  options: OptionsMois = {},
-): Mois {
-  const proposes = moisProposes(aujourdhui, options)
+export function moisParDefaut(aujourdhui: DateIso, dejaSaisis: ReadonlySet<Mois>): Mois {
+  const proposes = moisProposes(aujourdhui)
   const manquant = proposes.find(({ mois, enCours }) => !enCours && !dejaSaisis.has(mois))
   return manquant?.mois ?? proposes[0]?.mois ?? moisDe(aujourdhui)
 }

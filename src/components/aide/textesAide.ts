@@ -20,8 +20,7 @@ export const TEXTES_AIDE = {
   // Chiffres du mois (lot E3)
   'mois.periode':
     "Saisissez le total du mois entier. Un mois oublié se rattrape jusqu'en janvier de l'an dernier.",
-  'mois.sensible':
-    'Seul un mois fini se saisit. Le berger et le conseil voient « moins de 3 » à la place de 1 ou 2.',
+  'mois.sensible': 'Le berger et le conseil voient « moins de 3 » à la place de 1 ou 2.',
   'mois.aValider':
     "EJP Tech doit encore valider cet indicateur. Vous pouvez le saisir, mais il n'entre dans aucun total.",
 

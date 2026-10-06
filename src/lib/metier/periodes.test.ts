@@ -74,13 +74,10 @@ describe('mois proposés', () => {
     expect(moisProposes('2026-11-01')[1]).toMatchObject({ mois: '2026-10', enCours: false })
   })
 
-  it('pour un sensible, propose les deux derniers mois finis, jamais le mois en cours', () => {
-    expect(moisProposes('2026-10-06', { sensible: true })).toEqual([
-      { mois: '2026-09', libelle: 'Septembre 2026', enCours: false },
-      { mois: '2026-08', libelle: 'Août 2026', enCours: false },
-    ])
-    expect(dernierMoisPermis('2026-10-06', { sensible: true })).toBe('2026-09')
+  it('le dernier mois permis est le mois en cours, pour tout indicateur, sensible compris', () => {
+    // Décision du 6 octobre 2026 : plus d'option « sensible », le mois en cours se saisit.
     expect(dernierMoisPermis('2026-10-06')).toBe('2026-10')
+    expect(dernierMoisPermis('2027-01-01')).toBe('2027-01')
   })
 })
 
@@ -93,20 +90,11 @@ describe('rattrapage', () => {
     expect(liste.at(-1)).toMatchObject({ mois: '2025-01', libelle: 'Janvier 2025' })
   })
 
-  it('un sensible ne rattrape que des mois finis', () => {
-    const liste = moisDeRattrapage('2026-10-06', { sensible: true })
-    expect(liste).toHaveLength(21)
-    expect(liste[0]?.mois).toBe('2026-09')
-    expect(liste.some((m) => m.enCours)).toBe(false)
-  })
-
-  it('refuse un mois futur, un mois avant janvier de l’an dernier et le mois en cours d’un sensible', () => {
+  it('refuse un mois futur et un mois avant janvier de l’an dernier, pour tout indicateur', () => {
     expect(moisEstPermis('2026-10', '2026-10-06')).toBe(true)
     expect(moisEstPermis('2026-11', '2026-10-06')).toBe(false)
     expect(moisEstPermis('2025-01', '2026-10-06')).toBe(true)
     expect(moisEstPermis('2024-12', '2026-10-06')).toBe(false)
-    expect(moisEstPermis('2026-10', '2026-10-06', { sensible: true })).toBe(false)
-    expect(moisEstPermis('2026-09', '2026-10-06', { sensible: true })).toBe(true)
     expect(moisEstPermis('octobre', '2026-10-06')).toBe(false)
   })
 })
@@ -116,12 +104,5 @@ describe('mois choisi d’abord', () => {
     expect(moisParDefaut('2026-10-06', new Set())).toBe('2026-09')
     expect(moisParDefaut('2026-10-06', new Set(['2026-09']))).toBe('2026-08')
     expect(moisParDefaut('2026-10-06', new Set(['2026-09', '2026-08']))).toBe('2026-10')
-  })
-
-  it('pour un sensible : le dernier mois fini non saisi, sinon le dernier mois fini', () => {
-    const sensible = { sensible: true }
-    expect(moisParDefaut('2026-10-06', new Set(), sensible)).toBe('2026-09')
-    expect(moisParDefaut('2026-10-06', new Set(['2026-09']), sensible)).toBe('2026-08')
-    expect(moisParDefaut('2026-10-06', new Set(['2026-09', '2026-08']), sensible)).toBe('2026-09')
   })
 })
