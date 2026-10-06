@@ -11,6 +11,15 @@ un signalement n'est lu **que** par le ministère qui l'a écrit et par EJP Tech
 l'administration, ni le berger, ni le conseil). Tout texte qui dit qui le lit dit « EJP Tech lit
 votre signalement. ». « Formation » et « Prodiges Academy » sont deux ministères différents.
 
+**Changement du 6 octobre 2026 (indicateurs sensibles, P45 à P47, modèle T41).** Après la lecture
+des libellés, la personne responsable a décidé que le mois en cours d'un indicateur sensible se
+saisit (P45), qu'un texte « Précision » peut accompagner son total (P46) et que ce total se répartit
+entre des catégories fixées par la coordination (P47). Ce contrat change donc avant le lot I, une
+seule fois, aux endroits marqués « changement du 6 octobre » : `controler_mesure` (B1),
+`v_indicateur_suivi` (B2), et le lot nouveau B8 (trois tables, une fonction, deux vues, la cible et
+le couple de modération de la précision). Les noms de B8 sont fixés ici ; son code attend l'accord
+de la personne responsable sur le modèle (plan, question 16).
+
 Statut des noms : ceux que les documents de conception donnent sont repris tels quels ; ceux
 qu'ils laissaient ouverts sont **fixés ici** (marqués « fixé par W0 ») pour que les lots codent en
 parallèle. Aucun ne change une règle métier.
@@ -18,7 +27,12 @@ parallèle. Aucun ne change une règle métier.
 ## 1. Codes du journal et de la modération
 
 Posés une fois par `supabase/migrations/20261007090000_contrats_etape_4.sql`, vérifiés par
-`supabase/tests/contrats-etape-4.test.sql`. **Aucun lot ne retouche ces contraintes.** Noms des
+`supabase/tests/contrats-etape-4.test.sql`. **Aucun lot ne retouche ces contraintes**, sauf B8
+(changement du 6 octobre) : la migration de W0 étant fusionnée et figée, la migration nouvelle de
+B8 (`20261009105000_sensibles_precisions_repartitions.sql`) réécrit `journal_cible_check`,
+`moderation_cible_check` et `moderation_cible_champ_check` avec l'union de tous les codes, plus la
+cible `precision_sensible` et le couple (`precision_sensible`, `texte`) ; `journal_action_check`
+ne change pas. B8 met à jour les listes attendues de `contrats-etape-4.test.sql`. Noms des
 contraintes : `journal_action_check`, `journal_cible_check`, `moderation_cible_check`,
 `moderation_cible_champ_check`, et `moderation_masque_check` (une décision « masque » si et
 seulement si un champ et un motif sont donnés : contrainte des étapes 1 à 3, nommée par
@@ -42,14 +56,19 @@ Les 20 codes des étapes 1 à 3 restent. Codes nouveaux :
 
 Codes repris et étendus (déjà dans la liste) :
 
-- `mesure_saisie` (B2) : `{"lignes": [{"indicateur_id", "date_ref", "valeur", "corrige"}]}`. La
-  valeur n'est écrite que pour un chiffre commun ; `corrige` vaut `true` sur une ligne qui remplace
+- `mesure_saisie` (B2) : `{"lignes": [{"indicateur_id", "date_ref", "valeur", "corrige"}]}`. **Une
+  ligne d'indicateur sensible n'y figure jamais** (P45 : sinon chaque saisie intermédiaire du mois
+  en cours et sa date seraient lisibles au journal) ; un envoi qui ne contient que des sensibles a
+  `{"lignes": []}`. La valeur n'est écrite que pour un chiffre commun ; `corrige` vaut `true` sur une ligne qui remplace
   une valeur déjà saisie pour la même période (fixé par W0 : le drapeau est porté par chaque ligne).
+  Changement du 6 octobre : un envoi de « Chiffres du mois » passe par `saisir_chiffres_mois` (B8),
+  qui fait une seule instruction `insert` dans `mesure` : il garde donc une seule ligne
+  `mesure_saisie`, qui ne dit rien de la précision ni de la répartition (ni texte, ni valeur).
 - `evenement_ajoute` (B6) : `{"date", "statut", "mentions": [uuid]}`, jamais le nom d'un ministère.
 - `evenement_modifie` (B6) : `{"date", "statut", "date_precedente"}`.
 - `texte_relu`, `texte_masque` : `cible` vaut la cible de la modération (donc aussi
-  `demande_indicateur`, `validation`, `signalement`, `signalement_suivi`), et `ministere_id` le
-  ministère de l'auteur du texte.
+  `demande_indicateur`, `validation`, `signalement`, `signalement_suivi` et, depuis le changement
+  du 6 octobre, `precision_sensible`), et `ministere_id` le ministère de l'auteur du texte.
 
 **Lecture des lignes des signalements (T39, décidé).** Une ligne `difficulte_signalee` ou
 `signalement_clos`, et toute ligne `texte_relu` ou `texte_masque` dont la cible est `signalement`
@@ -84,25 +103,27 @@ fraîcheur (un signalement n'est pas une saisie).
 
 `session`, `evenement`, `reunion`, `point_attention`, `point_suivi`, `compte`, `ministere` (étapes 1
 à 3), puis `indicateur`, `signalement`, et les cibles de modération `demande_indicateur`,
-`validation`, `signalement_suivi`. Règle : **toute cible de la modération est une cible du
-journal**, parce que `marquer_relu` et `masquer_texte` écrivent leur ligne (`texte_relu`,
-`texte_masque`) avec la cible de la modération. `v_journal` (B3 pour `indicateur`, B7 pour
-`signalement`) calcule `cible_texte` sous la RLS du lecteur.
+`validation`, `signalement_suivi`, et `precision_sensible` (B8, changement du 6 octobre). Règle :
+**toute cible de la modération est une cible du journal**, parce que `marquer_relu` et
+`masquer_texte` écrivent leur ligne (`texte_relu`, `texte_masque`) avec la cible de la modération.
+`v_journal` (B3 pour `indicateur`, B8 pour `precision_sensible`, B7 pour `signalement`) calcule
+`cible_texte` sous la RLS du lecteur.
 
 ### Cibles et couples de la modération
 
-| Cible                | Champ masquable (couple)                  | Origine       | Lot qui étend `masquer_texte` et `marquer_relu` |
-| -------------------- | ----------------------------------------- | ------------- | ----------------------------------------------- |
-| `point_attention`    | `titre`, `description`, `action_attendue` | étapes 1 à 3  | aucun                                           |
-| `point_suivi`        | `commentaire`                             | étapes 1 à 3  | aucun                                           |
-| `evenement`          | `titre`                                   | étapes 1 à 3  | aucun                                           |
-| `reunion`            | `objet`, `decision_attendue`              | étapes 1 à 3  | aucun                                           |
-| `demande_indicateur` | `pourquoi`                                | étape 4       | B3                                              |
-| `validation`         | `motif`                                   | étape 4       | B3                                              |
-| `signalement`        | `texte`                                   | étape 4 (T39) | B7, après B3                                    |
-| `signalement_suivi`  | `commentaire`                             | étape 4 (T39) | B7, après B3                                    |
+| Cible                | Champ masquable (couple)                  | Origine                                | Lot qui étend `masquer_texte` et `marquer_relu`                                   |
+| -------------------- | ----------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
+| `point_attention`    | `titre`, `description`, `action_attendue` | étapes 1 à 3                           | aucun                                                                             |
+| `point_suivi`        | `commentaire`                             | étapes 1 à 3                           | aucun                                                                             |
+| `evenement`          | `titre`                                   | étapes 1 à 3                           | aucun                                                                             |
+| `reunion`            | `objet`, `decision_attendue`              | étapes 1 à 3                           | aucun                                                                             |
+| `demande_indicateur` | `pourquoi`                                | étape 4                                | B3                                                                                |
+| `validation`         | `motif`                                   | étape 4                                | B3                                                                                |
+| `signalement`        | `texte`                                   | étape 4 (T39)                          | B7, après B3 et B8                                                                |
+| `signalement_suivi`  | `commentaire`                             | étape 4 (T39)                          | B7, après B3 et B8                                                                |
+| `precision_sensible` | `texte`                                   | étape 4 (P46, changement du 6 octobre) | B8, après B3 et B4, avant B7 (B7 reprend `masquer_texte` depuis la version de B8) |
 
-Onze couples en tout. Le texte masqué reste « [texte masqué par EJP Tech] ». L'écran Modération
+Douze couples en tout (onze posés par W0, un par B8). Le texte masqué reste « [texte masqué par EJP Tech] ». L'écran Modération
 (étape 6) relit et masque ; à l'étape 4, seul le bloc « Signalements » existe sur `/moderation`.
 
 ## 2. Horodatages réservés des migrations
@@ -120,6 +141,7 @@ la dernière migration déjà fusionnée dans `etape-4`, jamais dans une plage r
 | B2  | `20261008100000_indicateurs_lectures.sql`, `20261008100500_indicateurs_seuil_sensibles.sql`, `20261008101000_journal_mesures.sql` |
 | B3  | `20261008110000_validation_indicateurs.sql`, `20261008110500_indicateurs_fonctions.sql`                                           |
 | B4  | `20261009100000_indicateurs_vague_1.sql`                                                                                          |
+| B8  | `20261009105000_sensibles_precisions_repartitions.sql` (changement du 6 octobre ; après B4, avant B7)                             |
 | B7  | `20261009110000_signalements.sql`                                                                                                 |
 | L   | horodatage réel du jour de création, après la dernière migration passée en production ; ordre L2, L4, L1, L3                      |
 
@@ -136,13 +158,14 @@ puis chaque fichier de `supabase/seed/` dans l'ordre lexical de son nom. Tant qu
 vide, elle écrit seulement l'avertissement « no files matched pattern ». Jamais appliqués en
 préproduction ni en production (`db push` sans `--include-seed`).
 
-| Fichier                                 | Lot | Contenu                                                                                                                                                                                                 |
-| --------------------------------------- | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/seed.sql`                     | B1  | définition de « Visuels livrés ce mois » ; reprise du ministère Coordination créé par la migration (comme FIJ)                                                                                          |
-| `supabase/seed/40-indicateurs.sql`      | B4  | prévus des ministères d'exemple, sensibles compris (un sensible à 2 pour « moins de 3 ») ; une valeur par unité ; un ajout à valider, un validé, un refusé ; un retiré avec saisies ; mois et dimanches |
-| `supabase/seed/41-fij-statistiques.sql` | B5  | deux semaines des 4 rubriques, une semaine incomplète (« 6 dép. sur 8 »)                                                                                                                                |
-| `supabase/seed/42-evenements.sql`       | B6  | « Réunion des responsables » (Coordination, en attente, reporté, @Communication), décalage de semaines recalculé                                                                                        |
-| `supabase/seed/43-signalements.sql`     | B7  | deux signalements de Communication, sans donnée personnelle : un ouvert sur `saisie_evenement`, un clos avec un commentaire d'EJP Tech                                                                  |
+| Fichier                                  | Lot | Contenu                                                                                                                                                                                                                                                                                                              |
+| ---------------------------------------- | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `supabase/seed.sql`                      | B1  | définition de « Visuels livrés ce mois » ; reprise du ministère Coordination créé par la migration (comme FIJ)                                                                                                                                                                                                       |
+| `supabase/seed/40-indicateurs.sql`       | B4  | prévus des ministères d'exemple, sensibles compris (un sensible à 2 pour « moins de 3 ») ; une valeur par unité ; un ajout à valider, un validé, un refusé ; un retiré avec saisies ; mois et dimanches                                                                                                              |
+| `supabase/seed/41-fij-statistiques.sql`  | B5  | deux semaines des 4 rubriques, une semaine incomplète (« 6 dép. sur 8 »)                                                                                                                                                                                                                                             |
+| `supabase/seed/42-evenements.sql`        | B6  | « Réunion des responsables » (Coordination, en attente, reporté, @Communication), décalage de semaines recalculé                                                                                                                                                                                                     |
+| `supabase/seed/43-signalements.sql`      | B7  | deux signalements de Communication, sans donnée personnelle : un ouvert sur `saisie_evenement`, un clos avec un commentaire d'EJP Tech                                                                                                                                                                               |
+| `supabase/seed/44-sensibles-details.sql` | B8  | catégories d'exemple du sensible de `seed/40` (`malaise`, `blessure`, `autre` ; jeu d'exemple seulement) ; un mois réparti avec une catégorie à 2 (« moins de 3 » et une catégorie masquée pour le berger) ; un mois réparti sans petit nombre ; une précision sans donnée personnelle ; une valeur du mois en cours |
 
 Règles pour chaque fichier de `seed/` :
 
@@ -178,6 +201,7 @@ Communication).
 | `validation.decision`, `p_decision`          | `valide`, `refuse`                                                                                                                                                                                                             | B3                                                                 |
 | `fij_statistique.rubrique`                   | `culte_ejp` (Présents au culte EJP), `reunion_fij` (Présents à la réunion FIJ), `evangelisation` (Présents à l'évangélisation), `membres_mardi` (Membres du mardi)                                                             | codes fixés par W0, libellés du plan (B5)                          |
 | `fij_statistique.departement`                | `75`, `77`, `78`, `91`, `92`, `93`, `94`, `95` (comme `fij_departement`)                                                                                                                                                       | étape 1                                                            |
+| `categorie_sensible.code`                    | codes écrits par migration d'après la liste de la coordination, par indicateur sensible du catalogue (1 à 30 caractères, minuscules et `_`) ; aucun en production avant la première liste                                      | B8                                                                 |
 | `signalement.ecran`, `ecran=` de `/signaler` | `saisie_dimanche`, `saisie_mois`, `saisie_session`, `saisie_fij`, `saisie_fij_statistiques`, `saisie_evenement`, `saisie_reunion`, `autre`                                                                                     | B7                                                                 |
 
 Libellés proposés de la ligne « Écran concerné : ... » (E8, « Proposé » tant qu'ils ne sont pas
@@ -222,7 +246,9 @@ colonnes, et les fonctions de B3 (`corriger_indicateur`, `retirer_indicateur`,
 | `libelle_sessions`      | `boolean`             | défaut `false` (X3)                                                          |
 
 `nature` accepte `mois`. `mesure.valeur` passe à 0 à 9 999 999, le plafond de l'unité étant
-contrôlé par `controler_mesure`. Libellé unique par ministère sur `private.normaliser(libelle)`,
+contrôlé par `controler_mesure`. Changement du 6 octobre (P45) : `controler_mesure` accepte le mois
+en cours d'un indicateur sensible, comme celui de tout indicateur du mois ; il refuse toujours un
+mois futur, un autre jour que le 1er et un mois avant le 1er janvier de l'année précédente. Libellé unique par ministère sur `private.normaliser(libelle)`,
 hors retirés. Pas de colonnes `haut_id` ni `bas_id` : les termes vivent dans `indicateur_terme`.
 
 ### `indicateur_terme` (B1)
@@ -286,6 +312,35 @@ Lecture (décision du 6 octobre 2026) : le ministère lit ses signalements et le
 Tech lit tout ; **l'administration, le berger et le conseil ne lisent rien**. Ajout seulement par
 `signaler_difficulte` et `clore_signalement`.
 
+### `categorie_sensible`, `ventilation_sensible` et `precision_sensible` (B8, changement du 6 octobre)
+
+| Table                  | Colonnes                                                                                                                                                                                                                                                            |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `categorie_sensible`   | `prevu_code text` (référence `private.indicateur_prevu(code)`, un prévu sensible), `code text` (section 4), `libelle text` (1 à 40 caractères), `ordre smallint`, `retiree_le date` (null) ; clé (`prevu_code`, `code`)                                             |
+| `ventilation_sensible` | `id bigint` (identité), `mesure_id bigint` (référence `mesure`), `indicateur_id uuid`, `ministere_id uuid`, `mois date` (1er du mois), `categorie text`, `valeur integer` (0 à 9 999), `saisi_le timestamptz`, `saisi_par uuid` ; unique (`mesure_id`, `categorie`) |
+| `precision_sensible`   | `id uuid`, `mesure_id bigint` (unique, référence `mesure`), `indicateur_id uuid`, `ministere_id uuid`, `mois date` (1er du mois), `texte text` (10 à 280 après `trim`), `saisi_le timestamptz`, `saisi_par uuid`                                                    |
+
+- `categorie_sensible` : table de référence, écrite seulement par migration (`pilotage.migration`)
+  d'après les listes de la coordination ; vide en production tant qu'aucune liste n'est arrivée ;
+  un trigger refuse modification et suppression dès qu'une ligne de `ventilation_sensible` utilise
+  la catégorie, sauf la pose de `retiree_le` (de null à une date, par migration, quand la
+  coordination change sa liste : une catégorie retirée ne s'affiche plus dans la grille de saisie
+  et reste lisible dans les anciennes répartitions) ; 3 à 6 catégories par indicateur (consigne
+  proposée par EJP Tech, supposée par la règle d'affichage de P47) ; lue comme `indicateur` (Q3) : il existe un indicateur sensible lisible dont
+  `modele_code` vaut `prevu_code`. RLS, `aal2`, GRANT `select` seulement.
+- `ventilation_sensible` et `precision_sensible` : ajout seulement (`forcer_auteur`, trigger
+  d'inaltérabilité ; seule exception `masquer_texte` pour `precision_sensible.texte`), RLS, `aal2`,
+  GRANT `select` seulement : seule `saisir_chiffres_mois` y écrit. `indicateur_id`, `ministere_id`
+  et `mois` reprennent ceux de la ligne de `mesure` (la fonction les pose). La somme des catégories
+  d'un `mesure_id` ne dépasse jamais sa `valeur`.
+- Lecture : `ventilation_sensible` par le seul ministère (`ministere_id = private.mon_ministere()`),
+  les autres passent par `v_ventilation_sensible` ; `precision_sensible` (table brute) par le
+  ministère auteur (`ministere_id = private.mon_ministere()`) et par EJP Tech seul (relecture et
+  masquage), jamais par le berger ni le conseil, qui lisent `v_precision_sensible`, adossée à
+  `private.precisions_sensibles()` : ils verraient sinon les envois intermédiaires (textes
+  remplacés, dates, `mesure_id`). Ni l'administration, ni un autre ministère. Toutes deux excluent un indicateur retiré pour
+  confidentialité (Q11).
+
 ## 6. Vues nouvelles ou étendues
 
 Toutes `with (security_invoker = true)`, lecture seule pour `authenticated`. Une vue servie par
@@ -307,6 +362,10 @@ un 0 reste 0. Une absence de saisie est toujours null, jamais 0.
 | `moins_de_3`    | `boolean`     | vrai pour 1 et 2 d'un sensible lu par un autre profil         |
 | `saisi_le`      | `timestamptz` | heure de la saisie qui fait foi                               |
 
+Changement du 6 octobre (P45) : le mois en cours d'un sensible y figure comme les autres mois, avec
+le seuil ; une seule ligne par période, celle de la saisie qui fait foi, jamais une saisie
+intermédiaire (pour le berger, le conseil et EJP Tech).
+
 ### `v_indicateur_serie` (B2)
 
 | Colonne         | Type       | Sens                                                   |
@@ -321,29 +380,30 @@ un 0 reste 0. Une absence de saisie est toujours null, jamais 0.
 
 ### `v_indicateur_suivi` (B2)
 
-| Colonne                 | Type          | Sens                                                                                        |
-| ----------------------- | ------------- | ------------------------------------------------------------------------------------------- |
-| `indicateur_id`         | `uuid`        |                                                                                             |
-| `ministere_id`          | `uuid`        | null pour un commun                                                                         |
-| `libelle`, `definition` | `text`        | textes actuels                                                                              |
-| `nature`, `unite`       | `text`        |                                                                                             |
-| `sensible`              | `boolean`     |                                                                                             |
-| `etat`, `origine`       | `text`        |                                                                                             |
-| `calcul`                | `text`        | null pour un indicateur saisi                                                               |
-| `derniere_periode`      | `date`        | null : pas encore de saisie                                                                 |
-| `derniere_valeur`       | `integer`     |                                                                                             |
-| `derniere_moins_de_3`   | `boolean`     |                                                                                             |
-| `derniere_saisie_le`    | `timestamptz` |                                                                                             |
-| `mois_en_cours_valeur`  | `integer`     | à part, jamais pour un sensible                                                             |
-| `somme_annee`           | `bigint`      | null si `sans_somme`, « à ce jour », ajout à valider, ou rien de saisi                      |
-| `somme_moins_de_3`      | `boolean`     | somme de l'année égale à 1 ou 2 d'un sensible (K5c)                                         |
-| `somme_depuis`          | `date`        | départ de la somme (« Depuis juillet »)                                                     |
-| `somme_nb_saisies`      | `integer`     | complétude : « 9 mois sur 9 »                                                               |
-| `somme_nb_attendues`    | `integer`     |                                                                                             |
-| `plus_de_30_jours`      | `boolean`     | « à ce jour » saisi il y a plus de 30 jours                                                 |
-| `etat_valeur`           | `text`        | `saisi`, `non_saisi` (rien pour la dernière période attendue), `jamais_saisi` (fixé par W0) |
-| `attente_jours`         | `integer`     | ajout à valider : jours depuis `cree_le`, heure de Paris ; sinon null                       |
-| `retire_le`             | `timestamptz` | pour le bloc « Retirés »                                                                    |
+| Colonne                    | Type          | Sens                                                                                                                    |
+| -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `indicateur_id`            | `uuid`        |                                                                                                                         |
+| `ministere_id`             | `uuid`        | null pour un commun                                                                                                     |
+| `libelle`, `definition`    | `text`        | textes actuels                                                                                                          |
+| `nature`, `unite`          | `text`        |                                                                                                                         |
+| `sensible`                 | `boolean`     |                                                                                                                         |
+| `etat`, `origine`          | `text`        |                                                                                                                         |
+| `calcul`                   | `text`        | null pour un indicateur saisi                                                                                           |
+| `derniere_periode`         | `date`        | null : pas encore de saisie                                                                                             |
+| `derniere_valeur`          | `integer`     |                                                                                                                         |
+| `derniere_moins_de_3`      | `boolean`     |                                                                                                                         |
+| `derniere_saisie_le`       | `timestamptz` |                                                                                                                         |
+| `mois_en_cours_valeur`     | `integer`     | à part ; pour un sensible aussi depuis le 6 octobre (P45), null si masquée                                              |
+| `mois_en_cours_moins_de_3` | `boolean`     | changement du 6 octobre (P45) : vrai pour 1 et 2 du mois en cours d'un sensible lu par un autre profil que le ministère |
+| `somme_annee`              | `bigint`      | null si `sans_somme`, « à ce jour », ajout à valider, ou rien de saisi                                                  |
+| `somme_moins_de_3`         | `boolean`     | somme de l'année égale à 1 ou 2 d'un sensible (K5c)                                                                     |
+| `somme_depuis`             | `date`        | départ de la somme (« Depuis juillet »)                                                                                 |
+| `somme_nb_saisies`         | `integer`     | complétude : « 9 mois sur 9 »                                                                                           |
+| `somme_nb_attendues`       | `integer`     |                                                                                                                         |
+| `plus_de_30_jours`         | `boolean`     | « à ce jour » saisi il y a plus de 30 jours                                                                             |
+| `etat_valeur`              | `text`        | `saisi`, `non_saisi` (rien pour la dernière période attendue), `jamais_saisi` (fixé par W0)                             |
+| `attente_jours`            | `integer`     | ajout à valider : jours depuis `cree_le`, heure de Paris ; sinon null                                                   |
+| `retire_le`                | `timestamptz` | pour le bloc « Retirés »                                                                                                |
 
 Un refusé et un retiré pour confidentialité n'y figurent pas (Q11).
 
@@ -418,10 +478,49 @@ Colonnes actuelles (`id`, `ministere_id`, `titre`, `date`, `statut`, `mis_a_jour
 validation, date au plus aujourd'hui plus 3, ministère actif), `reporte_du date` (date de l'état
 précédent si la date a changé, sinon null). Les mentions se lisent dans `evenement_mention`.
 
-### `v_journal` (B3, B7)
+### `v_ventilation_sensible` (B8, changement du 6 octobre)
 
-Mêmes colonnes ; `cible_texte` gagne `indicateur` (libellé actuel, B3) et `signalement` (B7 : code
-de l'écran, jamais le texte, fixé par W0).
+Servie par `private.ventilations_sensibles()` (`security definer`, `aal2` contrôlé dans le jeton,
+filtre du lecteur réappliqué : `private.lit_tout()` ou `ministere_id = private.mon_ministere()` ;
+rien pour l'administration ni pour un autre ministère). Une ligne par catégorie renseignée de la
+répartition du total le plus récent de chaque mois, plus une ligne « Non réparti » :
+
+| Colonne         | Type       | Sens                                                                                                   |
+| --------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
+| `indicateur_id` | `uuid`     |                                                                                                        |
+| `ministere_id`  | `uuid`     |                                                                                                        |
+| `periode`       | `date`     | 1er du mois                                                                                            |
+| `categorie`     | `text`     | code de `categorie_sensible` ; null pour la ligne « Non réparti »                                      |
+| `libelle`       | `text`     | libellé de la catégorie, ou « Non réparti »                                                            |
+| `ordre`         | `smallint` | ordre de la liste ; « Non réparti » en dernier                                                         |
+| `valeur`        | `integer`  | exacte pour le ministère ; null si « moins de 3 » ou masquée                                           |
+| `moins_de_3`    | `boolean`  | vrai pour une case de 1 ou 2 lue par un autre profil que le ministère                                  |
+| `masquee`       | `boolean`  | vrai pour une case masquée par le masquage secondaire (« masqué »)                                     |
+| `tout_masque`   | `boolean`  | vrai sur toutes les lignes d'un mois dont la répartition est masquée en entier (P47, règles 2, 5 et 6) |
+
+Règle d'affichage : celle de P47 (`docs/decisions.md`, règles 1 à 6, dont le départage « la
+première dans l'ordre de la liste, Non réparti en dernier » et la borne de la règle 6) ; une seule
+fonction `private` la calcule, appelée par la vue et par le test qui joue le lecteur. Aucune somme
+de l'année ni série par catégorie. **Un mois dont le total le plus récent n'a pas de répartition
+n'a aucune ligne** (l'écran dit « Pas de répartition pour septembre. », BRIEF section 9) ; E3
+pré-remplit la grille avec la répartition actuelle quand le ministère corrige le total.
+
+### `v_precision_sensible` (B8, changement du 6 octobre)
+
+Adossée à `private.precisions_sensibles()` (`security definer`, `aal2` contrôlé dans le jeton,
+filtre du lecteur réappliqué : `private.lit_tout()` ou `ministere_id = private.mon_ministere()` ;
+rien pour l'administration ni pour un autre ministère ; rien pour un indicateur retiré pour
+confidentialité), parce que le berger et le conseil ne lisent pas la table brute : la précision
+**attachée au total le plus récent** de chaque indicateur, ministère et mois (le même `mesure_id`
+que `v_mesure_periode`), sans `mesure_id` ni date d'envoi. Colonnes : `indicateur_id uuid`,
+`ministere_id uuid`, `mois date`, `texte text` (« [texte masqué par EJP Tech] » s'il est masqué).
+Un total plus récent sans précision n'a aucune ligne.
+
+### `v_journal` (B3, B8, B7)
+
+Mêmes colonnes ; `cible_texte` gagne `indicateur` (libellé actuel, B3), `precision_sensible` (B8 :
+« Précision : » suivi du libellé actuel de l'indicateur et du mois, jamais le texte) et
+`signalement` (B7 : code de l'écran, jamais le texte, fixé par W0).
 
 ## 7. Fonctions nouvelles
 
@@ -445,11 +544,22 @@ lève l'exception par défaut (P0001), affichée telle quelle. Aucun SQL dynamiq
 | `saisir_fij_statistiques(p_dimanche date, p_valeurs jsonb)`                                                                                                                                           | `void`                                                                                                  | B5  | ministère `fij` seulement                                                   |
 | `ajouter_evenement(p_titre text, p_date date, p_statut public.statut_evenement, p_mentions uuid[])`                                                                                                   | `uuid`                                                                                                  | B6  | ministère ; la version à trois arguments délègue avec `'{}'`                |
 | `signaler_difficulte(p_ecran text, p_texte text)`                                                                                                                                                     | `uuid` (le signalement)                                                                                 | B7  | ministère actif seulement (le ministère vient de la session)                |
+| `saisir_chiffres_mois(p_mois date, p_lignes jsonb)` (changement du 6 octobre)                                                                                                                         | `integer` (lignes de `mesure` écrites)                                                                  | B8  | ministère actif seulement (le ministère vient de la session)                |
 | `clore_signalement(p_signalement_id uuid, p_commentaire text default null)`                                                                                                                           | `void`                                                                                                  | B7  | EJP Tech seul                                                               |
 
 `p_valeurs` de `saisir_fij_statistiques` (fixé par W0) : un tableau
 `[{"rubrique": "culte_ejp", "departement": "75", "valeur": 12}, ...]`, 32 éléments au plus (4
 rubriques sur 8 départements), sans doublon ; une seule ligne de journal par envoi.
+
+`p_lignes` de `saisir_chiffres_mois` (changement du 6 octobre, B8) : un tableau de 1 à 30 éléments
+`[{"indicateur_id": "...", "valeur": 7, "categories": {"malaise": 4, "blessure": 2}, "precision":
+"..."}, ...]`, sans doublon d'indicateur. `indicateur_id` et `valeur` sont obligatoires ;
+`categories` et `precision` sont facultatifs et réservés aux indicateurs sensibles (`categories`
+seulement si l'indicateur a des catégories). Tout le mois part en un appel : une seule instruction
+`insert` dans `mesure` (une ligne de journal `mesure_saisie`), puis les lignes de
+`ventilation_sensible` et de `precision_sensible`, tout ou rien. La partie `private` réapplique les
+conditions de la politique d'ajout de `mesure` (ministère de la session, indicateur du mois à lui,
+actif ou à valider, non calculé) ; `controler_mesure` s'applique toujours.
 
 Fonctions `private` sans partie publique : `private.normaliser(text) returns text` (immutable,
 B1) ; `private.mois_courant() returns date` (1er du mois de `private.aujourdhui()`, B1) ;
@@ -457,30 +567,45 @@ B1) ; `private.mois_courant() returns date` (1er du mois de `private.aujourdhui(
 message text, bloquant boolean)` (B1, fixé par W0 ; B3 et B7 l'appellent) ;
 `private.peut_configurer() returns boolean` (administration et EJP Tech, B3) ;
 `private.communs_de_fiche()` (B4) ; `private.evenements_mentionnant_mon_ministere() returns setof
-uuid` (B6) ; triggers `private.controler_indicateur()` (B1), `private.controler_evenement_etat()`
-(B6), `private.controler_mesure()` réécrit (B1).
+uuid` (B6) ; `private.ventilations_sensibles()` et `private.precisions_sensibles()` (B8, servent
+`v_ventilation_sensible` et `v_precision_sensible`) ; triggers
+`private.controler_indicateur()` (B1), `private.controler_evenement_etat()` (B6),
+`private.controler_mesure()` réécrit (B1, mois en cours d'un sensible accepté depuis le 6 octobre),
+et le trigger de `categorie_sensible` qui refuse de changer une catégorie utilisée (B8).
+`masquer_texte` et `marquer_relu` acceptent le couple (`precision_sensible`, `texte`) depuis B8.
 
 Messages repris tels quels par les formulaires : « La date ne peut pas être passée. » (ajout
 d'événement, étape 3) ; « La nouvelle date doit être aujourd'hui ou plus tard. » et « Rien n'a
 changé : ce statut et cette date sont déjà enregistrés. » (B6) ; « Ce signalement est déjà
-clos. » (B7).
+clos. » (B7) ; « La somme des catégories (9) dépasse le total du mois (7). » et « La précision doit
+faire entre 10 et 280 caractères. » (B8, les nombres étant ceux de l'envoi).
 
 ## 8. Matrice des droits
 
 Celle de `docs/plan-etape-4.md`, section 4, avec la décision du 6 octobre 2026 sur les
 signalements, qui remplace les lignes « à confirmer » :
 
-| Objet                      | Ministère                                 | Berger, conseil                                      | Administration                                                                                        | EJP Tech                           | `aal1`, anonyme |
-| -------------------------- | ----------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------- |
-| `signalement`              | L les siens ; A par `signaler_difficulte` | rien                                                 | rien                                                                                                  | L tous                             | rien            |
-| `signalement_suivi`        | L celui de ses signalements               | rien                                                 | rien                                                                                                  | L tous ; A par `clore_signalement` | rien            |
-| `signaler_difficulte`      | sa fiche seulement                        | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
-| `clore_signalement`        | refusé                                    | refusé                                               | refusé                                                                                                | oui                                | refusé          |
-| `journal` (codes nouveaux) | lignes de sa fiche                        | toutes, sauf les lignes des signalements (section 1) | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements ; aucune ligne des signalements | toutes                             | rien            |
+| Objet                                                     | Ministère                                                    | Berger, conseil                                      | Administration                                                                                        | EJP Tech                           | `aal1`, anonyme |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------- |
+| `signalement`                                             | L les siens ; A par `signaler_difficulte`                    | rien                                                 | rien                                                                                                  | L tous                             | rien            |
+| `signalement_suivi`                                       | L celui de ses signalements                                  | rien                                                 | rien                                                                                                  | L tous ; A par `clore_signalement` | rien            |
+| `signaler_difficulte`                                     | sa fiche seulement                                           | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
+| `clore_signalement`                                       | refusé                                                       | refusé                                               | refusé                                                                                                | oui                                | refusé          |
+| `journal` (codes nouveaux)                                | lignes de sa fiche                                           | toutes, sauf les lignes des signalements (section 1) | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements ; aucune ligne des signalements | toutes                             | rien            |
+| `categorie_sensible` (B8)                                 | L des siens (comme `indicateur`, Q3)                         | L                                                    | L (définitions, sans valeur)                                                                          | L                                  | rien            |
+| `ventilation_sensible` (B8)                               | L les siennes (lignes brutes) ; A par `saisir_chiffres_mois` | rien (par la vue)                                    | rien                                                                                                  | rien (par la vue)                  | rien            |
+| `v_ventilation_sensible` (B8)                             | valeurs exactes des siennes                                  | « moins de 3 », masquage secondaire, « non réparti » | rien                                                                                                  | comme le berger                    | rien            |
+| `precision_sensible` (B8, table brute)                    | L les siennes ; A par `saisir_chiffres_mois`                 | rien (par la vue)                                    | rien                                                                                                  | L (relecture et masquage)          | rien            |
+| `v_precision_sensible` (B8)                               | L la sienne (total le plus récent)                           | L (total le plus récent, sans date d'envoi)          | rien                                                                                                  | L comme le berger                  | rien            |
+| `saisir_chiffres_mois` (B8)                               | sa fiche seulement, ministère actif                          | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
+| `moderation`, couple (`precision_sensible`, `texte`) (B8) | rien                                                         | rien                                                 | rien                                                                                                  | L, relecture et masquage           | rien            |
 
 Les lignes des signalements du journal (`difficulte_signalee`, `signalement_clos`, et
 `texte_relu` ou `texte_masque` de cible `signalement` ou `signalement_suivi`) ne se lisent que par
 le ministère auteur et par EJP Tech (T39, décidé ; condition de la section 1, écrite par B7).
+
+Les sept dernières lignes viennent du changement du 6 octobre (P46, P47, T41) ; la matrice complète
+reste celle de `docs/plan-etape-4.md`, section 4.
 
 Chaque lot de base écrit ses lignes en données et les parcourt avec l'aide de
 `supabase/tests/000-outils.test.sql` :
@@ -569,7 +694,11 @@ Aperçus sans base ni écriture (captures) : `/apercu/fiche`, `/apercu/saisies`,
 
 - `src/lib/base.ts` réexporte `src/lib/base/communs.ts` (contenu de l'étape 3), `indicateurs.ts`
   (E1), `fiche.ts` (E2), `fij.ts` (E4), `evenements.ts` (E5, E6) et `signalements.ts` (E8). Les
-  types s'écrivent à la main d'après ce document.
+  types s'écrivent à la main d'après ce document. Changement du 6 octobre : les types de lecture de
+  B8 (`v_ventilation_sensible`, `v_precision_sensible`) vont dans `fiche.ts` (E2) ; ceux de
+  `categorie_sensible` et de `p_lignes` de `saisir_chiffres_mois` vont dans `indicateurs.ts` (E1
+  s'il n'est pas fusionné, sinon E3, seule exception à la propriété de ce fichier) ; aucun fichier
+  nouveau, donc `base.ts` ne change pas.
 - `src/features/fiche/emplacements.tsx` : blocs calendrier et réunion (E6), statistiques FIJ
   (`ChiffresParDepartement.tsx`, E4), puis comptages et graphiques (lot de lecture), chacun un
   fichier amorce qui ne rend rien.
@@ -594,6 +723,14 @@ Aperçus sans base ni écriture (captures) : `/apercu/fiche`, `/apercu/saisies`,
 
 - **Page Confidentialité** (lot I) : dire « EJP Tech lit votre signalement. », sans
   l'administration (le plan, lot I, citait encore l'administration).
+- **Modèle de B8** (changement du 6 octobre, question 16 du plan) : les noms ci-dessus sont fixés
+  pour que E2 et E3 codent contre eux, mais le code de B8 attend l'accord de la personne
+  responsable sur ce changement du modèle de données. Les listes de catégories viennent de la
+  coordination, chacune par une petite migration.
+- **Aides nouvelles** (changement du 6 octobre) : `mois.repartition` et `fiche.repartition`
+  entrent dans `textesAide.ts` par W0 s'il n'est pas fusionné, sinon par un commit de documents et
+  de textes sur `etape-4` avant la vague 4 ; `mois.sensible` change de texte
+  (`docs/conception/aides-contextuelles.md`, section 6).
 
 Décidés le 6 octobre 2026, retirés des points ouverts : le journal des signalements (lu par le
 ministère auteur et EJP Tech seulement, section 1 ; B7 recrée la politique de `journal`) et la

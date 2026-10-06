@@ -1,7 +1,7 @@
 # Libellés et définitions des indicateurs à valider
 
 - **Date** : 6 octobre 2026
-- **Statut** : à valider avant l'ouverture des saisies
+- **Statut** : validé pour EJP Tech par la personne responsable le 6 octobre 2026 ; à valider par la coordination et les ministères avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
 - **Date limite de réponse** : mercredi 7 octobre 2026
@@ -23,13 +23,12 @@ Un indicateur est un chiffre que le ministère reporte (par exemple « Publicati
 
 ### Les rythmes
 
-| Dans ce document                   | Ce que cela veut dire                                                                                                                                                       |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chaque dimanche                    | Le chiffre porte sur le dimanche. Du lundi au dimanche 11 h 59, l'outil propose le dimanche précédent ; à partir du dimanche 12 h, il propose ce dimanche (heure de Paris). |
-| Chaque semaine                     | Le chiffre porte sur la semaine du lundi au dimanche. Il se saisit avec le dimanche de cette semaine, séances additionnées.                                                 |
-| Chaque mois                        | Le chiffre porte sur un mois. Le mois en cours peut se saisir : il s'affiche à part et n'entre dans aucune somme avant d'être fini.                                         |
-| Chaque mois, une fois le mois fini | Comme « Chaque mois », mais l'outil refuse le mois en cours. Réservé aux indicateurs sensibles.                                                                             |
-| À ce jour                          | Le chiffre le jour de la saisie : un stock (des personnes inscrites, des articles en réserve). L'outil note la date du jour. On le met à jour quand il change.              |
+| Dans ce document | Ce que cela veut dire                                                                                                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chaque dimanche  | Le chiffre porte sur le dimanche. Du lundi au dimanche 11 h 59, l'outil propose le dimanche précédent ; à partir du dimanche 12 h, il propose ce dimanche (heure de Paris).                               |
+| Chaque semaine   | Le chiffre porte sur la semaine du lundi au dimanche. Il se saisit avec le dimanche de cette semaine, séances additionnées.                                                                               |
+| Chaque mois      | Le chiffre porte sur un mois. Le mois en cours peut se saisir : il s'affiche à part, marqué « en cours », et n'entre dans aucune somme avant d'être fini. Cela vaut aussi pour les indicateurs sensibles. |
+| À ce jour        | Le chiffre le jour de la saisie : un stock (des personnes inscrites, des articles en réserve). L'outil note la date du jour. On le met à jour quand il change.                                            |
 
 Toutes les dates se calculent à l'heure de Paris. Une correction est une nouvelle saisie : la plus récente fait foi, l'ancienne reste dans l'historique.
 
@@ -80,13 +79,29 @@ Sur la fiche d'un ministère, un chiffre commun peut porter le nom de la demande
 
 Un indicateur est dit sensible quand il touche à la santé, à l'écoute, à l'accompagnement ou aux enfants. Il est créé et actif dès le premier jour, comme tous les autres : ces chiffres font partie des demandes de la coordination, ils doivent donc être présents. Ce qui change, ce sont les protections :
 
-- **Mois finis seulement** : on saisit le total d'un mois fini. L'outil refuse le mois en cours.
-- **Un total, rien d'autre** : aucune ventilation, aucun texte attaché, aucun calcul fait à partir de ces chiffres.
+- **Le mois en cours se saisit** : comme pour tout indicateur du mois, on peut saisir le total du mois en cours. Il s'affiche « en cours » et n'entre dans aucune somme avant la fin du mois. On peut le corriger : seule la dernière saisie du mois est montrée au berger, au conseil et à EJP Tech. Les saisies intermédiaires ne leur sont pas montrées.
+- **Un total, et deux ajouts facultatifs** : le total du mois, plus au choix une répartition par catégories et un texte « Précision » (voir plus bas). Aucun calcul n'est fait à partir de ces chiffres.
 - **Seuil « moins de 3 »** : pour le berger, le conseil et EJP Tech, une valeur de 1 ou 2 s'affiche « moins de 3 ». 0 reste 0. La somme de l'année ne compte que les mois affichés et le dit, pour qu'aucune différence ne révèle un mois masqué.
 - **Lecture réservée** : le ministère voit ses valeurs exactes. Les lignes saisies ne sont lisibles que par lui. Ces chiffres n'apparaissent jamais sur la vue de l'église, ni dans un courriel.
-- **Journal sans valeur** : le journal garde la trace qu'une saisie a eu lieu, jamais le chiffre.
-- **Information des personnes** : avant la mise en service, la page Confidentialité de l'outil dira que, pour la santé, l'accompagnement, l'écoute et les enfants, seuls des totaux de mois finis sont saisis.
+- **Journal sans valeur** : le journal garde la trace qu'une saisie a eu lieu, jamais le chiffre ni le texte.
+- **Information des personnes** : avant la mise en service, la page Confidentialité de l'outil dira que, pour la santé, l'accompagnement, l'écoute et les enfants, seuls des totaux, des répartitions par catégories larges et de courtes précisions sont saisis, sans nom ni information personnelle.
 - **Dossier de conformité** : EJP Tech rédige l'entrée du registre des traitements et une courte note d'analyse, et les remet à la coordination avant la mise en service. La coordination, qui décide au nom de l'église, dit si une analyse d'impact complète est nécessaire.
+
+La répartition par catégories :
+
+- **Ce que c'est** : pour chaque indicateur sensible, la coordination fixe une courte liste de catégories (par exemple « malaise », « blessure », « autre »). Le ministère répartit son total du mois entre ces catégories. C'est facultatif.
+- **Ce que l'outil vérifie** : la somme des catégories ne dépasse jamais le total du mois. Ce qui n'est pas réparti s'affiche « non réparti ».
+- **Le seuil s'applique à chaque catégorie** : une catégorie de 1 ou 2 s'affiche « moins de 3 » au berger, au conseil et à EJP Tech.
+- **Pas de fuite par calcul** : dès qu'une catégorie s'affiche « moins de 3 », on la retrouverait parfois en retranchant les autres du total. L'outil masque donc aussi une autre catégorie, et toute la répartition si cela ne suffit pas, pour qu'aucun calcul ne révèle un nombre de 1 ou 2. La même règle vaut pour la part « non réparti ». Le ministère, lui, voit toujours ses valeurs exactes.
+- **Les catégories ne viennent pas des ministères** : elles s'écrivent dans l'outil à partir des listes de la coordination. Tant qu'une liste n'est pas arrivée, l'indicateur n'a pas de répartition.
+- **Qui lit** : les mêmes personnes que pour le chiffre lui-même.
+
+Le texte « Précision » :
+
+- **Ce que c'est** : un court texte facultatif, attaché au total d'un mois, pour dire ce qu'un chiffre seul ne dit pas. Des informations sensibles peuvent être importantes à faire remonter : l'outil l'accepte donc.
+- **Les règles** : 10 à 280 caractères. Un rappel sous le champ demande de n'écrire aucun nom ni information personnelle. L'outil refuse un texte qui contient une donnée personnelle qu'il reconnaît, comme un courriel ou un numéro de téléphone. La précision attachée au dernier total envoyé pour le mois est celle qui s'affiche. Quand le ministère corrige le total, le champ reprend la précision actuelle : il peut la changer ou la vider (elle disparaît alors de l'affichage).
+- **Qui le lit** : le ministère qui l'a écrit, le berger, le conseil et EJP Tech. Ni l'administration de l'église, ni les autres ministères. Jamais la vue de l'église, jamais un courriel.
+- **Relecture** : EJP Tech relit ces textes et peut masquer un texte qui contient une information personnelle. Le journal ne recopie jamais la précision.
 
 Les onze indicateurs sensibles :
 
@@ -130,31 +145,65 @@ Un ministère relit sa section. La coordination relit toutes les sections et le 
 
 Renvoyez le document rempli à EJP Tech avant la date limite de réponse (mercredi 7 octobre 2026). EJP Tech corrige les noms et les définitions à l'écran, puis relit le résultat avec vous en préproduction avant d'ouvrir les saisies.
 
+## Catégories des chiffres sensibles, à fixer par la coordination
+
+Chaque indicateur sensible peut recevoir une répartition de son total du mois par catégories (voir « Les indicateurs sensibles » au début du document). Ces catégories ne viennent pas des ministères : la coordination les fixe, en lien avec le ministère concerné. Tant qu'une liste n'est pas arrivée, l'indicateur n'a pas de répartition et se saisit comme un simple total.
+
+Pour chaque indicateur, écrivez dans la colonne « Votre réponse » la liste des catégories que vous voulez, séparées par des virgules, ou « Aucune » si l'indicateur doit rester un simple total. La colonne « Catégories proposées » est vide : EJP Tech ne propose rien, pour ne pas décider à votre place de ce qui compte dans chaque ministère.
+
+| Ministère       | Indicateur                                          | Catégories proposées | Votre réponse |
+| --------------- | --------------------------------------------------- | -------------------- | ------------- |
+| Social          | Bénéficiaires (passages)                            |                      |               |
+| Social          | Personnes accompagnées                              |                      |               |
+| Social          | Nouveaux bénéficiaires                              |                      |               |
+| Santé           | Prises en charge                                    |                      |               |
+| Santé           | Interventions                                       |                      |               |
+| Santé           | Incidents avec intervention                         |                      |               |
+| Santé           | Orientations vers une structure ou un professionnel |                      |               |
+| Kumi            | Call your sister : prises en charge                 |                      |               |
+| Eagles          | La plate-forme d'écoute : prises en charge          |                      |               |
+| Prodiges Junior | Nouveaux enfants                                    |                      |               |
+| Prodiges Junior | Enfants déjà venus                                  |                      |               |
+
+Pour bien choisir les catégories :
+
+- **De 3 à 6 catégories larges.** Plus il y a de catégories, plus les nombres sont petits, et plus l'outil doit les cacher (« moins de 3 »).
+- **Jamais une catégorie si précise qu'elle désigne une personne.** Une catégorie doit décrire un type de situation, pas un cas. Si une catégorie ne compte en pratique qu'une personne connue de tous, elle est trop précise.
+- **Toujours une catégorie « autre »**, pour que le total puisse toujours être réparti en entier.
+- **Aucun nom, aucune tranche d'âge fine, aucun lieu, aucune date.**
+- **Des mots simples**, que tous les membres du ministère comprennent de la même façon.
+- **Les mêmes catégories d'un mois à l'autre**, pour pouvoir comparer. Changer une liste demande une décision de la coordination et une mise à jour par EJP Tech.
+
+Un exemple, pour « Incidents avec intervention » : malaise, blessure, autre. Ce n'est qu'un exemple, pas une proposition.
+
 ## Les choix à relire en priorité
 
 La liste de la coordination ne dit pas tout. EJP Tech a dû trancher les points ci-dessous. Ce sont des choix, pas des faits connus. La coordination et le ministère indiqué dans la colonne « Qui relit » les confirment ou les corrigent.
 
-| Point                                       | Choix d'EJP Tech                                                 | Qui relit                | Votre réponse |
-| ------------------------------------------- | ---------------------------------------------------------------- | ------------------------ | ------------- |
-| NC                                          | nouveaux convertis, exclusif de NA le même dimanche              | Intégration              |               |
-| Présence au culte                           | l'équipe d'Intégration, donc « STARs au service »                | Intégration              |               |
-| Taux de perte                               | sans nouvelles après 3 mois                                      | Intégration              |               |
-| Équipe d'accueil à Welcome Prodiges         | non comptée dans les présents                                    | Intégration              |               |
-| « À l'heure »                               | 5 minutes au plus après l'heure prévue                           | Coordination             |               |
-| Délai d'une demande de Communication        | date convenue, sinon 7 jours calendaires                         | Communication            |               |
-| Incident récurrent                          | même cause dans les 30 jours                                     | Tech                     |               |
-| Live et diffusion en direct                 | un seul chiffre                                                  | MCAD                     |               |
-| Spectateurs du direct                       | pic de spectateurs simultanés                                    | MCAD                     |               |
-| Catégories d'articles                       | vêtements, accessoires, autres articles                          | Merch                    |               |
-| Catégories de l'équipe                      | chanteurs, musiciens                                             | Prodiges Musique         |               |
-| Activité et projet                          | ponctuelle ; plusieurs semaines, comptée le mois où elle aboutit | Kumi, Eagles             |               |
-| Rubriques par département                   | quatre rubriques                                                 | Coordo FIJ               |               |
-| Étapes du parcours                          | nouveaux, réguliers, membres, au service                         | Coordo FIJ               |               |
-| PCNC, « terminé », réponse satisfaite       | sigle gardé ; deux meilleures notes                              | Formation                |               |
-| Recrutement abouti                          | intégration dans une équipe, comptée le mois de l'intégration    | MDS                      |               |
-| Seuil des petits nombres                    | « moins de 3 » pour 1 et 2                                       | Coordination             |               |
-| Valeurs en euros cachées à l'administration | oui                                                              | Coordination             |               |
-| Les « mobilisés » du dimanche               | « STARs au service » du ministère                                | les dix ministères visés |               |
+| Point                                       | Choix d'EJP Tech                                                                                | Qui relit                | Votre réponse |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------ | ------------- |
+| NC                                          | nouveaux convertis, exclusif de NA le même dimanche                                             | Intégration              |               |
+| Présence au culte                           | l'équipe d'Intégration, donc « STARs au service »                                               | Intégration              |               |
+| Taux de perte                               | sans nouvelles après 3 mois                                                                     | Intégration              |               |
+| Équipe d'accueil à Welcome Prodiges         | non comptée dans les présents                                                                   | Intégration              |               |
+| « À l'heure »                               | 5 minutes au plus après l'heure prévue                                                          | Coordination             |               |
+| Délai d'une demande de Communication        | date convenue, sinon 7 jours calendaires                                                        | Communication            |               |
+| Incident récurrent                          | même cause dans les 30 jours                                                                    | Tech                     |               |
+| Live et diffusion en direct                 | un seul chiffre                                                                                 | MCAD                     |               |
+| Spectateurs du direct                       | pic de spectateurs simultanés                                                                   | MCAD                     |               |
+| Catégories d'articles                       | vêtements, accessoires, autres articles                                                         | Merch                    |               |
+| Catégories de l'équipe                      | chanteurs, musiciens                                                                            | Prodiges Musique         |               |
+| Activité et projet                          | ponctuelle ; plusieurs semaines, comptée le mois où elle aboutit                                | Kumi, Eagles             |               |
+| Rubriques par département                   | quatre rubriques                                                                                | Coordo FIJ               |               |
+| Étapes du parcours                          | nouveaux, réguliers, membres, au service                                                        | Coordo FIJ               |               |
+| PCNC, « terminé », réponse satisfaite       | sigle gardé ; deux meilleures notes                                                             | Formation                |               |
+| Recrutement abouti                          | intégration dans une équipe, comptée le mois de l'intégration                                   | MDS                      |               |
+| Seuil des petits nombres                    | « moins de 3 » pour 1 et 2                                                                      | Coordination             |               |
+| Mois en cours des chiffres sensibles        | accepté, affiché « en cours », hors des sommes                                                  | Coordination             |               |
+| Précision attachée à un chiffre sensible    | texte facultatif de 10 à 280 caractères, lu par le ministère, le berger, le conseil et EJP Tech | Coordination             |               |
+| Catégories des chiffres sensibles           | listes fixées par la coordination (section dédiée)                                              | Coordination             |               |
+| Valeurs en euros cachées à l'administration | oui                                                                                             | Coordination             |               |
+| Les « mobilisés » du dimanche               | « STARs au service » du ministère                                                               | les dix ministères visés |               |
 
 Les dix ministères visés sont ceux dont la fiche donne à un chiffre commun le nom de leur demande : Intégration, MCAD, Santé, Kumi, Eagles, Entretien, Multilingue, Sécurité, Formation et Prodiges Junior. Chez neuf d'entre eux, c'est « STARs au service » qui porte ce nom (« Équipiers mobilisés », « Animateurs mobilisés »). Kumi renomme aussi « STARs actifs » (« Bénévoles actives »), et Eagles ne renomme que « STARs actifs » (« Bénévoles actifs »). Chaque section donne ces noms.
 
@@ -313,15 +362,15 @@ Question de la relecture : le délai d'une demande est la date convenue avec le 
 
 Trois de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. Ils n'ont aucun calcul.
 
-| Indicateur tel qu'il apparaîtra | Ce qu'on compte exactement                                                                           | Quand                              | Unité  | Sensible | Votre réponse |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- | ------------- |
-| Actions sociales                | Actions sociales menées et terminées dans le mois.                                                   | Chaque mois                        | Nombre | non      |               |
-| Bénéficiaires (passages)        | Aides apportées dans le mois. Chaque passage compte une fois, même pour une personne déjà aidée.     | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Personnes accompagnées          | Personnes qui ont eu au moins un entretien de suivi dans le mois. Une personne compte une fois.      | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Nouveaux bénéficiaires          | Personnes aidées pour la première fois dans le mois. Un total, sans liste.                           | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Partenariats actifs             | Partenariats en cours avec des structures extérieures, le jour de la saisie.                         | À ce jour                          | Nombre | non      |               |
-| Actions externes                | Actions menées avec un partenaire extérieur ou chez lui dans le mois.                                | Chaque mois                        | Nombre | non      |               |
-| Fonds levés                     | Fonds levés dans le mois, à l'euro près, sans nom de donateur. La comptabilité de l'église fait foi. | Chaque mois                        | Euros  | non      |               |
+| Indicateur tel qu'il apparaîtra | Ce qu'on compte exactement                                                                           | Quand       | Unité  | Sensible | Votre réponse |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
+| Actions sociales                | Actions sociales menées et terminées dans le mois.                                                   | Chaque mois | Nombre | non      |               |
+| Bénéficiaires (passages)        | Aides apportées dans le mois. Chaque passage compte une fois, même pour une personne déjà aidée.     | Chaque mois | Nombre | oui      |               |
+| Personnes accompagnées          | Personnes qui ont eu au moins un entretien de suivi dans le mois. Une personne compte une fois.      | Chaque mois | Nombre | oui      |               |
+| Nouveaux bénéficiaires          | Personnes aidées pour la première fois dans le mois. Un total, sans liste.                           | Chaque mois | Nombre | oui      |               |
+| Partenariats actifs             | Partenariats en cours avec des structures extérieures, le jour de la saisie.                         | À ce jour   | Nombre | non      |               |
+| Actions externes                | Actions menées avec un partenaire extérieur ou chez lui dans le mois.                                | Chaque mois | Nombre | non      |               |
+| Fonds levés                     | Fonds levés dans le mois, à l'euro près, sans nom de donateur. La comptabilité de l'église fait foi. | Chaque mois | Euros  | non      |               |
 
 ### Ce que l'outil calcule
 
@@ -496,17 +545,17 @@ Question de la relecture : MCAD distingue-t-elle les « lives » et les « diffu
 
 ### Ce que le ministère saisit
 
-Quatre de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. Aucun détail médical individuel n'apparaît dans l'outil : seuls des totaux de mois finis, avec le seuil « moins de 3 », jamais sur la vue de l'église ni dans un courriel.
+Quatre de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. Aucun détail médical individuel n'apparaît dans l'outil : seulement des totaux par mois (le mois en cours compris), une répartition facultative par catégories et une précision facultative, avec le seuil « moins de 3 », jamais sur la vue de l'église ni dans un courriel.
 
-| Indicateur tel qu'il apparaîtra                     | Ce qu'on compte exactement                                                                                     | Quand                              | Unité  | Sensible | Votre réponse |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- | ------------- |
-| Événements couverts                                 | Événements EJP où l'équipe santé a assuré sa présence dans le mois, cultes compris.                            | Chaque mois                        | Nombre | non      |               |
-| Événements à couvrir                                | Événements EJP où l'équipe santé devait être présente dans le mois, couverts ou non.                           | Chaque mois                        | Nombre | non      |               |
-| Prises en charge                                    | Personnes prises en charge par l'équipe santé dans le mois, une fois chacune. Aucun détail.                    | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Interventions                                       | Gestes de l'équipe (soin, appel aux secours) dans le mois. Une prise en charge peut en compter plusieurs.      | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Incidents avec intervention                         | Incidents (malaise, chute, accident) du mois qui ont demandé l'équipe santé ou les secours.                    | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Orientations vers une structure ou un professionnel | Personnes orientées vers une structure de santé ou un professionnel dans le mois.                              | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Mobilisés aux événements                            | Présences de l'équipe santé aux événements hors dimanche. Une personne compte à chaque événement où elle sert. | Chaque mois                        | Nombre | non      |               |
+| Indicateur tel qu'il apparaîtra                     | Ce qu'on compte exactement                                                                                     | Quand       | Unité  | Sensible | Votre réponse |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
+| Événements couverts                                 | Événements EJP où l'équipe santé a assuré sa présence dans le mois, cultes compris.                            | Chaque mois | Nombre | non      |               |
+| Événements à couvrir                                | Événements EJP où l'équipe santé devait être présente dans le mois, couverts ou non.                           | Chaque mois | Nombre | non      |               |
+| Prises en charge                                    | Personnes prises en charge par l'équipe santé dans le mois, une fois chacune. Aucun détail.                    | Chaque mois | Nombre | oui      |               |
+| Interventions                                       | Gestes de l'équipe (soin, appel aux secours) dans le mois. Une prise en charge peut en compter plusieurs.      | Chaque mois | Nombre | oui      |               |
+| Incidents avec intervention                         | Incidents (malaise, chute, accident) du mois qui ont demandé l'équipe santé ou les secours.                    | Chaque mois | Nombre | oui      |               |
+| Orientations vers une structure ou un professionnel | Personnes orientées vers une structure de santé ou un professionnel dans le mois.                              | Chaque mois | Nombre | oui      |               |
+| Mobilisés aux événements                            | Présences de l'équipe santé aux événements hors dimanche. Une personne compte à chaque événement où elle sert. | Chaque mois | Nombre | non      |               |
 
 ### Ce que l'outil calcule
 
@@ -642,19 +691,19 @@ Question de la relecture : l'équipe se compte en deux catégories, chanteurs et
 
 Un de ces indicateurs est sensible : voir « Les indicateurs sensibles » au début du document.
 
-| Indicateur tel qu'il apparaîtra            | Ce qu'on compte exactement                                                                               | Quand                              | Unité  | Sensible | Votre réponse |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- | ------------- |
-| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                | Chaque mois                        | Nombre | non      |               |
-| Participantes                              | Femmes venues à au moins une activité dans le mois, comptées une fois, hors outil.                       | Chaque mois                        | Nombre | non      |               |
-| Nouvelles participantes                    | Femmes venues à une activité pour la première fois dans le mois. Un total, sans liste.                   | Chaque mois                        | Nombre | non      |               |
-| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                | Chaque mois                        | Nombre | non      |               |
-| Femmes inscrites                           | Femmes inscrites aux activités de Kumi le jour de la saisie.                                             | À ce jour                          | Nombre | non      |               |
-| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe de Kumi dans le mois. Différent des nouveaux STARs comptés par MDS. | Chaque mois                        | Nombre | non      |               |
-| Pages Roses : prestataires inscrites       | Prestataires inscrites sur Pages Roses le jour du relevé, selon la plateforme. Relevé une fois par mois. | À ce jour                          | Nombre | non      |               |
-| Pages Roses : profils actifs               | Profils que Pages Roses compte comme actifs le jour du relevé. Relevé une fois par mois.                 | À ce jour                          | Nombre | non      |               |
-| Pages Roses : demandes de mise en relation | Demandes de mise en relation reçues sur Pages Roses dans le mois, selon la plateforme.                   | Chaque mois                        | Nombre | non      |               |
-| Pages Roses : réservations                 | Réservations enregistrées sur Pages Roses dans le mois, selon la plateforme.                             | Chaque mois                        | Nombre | non      |               |
-| Call your sister : prises en charge        | Prises en charge de Call your sister dans le mois. Mois fini seulement, aucun détail.                    | Chaque mois, une fois le mois fini | Nombre | oui      |               |
+| Indicateur tel qu'il apparaîtra            | Ce qu'on compte exactement                                                                               | Quand       | Unité  | Sensible | Votre réponse |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
+| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                | Chaque mois | Nombre | non      |               |
+| Participantes                              | Femmes venues à au moins une activité dans le mois, comptées une fois, hors outil.                       | Chaque mois | Nombre | non      |               |
+| Nouvelles participantes                    | Femmes venues à une activité pour la première fois dans le mois. Un total, sans liste.                   | Chaque mois | Nombre | non      |               |
+| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                | Chaque mois | Nombre | non      |               |
+| Femmes inscrites                           | Femmes inscrites aux activités de Kumi le jour de la saisie.                                             | À ce jour   | Nombre | non      |               |
+| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe de Kumi dans le mois. Différent des nouveaux STARs comptés par MDS. | Chaque mois | Nombre | non      |               |
+| Pages Roses : prestataires inscrites       | Prestataires inscrites sur Pages Roses le jour du relevé, selon la plateforme. Relevé une fois par mois. | À ce jour   | Nombre | non      |               |
+| Pages Roses : profils actifs               | Profils que Pages Roses compte comme actifs le jour du relevé. Relevé une fois par mois.                 | À ce jour   | Nombre | non      |               |
+| Pages Roses : demandes de mise en relation | Demandes de mise en relation reçues sur Pages Roses dans le mois, selon la plateforme.                   | Chaque mois | Nombre | non      |               |
+| Pages Roses : réservations                 | Réservations enregistrées sur Pages Roses dans le mois, selon la plateforme.                             | Chaque mois | Nombre | non      |               |
+| Call your sister : prises en charge        | Prises en charge de Call your sister dans le mois. Aucun détail.                                         | Chaque mois | Nombre | oui      |               |
 
 ### Ce que l'outil calcule
 
@@ -680,15 +729,15 @@ Question de la relecture : une activité est ponctuelle (atelier, rencontre, sor
 
 Un de ces indicateurs est sensible : voir « Les indicateurs sensibles » au début du document.
 
-| Indicateur tel qu'il apparaîtra            | Ce qu'on compte exactement                                                                                | Quand                              | Unité  | Sensible | Votre réponse |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- | ------------- |
-| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                 | Chaque mois                        | Nombre | non      |               |
-| Participants                               | Personnes venues à au moins une activité dans le mois, comptées une fois, hors outil.                     | Chaque mois                        | Nombre | non      |               |
-| Nouveaux participants                      | Personnes venues à une activité pour la première fois dans le mois. Un total, sans liste.                 | Chaque mois                        | Nombre | non      |               |
-| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                 | Chaque mois                        | Nombre | non      |               |
-| Inscrits                                   | Personnes inscrites aux activités d'Eagles le jour de la saisie.                                          | À ce jour                          | Nombre | non      |               |
-| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe d'Eagles dans le mois. Différent des nouveaux STARs comptés par MDS. | Chaque mois                        | Nombre | non      |               |
-| La plate-forme d'écoute : prises en charge | Prises en charge de la plate-forme d'écoute dans le mois. Mois fini seulement, aucun détail.              | Chaque mois, une fois le mois fini | Nombre | oui      |               |
+| Indicateur tel qu'il apparaîtra            | Ce qu'on compte exactement                                                                                | Quand       | Unité  | Sensible | Votre réponse |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
+| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                 | Chaque mois | Nombre | non      |               |
+| Participants                               | Personnes venues à au moins une activité dans le mois, comptées une fois, hors outil.                     | Chaque mois | Nombre | non      |               |
+| Nouveaux participants                      | Personnes venues à une activité pour la première fois dans le mois. Un total, sans liste.                 | Chaque mois | Nombre | non      |               |
+| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                 | Chaque mois | Nombre | non      |               |
+| Inscrits                                   | Personnes inscrites aux activités d'Eagles le jour de la saisie.                                          | À ce jour   | Nombre | non      |               |
+| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe d'Eagles dans le mois. Différent des nouveaux STARs comptés par MDS. | Chaque mois | Nombre | non      |               |
+| La plate-forme d'écoute : prises en charge | Prises en charge de la plate-forme d'écoute dans le mois. Aucun détail.                                   | Chaque mois | Nombre | oui      |               |
 
 ### Ce que l'outil calcule
 
@@ -950,12 +999,12 @@ Question de la relecture : un recrutement est « abouti » quand il mène à une
 
 Deux de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. « Enfants présents » et « Enfants inscrits » ne sont pas sensibles : un seul total, sans âge ni nom.
 
-| Indicateur tel qu'il apparaîtra | Ce qu'on compte exactement                                                                               | Quand                              | Unité  | Sensible | Votre réponse |
-| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------------- | ------ | -------- | ------------- |
-| Enfants présents                | Enfants accueillis ce dimanche, en un seul total, sans âge ni nom.                                       | Chaque dimanche                    | Nombre | non      |               |
-| Nouveaux enfants                | Enfants accueillis pour la première fois à Prodiges Junior dans le mois. Mois fini seulement.            | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Enfants déjà venus              | Enfants accueillis dans le mois qui l'avaient déjà été avant. Un total, sans liste. Mois fini seulement. | Chaque mois, une fois le mois fini | Nombre | oui      |               |
-| Enfants inscrits                | Enfants inscrits à Prodiges Junior le jour de la saisie.                                                 | À ce jour                          | Nombre | non      |               |
+| Indicateur tel qu'il apparaîtra | Ce qu'on compte exactement                                                          | Quand           | Unité  | Sensible | Votre réponse |
+| ------------------------------- | ----------------------------------------------------------------------------------- | --------------- | ------ | -------- | ------------- |
+| Enfants présents                | Enfants accueillis ce dimanche, en un seul total, sans âge ni nom.                  | Chaque dimanche | Nombre | non      |               |
+| Nouveaux enfants                | Enfants accueillis pour la première fois à Prodiges Junior dans le mois.            | Chaque mois     | Nombre | oui      |               |
+| Enfants déjà venus              | Enfants accueillis dans le mois qui l'avaient déjà été avant. Un total, sans liste. | Chaque mois     | Nombre | oui      |               |
+| Enfants inscrits                | Enfants inscrits à Prodiges Junior le jour de la saisie.                            | À ce jour       | Nombre | non      |               |
 
 ### Ce que l'outil calcule
 
