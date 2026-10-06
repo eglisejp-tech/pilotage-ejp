@@ -22,8 +22,8 @@ function nombreDePhrases(texte: string): number {
 }
 
 describe('catalogue des aides (T38)', () => {
-  it('compte les 31 textes de aides-contextuelles.md, section 6', () => {
-    expect(ENTREES).toHaveLength(31)
+  it('compte les 33 textes de aides-contextuelles.md, section 6', () => {
+    expect(ENTREES).toHaveLength(33)
   })
 
   it('nomme chaque code « écran.sujet », sans doublon', () => {
