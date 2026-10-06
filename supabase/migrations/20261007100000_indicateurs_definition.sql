@@ -12,7 +12,8 @@
 -- 4. Trigger controler_indicateur : sens figé, aucune suppression ; un indicateur sensible se
 --    crée et s'active comme les autres (P42), sans aucun réglage d'activation.
 -- 5. controler_mesure réécrit : plafond de l'unité, mois au 1er, ni mois futur ni avant janvier
---    de l'année précédente, mois en cours refusé pour un sensible, calcul jamais saisi.
+--    de l'année précédente, calcul jamais saisi. Le mois en cours se saisit aussi pour un
+--    indicateur sensible (décision de la personne responsable du 6 octobre 2026).
 -- 6. Politiques : lecture de indicateur et indicateur_terme (Q3 : un ministère lit les communs
 --    et les siens) ; ajout dans mesure (indicateur actif ou à valider, non calculé).
 -- 7. Ministère Coordination de code « coordination » (X7), comme FIJ.
@@ -437,8 +438,8 @@ create trigger ajout_seulement_vider before truncate on public.indicateur_terme
 -- Contrôles d'une valeur à un instant donné (l'heure de Paris décide du jour et du mois). Le
 -- trigger l'appelle avec now() ; les tests l'appellent avec des instants fixes (bascule du mois,
 -- dimanche matin). Dans l'ordre : indicateur ni actif ni à valider, calcul, plafond de l'unité,
--- puis la date (mois au 1er, ni futur, ni avant le 1er janvier de l'année précédente, mois en
--- cours refusé pour un sensible ; dimanche passé ou du jour, dès le matin).
+-- puis la date (mois au 1er, ni futur, ni avant le 1er janvier de l'année précédente, le mois en
+-- cours étant accepté pour tous, sensible compris ; dimanche passé ou du jour, dès le matin).
 create function private.controler_mesure_le(p_indicateur_id uuid, p_date_ref date, p_valeur integer,
   p_instant timestamptz)
 returns void
@@ -482,9 +483,6 @@ begin
     end if;
     if p_date_ref < make_date(extract(year from v_jour)::integer - 1, 1, 1) then
       raise exception 'Ce mois est trop ancien pour être saisi.';
-    end if;
-    if v_indicateur.sensible and p_date_ref = v_mois then
-      raise exception 'Ce chiffre se saisit une fois le mois fini.';
     end if;
   elsif v_indicateur.nature = 'dimanche' then
     if extract(isodow from p_date_ref) <> 7 or p_date_ref > v_jour then

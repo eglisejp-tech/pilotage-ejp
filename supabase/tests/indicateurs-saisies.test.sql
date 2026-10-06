@@ -1,6 +1,6 @@
 -- Saisies des indicateurs (étape 4, lot B1 ; configuration-indicateurs.md 5.3 ; BRIEF,
 -- section 4, « Unités » et « Rythmes » ; X2) : plafond de chaque unité, mois au 1er, ni mois
--- futur ni avant le 1er janvier de l'année précédente, mois en cours refusé pour un sensible,
+-- futur ni avant le 1er janvier de l'année précédente, mois en cours accepté pour un sensible,
 -- bascule du mois à l'heure de Paris, dimanche du jour dès le matin, calcul jamais saisi (par
 -- le trigger et par la politique), indicateur retiré nommé dans le message, ajout à valider
 -- saisissable, EJP Tech et les autres profils refusés.
@@ -8,7 +8,7 @@
 -- instant), que le trigger appelle avec now().
 begin;
 
-select plan(55);
+select plan(60);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -125,8 +125,11 @@ select is(pg_temp.saisir('Essai s. nombre', make_date(extract(year from private.
   'janvier de l''année précédente est accepté (rattrapage)');
 select is(pg_temp.saisir('Essai s. nombre', make_date(extract(year from private.aujourdhui())::int - 2, 12, 1), 5),
   'P0001 Ce mois est trop ancien pour être saisi.', 'décembre d''il y a deux ans est refusé');
-select is(pg_temp.saisir('Essai s. sensible', (select mois from ctx), 1), 'P0001 Ce chiffre se saisit une fois le mois fini.',
-  'sensible : le mois en cours est refusé');
+select is(pg_temp.saisir('Essai s. sensible', (select mois from ctx), 1), 'ok', 'sensible : le mois en cours est accepté');
+select is(pg_temp.saisir('Essai s. sensible', ((select mois from ctx) + interval '1 month')::date, 1),
+  'P0001 Ce mois n''est pas encore commencé.', 'sensible : un mois futur reste refusé');
+select is(pg_temp.saisir('Essai s. sensible', (select mois_passe from ctx) + 14, 1), 'P0001 Un mois se saisit à la date de son 1er jour.',
+  'sensible : le 15 du mois reste refusé');
 select is(pg_temp.saisir('Essai s. sensible', (select mois_passe from ctx), 1), 'ok', 'sensible : le dernier mois écoulé est accepté');
 
 -- Bascule du mois le 31 octobre 2026 à 23 h 30 UTC : déjà le 1er novembre à Paris.
@@ -134,14 +137,20 @@ select is(pg_temp.le('Essai s. nombre', date '2026-11-01', 5, timestamptz '2026-
   '31 oct. 23 h 30 UTC : novembre est le mois en cours à Paris');
 select is(pg_temp.le('Essai s. nombre', date '2026-12-01', 5, timestamptz '2026-10-31 23:30+00'), 'Ce mois n''est pas encore commencé.',
   '31 oct. 23 h 30 UTC : décembre est futur');
-select is(pg_temp.le('Essai s. sensible', date '2026-11-01', 1, timestamptz '2026-10-31 23:30+00'),
-  'Ce chiffre se saisit une fois le mois fini.', '31 oct. 23 h 30 UTC : novembre en cours, refusé pour un sensible');
+select is(pg_temp.le('Essai s. sensible', date '2026-11-01', 1, timestamptz '2026-10-31 23:30+00'), 'ok',
+  '31 oct. 23 h 30 UTC : novembre en cours, accepté pour un sensible');
+select is(pg_temp.le('Essai s. sensible', date '2026-12-01', 1, timestamptz '2026-10-31 23:30+00'), 'Ce mois n''est pas encore commencé.',
+  '31 oct. 23 h 30 UTC : décembre reste futur pour un sensible');
+select is(pg_temp.le('Essai s. sensible', date '2024-12-01', 1, timestamptz '2026-10-31 23:30+00'), 'Ce mois est trop ancien pour être saisi.',
+  'décembre 2024 reste refusé en 2026 pour un sensible');
 select is(pg_temp.le('Essai s. sensible', date '2026-10-01', 1, timestamptz '2026-10-31 23:30+00'), 'ok',
   '31 oct. 23 h 30 UTC : octobre est fini à Paris, accepté pour un sensible');
 select is(pg_temp.le('Essai s. nombre', date '2026-11-01', 5, timestamptz '2026-10-31 22:30+00'), 'Ce mois n''est pas encore commencé.',
   '31 oct. 22 h 30 UTC (23 h 30 à Paris) : novembre est encore futur');
-select is(pg_temp.le('Essai s. sensible', date '2026-10-01', 1, timestamptz '2026-10-31 22:30+00'),
-  'Ce chiffre se saisit une fois le mois fini.', '31 oct. 22 h 30 UTC : octobre est encore en cours pour un sensible');
+select is(pg_temp.le('Essai s. sensible', date '2026-10-01', 1, timestamptz '2026-10-31 22:30+00'), 'ok',
+  '31 oct. 22 h 30 UTC : octobre est encore en cours, accepté pour un sensible');
+select is(pg_temp.le('Essai s. sensible', date '2026-11-01', 1, timestamptz '2026-10-31 22:30+00'), 'Ce mois n''est pas encore commencé.',
+  '31 oct. 22 h 30 UTC : novembre est encore futur pour un sensible');
 select is(pg_temp.le('Essai s. nombre', date '2025-01-01', 5, timestamptz '2026-10-31 23:30+00'), 'ok',
   'janvier 2025 accepté en 2026');
 select is(pg_temp.le('Essai s. nombre', date '2024-12-01', 5, timestamptz '2026-10-31 23:30+00'), 'Ce mois est trop ancien pour être saisi.',

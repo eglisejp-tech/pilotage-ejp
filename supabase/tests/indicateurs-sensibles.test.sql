@@ -1,14 +1,14 @@
 -- Indicateurs sensibles (étape 4, lot B1 ; BRIEF, section 4, « Indicateurs sensibles » ; P42 ;
 -- configuration-indicateurs.md 3.7) : un sensible se crée et s'active comme les autres, sans
 -- aucun réglage d'activation ; sa forme est imposée (mois, nombre, aucun calcul) ; il n'est
--- jamais source d'un calcul ; seuls les mois écoulés se saisissent ; son remplaçant est
+-- jamais source d'un calcul ; le mois en cours se saisit (6 octobre 2026), pas un mois futur ; son remplaçant est
 -- sensible ; la case ne change plus.
 -- Les fonctions creer_indicateur et creer_indicateurs_prevus (B3) écrivent par une insertion
 -- du propriétaire des tables, comme ici : le trigger controler_indicateur s'applique quel que
 -- soit le chemin. B3 rejoue ces cas par ses fonctions.
 begin;
 
-select plan(19);
+select plan(20);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -35,9 +35,13 @@ select tests.se_connecter((select com from ctx), 'aal2');
 select lives_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select sens, com_m, mois_passe, 2 from ctx
 $$, 'il se saisit pour le dernier mois écoulé');
-select throws_ok($$
+select lives_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select sens, com_m, mois, 2 from ctx
-$$, 'P0001', 'Ce chiffre se saisit une fois le mois fini.', 'le mois en cours est refusé');
+$$, 'le mois en cours est accepté (décision du 6 octobre 2026)');
+select throws_ok($$
+  insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
+  select sens, com_m, (mois + interval '1 month')::date, 2 from ctx
+$$, 'P0001', 'Ce mois n''est pas encore commencé.', 'un mois futur reste refusé');
 select tests.deconnecter();
 
 -- Forme imposée
