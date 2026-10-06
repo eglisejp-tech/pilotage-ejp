@@ -336,7 +336,7 @@ Tech lit tout ; **l'administration, le berger et le conseil ne lisent rien**. Aj
 
 | Table                  | Colonnes                                                                                                                                                                                                                                                            |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `categorie_sensible`   | `prevu_code text` (référence `private.indicateur_prevu(code)`, un prévu sensible), `code text` (section 4), `libelle text` (1 à 40 caractères), `ordre smallint`, `retiree_le date` (null) ; clé (`prevu_code`, `code`)                                             |
+| `categorie_sensible`   | `prevu_code text` (référence `private.indicateur_prevu(code)`, un prévu sensible), `code text` (section 4), `libelle text` (1 à 40 caractères), `ordre smallint` (au moins 1, unique par `prevu_code`), `retiree_le date` (null) ; clé (`prevu_code`, `code`)       |
 | `ventilation_sensible` | `id bigint` (identité), `mesure_id bigint` (référence `mesure`), `indicateur_id uuid`, `ministere_id uuid`, `mois date` (1er du mois), `categorie text`, `valeur integer` (0 à 9 999), `saisi_le timestamptz`, `saisi_par uuid` ; unique (`mesure_id`, `categorie`) |
 | `precision_sensible`   | `id uuid`, `mesure_id bigint` (unique, référence `mesure`), `indicateur_id uuid`, `ministere_id uuid`, `mois date` (1er du mois), `texte text` (10 à 280 après `trim`), `saisi_le timestamptz`, `saisi_par uuid`                                                    |
 
@@ -345,14 +345,22 @@ Tech lit tout ; **l'administration, le berger et le conseil ne lisent rien**. Aj
   un trigger refuse modification et suppression dès qu'une ligne de `ventilation_sensible` utilise
   la catégorie, sauf la pose de `retiree_le` (de null à une date, par migration, quand la
   coordination change sa liste : une catégorie retirée ne s'affiche plus dans la grille de saisie
-  et reste lisible dans les anciennes répartitions) ; 3 à 6 catégories par indicateur (consigne
-  proposée par EJP Tech, supposée par la règle d'affichage de P47) ; lue comme `indicateur` (Q3) : il existe un indicateur sensible lisible dont
+  et reste lisible dans les anciennes répartitions) ; 3 à 6 catégories en cours par indicateur
+  (consigne proposée par EJP Tech, supposée par la règle d'affichage de P47) : **la base
+  l'impose** à chaque répartition (le trigger de `ventilation_sensible` et `saisir_chiffres_mois`
+  refusent une répartition dont la liste en cours, hors catégories retirées, compte moins de 3 ou
+  plus de 6 catégories : l'indicateur n'a alors pas de répartition) ; l'ordre est unique dans une
+  liste (la règle de P47 départage « la première dans l'ordre de la liste » : trier par `ordre`
+  suffit) ; lue comme `indicateur` (Q3) : il existe un indicateur sensible lisible dont
   `modele_code` vaut `prevu_code`. RLS, `aal2`, GRANT `select` seulement.
 - `ventilation_sensible` et `precision_sensible` : ajout seulement (`forcer_auteur`, trigger
   d'inaltérabilité ; seule exception `masquer_texte` pour `precision_sensible.texte`), RLS, `aal2`,
   GRANT `select` seulement : seule `saisir_chiffres_mois` y écrit. `indicateur_id`, `ministere_id`
   et `mois` reprennent ceux de la ligne de `mesure` (la fonction les pose). La somme des catégories
-  d'un `mesure_id` ne dépasse jamais sa `valeur`.
+  d'un `mesure_id` ne dépasse jamais sa `valeur`. **Une répartition reprend toute la liste en
+  cours** (T42, proposé) : une catégorie que le ministère ne renseigne pas est écrite à 0, jamais
+  absente ; le lien entre `categorie` et `categorie_sensible` ne tient que par les triggers, un
+  test vérifie qu'aucune ligne n'a une catégorie absente de la liste de son indicateur.
 - Lecture : `ventilation_sensible` par le seul ministère (`ministere_id = private.mon_ministere()`),
   les autres passent par `v_ventilation_sensible` ; `precision_sensible` (table brute) par le
   ministère auteur (`ministere_id = private.mon_ministere()`) et par EJP Tech seul (relecture et
@@ -502,8 +510,10 @@ précédent si la date a changé, sinon null). Les mentions se lisent dans `even
 
 Servie par `private.ventilations_sensibles()` (`security definer`, `aal2` contrôlé dans le jeton,
 filtre du lecteur réappliqué : `private.lit_tout()` ou `ministere_id = private.mon_ministere()` ;
-rien pour l'administration ni pour un autre ministère). Une ligne par catégorie renseignée de la
-répartition du total le plus récent de chaque mois, plus une ligne « Non réparti » :
+rien pour l'administration ni pour un autre ministère). Une ligne par catégorie de la liste en
+cours de la répartition du total le plus récent de chaque mois (une catégorie non renseignée vaut
+0, T42 proposé ; une catégorie retirée depuis garde sa ligne dans une ancienne répartition), plus
+une ligne « Non réparti » :
 
 | Colonne         | Type       | Sens                                                                                                   |
 | --------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
@@ -542,6 +552,15 @@ Mêmes colonnes ; `cible_texte` gagne `indicateur` (libellé actuel, B3), `preci
 « Précision : » suivi du libellé actuel de l'indicateur et du mois, jamais le texte) et
 `signalement` (B7 : code de l'écran, jamais le texte, fixé par W0).
 
+Pour `precision_sensible`, `cible_texte` se lit sous la RLS de la table brute : le ministère auteur
+et EJP Tech reçoivent le texte « Précision : … » ; **le berger et le conseil reçoivent null** (ils
+lisent la ligne de journal mais pas la précision, ce qui ne révèle pas qu'une précision remplacée
+a existé). Les écrans du journal affichent alors un texte de repli, par exemple « Précision d'un
+indicateur sensible ». B7 part de la version de B8 de la politique de lecture de `journal`, de
+`v_journal`, de `masquer_texte`, de `marquer_relu` et de `auteur_texte`, puis ajoute la condition
+de P51 (l'administration ne lit plus les lignes `texte_relu` et `texte_masque` de cible
+`demande_indicateur`) avec son test de matrice.
+
 ## 7. Fonctions nouvelles
 
 Chaque fonction de l'API : `private.<nom>` en `security definer`, `set search_path = ''`,
@@ -575,7 +594,8 @@ rubriques sur 8 départements), sans doublon ; une seule ligne de journal par en
 `[{"indicateur_id": "...", "valeur": 7, "categories": {"malaise": 4, "blessure": 2}, "precision":
 "..."}, ...]`, sans doublon d'indicateur. `indicateur_id` et `valeur` sont obligatoires ;
 `categories` et `precision` sont facultatifs et réservés aux indicateurs sensibles (`categories`
-seulement si l'indicateur a des catégories). Tout le mois part en un appel : une seule instruction
+seulement si la liste en cours de l'indicateur compte de 3 à 6 catégories ; une catégorie absente
+de l'objet est écrite à 0, T42 proposé). Tout le mois part en un appel : une seule instruction
 `insert` dans `mesure` (une ligne de journal `mesure_saisie`), puis les lignes de
 `ventilation_sensible` et de `precision_sensible`, tout ou rien. La partie `private` réapplique les
 conditions de la politique d'ajout de `mesure` (ministère de la session, indicateur du mois à lui,
