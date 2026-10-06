@@ -226,8 +226,9 @@ Aucune couleur en dur, aucune dépendance nouvelle.
 | Police                   | `--f-interface`, 14 px dans la bulle, 700 pour le « ? »     |
 | Focus                    | focus global du projet                                      |
 
-Deux ajouts proposés à `src/styles/tokens.css` (jamais à la référence, BRIEF section 10) :
-`--aide-disque: 20px` et `--aide-largeur: 280px`.
+Deux variables du composant, `--aide-disque: 20px` et `--aide-largeur: 280px`, posées par W0
+dans `src/index.css` avec la classe `.aide-forme` : `src/styles/tokens.css` reste la copie de la
+référence et ne reçoit aucun token nouveau.
 
 ### Réalisation
 

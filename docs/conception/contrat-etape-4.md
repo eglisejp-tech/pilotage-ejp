@@ -20,7 +20,9 @@ parallèle. Aucun ne change une règle métier.
 Posés une fois par `supabase/migrations/20261007090000_contrats_etape_4.sql`, vérifiés par
 `supabase/tests/contrats-etape-4.test.sql`. **Aucun lot ne retouche ces contraintes.** Noms des
 contraintes : `journal_action_check`, `journal_cible_check`, `moderation_cible_check`,
-`moderation_cible_champ_check`.
+`moderation_cible_champ_check`, et `moderation_masque_check` (une décision « masque » si et
+seulement si un champ et un motif sont donnés : contrainte des étapes 1 à 3, nommée par
+`20261007090500_contrats_etape_4_correctifs.sql`).
 
 ### Actions du journal (`journal.action`)
 
@@ -36,7 +38,7 @@ Les 20 codes des étapes 1 à 3 restent. Codes nouveaux :
 | `indicateur_retire`        | B3  | `retirer_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"motif", "avec_saisies", "calculs"}` (code du motif, section 4)                                            |
 | `fij_statistiques_saisies` | B5  | `saisir_fij_statistiques`                                | aucune (`null`), comme `fij_saisie`          | le ministère `fij`    | `{"dimanche", "nombre"}` (nombre de valeurs envoyées), jamais une valeur (fixé par W0)                       |
 | `difficulte_signalee`      | B7  | `signaler_difficulte`                                    | `signalement`, le signalement                | le ministère auteur   | `{"ecran"}` (code de l'écran), jamais le texte                                                               |
-| `signalement_clos`         | B7  | `clore_signalement`                                      | `signalement`, le signalement (pas le suivi) | le ministère auteur   | `{"avec_commentaire": true}` ou `false` (fixé par W0), jamais le commentaire                                 |
+| `signalement_clos`         | B7  | `clore_signalement`                                      | `signalement`, le signalement (pas le suivi) | le ministère auteur   | `{"ecran", "avec_commentaire"}` (T39 : le code de l'écran ; `true` ou `false`), jamais le commentaire        |
 
 Codes repris et étendus (déjà dans la liste) :
 
@@ -46,7 +48,29 @@ Codes repris et étendus (déjà dans la liste) :
 - `evenement_ajoute` (B6) : `{"date", "statut", "mentions": [uuid]}`, jamais le nom d'un ministère.
 - `evenement_modifie` (B6) : `{"date", "statut", "date_precedente"}`.
 - `texte_relu`, `texte_masque` : `cible` vaut la cible de la modération (donc aussi
-  `demande_indicateur`, `validation`, `signalement`, `signalement_suivi`).
+  `demande_indicateur`, `validation`, `signalement`, `signalement_suivi`), et `ministere_id` le
+  ministère de l'auteur du texte.
+
+**Lecture des lignes des signalements (T39, décidé).** Une ligne `difficulte_signalee` ou
+`signalement_clos`, et toute ligne `texte_relu` ou `texte_masque` dont la cible est `signalement`
+ou `signalement_suivi`, ne se lit que par le ministère auteur et par EJP Tech : elle dit qu'un
+signalement existe, et `texte_masque` en donne même le motif. B7 recrée la politique de lecture de
+`journal` depuis sa dernière version et ajoute, aux branches `private.lit_tout()` et
+administration, la condition :
+
+```sql
+(coalesce(cible, '') not in ('signalement', 'signalement_suivi')
+ and action not in ('difficulte_signalee', 'signalement_clos'))
+or (select private.mon_type()) = 'admin_plateforme'
+```
+
+La branche du ministère (`ministere_id = (select private.mon_ministere())`) reste : le ministère
+auteur garde ces lignes dans « Mon journal ». `v_journal` applique la même condition (B7). La liste
+fermée de `private.journal_lisible_administration` (B2) contient `texte_relu` et `texte_masque` :
+c'est la condition sur la cible, pas cette liste, qui retire ces lignes à l'administration. Le
+test de matrice de B7 vérifie qu'une ligne `texte_masque` sur un signalement reste invisible pour
+le berger, le conseil, l'administration et un autre ministère, et lisible par le ministère auteur
+et par EJP Tech.
 
 Absents, réservés au lot 2 des indicateurs (refusés par la contrainte) :
 `indicateur_correction_demandee`, `indicateur_officiel`.
@@ -164,10 +188,18 @@ réunion ; `autre` Autre écran. Un code inconnu dans l'adresse devient `autre`.
 
 ## 5. Tables nouvelles
 
-Toutes en ajout seulement (trigger d'inaltérabilité, seule exception `masquer_texte` sous
-`pilotage.masquage`), RLS active, politique restrictive `double_authentification` en `aal2`,
-GRANT `select` seulement à `authenticated` (l'ajout passe par les fonctions), rien pour `anon` ni
-`service_role`.
+Les sept tables nouvelles (`indicateur_terme`, `demande_indicateur`, `validation`,
+`fij_statistique`, `evenement_mention`, `signalement`, `signalement_suivi`) : toutes en ajout
+seulement (trigger d'inaltérabilité avant `update` et `delete`, seule exception `masquer_texte`
+sous `pilotage.masquage` ; contrôle générique de `structure.test.sql`), RLS active, politique
+restrictive `double_authentification` en `aal2`, GRANT `select` seulement à `authenticated`
+(l'ajout passe par les fonctions), rien pour `anon` ni `service_role`.
+
+`indicateur` n'est pas une table nouvelle ni une table en ajout seulement : B1 lui ajoute des
+colonnes, et les fonctions de B3 (`corriger_indicateur`, `retirer_indicateur`,
+`valider_indicateur`) mettent à jour `etat`, `retire_le`, `retrait_motif`, `texte_le` et
+`texte_par`. Aucun GRANT `update` pour autant : ces mises à jour passent par les fonctions
+`private` en `security definer`.
 
 ### `indicateur`, colonnes ajoutées (B1)
 
@@ -438,22 +470,28 @@ clos. » (B7).
 Celle de `docs/plan-etape-4.md`, section 4, avec la décision du 6 octobre 2026 sur les
 signalements, qui remplace les lignes « à confirmer » :
 
-| Objet                 | Ministère                                 | Berger, conseil | Administration | EJP Tech                           | `aal1`, anonyme |
-| --------------------- | ----------------------------------------- | --------------- | -------------- | ---------------------------------- | --------------- |
-| `signalement`         | L les siens ; A par `signaler_difficulte` | rien            | rien           | L tous                             | rien            |
-| `signalement_suivi`   | L celui de ses signalements               | rien            | rien           | L tous ; A par `clore_signalement` | rien            |
-| `signaler_difficulte` | sa fiche seulement                        | refusé          | refusé         | refusé                             | refusé          |
-| `clore_signalement`   | refusé                                    | refusé          | refusé         | oui                                | refusé          |
+| Objet                      | Ministère                                 | Berger, conseil                                      | Administration                                                                                        | EJP Tech                           | `aal1`, anonyme |
+| -------------------------- | ----------------------------------------- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------- |
+| `signalement`              | L les siens ; A par `signaler_difficulte` | rien                                                 | rien                                                                                                  | L tous                             | rien            |
+| `signalement_suivi`        | L celui de ses signalements               | rien                                                 | rien                                                                                                  | L tous ; A par `clore_signalement` | rien            |
+| `signaler_difficulte`      | sa fiche seulement                        | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
+| `clore_signalement`        | refusé                                    | refusé                                               | refusé                                                                                                | oui                                | refusé          |
+| `journal` (codes nouveaux) | lignes de sa fiche                        | toutes, sauf les lignes des signalements (section 1) | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements ; aucune ligne des signalements | toutes                             | rien            |
+
+Les lignes des signalements du journal (`difficulte_signalee`, `signalement_clos`, et
+`texte_relu` ou `texte_masque` de cible `signalement` ou `signalement_suivi`) ne se lisent que par
+le ministère auteur et par EJP Tech (T39, décidé ; condition de la section 1, écrite par B7).
 
 Chaque lot de base écrit ses lignes en données et les parcourt avec l'aide de
 `supabase/tests/000-outils.test.sql` :
 
 ```sql
+select plan(12 + tests.nombre_essais(:matrice, :profils, true));  -- 12 : les autres tests du fichier
 select * from tests.verifier_matrice(
   $$ values ('ministère A', 'signalement', 'lire', 'aal2', '1', 'select 1 from public.signalement'),
             ('EJP Tech', 'clore_signalement', 'appeler', 'aal2', 'ok', 'select public.clore_signalement(...)') $$,
   $$ select 'ministère A', a from ctx union all select 'EJP Tech', tech from ctx $$,
-  true);  -- vrai : ajoute la ligne aal1 de chaque ligne aal2 et la ligne de l'anonyme
+  true);  -- vrai : ajoute les lignes aal1 dérivées et la ligne de l'anonyme
 ```
 
 Colonnes de la matrice : `profil`, `objet`, `action` (« lire » compte les lignes, toute autre
@@ -461,16 +499,43 @@ action exécute la requête), `aal` (`aal1` ou `aal2`), `attendu` (nombre de lig
 code d'erreur comme `42501`), `requete`. Un test pgTAP par ligne ; chaque essai est annulé
 aussitôt. `tests.essai(compte, aal, requête, mode)` sert aussi seul.
 
+Règles de l'aide (`000-outils.test.sql`) :
+
+- **Lignes dérivées** (troisième argument à vrai). Une ligne aal1 n'est dérivée que d'une ligne
+  aal2 **acceptée** (`ok`, ou pour « lire » un nombre de lignes de 0 à 9999 ; un code d'erreur
+  a cinq caractères, comme `42501`) : elle attend `0` pour une lecture d'une table
+  ou d'une vue, `42501` pour toute autre action et pour une lecture qui appelle une fonction de
+  `public` (`exige_aal2`). Une ligne refusée en aal2 n'a pas de ligne aal1 dérivée (l'erreur en
+  aal1 dépend de l'ordre des contrôles : un trigger avant l'ajout passe avant la RLS) : le lot
+  écrit sa ligne aal1 s'il veut la tester. L'anonyme a une ligne par objet, action et requête,
+  qui attend `42501`.
+- **Une ligne écrite remplace la ligne dérivée** de même profil, objet, action et requête (en
+  aal1, ou pour l'anonyme). C'est le cas de `compte` : un compte lit sa propre ligne en aal1, la
+  ligne aal1 attend donc `1`.
+- **Nombre de tests** : `tests.nombre_essais(matrice, profils, dériver)` rend le nombre d'essais,
+  lignes dérivées comprises, pour `plan()`. L'ordre des essais est fixe (objet, action, requête).
+- **Profils** : un profil présent deux fois dans la requête des profils lève une erreur.
+- **Écriture sans ligne** : `tests.essai` rend `ok` pour un appel (requête qui commence par
+  `select`) ou pour une écriture qui touche au moins une ligne, et `ok:0` pour une écriture qui
+  n'en touche aucune (un `insert ... select` vide, un `update` filtré par la RLS) : une ligne
+  « acceptée » doit vraiment écrire.
+
 Contrôles génériques de `structure.test.sql` que chaque objet nouveau doit passer dès son lot :
-RLS et politique restrictive `aal2` sur toute table ; aucun droit pour `anon` ; aucun `update`,
-`delete` ni `truncate` pour `authenticated` ; `insert` seulement sur `mesure`, `fij_departement`,
+RLS et **exactement** la politique restrictive `aal2` de référence sur toute table (comparée
+à une copie écrite dans le test) ; aucun droit pour `anon` ; aucun `update`, `delete` ni
+`truncate` pour `authenticated` ; `insert` seulement sur `mesure`, `fij_departement`,
 `participation`, `evenement_etat` et `reunion` ; rien pour `anon` ni `authenticated` sur une
-table de `private` ; `service_role` seulement sur `ministere`, `compte` et `journal` ; toute vue en
-`security_invoker` ; toute fonction de `public` en `security invoker`, qui appelle sa partie
+table de `private` ; un GRANT sur une seule colonne compte comme un droit
+(`has_any_column_privilege`) ; `service_role` seulement sur `ministere`, `compte` et `journal` ;
+toute vue en `security_invoker` ; aucune fonction `security definer` hors de `private`, dans aucun
+schéma du projet ; toute fonction de `public` en `security invoker`, qui appelle sa partie
 `private` du même nom, `security definer`, commençant par `perform private.exige_aal2();` ; toute
-fonction `private` en `security definer` qui sert une vue contrôle `aal2` dans son jeton ;
-`forcer_auteur` sur toute table qui porte `saisi_par` ; aucun SQL dynamique ; aucun check avec
-`now()` ou `current_date`.
+fonction `private` en `security definer` qui sert une vue (`returns table`) contrôle `aal2` dans
+son jeton, par l'expression `(select auth.jwt() ->> 'aal') = 'aal2'` (avec ou sans `coalesce`)
+ou par `perform private.exige_aal2()`, hors commentaire ; `forcer_auteur` (la fonction
+`private.forcer_auteur()`, avant l'ajout de chaque ligne) sur toute table qui porte `saisi_par` ;
+un trigger avant `update` et `delete`, par ligne, sur toute table nouvelle de `public` ; aucun SQL
+dynamique ; aucun check avec `now()` ou `current_date`.
 
 ## 9. Adresses, pages amorces et aperçus
 
@@ -516,16 +581,20 @@ Aperçus sans base ni écriture (captures) : `/apercu/fiche`, `/apercu/saisies`,
 - `src/features/signalement/LienSignalement.tsx` : « Signaler une difficulté », lien vers
   `/signaler?ecran=<code>`, posé par chaque formulaire de saisie en bas, sous ses boutons.
 - Aides (T38) : `src/components/aide/Aide.tsx`, `LibelleAvecAide.tsx`, `textesAide.ts`. Le
-  bouton d'aide est un carré de 20 px (angles droits, forme dans une seule classe CSS, question 15
-  ouverte), cible de 44 px ; bulle aux tokens de `aides-contextuelles.md`.
+  bouton d'aide est un **bouton rond** de 20 px, seul élément rond de l'outil (T38, décidé le
+  6 octobre 2026 ; forme dans la seule classe `.aide-forme` de `src/index.css`), cible de 44 px ;
+  la bulle garde ses angles droits, aux tokens de `aides-contextuelles.md`. Les variables
+  `--aide-disque` et `--aide-largeur` vivent dans `src/index.css` : `src/styles/tokens.css` ne
+  reçoit aucun token nouveau.
+- Briques de saisie (`src/features/saisie/`) : `ChampNombre` nomme ses boutons « Ajouter un :
+  <libellé> » et « Retirer un : <libellé> » ; `MessageReussite` prend `envoi` (un compteur des
+  envois réussis) pour afficher de nouveau le même message après une correction.
 
 ## 11. Points ouverts
 
-- **Journal des signalements** : la politique de lecture du journal ouvre aujourd'hui toutes les
-  lignes au berger, au conseil et à EJP Tech (`private.lit_tout()`). Une ligne
-  `difficulte_signalee` ou `signalement_clos` ne porte aucun texte, mais dit qu'un signalement
-  existe. B7 propose, avant de coder, de la réserver au ministère auteur et à EJP Tech, pour suivre
-  la décision du 6 octobre 2026 (question à la personne responsable).
 - **Page Confidentialité** (lot I) : dire « EJP Tech lit votre signalement. », sans
   l'administration (le plan, lot I, citait encore l'administration).
-- **Forme du bouton d'aide** (question 15) : carré de 20 px en attendant la réponse.
+
+Décidés le 6 octobre 2026, retirés des points ouverts : le journal des signalements (lu par le
+ministère auteur et EJP Tech seulement, section 1 ; B7 recrée la politique de `journal`) et la
+forme du bouton d'aide (rond, section 10).
