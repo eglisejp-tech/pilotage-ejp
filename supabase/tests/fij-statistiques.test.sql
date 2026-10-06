@@ -32,8 +32,10 @@ grant select on ctx to authenticated, anon;
 
 select has_table('public', 'fij_statistique', 'la table fij_statistique existe');
 select results_eq($$
-  select c.column_name::text, c.data_type::text from information_schema.columns c
-   where c.table_schema = 'public' and c.table_name = 'fij_statistique' order by c.ordinal_position
+  select a.attname::text collate "default", format_type(a.atttypid, a.atttypmod) collate "default"
+    from pg_attribute a
+   where a.attrelid = 'public.fij_statistique'::regclass and a.attnum > 0 and not a.attisdropped
+   order by a.attnum
 $$, $$ values ('id', 'bigint'), ('ministere_id', 'uuid'), ('rubrique', 'text'), ('departement', 'text'),
               ('dimanche', 'date'), ('valeur', 'integer'), ('saisi_le', 'timestamp with time zone'),
               ('saisi_par', 'uuid') $$,
@@ -45,8 +47,10 @@ select results_eq($$ select code, libelle, ordre::int from private.fij_rubrique 
   'les quatre rubriques, leurs libellés et leur ordre');
 select has_view('public', 'v_fij_statistique', 'la vue v_fij_statistique existe');
 select results_eq($$
-  select c.column_name::text, c.data_type::text from information_schema.columns c
-   where c.table_schema = 'public' and c.table_name = 'v_fij_statistique' order by c.ordinal_position
+  select a.attname::text collate "default", format_type(a.atttypid, a.atttypmod) collate "default"
+    from pg_attribute a
+   where a.attrelid = 'public.v_fij_statistique'::regclass and a.attnum > 0 and not a.attisdropped
+   order by a.attnum
 $$, $$ values ('rubrique', 'text'), ('rubrique_libelle', 'text'), ('rubrique_ordre', 'smallint'),
               ('dimanche', 'date'), ('total', 'bigint'), ('nb_departements', 'integer'),
               ('departements', 'jsonb'), ('derniere_saisie_le', 'timestamp with time zone') $$,
