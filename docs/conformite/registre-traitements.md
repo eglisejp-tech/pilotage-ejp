@@ -309,7 +309,9 @@ archivage du dépôt du code.
 - **Données sensibles** : aucune.
 - **Destinataires** :
   - un ministère lit les lignes de son ministère et de son compte ;
-  - le berger, le conseil et EJP Tech lisent tout le journal ;
+  - EJP Tech lit tout le journal ; le berger et le conseil le lisent aussi, sauf les lignes d'un
+    signalement (`difficulte_signalee`, `signalement_clos`), que seuls le ministère concerné et EJP
+    Tech lisent ;
   - l'administration de l'église lit une liste limitée d'actions, fixée dans la base ;
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
     Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et
@@ -369,9 +371,11 @@ archivage du dépôt du code.
 - **Destinataires** (décidé) : le ministère lit ses signalements et leur clôture ; EJP Tech les lit
   tous et les clôt ; ni l'administration de l'église, ni le berger, ni le conseil, ni les autres
   ministères n'y ont accès (l'administration ne voit ni les pages des ministères ni les points, et
-  un signalement parle du contenu d'une page). EJP Tech transmet à l'administration, hors de
-  l'outil, ce qui la concerne. Un problème de compte ou de connexion ne passe pas par ce
-  signalement.
+  un signalement parle du contenu d'une page). Les lignes de journal de l'envoi et de la clôture
+  (ministère, compte, date, écran, sans le texte) ne sont lues, elles aussi, que par le ministère
+  et EJP Tech : la base les retire au berger et au conseil, qui lisent le reste du journal. EJP
+  Tech transmet à l'administration, hors de l'outil, ce qui la concerne. Un problème de compte ou
+  de connexion ne passe pas par ce signalement.
 - **Mesures prévues** : rappel sous le champ, 280 caractères au plus, refus par la base d'un texte
   qui ressemble à un email, à un numéro de téléphone ou à une civilité suivie d'un nom ; relecture
   et masquage par EJP Tech ; ajout seulement ; journal avec le code de l'écran, sans le texte ;
