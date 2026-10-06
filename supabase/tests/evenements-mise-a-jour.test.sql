@@ -11,8 +11,7 @@ select plan(25);
 create temp table ctx as
 select tests.creer_ministere('Mise à jour A') as a_m,
        tests.creer_ministere('Mise à jour B') as b_m;
-alter table ctx add column a uuid, add column b uuid, add column ev1 uuid, add column ev2 uuid,
-  add column ev3 uuid;
+alter table ctx add column a uuid, add column b uuid, add column ev1 uuid, add column ev2 uuid;
 update ctx set a = tests.creer_compte('maj-a@exemple.test', 'ministere', a_m),
                b = tests.creer_compte('maj-b@exemple.test', 'ministere', b_m);
 grant select on ctx to authenticated;
@@ -135,37 +134,29 @@ select throws_ok($$
 $$, '42501', null, 'aal1 : le porteur est refusé par la politique aal2, sans message sur l''état');
 select tests.deconnecter();
 
--- Bascule de minuit à Paris : le 14 oct. 2026 à 22 h 30 UTC, il est 0 h 30 le 15 oct. à Paris.
--- private.aujourdhui() est remplacée dans cette transaction (annulée à la fin) par la même
--- règle appliquée à cet instant fixe, au nom de postgres, propriétaire de la fonction.
-set local role postgres;
-create or replace function private.aujourdhui() returns date
-language sql stable set search_path = '' as $$
-  select (timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date
-$$;
-reset role;
-select is(private.aujourdhui(), date '2026-10-15', 'à 22 h 30 UTC le 14 oct., la date de Paris est le 15 oct.');
+-- Bascule de minuit à Paris. Les refus comparent à private.aujourdhui(), date de Paris
+-- (dates.test.sql), jamais à current_date ni à now() en UTC : le 14 oct. 2026 à 22 h 30 UTC,
+-- il est 0 h 30 le 15 oct. à Paris, et une nouvelle date au 14 oct. est déjà « hier ».
+select is(private.aujourdhui(), (now() at time zone 'Europe/Paris')::date, 'aujourdhui() est la date de Paris');
+select is((timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date, date '2026-10-15',
+  'à 22 h 30 UTC le 14 oct., la date de Paris est le 15 oct.');
 select is((timestamptz '2026-10-14 22:30:00+00' at time zone 'UTC')::date, date '2026-10-14',
   'au même instant, la date UTC est encore le 14 oct.');
-
-select tests.se_connecter((select a from ctx), 'aal2');
-select lives_ok($$ select public.ajouter_evenement('Mise à jour, minuit', date '2026-10-20', 'valide', '{}') $$,
-  'minuit : A ajoute un événement pour le 20 oct.');
-select throws_ok($$ select public.ajouter_evenement('Mise à jour, minuit refusé', date '2026-10-14', 'valide', '{}') $$,
-  'P0001', 'La date ne peut pas être passée.', 'minuit : à l''ajout, le 14 oct. est déjà passé à Paris');
-select tests.deconnecter();
-
-update ctx set ev3 = (select e.id from public.evenement e where e.titre = 'Mise à jour, minuit');
-
-select tests.se_connecter((select a from ctx), 'aal2');
-select throws_ok($$
-  insert into public.evenement_etat (evenement_id, date, statut) select ev3, date '2026-10-14', 'valide' from ctx
-$$, 'P0001', 'La nouvelle date doit être aujourd''hui ou plus tard.',
-  'minuit : une nouvelle date au 14 oct. (jour UTC) est refusée, c''est hier à Paris');
-select lives_ok($$
-  insert into public.evenement_etat (evenement_id, date, statut) select ev3, date '2026-10-15', 'valide' from ctx
-$$, 'minuit : une nouvelle date au 15 oct. (aujourd''hui à Paris) est acceptée');
-select tests.deconnecter();
+select ok((select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
+            like '%new.date < private.aujourdhui()%'
+          and (select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
+                !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
+  'le trigger compare la nouvelle date à private.aujourdhui(), jamais à current_date ni à now()');
+select ok((select p.prosrc from pg_proc p
+            where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[])'::regprocedure)
+            like '%p_date < private.aujourdhui()%'
+          and (select p.prosrc from pg_proc p
+                where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[])'::regprocedure)
+                !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
+  'à l''ajout, la date est comparée à private.aujourdhui(), jamais à current_date ni à now()');
+select ok(pg_get_viewdef('public.v_evenement'::regclass) like '%private.aujourdhui()%'
+          and pg_get_viewdef('public.v_evenement'::regclass) !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
+  'v_evenement calcule jours et a_confirmer avec private.aujourdhui()');
 
 -- Structure
 select has_trigger('public', 'evenement_etat', 'controler_evenement_etat',

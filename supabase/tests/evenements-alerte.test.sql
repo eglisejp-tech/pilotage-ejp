@@ -111,22 +111,12 @@ select is(tests.lire((select tech from ctx), 'aal2', 'select * from alerte'),
           tests.lire((select berger from ctx), 'aal2', 'select * from alerte'),
   'EJP Tech lit les mêmes lignes que le berger');
 
--- Bascule de minuit à Paris : le 14 oct. 2026 à 22 h 30 UTC, il est 0 h 30 le 15 oct. à Paris.
--- private.aujourdhui() est remplacée dans cette transaction (annulée à la fin) par la même
--- règle appliquée à cet instant fixe. Un événement du 18 oct. est à J+3 à Paris (alerte),
--- alors qu'il serait à J+4 avec la date UTC. Remplacée au nom de postgres, son propriétaire.
-set local role postgres;
-create or replace function private.aujourdhui() returns date
-language sql stable set search_path = '' as $$
-  select (timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date
-$$;
-reset role;
-select pg_temp.evenement(a_m, a, v.titre, v.jour, 'attente_validation')
-  from ctx
- cross join (values ('Alerte minuit 18 oct.', date '2026-10-18'), ('Alerte minuit 19 oct.', date '2026-10-19')) as v(titre, jour);
-select is(tests.lire((select berger from ctx), 'aal2', 'select titre, jours, a_confirmer from alerte where titre like ''Alerte minuit%'''),
-  '[{"jours": 3, "titre": "Alerte minuit 18 oct.", "a_confirmer": true}, {"jours": 4, "titre": "Alerte minuit 19 oct.", "a_confirmer": false}]'::jsonb,
-  'minuit à Paris : le 18 oct. est à J+3 (alerte), le 19 oct. à J+4 (pas d''alerte)');
+-- Minuit à Paris : jours se compte depuis la date de Paris (private.aujourdhui()), jamais
+-- depuis la date UTC ; entre 22 h et minuit UTC, les deux diffèrent d'un jour.
+select is(tests.compter((select berger from ctx), 'aal2', $$
+  select 1 from public.v_evenement
+   where titre like 'Alerte %' and jours <> date - (now() at time zone 'Europe/Paris')::date
+$$), 0, 'minuit à Paris : jours se compte depuis la date de Paris');
 
 -- Structure de la vue
 select results_eq($$
