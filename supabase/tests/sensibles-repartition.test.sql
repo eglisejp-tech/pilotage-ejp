@@ -7,14 +7,16 @@
 -- juste, seule la répartition du total le plus récent, une correction sans catégories ne laisse
 -- aucune ligne, valeurs exactes pour le ministère, règle de P47 pour le berger (total de 0, 1
 -- ou 2 masqué en entier, départage, cas nommé B, A, C), jeu d'exemple seed/44. Catégories :
--- 3 à 6 par indicateur, écrites par migration seulement, figées dès qu'elles servent, une
--- catégorie retirée reste lue dans une ancienne répartition.
+-- 3 à 6 par indicateur (la base refuse une répartition hors de cette plage, liste ramenée à 2
+-- par un retrait ou montée à 7), ordre unique et au moins 1, écrites par migration seulement,
+-- figées dès qu'elles servent, une catégorie retirée reste lue dans une ancienne répartition,
+-- aucune répartition avec une catégorie absente de la liste.
 -- Enfin la simulation du lecteur : pour 4 à 7 cases et un total de 3 à 16, toutes les
 -- répartitions, leur affichage par private.repartition_protegee (la fonction de la vue), et
 -- aucune case de 1 ou 2 qui n'aurait qu'une valeur possible dans son groupe d'affichage.
 begin;
 
-select plan(49);
+select plan(57);
 
 create temp table ctx as
 select tests.creer_ministere('B8 répartition A') as a_m,
@@ -267,6 +269,70 @@ select results_eq($$
    where indicateur_id = (select sens from ctx) and periode = (select m5 from ctx) order by ordre
 $$, $$ values ('b', 0), ('a', 0), ('d', 1), (null, 4) $$, 'la nouvelle répartition reprend B, A et D, sans C');
 select tests.deconnecter();
+
+-- Aucune répartition ne porte une catégorie absente de la liste de son indicateur (le lien ne
+-- tient que par les triggers : ce contrôle prévient qu'un futur lot en réécrive un).
+select is_empty($$
+  select 1 from public.ventilation_sensible v
+    join public.indicateur i on i.id = v.indicateur_id
+   where not exists (select 1 from public.categorie_sensible c
+                      where c.prevu_code = i.modele_code and c.code = v.categorie)
+$$, 'aucune ligne de répartition n''a de catégorie absente de la liste de son indicateur');
+
+-- La liste en cours compte de 3 à 6 catégories, sinon l'indicateur n'a pas de répartition (la
+-- règle de P47 suppose au moins 4 cases et n'est simulée que jusqu'à 7) : un retrait qui ramène
+-- la liste à 2 ou un ajout qui la monte à 7 ferme la répartition, par la fonction et par le trigger.
+select set_config('pilotage.migration', 'oui', true);
+select throws_ok($$
+  insert into public.categorie_sensible (prevu_code, code, libelle, ordre) values ('essai_b8_rep', 'e', 'Catégorie E', 2)
+$$, '23505', null, 'deux catégories d''une même liste ne partagent pas le même ordre');
+select throws_ok($$
+  insert into public.categorie_sensible (prevu_code, code, libelle, ordre) values ('essai_b8_rep', 'e', 'Catégorie E', 0)
+$$, '23514', null, 'l''ordre d''une catégorie est au moins 1');
+update public.categorie_sensible set retiree_le = private.aujourdhui() where prevu_code = 'essai_b8_rep' and code = 'd';
+select set_config('pilotage.migration', '', true);
+
+select tests.se_connecter((select a from ctx), 'aal2');
+select throws_ok($$
+  select public.saisir_chiffres_mois((select m5 from ctx), jsonb_build_array(jsonb_build_object(
+    'indicateur_id', (select sens from ctx), 'valeur', 5, 'categories', jsonb_build_object('b', 1))))
+$$, 'P0001', 'Cet indicateur n''a pas de répartition.', 'une liste ramenée à 2 catégories : l''indicateur n''a plus de répartition');
+select lives_ok($$
+  select public.saisir_chiffres_mois((select m5 from ctx), jsonb_build_array(jsonb_build_object(
+    'indicateur_id', (select sens from ctx), 'valeur', 5)))
+$$, 'le total du mois se saisit encore, sans répartition');
+select tests.deconnecter();
+select throws_ok($$
+  insert into public.ventilation_sensible (mesure_id, indicateur_id, ministere_id, mois, categorie, valeur, saisi_le, saisi_par)
+  select m.id, m.indicateur_id, m.ministere_id, m.date_ref, c.code, 0, m.saisi_le, m.saisi_par
+    from public.mesure m
+    join public.categorie_sensible c on c.prevu_code = 'essai_b8_rep' and c.retiree_le is null
+   where m.id = (select max(x.id) from public.mesure x where x.indicateur_id = (select sens from ctx)
+                                                          and x.date_ref = (select m5 from ctx))
+$$, 'P0001', 'Une répartition demande de 3 à 6 catégories en cours dans la liste de l''indicateur.',
+  'la base refuse une répartition quand la liste en cours compte 2 catégories');
+
+select set_config('pilotage.migration', 'oui', true);
+insert into public.categorie_sensible (prevu_code, code, libelle, ordre) values
+  ('essai_b8_rep', 'e', 'Catégorie E', 5), ('essai_b8_rep', 'f', 'Catégorie F', 6),
+  ('essai_b8_rep', 'g', 'Catégorie G', 7), ('essai_b8_rep', 'h', 'Catégorie H', 8),
+  ('essai_b8_rep', 'i', 'Catégorie I', 9);
+select set_config('pilotage.migration', '', true);
+select tests.se_connecter((select a from ctx), 'aal2');
+select throws_ok($$
+  select public.saisir_chiffres_mois((select m5 from ctx), jsonb_build_array(jsonb_build_object(
+    'indicateur_id', (select sens from ctx), 'valeur', 5, 'categories', jsonb_build_object('b', 1))))
+$$, 'P0001', 'Cet indicateur n''a pas de répartition.', 'une liste montée à 7 catégories : l''indicateur n''a plus de répartition');
+select tests.deconnecter();
+select throws_ok($$
+  insert into public.ventilation_sensible (mesure_id, indicateur_id, ministere_id, mois, categorie, valeur, saisi_le, saisi_par)
+  select m.id, m.indicateur_id, m.ministere_id, m.date_ref, c.code, 0, m.saisi_le, m.saisi_par
+    from public.mesure m
+    join public.categorie_sensible c on c.prevu_code = 'essai_b8_rep' and c.retiree_le is null
+   where m.id = (select max(x.id) from public.mesure x where x.indicateur_id = (select sens from ctx)
+                                                          and x.date_ref = (select m5 from ctx))
+$$, 'P0001', 'Une répartition demande de 3 à 6 catégories en cours dans la liste de l''indicateur.',
+  'la base refuse une répartition quand la liste en cours compte 7 catégories');
 
 -- 7. Simulation du lecteur (P47, « Contrôle de la règle »)
 create temp table simulation as

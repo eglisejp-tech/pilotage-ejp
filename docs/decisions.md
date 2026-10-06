@@ -939,3 +939,13 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après l'audit de B3
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
 - **BRIEF** : section 7 (matrice, ligne `journal`) (non reporté à ce jour) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; `docs/plan-etape-4.md` (B7)
+
+### T42. Répartition d'un indicateur sensible : toute la liste, de 3 à 6 catégories
+
+- **Date** : 7 octobre 2026
+- **Sujet** : T41 écrit que `ventilation_sensible` porte « une ligne par catégorie renseignée ». L'audit de B8 a relevé que la base écrit en fait toute la liste en cours, et que la consigne « 3 à 6 catégories » (P47) n'était contrôlée que par un test sur les données de la CI.
+- **Décision** : (1) **une répartition reprend toujours toute la liste en cours** de l'indicateur : une catégorie que le ministère ne renseigne pas est écrite à 0, jamais absente ; elle s'affiche « 0 » et non comme une case manquante ; (2) **la base impose de 3 à 6 catégories en cours** (hors catégories retirées) : `saisir_chiffres_mois` et le trigger de `ventilation_sensible` refusent une répartition dont la liste en cours compte moins de 3 ou plus de 6 catégories (l'indicateur n'a alors pas de répartition, comme tant qu'aucune liste n'est arrivée) ; (3) l'`ordre` d'une catégorie est au moins 1 et unique dans sa liste, pour que « la première dans l'ordre de la liste » (départage et borne de la règle 6) soit le même ordre que celui de l'écran. Les écrans E2 et E3 trient par `ordre`, « Non réparti » en dernier.
+- **Raison** : la règle d'affichage de P47 suppose au moins 4 cases (3 catégories plus « Non réparti ») et n'a été simulée que jusqu'à 7 cases. Une répartition creuse (seulement les catégories renseignées) aurait 2 ou 3 cases : un total de 6 réparti 2, 2 et 2 se lirait case par case. Écrire toute la liste évite cette fuite ; imposer la plage par la base empêche qu'une liste de 2 catégories (migration, retrait) ou de 7 et plus rouvre la fuite.
+- **Origine** : audit de sécurité de B8 (7 octobre 2026), proposition d'EJP Tech
+- **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
+- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)

@@ -68,9 +68,10 @@ create table public.categorie_sensible (
   prevu_code text not null references private.indicateur_prevu (code),
   code text not null check (code ~ '^[a-z_]{1,30}$'),
   libelle text not null check (char_length(libelle) between 1 and 40 and libelle = btrim(libelle)),
-  ordre smallint not null default 0,
+  ordre smallint not null check (ordre > 0),                -- rang dans la liste : unique, il départage la règle de P47
   retiree_le date,
-  primary key (prevu_code, code)
+  primary key (prevu_code, code),
+  constraint categorie_sensible_ordre_key unique (prevu_code, ordre)
 );
 
 -- 3. Répartitions et précisions
@@ -154,8 +155,10 @@ create trigger controler_categorie_sensible_vider before truncate on public.cate
 -- Répartitions : contrôlées à la fin de chaque instruction d'ajout (transition), que l'ajout
 -- vienne de saisir_chiffres_mois ou d'un jeu d'exemple. Chaque total répartit son indicateur
 -- sensible, son ministère et son mois ; toutes ses lignes arrivent dans la même instruction
--- (une seule répartition par total) ; elles reprennent les catégories en cours de la liste, et
--- elles seules ; leur somme ne dépasse pas le total.
+-- (une seule répartition par total) ; la liste en cours de l'indicateur compte de 3 à 6
+-- catégories (la règle de P47 suppose au moins 4 cases avec « Non réparti » et n'a été simulée
+-- que jusqu'à 7) ; elles reprennent les catégories en cours de la liste, et elles seules ; leur
+-- somme ne dépasse pas le total.
 create function private.verifier_ventilations() returns trigger
 language plpgsql security definer set search_path = '' as $$
 declare
@@ -173,6 +176,13 @@ begin
               where (select count(*) from public.ventilation_sensible v where v.mesure_id = t.mesure_id)
                     <> (select count(*) from nouvelles x where x.mesure_id = t.mesure_id)) then
     raise exception 'Un total ne se répartit qu''une fois.';
+  end if;
+  if exists (select 1
+               from (select distinct i.modele_code
+                       from nouvelles x join public.indicateur i on i.id = x.indicateur_id) as t
+              where (select count(*) from public.categorie_sensible c
+                      where c.prevu_code = t.modele_code and c.retiree_le is null) not between 3 and 6) then
+    raise exception 'Une répartition demande de 3 à 6 catégories en cours dans la liste de l''indicateur.';
   end if;
   if exists (select 1
                from (select distinct x.mesure_id, i.modele_code
@@ -433,7 +443,7 @@ grant select on public.v_ventilation_sensible, public.v_precision_sensible to au
 --
 -- p_lignes : 1 à 30 éléments {"indicateur_id", "valeur", "categories", "precision"}, sans
 -- doublon d'indicateur. categories (objet {"code": valeur}) seulement pour un indicateur sensible
--- qui a des catégories en cours : les codes de sa liste, des entiers de 0 à 9 999 ; une catégorie
+-- dont la liste en cours compte de 3 à 6 catégories : les codes de sa liste, des entiers de 0 à 9 999 ; une catégorie
 -- absente de l'objet vaut 0 (la répartition écrite reprend toute la liste, que la règle de P47
 -- suppose) ; un objet vide, null ou absent : pas de répartition. precision seulement pour un
 -- indicateur sensible, 10 à 280 caractères après trim, sans donnée personnelle ni crochets ;
@@ -512,8 +522,8 @@ begin
       end if;
       if v_categories <> '{}'::jsonb then
         if not v_ligne.sensible
-           or not exists (select 1 from public.categorie_sensible c
-                           where c.prevu_code = v_ligne.modele_code and c.retiree_le is null) then
+           or (select count(*) from public.categorie_sensible c
+                where c.prevu_code = v_ligne.modele_code and c.retiree_le is null) not between 3 and 6 then
           raise exception 'Cet indicateur n''a pas de répartition.';
         end if;
         if exists (select 1 from jsonb_object_keys(v_categories) as k(code)

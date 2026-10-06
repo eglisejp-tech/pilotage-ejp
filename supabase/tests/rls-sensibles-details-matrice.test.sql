@@ -128,10 +128,10 @@ insert into lecture_b8 values
   (4, 'v_precision_sensible', 'select 1 from public.v_precision_sensible where indicateur_id = (select sens from ctx)');
 grant select on matrice_b8, profil_b8, lecture_b8 to authenticated, anon;
 
--- Le plan compte les 24 tests fixes (contexte, inaltérabilité, masquage, retrait pour
--- confidentialité) et, par tests.nombre_essais, les essais de la matrice (lignes dérivées
+-- Le plan compte les 27 tests fixes (contexte, valeurs lues, inaltérabilité, masquage, retrait
+-- pour confidentialité) et, par tests.nombre_essais, les essais de la matrice (lignes dérivées
 -- comprises).
-select plan(24
+select plan(27
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_b8',
                         'select profil, compte from profil_b8', true));
 
@@ -144,6 +144,37 @@ select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice_b8',
   'select profil, compte from profil_b8',
   true);
+
+-- Les valeurs lues, pas seulement le nombre de lignes : le mois m1 est réparti 4, 2, 0 et 0
+-- (P, Q, R, « Non réparti »). Le ministère porteur lit les valeurs exactes ; le conseil et EJP
+-- Tech lisent la règle de P47 (la plus grande case masquée, la case de 2 « moins de 3 », les 0).
+select results_eq($x$
+  select e ->> 'categorie', (e ->> 'valeur')::integer, (e ->> 'moins_de_3')::boolean, (e ->> 'masquee')::boolean
+    from jsonb_array_elements(tests.lire((select a from ctx), 'aal2',
+      $q$ select categorie, valeur, moins_de_3, masquee from public.v_ventilation_sensible
+           where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) $q$)) as e
+   order by e ->> 'categorie' nulls last
+$x$, $x$ values ('p', 4, false, false), ('q', 2, false, false), ('r', 0, false, false),
+               (null, 0, false, false) $x$,
+  'le ministère porteur lit les valeurs exactes de sa répartition (4, 2, 0, 0)');
+select results_eq($x$
+  select e ->> 'categorie', (e ->> 'valeur')::integer, (e ->> 'moins_de_3')::boolean, (e ->> 'masquee')::boolean
+    from jsonb_array_elements(tests.lire((select conseil from ctx), 'aal2',
+      $q$ select categorie, valeur, moins_de_3, masquee from public.v_ventilation_sensible
+           where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) $q$)) as e
+   order by e ->> 'categorie' nulls last
+$x$, $x$ values ('p', null::integer, false, true), ('q', null, true, false), ('r', 0, false, false),
+               (null, 0, false, false) $x$,
+  'le conseil lit la règle de P47 : case masquée, case « moins de 3 », 0 et 0, aucune valeur exacte');
+select results_eq($x$
+  select e ->> 'categorie', (e ->> 'valeur')::integer, (e ->> 'moins_de_3')::boolean, (e ->> 'masquee')::boolean
+    from jsonb_array_elements(tests.lire((select tech from ctx), 'aal2',
+      $q$ select categorie, valeur, moins_de_3, masquee from public.v_ventilation_sensible
+           where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) $q$)) as e
+   order by e ->> 'categorie' nulls last
+$x$, $x$ values ('p', null::integer, false, true), ('q', null, true, false), ('r', 0, false, false),
+               (null, 0, false, false) $x$,
+  'EJP Tech lit la règle de P47 : case masquée, case « moins de 3 », 0 et 0, aucune valeur exacte');
 
 -- Inaltérabilité, même pour le propriétaire des tables (rôle du test).
 select throws_ok($$ update public.ventilation_sensible set valeur = valeur where indicateur_id = (select sens from ctx) $$,

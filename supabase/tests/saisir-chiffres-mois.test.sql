@@ -9,7 +9,7 @@
 -- administration, ministère désactivé et aal1 refusés ; saisi_le et saisi_par imposés.
 begin;
 
-select plan(36);
+select plan(38);
 
 create temp table ctx as
 select tests.creer_ministere('B8 saisie A') as a_m,
@@ -161,6 +161,22 @@ $$, 'P0001', 'Un indicateur ne se saisit qu''une fois par envoi.', 'un indicateu
 select tests.deconnecter();
 select is((select to_jsonb(c) from compte_ecrit c), (select to_jsonb(a) from avant a),
   'tout ou rien : aucun total, aucune répartition, aucune précision ni ligne de journal après un refus');
+
+-- Un échec qui arrive après l'insertion des totaux et des répartitions (un trigger d'essai lève
+-- une erreur sur la première précision) annule aussi ces écritures.
+create function tests.echec_precision() returns trigger language plpgsql as $$
+begin
+  raise exception 'Échec simulé après les totaux.';
+end $$;
+create trigger echec_essai before insert on public.precision_sensible
+  for each row execute function tests.echec_precision();
+select tests.se_connecter((select a from ctx), 'aal2');
+select throws_ok($$ select public.saisir_chiffres_mois((select m1 from ctx), pg_temp.cinq_lignes()) $$,
+  'P0001', 'Échec simulé après les totaux.', 'échec à l''écriture des précisions, après les totaux et les répartitions');
+select tests.deconnecter();
+drop trigger echec_essai on public.precision_sensible;
+select is((select to_jsonb(c) from compte_ecrit c), (select to_jsonb(a) from avant a),
+  'tout ou rien : un échec après l''insertion des totaux annule les totaux, les répartitions et le journal');
 
 -- 3. Mois et forme
 select tests.se_connecter((select a from ctx), 'aal2');
