@@ -849,8 +849,8 @@ fois le mois fini.'; end if;` (lignes 486 à 488) et la mention « mois en cours
 
 - **Migration** : `20261009100000_indicateurs_vague_1.sql`.
 - **Contenu** : les 161 prévus et les 41 calculs de `vague-1-decisions.md` (section 4), avec
-  libellés, définitions, rythmes, unités, drapeaux, valeurs de départ (5 164 € pour Production, 25
-  personnes formées) ; les 12 calculs étendus sont écrits avec leurs termes, dans le schéma complet
+  libellés, définitions, rythmes, unités, drapeaux (valeurs de départ de Production, 5 164 € et 25
+  personnes formées : saisies par le ministère à la mise en service, aucune ligne en migration) ; les 12 calculs étendus sont écrits avec leurs termes, dans le schéma complet
   posé par B1, et restent hors de la fiche jusqu'à L1 (section 7, question 6) ; les 11 suggestions
   communes ; Protocole au modèle « aucun ».
 - **Drapeau `part` et raison `haut_depasse_bas` (P49, décidé le 6 octobre 2026 après l'audit de
@@ -887,11 +887,14 @@ fois le mois fini.'; end if;` (lignes 486 à 488) et la mention « mois en cours
   ministère ne lit pas les libellés d'un ministère, l'administration, `aal1` et l'anonyme ne lisent
   rien, `private.libelle_commun` illisible en direct ; la ligne `v_commun_fiche` de la matrice, pour
   les sept comptes et l'anonyme en `aal1` et `aal2`, est dans ce fichier, qui appartient à B4) ;
-  **`calcul-part.test.sql`** (un taux « part » dont le haut vaut 12 et le bas 10 : « Non calculé »,
-  raison `haut_depasse_bas`, `resultat` null, ni 120 ni 100 ; haut égal au bas : 100 ; haut 0 : 0 ;
-  bas 0 : `bas_nul` d'abord ; la même règle sur la somme de l'année ; un taux sans `part` (résolution
-  des demandes) dépasse 100 sans refus ; `part` copié de `indicateur_prevu` à la création et jamais
-  modifié ensuite) ;
+  **`calcul-part.test.sql`** (`creer_calcul` à sept paramètres : une part créée, une part remplacée
+  qui garde sa protection, un choix explicite, une moyenne marquée part refusée, ministère et berger
+  refusés, droits) et, dans la partie 3 de `indicateurs-vague-1.test.sql`, les valeurs de `v_calcul` :
+  un taux « part » dont le haut vaut 12 et le bas 10 : « Non calculé », raison `haut_depasse_bas`,
+  `resultat` null, ni 120 ni 100 ; haut égal au bas : 100 ; haut 0 : 0 ; bas 0 : `bas_nul` d'abord ;
+  la même règle sur la somme de l'année (`annee_resultat` null si Σ haut dépasse Σ bas, aucune période
+  écartée) ; un taux sans `part` (résolution des demandes) dépasse 100 sans refus ; `part` copié de
+  `indicateur_prevu` à la création, jamais modifié ensuite, et les 19 parts de la liste de P49 ;
   `seed/40-indicateurs.sql`.
 
 ### B5. Statistiques FIJ par département, base (2 jours)

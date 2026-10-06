@@ -2,7 +2,7 @@
 -- docs/conception/vague-1-decisions.md, section 4 ; réponse de la personne responsable du
 -- 6 octobre 2026 sur les parts, question 1).
 --
--- 1. Catalogue : nombres par modèle et totaux (161 saisis, 41 calculs, 11 sensibles, 15 parts,
+-- 1. Catalogue : nombres par modèle et totaux (161 saisis, 41 calculs, 11 sensibles, 19 parts,
 --    unités, 11 suggestions, 21 modèles), 29 calculs de la V1 et 12 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
 --    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts.
@@ -10,21 +10,23 @@
 --    (sensibles compris), termes complets, journal, aucune validation ni ajout, MCAD 21 lignes
 --    sur 30, second appel sans doublon, « aucun » pour Protocole, suggestions déjà prévues
 --    écartées, aucun calcul sur un sensible ou un commun.
--- 3. Parts : un haut au-dessus du bas donne « Non calculé, à vérifier » (haut_depasse_bas) et sort
---    de la somme de l'année ; un taux qui n'est pas une part dépasse 100 % ; une part à 100 % se
---    calcule ; part figée et réservée aux taux.
+-- 3. Parts : un haut au-dessus du bas donne « Non calculé, à vérifier » (haut_depasse_bas) ;
+--    sur l'année, la règle porte sur les sommes (annee_resultat null si Σ haut > Σ bas, aucune
+--    période écartée) ; un haut de 0 donne 0, un bas de 0 donne bas_nul avant tout ; un taux qui
+--    n'est pas une part dépasse 100 % ; une part à 100 % se calcule ; part figée et réservée aux
+--    taux. La création et le remplacement d'une part par creer_calcul : calcul-part.test.sql.
 -- 4. Jeu d'exemple (seed/40-indicateurs.sql) : sensible à 2 rendu « moins de 3 » au berger, part
 --    à vérifier de Formation, une valeur par unité, un ajout à valider, un validé, un refusé, un
 --    retiré avec saisies.
 begin;
 
-select plan(46);
+select plan(50);
 
 create temp table attendu (modele text primary key, saisis integer, calculs integer, sensibles integer, parts integer,
                            v1 integer);
 insert into attendu values
   ('integration', 8, 4, 0, 0, 1),
-  ('coordination', 6, 4, 0, 1, 1),
+  ('coordination', 6, 4, 0, 2, 1),
   ('communication', 10, 4, 0, 1, 2),
   ('social', 7, 0, 3, 0, 0),
   ('film', 8, 2, 0, 1, 2),
@@ -35,20 +37,25 @@ insert into attendu values
   ('merch', 9, 3, 0, 0, 1),
   ('production', 7, 0, 0, 0, 0),
   ('prodiges musique', 6, 1, 0, 1, 1),
-  ('kumi', 11, 1, 1, 0, 1),
-  ('eagles', 7, 1, 1, 0, 1),
+  ('kumi', 11, 1, 1, 1, 1),
+  ('eagles', 7, 1, 1, 1, 1),
   ('entretien', 8, 2, 0, 0, 2),
   ('coordo fij', 3, 0, 0, 0, 0),
   ('multilingue', 8, 2, 0, 2, 2),
   ('securite', 7, 2, 0, 1, 2),
   ('formation', 6, 3, 0, 3, 3),
   ('mds', 8, 0, 0, 0, 0),
-  ('prodiges junior', 4, 1, 2, 0, 1);
+  ('prodiges junior', 4, 1, 2, 1, 1);
 
--- Les quinze parts du catalogue (« taux, plafond 100 % ») et les onze sensibles.
+-- Les dix-neuf parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
+-- nature ajoutés par EJP Tech) et les onze sensibles.
 create temp table parts_attendues (modele text, libelle text);
 insert into parts_attendues values
+  ('coordination', 'Taux de réalisation des événements'),
   ('coordination', 'Part des événements à l''heure'),
+  ('kumi', 'Taux de participation'),
+  ('eagles', 'Taux de participation'),
+  ('prodiges junior', 'Taux de présence'),
   ('communication', 'Taux de demandes traitées dans les délais'),
   ('film', 'Taux de livraison dans les délais'),
   ('mcad', 'Taux de couverture des événements'),
@@ -84,7 +91,8 @@ select tests.compte('Administration de l''église') as admin,
        tests.creer_ministere('Essai vague 1, Protocole') as protocole,
        private.dimanche_reference() as ref,
        (private.mois_courant() - interval '1 month')::date as m1,
-       private.periode_de('dimanche', make_date(extract(year from private.aujourdhui())::integer, 1, 1)) as debut_dim;
+       private.periode_de('dimanche', make_date(extract(year from private.aujourdhui())::integer, 1, 1)) as debut_dim,
+       make_date(extract(year from private.aujourdhui())::integer, 1, 1) as janvier;
 
 -- Un ministère d'essai par modèle.
 create temp table essai as
@@ -114,8 +122,8 @@ select results_eq($$
          count(*) filter (where p.modele = 'suggestion')::int,
          count(distinct p.modele) filter (where p.modele <> 'suggestion')::int
     from private.indicateur_prevu p
-$$, $$ values (161, 41, 11, 15, 4, 2, 4, 11, 21) $$,
-  '161 indicateurs saisis, 41 calculs, 11 sensibles, 15 parts ; 4 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
+$$, $$ values (161, 41, 11, 19, 4, 2, 4, 11, 21) $$,
+  '161 indicateurs saisis, 41 calculs, 11 sensibles, 19 parts ; 4 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
 select results_eq($$
   select count(*) filter (where v1)::int, count(*) filter (where not v1)::int
     from (select p.calcul in ('taux', 'moyenne')
@@ -160,15 +168,15 @@ select is_empty($$
 $$, 'chaque calcul a ses termes');
 select set_eq($$ select p.modele, p.libelle from private.indicateur_prevu p where p.part $$,
   $$ select modele, libelle from parts_attendues $$,
-  'les quinze parts du catalogue sont marquées part, et elles seules');
+  'les dix-neuf parts du catalogue sont marquées part, et elles seules (liste de P49)');
 select is_empty($$
-  select p.code from private.indicateur_prevu p
-   where p.part <> (position('Plafonné à 100 %' in p.definition) > 0) or (p.part and p.calcul <> 'taux')
-$$, 'part si et seulement si la définition dit « Plafonné à 100 % », et seulement pour un taux');
+  select p.code from private.indicateur_prevu p where p.part and p.calcul is distinct from 'taux'
+$$, 'part seulement pour un taux');
 select throws_ok($$
   insert into private.indicateur_prevu (code, modele, libelle, definition, nature, calcul, part)
   values ('essai_part_moyenne', 'essai part', 'Essai part moyenne', 'Moyenne d''essai marquée part.', 'mois', 'moyenne', true)
-$$, '23514', null, 'une moyenne du catalogue n''est pas une part');
+$$, '23514', 'new row for relation "indicateur_prevu" violates check constraint "indicateur_prevu_part_check"',
+  'une moyenne du catalogue n''est pas une part');
 select set_eq($$ select p.modele, p.libelle from private.indicateur_prevu p where p.sensible $$,
   $$ select modele, libelle from sensibles_attendus $$, 'les onze indicateurs sensibles du catalogue');
 select is_empty($$
@@ -306,7 +314,13 @@ select pg_temp.saisir('securite', 'securite_postes_tenus', ref - 7, 8),
        pg_temp.saisir('tech', 'tech_demandes_resolues', m1, 12),
        pg_temp.saisir('tech', 'tech_demandes_recues', m1, 10),
        pg_temp.saisir('formation', 'formation_reponses_satisfaites', m1, 10),
-       pg_temp.saisir('formation', 'formation_reponses_au_questionnaire', m1, 10)
+       pg_temp.saisir('formation', 'formation_reponses_au_questionnaire', m1, 10),
+       pg_temp.saisir('formation', 'formation_seances_presences', m1, 12),
+       pg_temp.saisir('formation', 'formation_seances_presences_attendues', m1, 10),
+       pg_temp.saisir('mcad', 'mcad_postes_d_equipe_tenus', m1, 0),
+       pg_temp.saisir('mcad', 'mcad_postes_d_equipe_prevus', m1, 10),
+       pg_temp.saisir('film', 'film_projets_livres_dans_les_delais', m1, 3),
+       pg_temp.saisir('film', 'film_projets_termines', m1, 0)
   from ctx;
 
 select tests.se_connecter((select berger from ctx), 'aal2');
@@ -318,11 +332,31 @@ $$, $$ values (0, 12::bigint, 10::bigint, null::numeric, 'haut_depasse_bas'::tex
 select results_eq($$
   select annee_haut, annee_bas, annee_resultat, annee_nb_periodes, annee_nb_attendues
     from public.v_calcul where indicateur_id = pg_temp.calcul('securite', 'securite_taux_de_couverture_des_postes')
-$$, $$ select case when ref - 7 >= debut_dim then 8::bigint end, case when ref - 7 >= debut_dim then 10::bigint end,
-              case when ref - 7 >= debut_dim then 80::numeric end, (ref - 7 >= debut_dim)::int,
-              (ref - 7 >= debut_dim)::int + (ref >= debut_dim)::int
+$$, $$ select case when ref - 7 >= debut_dim then 20 else 12 end::bigint, case when ref - 7 >= debut_dim then 20 else 10 end::bigint,
+              case when ref - 7 >= debut_dim then 100::numeric end,
+              1 + (ref - 7 >= debut_dim)::int, 1 + (ref - 7 >= debut_dim)::int
          from ctx $$,
-  'sur l''année : le dimanche à vérifier sort de la somme et de la complétude (8 sur 10, 1 dimanche sur 2)');
+  'sur l''année, la règle porte sur les sommes : aucun dimanche écarté (8 + 12 sur 10 + 10 = 100 %), et le seul dimanche à 12 sur 10 la première semaine de l''année donne null');
+select results_eq($$
+  select periode - (select m1 from ctx), haut, bas, resultat, non_calcule_raison
+    from public.v_calcul where indicateur_id = pg_temp.calcul('formation', 'formation_taux_de_presence')
+$$, $$ values (0, 12::bigint, 10::bigint, null::numeric, 'haut_depasse_bas'::text) $$,
+  'une part à un mois (Formation, taux de présence) : 12 sur 10 est à vérifier');
+select results_eq($$
+  select annee_haut, annee_bas, annee_resultat, annee_nb_periodes
+    from public.v_calcul where indicateur_id = pg_temp.calcul('formation', 'formation_taux_de_presence')
+$$, $$ select case when m1 >= janvier then 12::bigint end, case when m1 >= janvier then 10::bigint end,
+              null::numeric, (m1 >= janvier)::int
+         from ctx $$,
+  'sur l''année, Σ haut au-dessus de Σ bas : annee_resultat est null (jamais 120 %), la somme reste lisible');
+select results_eq($$
+  select resultat, non_calcule_raison
+    from public.v_calcul where indicateur_id = pg_temp.calcul('mcad', 'mcad_taux_de_presence_des_equipiers')
+$$, $$ values (0::numeric, null::text) $$, 'une part dont le haut vaut 0 se calcule : 0 %, pas « Non calculé »');
+select results_eq($$
+  select resultat, non_calcule_raison
+    from public.v_calcul where indicateur_id = pg_temp.calcul('film', 'film_taux_de_livraison_dans_les_delais')
+$$, $$ values (null::numeric, 'bas_nul'::text) $$, 'une part dont le bas vaut 0 (haut 3) : bas_nul, avant haut_depasse_bas');
 select results_eq($$
   select resultat, non_calcule_raison
     from public.v_calcul where indicateur_id = pg_temp.calcul('tech', 'tech_taux_de_resolution_des_demandes')
@@ -345,7 +379,8 @@ select throws_ok($$
   insert into public.indicateur (libelle, definition, nature, ministere_id, calcul, part)
   select 'Essai moyenne part', 'Moyenne d''essai marquée part.', 'mois', ministere, 'moyenne', true
     from essai where modele = 'tech'
-$$, '23514', null, 'seul un taux est une part');
+$$, '23514', 'new row for relation "indicateur" violates check constraint "indicateur_part_check"',
+  'seul un taux est une part');
 
 -- 4. Jeu d'exemple
 

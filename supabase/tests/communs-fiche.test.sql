@@ -27,11 +27,21 @@ update ctx set porteur_m = (select e.ministere from essai e where e.modele = 'mc
                autre_m = (select e.ministere from essai e where e.modele = 'kumi');
 update ctx set porteur = tests.creer_compte('communs-mcad@exemple.test', 'ministere', porteur_m),
                autre = tests.creer_compte('communs-kumi@exemple.test', 'ministere', autre_m);
+-- Un ministère désactivé avec son compte, sur le modèle MCAD (la fiche a ses communs). Hors de
+-- « essai » : les nombres de la matrice ne changent pas.
+alter table ctx add column des_m uuid, add column des uuid;
+update ctx set des_m = tests.creer_ministere('Essai communs, ministère désactivé');
+update ctx set des = tests.creer_compte('communs-desactive@exemple.test', 'ministere', des_m);
 grant select on ctx, essai to authenticated, anon;
 
 select tests.se_connecter((select admin from ctx), 'aal2');
 select count(public.creer_indicateurs_prevus(e.ministere, e.modele)) from essai e;
+select public.creer_indicateurs_prevus((select des_m from ctx), 'mcad');
 select tests.deconnecter();
+
+-- Désactivation (comme desactiver-compte) une fois la fiche créée.
+update public.ministere set desactive_le = now() where id = (select des_m from ctx);
+update public.compte set desactive_le = now() where user_id = (select des from ctx);
 
 -- Matrice en aal2. Attendus dans l'ordre des profils : porteur (MCAD), autre (Kumi), FIJ,
 -- Coordination, berger, conseil, administration, EJP Tech.
@@ -60,7 +70,7 @@ create temp view matrice_cf_privee (profil, objet, action, aal, attendu, requete
   select 'anonyme', 'private.libelle_commun', 'lire', null, '42501', 'select 1 from private.libelle_commun';
 grant select on matrice_cf, profil_cf, matrice_cf_privee to authenticated, anon;
 
-select plan(4
+select plan(6
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_cf',
                         'select profil, compte from profil_cf', true)
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_cf_privee',
@@ -103,6 +113,11 @@ select is(tests.lire(tests.compte('Ministère EJP Formation'), 'aal2',
     'select commun_code, libelle, reference_eglise from public.v_commun_fiche'),
   '[{"libelle": "Formateurs mobilisés", "commun_code": "service", "reference_eglise": false}]'::jsonb,
   'jeu d''exemple : EJP Formation lit « Formateurs mobilisés » pour ses STARs au service, et rien d''autre');
+
+select is((select count(*)::int from public.indicateur i where i.ministere_id = (select des_m from ctx)), 21,
+  'le ministère désactivé a bien sa fiche MCAD (21 indicateurs, dont un chiffre commun affiché)');
+select is(tests.essai((select des from ctx), 'aal2', 'select 1 from public.v_commun_fiche', 'lignes'), '0',
+  'un ministère désactivé et son compte ne lisent aucun chiffre commun, pas même ceux de leur fiche');
 
 select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice_cf',
