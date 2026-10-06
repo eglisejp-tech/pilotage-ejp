@@ -65,7 +65,7 @@ test.describe('présence à une session, ministère Communication', () => {
     await attendreChargement(page)
 
     const lignesAvant = await compter(page, `participation?select=id&session_id=eq.${sessionId}`)
-    const journalAvant = await compter(page, 'journal?select=id&code=eq.participation_saisie')
+    const journalAvant = await compter(page, 'journal?select=id&action=eq.participation_saisie')
 
     const presents = page.getByLabel('STARs de votre ministère présents', { exact: true })
     const dejaComptes = page.getByLabel('Dont déjà comptés par leur ministère principal', {
@@ -80,7 +80,7 @@ test.describe('présence à une session, ministère Communication', () => {
     expect(await compter(page, `participation?select=id&session_id=eq.${sessionId}`)).toBe(
       lignesAvant + 1,
     )
-    expect(await compter(page, 'journal?select=id&code=eq.participation_saisie')).toBe(
+    expect(await compter(page, 'journal?select=id&action=eq.participation_saisie')).toBe(
       journalAvant + 1,
     )
 
@@ -143,7 +143,7 @@ test.describe('ministère FIJ', () => {
     await page.goto('/saisir/fij')
     await attendreChargement(page)
     const carteAvant = await compter(page, 'fij_departement?select=id')
-    const journalCarteAvant = await compter(page, 'journal?select=id&code=eq.fij_saisie')
+    const journalCarteAvant = await compter(page, 'journal?select=id&action=eq.fij_saisie')
     const champsCarte = page.getByRole('textbox')
     await expect(champsCarte).toHaveCount(8)
     for (let rang = 0; rang < 8; rang++) await champsCarte.nth(rang).fill(String(rang + 1))
@@ -151,13 +151,15 @@ test.describe('ministère FIJ', () => {
     await page.getByRole('button', { name: 'Enregistrer la carte' }).click()
     await expect(page.getByRole('status').getByText('Carte des FIJ enregistrée.')).toBeVisible()
     expect(await compter(page, 'fij_departement?select=id')).toBe(carteAvant + 8)
-    expect(await compter(page, 'journal?select=id&code=eq.fij_saisie')).toBe(journalCarteAvant + 1)
+    expect(await compter(page, 'journal?select=id&action=eq.fij_saisie')).toBe(
+      journalCarteAvant + 1,
+    )
 
     // Chiffres par département : 32 valeurs en un appel, une ligne de journal sans valeur.
     await page.goto('/saisir/fij-statistiques')
     await attendreChargement(page)
     const statistiquesAvant = await compter(page, 'fij_statistique?select=id')
-    const journalAvant = await compter(page, 'journal?select=id&code=eq.fij_statistiques_saisies')
+    const journalAvant = await compter(page, 'journal?select=id&action=eq.fij_statistiques_saisies')
     const champs = page.getByRole('group').getByRole('textbox')
     await expect(champs).toHaveCount(32)
     for (let rang = 0; rang < 32; rang++) await champs.nth(rang).fill(String(rang % 9))
@@ -168,7 +170,7 @@ test.describe('ministère FIJ', () => {
         .getByText(/^Chiffres par département de la semaine \d+ enregistrés\.$/),
     ).toBeVisible()
     expect(await compter(page, 'fij_statistique?select=id')).toBe(statistiquesAvant + 32)
-    expect(await compter(page, 'journal?select=id&code=eq.fij_statistiques_saisies')).toBe(
+    expect(await compter(page, 'journal?select=id&action=eq.fij_statistiques_saisies')).toBe(
       journalAvant + 1,
     )
   })
