@@ -7,7 +7,8 @@
 -- (cinq profils, ministères porteur, autre, fij et coordination, aal1 et anonyme).
 begin;
 
-select plan(263);
+-- 207 essais : la matrice n'en dérive plus en aal1 que pour les lignes acceptées en aal2 (W0).
+select plan(207);
 
 -- Contexte : comptes du jeu d'exemple ; indicateurs d'essai de Communication (le ministère
 -- porteur), écrits comme le ferait une fonction de configuration.
