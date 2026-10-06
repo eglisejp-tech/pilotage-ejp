@@ -408,9 +408,10 @@ const ADRESSES_REFUSEES = ADRESSES_APPLICATION.flatMap((adresse) =>
   ),
 )
 
-// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cet écran arrive à l'étape 4. »).
-// Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie page.
-const ADRESSES_AMORCES = [
+// Adresses de saisie et de fiche de l'étape 4, chacune avec sa page : l'amorce de W0 (« Cet écran
+// arrive à l'étape 4. ») tant que son lot ne l'a pas remplacée. Le lot qui remplace une page
+// ajoute son adresse à ADRESSES_REMPLACEES et teste sa vraie page.
+const ADRESSES_ETAPE_4 = [
   '/ma-fiche',
   '/ministeres',
   '/ministeres/:id',
@@ -424,14 +425,19 @@ const ADRESSES_AMORCES = [
   '/saisir/reunion',
   '/signaler',
 ]
+// E5 : saisies d'événement et de réunion (src/pages/PageSaisieEvenement.test.tsx).
+const ADRESSES_REMPLACEES = ['/saisir/evenement', '/saisir/evenement/:id', '/saisir/reunion']
+const ADRESSES_AMORCES = ADRESSES_ETAPE_4.filter(
+  (adresse) => !ADRESSES_REMPLACEES.includes(adresse),
+)
 const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
   ADRESSES_AMORCES.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
 
 describe("adresses de l'étape 4", () => {
-  it('déclare les douze adresses de saisie et de fiche, chacune avec une page amorce', () => {
-    expect(ADRESSES_AMORCES).toHaveLength(12)
-    for (const motif of ADRESSES_AMORCES) {
+  it('déclare les douze adresses de saisie et de fiche, chacune avec une page', () => {
+    expect(ADRESSES_ETAPE_4).toHaveLength(12)
+    for (const motif of ADRESSES_ETAPE_4) {
       expect(
         ADRESSES_APPLICATION.some((adresse) => adresse.chemin === motif),
         motif,
