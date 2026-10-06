@@ -67,14 +67,19 @@ union all select 6, 'admin_plateforme', 'EJP Tech', c.ejptech, c.com_m from ctx 
 union all select 7, 'desactive', 'ministère désactivé', c.des, c.des_m from ctx c
 union all select 8, 'anonyme', 'anonyme', null, c.com_m from ctx c;
 
--- Mesure : tout pour le berger, le conseil et EJP Tech (lecture seule, T29) ; les indicateurs
+-- Mesure : tout pour le berger, le conseil et EJP Tech (lecture seule, T29), sauf les lignes
+-- sensibles (lues par les vues du seuil) et celles d'un ajout refusé (lot B2) ; les indicateurs
 -- communs de tous et ses indicateurs propres pour un ministère ; les indicateurs communs pour
--- l'administration.
+-- l'administration. Un retiré pour confidentialité ne se lit pour personne (Q11). Le jeu
+-- seed/40-indicateurs.sql (lot B4) porte des lignes sensibles.
 update profil p set mesures = case
-    when p.code in ('berger', 'conseil', 'admin_plateforme') then (select count(*) from public.mesure)
+    when p.code in ('berger', 'conseil', 'admin_plateforme') then
+      (select count(*) from public.mesure m join public.indicateur i on i.id = m.indicateur_id
+        where not i.sensible and coalesce(i.retrait_motif, '') not in ('refuse', 'confidentialite'))
     when p.code in ('ministere', 'ministere_fij') then
       (select count(*) from public.mesure m join public.indicateur i on i.id = m.indicateur_id
-        where i.ministere_id is null or m.ministere_id = p.cible)
+        where (i.ministere_id is null or m.ministere_id = p.cible)
+          and i.retrait_motif is distinct from 'confidentialite')
     when p.code = 'admin_eglise' then
       (select count(*) from public.mesure m join public.indicateur i on i.id = m.indicateur_id
         where i.ministere_id is null)

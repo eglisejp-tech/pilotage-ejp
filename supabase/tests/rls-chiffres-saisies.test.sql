@@ -149,17 +149,19 @@ select is(tests.compter((select com from ctx), 'aal2',
 select is(tests.compter((select admin from ctx), 'aal2',
     'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 0,
   'l''administration ne lit aucun chiffre d''indicateur propre');
+-- Les indicateurs propres comptés ici sont ceux de ce test et « Visuels livrés ce mois » : le
+-- jeu seed/40-indicateurs.sql (lot B4) en ajoute d'autres, avec leurs chiffres.
 select is(tests.compter((select berger from ctx), 'aal2',
-    'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 6,
+    'select m.* from public.mesure m where m.indicateur_id in ((select visuels from ctx), (select propre from ctx))'), 6,
   'le berger lit les chiffres de tous les indicateurs propres');
 select is(tests.compter((select conseil from ctx), 'aal2',
-    'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 6,
+    'select m.* from public.mesure m where m.indicateur_id in ((select visuels from ctx), (select propre from ctx))'), 6,
   'le conseil lit les chiffres de tous les indicateurs propres');
 select is(tests.compter((select ejptech from ctx), 'aal2',
-    'select m.* from public.mesure m join public.indicateur i on i.id = m.indicateur_id where i.ministere_id is not null'), 6,
+    'select m.* from public.mesure m where m.indicateur_id in ((select visuels from ctx), (select propre from ctx))'), 6,
   'EJP Tech lit les chiffres de tous les indicateurs propres, comme le berger (T29)');
 select is(tests.compter((select admin from ctx), 'aal2',
-    'select * from public.indicateur i where i.ministere_id is not null'), 2,
+    'select * from public.indicateur i where i.id in ((select visuels from ctx), (select propre from ctx))'), 2,
   'l''administration lit la liste des indicateurs propres (écran 13), sans leurs chiffres');
 
 -- Présences : date de la session et contrainte des déjà comptés
