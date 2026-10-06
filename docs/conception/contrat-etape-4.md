@@ -502,7 +502,8 @@ aussitôt. `tests.essai(compte, aal, requête, mode)` sert aussi seul.
 Règles de l'aide (`000-outils.test.sql`) :
 
 - **Lignes dérivées** (troisième argument à vrai). Une ligne aal1 n'est dérivée que d'une ligne
-  aal2 **acceptée** (`ok` ou un nombre de lignes) : elle attend `0` pour une lecture d'une table
+  aal2 **acceptée** (`ok`, ou pour « lire » un nombre de lignes de 0 à 9999 ; un code d'erreur
+  a cinq caractères, comme `42501`) : elle attend `0` pour une lecture d'une table
   ou d'une vue, `42501` pour toute autre action et pour une lecture qui appelle une fonction de
   `public` (`exige_aal2`). Une ligne refusée en aal2 n'a pas de ligne aal1 dérivée (l'erreur en
   aal1 dépend de l'ordre des contrôles : un trigger avant l'ajout passe avant la RLS) : le lot

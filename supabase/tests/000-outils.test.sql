@@ -175,8 +175,9 @@ end $$;
 --   présent deux fois lève une erreur (il doublerait chaque essai).
 -- p_deriver : vrai pour ajouter les lignes dérivées, de sorte que la matrice n'écrive que
 --   l'aal2 :
---   - pour chaque ligne en aal2 d'un profil qui est **acceptée** (attendu « ok » ou un nombre
---     de lignes), sa ligne en aal1 : « 0 » pour une lecture d'une table ou d'une vue (la
+--   - pour chaque ligne en aal2 d'un profil qui est **acceptée** (attendu « ok », ou un nombre
+--     de lignes de 0 à 9999 pour « lire » ; un code d'erreur a cinq caractères, comme
+--     « 42501 »), sa ligne en aal1 : « 0 » pour une lecture d'une table ou d'une vue (la
 --     politique restrictive aal2 la vide), « 42501 » pour toute autre action et pour une
 --     lecture qui appelle une fonction de public (exige_aal2). Une ligne refusée en aal2 n'a
 --     pas de ligne dérivée : l'erreur en aal1 dépend de l'ordre des contrôles (triggers avant
@@ -220,7 +221,7 @@ begin
              m.requete
         from m
        where $1 and m.aal = 'aal2' and m.profil <> 'anonyme'
-         and (m.attendu = 'ok' or m.attendu ~ '^[0-9]+$')
+         and (m.attendu = 'ok' or (m.action = 'lire' and m.attendu ~ '^[0-9]{1,4}$'))
          and not exists (select 1 from m e
                           where e.profil = m.profil and e.objet = m.objet and e.action = m.action
                             and e.requete = m.requete and e.aal = 'aal1')
