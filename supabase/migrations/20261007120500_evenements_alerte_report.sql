@@ -20,7 +20,10 @@
 --    journal (l'ajout n'a pas lieu). Les messages sont repris tels quels par le formulaire 11.
 --    Le contrôle ne vise que le ministère porteur en aal2 : tout autre essai est refusé ensuite
 --    par la RLS (42501), sans rien dire de l'état de l'événement. Le jeu d'exemple et les
---    migrations (sans compte connecté) gardent leur historique.
+--    migrations (sans compte connecté) gardent leur historique ; service_role n'a aucun droit
+--    d'insertion sur evenement_etat (testé), donc cette exception n'est pas exploitable. Le
+--    trigger verrouille la ligne de l'événement avant de lire le dernier état, pour que deux
+--    envois identiques simultanés ne passent pas tous les deux.
 
 -- 1. Vue des événements
 
@@ -54,6 +57,9 @@ begin
                      where e.id = new.evenement_id and e.ministere_id = private.mon_ministere()) then
     return new;
   end if;
+  -- Verrou sur l'événement : deux envois simultanés (double clic, deux onglets, nouvel essai
+  -- du réseau) se suivent, et le second lit le dernier état déjà validé par le premier.
+  perform 1 from public.evenement e where e.id = new.evenement_id for no key update;
   select x.date, x.statut into v_date, v_statut
     from public.evenement_etat x
    where x.evenement_id = new.evenement_id

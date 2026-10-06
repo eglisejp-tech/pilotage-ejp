@@ -38,7 +38,7 @@ create trigger ajout_seulement_vider before truncate on public.evenement_mention
 -- Lit les mentions sans RLS : la politique de evenement ne relit pas evenement_mention sous RLS.
 create function private.evenements_mentionnant_mon_ministere() returns setof uuid
 language sql stable security definer set search_path = '' as $$
-  select m.evenement_id from public.evenement_mention m where m.ministere_id = private.mon_ministere()
+  select m.evenement_id from public.evenement_mention m where m.ministere_id = (select private.mon_ministere())
 $$;
 
 revoke all on function private.evenements_mentionnant_mon_ministere() from public, anon, authenticated, service_role;

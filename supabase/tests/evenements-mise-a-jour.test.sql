@@ -135,13 +135,10 @@ $$, '42501', null, 'aal1 : le porteur est refusé par la politique aal2, sans me
 select tests.deconnecter();
 
 -- Bascule de minuit à Paris. Les refus comparent à private.aujourdhui(), date de Paris
--- (dates.test.sql), jamais à current_date ni à now() en UTC : le 14 oct. 2026 à 22 h 30 UTC,
--- il est 0 h 30 le 15 oct. à Paris, et une nouvelle date au 14 oct. est déjà « hier ».
+-- (dates.test.sql), jamais à current_date ni à now() en UTC : entre 22 h et minuit UTC, la
+-- date de Paris a un jour d'avance. private.aujourdhui() ne se remplace pas dans un test (sa
+-- propriété diffère en CI) : le code qui la lit est donc vérifié sur son source.
 select is(private.aujourdhui(), (now() at time zone 'Europe/Paris')::date, 'aujourdhui() est la date de Paris');
-select is((timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date, date '2026-10-15',
-  'à 22 h 30 UTC le 14 oct., la date de Paris est le 15 oct.');
-select is((timestamptz '2026-10-14 22:30:00+00' at time zone 'UTC')::date, date '2026-10-14',
-  'au même instant, la date UTC est encore le 14 oct.');
 select ok((select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
             like '%new.date < private.aujourdhui()%'
           and (select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
@@ -158,7 +155,14 @@ select ok(pg_get_viewdef('public.v_evenement'::regclass) like '%private.aujourdh
           and pg_get_viewdef('public.v_evenement'::regclass) !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
   'v_evenement calcule jours et a_confirmer avec private.aujourdhui()');
 
+select ok((select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
+            like '%from public.evenement e where e.id = new.evenement_id for no key update%',
+  'le trigger verrouille l''événement avant de lire le dernier état (deux envois simultanés se suivent)');
+
 -- Structure
+select ok(not has_table_privilege('service_role', 'public.evenement_etat', 'INSERT')
+          and not has_table_privilege('anon', 'public.evenement_etat', 'INSERT'),
+  'ni service_role ni anon ne peuvent insérer dans evenement_etat (le trigger T37 ne vise que les comptes connectés)');
 select has_trigger('public', 'evenement_etat', 'controler_evenement_etat',
   'le trigger controler_evenement_etat contrôle chaque ajout dans evenement_etat');
 select ok((select p.prosecdef from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
