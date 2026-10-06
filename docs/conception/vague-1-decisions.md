@@ -7,6 +7,10 @@
   (`docs/conception/configuration-indicateurs.md`), validation (`docs/conception/validation-metier.md`),
   `BRIEF.md`, `docs/decisions.md` (numéros du 6 octobre)
 - **Entrées du journal des décisions** : P32 à P41 et T36 (`docs/decisions.md`)
+- **Révision du 6 octobre 2026** : la personne responsable a décidé que les indicateurs sensibles
+  sont créés et actifs dès la vague 1 (P42, réponse à la question 4 de `docs/plan-etape-4.md`).
+  K56, X4 et les sections 7 et 8 de ce document sont alignés ; toutes les protections de K5
+  restent.
 
 Ce document répond aux 112 questions de `kpi-ministeres.md` (C1 à C3, K1 à K57), aux questions Q1 à
 Q21 de `configuration-indicateurs.md`, et fixe la vague 1 des indicateurs. Là où il diffère de ces
@@ -209,7 +213,9 @@ ont été rapprochées (section 8).
   Indicateurs (configuration, section 9).
 - **K14b. Une boîte mail partagée par ministère ?** Oui, au nom de l'église, jamais d'une personne,
   créée par l'administration. Un ministère sans adresse n'est pas activé et manque à la complétude
-  jusqu'à son activation.
+  jusqu'à son activation. Le 6 octobre 2026, chaque ministère a été invité à créer sa boîte ; la
+  personne responsable enverra la liste plus tard, pour la création des comptes à l'écran 13. Cette
+  liste ne va jamais dans le dépôt.
 - **K14c. Noms exacts ?** Ceux de la liste : Intégration, Coordination, Communication, Social, Film,
   Tech, MCAD, MPI, Santé, Merch, Production, Prodiges Musique, Kumi, Eagles, Entretien, Coordo FIJ
   (le ministère de code `fij`), Multilingue, Sécurité, Formation, Protocole, MDS, Prodiges Junior.
@@ -219,9 +225,17 @@ ont été rapprochées (section 8).
   totaux mensuels sans personne ; durée : fin de vie de l'outil ; destinataires : ministère, berger,
   conseil, EJP Tech ; mesures : mois clos, seuil, aucune ventilation) et une note d'analyse courte
   (risques, mesures, risque résiduel), et les remet à la coordination, responsable de traitement.
-  **Les indicateurs sensibles ne s'activent qu'après cette remise.** La coordination décide d'une
-  analyse d'impact complète. La page Confidentialité dit que seuls des totaux de mois écoulés sont
-  saisis pour la santé, l'accompagnement, l'écoute et les enfants.
+  La coordination décide d'une analyse d'impact complète. La page Confidentialité dit que seuls
+  des totaux de mois écoulés sont saisis pour la santé, l'accompagnement, l'écoute et les enfants.
+  **Révisé le 6 octobre 2026 (P42, décision de la personne responsable)** : la première réponse
+  n'activait les indicateurs sensibles qu'après la remise du registre et de la note. Elle est
+  remplacée : « à partir du moment où ils sont présents dans les KPI, ils doivent être présents ».
+  Les onze indicateurs sensibles sont créés et actifs dès la vague 1, comme les autres, sans aucun
+  réglage d'activation ; toutes les protections de K5 restent (mois écoulés seulement, « moins de
+  3 » sans fuite, lignes brutes au seul ministère, aucun calcul, jamais sur la vue de l'église,
+  journal sans valeur, page Confidentialité). EJP Tech rédige maintenant le registre et la note
+  (`docs/conformite/`) ; ils sont remis à la coordination avant la mise en service, sans rien
+  conditionner dans l'outil.
 
 ### 2.2 Avant l'étape 4 (fiche et saisies)
 
@@ -1322,7 +1336,7 @@ matrice des droits.
 | X1  | Catalogue complet de la vague 1 : 161 prévus, 41 calculs, définitions, valeurs de départ, suggestions ; tests de création par « Créer »                                                                                                                                                                                                                                                                                                                                                                                                                                                      | tous les ministères                                  | 1,5 jour  |
 | X2  | Unités « heure » (0 à 1439, minutes depuis minuit, saisie en heures et minutes, affichage « 10 h 42 ») et « jours » (0 à 99 999) sur `indicateur.unite` ; contrôle de `mesure.valeur` par unité ; formulaire ; pgTAP                                                                                                                                                                                                                                                                                                                                                                         | Coordination, Film, Tech, Entretien                  | 1 jour    |
 | X3  | Drapeaux du catalogue, fixés à la création et contrôlés par `controler_indicateur` : `sans_somme`, `saisi_dimanche_matin` (le formulaire propose le dimanche du jour tant qu'on est dimanche, heure de Paris), `libelle_sessions`                                                                                                                                                                                                                                                                                                                                                            | MPI, Kumi, Eagles, MCAD, Coordo FIJ, Prodiges Junior | 0,5 jour  |
-| X4  | Seuil « moins de 3 » : vue `security_invoker` adossée à une fonction `private` ; somme sans fuite (mois affichés seulement) ; politique de lecture de `mesure` fermée aux lignes sensibles pour tout autre profil que le ministère ; pgTAP (0 reste 0, 1 et 2 masqués, valeur exacte pour le ministère, lecture directe refusée, somme sans fuite)                                                                                                                                                                                                                                           | Social, Santé, Kumi, Eagles, Prodiges Junior         | 1,5 jour  |
+| X4  | Seuil « moins de 3 » : vue `security_invoker` adossée à une fonction `private` ; somme sans fuite (mois affichés seulement) ; politique de lecture de `mesure` fermée aux lignes sensibles pour tout autre profil que le ministère ; sensibles actifs dès la vague 1, sans réglage d'activation (P42) ; pgTAP (0 reste 0, 1 et 2 masqués, valeur exacte pour le ministère, lecture directe refusée, somme sans fuite)                                                                                                                                                                        | Social, Santé, Kumi, Eagles, Prodiges Junior         | 1,5 jour  |
 | X5  | Statistiques FIJ par département : table `fij_statistique` (rubrique, département, dimanche, valeur, `saisi_le`, `saisi_par`), liste fermée `private.fij_rubrique`, fonction `saisir_fij_statistiques` (`private` en `security definer`, appelée par une fonction `public` en `security invoker`, une ligne de journal sans valeur), vue `v_fij_statistique` (dernière saisie par département, total, complétude, série), formulaire « Chiffres par département », pgTAP (le ministère `fij` écrit ; berger, conseil, EJP Tech lisent ; rien pour l'administration ni les autres ministères) | Coordo FIJ                                           | 2,5 jours |
 | X6  | Libellés des communs sur une fiche : `private.libelle_commun` (modèle, code du commun, libellé de 60 caractères au plus), jamais exposée, lue par la fiche ; lignes de référence de l'église pour MDS                                                                                                                                                                                                                                                                                                                                                                                        | 10 ministères et MDS                                 | 0,5 jour  |
 | X7  | Limites : 30 lignes par fiche, saisis et calculs, prévus compris ; plus de plafond de six ; code `coordination` posé sur le ministère Coordination par migration                                                                                                                                                                                                                                                                                                                                                                                                                             | tous                                                 | 0,25 jour |
@@ -1396,9 +1410,11 @@ Tout ce document l'est. Comment une révision s'applique :
   totaux d'événements, sens de « STARs au service » pour les mobilisés, tolérances de 5 minutes, 7
   jours, 3 mois et 30 jours) se change par une décision écrite dans `docs/decisions.md` et, si la
   base l'impose, par une migration.
-- **Hors de l'outil, à la coordination seule** : le registre des traitements et la note d'analyse
-  des comptes sensibles (K56), qui conditionnent l'activation des indicateurs sensibles ; la
-  décision d'une analyse d'impact complète.
+- **Hors de l'outil, à la coordination seule** : la validation du registre des traitements et de
+  la note d'analyse des comptes sensibles (K56), rédigés par EJP Tech (`docs/conformite/`) et
+  remis avant la mise en service, sans conditionner l'activation des indicateurs sensibles, actifs
+  dès la vague 1 (P42) ; la validation des libellés, définitions et faits choisis, remis dans le
+  même dossier ; la décision d'une analyse d'impact complète.
 - **Questions à poser pendant la relecture** : sens de la présence au culte (K19a) ; live et
   diffusion en direct (K32) ; catégories de Merch et de Prodiges Musique ; rubriques et étapes de
   Coordo FIJ ; jour des séances de Formation (formateurs mobilisés) ; définitions d'activité et de
@@ -1419,7 +1435,8 @@ La revue des propositions des quatre lots de travail a relevé 30 points. Suites
   les enfants différents retirée ; définitions de Sécurité sans faits de santé ; étape « membres »
   lue dans la table FIJ, « au service » distingué de « dont en FIJ », table FIJ avant la mise en
   service ; règle unique de départ des sommes ; unités « heure » et « jours » seulement ; relecture
-  unique avant la saisie ; registre remis avant l'activation des sensibles ; exception de lecture de
+  unique avant la saisie ; registre remis avant la mise en service (il conditionnait l'activation
+  des sensibles jusqu'à P42, qui les active dès la vague 1) ; exception de lecture de
   Coordination écrite dans la matrice ; couverture indépendante de P31 ; périmètre réduit ; « Live »
   posé à MCAD ; baptisés à la dernière session saisis ; drapeau « sans somme » ; « Événements
   couverts » en prévus propres ; haut et bas des événements à l'heure sur une même population ;
@@ -1436,7 +1453,9 @@ La revue des propositions des quatre lots de travail a relevé 30 points. Suites
     ne prouve pas la couverture.
   - _Événements passés de l'année saisis après coup_ : non retenu. Raison : il faudrait lever le
     refus des dates passées de `ajouter_evenement` (BRIEF, section 7) pour quelques mois de 2026 ;
-    les comptages nomment leur départ et couvrent l'année entière dès 2027.
+    les comptages nomment leur départ et couvrent l'année entière dès 2027. Confirmé le 6 octobre
+    2026 (T37) : la base refuse aussi une nouvelle date passée et une mise à jour identique à
+    l'état actuel ; un ministère gêné par ce refus peut le signaler (T39, à confirmer).
   - _Report des changements dans le BRIEF dès maintenant_ : différé au mode plan de l'étape 4a.
     Raison : CLAUDE.md demande l'accord explicite de la personne sur tout changement de modèle de
     données avant le code ; ce document liste les sections à reporter (section 1).
