@@ -19,3 +19,10 @@ Ajoute la table `$ARGUMENTS` en suivant ces étapes, dans l'ordre :
 6. Régénère les types quand la base locale tourne : `npx supabase gen types --lang typescript --local > src/types/database.ts`. Sans base locale, signale que les types sont à régénérer.
 7. Ajoute les fonctions d'accès dans `src/data/` (une par requête, typée, validée avec Zod).
 8. Lance le sous-agent `rls-auditor` et corrige les points bloquants.
+
+## Pièges connus des tests pgTAP
+
+Sans Docker sur le poste, chaque erreur coûte un aller-retour de CI. Vérifie ces points avant d'envoyer :
+
+- **Collation** : une colonne du catalogue (`information_schema`, `pg_catalog` : types `name` et `sql_identifier`, collation « C ») comparée à des textes littéraux ou à une colonne `text` donne « could not determine which collation to use for string comparison ». Écris `colonne::text collate "default"` (ou `collate "C"` des deux côtés) dans `results_eq`, `set_eq`, `bag_eq` et les `in (...)`. Erreur vue à l'étape 2 et trois fois au lot B6 de l'étape 4.
+- **Date de Paris** : ne remplace jamais `private.aujourdhui()` dans un test. Pour tester minuit, passe la date en paramètre de la fonction testée, ou agis au nom du propriétaire de la fonction.

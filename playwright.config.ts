@@ -18,8 +18,16 @@ const environnementNavigateur = {
 
 const testsAvecBase = /base[\\/]/
 const preparation = /\.setup\.ts$/
-const ignores = avecBase ? [preparation] : [preparation, testsAvecBase]
+// Parcours qui écrivent dans la base (étape 4, plan section 4) : suffixe `.ecriture.spec.ts`. Ils
+// tournent seuls, dans le projet « ecritures », jamais dans un projet de lecture, car rien ne
+// remet la base à zéro entre deux tests et les parcours de lecture comptent des chiffres exacts.
+const parcoursEcriture = /\.ecriture\.spec\.ts$/
+const ignores = avecBase
+  ? [preparation, parcoursEcriture]
+  : [preparation, parcoursEcriture, testsAvecBase]
+const ignoresEcriture = avecBase ? [preparation] : [preparation, testsAvecBase]
 const dependances = avecBase ? ['connexion'] : []
+const projetsDeLecture = ['ordinateur', 'tablette', 'telephone']
 
 // Trois formats de référence (BRIEF section 12) : ordinateur 1440, tablette 834, téléphone 390.
 export default defineConfig({
@@ -71,6 +79,19 @@ export default defineConfig({
         hasTouch: true,
         isMobile: true,
       },
+    },
+    // Parcours en écriture : en série (un seul worker, tests dans l'ordre du fichier), à 1440 px,
+    // et seulement après les trois projets de lecture, qui comptent des chiffres du jeu
+    // d'exemple. Un parcours crée ses propres lignes (nom suffixé, événement du test) et compare
+    // les comptes avant et après.
+    {
+      name: 'ecritures',
+      testMatch: parcoursEcriture,
+      testIgnore: ignoresEcriture,
+      dependencies: projetsDeLecture,
+      workers: 1,
+      fullyParallel: false,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
     },
   ],
   webServer: {

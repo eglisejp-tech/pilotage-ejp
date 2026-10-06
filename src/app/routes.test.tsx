@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
-import { accueil } from '@/features/navigation/profils'
+import { accueil, ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -393,5 +393,120 @@ describe('routes', () => {
       "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi.",
     )
     expect(screen.queryByRole('heading', { name: 'À décider' })).not.toBeInTheDocument()
+  })
+})
+
+const TOUS_LES_PROFILS = Object.keys(LIBELLES) as TypeCompte[]
+
+/** Adresse réelle d'un motif (« /ministeres/:id » : l'identifiant d'un autre ministère). */
+const exempleDe = (motif: string) => motif.replace(':id', 'm-autre')
+
+/** Chaque adresse de l'application avec chaque profil qui n'y a pas droit. */
+const ADRESSES_REFUSEES = ADRESSES_APPLICATION.flatMap((adresse) =>
+  TOUS_LES_PROFILS.filter((profil) => !adresse.profils.includes(profil)).map(
+    (profil) => [adresse.chemin, profil] as const,
+  ),
+)
+
+// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cet écran arrive à l'étape 4. »).
+// Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie page.
+const ADRESSES_AMORCES = [
+  '/ma-fiche',
+  '/ministeres',
+  '/ministeres/:id',
+  '/saisir/dimanche',
+  '/saisir/mois',
+  '/saisir/session/:id',
+  '/saisir/fij',
+  '/saisir/fij-statistiques',
+  '/saisir/evenement',
+  '/saisir/evenement/:id',
+  '/saisir/reunion',
+  '/signaler',
+]
+const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
+  ADRESSES_AMORCES.includes(adresse.chemin),
+).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
+
+describe("adresses de l'étape 4", () => {
+  it('déclare les douze adresses de saisie et de fiche, chacune avec une page amorce', () => {
+    expect(ADRESSES_AMORCES).toHaveLength(12)
+    for (const motif of ADRESSES_AMORCES) {
+      expect(
+        ADRESSES_APPLICATION.some((adresse) => adresse.chemin === motif),
+        motif,
+      ).toBe(true)
+    }
+  })
+
+  it.each(ADRESSES_REFUSEES)(
+    '%s refusée au profil %s : page non disponible, aucune requête au-delà du compte',
+    async (motif, profil) => {
+      const faux = connecte(profil)
+      afficher(exempleDe(motif))
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: "Cette page n'est pas disponible avec votre compte.",
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Elle est réservée à un autre profil.')).toBeInTheDocument()
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
+
+  it.each(AMORCES_PAR_PROFIL)(
+    '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
+    async (motif, profil) => {
+      const faux = connecte(profil)
+      const routeur = afficher(exempleDe(motif))
+      expect(await screen.findByText("Cet écran arrive à l'étape 4.")).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+      expect(routeur.state.location.pathname).toBe(exempleDe(motif))
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
+
+  it('EJP Tech sur une saisie : la page non disponible, jamais un bouton de saisie (T29)', async () => {
+    connecte('admin_plateforme')
+    afficher('/saisir/dimanche')
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: "Cette page n'est pas disponible avec votre compte.",
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+  })
+
+  it('le berger sur /signaler : la page non disponible (seuls le ministère et EJP Tech lisent un signalement)', async () => {
+    const faux = connecte('berger')
+    afficher('/signaler?ecran=saisie_evenement')
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: "Cette page n'est pas disponible avec votre compte.",
+      }),
+    ).toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte'])
+  })
+
+  it('/moderation : le bloc « Signalements » est un emplacement vide au-dessus du message « à venir »', async () => {
+    connecte('admin_plateforme')
+    afficher('/moderation')
+    expect(await screen.findByText("Cet écran arrive à l'étape 6.")).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.queryByText('Signalements')).toBeNull()
+  })
+
+  it.each([
+    ['/apercu/fiche', 5],
+    ['/apercu/saisies', 4],
+    ['/apercu/evenements', 3],
+  ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
+    const faux = installer({})
+    afficher(`${adresse}?profil=ministere`)
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(nombreDAides)
+    expect(faux.from).not.toHaveBeenCalled()
   })
 })
