@@ -58,7 +58,9 @@ export type AdresseApplication = {
 }
 
 /**
- * Table des adresses (BRIEF section 9, « Adresses »). Les saisies arrivent aux étapes 4 et 5.
+ * Table des adresses (BRIEF section 9, « Adresses » ; plan de l'étape 4, section 4). Les saisies
+ * arrivent aux étapes 4 et 5 ; l'étape 4 les déclare toutes une fois, ce fichier est ensuite figé
+ * jusqu'au lot I.
  * Les adresses de lecture du berger s'ouvrent à LECTEURS (berger, conseil, et EJP Tech en
  * lecture seule, T29) ; leurs boutons d'action se montrent par estDecideur
  * (src/lib/metier/droits.ts), jamais par ce droit d'adresse.
@@ -73,6 +75,41 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   { chemin: '/ma-fiche', profils: ['ministere'], titre: 'Ma fiche', etape: 4 },
   { chemin: '/ministeres', profils: LECTEURS, titre: 'Ministères', etape: 4 },
   { chemin: '/ministeres/:id', profils: LECTEURS, titre: 'Fiche du ministère', etape: 4 },
+  // Saisies du ministère (étape 4, plan section 4, « Adresses »). EJP Tech lit tout et ne saisit
+  // rien (T29) : aucune de ces adresses ne lui est ouverte, ni à l'administration de l'église.
+  // Les deux saisies FIJ sont ouvertes au profil « ministère » ici : le lot E4 réserve la page au
+  // ministère `fij` (un autre ministère reçoit la page non disponible).
+  { chemin: '/saisir/dimanche', profils: ['ministere'], titre: 'Chiffres du dimanche', etape: 4 },
+  { chemin: '/saisir/mois', profils: ['ministere'], titre: 'Chiffres du mois', etape: 4 },
+  {
+    chemin: '/saisir/session/:id',
+    profils: ['ministere'],
+    titre: "Saisie d'une session",
+    etape: 4,
+  },
+  { chemin: '/saisir/fij', profils: ['ministere'], titre: 'Carte des FIJ', etape: 4 },
+  {
+    chemin: '/saisir/fij-statistiques',
+    profils: ['ministere'],
+    titre: 'Chiffres par département',
+    etape: 4,
+  },
+  {
+    chemin: '/saisir/evenement',
+    profils: ['ministere'],
+    titre: 'Ajouter un événement',
+    etape: 4,
+  },
+  {
+    chemin: '/saisir/evenement/:id',
+    profils: ['ministere'],
+    titre: "Mettre à jour l'événement",
+    etape: 4,
+  },
+  { chemin: '/saisir/reunion', profils: ['ministere'], titre: 'Prochaine réunion', etape: 4 },
+  // « Signaler une difficulté » (T39) : le ministère seul écrit, EJP Tech lit dans le bloc
+  // « Signalements » de /moderation, le berger et le conseil n'y ont aucun accès.
+  { chemin: '/signaler', profils: ['ministere'], titre: 'Signaler une difficulté', etape: 4 },
   {
     chemin: '/points',
     profils: ['ministere', ...LECTEURS],

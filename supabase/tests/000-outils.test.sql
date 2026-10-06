@@ -124,13 +124,17 @@ $$;
 
 -- Essai d'une requête au nom d'un compte (null : l'anonyme), en aal1 ou en aal2, puis
 -- annulation de tout ce qu'elle a fait. Mode « lignes » : rend le nombre de lignes lues.
--- Autre mode : rend « ok » pour une écriture ou un appel accepté. Une erreur rend son code
--- (42501 pour un droit refusé, 23514 pour un check, P0001 pour un refus d'une fonction).
+-- Autre mode : rend « ok » pour un appel (requête qui commence par select) ou pour une écriture
+-- qui touche au moins une ligne, et « ok:0 » pour une écriture qui n'en touche aucune (un
+-- insert ... select filtré à vide, un update ou un delete que la RLS filtre) : elle ne prouve
+-- pas que l'écriture est permise. Une erreur rend son code (42501 pour un droit refusé, 23514
+-- pour un check, P0001 pour un refus d'une fonction).
 create or replace function tests.essai(p_compte uuid, p_aal text, p_requete text, p_mode text default 'code')
 returns text
 language plpgsql as $$
 declare
   v_resultat text;
+  v_lignes bigint;
 begin
   begin
     if p_compte is null then
@@ -142,7 +146,8 @@ begin
       execute format('select count(*)::text from (%s) as x', p_requete) into v_resultat;
     else
       execute p_requete;
-      v_resultat := 'ok';
+      get diagnostics v_lignes = row_count;
+      v_resultat := case when v_lignes > 0 or p_requete ~* '^\s*select\M' then 'ok' else 'ok:0' end;
     end if;
     raise exception using errcode = 'ZZ002', message = 'essai annulé';
   exception
@@ -166,43 +171,90 @@ end $$;
 --   attendu  pour « lire » : le nombre de lignes, ou un code d'erreur (42501) ; sinon « ok »
 --            ou le code d'erreur attendu ;
 --   requete  la requête SQL essayée (select pour « lire »).
--- p_profils : requête qui rend (profil text, compte uuid), un compte par profil.
--- p_deriver : vrai pour ajouter à chaque ligne en aal2 d'un profil sa ligne en aal1 (zéro
---   ligne lue, toute autre action refusée en 42501) et, une fois par objet, action et requête,
---   la ligne de l'anonyme (42501 partout). Avec p_deriver, la matrice n'écrit que l'aal2.
+-- p_profils : requête qui rend (profil text, compte uuid), un compte par profil. Un profil
+--   présent deux fois lève une erreur (il doublerait chaque essai).
+-- p_deriver : vrai pour ajouter les lignes dérivées, de sorte que la matrice n'écrive que
+--   l'aal2 :
+--   - pour chaque ligne en aal2 d'un profil qui est **acceptée** (attendu « ok » ou un nombre
+--     de lignes), sa ligne en aal1 : « 0 » pour une lecture d'une table ou d'une vue (la
+--     politique restrictive aal2 la vide), « 42501 » pour toute autre action et pour une
+--     lecture qui appelle une fonction de public (exige_aal2). Une ligne refusée en aal2 n'a
+--     pas de ligne dérivée : l'erreur en aal1 dépend de l'ordre des contrôles (triggers avant
+--     la RLS) ;
+--   - une fois par objet, action et requête, la ligne de l'anonyme (42501 partout).
+--   Une ligne écrite dans la matrice remplace la ligne dérivée de même profil, objet, action et
+--   requête (en aal1, ou pour l'anonyme) : c'est le cas de compte, dont un compte lit sa
+--   propre ligne en aal1.
+-- L'ordre des essais est fixe (objet, action, requête, puis ligne écrite avant ses dérivées).
+-- tests.nombre_essais(p_matrice, p_profils, p_deriver) donne leur nombre, pour plan().
 -- Les tables temporaires lues par les requêtes doivent être ouvertes à authenticated et à
 -- anon par le fichier de test (grant select). Chaque essai est annulé aussitôt.
+create or replace function tests.lignes_matrice(p_matrice text, p_profils text, p_deriver boolean default false)
+returns table (profil text, objet text, action text, aal text, attendu text, requete text,
+               compte uuid, connu boolean)
+language plpgsql as $$
+declare
+  v_doubles text;
+begin
+  execute format('select string_agg(d.nom, '', '' order by d.nom)
+                    from (select x.profil as nom from (%s) as x(profil, compte)
+                           group by x.profil having count(*) > 1) as d', p_profils)
+    into v_doubles;
+  if v_doubles is not null then
+    raise exception 'tests.verifier_matrice : profil en double dans p_profils (%)', v_doubles;
+  end if;
+
+  return query execute format($requete$
+    with m as (
+      select x.profil::text as profil, x.objet::text as objet, x.action::text as action,
+             x.aal::text as aal, x.attendu::text as attendu, x.requete::text as requete
+        from (%s) as x(profil, objet, action, aal, attendu, requete)
+    ),
+    lignes as (
+      select 1 as sous_rang, m.profil, m.objet, m.action, m.aal, m.attendu, m.requete
+        from m
+      union all
+      select 2, m.profil, m.objet, m.action, 'aal1',
+             case when m.action = 'lire' and m.requete !~* '\mpublic\.[a-z0-9_]+\s*\('
+                  then '0' else '42501' end,
+             m.requete
+        from m
+       where $1 and m.aal = 'aal2' and m.profil <> 'anonyme'
+         and (m.attendu = 'ok' or m.attendu ~ '^[0-9]+$')
+         and not exists (select 1 from m e
+                          where e.profil = m.profil and e.objet = m.objet and e.action = m.action
+                            and e.requete = m.requete and e.aal = 'aal1')
+      union all
+      select distinct 3, 'anonyme', m.objet, m.action, null::text, '42501', m.requete
+        from m
+       where $1 and m.profil <> 'anonyme'
+         and not exists (select 1 from m e
+                          where e.profil = 'anonyme' and e.objet = m.objet and e.action = m.action
+                            and e.requete = m.requete)
+    )
+    select l.profil, l.objet, l.action, l.aal, l.attendu, l.requete,
+           p.compte, p.profil is not null
+      from lignes l
+      left join (%s) as p(profil, compte) on p.profil = l.profil
+     order by l.objet, l.action, l.requete, l.sous_rang, l.profil, l.aal nulls first
+  $requete$, p_matrice, p_profils) using p_deriver;
+end $$;
+
+-- Nombre d'essais que tests.verifier_matrice rendra pour cette matrice (lignes dérivées
+-- comprises) : select plan(n + tests.nombre_essais(...)).
+create or replace function tests.nombre_essais(p_matrice text, p_profils text, p_deriver boolean default false)
+returns integer
+language sql as $$
+  select count(*)::integer from tests.lignes_matrice(p_matrice, p_profils, p_deriver)
+$$;
+
 create or replace function tests.verifier_matrice(p_matrice text, p_profils text, p_deriver boolean default false)
 returns setof text
 language plpgsql as $$
 declare
   r record;
 begin
-  for r in execute format($requete$
-    with m as (
-      select row_number() over () as rang, x.profil, x.objet, x.action, x.aal, x.attendu, x.requete
-        from (%s) as x(profil, objet, action, aal, attendu, requete)
-    ),
-    lignes as (
-      select m.rang, 1 as sous_rang, m.profil, m.objet, m.action, m.aal, m.attendu, m.requete
-        from m
-      union all
-      select m.rang, 2, m.profil, m.objet, m.action, 'aal1',
-             case when m.action = 'lire' then '0' else '42501' end, m.requete
-        from m
-       where $1 and m.aal = 'aal2' and m.profil <> 'anonyme'
-      union all
-      select min(m.rang), 3, 'anonyme', m.objet, m.action, null, '42501', m.requete
-        from m
-       where $1
-       group by m.objet, m.action, m.requete
-    )
-    select l.rang, l.sous_rang, l.profil, l.objet, l.action, l.aal, l.attendu, l.requete,
-           p.compte, p.profil is not null as connu
-      from lignes l
-      left join (%s) as p(profil, compte) on p.profil = l.profil
-     order by l.rang, l.sous_rang, l.profil
-  $requete$, p_matrice, p_profils) using p_deriver
+  for r in select * from tests.lignes_matrice(p_matrice, p_profils, p_deriver)
   loop
     if r.profil <> 'anonyme' and (not r.connu or r.compte is null) then
       return next fail(format('%s, %s, %s : profil sans compte dans p_profils', r.objet, r.action, r.profil));
@@ -224,11 +276,13 @@ end $$;
 
 grant execute on all functions in schema tests to anon, authenticated;
 
-select plan(4);
+select plan(5);
 select has_schema('tests', 'le schéma des outils de test existe');
 select has_function('tests', 'se_connecter', array['uuid', 'text'], 'tests.se_connecter(user_id, aal) existe');
 select has_function('tests', 'essai', array['uuid', 'text', 'text', 'text'],
   'tests.essai(compte, aal, requête, mode) existe');
 select has_function('tests', 'verifier_matrice', array['text', 'text', 'boolean'],
   'tests.verifier_matrice(matrice, profils, dériver) existe (matrice des droits en données)');
+select has_function('tests', 'nombre_essais', array['text', 'text', 'boolean'],
+  'tests.nombre_essais(matrice, profils, dériver) existe (nombre de tests pour plan)');
 select * from finish();

@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { EmplacementEvenementsAConfirmer } from '@/features/cette-semaine/EmplacementEvenementsAConfirmer'
+import { EmplacementVosPoints } from '@/features/cette-semaine/EmplacementVosPoints'
 
 interface Props {
   ouverture: ReactNode
@@ -49,19 +51,33 @@ export function GrilleCetteSemaine({
           </div>
           <div className="min-w-0 lg:col-span-2 lg:col-start-1 lg:row-start-2">{session}</div>
           <div className="min-w-0 lg:col-start-2 lg:row-start-1">{carte}</div>
+          {/* Emplacement de W0 : « Vos points » (lot E7, qui range sa place dans la grille). */}
+          <EmplacementVosPoints />
         </div>
         {ministeres}
       </div>
     )
   }
 
+  // « Événements à confirmer » (lot E6) suit « À décider » : dans le même bloc de la colonne de
+  // droite, ou juste après lui quand il remonte en tête (téléphone).
   return (
     <div className="flex flex-col gap-9 min-[600px]:gap-11 lg:gap-13">
       {ouverture}
-      {aDeciderEnTete ? aDecider : null}
+      {aDeciderEnTete ? (
+        <>
+          {aDecider}
+          <EmplacementEvenementsAConfirmer />
+        </>
+      ) : null}
       <div className={`${rangee} ${deuxColonnes}`}>
         {chiffres}
-        {aDeciderEnTete ? null : aDecider}
+        {aDeciderEnTete ? null : (
+          <div className="flex min-w-0 flex-col gap-9 min-[600px]:gap-11">
+            {aDecider}
+            <EmplacementEvenementsAConfirmer />
+          </div>
+        )}
       </div>
       <div className={`${rangee} ${sessionEtCarte} ${deuxColonnes}`}>
         {session}
