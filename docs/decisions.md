@@ -14,14 +14,15 @@ Quand une proposition est confirmée ou changée, mets à jour son statut ici, p
 
 Les branches `main` et `etape-kpi-conception` ont numéroté leurs entrées en parallèle. À la fusion (branche `etape-4-preparation`), `main` garde ses numéros (P01 à P14, T01 à T32) et les entrées de la conception des KPI prennent les numéros libres suivants. Les renvois dans ce fichier et dans `docs/conception/*.md` ont été mis à jour une seule fois.
 
-| Ancien numéro (conception) | Nouveau numéro | Titre                                                                             |
-| -------------------------- | -------------- | --------------------------------------------------------------------------------- |
-| P14                        | P31            | Rappels de saisie par email                                                       |
-| T26                        | T33            | Unité, plafond, groupe et marque sensible d'un indicateur                         |
-| T27                        | T34            | Indicateurs créés par lots de migration, avec un catalogue                        |
-| T28                        | T29            | EJP Tech voit les chiffres (fusionnée dans « EJP Tech lit tout comme le berger ») |
-| T29                        | T35            | Configuration des indicateurs et indicateurs créés par les ministères             |
-| T30                        | T30            | Validation par EJP Tech des indicateurs (fusionnée dans le T30 de `main`)         |
+| Ancien numéro (conception) | Nouveau numéro | Titre                                                                                              |
+| -------------------------- | -------------- | -------------------------------------------------------------------------------------------------- |
+| P14                        | P31            | Rappels de saisie par email                                                                        |
+| T26                        | T33            | Unité, plafond, groupe et marque sensible d'un indicateur                                          |
+| T27                        | T34            | Indicateurs créés par lots de migration, avec un catalogue                                         |
+| T28                        | T29            | EJP Tech voit les chiffres (fusionnée dans « EJP Tech lit tout comme le berger »)                  |
+| T29                        | T35            | Configuration des indicateurs et indicateurs créés par les ministères                              |
+| T30                        | T30            | Validation par EJP Tech des indicateurs (fusionnée dans le T30 de `main`)                          |
+| P18, P28                   | aucun          | Numéros libres, non réutilisés : P18 et P28 sont devenues T26 et T27 le 5 octobre, puis T33 et T34 |
 
 P14 « Calculs affichés » garde son numéro. P15 à P30 ne changent pas. T26 à T32 de `main` ne changent pas.
 
