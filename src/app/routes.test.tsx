@@ -424,8 +424,12 @@ const ADRESSES_AMORCES = [
   '/saisir/reunion',
   '/signaler',
 ]
-const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
-  ADRESSES_AMORCES.includes(adresse.chemin),
+// Adresses dont le lot a remplacé l'amorce : leurs vraies pages sont testées à part (lot E5 :
+// `src/pages/PageSaisieEvenement.test.tsx`). Elles restent dans la liste des douze déclarées.
+const ADRESSES_REMPLACEES = ['/saisir/evenement', '/saisir/evenement/:id', '/saisir/reunion']
+const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter(
+  (adresse) =>
+    ADRESSES_AMORCES.includes(adresse.chemin) && !ADRESSES_REMPLACEES.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
 
 describe("adresses de l'étape 4", () => {

@@ -1,10 +1,26 @@
-import { PageAVenir } from '@/pages/PageAVenir'
-import type { ProprietesPage } from '@/pages/proprietesPage'
+import { useParams } from 'react-router'
+import { SaisieAjoutEvenement } from '@/features/evenements/SaisieAjoutEvenement'
+import { SaisieMiseAJourEvenement } from '@/features/evenements/SaisieMiseAJourEvenement'
+import { useCompteConnecte } from '@/features/session/contexte'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 /**
- * Amorce de W0 pour `/saisir/evenement` et `/saisir/evenement/:id` : le lot E5 la remplace
- * (ajout et mise à jour d'un événement, 11).
+ * `/saisir/evenement` (ajout, maquette 11) et `/saisir/evenement/:id` (mise à jour), pour un
+ * compte de ministère seulement : `PageApplication` a déjà refusé les autres profils, sans
+ * requête. Le titre vient du panneau (« Ajouter un événement », « Mettre à jour l'événement »),
+ * pas de `ProprietesPage`.
  */
-export function PageSaisieEvenement({ titre }: ProprietesPage) {
-  return <PageAVenir titre={titre} etape={4} />
+export function PageSaisieEvenement() {
+  const compte = useCompteConnecte()
+  const { id } = useParams()
+  if (compte.ministereId === null) return <PageNonDisponible />
+  return id === undefined ? (
+    <SaisieAjoutEvenement ministereId={compte.ministereId} libelleCompte={compte.libelle} />
+  ) : (
+    <SaisieMiseAJourEvenement
+      id={id}
+      ministereId={compte.ministereId}
+      libelleCompte={compte.libelle}
+    />
+  )
 }
