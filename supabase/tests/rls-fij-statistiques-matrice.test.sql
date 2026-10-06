@@ -14,8 +14,6 @@
 -- n'écrit directement dans la table, ni ne la modifie, ni ne l'efface, pas même son propriétaire.
 begin;
 
-select plan(138);
-
 create temp table ctx as
 select (select c.user_id from public.compte c
           join public.ministere m on m.id = c.ministere_id
@@ -87,12 +85,6 @@ select row_number() over (order by o.rang, p.ordre) as rang,
   from objet o
  cross join profil p;
 
--- 49 lignes en aal2, 49 en aal1 (dérivées), 7 de l'anonyme (dérivées).
-select * from tests.verifier_matrice(
-  $$ select profil, objet, action, aal, attendu, requete from matrice order by rang $$,
-  $$ select nom, compte from profil $$,
-  true);
-
 -- private.fij_rubrique : rien pour personne, en aal1 comme en aal2, ni pour l'anonyme
 -- (2 actions : 7 profils en aal2 et en aal1, puis l'anonyme).
 create temp table matrice_privee as
@@ -108,6 +100,20 @@ select 100 + a.rang, 'anonyme', 'private.fij_rubrique', a.action, null, '42501',
   from (values (1, 'lire', 'select 1 from private.fij_rubrique'),
                (2, 'ajouter', 'insert into private.fij_rubrique (code, libelle, ordre) values (''autre'', ''Autre'', 9)'))
        as a(rang, action, requete);
+
+-- Le plan compte les 3 tests fixes (inaltérabilité) et, par tests.nombre_essais, les essais de
+-- chaque matrice (lignes dérivées comprises) : l'aide de 000-outils.test.sql en décide.
+select plan(3
+  + tests.nombre_essais($$ select profil, objet, action, aal, attendu, requete from matrice order by rang $$,
+                        $$ select nom, compte from profil $$, true)
+  + tests.nombre_essais($$ select profil, objet, action, aal, attendu, requete from matrice_privee order by rang $$,
+                        $$ select nom, compte from profil $$, false));
+
+-- Lignes en aal2, puis leurs dérivées en aal1 et celles de l'anonyme.
+select * from tests.verifier_matrice(
+  $$ select profil, objet, action, aal, attendu, requete from matrice order by rang $$,
+  $$ select nom, compte from profil $$,
+  true);
 
 select * from tests.verifier_matrice(
   $$ select profil, objet, action, aal, attendu, requete from matrice_privee order by rang $$,

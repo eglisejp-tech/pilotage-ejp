@@ -6,8 +6,6 @@
 -- chaque ligne en aal1 (rien lu, tout refusé) et l'anonyme (42501 partout).
 begin;
 
-select plan(139);
-
 -- Jeu d'essai : A porte l'événement et mentionne B ; C est un autre ministère ; D, actif, sert
 -- de mention à l'essai de ajouter_evenement (aucun profil ne s'y mentionne lui-même).
 create temp table ctx as
@@ -26,15 +24,6 @@ update ctx set a = tests.creer_compte('matrice-b6-a@exemple.test', 'ministere', 
                tech = tests.creer_compte('matrice-b6-tech@exemple.test', 'admin_plateforme');
 grant select on ctx to authenticated;
 
-select tests.se_connecter((select a from ctx), 'aal2');
-select lives_ok($$
-  select public.ajouter_evenement('Matrice B6, événement', private.aujourdhui() + 10, 'attente_validation',
-    array[(select b_m from ctx)])
-$$, 'jeu d''essai : A ajoute un événement qui mentionne B');
-select tests.deconnecter();
-update ctx set ev = (select e.id from public.evenement e where e.titre = 'Matrice B6, événement');
-select ok((select count(*) from ctx where ev is not null) = 1, 'le jeu d''essai a son événement');
-
 -- Profils, dans l'ordre des colonnes de la matrice.
 create temp table profil as
 select x.ordre, x.nom, x.compte
@@ -52,7 +41,7 @@ cross join lateral (values
 -- La matrice en aal2. Colonnes des attendus dans l'ordre des profils : porteur, mentionné,
 -- autre ministère, berger, conseil, administration, EJP Tech. « lire » : lignes de
 -- l'événement du jeu d'essai ; toute autre action : ok ou le code d'erreur.
-create temp table matrice as
+create temp view matrice as
 select row_number() over (order by o.rang, p.ordre) as rang,
        p.nom as profil, o.objet, o.action, 'aal2'::text as aal, o.attendus[p.ordre] as attendu, o.requete
 from ctx
@@ -80,6 +69,24 @@ cross join lateral (values
 ) as o(rang, objet, action, attendus, requete)
 cross join profil p;
 grant select on matrice, profil to authenticated, anon;
+
+-- Le plan compte les 4 tests fixes (jeu d'essai, 2 contrôles finaux) et, par tests.nombre_essais,
+-- les essais de la matrice (lignes dérivées comprises). La matrice est une vue : elle lit
+-- ctx.ev au moment de l'essai, une fois le jeu d'essai posé.
+select plan(4 + tests.nombre_essais(
+  'select profil, objet, action, aal, attendu, requete from matrice order by rang',
+  'select nom, compte from profil',
+  true));
+
+select tests.se_connecter((select a from ctx), 'aal2');
+select lives_ok($$
+  select public.ajouter_evenement('Matrice B6, événement', private.aujourdhui() + 10, 'attente_validation',
+    array[(select b_m from ctx)])
+$$, 'jeu d''essai : A ajoute un événement qui mentionne B');
+select tests.deconnecter();
+update ctx set ev = (select e.id from public.evenement e where e.titre = 'Matrice B6, événement');
+select ok((select count(*) from ctx where ev is not null) = 1, 'le jeu d''essai a son événement');
+
 
 select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice order by rang',
