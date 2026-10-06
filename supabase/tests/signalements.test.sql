@@ -13,6 +13,7 @@ select tests.creer_ministere('Signalements A') as a_m,
 alter table ctx add column a uuid, add column d uuid,
   add column s1 uuid, add column s2 uuid, add column s3 uuid,
   add column x1 uuid, add column x2 uuid, add column x3 uuid,
+  add column v1 uuid, add column v2 uuid,
   add column fraicheur timestamptz, add column precision uuid;
 update ctx set a = tests.creer_compte('signalements-a@exemple.test', 'ministere', a_m),
                d = tests.creer_compte('signalements-d@exemple.test', 'ministere', d_m);
@@ -26,7 +27,7 @@ update ctx set fraicheur = now() - interval '2 days',
                precision = (select p.id from public.precision_sensible p order by p.saisi_le, p.id limit 1);
 grant select on ctx to authenticated;
 
-select plan(62);
+select plan(69);
 
 select ok((select count(*) from ctx where a is not null and d is not null and berger is not null
              and tech is not null and precision is not null) = 1,
@@ -49,13 +50,22 @@ select function_returns('public', 'signaler_difficulte', array['text', 'text'], 
   'signaler_difficulte(p_ecran, p_texte) rend l''identifiant du signalement');
 select function_returns('public', 'clore_signalement', array['uuid', 'text'], 'void',
   'clore_signalement(p_signalement_id, p_commentaire) ne rend rien');
-select set_eq($$
-  select (regexp_matches(pg_get_constraintdef(c.oid), '''([a-z_]+)''', 'g'))[1]
-    from pg_constraint c
-   where c.conrelid = 'public.signalement'::regclass and c.conname = 'signalement_ecran_check'
-$$, $$ values ('saisie_dimanche'), ('saisie_mois'), ('saisie_session'), ('saisie_fij'),
+select set_eq($$ select unnest(private.ecrans_signalement()) $$, $$ values ('saisie_dimanche'), ('saisie_mois'), ('saisie_session'), ('saisie_fij'),
               ('saisie_fij_statistiques'), ('saisie_evenement'), ('saisie_reunion'), ('autre') $$,
-  'signalement.ecran : les 8 codes du contrat, rien d''autre');
+  'signalement.ecran : les 8 codes du contrat, rien d''autre (private.ecrans_signalement())');
+select ok((select pg_get_constraintdef(c.oid) like '%ecrans_signalement()%'
+             from pg_constraint c
+            where c.conrelid = 'public.signalement'::regclass and c.conname = 'signalement_ecran_check'),
+  'le check de signalement.ecran lit la même liste que signaler_difficulte (une seule source)');
+select is((select count(*)::int from public.signalement s
+             join public.ministere m on m.id = s.ministere_id
+            where m.nom = 'Communication'
+              and s.id in ('43000000-0000-4000-8000-000000000001', '43000000-0000-4000-8000-000000000002')), 2,
+  'jeu d''exemple (seed/43) : deux signalements de Communication');
+select is((select count(*)::int from public.signalement s
+            where s.id in ('43000000-0000-4000-8000-000000000001', '43000000-0000-4000-8000-000000000002')
+              and not exists (select 1 from public.signalement_suivi x where x.signalement_id = s.id)), 1,
+  'jeu d''exemple (seed/43) : un seul des deux est encore ouvert, l''autre est clos');
 
 -- 2. Signaler une difficulté (ministère A)
 select tests.se_connecter((select a from ctx), 'aal2');
@@ -260,6 +270,42 @@ select throws_ok($$ with n as (insert into public.signalement (ministere_id, ecr
                     insert into public.signalement_suivi (signalement_id, commentaire, saisi_par)
                     select n.id, 'Court.', (select tech from ctx) from n $$,
   '23514', null, 'la base refuse un commentaire de moins de 10 caractères');
+
+-- 6. v_signalement : ouvert et clos_recent (30 jours, heure de Paris). Trois signalements de A :
+-- s1 (clos à l'instant), un ouvert d'hier, un ancien clos il y a 40 jours (insérés par le
+-- propriétaire, qui garde les dates données).
+with n as (
+  insert into public.signalement (ministere_id, ecran, texte, saisi_le, saisi_par)
+  select a_m, 'saisie_reunion', 'Signalement ouvert de la vue.', now() - interval '1 day', a from ctx
+  returning id)
+update ctx set v1 = (select id from n);
+with n as (
+  insert into public.signalement (ministere_id, ecran, texte, saisi_le, saisi_par)
+  select a_m, 'saisie_session', 'Signalement ancien de la vue.', now() - interval '50 days', a from ctx
+  returning id),
+x as (
+  insert into public.signalement_suivi (signalement_id, saisi_le, saisi_par)
+  select n.id, now() - interval '40 days', (select tech from ctx) from n)
+update ctx set v2 = (select id from n);
+
+select results_eq($$
+  select column_name::text collate "default" from information_schema.columns
+   where table_schema = 'public' and table_name = 'v_signalement' order by ordinal_position
+$$, $$ values ('id'), ('ministere_id'), ('ministere_nom'), ('ecran'), ('texte'), ('saisi_le'), ('suivi_id'),
+              ('commentaire'), ('clos_le'), ('ouvert'), ('clos_recent') $$,
+  'v_signalement : les colonnes annoncées à E8, dans l''ordre');
+select is(tests.lire((select tech from ctx), 'aal2',
+  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx) order by saisi_le'),
+  '[{"ouvert": false, "clos_recent": false}, {"ouvert": true, "clos_recent": false}, {"ouvert": false, "clos_recent": true}]'::jsonb,
+  'EJP Tech : clos il y a 40 jours, ouvert, clos à l''instant (clos_recent vaut faux, faux, vrai)');
+select is(tests.lire((select a from ctx), 'aal2',
+  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx) order by saisi_le'),
+  '[{"ouvert": false, "clos_recent": false}, {"ouvert": true, "clos_recent": false}, {"ouvert": false, "clos_recent": true}]'::jsonb,
+  'le ministère auteur lit les mêmes trois lignes de v_signalement');
+select is(tests.lire((select a from ctx), 'aal2',
+  'select ministere_nom, commentaire is not null as avec_commentaire from public.v_signalement where id = (select s1 from ctx)'),
+  '[{"ministere_nom": "Signalements A", "avec_commentaire": true}]'::jsonb,
+  'v_signalement donne le nom du ministère et le commentaire de la clôture (masqué : le texte de la modération)');
 
 select * from finish();
 rollback;

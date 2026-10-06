@@ -9,10 +9,12 @@
 -- Aucune donnée personnelle : ni nom, ni adresse, ni numéro (les textes passent les familles
 -- « données personnelles » et « crochets » de private.verifier_texte).
 --
--- Insertion directe sous pilotage.migration, sans passer par signaler_difficulte ni
+-- Insertion directe (rôle du jeu, sans compte connecté), sans passer par signaler_difficulte ni
 -- clore_signalement : aucune ligne de journal, pour que la fraîcheur de Communication et les
 -- comptes du journal que vérifient les tests de l'étape 3 ne bougent pas (contrat de l'étape 4,
--- section 3). forcer_auteur garde saisi_le et saisi_par (rôle du jeu, sans compte connecté).
+-- section 3). Aucun réglage de session n'est nécessaire : les triggers des deux tables ne lisent
+-- pas pilotage.migration. forcer_auteur garde saisi_le et saisi_par parce qu'aucun compte n'est
+-- connecté. signalements.test.sql vérifie le contenu du jeu (E8 en dépend).
 --
 -- Ce fichier se suffit à lui-même : il redéfinit les aides de décalage de seed.sql et retrouve
 -- le ministère et les comptes par leurs identifiants fixes.
@@ -21,8 +23,6 @@ create or replace function pg_temp.h(p_heure timestamp) returns timestamptz
 language sql stable as $$
   select (p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day') at time zone 'Europe/Paris'
 $$;
-
-select set_config('pilotage.migration', 'oui', false);
 
 insert into public.signalement (id, ministere_id, ecran, texte, saisi_le, saisi_par) values
   ('43000000-0000-4000-8000-000000000001', '10000000-0000-4000-8000-000000000001', 'saisie_evenement',
@@ -36,5 +36,3 @@ insert into public.signalement_suivi (id, signalement_id, commentaire, saisi_le,
   ('43000000-0000-4000-8000-000000000011', '43000000-0000-4000-8000-000000000002',
    'Réglé avec le ministère : le champ attendait un nombre entier.',
    pg_temp.h('2026-09-22 10:00'), '20000000-0000-4000-8000-000000000031');          -- EJP Tech, compte 1
-
-select set_config('pilotage.migration', '', false);

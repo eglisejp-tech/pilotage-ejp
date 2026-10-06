@@ -28,23 +28,33 @@
 --    auteur et EJP Tech (T39). Les lignes texte_relu et texte_masque de cible
 --    demande_indicateur ne se lisent plus par l'administration (P51). v_journal donne pour la
 --    cible signalement le code de l'écran, sous la RLS du lecteur, jamais le texte.
--- 6. Fraîcheur : private.tableau_ministeres() recréée depuis sa dernière version
+-- 6. Vue v_signalement : le signalement et sa clôture, avec ouvert et clos_recent (30 jours à
+--    l'heure de Paris), sous la RLS du lecteur (le ministère auteur et EJP Tech).
+-- 7. Fraîcheur : private.tableau_ministeres() recréée depuis sa dernière version
 --    (20261005172228) ; elle ignore difficulte_signalee (un signalement n'est pas une saisie,
 --    règle 6 du BRIEF).
+-- 8. Droits des fonctions.
 --
 -- Aucune donnée personnelle ; aucun email ni notification ; aucun SQL dynamique.
 
 -- 1. Tables
 
+-- Les codes d'écran, écrits une seule fois : le check de la table et signaler_difficulte les
+-- lisent ici. Une nouvelle saisie ajoute son code en recréant cette seule fonction, par migration.
+create function private.ecrans_signalement() returns text[]
+language sql immutable set search_path = '' as $$
+  select array['saisie_dimanche', 'saisie_mois', 'saisie_session', 'saisie_fij', 'saisie_fij_statistiques',
+               'saisie_evenement', 'saisie_reunion', 'autre']
+$$;
+
 create table public.signalement (
   id uuid primary key default gen_random_uuid(),
   ministere_id uuid not null references public.ministere,
-  ecran text not null check (ecran in (
-    'saisie_dimanche', 'saisie_mois', 'saisie_session', 'saisie_fij', 'saisie_fij_statistiques',
-    'saisie_evenement', 'saisie_reunion', 'autre')),
-  texte text not null,                                      -- seul masquer_texte le réécrit
+  ecran text not null,
+  texte text not null,                                    -- seul masquer_texte le réécrit
   saisi_le timestamptz not null default now(),
   saisi_par uuid not null default auth.uid() references public.compte (user_id),
+  constraint signalement_ecran_check check (ecran = any (private.ecrans_signalement())),
   constraint signalement_texte_check check (char_length(texte) between 10 and 280 and texte = btrim(texte))
 );
 create index on public.signalement (ministere_id, saisi_le desc);
@@ -115,8 +125,7 @@ begin
   if private.mon_type() is distinct from 'ministere' or v_ministere is null then
     raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
   end if;
-  if p_ecran is null or p_ecran not in ('saisie_dimanche', 'saisie_mois', 'saisie_session', 'saisie_fij',
-                                        'saisie_fij_statistiques', 'saisie_evenement', 'saisie_reunion', 'autre') then
+  if p_ecran is null or p_ecran <> all (private.ecrans_signalement()) then
     raise exception 'Choisissez l''écran concerné dans la liste.';
   end if;
   v_texte := btrim(coalesce(p_texte, ''));
@@ -163,9 +172,6 @@ begin
   if not found then
     raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
   end if;
-  if exists (select 1 from public.signalement_suivi x where x.signalement_id = p_signalement_id) then
-    raise exception 'Ce signalement est déjà clos.';
-  end if;
   v_commentaire := nullif(btrim(coalesce(p_commentaire, '')), '');
   if v_commentaire is not null then
     if char_length(v_commentaire) < 10 then
@@ -180,8 +186,15 @@ begin
     end if;
   end if;
 
-  insert into public.signalement_suivi (signalement_id, commentaire)
-  values (p_signalement_id, v_commentaire);
+  -- Une seule clôture, sans contrôle préalable : le verrou for update fait attendre une seconde
+  -- clôture, puis l'index unique de signalement_suivi la refuse ; le refus devient le message
+  -- lisible (aucune ligne de journal n'est écrite).
+  begin
+    insert into public.signalement_suivi (signalement_id, commentaire)
+    values (p_signalement_id, v_commentaire);
+  exception when unique_violation then
+    raise exception 'Ce signalement est déjà clos.';
+  end;
 
   insert into public.journal (le, compte, ministere_id, action, cible, cible_id, detail)
   values (statement_timestamp(), (select auth.uid()), v_signalement.ministere_id, 'signalement_clos',
@@ -404,8 +417,9 @@ create policy lecture on public.journal for select to authenticated using (
   or ((select private.mon_type()) = 'ministere'
       and (ministere_id = (select private.mon_ministere()) or compte = (select auth.uid()))));
 
--- v_journal : version de B8, plus la cible signalement (code de l'écran, lu sous la RLS du
--- lecteur : le ministère auteur et EJP Tech ; jamais le texte), et les mêmes conditions que la
+-- v_journal : version de B8, plus les cibles signalement et signalement_suivi (code de l'écran
+-- du signalement, lu sous la RLS du lecteur : le ministère auteur et EJP Tech ; jamais le texte
+-- ni le commentaire), et les mêmes conditions que la
 -- politique de lecture : P51 pour l'administration, T39 pour tout lecteur autre que EJP Tech
 -- et un ministère (dont la RLS ne rend que les lignes de sa fiche et de son compte). Mêmes
 -- colonnes.
@@ -441,6 +455,9 @@ select j.id, j.le, j.compte, j.ministere_id, j.action, j.cible, j.cible_id, j.de
              join public.indicateur i on i.id = p.indicateur_id
             where p.id = j.cible_id)
          when 'signalement' then (select s.ecran from public.signalement s where s.id = j.cible_id)
+         when 'signalement_suivi' then (select s.ecran from public.signalement_suivi x
+                                          join public.signalement s on s.id = x.signalement_id
+                                         where x.id = j.cible_id)
        end as cible_texte
 from public.journal j
 left join public.compte a on a.user_id = j.compte
@@ -453,7 +470,33 @@ where ((select private.mon_type()) is distinct from 'admin_eglise'
         and j.action not in ('difficulte_signalee', 'signalement_clos'))
        or (select private.mon_type()) in ('admin_plateforme', 'ministere'));
 
--- 6. Fraîcheur : version de 20261005172228_droits_lecture_ejp_tech.sql ; la dernière ligne de
+-- 6. v_signalement : un signalement avec sa clôture, pour le bloc « Signalements » d'EJP Tech et
+-- « Vos derniers signalements » d'un ministère. Lue sous la RLS du lecteur (security_invoker) :
+-- le ministère auteur et EJP Tech seulement, aucune ligne pour les autres et en aal1. Le jour
+-- de la clôture et le seuil des 30 jours se calculent à l'heure de Paris (private.aujourdhui()),
+-- jamais avec la date du navigateur : clos_recent vaut vrai pour une clôture d'il y a 30 jours
+-- au plus. Pour un signalement ouvert, clos_le, suivi_id et commentaire sont null et
+-- clos_recent vaut faux. suivi_id est la cible de la modération du commentaire.
+create view public.v_signalement with (security_invoker = true) as
+select s.id,
+       s.ministere_id,
+       m.nom as ministere_nom,
+       s.ecran,
+       s.texte,
+       s.saisi_le,
+       x.id as suivi_id,
+       x.commentaire,
+       x.saisi_le as clos_le,
+       x.id is null as ouvert,
+       coalesce(private.aujourdhui() - (x.saisi_le at time zone 'Europe/Paris')::date <= 30, false) as clos_recent
+from public.signalement s
+left join public.ministere m on m.id = s.ministere_id
+left join public.signalement_suivi x on x.signalement_id = s.id;
+
+revoke all on public.v_signalement from public, anon, authenticated, service_role;
+grant select on public.v_signalement to authenticated;
+
+-- 7. Fraîcheur : version de 20261005172228_droits_lecture_ejp_tech.sql ; la dernière ligne de
 -- journal écrite par un compte du ministère, hors signalement (T39, règle 6). Même signature :
 -- create or replace garde le propriétaire, les droits sont redonnés ci-dessous.
 create or replace function private.tableau_ministeres()
@@ -506,10 +549,13 @@ language sql stable security definer set search_path = '' as $$
     and (moi.lit_tout or moi.type in ('ministere', 'admin_eglise'))
 $$;
 
--- 7. Droits des fonctions : rien pour public, anon ni service_role ; authenticated exécute les
+-- 8. Droits des fonctions : rien pour public, anon ni service_role ; authenticated exécute les
 -- fonctions de l'API et le tableau des ministères (lu par sa vue). ministere_du_signalement ne
--- s'appelle qu'au nom du propriétaire (marquer_relu, masquer_texte).
+-- s'appelle qu'au nom du propriétaire (marquer_relu, masquer_texte) ; ecrans_signalement, que
+-- lit le check de signalement, ne s'exécute qu'au nom du propriétaire (insertion par
+-- signaler_difficulte, security definer) : un compte de l'application n'insère jamais en direct.
 revoke all on function
+  private.ecrans_signalement(),
   private.signaler_difficulte(text, text),
   public.signaler_difficulte(text, text),
   private.clore_signalement(uuid, text),

@@ -68,7 +68,15 @@ Codes repris et étendus (déjà dans la liste) :
 - `evenement_modifie` (B6) : `{"date", "statut", "date_precedente"}`.
 - `texte_relu`, `texte_masque` : `cible` vaut la cible de la modération (donc aussi
   `demande_indicateur`, `validation`, `signalement`, `signalement_suivi` et, depuis le changement
-  du 6 octobre, `precision_sensible`), et `ministere_id` le ministère de l'auteur du texte.
+  du 6 octobre, `precision_sensible`), et `ministere_id` le ministère de l'auteur du texte. Deux
+  exceptions : pour la cible `precision_sensible`, celui de la précision (B8) ; pour les cibles
+  `signalement` et `signalement_suivi`, **celui du signalement** (le commentaire d'une clôture est
+  écrit par EJP Tech, dont le compte n'a pas de ministère : la ligne prend le ministère du
+  signalement clos, pour que le ministère auteur la lise comme sa clôture, T39).
+- Texte d'un signalement et commentaire de clôture : les familles « données personnelles » de
+  `private.verifier_texte` **et** « crochets » sont refusées, par `private.texte_libre_refuse`
+  (T43, « Proposé » : T39 ne citait que les données personnelles ; les crochets protègent le
+  marqueur de masquage).
 
 **Lecture des lignes des signalements (T39, décidé).** Une ligne `difficulte_signalee` ou
 `signalement_clos`, et toute ligne `texte_relu` ou `texte_masque` dont la cible est `signalement`
@@ -89,7 +97,8 @@ fermée de `private.journal_lisible_administration` (B2) contient `texte_relu` e
 c'est la condition sur la cible, pas cette liste, qui retire ces lignes à l'administration. Le
 test de matrice de B7 vérifie qu'une ligne `texte_masque` sur un signalement reste invisible pour
 le berger, le conseil, l'administration et un autre ministère, et lisible par le ministère auteur
-et par EJP Tech.
+et par EJP Tech. Risque résiduel (T44, « Proposé ») : un trou dans la suite de `journal.id` montre à
+un lecteur de l'API qu'une ligne cachée existe, sans rien dire de son contenu.
 
 **Lecture des lignes du texte « Pourquoi » (P51, décidé le 6 octobre 2026).** Une ligne
 `texte_relu` ou `texte_masque` dont la cible est `demande_indicateur` se lit par le ministère
@@ -194,9 +203,11 @@ Règles pour chaque fichier de `seed/` :
 - ses dates suivent le décalage de semaines de `seed.sql` (le dimanche 27 sept. 2026 devient
   `private.dimanche_reference()`) ;
 - adresses en `@exemple.test` seulement, aucun nom de personne ;
-- les signalements ne passent pas par le journal (insertion directe sous
-  `set_config('pilotage.migration', 'oui', true)`), pour ne pas changer la fraîcheur que vérifient
-  les tests de l'étape 3.
+- les signalements ne passent pas par le journal (insertion directe par le rôle du jeu, sans
+  compte connecté ; aucun réglage de session `pilotage.migration` : les triggers des deux tables
+  ne le lisent pas), pour ne pas changer la fraîcheur que vérifient les tests de l'étape 3.
+  `signalements.test.sql` vérifie le contenu du jeu (deux signalements de Communication, un seul
+  ouvert), dont dépend E8.
 
 `jeu-exemple.test.sql` n'est touché que par B6 (11 puis 12 événements) et B2 (ligne de journal de
 Communication).
@@ -550,7 +561,35 @@ Un total plus récent sans précision n'a aucune ligne.
 
 Mêmes colonnes ; `cible_texte` gagne `indicateur` (libellé actuel, B3), `precision_sensible` (B8 :
 « Précision : » suivi du libellé actuel de l'indicateur et du mois, jamais le texte) et
-`signalement` (B7 : code de l'écran, jamais le texte, fixé par W0).
+`signalement` et `signalement_suivi` (B7 : code de l'écran du signalement, jamais le texte ni le
+commentaire ; l'un et l'autre se lisent sous la RLS du lecteur : le ministère auteur et EJP Tech).
+
+### `v_signalement` (B7)
+
+Un signalement avec sa clôture, pour le bloc « Signalements » d'EJP Tech (E8 : les ouverts, puis
+les clos des 30 derniers jours) et « Vos derniers signalements » d'un ministère. `security_invoker`
+sur `signalement` et `signalement_suivi` : le ministère auteur ne lit que les siens, EJP Tech tous,
+personne d'autre (ni l'administration, ni le berger, ni le conseil), rien en `aal1`. Les dates se
+calculent à l'heure de Paris par la base (`private.aujourdhui()`) : **E8 ne filtre jamais avec la
+date du navigateur**, il lit `ouvert` et `clos_recent` et trie par `saisi_le`.
+
+| Colonne         | Type          | Sens                                                                             |
+| --------------- | ------------- | -------------------------------------------------------------------------------- |
+| `id`            | `uuid`        | le signalement (cible de la modération du texte)                                 |
+| `ministere_id`  | `uuid`        |                                                                                  |
+| `ministere_nom` | `text`        |                                                                                  |
+| `ecran`         | `text`        | code de la section 4                                                             |
+| `texte`         | `text`        | « [texte masqué par EJP Tech] » s'il est masqué                                  |
+| `saisi_le`      | `timestamptz` | envoi                                                                            |
+| `suivi_id`      | `uuid`        | la clôture (cible de la modération du commentaire) ; null si ouvert              |
+| `commentaire`   | `text`        | commentaire de clôture ; null si ouvert ou sans commentaire                      |
+| `clos_le`       | `timestamptz` | clôture ; null si ouvert                                                         |
+| `ouvert`        | `boolean`     | vrai sans clôture                                                                |
+| `clos_recent`   | `boolean`     | vrai pour une clôture d'il y a 30 jours au plus (jour de Paris) ; faux si ouvert |
+
+La liste des codes d'écran est écrite une seule fois, dans `private.ecrans_signalement()` : le
+check de `signalement.ecran` et `signaler_difficulte` la lisent. Une nouvelle saisie ajoute son code
+en recréant cette fonction par migration.
 
 Pour `precision_sensible`, `cible_texte` se lit sous la RLS de la table brute : le ministère auteur
 et EJP Tech reçoivent le texte « Précision : … » ; **le berger et le conseil reçoivent null** (ils

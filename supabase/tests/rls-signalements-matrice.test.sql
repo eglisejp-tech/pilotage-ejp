@@ -14,27 +14,32 @@
 -- la ligne aal1 de chacun (zéro ligne lue, toute autre action refusée) et la ligne de l'anonyme
 -- (refusé partout).
 -- Tests précis : l'administration, le berger et le conseil ne lisent aucun signalement, aucune
--- clôture et aucune ligne de journal des signalements, jeu d'exemple compris, et se voient
--- refuser les deux fonctions ; une ligne texte_masque sur un signalement n'est lue que par le
--- ministère auteur et EJP Tech ; les lignes de P51 sont lues par le ministère auteur, EJP Tech,
--- le berger et le conseil, pas par l'administration ni un autre ministère.
--- Puis l'inaltérabilité, même au propriétaire, sauf le masquage d'un texte.
+-- clôture (v_signalement comprise) et aucune ligne de journal des signalements, jeu d'exemple
+-- compris, et se voient refuser les deux fonctions ; une ligne texte_masque sur un signalement
+-- n'est lue que par le ministère auteur et EJP Tech ; les lignes de P51 sont lues par le
+-- ministère auteur, EJP Tech, le berger et le conseil, pas par l'administration ni un autre
+-- ministère ; un ministère désactivé (C), dont le signalement a été écrit et clos avant, ne lit
+-- plus rien, alors qu'EJP Tech le lit.
+-- Puis l'inaltérabilité, même au propriétaire (chaque trigger contre truncate vérifié), sauf
+-- le masquage d'un texte.
 begin;
 
 create temp table ctx as
 select tests.creer_ministere('Matrice B7 porteur') as a_m,
        tests.creer_ministere('Matrice B7 autre') as b_m,
+       tests.creer_ministere('Matrice B7 désactivé') as c_m,
        tests.compte('Ministère FIJ') as fij,
        tests.compte('Ministère Coordination') as coo,
        tests.compte('Berger') as berger,
        tests.compte('Conseil, compte 1') as conseil,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech;
-alter table ctx add column a uuid, add column b uuid,
-  add column s1 uuid, add column s2 uuid, add column sb uuid, add column x2 uuid,
+alter table ctx add column a uuid, add column b uuid, add column c uuid,
+  add column s1 uuid, add column s2 uuid, add column sb uuid, add column sc uuid, add column x2 uuid,
   add column d1 uuid, add column d2 uuid;
 update ctx set a = tests.creer_compte('matrice-b7-a@exemple.test', 'ministere', a_m),
-               b = tests.creer_compte('matrice-b7-b@exemple.test', 'ministere', b_m);
+               b = tests.creer_compte('matrice-b7-b@exemple.test', 'ministere', b_m),
+               c = tests.creer_compte('matrice-b7-c@exemple.test', 'ministere', c_m);
 grant select on ctx to authenticated, anon;
 
 -- Deux suggestions d'essai, pour les lignes de P51.
@@ -48,6 +53,7 @@ declare
   v_s1 uuid;
   v_s2 uuid;
   v_sb uuid;
+  v_sc uuid;
 begin
   perform tests.se_connecter((select a from ctx), 'aal2');
   v_s1 := public.signaler_difficulte('saisie_evenement', 'Le formulaire refuse la date de notre soirée.');
@@ -58,7 +64,11 @@ begin
   perform tests.se_connecter((select b from ctx), 'aal2');
   v_sb := public.signaler_difficulte('autre', 'Une difficulté d''essai du ministère B.');
   perform tests.deconnecter();
-  update ctx set s1 = v_s1, s2 = v_s2, sb = v_sb;
+  -- Le ministère C signale avant sa désactivation (posée plus bas).
+  perform tests.se_connecter((select c from ctx), 'aal2');
+  v_sc := public.signaler_difficulte('saisie_session', 'Une difficulté d''essai du ministère C.');
+  perform tests.deconnecter();
+  update ctx set s1 = v_s1, s2 = v_s2, sb = v_sb, sc = v_sc;
 end $$;
 update ctx set
   d1 = (select d.id from public.demande_indicateur d join public.indicateur i on i.id = d.indicateur_id
@@ -73,6 +83,7 @@ begin
   perform tests.se_connecter((select tech from ctx), 'aal2');
   perform public.clore_signalement((select s2 from ctx), 'Transmis à l''administration, merci.');
   perform public.masquer_texte('signalement', (select s1 from ctx), 'texte', 'nom_personne');
+  perform public.clore_signalement((select sc from ctx), 'Clôture d''essai du ministère C.');
   perform tests.deconnecter();
 end $$;
 update ctx set x2 = (select x.id from public.signalement_suivi x where x.signalement_id = ctx.s2);
@@ -84,6 +95,11 @@ begin
   perform public.masquer_texte('demande_indicateur', (select d2 from ctx), 'pourquoi', 'autre');
   perform tests.deconnecter();
 end $$;
+
+-- Le ministère C est désactivé après ses écrits (comme desactiver-compte : le compte et le
+-- ministère reçoivent la date de désactivation).
+update public.ministere set desactive_le = now() where id = (select c_m from ctx);
+update public.compte set desactive_le = now() where user_id = (select c from ctx);
 
 -- Matrice en aal2. Attendus dans l'ordre des profils : porteur, autre ministère, FIJ,
 -- Coordination, berger, conseil, administration, EJP Tech.
@@ -101,6 +117,8 @@ create temp view matrice_b7 (profil, objet, action, aal, attendu, requete) as
       'update public.signalement set texte = texte where id = (select s2 from ctx)'),
      ('signalement', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'delete from public.signalement where id = (select s2 from ctx)'),
+     ('v_signalement', 'lire', array['2', '1', '0', '0', '0', '0', '0', '3'],
+      'select 1 from public.v_signalement where id in (select s1 from ctx union all select s2 from ctx union all select sb from ctx)'),
      ('signalement_suivi', 'lire', array['1', '0', '0', '0', '0', '0', '0', '1'],
       'select 1 from public.signalement_suivi where signalement_id in (select s1 from ctx union all select s2 from ctx union all select sb from ctx)'),
      ('signalement_suivi', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
@@ -161,21 +179,34 @@ insert into lecture_b7 values
   (3, 'journal (lignes des signalements)',
    'select 1 from public.journal where action in (''difficulte_signalee'', ''signalement_clos'') or cible in (''signalement'', ''signalement_suivi'')'),
   (4, 'v_journal (lignes des signalements)',
-   'select 1 from public.v_journal where action in (''difficulte_signalee'', ''signalement_clos'') or cible in (''signalement'', ''signalement_suivi'')');
-grant select on matrice_b7, profil_b7, lecture_b7 to authenticated, anon;
+   'select 1 from public.v_journal where action in (''difficulte_signalee'', ''signalement_clos'') or cible in (''signalement'', ''signalement_suivi'')'),
+  (5, 'v_signalement', 'select 1 from public.v_signalement');
 
--- Le plan compte les 24 tests fixes (contexte, 12 lectures vides, 2 textes de v_journal, 9 pour
--- l'inaltérabilité et le masquage) et, par tests.nombre_essais, les essais de la matrice
--- (lignes dérivées comprises).
-select plan(24
+-- Le ministère désactivé (C) ne lit plus rien de ses signalements, écrits et clos avant sa
+-- désactivation ; EJP Tech les lit (preuve que le zéro ne vient pas d'un jeu vide).
+create temp table desactive_b7 (rang int primary key, objet text, requete text, attendu_tech int);
+insert into desactive_b7 values
+  (1, 'signalement', 'select 1 from public.signalement where id = (select sc from ctx)', 1),
+  (2, 'signalement_suivi', 'select 1 from public.signalement_suivi where signalement_id = (select sc from ctx)', 1),
+  (3, 'journal (difficulte_signalee, signalement_clos)',
+   'select 1 from public.journal where action in (''difficulte_signalee'', ''signalement_clos'') and cible_id = (select sc from ctx)', 2),
+  (4, 'v_journal (difficulte_signalee, signalement_clos)',
+   'select 1 from public.v_journal where action in (''difficulte_signalee'', ''signalement_clos'') and cible_id = (select sc from ctx)', 2),
+  (5, 'v_signalement', 'select 1 from public.v_signalement where id = (select sc from ctx)', 1);
+grant select on matrice_b7, profil_b7, lecture_b7, desactive_b7 to authenticated, anon;
+
+-- Le plan compte les 41 tests fixes (contexte, 15 lectures vides, 3 textes de v_journal, 12 pour
+-- l'inaltérabilité et le masquage, 10 pour le ministère désactivé) et, par
+-- tests.nombre_essais, les essais de la matrice (lignes dérivées comprises).
+select plan(41
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_b7',
                         'select profil, compte from profil_b7', true));
 
 select ok((select count(*) from ctx where a is not null and b is not null and fij is not null and coo is not null
              and berger is not null and conseil is not null and admin is not null and tech is not null
-             and s1 is not null and s2 is not null and sb is not null and x2 is not null
-             and d1 is not null and d2 is not null) = 1,
-  'le jeu d''exemple et le contexte fournissent les comptes, les trois signalements, la clôture et les deux demandes');
+             and c is not null and s1 is not null and s2 is not null and sb is not null and sc is not null
+             and x2 is not null and d1 is not null and d2 is not null) = 1,
+  'le jeu d''exemple et le contexte fournissent les comptes, les quatre signalements, la clôture et les deux demandes');
 
 select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice_b7',
@@ -200,6 +231,18 @@ select is(tests.lire((select tech from ctx), 'aal2',
   'select cible_texte from public.v_journal where action = ''signalement_clos'' and cible_id = (select s2 from ctx)'),
   '[{"cible_texte": "saisie_mois"}]'::jsonb,
   'v_journal donne à EJP Tech le code de l''écran du signalement clos');
+select is(tests.lire((select a from ctx), 'aal2',
+  'select cible_texte from public.v_journal where action = ''texte_relu'' and cible = ''signalement_suivi'' and cible_id = (select x2 from ctx)'),
+  '[{"cible_texte": "saisie_mois"}]'::jsonb,
+  'v_journal donne au ministère auteur le code de l''écran pour la ligne d''un commentaire de clôture');
+
+-- Ministère désactivé (C) : rien, alors qu'EJP Tech lit les mêmes lignes.
+select is(tests.compter((select c from ctx), 'aal2', d.requete), 0,
+          format('un ministère désactivé ne lit plus : %s', d.objet))
+  from desactive_b7 d order by d.rang;
+select is(tests.compter((select tech from ctx), 'aal2', d.requete), d.attendu_tech,
+          format('EJP Tech lit les lignes du ministère désactivé : %s', d.objet))
+  from desactive_b7 d order by d.rang;
 
 -- Inaltérabilité, même pour le propriétaire des tables (rôle du test).
 select throws_ok($$ update public.signalement set ecran = 'autre' where id = (select s2 from ctx) $$,
@@ -208,8 +251,16 @@ select throws_ok($$ update public.signalement set ecran = 'autre' where id = (se
 select throws_ok($$ delete from public.signalement where id = (select sb from ctx) $$,
   '42501', 'La table signalement est en ajout seul : elle ne se modifie pas et ne s''efface pas.',
   'signalement : le propriétaire ne peut pas effacer une ligne');
-select throws_ok($$ truncate public.signalement_suivi, public.signalement $$, '42501', null::text,
-  'signalement et signalement_suivi : le propriétaire ne peut pas les vider');
+-- Vider : un trigger before truncate par table (le contrôle générique ne regarde que update et
+-- delete). Chaque trigger est vérifié seul : une table vidée avec cascade déclencherait ceux des
+-- deux tables, ce qui cacherait l'absence de l'un.
+select has_trigger('public', 'signalement', 'ajout_seulement_vider', 'signalement : trigger contre truncate');
+select has_trigger('public', 'signalement_suivi', 'ajout_seulement_vider', 'signalement_suivi : trigger contre truncate');
+select throws_ok($$ truncate public.signalement_suivi $$,
+  '42501', 'La table signalement_suivi est en ajout seul : elle ne se modifie pas et ne s''efface pas.',
+  'signalement_suivi : le propriétaire ne peut pas la vider');
+select throws_ok($$ truncate public.signalement cascade $$, '42501', null::text,
+  'signalement : le propriétaire ne peut pas la vider, même avec cascade');
 select throws_ok($$ update public.signalement_suivi set commentaire = 'Autre commentaire d''essai.' where id = (select x2 from ctx) $$,
   '42501', 'La table signalement_suivi est en ajout seul : elle ne se modifie pas et ne s''efface pas.',
   'signalement_suivi : le propriétaire ne peut pas réécrire une clôture');
