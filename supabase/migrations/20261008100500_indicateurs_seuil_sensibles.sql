@@ -10,6 +10,9 @@
 --   chaque mois, jamais une saisie intermédiaire du mois en cours ni sa date (P45) ;
 -- - un indicateur retiré pour confidentialité ne se lit plus par l'API, pour aucun profil, EJP
 --   Tech et son ministère compris (Q11) ; l'export de fin de vie se fait hors de l'API ;
+-- - un ajout refusé par EJP Tech n'a de valeurs que pour son ministère : le berger, le conseil et
+--   EJP Tech ne lisent jamais ses lignes (configuration-indicateurs.md, lignes « Lire les valeurs » :
+--   « jamais pour un ajout refusé »), comme par les vues de la migration précédente ;
 -- - le reste ne change pas : le ministère lit ses lignes et les chiffres communs de tous,
 --   l'administration les chiffres communs, le berger, le conseil et EJP Tech tout le reste.
 --
@@ -23,6 +26,7 @@ create policy lecture on public.mesure for select to authenticated using (
      where i.id = mesure.indicateur_id
        and i.retrait_motif is distinct from 'confidentialite'
        and (mesure.ministere_id = (select private.mon_ministere())
-            or ((select private.lit_tout()) and not i.sensible)
+            or ((select private.lit_tout()) and not i.sensible
+                and i.retrait_motif is distinct from 'refuse')
             or ((select private.mon_type()) in ('ministere', 'admin_eglise')
                 and i.ministere_id is null and not i.sensible))));

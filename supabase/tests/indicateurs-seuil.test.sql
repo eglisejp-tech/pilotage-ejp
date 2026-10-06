@@ -11,7 +11,7 @@
 -- 4, sur une seule ligne, sans la date de la première saisie.
 begin;
 
-select plan(44);
+select plan(42);
 
 select tests.creer_ministere('Essai seuil');
 update public.ministere set cree_le = now() - interval '2 years' where nom = 'Essai seuil';
@@ -128,9 +128,6 @@ select results_eq($$
     from public.v_indicateur_suivi s where s.indicateur_id = (select petits from ind)
 $$, $$ select null::bigint, false, nb from attendu where cle = 'petits' $$,
   'berger : une année de mois tous sous 3 n''a aucune somme affichée (ni 3, ni « moins de 3 »)');
-select is((select count(*)::int from public.v_indicateur_suivi s
-            where s.sensible and s.ministere_id = (select m from ctx) and s.somme_annee in (1, 2)), 0,
-  'berger : aucune somme de l''année égale à 1 ou 2 (K5c)');
 select results_eq($$
   select count(*)::int, max(valeur), max(saisi_le) from public.v_mesure_periode
    where indicateur_id = (select corr from ind) and periode = (select mc from ctx)
@@ -273,9 +270,8 @@ select is((select count(*)::int from public.journal j
 
 -- 7. Politique de lecture de mesure
 
-select ok((select p.qual from pg_policies p
-            where p.schemaname = 'public' and p.tablename = 'mesure' and p.policyname = 'lecture') like '%sensible%',
-  'la politique de lecture de mesure ferme les lignes sensibles');
+-- (La fermeture des lignes sensibles se contrôle par comportement : le conseil et EJP Tech
+-- comptent zéro ligne brute d'un sensible, plus haut.)
 select ok(not exists (select 1 from pg_policies p
                        where p.schemaname = 'public' and p.tablename = 'mesure' and p.cmd = 'SELECT'
                          and p.permissive = 'PERMISSIVE' and p.policyname <> 'lecture'),

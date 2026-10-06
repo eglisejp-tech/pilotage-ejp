@@ -14,7 +14,7 @@
 -- test, y compris en janvier et en février, où une partie des mois écoulés tombe l'année d'avant.
 begin;
 
-select plan(60);
+select plan(63);
 
 -- Ministères d'essai, créés il y a deux ans (toute période des courbes est couverte), et le
 -- compte du premier.
@@ -110,6 +110,18 @@ select pg_temp.terme(taux, 1, 'haut', res), pg_temp.terme(taux, 2, 'bas', rec),
        pg_temp.terme(diff, 1, 'plus', res), pg_temp.terme(diff, 2, 'moins', rec),
        pg_temp.terme(decale, 1, 'haut', res), pg_temp.terme(decale, 2, 'bas', rec, 1)
   from ind;
+-- Calculs que T30 écarte de tout calcul : un taux à valider, et un taux dont une source est
+-- ensuite refusée (retirée avec le motif « refuse »). Leurs sources valent 16 sur 20 (le premier)
+-- et 3 sur 4 (le second) : sans l'exclusion, un résultat s'afficherait.
+alter table ind add column src_h uuid, add column src_b uuid, add column taux_attente uuid, add column taux_refus uuid;
+update ind set src_h = pg_temp.ind('Essai L source haut', 'mois', (select m from ctx)),
+               src_b = pg_temp.ind('Essai L source bas', 'mois', (select m from ctx)),
+               taux_attente = pg_temp.ind('Essai L taux à valider', 'mois', (select m from ctx),
+                                          p_etat => 'en_attente', p_origine => 'ministere', p_calcul => 'taux'),
+               taux_refus = pg_temp.ind('Essai L taux source refusée', 'mois', (select m from ctx), p_calcul => 'taux');
+select pg_temp.terme(taux_attente, 1, 'haut', res), pg_temp.terme(taux_attente, 2, 'bas', rec),
+       pg_temp.terme(taux_refus, 1, 'haut', src_h), pg_temp.terme(taux_refus, 2, 'bas', src_b)
+  from ind;
 grant select on ind to authenticated;
 
 -- Saisies
@@ -136,10 +148,11 @@ select pg_temp.saisir(retire, m2, 8) from ind, ctx;
 select pg_temp.saisir(ajoute, m1, 1) from ind, ctx;
 select pg_temp.saisir(rattrape, m3, 2), pg_temp.saisir(rattrape, m1, 3) from ind, ctx;
 select pg_temp.saisir(des, m2, 5) from ind, ctx;
+select pg_temp.saisir(src_h, m1, 3), pg_temp.saisir(src_b, m1, 4) from ind, ctx;
 
 -- Retraits (par le propriétaire des tables, comme une fonction de B3), puis désactivation du
 -- second ministère au 1er du mois dernier (heure de Paris).
-update public.indicateur set etat = 'retire', retrait_motif = 'refuse' where id = (select refuse from ind);
+update public.indicateur set etat = 'retire', retrait_motif = 'refuse' where id in ((select refuse from ind), (select src_b from ind));
 update public.indicateur set etat = 'retire', retrait_motif = 'plus_suivi'
  where id in ((select retire from ind), (select retire_vide from ind));
 update public.ministere set desactive_le = ((select m1 from ctx)::timestamp at time zone 'Europe/Paris')
@@ -324,6 +337,12 @@ $$), 0, 'berger : un ajout refusé n''y figure pas');
 select is(tests.compter((select berger from ctx), 'aal2', $$
   select 1 from public.v_mesure_periode where indicateur_id = (select refuse from ind)
 $$), 0, 'berger : aucune valeur d''un ajout refusé');
+select is(tests.compter((select berger from ctx), 'aal2', $$
+  select 1 from public.mesure where indicateur_id = (select refuse from ind)
+$$), 0, 'berger : aucune ligne brute de mesure d''un ajout refusé (jamais pour un ajout refusé)');
+select is(tests.compter((select moi from ctx), 'aal2', $$
+  select 1 from public.mesure where indicateur_id = (select refuse from ind)
+$$), 1, 'le ministère garde les lignes brutes de son ajout refusé');
 
 -- 5. v_calcul, lue par le berger
 
@@ -355,6 +374,9 @@ select is((select resultat from public.v_calcul where indicateur_id = (select mo
 select is((select count(*)::int from public.v_calcul
             where indicateur_id in ((select diff from ind), (select decale from ind))), 0,
   'les calculs étendus (différence, décalage) restent invisibles jusqu''au lot L1');
+select is((select count(*)::int from public.v_calcul
+            where indicateur_id in ((select taux_attente from ind), (select taux_refus from ind))), 0,
+  'un calcul à valider, ou dont une source est refusée, n''a aucune ligne : hors de tout calcul et de toute somme (T30)');
 select tests.deconnecter();
 
 -- 6. Administration : lignes sans valeur, sauf communs

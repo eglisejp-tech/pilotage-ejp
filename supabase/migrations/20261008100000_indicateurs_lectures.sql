@@ -30,8 +30,10 @@
 --   ministère était actif (à la fin de la période) et l'indicateur pas encore retiré ;
 -- - pour un sensible lu par un autre profil que son ministère, la somme ne compte que les mois
 --   affichés (les mois de 1 ou 2 sont rendus « moins de 3 » et n'y entrent pas) : aucune
---   différence entre la somme et la série affichées ne révèle un mois masqué. Une somme de 1 ou 2
---   serait rendue « moins de 3 » (K5c) ;
+--   différence entre la somme et la série affichées ne révèle un mois masqué. Chaque mois affiché
+--   valant 0 ou au moins 3, cette somme ne vaut jamais 1 ni 2 : une année dont tous les mois sont
+--   sous 3 n'a pas de somme, et somme_moins_de_3 reste faux (garde du contrat, K5c, qui
+--   rendrait « moins de 3 » une somme de 1 ou 2 si la règle changeait) ;
 -- - aucune absence n'est rendue 0 : une période sans saisie a une valeur null.
 --
 -- Aucune date du navigateur, jamais current_date : les dates métier viennent de
@@ -91,10 +93,12 @@ language sql stable security definer set search_path = '' as $$
      where coalesce((select auth.jwt() ->> 'aal'), '') = 'aal2'
   ),
   derniere as (
-    select distinct on (m.indicateur_id, m.ministere_id, m.date_ref)
+    -- Même ordre que l'index de mesure (ministere_id, indicateur_id, date_ref desc, saisi_le desc,
+    -- id desc) : la lecture le parcourt sans trier la table.
+    select distinct on (m.ministere_id, m.indicateur_id, m.date_ref)
            m.indicateur_id, m.ministere_id, m.date_ref, m.valeur, m.saisi_le
       from public.mesure m
-     order by m.indicateur_id, m.ministere_id, m.date_ref, m.saisi_le desc, m.id desc
+     order by m.ministere_id, m.indicateur_id, m.date_ref desc, m.saisi_le desc, m.id desc
   ),
   lues as (
     select d.indicateur_id, d.ministere_id, i.nature, i.sensible, d.date_ref, d.valeur, d.saisi_le,
@@ -291,9 +295,17 @@ calculs as (
    cross join repere r
    where i.calcul in ('taux', 'moyenne')
      and coalesce(i.retrait_motif, '') not in ('confidentialite', 'refuse')
+     -- Un calcul à valider, ou dont une source est à valider, refusée ou retirée pour
+     -- confidentialité, n'a aucune ligne : ses valeurs restent hors de tout total et de tout calcul
+     -- (T30), et rien d'un retiré pour confidentialité ne se lit (Q11), pour tous les lecteurs.
+     and i.etat <> 'en_attente'
      and not exists (select 1 from public.indicateur_terme t
                       where t.calcul_id = i.id
                         and (t.source_id is null or t.agregat <> 'periode' or t.decalage <> 0))
+     and not exists (select 1 from public.indicateur_terme t
+                       join public.indicateur s on s.id = t.source_id
+                      where t.calcul_id = i.id
+                        and (s.etat = 'en_attente' or s.retrait_motif in ('refuse', 'confidentialite')))
 ),
 termes as (
   select c.id as calcul_id, t.ordre, t.role, t.source_id, s.nature as source_nature,
