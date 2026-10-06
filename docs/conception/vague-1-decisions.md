@@ -584,33 +584,33 @@ le premier jour.
 
 ### Coordination (11 demandes, annexe : 11)
 
-| Ligne | Demande                                         | Mécanisme             | Indicateur ou source                                           | Rythme, unité   | Formule                                                                 | Sensible | Lot             |
-| ----- | ----------------------------------------------- | --------------------- | -------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------- | -------- | --------------- |
-| 33    | Événements réalisés depuis janvier              | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier état « Terminé », somme depuis la mise en service, puis janvier | non      | V1+4            |
-| 34    | Événements prévus                               | Dérivé des événements | Événements prévus (église)                                     | Mois, nombre    | K10a                                                                    | non      | V1+4            |
-| 35    | Événements réalisés, dernière période           | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier mois écoulé, mois en cours à part (K23)                         | non      | V1+4            |
-| 36    | Baptisés à la dernière session                  | Saisi                 | Baptême : baptisés à la dernière session du mois               | Mois, nombre    | valeur du dernier mois qui a une session                                | non      | V1              |
-| 37    | Baptisés depuis janvier                         | Somme de l'année      | Baptême : baptisés                                             | Mois, nombre    | somme des mois depuis le départ                                         | non      | V1              |
-| 38    | Événements annulés                              | Dérivé des événements | Événements annulés (église)                                    | Mois, nombre    | dernier état « Annulé », date dans le mois                              | non      | V1+4            |
-| 39    | Événements reportés                             | Dérivé des événements | Événements reportés (église)                                   | Mois, nombre    | date repoussée dans l'historique, mois de la date quittée (K10b)        | non      | V1+4            |
-| 40    | Taux de réalisation des événements              | Calcul                | Taux de réalisation des événements                             | Mois, %         | réalisés ÷ (réalisés + annulés + passés sans état final)                | non      | V1+4            |
-| 41    | Événements commencés à l'heure                  | Saisi et calcul       | Événements commencés à l'heure ; Part des événements à l'heure | Mois, %         | commencés à l'heure ÷ réalisés de l'église du mois, plafond 100 %       | non      | V1, calcul V1+4 |
-| 42    | Heure de début de culte                         | Saisi                 | Heure de début du culte (et Heure prévue du culte)             | Dimanche, heure | valeur ; retard = différence signée (calcul V1+4)                       | non      | V1              |
-| 43    | Graphique : prévus, réalisés, annulés, reportés | Graphique             | G4                                                             | 12 mois         | quatre séries d'événements                                              | non      | V1+4            |
+| Ligne | Demande                                         | Mécanisme             | Indicateur ou source                                           | Rythme, unité   | Formule                                                                        | Sensible | Lot             |
+| ----- | ----------------------------------------------- | --------------------- | -------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------ | -------- | --------------- |
+| 33    | Événements réalisés depuis janvier              | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier état « Terminé », somme depuis la mise en service, puis janvier        | non      | V1+4            |
+| 34    | Événements prévus                               | Dérivé des événements | Événements prévus (église)                                     | Mois, nombre    | K10a                                                                           | non      | V1+4            |
+| 35    | Événements réalisés, dernière période           | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier mois écoulé, mois en cours à part (K23)                                | non      | V1+4            |
+| 36    | Baptisés à la dernière session                  | Saisi                 | Baptême : baptisés à la dernière session du mois               | Mois, nombre    | valeur du dernier mois qui a une session                                       | non      | V1              |
+| 37    | Baptisés depuis janvier                         | Somme de l'année      | Baptême : baptisés                                             | Mois, nombre    | somme des mois depuis le départ                                                | non      | V1              |
+| 38    | Événements annulés                              | Dérivé des événements | Événements annulés (église)                                    | Mois, nombre    | dernier état « Annulé », date dans le mois                                     | non      | V1+4            |
+| 39    | Événements reportés                             | Dérivé des événements | Événements reportés (église)                                   | Mois, nombre    | date repoussée dans l'historique, mois de la date quittée (K10b)               | non      | V1+4            |
+| 40    | Taux de réalisation des événements              | Calcul                | Taux de réalisation des événements                             | Mois, %         | réalisés ÷ (réalisés + annulés + passés sans état final)                       | non      | V1+4            |
+| 41    | Événements commencés à l'heure                  | Saisi et calcul       | Événements commencés à l'heure ; Part des événements à l'heure | Mois, %         | commencés à l'heure ÷ réalisés de l'église du mois, part, jamais plus de 100 % | non      | V1, calcul V1+4 |
+| 42    | Heure de début de culte                         | Saisi                 | Heure de début du culte (et Heure prévue du culte)             | Dimanche, heure | valeur ; retard = différence signée (calcul V1+4)                              | non      | V1              |
+| 43    | Graphique : prévus, réalisés, annulés, reportés | Graphique             | G4                                                             | 12 mois         | quatre séries d'événements                                                     | non      | V1+4            |
 
 ### Communication (9 demandes, annexe : 9)
 
-| Ligne | Demande                                       | Mécanisme              | Indicateur ou source                                                                                  | Rythme, unité                   | Formule                                                      | Sensible | Lot              |
-| ----- | --------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------ | -------- | ---------------- |
-| 47    | Publications réalisées                        | Saisi                  | Publications                                                                                          | Mois, nombre                    | valeur et somme de l'année                                   | non      | V1               |
-| 48    | Campagnes réalisées                           | Saisi                  | Campagnes terminées                                                                                   | Mois, nombre                    | valeur et somme de l'année                                   | non      | V1               |
-| 49    | Contenus produits                             | Saisi                  | Contenus produits                                                                                     | Mois, nombre                    | valeur et somme de l'année                                   | non      | V1               |
-| 50    | Portée cumulée                                | Relevé externe mensuel | Portée (toutes plateformes)                                                                           | Mois, grand nombre              | somme des portées depuis le départ                           | non      | V1               |
-| 51    | Taux d'engagement (par semaine)               | Calcul                 | Taux d'engagement                                                                                     | Mois, %                         | interactions ÷ portée du même mois (K1b : au mois)           | non      | V1               |
-| 52    | Évolution vues et abonnés, toutes plateformes | Relevé et calcul       | Vues (toutes plateformes) ; Abonnés (toutes plateformes) ; Évolution des vues ; Évolution des abonnés | Mois et à ce jour, grand nombre | écart au mois précédent et depuis janvier, en nombre et en % | non      | V1, calculs V1+4 |
-| 54    | Demandes traitées                             | Saisi                  | Demandes traitées (et Demandes reçues)                                                                | Mois, nombre                    | valeur et somme de l'année                                   | non      | V1               |
-| 55    | Taux de demandes traitées dans les délais     | Calcul                 | Taux de demandes traitées dans les délais                                                             | Mois, %                         | traitées dans les délais ÷ traitées, plafond 100 %           | non      | V1               |
-| 56    | Graphique : contenu produit et portée         | Graphique              | G5                                                                                                    | 12 mois                         | deux séries                                                  | non      | V1+4             |
+| Ligne | Demande                                       | Mécanisme              | Indicateur ou source                                                                                  | Rythme, unité                   | Formule                                                         | Sensible | Lot              |
+| ----- | --------------------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------- | --------------------------------------------------------------- | -------- | ---------------- |
+| 47    | Publications réalisées                        | Saisi                  | Publications                                                                                          | Mois, nombre                    | valeur et somme de l'année                                      | non      | V1               |
+| 48    | Campagnes réalisées                           | Saisi                  | Campagnes terminées                                                                                   | Mois, nombre                    | valeur et somme de l'année                                      | non      | V1               |
+| 49    | Contenus produits                             | Saisi                  | Contenus produits                                                                                     | Mois, nombre                    | valeur et somme de l'année                                      | non      | V1               |
+| 50    | Portée cumulée                                | Relevé externe mensuel | Portée (toutes plateformes)                                                                           | Mois, grand nombre              | somme des portées depuis le départ                              | non      | V1               |
+| 51    | Taux d'engagement (par semaine)               | Calcul                 | Taux d'engagement                                                                                     | Mois, %                         | interactions ÷ portée du même mois (K1b : au mois)              | non      | V1               |
+| 52    | Évolution vues et abonnés, toutes plateformes | Relevé et calcul       | Vues (toutes plateformes) ; Abonnés (toutes plateformes) ; Évolution des vues ; Évolution des abonnés | Mois et à ce jour, grand nombre | écart au mois précédent et depuis janvier, en nombre et en %    | non      | V1, calculs V1+4 |
+| 54    | Demandes traitées                             | Saisi                  | Demandes traitées (et Demandes reçues)                                                                | Mois, nombre                    | valeur et somme de l'année                                      | non      | V1               |
+| 55    | Taux de demandes traitées dans les délais     | Calcul                 | Taux de demandes traitées dans les délais                                                             | Mois, %                         | traitées dans les délais ÷ traitées, part, jamais plus de 100 % | non      | V1               |
+| 56    | Graphique : contenu produit et portée         | Graphique              | G5                                                                                                    | 12 mois                         | deux séries                                                     | non      | V1+4             |
 
 ### Social (7 demandes, annexe : 7)
 
@@ -626,17 +626,17 @@ le premier jour.
 
 ### Film (9 demandes, annexe : 9)
 
-| Ligne | Demande                           | Mécanisme              | Indicateur ou source              | Rythme, unité      | Formule                                          | Sensible | Lot |
-| ----- | --------------------------------- | ---------------------- | --------------------------------- | ------------------ | ------------------------------------------------ | -------- | --- |
-| 70    | Tournages réalisés                | Saisi                  | Tournages                         | Mois, nombre       | valeur                                           | non      | V1  |
-| 71    | Vidéos produites                  | Saisi                  | Vidéos produites                  | Mois, nombre       | valeur                                           | non      | V1  |
-| 72    | Vidéos publiées                   | Saisi                  | Vidéos publiées                   | Mois, nombre       | valeur                                           | non      | V1  |
-| 73    | Projets en cours                  | Saisi                  | Projets en cours                  | À ce jour, nombre  | valeur et date                                   | non      | V1  |
-| 74    | Projets terminés                  | Saisi                  | Projets terminés                  | Mois, nombre       | valeur                                           | non      | V1  |
-| 75    | Projets livrés dans les délais    | Saisi                  | Projets livrés dans les délais    | Mois, nombre       | valeur                                           | non      | V1  |
-| 76    | Vues cumulées                     | Relevé externe mensuel | Vues des vidéos Film              | Mois, grand nombre | somme des vues mensuelles depuis le départ       | non      | V1  |
-| 77    | Délai moyen de production         | Calcul                 | Délai moyen de production         | Mois, jours        | jours de production ÷ projets terminés           | non      | V1  |
-| 78    | Taux de livraison dans les délais | Calcul                 | Taux de livraison dans les délais | Mois, %            | livrés dans les délais ÷ terminés, plafond 100 % | non      | V1  |
+| Ligne | Demande                           | Mécanisme              | Indicateur ou source              | Rythme, unité      | Formule                                                       | Sensible | Lot |
+| ----- | --------------------------------- | ---------------------- | --------------------------------- | ------------------ | ------------------------------------------------------------- | -------- | --- |
+| 70    | Tournages réalisés                | Saisi                  | Tournages                         | Mois, nombre       | valeur                                                        | non      | V1  |
+| 71    | Vidéos produites                  | Saisi                  | Vidéos produites                  | Mois, nombre       | valeur                                                        | non      | V1  |
+| 72    | Vidéos publiées                   | Saisi                  | Vidéos publiées                   | Mois, nombre       | valeur                                                        | non      | V1  |
+| 73    | Projets en cours                  | Saisi                  | Projets en cours                  | À ce jour, nombre  | valeur et date                                                | non      | V1  |
+| 74    | Projets terminés                  | Saisi                  | Projets terminés                  | Mois, nombre       | valeur                                                        | non      | V1  |
+| 75    | Projets livrés dans les délais    | Saisi                  | Projets livrés dans les délais    | Mois, nombre       | valeur                                                        | non      | V1  |
+| 76    | Vues cumulées                     | Relevé externe mensuel | Vues des vidéos Film              | Mois, grand nombre | somme des vues mensuelles depuis le départ                    | non      | V1  |
+| 77    | Délai moyen de production         | Calcul                 | Délai moyen de production         | Mois, jours        | jours de production ÷ projets terminés                        | non      | V1  |
+| 78    | Taux de livraison dans les délais | Calcul                 | Taux de livraison dans les délais | Mois, %            | livrés dans les délais ÷ terminés, part, jamais plus de 100 % | non      | V1  |
 
 ### Tech (8 demandes, annexe : 8)
 
@@ -669,28 +669,28 @@ le premier jour.
 | 107   | Problèmes audio                    | Saisi                      | Problèmes audio                                                                      | Mois, nombre             | valeur                                                                     | non      | V1   |
 | 108   | Problèmes vidéo                    | Saisi                      | Problèmes vidéo                                                                      | Mois, nombre             | valeur                                                                     | non      | V1   |
 | 109   | Interruptions de diffusion         | Saisi                      | Interruptions de diffusion                                                           | Mois, nombre             | valeur                                                                     | non      | V1   |
-| 110   | Taux de couverture des événements  | Calcul                     | Taux de couverture des événements                                                    | Mois, %                  | couverts ÷ à couvrir, plafond 100 %                                        | non      | V1   |
+| 110   | Taux de couverture des événements  | Calcul                     | Taux de couverture des événements                                                    | Mois, %                  | couverts ÷ à couvrir, part, jamais plus de 100 %                           | non      | V1   |
 | 112   | Équipiers mobilisés                | Commun et saisi            | STARs au service de MCAD, affiché « Équipiers mobilisés » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences hors dimanche                          | non      | V1   |
 | 113   | Personnes formées                  | Saisi                      | Personnes formées                                                                    | Mois, nombre             | valeur et somme de l'année                                                 | non      | V1   |
 | 114   | Nouveaux équipiers intégrés        | Saisi                      | Nouveaux équipiers intégrés                                                          | Mois, nombre             | valeur                                                                     | non      | V1   |
-| 115   | Taux de présence des équipiers     | Calcul                     | Taux de présence des équipiers                                                       | Mois, %                  | postes tenus ÷ postes prévus, plafond 100 %                                | non      | V1   |
+| 115   | Taux de présence des équipiers     | Calcul                     | Taux de présence des équipiers                                                       | Mois, %                  | postes tenus ÷ postes prévus, part, jamais plus de 100 %                   | non      | V1   |
 
 ### MPI (12 demandes, annexe : 12)
 
-| Ligne | Demande                                       | Mécanisme        | Indicateur ou source                               | Rythme, unité                     | Formule                                | Sensible | Lot  |
-| ----- | --------------------------------------------- | ---------------- | -------------------------------------------------- | --------------------------------- | -------------------------------------- | -------- | ---- |
-| 122   | Présents à la Prière des Stars                | Saisi et calcul  | Prière des Stars : présents ; présents par session | Semaine (dimanche), nombre        | valeur ; moyenne : présents ÷ sessions | non      | V1   |
-| 123   | Sessions réalisées (Prière des Stars)         | Saisi            | Prière des Stars : sessions                        | Semaine (dimanche), nombre        | valeur                                 | non      | V1   |
-| 124   | Participants cumulés (Prière des Stars)       | Somme de l'année | Prière des Stars : présents                        | Semaine (dimanche), nombre        | somme de présences depuis le départ    | non      | V1   |
-| 125   | Taux de participation (Prière des Stars)      | Calcul           | Prière des Stars : taux de participation           | Semaine (dimanche), %             | présents ÷ attendus, plafond 100 %     | non      | V1   |
-| 127   | Présents à la chaîne de prière                | Saisi            | Chaîne de prière : présents                        | Dimanche, nombre                  | valeur                                 | non      | V1   |
-| 128   | Participants de la nuit du samedi au dimanche | Saisi            | Chaîne de prière : présents la nuit                | Dimanche (dimanche matin), nombre | valeur                                 | non      | V1   |
-| 129   | Participants uniques                          | Saisi            | Chaîne de prière : personnes différentes           | Mois, nombre                      | compte du mois, sans somme de l'année  | non      | V1   |
-| 130   | Participants cumulés (chaîne de prière)       | Somme de l'année | Chaîne de prière : présents (et présents la nuit)  | Dimanche, nombre                  | somme de présences depuis le départ    | non      | V1   |
-| 131   | Taux de participation (chaîne de prière)      | Calcul           | Chaîne de prière : taux de participation           | Dimanche, %                       | présents ÷ attendus, plafond 100 %     | non      | V1   |
-| 133   | Personnes dans l'équipe sainte cène           | Saisi            | Sainte cène : personnes dans l'équipe              | À ce jour, nombre                 | valeur et date                         | non      | V1   |
-| 134   | Sainte cène distribuées chaque dimanche       | Saisi            | Sainte cène : portions distribuées                 | Dimanche, nombre                  | valeur                                 | non      | V1   |
-| 135   | Graphique : participation à la prière         | Graphique        | G7                                                 | 12 semaines                       | trois séries                           | non      | V1+4 |
+| Ligne | Demande                                       | Mécanisme        | Indicateur ou source                               | Rythme, unité                     | Formule                                         | Sensible | Lot  |
+| ----- | --------------------------------------------- | ---------------- | -------------------------------------------------- | --------------------------------- | ----------------------------------------------- | -------- | ---- |
+| 122   | Présents à la Prière des Stars                | Saisi et calcul  | Prière des Stars : présents ; présents par session | Semaine (dimanche), nombre        | valeur ; moyenne : présents ÷ sessions          | non      | V1   |
+| 123   | Sessions réalisées (Prière des Stars)         | Saisi            | Prière des Stars : sessions                        | Semaine (dimanche), nombre        | valeur                                          | non      | V1   |
+| 124   | Participants cumulés (Prière des Stars)       | Somme de l'année | Prière des Stars : présents                        | Semaine (dimanche), nombre        | somme de présences depuis le départ             | non      | V1   |
+| 125   | Taux de participation (Prière des Stars)      | Calcul           | Prière des Stars : taux de participation           | Semaine (dimanche), %             | présents ÷ attendus, part, jamais plus de 100 % | non      | V1   |
+| 127   | Présents à la chaîne de prière                | Saisi            | Chaîne de prière : présents                        | Dimanche, nombre                  | valeur                                          | non      | V1   |
+| 128   | Participants de la nuit du samedi au dimanche | Saisi            | Chaîne de prière : présents la nuit                | Dimanche (dimanche matin), nombre | valeur                                          | non      | V1   |
+| 129   | Participants uniques                          | Saisi            | Chaîne de prière : personnes différentes           | Mois, nombre                      | compte du mois, sans somme de l'année           | non      | V1   |
+| 130   | Participants cumulés (chaîne de prière)       | Somme de l'année | Chaîne de prière : présents (et présents la nuit)  | Dimanche, nombre                  | somme de présences depuis le départ             | non      | V1   |
+| 131   | Taux de participation (chaîne de prière)      | Calcul           | Chaîne de prière : taux de participation           | Dimanche, %                       | présents ÷ attendus, part, jamais plus de 100 % | non      | V1   |
+| 133   | Personnes dans l'équipe sainte cène           | Saisi            | Sainte cène : personnes dans l'équipe              | À ce jour, nombre                 | valeur et date                                  | non      | V1   |
+| 134   | Sainte cène distribuées chaque dimanche       | Saisi            | Sainte cène : portions distribuées                 | Dimanche, nombre                  | valeur                                          | non      | V1   |
+| 135   | Graphique : participation à la prière         | Graphique        | G7                                                 | 12 semaines                       | trois séries                                    | non      | V1+4 |
 
 ### Santé (7 demandes, annexe : 7)
 
@@ -702,7 +702,7 @@ le premier jour.
 | 142   | Incidents nécessitant une intervention | Saisi           | Incidents avec intervention                                                            | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
 | 143   | Orientations vers une structure        | Saisi           | Orientations vers une structure ou un professionnel                                    | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
 | 144   | Personnes mobilisées                   | Commun et saisi | STARs au service de Santé, affiché « Personnes mobilisées » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences                      | non      | V1  |
-| 145   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                      | Mois, %                  | couverts ÷ à couvrir, plafond 100 %                      | non      | V1  |
+| 145   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                      | Mois, %                  | couverts ÷ à couvrir, part, jamais plus de 100 %         | non      | V1  |
 
 La ligne 146 de la source (« Les données médicales individuelles ne doivent pas apparaître dans le
 dashboard général ») est une règle et non une demande : elle est tenue par construction (totaux de
@@ -736,12 +736,12 @@ familles de texte et la relecture par EJP Tech).
 
 ### Prodiges Musique (4 demandes, annexe : 4)
 
-| Ligne | Demande                                         | Mécanisme           | Indicateur ou source                          | Rythme, unité         | Formule                              | Sensible | Lot                |
-| ----- | ----------------------------------------------- | ------------------- | --------------------------------------------- | --------------------- | ------------------------------------ | -------- | ------------------ |
-| 173   | Musiciens et chanteurs mobilisés, par catégorie | Saisi               | Chanteurs de l'équipe ; Musiciens de l'équipe | À ce jour, nombre     | deux valeurs, courbes de fin de mois | non      | V1                 |
-| 174   | Morceaux préparés                               | Saisi               | Morceaux préparés                             | Mois, nombre          | valeur                               | non      | V1                 |
-| 175   | Morceaux originaux réalisés                     | Saisi               | Morceaux originaux réalisés                   | Mois, nombre          | valeur                               | non      | V1                 |
-| 176   | Graphique : taux de présence aux répétitions    | Calcul et graphique | Répétitions : taux de présence ; G10          | Semaine (dimanche), % | présents ÷ attendus, plafond 100 %   | non      | V1, graphique V1+4 |
+| Ligne | Demande                                         | Mécanisme           | Indicateur ou source                          | Rythme, unité         | Formule                                         | Sensible | Lot                |
+| ----- | ----------------------------------------------- | ------------------- | --------------------------------------------- | --------------------- | ----------------------------------------------- | -------- | ------------------ |
+| 173   | Musiciens et chanteurs mobilisés, par catégorie | Saisi               | Chanteurs de l'équipe ; Musiciens de l'équipe | À ce jour, nombre     | deux valeurs, courbes de fin de mois            | non      | V1                 |
+| 174   | Morceaux préparés                               | Saisi               | Morceaux préparés                             | Mois, nombre          | valeur                                          | non      | V1                 |
+| 175   | Morceaux originaux réalisés                     | Saisi               | Morceaux originaux réalisés                   | Mois, nombre          | valeur                                          | non      | V1                 |
+| 176   | Graphique : taux de présence aux répétitions    | Calcul et graphique | Répétitions : taux de présence ; G10          | Semaine (dimanche), % | présents ÷ attendus, part, jamais plus de 100 % | non      | V1, graphique V1+4 |
 
 ### Kumi (13 demandes, annexe : 13)
 
@@ -795,39 +795,39 @@ familles de texte et la relecture par EJP Tech).
 
 ### Multilingue (8 demandes, annexe : 8)
 
-| Ligne | Demande                                | Mécanisme       | Indicateur ou source                                                                          | Rythme, unité            | Formule                               | Sensible | Lot |
-| ----- | -------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------- | -------- | --- |
-| 227   | Langues couvertes                      | Saisi           | Langues couvertes                                                                             | Dimanche, nombre         | valeur, sans somme de l'année         | non      | V1  |
-| 228   | Événements couverts                    | Saisi           | Événements couverts                                                                           | Mois, nombre             | valeur                                | non      | V1  |
-| 229   | Personnes bénéficiant de la traduction | Saisi           | Personnes servies par la traduction                                                           | Dimanche, nombre         | valeur                                | non      | V1  |
-| 230   | Interprètes mobilisés                  | Commun et saisi | STARs au service de Multilingue, affiché « Interprètes mobilisés » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences   | non      | V1  |
-| 231   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                             | Mois, %                  | couverts ÷ à couvrir, plafond 100 %   | non      | V1  |
-| 232   | Demandes de traduction                 | Saisi           | Demandes de traduction                                                                        | Mois, nombre             | valeur                                | non      | V1  |
-| 233   | Demandes satisfaites                   | Saisi et calcul | Demandes satisfaites ; Part des demandes satisfaites                                          | Mois, nombre et %        | satisfaites ÷ demandes, plafond 100 % | non      | V1  |
-| 234   | Incidents de traduction                | Saisi           | Incidents de traduction                                                                       | Mois, nombre             | valeur                                | non      | V1  |
+| Ligne | Demande                                | Mécanisme       | Indicateur ou source                                                                          | Rythme, unité            | Formule                                            | Sensible | Lot |
+| ----- | -------------------------------------- | --------------- | --------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------- | -------- | --- |
+| 227   | Langues couvertes                      | Saisi           | Langues couvertes                                                                             | Dimanche, nombre         | valeur, sans somme de l'année                      | non      | V1  |
+| 228   | Événements couverts                    | Saisi           | Événements couverts                                                                           | Mois, nombre             | valeur                                             | non      | V1  |
+| 229   | Personnes bénéficiant de la traduction | Saisi           | Personnes servies par la traduction                                                           | Dimanche, nombre         | valeur                                             | non      | V1  |
+| 230   | Interprètes mobilisés                  | Commun et saisi | STARs au service de Multilingue, affiché « Interprètes mobilisés » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences                | non      | V1  |
+| 231   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                             | Mois, %                  | couverts ÷ à couvrir, part, jamais plus de 100 %   | non      | V1  |
+| 232   | Demandes de traduction                 | Saisi           | Demandes de traduction                                                                        | Mois, nombre             | valeur                                             | non      | V1  |
+| 233   | Demandes satisfaites                   | Saisi et calcul | Demandes satisfaites ; Part des demandes satisfaites                                          | Mois, nombre et %        | satisfaites ÷ demandes, part, jamais plus de 100 % | non      | V1  |
+| 234   | Incidents de traduction                | Saisi           | Incidents de traduction                                                                       | Mois, nombre             | valeur                                             | non      | V1  |
 
 ### Sécurité (7 demandes, annexe : 7)
 
-| Ligne | Demande                          | Mécanisme       | Indicateur ou source                                                                               | Rythme, unité            | Formule                                      | Sensible | Lot |
-| ----- | -------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------- | -------- | --- |
-| 238   | Événements couverts              | Saisi           | Événements couverts                                                                                | Mois, nombre             | valeur                                       | non      | V1  |
-| 239   | Agents et bénévoles mobilisés    | Commun et saisi | STARs au service de Sécurité, affiché « Agents et bénévoles mobilisés » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences          | non      | V1  |
-| 240   | Incidents                        | Saisi           | Incidents                                                                                          | Mois, nombre             | valeur (hors faits de santé)                 | non      | V1  |
-| 241   | Interventions                    | Saisi           | Interventions                                                                                      | Mois, nombre             | valeur (hors faits de santé)                 | non      | V1  |
-| 242   | Exercices et formations réalisés | Saisi           | Exercices et formations                                                                            | Mois, nombre             | valeur                                       | non      | V1  |
-| 243   | Taux de couverture des postes    | Calcul          | Taux de couverture des postes                                                                      | Dimanche, %              | postes tenus ÷ postes à tenir, plafond 100 % | non      | V1  |
-| 244   | Incidents par événement          | Calcul          | Incidents par événement                                                                            | Mois, nombre             | moyenne : incidents ÷ événements couverts    | non      | V1  |
+| Ligne | Demande                          | Mécanisme       | Indicateur ou source                                                                               | Rythme, unité            | Formule                                                   | Sensible | Lot |
+| ----- | -------------------------------- | --------------- | -------------------------------------------------------------------------------------------------- | ------------------------ | --------------------------------------------------------- | -------- | --- |
+| 238   | Événements couverts              | Saisi           | Événements couverts                                                                                | Mois, nombre             | valeur                                                    | non      | V1  |
+| 239   | Agents et bénévoles mobilisés    | Commun et saisi | STARs au service de Sécurité, affiché « Agents et bénévoles mobilisés » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences                       | non      | V1  |
+| 240   | Incidents                        | Saisi           | Incidents                                                                                          | Mois, nombre             | valeur (hors faits de santé)                              | non      | V1  |
+| 241   | Interventions                    | Saisi           | Interventions                                                                                      | Mois, nombre             | valeur (hors faits de santé)                              | non      | V1  |
+| 242   | Exercices et formations réalisés | Saisi           | Exercices et formations                                                                            | Mois, nombre             | valeur                                                    | non      | V1  |
+| 243   | Taux de couverture des postes    | Calcul          | Taux de couverture des postes                                                                      | Dimanche, %              | postes tenus ÷ postes à tenir, part, jamais plus de 100 % | non      | V1  |
+| 244   | Incidents par événement          | Calcul          | Incidents par événement                                                                            | Mois, nombre             | moyenne : incidents ÷ événements couverts                 | non      | V1  |
 
 ### Formation (6 demandes, annexe : 6)
 
-| Ligne | Demande                                | Mécanisme | Indicateur ou source                                            | Rythme, unité     | Formule                                                  | Sensible | Lot |
-| ----- | -------------------------------------- | --------- | --------------------------------------------------------------- | ----------------- | -------------------------------------------------------- | -------- | --- |
-| 248   | Inscrits (PCNC)                        | Saisi     | Inscrits (PCNC)                                                 | À ce jour, nombre | valeur, date, courbe de fin de mois                      | non      | V1  |
-| 249   | Taux de présence                       | Calcul    | Taux de présence                                                | Mois, %           | présences ÷ présences attendues, plafond 100 %           | non      | V1  |
-| 250   | Personnes ayant terminé les formations | Saisi     | Personnes ayant terminé la formation                            | À ce jour, nombre | valeur, date, courbe de fin de mois                      | non      | V1  |
-| 251   | Taux de complétion                     | Calcul    | Taux de complétion                                              | À ce jour, %      | terminé ÷ inscrits, résultat du jour avec les deux dates | non      | V1  |
-| 252   | Formateurs mobilisés                   | Commun    | STARs au service de Formation, affiché « Formateurs mobilisés » | Dimanche, nombre  | chiffre commun                                           | non      | V1  |
-| 253   | Taux de satisfaction                   | Calcul    | Taux de satisfaction (avec deux comptes anonymes)               | Mois, %           | réponses satisfaites ÷ réponses, plafond 100 %           | non      | V1  |
+| Ligne | Demande                                | Mécanisme | Indicateur ou source                                            | Rythme, unité     | Formule                                                     | Sensible | Lot |
+| ----- | -------------------------------------- | --------- | --------------------------------------------------------------- | ----------------- | ----------------------------------------------------------- | -------- | --- |
+| 248   | Inscrits (PCNC)                        | Saisi     | Inscrits (PCNC)                                                 | À ce jour, nombre | valeur, date, courbe de fin de mois                         | non      | V1  |
+| 249   | Taux de présence                       | Calcul    | Taux de présence                                                | Mois, %           | présences ÷ présences attendues, part, jamais plus de 100 % | non      | V1  |
+| 250   | Personnes ayant terminé les formations | Saisi     | Personnes ayant terminé la formation                            | À ce jour, nombre | valeur, date, courbe de fin de mois                         | non      | V1  |
+| 251   | Taux de complétion                     | Calcul    | Taux de complétion                                              | À ce jour, %      | terminé ÷ inscrits, résultat du jour avec les deux dates    | non      | V1  |
+| 252   | Formateurs mobilisés                   | Commun    | STARs au service de Formation, affiché « Formateurs mobilisés » | Dimanche, nombre  | chiffre commun                                              | non      | V1  |
+| 253   | Taux de satisfaction                   | Calcul    | Taux de satisfaction (avec deux comptes anonymes)               | Mois, %           | réponses satisfaites ÷ réponses, part, jamais plus de 100 % | non      | V1  |
 
 ### MDS (12 demandes, annexe : 12)
 
@@ -925,7 +925,24 @@ du ministère ; il compte dans les 30 lignes de la fiche.
   différentes du mois, pic, heure, jours). Un « à ce jour » n'a jamais de somme.
 - **Calcul** : « V1 » = taux ou moyenne de deux indicateurs du même ministère (T35) ; « V1+4 » =
   calcul étendu de `indicateur_terme` (X9). Sur l'année : somme des hauts ÷ somme des bas, sur les
-  périodes qui ont toutes les valeurs. « Plafond 100 % » : « Non calculé » si le haut dépasse le bas.
+  périodes qui ont toutes les valeurs. « Part » (décision P49 du 6 octobre 2026, drapeau `part` de
+  l'indicateur) : une part ne dépasse jamais 100 %. Si le haut dépasse le bas, l'outil affiche
+  « Non calculé, à vérifier » (`non_calcule_raison` = `haut_depasse_bas`), jamais 120 % ni un 100 %
+  plafonné : une part au-dessus de 100 % révèle une erreur de saisie, la plafonner la cacherait.
+  Les **19 calculs « part »** : Coordination (Taux de réalisation des événements, Part des
+  événements à l'heure), Communication (Taux de demandes traitées dans les délais), Film (Taux de
+  livraison dans les délais), MCAD (Taux de couverture des événements, Taux de présence des
+  équipiers), MPI (Prière des Stars : taux de participation, Chaîne de prière : taux de
+  participation), Santé (Taux de couverture des événements), Prodiges Musique (Répétitions : taux de
+  présence), Kumi (Taux de participation), Eagles (Taux de participation), Multilingue (Taux de
+  couverture des événements, Part des demandes satisfaites), Sécurité (Taux de couverture des
+  postes), Formation (Taux de présence, Taux de complétion, Taux de satisfaction), Prodiges Junior
+  (Taux de présence). Quinze portaient « plafond 100 % » ; quatre autres taux de même nature
+  reçoivent aussi le drapeau (Réalisation, Kumi, Eagles, Prodiges Junior). Ne le reçoivent pas : le
+  taux de résolution des demandes (« peut dépasser 100 % »), le taux d'engagement, et,
+  **Proposé, à confirmer par la coordination**, le taux de retour des NA, le taux de conversion NA
+  vers FIJ et le taux de perte (leur haut et leur bas portent sur des mois décalés : un haut plus
+  grand que le bas peut être exact).
 
 ### Intégration
 
@@ -970,8 +987,8 @@ Commun affiché : « Équipe présente au culte » (STARs au service).
 | Événements reportés (église)       | comptage d'événements | date repoussée, mois de la date quittée (K10b)                             | V1+4 |
 | Événements en attente (église)     | comptage d'événements | dernier état « En attente de validation »                                  | V1+4 |
 | Événements passés sans état final  | comptage d'événements | date passée, dernier état « Validé » ou « En préparation »                 | V1+4 |
-| Taux de réalisation des événements | taux                  | réalisés ÷ (réalisés + annulés + passés sans état final)                   | V1+4 |
-| Part des événements à l'heure      | taux, plafond 100 %   | Événements commencés à l'heure ÷ Événements réalisés (église)              | V1+4 |
+| Taux de réalisation des événements | taux, part            | réalisés ÷ (réalisés + annulés + passés sans état final)                   | V1+4 |
+| Part des événements à l'heure      | taux, part            | Événements commencés à l'heure ÷ Événements réalisés (église)              | V1+4 |
 
 ### Communication
 
@@ -988,12 +1005,12 @@ Commun affiché : « Équipe présente au culte » (STARs au service).
 | Demandes traitées                 | Demandes de communication menées à terme dans le mois, quel que soit leur mois d'arrivée.                            | Mois      | nombre, 9 999           | aucune   | non      | oui   |
 | Demandes traitées dans les délais | Demandes traitées à la date convenue avec le demandeur, sinon sous 7 jours calendaires.                              | Mois      | nombre, 9 999           | aucune   | non      | oui   |
 
-| Calcul                                    | Type                | Formule (sources)                                                   | Lot  |
-| ----------------------------------------- | ------------------- | ------------------------------------------------------------------- | ---- |
-| Taux d'engagement                         | taux                | Interactions ÷ Portée, même mois                                    | V1   |
-| Taux de demandes traitées dans les délais | taux, plafond 100 % | Demandes traitées dans les délais ÷ Demandes traitées               | V1   |
-| Évolution des vues                        | évolution           | Vues : écart au mois précédent et depuis janvier, en nombre et en % | V1+4 |
-| Évolution des abonnés                     | évolution           | Abonnés en fin de mois (`v_stock_mois`) : même écart                | V1+4 |
+| Calcul                                    | Type       | Formule (sources)                                                   | Lot  |
+| ----------------------------------------- | ---------- | ------------------------------------------------------------------- | ---- |
+| Taux d'engagement                         | taux       | Interactions ÷ Portée, même mois                                    | V1   |
+| Taux de demandes traitées dans les délais | taux, part | Demandes traitées dans les délais ÷ Demandes traitées               | V1   |
+| Évolution des vues                        | évolution  | Vues : écart au mois précédent et depuis janvier, en nombre et en % | V1+4 |
+| Évolution des abonnés                     | évolution  | Abonnés en fin de mois (`v_stock_mois`) : même écart                | V1+4 |
 
 ### Social
 
@@ -1024,10 +1041,10 @@ Nouveaux bénéficiaires : catégories : à fixer par la coordination (P47) ; «
 | Vues des vidéos Film                     | Vues du mois des vidéos de Film, relevées sur les statistiques des plateformes où Film publie.            | Mois      | grand nombre, 9 999 999 | aucune   | non      | oui   |
 | Jours de production des projets terminés | Somme, pour les projets terminés du mois, des jours calendaires entre lancement et livraison.             | Mois      | jours, 99 999           | aucune   | non      | non   |
 
-| Calcul                            | Type                | Formule (sources)                                           | Lot |
-| --------------------------------- | ------------------- | ----------------------------------------------------------- | --- |
-| Délai moyen de production         | moyenne             | Jours de production des projets terminés ÷ Projets terminés | V1  |
-| Taux de livraison dans les délais | taux, plafond 100 % | Projets livrés dans les délais ÷ Projets terminés           | V1  |
+| Calcul                            | Type       | Formule (sources)                                           | Lot |
+| --------------------------------- | ---------- | ----------------------------------------------------------- | --- |
+| Délai moyen de production         | moyenne    | Jours de production des projets terminés ÷ Projets terminés | V1  |
+| Taux de livraison dans les délais | taux, part | Projets livrés dans les délais ÷ Projets terminés           | V1  |
 
 ### Tech
 
@@ -1066,13 +1083,13 @@ Nouveaux bénéficiaires : catégories : à fixer par la coordination (P47) ; «
 | Postes d'équipe prévus         | Postes d'équipe prévus au planning du mois, dimanches et événements additionnés.                                 | Mois      | nombre, 9 999           | aucune   | non      | oui   |
 | Postes d'équipe tenus          | Postes du planning du mois effectivement tenus par un équipier.                                                  | Mois      | nombre, 9 999           | aucune   | non      | oui   |
 
-| Calcul                            | Type                | Formule (sources)                                                          | Lot  |
-| --------------------------------- | ------------------- | -------------------------------------------------------------------------- | ---- |
-| Taux de couverture des événements | taux, plafond 100 % | Événements couverts ÷ Événements à couvrir                                 | V1   |
-| Vues par événement couvert        | moyenne             | Vues des diffusions MCAD ÷ Événements couverts                             | V1   |
-| Taux de présence des équipiers    | taux, plafond 100 % | Postes d'équipe tenus ÷ Postes d'équipe prévus                             | V1   |
-| Évolution de l'audience           | évolution           | Pic de spectateurs : écart au dimanche précédent, seulement s'il est saisi | V1+4 |
-| Incidents techniques              | somme               | Problèmes audio + Problèmes vidéo + Interruptions de diffusion             | V1+4 |
+| Calcul                            | Type       | Formule (sources)                                                          | Lot  |
+| --------------------------------- | ---------- | -------------------------------------------------------------------------- | ---- |
+| Taux de couverture des événements | taux, part | Événements couverts ÷ Événements à couvrir                                 | V1   |
+| Vues par événement couvert        | moyenne    | Vues des diffusions MCAD ÷ Événements couverts                             | V1   |
+| Taux de présence des équipiers    | taux, part | Postes d'équipe tenus ÷ Postes d'équipe prévus                             | V1   |
+| Évolution de l'audience           | évolution  | Pic de spectateurs : écart au dimanche précédent, seulement s'il est saisi | V1+4 |
+| Incidents techniques              | somme      | Problèmes audio + Problèmes vidéo + Interruptions de diffusion             | V1+4 |
 
 Commun affiché : « Équipiers mobilisés » (STARs au service). 21 lignes sur 30.
 
@@ -1092,11 +1109,11 @@ Commun affiché : « Équipiers mobilisés » (STARs au service). 21 lignes sur 
 
 « Chaîne de prière : présents la nuit » porte le drapeau « saisi le dimanche matin » (K36b).
 
-| Calcul                                   | Type                | Formule (sources)                                         | Lot |
-| ---------------------------------------- | ------------------- | --------------------------------------------------------- | --- |
-| Prière des Stars : présents par session  | moyenne             | Prière des Stars : présents ÷ Prière des Stars : sessions | V1  |
-| Prière des Stars : taux de participation | taux, plafond 100 % | Prière des Stars : présents ÷ Prière des Stars : attendus | V1  |
-| Chaîne de prière : taux de participation | taux, plafond 100 % | Chaîne de prière : présents ÷ Chaîne de prière : attendus | V1  |
+| Calcul                                   | Type       | Formule (sources)                                         | Lot |
+| ---------------------------------------- | ---------- | --------------------------------------------------------- | --- |
+| Prière des Stars : présents par session  | moyenne    | Prière des Stars : présents ÷ Prière des Stars : sessions | V1  |
+| Prière des Stars : taux de participation | taux, part | Prière des Stars : présents ÷ Prière des Stars : attendus | V1  |
+| Chaîne de prière : taux de participation | taux, part | Chaîne de prière : présents ÷ Chaîne de prière : attendus | V1  |
 
 ### Santé
 
@@ -1110,9 +1127,9 @@ Commun affiché : « Équipiers mobilisés » (STARs au service). 21 lignes sur 
 | Orientations vers une structure ou un professionnel | Personnes orientées vers une structure de santé ou un professionnel dans le mois.                              | Mois   | nombre, 9 999 | aucune   | oui      | oui   |
 | Mobilisés aux événements                            | Présences de l'équipe santé aux événements hors dimanche. Une personne compte à chaque événement où elle sert. | Mois   | nombre, 9 999 | aucune   | non      | oui   |
 
-| Calcul                            | Type                | Formule (sources)                          | Lot |
-| --------------------------------- | ------------------- | ------------------------------------------ | --- |
-| Taux de couverture des événements | taux, plafond 100 % | Événements couverts ÷ Événements à couvrir | V1  |
+| Calcul                            | Type       | Formule (sources)                          | Lot |
+| --------------------------------- | ---------- | ------------------------------------------ | --- |
+| Taux de couverture des événements | taux, part | Événements couverts ÷ Événements à couvrir | V1  |
 
 Commun affiché : « Personnes mobilisées » (STARs au service). Prises en charge, Interventions,
 Incidents avec intervention, Orientations vers une structure ou un professionnel : catégories : à
@@ -1164,9 +1181,9 @@ Valeurs de départ, saisies à la mise en service : Budget matériel prévu 5 16
 | Répétitions : présents      | Présences aux répétitions de la semaine du lundi au dimanche, séances additionnées. Aucun nom. | Semaine   | nombre, 9 999 | Répétitions | non      | oui   |
 | Répétitions : attendus      | Présences attendues aux répétitions de la semaine, séances additionnées, selon le planning.    | Semaine   | nombre, 9 999 | Répétitions | non      | oui   |
 
-| Calcul                         | Type                | Formule (sources)                               | Lot |
-| ------------------------------ | ------------------- | ----------------------------------------------- | --- |
-| Répétitions : taux de présence | taux, plafond 100 % | Répétitions : présents ÷ Répétitions : attendus | V1  |
+| Calcul                         | Type       | Formule (sources)                               | Lot |
+| ------------------------------ | ---------- | ----------------------------------------------- | --- |
+| Répétitions : taux de présence | taux, part | Répétitions : présents ÷ Répétitions : attendus | V1  |
 
 ### Kumi
 
@@ -1184,9 +1201,9 @@ Valeurs de départ, saisies à la mise en service : Budget matériel prévu 5 16
 | Pages Roses : réservations                 | Réservations enregistrées sur Pages Roses dans le mois, selon la plateforme.                             | Mois      | nombre, 9 999 | Pages Roses      | non      | oui   |
 | Call your sister : prises en charge        | Prises en charge de Call your sister dans le mois. Aucun détail.                                         | Mois      | nombre, 9 999 | Call your sister | oui      | oui   |
 
-| Calcul                | Type | Formule (sources)                                            | Lot |
-| --------------------- | ---- | ------------------------------------------------------------ | --- |
-| Taux de participation | taux | Participantes ÷ Femmes inscrites en vigueur à la fin du mois | V1  |
+| Calcul                | Type       | Formule (sources)                                            | Lot |
+| --------------------- | ---------- | ------------------------------------------------------------ | --- |
+| Taux de participation | taux, part | Participantes ÷ Femmes inscrites en vigueur à la fin du mois | V1  |
 
 Communs affichés : « Femmes mobilisées » (STARs au service), « Bénévoles actives » (STARs actifs).
 Call your sister : prises en charge : catégories : à fixer par la coordination (P47) ;
@@ -1204,9 +1221,9 @@ Call your sister : prises en charge : catégories : à fixer par la coordination
 | Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe d'Eagles dans le mois. Différent des nouveaux STARs comptés par MDS. | Mois      | nombre, 9 999 | aucune                  | non      | oui   |
 | La plate-forme d'écoute : prises en charge | Prises en charge de la plate-forme d'écoute dans le mois. Aucun détail.                                   | Mois      | nombre, 9 999 | La plate-forme d'écoute | oui      | oui   |
 
-| Calcul                | Type | Formule (sources)                                   | Lot |
-| --------------------- | ---- | --------------------------------------------------- | --- |
-| Taux de participation | taux | Participants ÷ Inscrits en vigueur à la fin du mois | V1  |
+| Calcul                | Type       | Formule (sources)                                   | Lot |
+| --------------------- | ---------- | --------------------------------------------------- | --- |
+| Taux de participation | taux, part | Participants ÷ Inscrits en vigueur à la fin du mois | V1  |
 
 Commun affiché : « Bénévoles actifs » (STARs actifs). La plate-forme d'écoute : prises en charge :
 catégories : à fixer par la coordination (P47) ; « Précision » possible (P46).
@@ -1264,10 +1281,10 @@ mois, lu dans la table, sans seconde saisie.
 | Demandes satisfaites                | Demandes de traduction honorées dans le mois.                                                                 | Mois     | nombre, 9 999 | aucune   | non      | oui   |
 | Incidents de traduction             | Incidents qui ont gêné la traduction dans le mois (matériel, absence, langue non couverte).                   | Mois     | nombre, 9 999 | aucune   | non      | oui   |
 
-| Calcul                            | Type                | Formule (sources)                             | Lot |
-| --------------------------------- | ------------------- | --------------------------------------------- | --- |
-| Taux de couverture des événements | taux, plafond 100 % | Événements couverts ÷ Événements à couvrir    | V1  |
-| Part des demandes satisfaites     | taux, plafond 100 % | Demandes satisfaites ÷ Demandes de traduction | V1  |
+| Calcul                            | Type       | Formule (sources)                             | Lot |
+| --------------------------------- | ---------- | --------------------------------------------- | --- |
+| Taux de couverture des événements | taux, part | Événements couverts ÷ Événements à couvrir    | V1  |
+| Part des demandes satisfaites     | taux, part | Demandes satisfaites ÷ Demandes de traduction | V1  |
 
 Commun affiché : « Interprètes mobilisés » (STARs au service).
 
@@ -1283,10 +1300,10 @@ Commun affiché : « Interprètes mobilisés » (STARs au service).
 | Postes tenus             | Postes effectivement occupés ce dimanche.                                                                     | Dimanche | nombre, 9 999 | aucune   | non      | oui   |
 | Mobilisés aux événements | Présences d'agents et de bénévoles aux événements hors dimanche. Une personne compte à chaque événement.      | Mois     | nombre, 9 999 | aucune   | non      | oui   |
 
-| Calcul                        | Type                | Formule (sources)               | Lot |
-| ----------------------------- | ------------------- | ------------------------------- | --- |
-| Taux de couverture des postes | taux, plafond 100 % | Postes tenus ÷ Postes à tenir   | V1  |
-| Incidents par événement       | moyenne             | Incidents ÷ Événements couverts | V1  |
+| Calcul                        | Type       | Formule (sources)               | Lot |
+| ----------------------------- | ---------- | ------------------------------- | --- |
+| Taux de couverture des postes | taux, part | Postes tenus ÷ Postes à tenir   | V1  |
+| Incidents par événement       | moyenne    | Incidents ÷ Événements couverts | V1  |
 
 Commun affiché : « Agents et bénévoles mobilisés » (STARs au service). Le mot « interventions »
 déclenche l'avertissement « domaine sensible » de l'écran : l'administration confirme qu'il s'agit
@@ -1303,11 +1320,11 @@ de la sécurité des lieux.
 | Réponses au questionnaire            | Réponses reçues dans le mois au questionnaire anonyme de satisfaction de Formation.            | Mois      | nombre, 9 999 | aucune   | non      | oui   |
 | Réponses satisfaites                 | Parmi ces réponses, celles qui disent « satisfait » ou donnent une des deux meilleures notes.  | Mois      | nombre, 9 999 | aucune   | non      | oui   |
 
-| Calcul               | Type                | Formule (sources)                                                        | Lot |
-| -------------------- | ------------------- | ------------------------------------------------------------------------ | --- |
-| Taux de présence     | taux, plafond 100 % | Séances : présences ÷ Séances : présences attendues                      | V1  |
-| Taux de complétion   | taux, plafond 100 % | Personnes ayant terminé la formation ÷ Inscrits (PCNC), résultat du jour | V1  |
-| Taux de satisfaction | taux, plafond 100 % | Réponses satisfaites ÷ Réponses au questionnaire                         | V1  |
+| Calcul               | Type       | Formule (sources)                                                        | Lot |
+| -------------------- | ---------- | ------------------------------------------------------------------------ | --- |
+| Taux de présence     | taux, part | Séances : présences ÷ Séances : présences attendues                      | V1  |
+| Taux de complétion   | taux, part | Personnes ayant terminé la formation ÷ Inscrits (PCNC), résultat du jour | V1  |
+| Taux de satisfaction | taux, part | Réponses satisfaites ÷ Réponses au questionnaire                         | V1  |
 
 Commun affiché : « Formateurs mobilisés » (STARs au service). Si les séances ont lieu un autre jour
 que le dimanche, l'administration ajoute à l'écran « Mobilisés aux événements » (suggestion).
@@ -1338,9 +1355,9 @@ l'église, déjà publics). Série dérivée : « Événements organisés » (é
 | Enfants déjà venus | Enfants accueillis dans le mois qui l'avaient déjà été avant. Un total, sans liste. | Mois      | nombre, 9 999 | aucune   | oui      | oui   |
 | Enfants inscrits   | Enfants inscrits à Prodiges Junior le jour de la saisie.                            | À ce jour | nombre, 9 999 | aucune   | non      | non   |
 
-| Calcul           | Type | Formule (sources)                                          | Lot |
-| ---------------- | ---- | ---------------------------------------------------------- | --- |
-| Taux de présence | taux | Enfants présents ÷ Enfants inscrits en vigueur ce dimanche | V1  |
+| Calcul           | Type       | Formule (sources)                                          | Lot |
+| ---------------- | ---------- | ---------------------------------------------------------- | --- |
+| Taux de présence | taux, part | Enfants présents ÷ Enfants inscrits en vigueur ce dimanche | V1  |
 
 « Enfants présents » porte le libellé de sessions « Sessions réalisées » (X14). Commun affiché :
 « Animateurs mobilisés » (STARs au service). Le mot « enfant » déclenche l'avertissement « domaine
