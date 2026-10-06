@@ -10,8 +10,8 @@
   qu'un texte « Précision » peut accompagner le total du mois (P46) et que ce total se répartit
   entre des catégories fixées par la coordination (P47). Ce plan les place dans B1 (contrôle du
   mois, **à ajuster avant sa fusion**), B2 (seuil du mois en cours), un nouveau lot de base **B8**
-  (précisions et répartitions, modèle T41), E2, E3 et I. B8 attend l'accord de la personne
-  responsable sur le modèle de données (section 7, question 16). Le document des libellés est
+  (précisions et répartitions, modèle T41), E2, E3 et I. La personne responsable a donné son
+  accord écrit sur ce modèle de données le 6 octobre 2026 (section 7, question 16). Le document des libellés est
   validé pour EJP Tech (P48).
 - **Sources** : `BRIEF.md` (sections 3, 4, 6, 7, 9 et 13), `docs/decisions.md` (P01 à P48, T01 à
   T41), `docs/conception/vague-1-decisions.md`, `docs/conception/configuration-indicateurs.md`,
@@ -1747,7 +1747,8 @@ P47) est décidé : il ne pose que la question 16, sur le modèle.
     les textes proposés, le lot I reporte les textes validés ; la relecture en préproduction par la
     coordination et les ministères (K16) peut encore les ajuster, sans migration puisqu'ils vivent
     dans le code de l'interface.
-16. **Modèle des précisions et des répartitions (T41).** _Nouvelle, changement du 6 octobre ;
+16. **Modèle des précisions et des répartitions (T41).** **Répondue le 6 octobre 2026 : accord écrit
+    de la personne responsable sur ce modèle ; B8 se construit en vague 4.** _Nouvelle, changement du 6 octobre ;
     réponse attendue avant le début de la vague 4, car elle bloque B8 et, par lui, E2 et E3
     (E3 envoie le mois par `saisir_chiffres_mois`). Repli si elle tarde : E2 et E3 gardent
     l'insert direct dans `mesure`, et la fiche ne montre ni précision ni répartition ; B8 et les

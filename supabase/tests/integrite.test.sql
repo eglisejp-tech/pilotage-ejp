@@ -171,12 +171,14 @@ select throws_ok($$
 $$, '42501', null, 'un ministère ne saisit pas l''indicateur propre d''un autre ministère');
 select tests.deconnecter();
 
-update public.indicateur set actif = false where id = (select visuels from ctx);
+-- Retrait (étape 4) : l'état passe à « retiré », actif suit, et le message nomme l'indicateur.
+update public.indicateur set etat = 'retire', retrait_motif = 'plus_suivi' where id = (select visuels from ctx);
 select tests.se_connecter((select com from ctx), 'aal2');
 select throws_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
   select ctx.visuels, ctx.com_m, private.aujourdhui(), 3 from ctx
-$$, '42501', null, 'un indicateur retiré (actif = false) n''accepte plus de saisie');
+$$, 'P0001', '« Visuels livrés ce mois » n''est plus proposé à la saisie.',
+  'un indicateur retiré n''accepte plus de saisie, et le message le nomme');
 select tests.deconnecter();
 
 select tests.se_connecter((select berger from ctx), 'aal2');
