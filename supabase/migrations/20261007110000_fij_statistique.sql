@@ -47,7 +47,8 @@ create table public.fij_statistique (
   saisi_le timestamptz not null default now(),
   saisi_par uuid not null default auth.uid() references public.compte (user_id)
 );
-create index on public.fij_statistique (dimanche, rubrique, departement, saisi_le desc, id desc);
+-- Ordre du distinct on de la vue : rubrique, département, dimanche, dernière saisie d'abord.
+create index on public.fij_statistique (rubrique, departement, dimanche, saisi_le desc, id desc);
 create index on public.fij_statistique (ministere_id);
 
 alter table public.fij_statistique enable row level security;
@@ -120,6 +121,10 @@ grant select on public.v_fij_statistique to authenticated;
 -- 5. Saisie : 1 à 32 valeurs pour un dimanche passé ou aujourd'hui (heure de Paris), chaque
 -- couple (rubrique, département) une fois au plus. Une ligne de journal par envoi :
 -- {"dimanche", "nombre"}, jamais une valeur. L'heure du journal est celle des lignes.
+-- Le dimanche du jour s'accepte dès minuit, alors que la vue ne l'affiche qu'à partir de midi
+-- (private.dimanche_reference()) : une saisie du dimanche matin est enregistrée mais absente de
+-- la vue jusqu'à midi, l'écran ne doit donc pas s'appuyer sur la vue pour confirmer l'envoi.
+-- Une valeur écrite 5.0 est un entier : le cast passe par numeric.
 create function private.saisir_fij_statistiques(p_dimanche date, p_valeurs jsonb)
 returns void language plpgsql security definer set search_path = '' as $$
 declare
@@ -164,7 +169,7 @@ begin
 
   -- Une seule instruction : les lignes de l'envoi partagent saisi_le (forcer_auteur).
   insert into public.fij_statistique (ministere_id, rubrique, departement, dimanche, valeur)
-  select v_ministere, e.x ->> 'rubrique', e.x ->> 'departement', p_dimanche, (e.x ->> 'valeur')::integer
+  select v_ministere, e.x ->> 'rubrique', e.x ->> 'departement', p_dimanche, (e.x ->> 'valeur')::numeric::integer
   from jsonb_array_elements(p_valeurs) with ordinality as e(x, rang)
   order by e.rang;
 

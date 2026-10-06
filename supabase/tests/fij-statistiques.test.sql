@@ -6,7 +6,7 @@
 -- La matrice des droits de ces objets est dans rls-fij-statistiques-matrice.test.sql.
 begin;
 
-select plan(78);
+select plan(84);
 
 create temp table ctx as
 select (select c.user_id from public.compte c
@@ -114,6 +114,10 @@ select is((select count(*)::int from public.v_fij_statistique
               and total is null and nb_departements = 0 and departements = '{}'::jsonb
               and derniere_saisie_le is null),
   32, 'semaine sans saisie : total null (un trou, jamais 0), complétude 0 sur 8');
+select is((select derniere_saisie_le from public.v_fij_statistique
+            where rubrique = 'culte_ejp' and dimanche = (select ref from ctx) - 7),
+  (select (timestamp '2026-09-21 19:00' + (ref - date '2026-09-27') * interval '1 day') at time zone 'Europe/Paris' from ctx),
+  'derniere_saisie_le : l''heure de la correction du 93, la plus récente de la semaine');
 select tests.deconnecter();
 
 -- 3. Saisie par le ministère fij : 32 valeurs en un envoi, une ligne de journal
@@ -307,6 +311,30 @@ select is(tests.compter((select com from ctx), 'aal2',
   $$ select 1 from public.journal where action = 'fij_statistiques_saisies' $$), 0,
   'un autre ministère ne lit pas ces lignes de journal');
 
+-- Un entier écrit avec une décimale (5.0) est accepté et enregistré 5, sans erreur de cast
+select tests.se_connecter((select fij from ctx), 'aal2');
+select lives_ok($$ select public.saisir_fij_statistiques((select ref from ctx) - 28,
+    '[{"rubrique": "culte_ejp", "departement": "75", "valeur": 5.0}]'::jsonb) $$,
+  'une valeur 5.0 est un entier : elle est acceptée');
+select tests.deconnecter();
+select is((select valeur from public.fij_statistique where dimanche = (select ref from ctx) - 28), 5,
+  'la valeur 5.0 est enregistrée 5');
+
+-- forcer_auteur écrase l'auteur et l'heure envoyés par le client (jeton fij simulé, insertion
+-- directe sous le rôle du test : il contourne les droits mais pas le trigger)
+select set_config('request.jwt.claims',
+  json_build_object('sub', fij, 'role', 'authenticated', 'aal', 'aal2')::text, true) from ctx;
+select set_config('request.jwt.claim.sub', fij::text, true) from ctx;
+select lives_ok($$
+  insert into public.fij_statistique (ministere_id, rubrique, departement, dimanche, valeur, saisi_le, saisi_par)
+  select fij_m, 'culte_ejp', '75', ref - 35, 77, timestamptz '2000-01-01 00:00+00', berger from ctx
+$$, 'insertion avec un auteur et une heure fournis par le client');
+select tests.deconnecter();
+select results_eq($$
+  select saisi_par, saisi_le >= now() from public.fij_statistique where dimanche = (select ref from ctx) - 35
+$$, $$ select fij, true from ctx $$,
+  'forcer_auteur impose le compte connecté et l''heure du serveur');
+
 -- 9. Dates à l'heure de Paris : jamais current_date ni la date du navigateur
 
 select ok((select p.prosrc from pg_proc p where p.oid = 'private.saisir_fij_statistiques(date, jsonb)'::regprocedure)
@@ -328,6 +356,14 @@ select is(tests.compter((select fij from ctx), 'aal2', 'select 1 from public.v_f
   'un ministère fij désactivé ne lit plus la vue');
 select is(tests.compter((select berger from ctx), 'aal2', 'select 1 from public.v_fij_statistique'), 40,
   'le berger lit toujours les 4 rubriques sur 10 dimanches');
+select tests.se_connecter((select berger from ctx), 'aal2');
+select results_eq($$
+  select dimanche - (select ref from ctx), rubrique, total::int, nb_departements from public.v_fij_statistique
+   where dimanche >= (select ref from ctx) - 7 order by dimanche, rubrique_ordre
+$$, $$ values (-7, 'culte_ejp', 64, 8), (-7, 'reunion_fij', 52, 8), (-7, 'evangelisation', 33, 8), (-7, 'membres_mardi', 42, 8),
+              (0, 'culte_ejp', 58, 6), (0, 'reunion_fij', 47, 6), (0, 'evangelisation', 27, 6), (0, 'membres_mardi', 40, 6) $$,
+  'les saisies du ministère fij désactivé restent dans les totaux');
+select tests.deconnecter();
 
 select * from finish();
 rollback;
