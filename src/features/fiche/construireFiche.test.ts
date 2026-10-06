@@ -1,0 +1,390 @@
+import { describe, expect, it } from 'vitest'
+import {
+  lecturesExempleFiche,
+  RAISON_HAUT_DEPASSE_BAS,
+  SOCIAL,
+} from '@/features/fiche/apercu/exemplesFiche'
+import { construireFiche, construirePointsFiche } from '@/features/fiche/construireFiche'
+import type { LecturesFiche } from '@/features/fiche/construireFiche'
+import type { LigneIndicateurFiche, ProfilFiche } from '@/features/fiche/modeleFiche'
+import { texteDePhrase } from '@/lib/metier/phrases'
+
+const berger = (lectures: LecturesFiche = lecturesExempleFiche('berger', false)) =>
+  construireFiche(lectures, { profil: 'berger' })
+const ministere = (lectures: LecturesFiche = lecturesExempleFiche('ministere', false)) =>
+  construireFiche(lectures, { profil: 'ministere' })
+
+function ligne(donnees: ReturnType<typeof berger>, libelle: string): LigneIndicateurFiche {
+  const trouvee = donnees.sections
+    .flatMap((section) => section.lignes)
+    .find((l) => l.libelle === libelle)
+  if (!trouvee) throw new Error(`Ligne absente : ${libelle}`)
+  return trouvee
+}
+
+describe('construireFiche : chiffres communs', () => {
+  it('service, actifs et en FIJ : valeur, écart, courbe et date ; FIJ calculé', () => {
+    const [service, actifs, enFij] = berger().communs
+    expect(service).toMatchObject({
+      libelle: 'STARs au service',
+      valeur: { etat: 'saisie', texte: '10' },
+      ecart: { texte: '+1', sens: 'hausse' },
+      detail: 'Dimanche 4 oct.',
+    })
+    expect(service?.courbe?.points).toHaveLength(10)
+    // Le dimanche 16 août n'est pas saisi : un trou, jamais 0.
+    expect(service?.courbe?.description).toContain('sans saisie')
+    expect(actifs).toMatchObject({ valeur: { texte: '14' }, detail: 'Saisi le 24 sept.' })
+    expect(enFij).toMatchObject({
+      libelle: 'STARs présents en FIJ',
+      valeur: { etat: 'saisie', texte: '79', unite: '%' },
+      detail: '11 sur 14, calculé',
+    })
+  })
+
+  it('le libellé de la demande remplace le nom du commun ; les deux lignes de référence de MDS avec leur complétude', () => {
+    const lectures: LecturesFiche = {
+      ...lecturesExempleFiche('berger', false),
+      libellesCommuns: [
+        {
+          ministere_id: SOCIAL,
+          commun_code: 'service',
+          libelle: 'Équipiers mobilisés',
+          ordre: 1,
+          reference_eglise: false,
+        },
+        {
+          ministere_id: SOCIAL,
+          commun_code: 'actifs',
+          libelle: "STARs actifs de l'église",
+          ordre: 4,
+          reference_eglise: true,
+        },
+        {
+          ministere_id: SOCIAL,
+          commun_code: 'service',
+          libelle: "STARs au service de l'église",
+          ordre: 5,
+          reference_eglise: true,
+        },
+      ],
+      totauxDimanche: [
+        {
+          indicateur_id: 'c0000000-0000-4000-8000-000000000001',
+          dimanche: '2026-10-04',
+          total: 52,
+          nb_saisis: 6,
+          nb_attendus: 8,
+        },
+      ],
+      totauxACeJour: [
+        {
+          indicateur_id: 'c0000000-0000-4000-8000-000000000002',
+          code: 'actifs',
+          total: 83,
+          nb_saisis: 8,
+          nb_actifs: 8,
+          plus_ancienne: '2026-09-01',
+          nb_plus_de_30_jours: 0,
+        },
+      ],
+    }
+    const communs = berger(lectures).communs
+    expect(communs.map((c) => c.libelle)).toEqual([
+      'Équipiers mobilisés',
+      'STARs actifs',
+      'STARs présents en FIJ',
+      "STARs actifs de l'église",
+      "STARs au service de l'église",
+    ])
+    expect(communs[3]).toMatchObject({
+      valeur: { texte: '83' },
+      detail: '8 sur 8',
+      detailSignale: false,
+    })
+    expect(communs[4]).toMatchObject({
+      valeur: { texte: '52' },
+      detail: 'Dimanche 4 oct., 6 sur 8',
+      detailSignale: true,
+    })
+  })
+
+  it('jamais un 0 pour une absence : « vide » sans saisie, et « non saisi » quand le dimanche précédent manque', () => {
+    const vide = berger(lecturesExempleFiche('berger', true))
+    expect(vide.communs.map((c) => c.valeur.etat)).toEqual(['vide', 'vide', 'vide'])
+    expect(vide.communs[0]?.courbe).toBeNull()
+
+    const lectures = lecturesExempleFiche('berger', false)
+    const sansPrecedent = berger({
+      ...lectures,
+      mesuresCommuns: lectures.mesuresCommuns.filter((m) => m.periode !== '2026-09-27'),
+    })
+    expect(sansPrecedent.communs[0]?.ecart).toMatchObject({
+      texte: 'dimanche 27 sept. non saisi',
+      sens: 'non_saisi',
+    })
+  })
+
+  it('phrase de la fiche, surlignée pour un point du ministère en attente de décision', () => {
+    const phrase = berger().phrase
+    expect(texteDePhrase(phrase)).toBe(
+      '10 STARs au service dimanche, 14 actifs dont 11 en FIJ. Un point attend une décision.',
+    )
+    expect(phrase.find((s) => s.surligne)?.texte).toBe('Un point attend une décision')
+  })
+
+  it('fraîcheur : « Mis à jour il y a 3 jours », « Aucune saisie » en premier usage', () => {
+    expect(berger().fraicheur).toEqual({ libelle: 'Mis à jour il y a 3 jours', etat: 'bien' })
+    expect(berger(lecturesExempleFiche('berger', true)).fraicheur).toEqual({
+      libelle: 'Aucune saisie',
+      etat: 'alerte',
+    })
+  })
+})
+
+describe('construireFiche : indicateurs propres', () => {
+  it('rangés par rythme puis par ordre alphabétique, les retirés à part', () => {
+    const donnees = berger()
+    expect(donnees.sections.map((s) => s.titre)).toEqual([
+      'Chaque dimanche',
+      'Chaque mois',
+      'À ce jour',
+    ])
+    expect(donnees.sections[1]?.lignes.map((l) => l.libelle)).toEqual([
+      'Actions sociales',
+      'Bénéficiaires (passages)',
+      'Collectes organisées',
+      'Fonds levés',
+      'Montant moyen par action',
+      'Part des actions en partenariat',
+      'Taux de passages orientés',
+    ])
+    expect(donnees.retires).toEqual([
+      { id: expect.any(String), libelle: 'Colis distribués', detail: 'Retiré le 5 sept.' },
+    ])
+  })
+
+  it('somme de l’année avec son départ et sa complétude ; « plus de 30 jours » signalé', () => {
+    const donnees = berger()
+    expect(ligne(donnees, 'Fonds levés').somme).toEqual({
+      texte: 'Depuis août : 2 050 €',
+      completude: '2 mois sur 2',
+      moinsDe3: false,
+    })
+    expect(ligne(donnees, 'Personnes rencontrées en maraude').somme?.completude).toBe(
+      '8 dimanches sur 10',
+    )
+    expect(ligne(donnees, 'Partenariats actifs')).toMatchObject({
+      detail: 'Saisi le 20 août, il y a plus de 30 jours',
+      detailSignale: true,
+    })
+  })
+
+  it('ajout à valider : « à valider » pour le berger, la phrase du ministère pour lui ; jamais saisi : « vide »', () => {
+    expect(ligne(berger(), 'Collectes organisées')).toMatchObject({
+      aValider: 'à valider',
+      valeur: { etat: 'vide' },
+      moisEnCours: { texte: 'Octobre en cours : pas encore de saisie' },
+    })
+    expect(ligne(ministere(), 'Collectes organisées').aValider).toBe(
+      'À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir.',
+    )
+  })
+
+  it('calculs : résultat, « Non calculé » avec sa raison, et « Non calculé, à vérifier » pour une part (P49)', () => {
+    const donnees = berger()
+    expect(ligne(donnees, 'Taux de passages orientés')).toMatchObject({
+      calcul: true,
+      valeur: { etat: 'saisie', texte: '80', unite: '%' },
+      detail: 'Septembre 2026 (16 sur 20)',
+      somme: { texte: "Sur l'année : 78 %", completude: '2 mois sur 2' },
+    })
+    expect(ligne(donnees, 'Montant moyen par action')).toMatchObject({
+      valeur: { etat: 'non_calcule', texte: 'Non calculé' },
+      detail: 'Non calculé : aucune saisie de « Collectes organisées » pour septembre.',
+    })
+    expect(ligne(donnees, 'Part des actions en partenariat')).toMatchObject({
+      valeur: { etat: 'non_calcule', texte: 'Non calculé, à vérifier' },
+    })
+    expect(RAISON_HAUT_DEPASSE_BAS).toBe('haut_depasse_bas')
+  })
+
+  it('un calcul étendu absent de v_calcul n’a pas de ligne', () => {
+    const lectures = lecturesExempleFiche('berger', false)
+    const donnees = berger({ ...lectures, calculs: [] })
+    const libelles = donnees.sections.flatMap((s) => s.lignes).map((l) => l.libelle)
+    expect(libelles).not.toContain('Taux de passages orientés')
+  })
+
+  it('premier usage : aucun indicateur propre, aucune section ; aucune action pour le berger', () => {
+    const donnees = berger(lecturesExempleFiche('berger', true))
+    expect(donnees.sansIndicateurPropre).toBe(true)
+    expect(donnees.sections).toEqual([])
+    expect(donnees.actionSaisirMois).toBe(false)
+  })
+
+  it('« Saisir les chiffres du mois » au seul ministère, quand un indicateur du mois n’a jamais été saisi', () => {
+    expect(ministere().actionSaisirMois).toBe(true)
+    expect(ministere().aDesIndicateursDuMois).toBe(true)
+    expect(berger().actionSaisirMois).toBe(false)
+  })
+})
+
+describe('construireFiche : indicateur sensible (P45 à P47)', () => {
+  const sensible = (profil: ProfilFiche) =>
+    ligne(
+      construireFiche(lecturesExempleFiche(profil, false), { profil }),
+      'Bénéficiaires (passages)',
+    )
+
+  it('berger : « moins de 3 », somme des mois affichés, mois en cours « en cours »', () => {
+    const l = sensible('berger')
+    expect(l.valeur).toEqual({ etat: 'moins_de_3' })
+    expect(l.somme?.texte).toBe('Depuis juin, somme des mois affichés : 6, plus 2 mois sous 3')
+    expect(l.moisEnCours).toEqual({ texte: 'Octobre en cours : 7', moinsDe3: false })
+    expect(l.courbe?.description).toContain('moins de 3')
+  })
+
+  it('ministère : ses valeurs exactes, sans « moins de 3 »', () => {
+    const l = sensible('ministere')
+    expect(l.valeur).toMatchObject({ etat: 'saisie', texte: '2' })
+    expect(l.somme?.texte).toBe('Depuis juin : 9')
+    const octobre = l.sensible?.repartitions?.find((r) => r.mois === '2026-10-01')
+    expect(octobre).toMatchObject({
+      etat: 'cases',
+      cases: [
+        { libelle: 'Malaise', texte: '4' },
+        { libelle: 'Blessure', texte: '2' },
+        { libelle: 'Autre', texte: '1' },
+        { libelle: 'Non réparti', texte: '0' },
+      ],
+    })
+  })
+
+  it('berger : répartition avec « masqué », « moins de 3 » et « Non réparti » ; un mois sans ligne : « Pas de répartition »', () => {
+    const repartitions = sensible('berger').sensible?.repartitions
+    expect(repartitions?.map((r) => r.titre)).toEqual(['Septembre 2026', 'Octobre en cours'])
+    expect(repartitions?.[0]).toMatchObject({
+      etat: 'aucune',
+      texte: 'Pas de répartition pour septembre.',
+    })
+    expect(repartitions?.[1]).toMatchObject({
+      etat: 'cases',
+      cases: [
+        { libelle: 'Malaise', texte: 'masqué', masquee: true },
+        { libelle: 'Blessure', texte: 'moins de 3', moinsDe3: true },
+        { libelle: 'Autre', texte: 'moins de 3' },
+        { libelle: 'Non réparti', texte: '0' },
+      ],
+    })
+  })
+
+  it('répartition masquée en entier : la phrase de P47', () => {
+    const lectures = lecturesExempleFiche('berger', false)
+    const toutMasque = berger({
+      ...lectures,
+      repartitions: lectures.repartitions.map((r) => ({
+        ...r,
+        valeur: null,
+        masquee: false,
+        moins_de_3: false,
+        tout_masque: true,
+      })),
+    })
+    expect(ligne(toutMasque, 'Bénéficiaires (passages)').sensible?.repartitions?.[1]).toMatchObject(
+      {
+        etat: 'masquee',
+        texte: 'Répartition masquée pour protéger les petits nombres.',
+      },
+    )
+  })
+
+  it('sans catégorie : aucune répartition ; précisions des deux mois, la masquée signalée', () => {
+    const lectures = lecturesExempleFiche('berger', false)
+    const sansCategorie = ligne(
+      berger({ ...lectures, categories: [], repartitions: [] }),
+      'Bénéficiaires (passages)',
+    )
+    expect(sansCategorie.sensible?.repartitions).toBeNull()
+    // Une liste de moins de 3 catégories en cours n'a pas de répartition (B8) ; une répartition
+    // déjà écrite reste lue.
+    const listeCourte = ligne(
+      berger({ ...lectures, categories: lectures.categories.slice(0, 2), repartitions: [] }),
+      'Bénéficiaires (passages)',
+    )
+    expect(listeCourte.sensible?.repartitions).toBeNull()
+    const ancienne = ligne(
+      berger({ ...lectures, categories: lectures.categories.slice(0, 2) }),
+      'Bénéficiaires (passages)',
+    )
+    expect(ancienne.sensible?.repartitions).not.toBeNull()
+    expect(sansCategorie.sensible?.repartitions).toBeNull()
+    expect(sensible('berger').sensible?.precisions).toEqual([
+      {
+        mois: '2026-09-01',
+        titre: 'Précision de septembre',
+        texte: { texte: '[texte masqué par EJP Tech]', masque: true },
+      },
+      {
+        mois: '2026-10-01',
+        titre: "Précision d'octobre",
+        texte: { texte: expect.stringContaining('collecte de rentrée'), masque: false },
+      },
+    ])
+  })
+
+  it('aides : chacune une fois, « moins de 3 » et « masqué » jamais pour le ministère', () => {
+    const aides = (donnees: ReturnType<typeof berger>) =>
+      donnees.sections.flatMap((s) => s.lignes).map((l) => l.aides)
+    const duBerger = aides(berger())
+    expect(duBerger.filter((a) => a.calcule)).toHaveLength(1)
+    expect(duBerger.filter((a) => a.somme)).toHaveLength(1)
+    expect(duBerger.filter((a) => a.moinsDe3 !== undefined)).toEqual([
+      { moinsDe3: 'valeur', repartition: true },
+    ])
+    expect(duBerger.filter((a) => a.repartition)).toHaveLength(1)
+    const duMinistere = aides(ministere())
+    expect(duMinistere.some((a) => a.moinsDe3 !== undefined || a.repartition)).toBe(false)
+    expect(berger().aideCourbe).toBe(true)
+  })
+})
+
+describe('construirePointsFiche', () => {
+  it('ouverts par priorité puis échéance, puis les traités des 7 derniers jours', () => {
+    const points = construirePointsFiche(lecturesExempleFiche('berger', false), {
+      profil: 'berger',
+    })
+    expect(points.map((p) => p.titre.texte)).toEqual([
+      'Local de stockage des dons',
+      'Accueil des familles le dimanche',
+      'Bénévoles pour la collecte de rentrée',
+    ])
+    expect(points[0]).toMatchObject({
+      ministere: 'Social',
+      echeance: { texte: 'avant le 15 oct.', depassee: false },
+      mentions: ['Coordination'],
+      mentionnePar: null,
+    })
+    expect(points[1]?.echeance).toEqual({ texte: 'avant le 2 oct.', depassee: true })
+    expect(points[1]?.description).toEqual({ texte: '[texte masqué par EJP Tech]', masque: true })
+    expect(points[2]?.traite?.texte).toBe('Traité le 3 oct.')
+  })
+
+  it('le ministère mentionné lit « Mentionné par Intégration. » ; un traité de plus de 7 jours disparaît', () => {
+    const lectures = lecturesExempleFiche('ministere', false)
+    const points = construirePointsFiche(
+      {
+        ...lectures,
+        points: {
+          ...lectures.points,
+          points: lectures.points.points.map((p) =>
+            p.traite_le === null ? p : { ...p, traite_le: '2026-09-29T10:00:00+02:00' },
+          ),
+        },
+      },
+      { profil: 'ministere' },
+    )
+    expect(points).toHaveLength(2)
+    expect(points[1]?.mentionnePar).toBe('Intégration')
+  })
+})
