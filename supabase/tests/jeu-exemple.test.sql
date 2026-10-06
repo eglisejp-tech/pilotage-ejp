@@ -3,7 +3,7 @@
 -- Lecture par le berger en aal2, à travers les vues (RLS comprise).
 begin;
 
-select plan(26);
+select plan(27);
 
 select tests.se_connecter(tests.compte('Berger'), 'aal2');
 
@@ -104,6 +104,14 @@ select results_eq($$
   select count(*)::int from public.journal j
    where j.action = 'mesure_saisie' and j.ministere_id = (select m.id from public.ministere m where m.nom = 'Communication')
 $$, $$ values (11) $$, 'Communication : 11 envois de chiffres (10 dimanches, puis actifs, FIJ et visuels)');
+select results_eq($$
+  select count(*)::int, count(*) filter (where l.ligne ? 'valeur')::int, bool_and(l.ligne ? 'corrige')
+    from public.journal j
+   cross join lateral jsonb_array_elements(j.detail -> 'lignes') as l(ligne)
+    join public.indicateur i on i.id = (l.ligne ->> 'indicateur_id')::uuid
+   where j.action = 'mesure_saisie' and j.ministere_id = (select m.id from public.ministere m where m.nom = 'Communication')
+     and i.libelle = 'Visuels livrés ce mois'
+$$, $$ values (3, 0, true) $$, 'Communication : les 3 envois des visuels citent l''indicateur propre sans sa valeur (lot B2)');
 select results_eq($$ select count(*)::int, max((detail ->> 'total')::int) from public.journal where action = 'fij_saisie' $$,
   $$ values (1, 29) $$, 'la carte des FIJ donne une ligne de journal, 29 au total');
 select results_eq($$
