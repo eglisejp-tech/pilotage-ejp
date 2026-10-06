@@ -723,10 +723,10 @@ Aperçus sans base ni écriture (captures) : `/apercu/fiche`, `/apercu/saisies`,
 
 - **Page Confidentialité** (lot I) : dire « EJP Tech lit votre signalement. », sans
   l'administration (le plan, lot I, citait encore l'administration).
-- **Modèle de B8** (changement du 6 octobre, question 16 du plan) : les noms ci-dessus sont fixés
-  pour que E2 et E3 codent contre eux, mais le code de B8 attend l'accord de la personne
-  responsable sur ce changement du modèle de données. Les listes de catégories viennent de la
-  coordination, chacune par une petite migration.
+- **Modèle de B8** (changement du 6 octobre, question 16 du plan) : accord écrit de la personne
+  responsable le 6 octobre 2026 (T41, décidé). Les noms ci-dessus sont fixés pour que E2 et E3
+  codent contre eux. Les listes de catégories viennent de la coordination, chacune par une petite
+  migration.
 - **Aides nouvelles** (changement du 6 octobre) : `mois.repartition` et `fiche.repartition`
   entrent dans `textesAide.ts` par W0 s'il n'est pas fusionné, sinon par un commit de documents et
   de textes sur `etape-4` avant la vague 4 ; `mois.sensible` change de texte
