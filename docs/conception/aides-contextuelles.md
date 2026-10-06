@@ -11,7 +11,7 @@
   `src/styles/tokens.css`, composants de `src/features/cette-semaine/`.
 - **Portée** : les règles, le composant et le catalogue des textes. Le code vient avec les lots du
   plan (section 9 ci-dessous). Ce document ne change ni le modèle de données ni les droits, sauf
-  « Signaler une difficulté » (section 7), proposé en T39 et à trancher par la question 14 du plan.
+  « Signaler une difficulté » (section 7), décidé le 6 octobre 2026 (T39, question 14 du plan).
 
 Vocabulaire : une **aide** est la petite bulle qui s'ouvre sur un bouton « ? ». Un **texte visible**
 est une ligne écrite sous un champ ou dans l'écran, toujours affichée. Une aide ne remplace jamais
@@ -381,7 +381,8 @@ Coordo FIJ), vue de l'église 5, accueil 6 au plus.
 Demande de la personne responsable (6 octobre 2026) : un ministère doit pouvoir **signaler qu'il a
 une difficulté**, par exemple quand il ne peut pas choisir une date. Cette section contient les
 textes ; le modèle, les droits et les lots (B7 et E8) sont décrits par T39 de `docs/decisions.md`
-et le plan de l'étape 4, à confirmer par la question 14. Statut : **Proposé**.
+et le plan de l'étape 4. Le principe est **décidé** le 6 octobre 2026 (question 14) : le signalement
+n'est lu que par le ministère qui l'écrit et par EJP Tech. Statut des textes : **Proposé**.
 
 ### Où le lien apparaît
 
@@ -391,8 +392,8 @@ et le plan de l'étape 4, à confirmer par la question 14. Statut : **Proposé**
   département, événement, prochaine réunion), sous les boutons, comme un lien ordinaire (pas un
   bouton, pas une aide).
 
-Autre choix, ouvert dans la question 14 : le lien sur les seuls formulaires d'événement et de
-réunion.
+Un problème de compte ou de connexion ne passe pas par ce lien : un ministère qui ne peut pas se
+connecter écrit à l'administration.
 
 ### Les textes
 
@@ -400,7 +401,7 @@ réunion.
 | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | Lien                                                                            | Signaler une difficulté                                                                                                         |
 | Titre du panneau                                                                | Signaler une difficulté                                                                                                         |
-| Phrase sous le titre                                                            | EJP Tech et l'administration de l'église lisent votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.          |
+| Phrase sous le titre                                                            | EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.                                             |
 | Ligne de contexte (remplie par l'outil)                                         | Écran concerné : Ajouter un événement                                                                                           |
 | Libellé du champ                                                                | Quelle difficulté rencontrez-vous ?                                                                                             |
 | Rappel sous le champ (le rappel du formulaire, une seule fois)                  | N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.                                      |
@@ -422,9 +423,8 @@ réunion.
 Dans les deux messages de date refusée, « Signaler une difficulté » est le lien ; le reste est du
 texte. Le message d'erreur garde `aria-describedby` et reste visible à côté du champ (section 1).
 
-La phrase sous le titre suit la recommandation de la question 14 (l'administration lit les
-signalements sans agir). Si l'administration ne les lit pas, elle devient « EJP Tech lit votre
-signalement. Décrivez ce qui vous bloque en une ou deux phrases. ».
+La phrase sous le titre dit qui lit le signalement : EJP Tech seul, puisque l'administration, le
+berger et le conseil ne lisent aucun signalement (décision du 6 octobre 2026, question 14).
 
 Note : les deux messages de date refusée remplacent « Choisissez une date à venir. » de
 `LISEZMOI.md` pour l'ajout et le texte proposé « La nouvelle date doit être aujourd'hui ou plus
@@ -434,14 +434,15 @@ tard. » du plan (lot E5) pour la mise à jour : même sens, avec la sortie en p
 
 Le signalement contient un **champ libre** : il suit donc toutes les règles des champs libres
 (rappel une fois, 280 caractères, relecture et masquage par EJP Tech, jamais recopié dans le
-journal). La proposition T39 (lots B7 et E8 du plan) : tables `signalement` (ministère, écran
+journal). La décision T39 (lots B7 et E8 du plan) : tables `signalement` (ministère, écran
 concerné parmi une liste fermée, texte de 10 à 280 caractères) et `signalement_suivi` (une seule
 clôture par EJP Tech, commentaire facultatif), en ajout seulement ; fonctions `signaler_difficulte`
 et `clore_signalement` ; codes de journal `difficulte_signalee` et `signalement_clos`, sans texte ;
 couples de modération (`signalement`, `texte`) et (`signalement_suivi`, `commentaire`) ; lecture
-par le ministère pour les siens, par EJP Tech et l'administration de l'église pour tous, rien pour
-le berger et le conseil. Ce sont des décisions de modèle : CLAUDE.md demande la confirmation
-avant de les coder.
+par le ministère pour les siens, par EJP Tech pour tous, rien pour l'administration de l'église,
+le berger et le conseil (l'administration ne voit ni les pages des ministères ni les points, et un
+signalement parle du contenu d'une page). EJP Tech transmet à l'administration ce qui la concerne
+et écrit « transmis à l'administration » en clôturant. Ce changement de modèle est approuvé.
 
 ## 8. Ce qui n'est pas une aide
 
@@ -469,16 +470,16 @@ Le plan de l'étape 4 reprend cette répartition (W0, E2 à E8 et I, T38) :
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | W0  | Écrit `Aide`, `LibelleAvecAide`, `textesAide.ts` (tous les textes du catalogue), leurs tests et `e2e/aide.spec.ts` : c'est une brique partagée, avec `EtatVide`          |
 | E2  | Branche les aides de la fiche (`fiche.*`)                                                                                                                                |
-| E3  | Branche `dimanche.*` et `mois.*`, et le lien « Signaler une difficulté » de ses formulaires (si décidé)                                                                  |
-| E4  | Branche `session.*`, `fij.carte`, `fij.departements` et `fij.completudeDep` (bloc « Chiffres par département », écrit par E4), et le lien de ses formulaires (si décidé) |
-| E5  | Branche `evenement.*`, `reunion.*`, le lien et les messages de « Signaler une difficulté » (si décidé)                                                                   |
-| E8  | Écrit le formulaire « Signaler une difficulté » et le bloc « Signalements » avec les textes de la section 7 (si décidé)                                                  |
+| E3  | Branche `dimanche.*` et `mois.*`, et le lien « Signaler une difficulté » de ses formulaires                                                                              |
+| E4  | Branche `session.*`, `fij.carte`, `fij.departements` et `fij.completudeDep` (bloc « Chiffres par département », écrit par E4), et le lien de ses formulaires             |
+| E5  | Branche `evenement.*`, `reunion.*`, le lien et les messages de « Signaler une difficulté »                                                                               |
+| E8  | Écrit le formulaire « Signaler une difficulté » et le bloc « Signalements » avec les textes de la section 7                                                              |
 | E6  | Branche `accueil.aConfirmer` ; E7 branche `accueil.points`                                                                                                               |
 | I   | Branche `eglise.*` sur la vue de l'église (écrans de l'étape 3) ; passe l'audit `axe` et les captures avec bulle ouverte ; reporte les textes retenus dans `LISEZMOI.md` |
 
 Effort retenu par le plan : 1 jour pour le composant et ses tests (W0), 0,25 jour par lot d'écran
 de E2 à E7 (1,5 jour), parce que chaque lot teste aussi ses aides au clavier et dans l'audit axe,
-et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté » compte 3 jours à part (B7 et E8, si décidé).
+et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté » compte 3 jours à part (B7 et E8).
 
 ## 10. Points à confirmer
 
@@ -494,24 +495,23 @@ et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté »
    concerné : `evenement.report` (le berger et le conseil voient bien le report sur la fiche, lot
    E6), `eglise.carte` (l'échelle des teintes est relative aux autres départements, comme dans
    `carte.ts`) et `fiche.fraicheur` (les seuils de 7 et 30 jours de la règle 6).
-5. **Signaler une difficulté** (question 14 du plan, T39) : décision de modèle (deux tables,
-   journal, modération), de lecture (EJP Tech et l'administration recommandés), de portée (tous
-   les formulaires de saisie recommandés, ou seulement événement et réunion ; un ministère
-   seulement peut signaler) et de réponse : l'outil n'écrit pas à la personne, donc **comment EJP
-   Tech répond-il** ? Par la boîte mail partagée du ministère ? Cela suppose que la liste des
+5. **Signaler une difficulté** (question 14 du plan, T39) : le modèle (deux tables, journal,
+   modération), la lecture (le ministère et EJP Tech seulement), la portée (tous les formulaires de
+   saisie ; un ministère seulement peut signaler) sont décidés le 6 octobre 2026. Reste ouverte la
+   réponse : l'outil n'écrit pas à la personne, donc **comment EJP Tech répond-il** ? Par la boîte mail partagée du ministère ? Cela suppose que la liste des
    boîtes que la personne responsable doit envoyer soit connue d'EJP Tech sans entrer dans le
    dépôt. Le texte « EJP Tech le lira. » ne promet pas de réponse ; la clôture, avec son
    commentaire facultatif, est lue par le ministère dans « Vos derniers signalements ».
 6. **Place dans le plan** : « Signaler une difficulté » ajoute deux tables, deux fonctions, deux
-   codes de journal et deux couples de modération au contrat de W0 (section 3 du plan), donc se
-   décide avant W0. Effort retenu par le plan : 3 jours (B7 1,5, E8 1,5).
+   codes de journal et deux couples de modération au contrat de W0 (section 3 du plan), décidés
+   avant W0. Effort retenu par le plan : 3 jours (B7 1,5, E8 1,5).
 7. **Aides à ajouter plus tard** : les écrans des étapes 5 et 6 (nouveau point, marquer traité,
    indicateurs, comptes) auront leurs propres aides, avec les mêmes règles. Elles s'ajouteront à ce
    catalogue au moment de leur plan, pas avant.
 8. **Numéro de décision** : ce document est la référence de T38 (aides contextuelles) et de la
    section 7 de T39 (signalement) dans `docs/decisions.md` ; les textes validés se reportent dans
    `LISEZMOI.md` au lot I. La liste des codes de journal et des couples de modération de W0 ne
-   change que si le point 5 est accepté.
+   change pas, le point 5 étant décidé.
 9. **Relecture par la coordination** : les textes d'aide parlent de « moins de 3 », de « complétude »
    (sans le mot) et de ce que voient le berger et le conseil. Ils font partie des libellés remis à
    la coordination avant la mise en service.

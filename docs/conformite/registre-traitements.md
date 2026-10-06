@@ -352,12 +352,11 @@ archivage du dépôt du code.
 - **À venir, non décidé** : des rappels de saisie par email sont proposés (P31). Ils ne sont pas
   construits. S'ils sont décidés, cette fiche sera mise à jour avant leur mise en service.
 
-## Fiche 6. Signalement d'une difficulté (proposition, non construite)
+## Fiche 6. Signalement d'une difficulté (décidé, non construit)
 
-- **Statut** : proposition du 6 octobre 2026 (T39), demandée par la personne responsable et conçue
-  par EJP Tech. Elle n'est ni décidée ni construite : la personne responsable la tranche avant le
-  début du code (question 14 du plan de l'étape 4). Si elle est décidée, cette fiche est confirmée
-  et remise à la coordination avec le reste du registre.
+- **Statut** : décidé le 6 octobre 2026 par la personne responsable (T39, question 14 du plan de
+  l'étape 4), conçu par EJP Tech. Il n'est pas encore construit. Cette fiche est remise à la
+  coordination avec le reste du registre.
 - **Finalité prévue** : permettre à un ministère de signaler une difficulté avec l'outil, par
   exemple quand il ne peut pas enregistrer une date (la base refuse une nouvelle date déjà passée
   pour un événement), pour qu'EJP Tech l'aide en dehors de l'outil.
@@ -367,9 +366,12 @@ archivage du dépôt du code.
 - **Catégories de données prévues** : ministère et compte qui signalent, date, écran concerné
   (choisi dans une liste fermée), court texte libre (10 à 280 caractères) ; clôture par EJP Tech
   (compte, date, commentaire facultatif de 10 à 280 caractères).
-- **Destinataires prévus** (recommandation, à confirmer avec la question 14) : le ministère lit ses
-  signalements et leur clôture ; EJP Tech les lit tous et les clôt ; l'administration de l'église
-  les lit tous, sans agir ; le berger, le conseil et les autres ministères n'y ont pas accès.
+- **Destinataires** (décidé) : le ministère lit ses signalements et leur clôture ; EJP Tech les lit
+  tous et les clôt ; ni l'administration de l'église, ni le berger, ni le conseil, ni les autres
+  ministères n'y ont accès (l'administration ne voit ni les pages des ministères ni les points, et
+  un signalement parle du contenu d'une page). EJP Tech transmet à l'administration, hors de
+  l'outil, ce qui la concerne. Un problème de compte ou de connexion ne passe pas par ce
+  signalement.
 - **Mesures prévues** : rappel sous le champ, 280 caractères au plus, refus par la base d'un texte
   qui ressemble à un email, à un numéro de téléphone ou à une civilité suivie d'un nom ; relecture
   et masquage par EJP Tech ; ajout seulement ; journal avec le code de l'écran, sans le texte ;
@@ -397,8 +399,8 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 10. Durée de conservation de l'export final et lieu où la coordination le garde (à la coordination).
 11. Confirmation que chaque titulaire de compte est membre de l'église ou en contact régulier avec
     elle (à la coordination).
-12. Décision sur le signalement d'une difficulté (fiche 6, question 14 du plan de l'étape 4) : oui
-    ou non, et qui lit les signalements.
+12. Confirmation par la coordination de la fiche 6 (signalement d'une difficulté), décidée le 6
+    octobre 2026 : lue par le ministère qui l'écrit et par EJP Tech seulement.
 
 ## Historique
 
