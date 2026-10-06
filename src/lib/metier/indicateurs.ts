@@ -16,7 +16,7 @@ import type {
 } from '@/lib/base'
 import { formaterJourCourt, formaterJourSemaine, nomDuMois } from './dates'
 import type { DateIso } from './dates'
-import { estMois, moisDe, premierMoisPermis } from './periodes'
+import { dernierMoisPermis, estMois, premierMoisPermis } from './periodes'
 import { formaterPourcentage, NON_CALCULE } from './pourcentage'
 import { accorder, comparerNoms, ESPACE_FINE, nombre, terminerPhrase } from './texte'
 import { formaterHeureEnMinutes, formaterValeur, MOINS_DE_3 } from './unites'
@@ -59,17 +59,28 @@ export interface SectionRythme<T> {
   indicateurs: T[]
 }
 
-/** Sections de la fiche, dans l'ordre des rythmes, sans section vide, chacune rangée (R6). */
-export function regrouperParRythme<T extends IndicateurRangeable>(
+/**
+ * Sections de la fiche pour les indicateurs qui ne sont pas retirés, dans l'ordre des rythmes, sans
+ * section vide, chacune rangée (R6). Les retirés vont à part, dans le bloc « Retirés » replié de la
+ * fiche : `retires` les rend.
+ */
+export function regrouperParRythme<T extends IndicateurRangeable & { etat?: EtatIndicateur }>(
   indicateurs: readonly T[],
 ): SectionRythme<T>[] {
-  const rangees = trierIndicateurs(indicateurs)
+  const rangees = trierIndicateurs(indicateurs.filter((indicateur) => indicateur.etat !== 'retire'))
   return RYTHMES.flatMap((nature) => {
     const section = rangees.filter((indicateur) => indicateur.nature === nature)
     return section.length === 0
       ? []
       : [{ nature, titre: libelleRythme(nature), indicateurs: section }]
   })
+}
+
+/** Indicateurs retirés, rangés comme la fiche (rythme puis ordre alphabétique) : bloc « Retirés ». */
+export function retires<T extends IndicateurRangeable & { etat: EtatIndicateur }>(
+  indicateurs: readonly T[],
+): T[] {
+  return trierIndicateurs(indicateurs.filter((indicateur) => indicateur.etat === 'retire'))
 }
 
 /** Un calcul se déclare, il ne se saisit jamais. */
@@ -102,7 +113,7 @@ export type RefusMois = 'invalide' | 'futur' | 'trop_ancien'
  */
 export function refusDeMois(mois: string, aujourdhui: DateIso): RefusMois | null {
   if (!estMois(mois)) return 'invalide'
-  if (mois > moisDe(aujourdhui)) return 'futur'
+  if (mois > dernierMoisPermis(aujourdhui)) return 'futur'
   if (mois < premierMoisPermis(aujourdhui)) return 'trop_ancien'
   return null
 }
@@ -136,9 +147,18 @@ export function libelleCompletudePeriodes(
   return `${nombre(saisies)} ${accorder(saisies, singulier, pluriel)} sur ${nombre(attendues)}`
 }
 
-/** Période d'un calcul dans une phrase : « septembre », « le dimanche 27 sept. », « le 27 sept. ». */
-function quandPeriode(periode: DateIso, nature: NatureIndicateur): string {
-  if (nature === 'mois') return nomDuMois(Number(periode.slice(5, 7)))
+/**
+ * Période d'un calcul dans une phrase : « septembre », « le dimanche 27 sept. », « le 27 sept. ».
+ * Un mois d'une autre année que celle du jour de Paris (`aujourdhui`) porte son année :
+ * « décembre 2026 » lu en janvier 2027.
+ */
+function quandPeriode(periode: DateIso, nature: NatureIndicateur, aujourdhui?: DateIso): string {
+  if (nature === 'mois') {
+    const nom = nomDuMois(Number(periode.slice(5, 7)))
+    return aujourdhui !== undefined && periode.slice(0, 4) !== aujourdhui.slice(0, 4)
+      ? `${nom} ${periode.slice(0, 4)}`
+      : nom
+  }
   return nature === 'dimanche'
     ? `le ${formaterJourSemaine(periode)}`
     : `le ${formaterJourCourt(periode)}`
@@ -159,10 +179,14 @@ export function formaterResultatCalcul(
   unite: UniteIndicateur,
 ): string {
   if (calcul === 'taux') return formaterPourcentage(Math.round(resultat))
+  // La moyenne de valeurs valides reste entre 0 et 1439 ; la borne protège la fiche d'une donnée
+  // hors limites, qui ferait lever `formaterHeureEnMinutes`.
   if (unite === 'heure') return formaterHeureEnMinutes(Math.min(1439, Math.round(resultat)))
-  const decimal = formatDecimal.format(resultat)
+  // L'accord porte sur la valeur écrite : 1,96 s'écrit « 2,0 jours ».
+  const arrondi = Math.round(resultat * 10) / 10
+  const decimal = formatDecimal.format(arrondi)
   if (unite === 'euros') return `${decimal}${ESPACE_FINE}€`
-  if (unite === 'jours') return `${decimal} ${accorder(resultat, 'jour', 'jours')}`
+  if (unite === 'jours') return `${decimal} ${accorder(arrondi, 'jour', 'jours')}`
   return decimal
 }
 
@@ -174,16 +198,22 @@ export interface EntreeNonCalcule {
   periode: DateIso
   /** Libellé de la source qui manque (`v_calcul.non_calcule_source_id`), s'il est connu. */
   libelleSource?: string | null
+  /** Jour de Paris (`v_semaine.aujourdhui`) : un mois d'une autre année porte son année. */
+  aujourdhui?: DateIso
 }
 
 /**
- * Texte du « Non calculé » : la raison est dite dans la ligne (plan E2). La source est citée entre
- * guillemets : le texte reste juste quel que soit le genre ou le nombre de son libellé.
+ * Texte du « Non calculé » : la raison est dite dans la ligne (plan E2, B2). La source est citée
+ * entre guillemets : le texte reste juste quel que soit le genre, le nombre ou la majuscule de son
+ * libellé (nom propre compris), sans accord à écrire.
  * « Non calculé : aucune saisie de « Demandes reçues » pour septembre. »
  * « Non calculé : « Demandes reçues » vaut 0 pour septembre. »
+ *
+ * Point ouvert pour la coordination : le plan donne seulement « Non calculé : demandes reçues de
+ * septembre non saisies. » ; cette forme sans accord le remplace tant qu'elle n'a pas tranché.
  */
 export function texteNonCalcule(entree: EntreeNonCalcule): string {
-  const quand = quandPeriode(entree.periode, entree.nature)
+  const quand = quandPeriode(entree.periode, entree.nature, entree.aujourdhui)
   const source = entree.libelleSource ? `« ${entree.libelleSource} »` : null
   if (entree.raison === 'source_non_saisie') {
     return source
@@ -220,6 +250,8 @@ export interface EntreeCalcul {
   depuis?: string | null
   /** Libellé de la source qui manque, pour le « Non calculé ». */
   libelleSource?: string | null
+  /** Jour de Paris (`v_semaine.aujourdhui`) : un mois d'une autre année porte son année. */
+  aujourdhui?: DateIso
 }
 
 /**
@@ -236,14 +268,15 @@ export function phraseCalcul(entree: EntreeCalcul): string {
       nature,
       periode: ligne.periode,
       libelleSource: entree.libelleSource,
+      aujourdhui: entree.aujourdhui,
     })
   }
   const valeur = formaterResultatCalcul(ligne.calcul, ligne.resultat, unite)
-  const quand = quandPeriode(ligne.periode, nature)
+  const quand = quandPeriode(ligne.periode, nature, entree.aujourdhui)
   const quandPhrase = nature === 'mois' ? `en ${quand}` : quand
   const detail =
     ligne.haut !== null && ligne.bas !== null
-      ? ` (${detailCalcul(ligne.calcul, ligne.haut, ligne.bas, unite)})`
+      ? detailCalcul(ligne.calcul, ligne.haut, ligne.bas, unite)
       : ''
   const periode = terminerPhrase(`${libelle} : ${valeur} ${quandPhrase}${detail}`)
   if (
@@ -262,13 +295,20 @@ export function phraseCalcul(entree: EntreeCalcul): string {
   return `${periode} ${entree.depuis ?? "Sur l'année"} : ${annee} (${completude}).`
 }
 
+/**
+ * Détail entre parenthèses (avec son espace d'attaque), ou rien. Une unité d'heure n'a pas de
+ * détail : le haut est une somme de minutes, que `formaterValeur` refuse au-delà de 23 h 59 et que
+ * personne ne lirait. La date du bas « à ce jour » de plus de 30 jours n'est pas écrite : `v_calcul`
+ * ne l'expose pas (point ouvert, B2).
+ */
 function detailCalcul(
   calcul: CalculIndicateur,
   haut: number,
   bas: number,
   unite: UniteIndicateur,
 ): string {
+  if (unite === 'heure') return ''
   const lienDuHaut = calcul === 'taux' ? 'sur' : 'pour'
   const hautEcrit = calcul === 'taux' ? nombre(haut) : formaterValeur(haut, unite)
-  return `${hautEcrit} ${lienDuHaut} ${nombre(bas)}`
+  return ` (${hautEcrit} ${lienDuHaut} ${nombre(bas)})`
 }

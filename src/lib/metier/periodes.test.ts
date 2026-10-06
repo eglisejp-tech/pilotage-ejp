@@ -74,10 +74,9 @@ describe('mois proposés', () => {
     expect(moisProposes('2026-11-01')[1]).toMatchObject({ mois: '2026-10', enCours: false })
   })
 
-  it('le dernier mois permis est le mois en cours, pour tout indicateur, sensible compris', () => {
-    // Décision du 6 octobre 2026 : plus d'option « sensible », le mois en cours se saisit.
+  it('le dernier mois permis est le mois en cours, pour un sensible comme pour un autre (P45)', () => {
     expect(dernierMoisPermis('2026-10-06')).toBe('2026-10')
-    expect(dernierMoisPermis('2027-01-01')).toBe('2027-01')
+    expect(moisProposes('2026-10-06').map((m) => m.mois)).toEqual(['2026-10', '2026-09', '2026-08'])
   })
 })
 
@@ -90,7 +89,7 @@ describe('rattrapage', () => {
     expect(liste.at(-1)).toMatchObject({ mois: '2025-01', libelle: 'Janvier 2025' })
   })
 
-  it('refuse un mois futur et un mois avant janvier de l’an dernier, pour tout indicateur', () => {
+  it('refuse un mois futur, un mois avant janvier de l’an dernier', () => {
     expect(moisEstPermis('2026-10', '2026-10-06')).toBe(true)
     expect(moisEstPermis('2026-11', '2026-10-06')).toBe(false)
     expect(moisEstPermis('2025-01', '2026-10-06')).toBe(true)
@@ -100,7 +99,7 @@ describe('rattrapage', () => {
 })
 
 describe('mois choisi d’abord', () => {
-  it('prend le dernier mois fini non saisi, sinon le mois en cours', () => {
+  it('prend le dernier mois révolu non saisi, sinon le mois en cours', () => {
     expect(moisParDefaut('2026-10-06', new Set())).toBe('2026-09')
     expect(moisParDefaut('2026-10-06', new Set(['2026-09']))).toBe('2026-08')
     expect(moisParDefaut('2026-10-06', new Set(['2026-09', '2026-08']))).toBe('2026-10')

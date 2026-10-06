@@ -32,19 +32,50 @@ export type DefinitionIndicateur = Pick<
   | 'retrait_motif'
 >
 
+const COLONNES_DEFINITION =
+  'id, code, libelle, definition, nature, unite, sensible, calcul, etat, origine, ministere_id, ordre, sans_somme, saisi_dimanche_matin, libelle_sessions, remplace_id, cree_le, retire_le, retrait_motif'
+
 /**
- * Indicateurs d'un ministère, tous états (actif, à valider, retiré), calculs compris. Un ministère
- * ne lit que les siens et les communs : la base filtre déjà, le filtre ici nomme la fiche voulue.
+ * Indicateurs propres d'un ministère, tous états (actif, à valider, retiré), calculs compris. Les
+ * communs (`ministere_id` nul) n'y sont pas : `lireDefinitionsCommuns` les lit. La base filtre déjà
+ * les lignes d'un ministère ; le filtre nomme la fiche voulue. Le motif d'un refus
+ * (`validation.motif`) n'est pas lu ici : E2 ajoute sa lecture typée.
  */
 export async function lireIndicateursDuMinistere(
   ministereId: string,
 ): Promise<DefinitionIndicateur[]> {
   const { data, error } = await supabase()
     .from('indicateur')
-    .select(
-      'id, code, libelle, definition, nature, unite, sensible, calcul, etat, origine, ministere_id, ordre, sans_somme, saisi_dimanche_matin, libelle_sessions, remplace_id, cree_le, retire_le, retrait_motif',
-    )
+    .select(COLONNES_DEFINITION)
     .eq('ministere_id', ministereId)
+  if (error) throw error
+  return data
+}
+
+/**
+ * Définitions des trois chiffres communs (service, actifs, en FIJ) : libellé, définition et unité
+ * que le formulaire du dimanche (E3) écrit sous chaque champ. Les communs n'ont pas de ministère.
+ */
+export async function lireDefinitionsCommuns(): Promise<DefinitionIndicateur[]> {
+  const { data, error } = await supabase()
+    .from('indicateur')
+    .select(COLONNES_DEFINITION)
+    .is('ministere_id', null)
+  if (error) throw error
+  return data
+}
+
+/**
+ * Catégories des indicateurs sensibles prévus (B8) : la grille de répartition du formulaire du mois
+ * (E3). Une catégorie retirée (`retiree_le` renseigné) reste lue, pour les anciennes répartitions :
+ * l'écran de saisie ne propose que celles qui n'ont pas de date de retrait.
+ */
+export async function lireCategoriesSensibles(): Promise<LigneTable<'categorie_sensible'>[]> {
+  const { data, error } = await supabase()
+    .from('categorie_sensible')
+    .select('prevu_code, code, libelle, ordre, retiree_le')
+    .order('prevu_code', { ascending: true })
+    .order('ordre', { ascending: true })
   if (error) throw error
   return data
 }
@@ -75,7 +106,7 @@ export async function lireSuiviIndicateurs(
   const requete = supabase()
     .from('v_indicateur_suivi')
     .select(
-      'indicateur_id, ministere_id, libelle, definition, nature, unite, sensible, etat, origine, calcul, derniere_periode, derniere_valeur, derniere_moins_de_3, derniere_saisie_le, mois_en_cours_valeur, somme_annee, somme_moins_de_3, somme_depuis, somme_nb_saisies, somme_nb_attendues, plus_de_30_jours, etat_valeur, attente_jours, retire_le',
+      'indicateur_id, ministere_id, libelle, definition, nature, unite, sensible, etat, origine, calcul, derniere_periode, derniere_valeur, derniere_moins_de_3, derniere_saisie_le, mois_en_cours_valeur, mois_en_cours_moins_de_3, somme_annee, somme_moins_de_3, somme_depuis, somme_nb_saisies, somme_nb_attendues, plus_de_30_jours, etat_valeur, attente_jours, retire_le',
     )
   const { data, error } = await (ministereId === undefined
     ? requete

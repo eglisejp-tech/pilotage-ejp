@@ -12,6 +12,7 @@ import {
   phraseCalcul,
   refusDeMois,
   regrouperParRythme,
+  retires,
   RYTHMES,
   texteNonCalcule,
   trierIndicateurs,
@@ -77,6 +78,21 @@ describe('ordre de la fiche (R6)', () => {
     expect(regrouperParRythme([])).toEqual([])
     expect(libelleRythme('mois')).toBe('Chaque mois')
   })
+
+  it('les retirés ne sont pas dans les sections : ils vont à part, rangés comme la fiche', () => {
+    const lignes = [
+      { nature: 'mois', libelle: 'Publications', etat: 'actif' },
+      { nature: 'mois', libelle: 'Vieux suivi', etat: 'retire' },
+      { nature: 'dimanche', libelle: 'Ancien décompte', etat: 'retire' },
+      { nature: 'mois', libelle: 'Abonnements', etat: 'en_attente' },
+    ] as const
+    const sections = regrouperParRythme(lignes)
+    expect(sections.map((s) => s.indicateurs.map((l) => l.libelle))).toEqual([
+      ['Abonnements', 'Publications'],
+    ])
+    expect(retires(lignes).map((l) => l.libelle)).toEqual(['Ancien décompte', 'Vieux suivi'])
+    expect(retires([])).toEqual([])
+  })
 })
 
 describe('qui se saisit', () => {
@@ -125,6 +141,14 @@ describe('valeur d’une période', () => {
     expect(libelleValeurMesure(null, false, 'nombre')).toBeNull()
   })
 
+  it('mois en cours d’un sensible (P45) : un 1 ou 2 masqué se dit « moins de 3 », pas une absence', () => {
+    // `mois_en_cours_valeur` est null ET `mois_en_cours_moins_de_3` est vrai : pas de saisie ne se
+    // confond pas avec un petit nombre masqué.
+    expect(libelleValeurMesure(null, true, 'nombre')).toBe('moins de 3')
+    expect(libelleValeurMesure(null, false, 'nombre')).toBeNull()
+    expect(libelleValeurMesure(5, false, 'nombre')).toBe('5')
+  })
+
   it('écrit la complétude de la somme avec son unité de période', () => {
     expect(libelleCompletudePeriodes(9, 9, 'mois')).toBe('9 mois sur 9')
     expect(libelleCompletudePeriodes(1, 5, 'mois')).toBe('1 mois sur 5')
@@ -147,6 +171,8 @@ describe('résultat d’un calcul', () => {
     expect(formaterResultatCalcul('moyenne', 12, 'nombre')).toBe('12,0')
     expect(formaterResultatCalcul('moyenne', 1.5, 'jours')).toBe('1,5 jour')
     expect(formaterResultatCalcul('moyenne', 3.2, 'jours')).toBe('3,2 jours')
+    expect(formaterResultatCalcul('moyenne', 1.96, 'jours')).toBe('2,0 jours')
+    expect(formaterResultatCalcul('moyenne', 1.04, 'jours')).toBe('1,0 jour')
     expect(formaterResultatCalcul('moyenne', 630.4, 'heure')).toBe('10 h 30')
   })
 })
@@ -252,6 +278,50 @@ describe('ligne d’un calcul', () => {
         },
       }),
     ).toBe(`Panier moyen : 23,4${F}€ en septembre (1${F}240${F}€ pour 53).`)
+  })
+
+  it('moyenne en heure : sommes de minutes sans détail, jamais d’erreur', () => {
+    expect(
+      phraseCalcul({
+        libelle: 'Heure moyenne du culte',
+        nature: 'mois',
+        unite: 'heure',
+        ligne: {
+          ...ligneTaux,
+          calcul: 'moyenne',
+          haut: 2520,
+          bas: 4,
+          resultat: 630,
+          annee_resultat: null,
+        },
+      }),
+    ).toBe('Heure moyenne du culte : 10 h 30 en septembre.')
+  })
+
+  it('un mois d’une autre année que le jour de Paris porte son année', () => {
+    const entree: EntreeCalcul = {
+      libelle: 'Taux de résolution',
+      nature: 'mois',
+      unite: 'nombre',
+      ligne: { ...ligneTaux, periode: '2026-12-01' },
+      aujourdhui: '2027-01-05',
+    }
+    expect(phraseCalcul(entree)).toContain(`80${F}% en décembre 2026 (16 sur 20).`)
+    expect(phraseCalcul({ ...entree, aujourdhui: '2026-12-20' })).toContain(
+      `80${F}% en décembre (16 sur 20).`,
+    )
+    expect(
+      phraseCalcul({
+        ...entree,
+        ligne: {
+          ...ligneTaux,
+          periode: '2026-12-01',
+          resultat: null,
+          non_calcule_raison: 'bas_nul',
+        },
+        libelleSource: 'Demandes reçues',
+      }),
+    ).toBe('Non calculé : « Demandes reçues » vaut 0 pour décembre 2026.')
   })
 
   it('un calcul du dimanche dit le jour, sans « en »', () => {

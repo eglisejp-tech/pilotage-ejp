@@ -6,6 +6,10 @@
 - **Date** : 6 octobre 2026
 - **Origine** : demande du 6 octobre 2026 (réponse à la question 7 du plan de l'étape 4) : de petites
   aides contextuelles, bien placées, simplement rédigées, pour aider à la prise en main.
+- **Changement du 6 octobre 2026** : le mois en cours d'un indicateur sensible se saisit (P45), une
+  « Précision » et une répartition par catégories s'y ajoutent (P46, P47). `mois.sensible` est revue,
+  `mois.repartition` et `fiche.repartition` sont proposées (section 6), et le texte « Se saisit une
+  fois le mois fini. » est retiré (section 8).
 - **Sources** : `docs/plan-etape-4.md` (lots E2 à E7), `BRIEF.md` (sections 3, 4 et 9),
   `docs/reference/maquettes/LISEZMOI.md`, maquettes 04, 07, 08, 09, 11 et 12,
   `src/styles/tokens.css`, composants de `src/features/cette-semaine/`.
@@ -295,14 +299,34 @@ seule aide pour le groupe, jamais une par indicateur.
 
 ### Chiffres du mois (lot E3)
 
-| Code            | Champ ou bloc                                                           | Texte                                                                                                 | Car. | Placement | Profils   |
-| --------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
-| `mois.periode`  | Titre « Chiffres de septembre » (choix du mois)                         | Saisissez le total du mois entier. Un mois oublié se rattrape jusqu'en janvier de l'an dernier.       | 95   | Flux      | ministère |
-| `mois.sensible` | Champ d'un indicateur de santé, d'écoute, d'accompagnement ou d'enfants | Seul un mois fini se saisit. Le berger et le conseil voient « moins de 3 » à la place de 1 ou 2.      | 96   | Flux      | ministère |
-| `mois.aValider` | Champ d'un indicateur marqué « à valider »                              | EJP Tech doit encore valider cet indicateur. Vous pouvez le saisir, mais il n'entre dans aucun total. | 101  | Flux      | ministère |
+| Code               | Champ ou bloc                                                                                 | Texte                                                                                                 | Car. | Placement | Profils   |
+| ------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
+| `mois.periode`     | Titre « Chiffres de septembre » (choix du mois)                                               | Saisissez le total du mois entier. Un mois oublié se rattrape jusqu'en janvier de l'an dernier.       | 95   | Flux      | ministère |
+| `mois.sensible`    | Champ d'un indicateur de santé, d'écoute, d'accompagnement ou d'enfants                       | Le berger et le conseil voient « moins de 3 » à la place de 1 ou 2, mois en cours compris.            | 90   | Flux      | ministère |
+| `mois.repartition` | Titre de la grille « Répartition (facultatif) » d'un indicateur sensible qui a des catégories | Les catégories viennent de la coordination. Ce que vous ne répartissez pas s'affiche « non réparti ». | 101  | Flux      | ministère |
+| `mois.aValider`    | Champ d'un indicateur marqué « à valider »                                                    | EJP Tech doit encore valider cet indicateur. Vous pouvez le saisir, mais il n'entre dans aucun total. | 101  | Flux      | ministère |
 
-`mois.sensible` et `mois.aValider` sont conditionnelles : elles ne s'affichent que sur les champs
-concernés, une fois par formulaire.
+`mois.sensible`, `mois.aValider` et `mois.repartition` sont conditionnelles : elles ne s'affichent
+que sur les champs concernés, une fois par formulaire. Avec elles, le formulaire atteint le plafond
+de quatre aides : le champ « Précision » n'a pas d'aide, parce que ce qu'il faut savoir avant
+d'écrire (qui la lit, le rappel sur les données personnelles) est un texte visible (section 8).
+
+**Changement du 6 octobre 2026 (P45 à P47), statut Proposé.** `mois.sensible` disait « Seul un mois
+fini se saisit. » : ce n'est plus vrai, le mois en cours d'un indicateur sensible se saisit (P45),
+et le texte est revu. `mois.repartition` est nouvelle (P47). Textes visibles proposés pour la
+précision et la répartition (« Proposé », plan de l'étape 4, E3) :
+
+| Élément                                                  | Texte                                                                                      |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Libellé du champ                                         | Précision (facultatif)                                                                     |
+| Texte visible sous le libellé                            | Lue par votre ministère, le berger, le conseil et EJP Tech.                                |
+| Rappel sous le premier champ « Précision » du formulaire | N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech. |
+| Compteur                                                 | 0 sur 280                                                                                  |
+| Précision déjà envoyée pour ce mois                      | « Précision actuelle : », suivi du texte (un champ vide la laisse en place)                |
+| Erreur du champ                                          | Écrivez au moins 10 caractères, ou laissez la précision vide.                              |
+| Titre de la grille                                       | Répartition (facultatif)                                                                   |
+| Ligne calculée sous la grille                            | Non réparti : 3                                                                            |
+| Erreur sous la grille                                    | La somme des catégories (9) dépasse le total du mois (7).                                  |
 
 ### Saisie d'une session (maquette 09, lot E4)
 
@@ -342,7 +366,10 @@ l'outil. Ici, on reporte seulement le statut. » et la note sur les mentions res
 ### Fiche d'un ministère (maquettes 04 et 12, lot E2)
 
 Cinq aides au plus à l'écran, sur les lignes concernées, chacune une seule fois. Avec le bloc
-« Chiffres par département » de la fiche de Coordo FIJ, six.
+« Chiffres par département » de la fiche de Coordo FIJ, six. Avec `fiche.repartition` (changement
+du 6 octobre 2026, P47), six aussi sur la fiche d'un ministère qui a un indicateur sensible réparti
+(Social, Santé, Kumi, Eagles, Prodiges Junior) ; Coordo FIJ n'a aucun indicateur sensible, donc
+aucune fiche ne dépasse le plafond de six.
 
 | Code               | Champ ou bloc                                          | Texte                                                                                                                | Car. | Placement | Profils                              |
 | ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------------------ |
@@ -354,6 +381,17 @@ Cinq aides au plus à l'écran, sur les lignes concernées, chacune une seule fo
 
 `fiche.moinsDe3` ne s'affiche pas pour le ministère : il lit ses propres valeurs exactes, sans seuil
 (BRIEF, matrice des droits ; plan de l'étape 4, B2).
+
+Aide proposée le 6 octobre 2026 (P47, statut **Proposé**) :
+
+| Code                | Champ ou bloc                                                  | Texte                                                                                                    | Car. | Placement | Profils                   |
+| ------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------- |
+| `fiche.repartition` | Premier « masqué » d'une répartition par catégories (fiche 04) | « Masqué » : une catégorie de plus est cachée, pour qu'aucune soustraction ne redonne un « moins de 3 ». | 104  | Flottante | berger, conseil, EJP Tech |
+
+`fiche.repartition` ne s'affiche pas pour le ministère, qui lit ses valeurs exactes, ni quand
+aucune catégorie n'est masquée. La précision n'a pas d'aide : c'est un texte écrit par le ministère,
+lu tel quel. « Répartition masquée pour protéger les petits nombres. » est un état visible, pas une
+aide (plan de l'étape 4, E2).
 
 ### Vue de l'église (écrans 01 à 03, déjà construits)
 
@@ -377,9 +415,10 @@ aides.
 
 ### Total du catalogue
 
-31 aides. Par écran : saisie du dimanche 4, Chiffres du mois 3, session 3, carte 1, départements 2
-(saisie et lecture), événement 3 à l'ajout et 2 à la mise à jour, réunion 2, fiche 5 (6 pour
-Coordo FIJ), vue de l'église 5, accueil 6 au plus.
+33 aides (31, plus `mois.repartition` et `fiche.repartition` le 6 octobre 2026). Par écran : saisie
+du dimanche 4, Chiffres du mois 4, session 3, carte 1, départements 2 (saisie et lecture),
+événement 3 à l'ajout et 2 à la mise à jour, réunion 2, fiche 5 (6 pour Coordo FIJ et pour une
+fiche avec une répartition), vue de l'église 5, accueil 6 au plus.
 
 ## 7. Signaler une difficulté
 
@@ -454,18 +493,21 @@ et écrit « transmis à l'administration » en clôturant. Ce changement de mod
 Textes envisagés puis écartés, avec la raison. Les écrans les disent déjà, ou ils sont nécessaires
 pour remplir.
 
-| Candidat                                                               | Décision                    | Raison                                                                                              |
-| ---------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
-| « Un STAR saisi par deux ministères n'est compté qu'une fois »         | Texte visible (déjà prévu)  | Note sous le tableau et ligne de la session, BRIEF section 9                                        |
-| « Non calculé : demandes reçues de septembre non saisies. »            | Texte visible (déjà prévu)  | État vide du calcul, plan E2 : la raison est dite dans la ligne                                     |
-| « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir. » | Texte visible (déjà prévu)  | Plan E2 : aucune aide en plus sur la fiche                                                          |
-| « Se saisit une fois le mois fini. » (mois en cours d'un sensible)     | Texte visible (déjà prévu)  | Nécessaire pour comprendre pourquoi le champ manque                                                 |
-| Format de l'heure (« 10 h 42 »), unité, plafond d'un chiffre           | Texte visible               | Nécessaire pour remplir ; la définition est déjà sous chaque champ (plan E3)                        |
-| « Les mentions se choisissent à la création et ne changent plus. »     | **Texte visible à ajouter** | Nécessaire : on ne peut pas ajouter une mention après (T32). À proposer au lot E5 sous les mentions |
-| Le bouton principal change le dimanche à midi                          | Rien                        | Note de conception de la maquette 07 que `LISEZMOI.md` interdit d'afficher                          |
-| Ce qu'est un « ministère principal »                                   | Rien                        | Convention entre les personnes, que l'outil ne stocke pas et ne définit pas (BRIEF règle 4)         |
-| Développer « FIJ » ou « STAR »                                         | Rien                        | L'outil ne développe ces sigles nulle part : la personne responsable les connaît                    |
-| Aide sur les boutons « Corriger », « Saisir », « Mettre à jour »       | Rien                        | Un bouton dit ce qu'il fait (CLAUDE.md, « Textes de l'interface »)                                  |
+| Candidat                                                               | Décision                     | Raison                                                                                              |
+| ---------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| « Un STAR saisi par deux ministères n'est compté qu'une fois »         | Texte visible (déjà prévu)   | Note sous le tableau et ligne de la session, BRIEF section 9                                        |
+| « Non calculé : demandes reçues de septembre non saisies. »            | Texte visible (déjà prévu)   | État vide du calcul, plan E2 : la raison est dite dans la ligne                                     |
+| « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir. » | Texte visible (déjà prévu)   | Plan E2 : aucune aide en plus sur la fiche                                                          |
+| « Se saisit une fois le mois fini. » (mois en cours d'un sensible)     | **Retiré le 6 octobre 2026** | Le mois en cours d'un sensible se saisit (P45) : le champ ne manque plus                            |
+| Qui lit la « Précision » (« Lue par votre ministère, le berger, ... ») | Texte visible                | Nécessaire avant d'écrire, comme pour le signalement (P46)                                          |
+| « Non réparti : 3 » sous la grille de répartition                      | Texte visible                | Calculé en direct, sert à chaque saisie (P47)                                                       |
+| « La somme des catégories (9) dépasse le total du mois (7). »          | Texte visible (erreur)       | Une erreur reste visible à côté du champ (section 1)                                                |
+| Format de l'heure (« 10 h 42 »), unité, plafond d'un chiffre           | Texte visible                | Nécessaire pour remplir ; la définition est déjà sous chaque champ (plan E3)                        |
+| « Les mentions se choisissent à la création et ne changent plus. »     | **Texte visible à ajouter**  | Nécessaire : on ne peut pas ajouter une mention après (T32). À proposer au lot E5 sous les mentions |
+| Le bouton principal change le dimanche à midi                          | Rien                         | Note de conception de la maquette 07 que `LISEZMOI.md` interdit d'afficher                          |
+| Ce qu'est un « ministère principal »                                   | Rien                         | Convention entre les personnes, que l'outil ne stocke pas et ne définit pas (BRIEF règle 4)         |
+| Développer « FIJ » ou « STAR »                                         | Rien                         | L'outil ne développe ces sigles nulle part : la personne responsable les connaît                    |
+| Aide sur les boutons « Corriger », « Saisir », « Mettre à jour »       | Rien                         | Un bouton dit ce qu'il fait (CLAUDE.md, « Textes de l'interface »)                                  |
 
 ## 9. Où cela entre dans le plan de l'étape 4
 
@@ -474,8 +516,8 @@ Le plan de l'étape 4 reprend cette répartition (W0, E2 à E8 et I, T38) :
 | Lot | Ce qu'il fait des aides                                                                                                                                                  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | W0  | Écrit `Aide`, `LibelleAvecAide`, `textesAide.ts` (tous les textes du catalogue), leurs tests et `e2e/aide.spec.ts` : c'est une brique partagée, avec `EtatVide`          |
-| E2  | Branche les aides de la fiche (`fiche.*`)                                                                                                                                |
-| E3  | Branche `dimanche.*` et `mois.*`, et le lien « Signaler une difficulté » de ses formulaires                                                                              |
+| E2  | Branche les aides de la fiche (`fiche.*`, dont `fiche.repartition` depuis le 6 octobre 2026)                                                                             |
+| E3  | Branche `dimanche.*` et `mois.*` (dont `mois.repartition` depuis le 6 octobre 2026), et le lien « Signaler une difficulté » de ses formulaires                           |
 | E4  | Branche `session.*`, `fij.carte`, `fij.departements` et `fij.completudeDep` (bloc « Chiffres par département », écrit par E4), et le lien de ses formulaires             |
 | E5  | Branche `evenement.*`, `reunion.*`, le lien et les messages de « Signaler une difficulté »                                                                               |
 | E8  | Écrit le formulaire « Signaler une difficulté » et le bloc « Signalements » avec les textes de la section 7                                                              |
@@ -521,3 +563,9 @@ et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté »
 9. **Relecture par la coordination** : les textes d'aide parlent de « moins de 3 », de « complétude »
    (sans le mot) et de ce que voient le berger et le conseil. Ils font partie des libellés remis à
    la coordination avant la mise en service.
+10. **Indicateurs sensibles, changement du 6 octobre 2026** (P45 à P47) : textes « Proposé » de
+    `mois.sensible` (revu : le mois en cours se saisit), `mois.repartition` et `fiche.repartition`
+    (nouvelles), et textes visibles du champ « Précision » et de la grille (section 6, « Chiffres du
+    mois »). Si W0 est déjà fusionné, les deux codes nouveaux entrent dans `textesAide.ts` par un
+    commit de documents et de textes sur `etape-4` avant la vague 4 (plan de l'étape 4, section 3).
+    À confirmer avec les autres textes (question 15 du plan).

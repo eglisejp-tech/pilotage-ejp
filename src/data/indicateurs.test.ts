@@ -4,7 +4,9 @@ import {
   lireAValider,
   lireCalculs,
   lireCatalogue,
+  lireCategoriesSensibles,
   lireCommunsFiche,
+  lireDefinitionsCommuns,
   lireIndicateursDuMinistere,
   lireLimitesIndicateurs,
   lireMesuresPeriode,
@@ -55,6 +57,40 @@ describe('lireIndicateursDuMinistere', () => {
   })
 })
 
+describe('lireDefinitionsCommuns', () => {
+  it('lit les indicateurs sans ministère, avec les mêmes colonnes qu’une fiche', async () => {
+    const { faux } = client({ indicateur: { data: [{ id: 'c1' }], error: null } })
+    expect(await lireDefinitionsCommuns()).toEqual([{ id: 'c1' }])
+    const appels = appelsDe(faux.de('indicateur')[0])
+    expect(appels[0]).toContain('select("id, code, libelle, definition, nature, unite')
+    expect(appels[1]).toBe('is("ministere_id", null)')
+  })
+
+  it('remonte l’erreur de la base', async () => {
+    client({ indicateur: { data: null, error: new Error('refus') } })
+    await expect(lireDefinitionsCommuns()).rejects.toThrow('refus')
+  })
+})
+
+describe('lireCategoriesSensibles', () => {
+  it('lit les catégories par indicateur prévu puis par ordre, retirées comprises', async () => {
+    const { faux } = client({
+      categorie_sensible: { data: [{ prevu_code: 'x', code: 'malaise' }], error: null },
+    })
+    expect(await lireCategoriesSensibles()).toEqual([{ prevu_code: 'x', code: 'malaise' }])
+    expect(appelsDe(faux.de('categorie_sensible')[0])).toEqual([
+      'select("prevu_code, code, libelle, ordre, retiree_le")',
+      'order("prevu_code", {"ascending":true})',
+      'order("ordre", {"ascending":true})',
+    ])
+  })
+
+  it('remonte l’erreur de la base', async () => {
+    client({ categorie_sensible: { data: null, error: new Error('refus') } })
+    await expect(lireCategoriesSensibles()).rejects.toThrow('refus')
+  })
+})
+
 describe('lireTermes', () => {
   it('lit les termes des calculs donnés, dans l’ordre de chaque calcul', async () => {
     const { faux } = client({ indicateur_terme: { data: [{ calcul_id: 'c1' }], error: null } })
@@ -82,6 +118,7 @@ describe('lireSuiviIndicateurs', () => {
     expect(await lireSuiviIndicateurs('com')).toEqual([{ indicateur_id: 'i1' }])
     const appels = appelsDe(faux.de('v_indicateur_suivi')[0])
     expect(appels[0]).toContain('select("indicateur_id, ministere_id, libelle, definition, nature')
+    expect(appels[0]).toContain('mois_en_cours_valeur, mois_en_cours_moins_de_3, somme_annee')
     expect(appels[0]).toContain('somme_nb_saisies, somme_nb_attendues')
     expect(appels[0]).toContain('etat_valeur, attente_jours, retire_le')
     expect(appels[1]).toBe('eq("ministere_id", "com")')

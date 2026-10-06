@@ -4,6 +4,8 @@ Statut : **à l'étude, non appliqué** (décisions P15 à P30, T33 et T34 de `d
 ne s'applique tant que la coordination et EJP Tech n'ont pas répondu. Rien n'est codé, aucune
 migration n'est écrite, `BRIEF.md` n'est pas modifié.
 Date : 5 octobre 2026.
+Renvoi (6 octobre 2026) : pour les indicateurs sensibles, la règle « mois écoulés seulement » de ce
+document est remplacée par P45 (mois en cours accepté), complétée par P46 et P47 (`docs/decisions.md`).
 
 Source : `docs/sources/kpi-coordination-2026-10.md`.
 

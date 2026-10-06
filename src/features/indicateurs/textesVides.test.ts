@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { TEXTES_VIDES_INDICATEURS, texteAjoutAValider } from './textesVides'
+import {
+  moisEnCoursSansSaisie,
+  pasDeRepartition,
+  TEXTES_VIDES_INDICATEURS,
+  texteAjoutAValider,
+} from './textesVides'
 
 // Tiret cadratin et demi-cadratin, écrits par leur code pour que ce fichier n'en contienne aucun.
 const TIRETS = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`)
@@ -36,6 +41,14 @@ describe('états vides des indicateurs', () => {
     expect(TEXTES_VIDES_INDICATEURS.actionSaisirLeMois).toBe('Saisir les chiffres du mois')
   })
 
+  it('dit le mois en cours sans saisie, pour tout indicateur du mois, et la répartition absente', () => {
+    expect(moisEnCoursSansSaisie('2026-10')).toBe('Octobre en cours : pas encore de saisie')
+    expect(pasDeRepartition('2026-09')).toBe('Pas de répartition pour septembre.')
+    expect(TEXTES_VIDES_INDICATEURS.repartitionMasquee).toBe(
+      'Répartition masquée pour protéger les petits nombres.',
+    )
+  })
+
   it('n’a plus de texte pour le mois en cours d’un sensible : il se saisit comme les autres', () => {
     const tous = textes(TEXTES_VIDES_INDICATEURS).join(' ')
     expect(tous).not.toMatch(/une fois le mois fini/i)
@@ -66,10 +79,16 @@ describe('ajout à valider', () => {
     )
   })
 
-  it('le jour même, ou sans durée connue : « depuis aujourd’hui »', () => {
-    const attendu = "À valider par EJP Tech depuis aujourd'hui. Vous pouvez déjà le saisir."
-    expect(texteAjoutAValider('ministere', 0)).toBe(attendu)
-    expect(texteAjoutAValider('ministere', null)).toBe(attendu)
+  it('le jour même : « depuis aujourd’hui »', () => {
+    expect(texteAjoutAValider('ministere', 0)).toBe(
+      "À valider par EJP Tech depuis aujourd'hui. Vous pouvez déjà le saisir.",
+    )
+  })
+
+  it('sans durée connue, n’invente aucune durée', () => {
+    expect(texteAjoutAValider('ministere', null)).toBe(
+      'À valider par EJP Tech. Vous pouvez déjà le saisir.',
+    )
   })
 
   it('le berger, le conseil et EJP Tech lisent seulement « à valider »', () => {

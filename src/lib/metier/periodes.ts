@@ -21,11 +21,6 @@ export interface MoisPropose {
   enCours: boolean
 }
 
-// Décision de la personne responsable du 6 octobre 2026 : un indicateur sensible se saisit aussi
-// pour le mois en cours. Les mois saisissables sont donc les mêmes pour tout indicateur ; il n'y a
-// plus d'option « sensible ». Les protections des sensibles (« moins de 3 », lecteurs) sont celles
-// de la base (lot B2), pas celles de la période.
-
 const FORMAT_MOIS = /^(\d{4})-(0[1-9]|1[0-2])$/
 
 function lireMois(mois: Mois): { annee: number; numero: number } {
@@ -86,7 +81,7 @@ export function premierMoisPermis(aujourdhui: DateIso): Mois {
   return ecrireMois(lireMois(moisDe(aujourdhui)).annee - 1, 1)
 }
 
-/** Dernier mois qu'on peut saisir : le mois en cours, pour tout indicateur, sensible compris. */
+/** Dernier mois qu'on peut saisir : le mois en cours, pour tous les indicateurs, sensibles compris (P45). */
 export function dernierMoisPermis(aujourdhui: DateIso): Mois {
   return moisDe(aujourdhui)
 }
@@ -95,7 +90,10 @@ function moisPropose(mois: Mois, aujourdhui: DateIso): MoisPropose {
   return { mois, libelle: libelleMois(mois), enCours: mois === moisDe(aujourdhui) }
 }
 
-/** Mois proposés d'abord (K1a) : le mois en cours et les deux précédents, du plus récent au plus ancien. */
+/**
+ * Mois proposés d'abord (K1a, K5b) : le mois en cours et les deux précédents, du plus récent au
+ * plus ancien, pour tous les indicateurs, sensibles compris (P45).
+ */
 export function moisProposes(aujourdhui: DateIso): MoisPropose[] {
   const dernier = dernierMoisPermis(aujourdhui)
   return Array.from({ length: 3 }, (_, rang) =>
@@ -122,8 +120,8 @@ export function moisEstPermis(mois: Mois, aujourdhui: DateIso): boolean {
 }
 
 /**
- * Mois choisi d'abord : le dernier mois fini qui n'a pas encore de saisie parmi les mois proposés,
- * sinon le mois en cours.
+ * Mois choisi d'abord : le dernier mois révolu qui n'a pas encore de saisie parmi les mois proposés,
+ * sinon le mois en cours. Même règle pour un indicateur sensible (P45).
  */
 export function moisParDefaut(aujourdhui: DateIso, dejaSaisis: ReadonlySet<Mois>): Mois {
   const proposes = moisProposes(aujourdhui)

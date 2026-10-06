@@ -10,8 +10,8 @@ import {
   schemaValeur,
 } from './schemas'
 
-// Espace fine insécable d'Intl (U+202F) : « 9 999 ».
-const F = ' '
+// Espace ordinaire (U+0020), comme dans le message de la base : « 9 999 ».
+const F = ' '
 
 function message(resultat: { success: boolean; error?: { issues: { message: string }[] } }) {
   return resultat.error?.issues[0]?.message
@@ -46,8 +46,12 @@ describe('valeur selon l’unité', () => {
   })
 
   it('dit les bornes de l’heure en heures et minutes, jamais en minutes', () => {
-    expect(message(schemaValeur('heure').safeParse(1440))).toBe('Entre 0 h et 23 h 59.')
-    expect(message(schemaValeur('heure').safeParse(-1))).toBe('Entre 0 h et 23 h 59.')
+    expect(message(schemaValeur('heure').safeParse(1440))).toBe(
+      'Choisissez une heure entre 0 h 00 et 23 h 59.',
+    )
+    expect(message(schemaValeur('heure').safeParse(-1))).toBe(
+      'Choisissez une heure entre 0 h 00 et 23 h 59.',
+    )
   })
 
   it('refuse un négatif, une décimale et ce qui n’est pas un nombre', () => {
@@ -136,7 +140,7 @@ describe('« Pourquoi » et motif : 10 à 280 caractères après suppression des
       'Expliquez pourquoi en 10 caractères au moins.',
     )
     expect(message(schemaMotif.safeParse('court'))).toBe(
-      'Écrivez le motif en 10 caractères au moins.',
+      'Expliquez le refus (10 caractères au moins).',
     )
     expect(schemaPourquoi.safeParse('1234567890').success).toBe(true)
   })
@@ -145,7 +149,12 @@ describe('« Pourquoi » et motif : 10 à 280 caractères après suppression des
     expect(schemaPourquoi.safeParse('a'.repeat(280)).success).toBe(true)
     expect(schemaPourquoi.safeParse(` ${'a'.repeat(280)} `).success).toBe(true)
     expect(message(schemaPourquoi.safeParse('a'.repeat(281)))).toBe('280 caractères au plus.')
-    expect(message(schemaMotif.safeParse('a'.repeat(281)))).toBe('280 caractères au plus.')
+    expect(message(schemaMotif.safeParse('a'.repeat(281)))).toBe('Le motif dépasse 280 caractères.')
+  })
+
+  it('rend la valeur nettoyée : un saut de ligne final est retiré avant l’envoi à la base', () => {
+    const resultat = schemaPourquoi.parse(`${'a'.repeat(280)}\n`)
+    expect(resultat).toBe('a'.repeat(280))
   })
 
   it('compte les caractères comme la base, pas les unités UTF-16', () => {

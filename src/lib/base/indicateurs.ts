@@ -42,6 +42,16 @@ export type MotifRetrait =
   | 'source_retiree'
   | 'refuse'
 
+/** Motifs qu'un écran peut envoyer à `retirer_indicateur` (les autres sont posés par la base). */
+export type MotifRetraitChoisi =
+  | 'plus_suivi'
+  | 'doublon'
+  | 'erreur'
+  | 'se_calcule'
+  | 'deja_commun'
+  | 'domaine_sensible'
+  | 'hors_regles'
+
 export type RoleTerme = 'haut' | 'bas' | 'plus' | 'moins' | 'terme'
 export type ComptageTerme =
   'prevus' | 'realises' | 'annules' | 'reportes' | 'en_attente' | 'sans_etat_final'
@@ -94,7 +104,8 @@ export type TablesIndicateurs = {
     cree_le: string
     /** Null pour Système (migration). */
     cree_par: string | null
-    texte_le: string | null
+    /** `not null default now()` (B1). */
+    texte_le: string
     texte_par: string | null
     retire_le: string | null
     retrait_motif: MotifRetrait | null
@@ -135,6 +146,22 @@ export type TablesIndicateurs = {
     motif: string | null
     saisi_le: string
     saisi_par: string
+  }>
+  /**
+   * Catégories d'un indicateur sensible prévu (B8, changement du 6 octobre) : table de référence,
+   * lue comme `indicateur`, écrite seulement par migration. Une catégorie retirée ne s'affiche plus
+   * dans la grille de saisie et reste lisible dans les anciennes répartitions.
+   */
+  categorie_sensible: TableEnLecture<{
+    /** Code de `private.indicateur_prevu` (un prévu sensible). */
+    prevu_code: string
+    /** 1 à 30 caractères, minuscules et `_`. */
+    code: string
+    /** 1 à 40 caractères. */
+    libelle: string
+    ordre: number
+    /** Date de retrait, null : catégorie en vigueur. */
+    retiree_le: string | null
   }>
 }
 
@@ -181,8 +208,10 @@ export type VuesIndicateurs = {
     derniere_valeur: number | null
     derniere_moins_de_3: boolean
     derniere_saisie_le: string | null
-    /** Valeur du mois en cours, à part de la somme de l'année. */
+    /** Valeur du mois en cours, à part de la somme de l'année ; pour un sensible aussi (P45), null si masquée. */
     mois_en_cours_valeur: number | null
+    /** Vrai : 1 ou 2 au mois en cours d'un sensible, masqué pour ce profil (« moins de 3 », pas une absence). */
+    mois_en_cours_moins_de_3: boolean
     /** Null si `sans_somme`, « à ce jour », ajout à valider ou rien de saisi. */
     somme_annee: number | null
     /** Somme de l'année égale à 1 ou 2 d'un sensible. */
@@ -296,6 +325,21 @@ export type LimitesIndicateurs = {
   lignes_max: number
 }
 
+/**
+ * Un élément de `p_lignes` de `saisir_chiffres_mois` (B8, contrat section 6) : 1 à 30 éléments, sans
+ * doublon d'indicateur. `categories` et `precision` sont réservés aux indicateurs sensibles
+ * (`categories` seulement s'ils en ont) ; la somme des catégories ne dépasse jamais `valeur`.
+ */
+export type LigneSaisieMois = {
+  indicateur_id: string
+  /** Entier de 0 au plafond de l'unité. */
+  valeur: number
+  /** Valeur par code de `categorie_sensible`. */
+  categories?: Record<string, number>
+  /** 10 à 280 caractères après `trim`. */
+  precision?: string
+}
+
 export type FonctionsIndicateurs = {
   creer_indicateurs_prevus: {
     Args: { p_ministere_id: string; p_modele: string }
@@ -337,7 +381,7 @@ export type FonctionsIndicateurs = {
     Returns: 'corrige' | 'envoye'
   }
   retirer_indicateur: {
-    Args: { p_indicateur_id: string; p_motif: MotifRetrait }
+    Args: { p_indicateur_id: string; p_motif: MotifRetraitChoisi }
     /** Nombre de calculs retirés avec lui. */
     Returns: number
   }
@@ -352,5 +396,12 @@ export type FonctionsIndicateurs = {
   limites_indicateurs: {
     Args: { p_ministere_id: string }
     Returns: LimitesIndicateurs[]
+  }
+  /** Tout le mois en un appel, tout ou rien (B8, changement du 6 octobre). */
+  saisir_chiffres_mois: {
+    /** `p_mois` : le 1er du mois, « 2026-09-01 ». */
+    Args: { p_mois: string; p_lignes: LigneSaisieMois[] }
+    /** Nombre de lignes de `mesure` écrites. */
+    Returns: number
   }
 }

@@ -11,21 +11,28 @@
 // saisit comme les autres (décision de la personne responsable, 6 octobre 2026).
 //
 // Texte du « Non calculé » : `texteNonCalcule` (`src/lib/metier/indicateurs.ts`), qui connaît la
-// raison, la période et la source. Valeur jamais saisie : `TEXTES_VIDES.chiffres.valeur` de
-// `src/features/cette-semaine/textesVides.ts`, repris ici pour ne pas le dire deux fois.
+// raison, la période et la source. « Pas encore de saisie » est écrit ici (LISEZMOI, « États ») et
+// non importé de `src/features/cette-semaine`, qui appartient au lot E7 : un changement de ce lot ne
+// doit pas changer la fiche sans que le lot E2 le voie.
 
-import { TEXTES_VIDES as TEXTES_VIDES_SEMAINE } from '@/features/cette-semaine/textesVides'
-import { accorder, nombre } from '@/lib/metier/texte'
+import { nomDuMois } from '@/lib/metier/dates'
+import { libelleMoisEnCours } from '@/lib/metier/periodes'
+import type { Mois } from '@/lib/metier/periodes'
 import { NON_CALCULE } from '@/lib/metier/pourcentage'
+import { accorder, nombre } from '@/lib/metier/texte'
 
 /** Ce que voit chaque profil d'un ajout qui attend la validation d'EJP Tech. */
 export type LecteurAjout = 'ministere' | 'autre'
 
+const PAS_ENCORE_DE_SAISIE = 'Pas encore de saisie'
+
 export const TEXTES_VIDES_INDICATEURS = {
   /** Valeur, écart et courbe d'une ligne d'indicateur jamais saisi : la ligne reste (LISEZMOI). */
-  pasEncoreDeSaisie: TEXTES_VIDES_SEMAINE.chiffres.valeur,
+  pasEncoreDeSaisie: PAS_ENCORE_DE_SAISIE,
   /** Somme de l'année d'un indicateur jamais saisi : jamais « 0 ». */
-  sommeSansSaisie: TEXTES_VIDES_SEMAINE.chiffres.valeur,
+  sommeSansSaisie: PAS_ENCORE_DE_SAISIE,
+  /** Mois sensible dont la répartition manque pour ce profil. Proposé (plan, E2). */
+  repartitionMasquee: 'Répartition masquée pour protéger les petits nombres.',
   /** Calcul dont une source manque ou dont le bas vaut 0 : le détail vient de `texteNonCalcule`. */
   nonCalcule: NON_CALCULE,
 
@@ -58,9 +65,24 @@ export const TEXTES_VIDES_INDICATEURS = {
  */
 export function texteAjoutAValider(lecteur: LecteurAjout, attenteJours: number | null): string {
   if (lecteur === 'autre') return 'à valider'
+  // `attente_jours` est null quand l'indicateur n'est pas à valider : aucune durée à inventer.
+  if (attenteJours === null) return 'À valider par EJP Tech. Vous pouvez déjà le saisir.'
   const depuis =
-    attenteJours === null || attenteJours <= 0
+    attenteJours <= 0
       ? "depuis aujourd'hui"
       : `depuis ${nombre(attenteJours)} ${accorder(attenteJours, 'jour', 'jours')}`
   return `À valider par EJP Tech ${depuis}. Vous pouvez déjà le saisir.`
+}
+
+/**
+ * Mois en cours d'un indicateur du mois sans saisie, pour tout indicateur, sensible compris (P45) :
+ * « Octobre en cours : pas encore de saisie ». Proposé (plan, E2).
+ */
+export function moisEnCoursSansSaisie(mois: Mois): string {
+  return `${libelleMoisEnCours(mois)} : pas encore de saisie`
+}
+
+/** Mois sensible sans ligne de répartition : « Pas de répartition pour septembre. ». Proposé. */
+export function pasDeRepartition(mois: Mois): string {
+  return `Pas de répartition pour ${nomDuMois(Number(mois.slice(5, 7)))}.`
 }
