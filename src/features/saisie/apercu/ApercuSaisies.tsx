@@ -1,99 +1,53 @@
-import { useState } from 'react'
-import { Aide } from '@/components/aide/Aide'
-import { ChampNombre } from '@/features/saisie/ChampNombre'
-import { MessageReussite } from '@/features/saisie/MessageReussite'
+import { useSearchParams } from 'react-router'
+import { lireProfilApercu } from '@/features/navigation/apercu/exemples'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
-import { LienSignalement } from '@/features/signalement/LienSignalement'
-import { plafondUnite } from '@/lib/metier/unites'
+import { etatApercuDimanche, etatApercuMois } from '@/features/saisie-chiffres/apercu/etatsApercu'
+import { lireEcranApercuE3 } from '@/features/saisie-chiffres/apercu/exemples'
+import { ContenuSaisieDimanche } from '@/features/saisie-chiffres/ContenuSaisieDimanche'
+import { ContenuSaisieMois } from '@/features/saisie-chiffres/ContenuSaisieMois'
+import {
+  surtitreDimanche,
+  TEXTES_CHIFFRES,
+  titreDimanche,
+  titreMois,
+} from '@/features/saisie-chiffres/textes'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
+
+const fermer = () => undefined
 
 /**
- * Aperçu de développement des briques de saisie : le panneau de la saisie du dimanche (maquette
- * 08) avec ses quatre aides en bulle « flux », sans base ni envoi. Adresse : /apercu/saisies.
- * Données d'exemple. Le lot E3 le remplace par sa vraie saisie, en gardant les aides, car
- * `e2e/aide.spec.ts` s'appuie sur cette adresse. Enregistrée seulement en développement.
+ * Aperçus de développement du lot E3, sans base ni envoi (/apercu/saisies) : la saisie du
+ * dimanche (maquette 08, par défaut, avec ses quatre aides en flux, que lit `e2e/aide.spec.ts`)
+ * et « Chiffres du mois » (`?ecran=mois`), chacun dans ses états (`?etat=`, voir
+ * `etatsApercu.ts`). Un autre profil que le ministère (`?profil=`) reçoit la page non
+ * disponible, comme dans l'application : EJP Tech n'a aucun bouton de saisie. Données d'exemple.
  */
 export function ApercuSaisies() {
-  const plafond = plafondUnite('nombre')
-  const [service, setService] = useState('10')
-  const [actifs, setActifs] = useState('14')
-  const [enFij, setEnFij] = useState('11')
-  const [propre, setPropre] = useState('3')
-  const [message, setMessage] = useState<string | null>(null)
-  const [envoi, setEnvoi] = useState(0)
+  const [parametres] = useSearchParams()
+  const profil = parametres.get('profil')
+  const etat = parametres.get('etat')
+  if (profil !== null && lireProfilApercu(profil) !== 'ministere') return <PageNonDisponible />
 
-  return (
-    <>
-      <title>Aperçu, Saisie du dimanche, Pilotage EJP</title>
+  if (lireEcranApercuE3(parametres.get('ecran')) === 'mois') {
+    const mois = etatApercuMois(etat)
+    return (
       <PanneauSaisie
-        surtitre="Chiffres du dimanche"
-        titre="Dimanche 27 septembre"
-        onFermer={() => undefined}
+        titre={mois.etat === 'pret' ? titreMois(mois.mois, mois.enCours) : 'Chiffres du mois'}
+        surtitre={TEXTES_CHIFFRES.surtitreMois}
+        onFermer={fermer}
       >
-        <form
-          className="flex flex-col gap-5"
-          onSubmit={(evenement) => {
-            evenement.preventDefault()
-            setMessage('Chiffres du dimanche 27 sept. enregistrés.')
-            setEnvoi((precedent) => precedent + 1)
-          }}
-        >
-          <ChampNombre
-            id="apercu-service"
-            libelle="STARs au service ce dimanche"
-            aide="dimanche.service"
-            definition="Les STARs qui ont servi dans votre ministère ce dimanche. Si personne n'a servi, enregistrez 0."
-            valeur={service}
-            onChange={setService}
-            max={plafond}
-            note="Dimanche dernier : 9"
-          />
-          <ChampNombre
-            id="apercu-actifs"
-            libelle="STARs actifs"
-            aide="dimanche.actifs"
-            valeur={actifs}
-            onChange={setActifs}
-            max={plafond}
-            variante="compact"
-            note="Saisi le 24 sept."
-          />
-          <ChampNombre
-            id="apercu-en-fij"
-            libelle="Dont en FIJ"
-            aide="dimanche.enFij"
-            valeur={enFij}
-            onChange={setEnFij}
-            max={plafond}
-            variante="compact"
-            note="79 % des actifs"
-          />
-          <div className="flex flex-col gap-1.5">
-            <div className="flex min-h-cible flex-wrap items-center">
-              <p className="text-[15px] font-semibold">Indicateurs du ministère</p>
-              <Aide code="dimanche.propres" libelle="Indicateurs du ministère" />
-            </div>
-            <ChampNombre
-              id="apercu-propre"
-              libelle="Répétitions de la semaine"
-              valeur={propre}
-              onChange={setPropre}
-              max={plafond}
-              variante="compact"
-            />
-          </div>
-          <p className="text-note text-encre-3">
-            Votre saisie s'ajoute à l'historique, elle ne remplace rien.
-          </p>
-          <button
-            type="submit"
-            className="min-h-14.5 w-full bg-lumiere px-4 text-[17px] font-bold text-encre"
-          >
-            Enregistrer les chiffres
-          </button>
-          <MessageReussite message={message} envoi={envoi} />
-          <LienSignalement ecran="saisie_dimanche" />
-        </form>
+        <ContenuSaisieMois etat={mois} />
       </PanneauSaisie>
-    </>
+    )
+  }
+  const dimanche = etatApercuDimanche(etat)
+  return (
+    <PanneauSaisie
+      titre={dimanche.etat === 'pret' ? titreDimanche(dimanche.dimanche) : 'Chiffres du dimanche'}
+      surtitre={surtitreDimanche(dimanche.etat === 'pret' && dimanche.champs.correction)}
+      onFermer={fermer}
+    >
+      <ContenuSaisieDimanche etat={dimanche} />
+    </PanneauSaisie>
   )
 }
