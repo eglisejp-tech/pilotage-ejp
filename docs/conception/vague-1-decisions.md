@@ -1455,7 +1455,7 @@ La revue des propositions des quatre lots de travail a relevé 30 points. Suites
     refus des dates passées de `ajouter_evenement` (BRIEF, section 7) pour quelques mois de 2026 ;
     les comptages nomment leur départ et couvrent l'année entière dès 2027. Confirmé le 6 octobre
     2026 (T37) : la base refuse aussi une nouvelle date passée et une mise à jour identique à
-    l'état actuel ; un ministère gêné par ce refus peut le signaler (T39, à confirmer).
+    l'état actuel ; un ministère gêné par ce refus peut le signaler (T39, décidé le 6 octobre 2026 : lu par le ministère et EJP Tech seulement).
   - _Report des changements dans le BRIEF dès maintenant_ : différé au mode plan de l'étape 4a.
     Raison : CLAUDE.md demande l'accord explicite de la personne sur tout changement de modèle de
     données avant le code ; ce document liste les sections à reporter (section 1).

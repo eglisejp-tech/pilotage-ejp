@@ -1,10 +1,11 @@
 # Validation métier par EJP Tech
 
-Statut : **principe décidé (T30 de `docs/decisions.md`, décisions du 5 et du 6 octobre 2026),
-conception à l'étude, non appliquée**. Rien n'est codé, aucune migration n'est écrite, `BRIEF.md`
-n'est pas modifié sur cette branche. Une session ne construit rien à partir de ce document tant que
-la personne responsable a répondu aux questions de la section 8 le 6 octobre 2026 (recommandations
-acceptées, et mentions sur les événements dans la V1 de l'outil, section 4.7).
+Statut : **Décidé le 6 octobre 2026, construit à l'étape 4** (T30 de `docs/decisions.md`, décisions
+du 5 et du 6 octobre 2026, accord écrit de la personne responsable sur `docs/plan-etape-4.md`) : la
+validation des ajouts côté base et l'alerte à l'étape 4, le bloc « À valider » à l'étape 6, la
+confirmation « Vérifiez ce chiffre » après la mise en service, avant le 5e dimanche. La personne
+responsable a répondu aux questions de la section 8 le 6 octobre 2026 (recommandations acceptées, et
+mentions sur les événements dans la V1 de l'outil, section 4.7).
 Date : 5 octobre 2026, réécrit le 6 octobre 2026 après les décisions de la personne responsable,
 qui réduisent la validation aux indicateurs créés par les ministères (section 9 : ce qui est
 retiré).
