@@ -119,6 +119,20 @@ Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 | Vide | 04, 12 (calendrier) | « Aucun événement prévu. » (et « Ajouter un événement » pour le ministère) |
 | Vide | 14, 15 | « Aucune session déclarée. Déclarez la première avec le panneau. » ; « Aucun texte à relire. » |
 | Premier dimanche | 01 à 03 | « Pas encore de saisie » à la place de la valeur, complétude « 0 sur 8 », pas d'écart ni de courbe. Session : « Aucune session déclarée. » Carte : « La carte s'affichera quand FIJ aura saisi ses chiffres. » |
+| Premier usage | 01 à 03, courbes | Une seule phrase sous le tableau, pas une par ligne : « Les courbes apparaîtront avec les premières saisies. » (berger, conseil, EJP Tech) |
+| En attente des autres | carte des FIJ (tous les profils) | « La carte s'affichera quand FIJ aura saisi ses chiffres. » Chaque département vide porte « À saisir ». Le ministère FIJ voit en plus le bouton « Saisir la carte » ; les autres profils n'ont aucune action. |
+| Tout est fait | Indicateurs, bloc « À valider » (EJP Tech) | « Rien à valider. Les demandes d'indicateurs des ministères arriveront ici. » Le bloc garde sa place, pour qu'EJP Tech sache où regarder. |
+| Premier usage | Mes indicateurs (ministère) | « Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche. », bouton « Demander un indicateur ». |
+| Premier usage | Indicateurs d'un ministère sans prévu (administration, EJP Tech) | « Aucun indicateur pour Protocole. Il saisit les chiffres communs. », bouton « Ajouter un indicateur ». |
+| Tout est fait | blocs d'alerte (événements en attente de validation, T31) | Une alerte n'a pas d'état vide : quand rien n'est à signaler, le bloc disparaît. |
 | Validation | formulaires | Un champ facultatif porte « (facultatif) » dans son libellé. Messages sous le champ, reliés par `aria-describedby` (« Donnez un titre au point. », « Choisissez une date à venir. »). Un compteur « 12 sur 80 » s'affiche à partir de 60 caractères. |
+
+**États vides partout** (`docs/decisions.md`, T36, décidé le 6 octobre 2026) : le catalogue des états du canevas de conception (https://claude.ai/artifact/XCCBJHgKrHGBYGwW8nLUQ2) est validé. Chaque écran et chaque bloc a un état vide conçu, rangé dans l'une des six situations : premier usage, en attente des autres, tout est fait, aucun résultat, pas pour ce profil, problème passager. Règles :
+- garder la forme du bloc rempli : titre, filets, mise en page ;
+- une phrase complète qui dit ce qui se passe, puis ce qui viendra ou qui doit agir (« L'administration de l'église déclare les sessions. ») ;
+- jamais un zéro trompeur : « Pas encore de saisie » et la complétude, car 0 est une vraie valeur saisie ;
+- une seule action, et seulement pour le profil qui peut la faire ;
+- un bloc d'alerte disparaît quand il n'y a rien à signaler ;
+- ni illustration, ni emoji, ni ton d'excuse ; chaque état se vérifie au clavier et au lecteur d'écran.
 
 Les données visibles sont fictives. Les emails en `@ejp.exemple` sont des exemples.
