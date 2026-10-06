@@ -50,7 +50,8 @@ const COMMUNS: IndicateurDeSaisie[] = [
   indicateur({
     id: 'commun-service',
     code: 'service',
-    libelle: 'STARs au service ce dimanche',
+    // Le libellé de la base : la saisie le remplace par « STARs au service ce dimanche ».
+    libelle: 'STARs au service',
     definition:
       "Les STARs qui ont servi dans votre ministère ce dimanche. Si personne n'a servi, enregistrez 0.",
     nature: 'dimanche',

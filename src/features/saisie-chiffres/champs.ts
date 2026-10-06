@@ -173,6 +173,16 @@ const AIDES_COMMUNS: Readonly<Record<string, CodeAide>> = {
 
 const ORDRE_COMMUNS = ['service', 'actifs', 'en_fij']
 
+/**
+ * Libellés des communs dans la saisie (maquette 08 ; BRIEF, sections 4 et 9) : la base les nomme
+ * « STARs au service », « STARs actifs » et « Dont en FIJ », la saisie dit « ce dimanche ».
+ */
+const LIBELLES_COMMUNS: Readonly<Record<string, string>> = {
+  service: 'STARs au service ce dimanche',
+  actifs: 'STARs actifs',
+  en_fij: 'Dont en FIJ',
+}
+
 export interface EntreeDimanche {
   dimanche: DateIso
   /** Le dimanche du jour avant midi : seuls les indicateurs saisis le matin (X3). */
@@ -228,7 +238,11 @@ export function champsDimanche(entree: EntreeDimanche): ChampsDimanche {
         )
         if (!indicateur) return []
         const champ = completerDimanche(
-          { ...champDeBase(indicateur), aide: AIDES_COMMUNS[code] ?? null },
+          {
+            ...champDeBase(indicateur),
+            libelle: LIBELLES_COMMUNS[code] ?? indicateur.libelle,
+            aide: AIDES_COMMUNS[code] ?? null,
+          },
           entree,
         )
         if (code !== 'service') return [champ]
