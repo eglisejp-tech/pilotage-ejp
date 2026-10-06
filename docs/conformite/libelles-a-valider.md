@@ -53,7 +53,7 @@ Pour la plupart des chiffres du dimanche, de la semaine et du mois, l'outil ajou
 Un chiffre calculé n'est jamais saisi. L'outil le tire des chiffres saisis par le même ministère (un taux, une moyenne, une différence, une somme, une évolution) ou des événements déclarés dans le calendrier. Dans ce document, ces lignes portent la mention « Rien » dans la colonne « À saisir ».
 
 - **Taux** : un chiffre divisé par un autre, affiché en pourcentage. Sur l'année, l'outil divise la somme des chiffres du haut par la somme des chiffres du bas, sur les périodes où les deux existent. Jamais une moyenne de pourcentages.
-- **Plafonné à 100 %** : si le résultat devait dépasser 100 %, l'outil affiche « Non calculé » plutôt qu'un pourcentage au-dessus de 100 %.
+- **Plafonné à 100 %** : si le résultat devait dépasser 100 %, l'outil affiche « Non calculé, à vérifier » (décision P49 : jamais un 100 % plafonné) plutôt qu'un pourcentage au-dessus de 100 %. Quatre taux de même nature, ajoutés par EJP Tech (Réalisation des événements, Taux de participation de Kumi et d'Eagles, Taux de présence de Prodiges Junior), suivent la même règle sans que leur définition le dise : 19 parts en tout.
 - **Non calculé** : l'outil affiche aussi « Non calculé » quand le chiffre du bas manque ou vaut 0.
 - **Rien, affiché plus tard** : le calcul sera visible dans les 4 semaines qui suivent l'ouverture. Les chiffres qui le nourrissent se saisissent dès le premier jour, rien n'est perdu.
 

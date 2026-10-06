@@ -12,7 +12,7 @@
 --    liste de la coordination, Protocole et Prodiges Academy n'en ont pas), 161 indicateurs saisis
 --    (11 sensibles, actifs dès leur création, P42, sans catégories : lot B8), 41 calculs (29 taux
 --    et moyennes lus dès la V1, 12 calculs étendus écrits avec leurs termes et invisibles jusqu'au
---    lot L1), 15 parts, et les 11 suggestions communes. Libellés et définitions copiés de
+--    lot L1), 19 parts, et les 11 suggestions communes. Libellés et définitions copiés de
 --    vague-1-decisions.md, section 4 (identiques à libelles-a-valider.md). La définition d'un
 --    calcul est le texte « Comment il se calcule » de libelles-a-valider.md ; quatre textes de
 --    plus de 140 caractères gardent leur première phrase (Retard du début du culte, Taux de
@@ -24,8 +24,10 @@
 --    référence de l'église pour MDS), lue par private.communs_de_fiche() derrière la vue
 --    v_commun_fiche (security_invoker). Le modèle d'une fiche est celui de ses prévus.
 -- 4. creer_indicateurs_prevus recopie part (même signature, même corps sinon).
--- 5. v_calcul réécrite (mêmes colonnes) : code haut_depasse_bas pour une part ; sur l'année, une
---    période d'une part dont le haut dépasse le bas sort de la somme et de la complétude.
+-- 5. v_calcul réécrite (mêmes colonnes) : code haut_depasse_bas pour une part ; sur l'année,
+--    annee_resultat est null pour une part dont Σ haut dépasse Σ bas.
+-- 6. creer_calcul reprend p_part (7e paramètre, par défaut la valeur du calcul remplacé) : un
+--    taux créé ou remplacé par l'administration garde sa protection de part.
 --
 -- Valeurs de départ de Production (Budget matériel prévu 5 164 €, Personnes formées (total) 25,
 -- Projets annulés de mars 2026 : 1) : ce sont des saisies du ministère à la mise en service, pas
@@ -39,11 +41,11 @@
 
 alter table public.indicateur
   add column part boolean not null default false,
-  add constraint indicateur_part_check check (not part or calcul = 'taux');
+  add constraint indicateur_part_check check (not part or coalesce(calcul = 'taux', false));
 
 alter table private.indicateur_prevu
   add column part boolean not null default false,
-  add constraint indicateur_prevu_part_check check (not part or calcul = 'taux');
+  add constraint indicateur_prevu_part_check check (not part or coalesce(calcul = 'taux', false));
 
 -- part fait partie du sens : figé comme lui (controler_indicateur, lot B1, fige le reste).
 create function private.figer_part() returns trigger
@@ -127,7 +129,7 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
    'dimanche', 'nombre', false, 'difference', false, false, false, false, 8),
   ('coordination_taux_de_realisation_des_evenements', 'coordination', 'Taux de réalisation des événements',
    'Événements réalisés, divisés par la somme des réalisés, des annulés et des passés sans état final.',
-   'mois', 'nombre', false, 'taux', false, false, false, false, 9),
+   'mois', 'nombre', false, 'taux', true, false, false, false, 9),
   ('coordination_part_des_evenements_a_l_heure', 'coordination', 'Part des événements à l''heure',
    '« Événements commencés à l''heure » divisés par « Événements réalisés (église) » du même mois. Plafonné à 100 %.',
    'mois', 'nombre', false, 'taux', true, false, false, false, 10),
@@ -484,7 +486,7 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
    'mois', 'nombre', true, null, false, false, false, false, 11),
   ('kumi_taux_de_participation', 'kumi', 'Taux de participation',
    '« Participantes » divisées par « Femmes inscrites » en vigueur à la fin du mois.',
-   'mois', 'nombre', false, 'taux', false, false, false, false, 12),
+   'mois', 'nombre', false, 'taux', true, false, false, false, 12),
   ('eagles_activites_realisees', 'eagles', 'Activités réalisées',
    'Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.',
    'mois', 'nombre', false, null, false, false, false, false, 1),
@@ -508,7 +510,7 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
    'mois', 'nombre', true, null, false, false, false, false, 7),
   ('eagles_taux_de_participation', 'eagles', 'Taux de participation',
    '« Participants » divisés par « Inscrits » en vigueur à la fin du mois.',
-   'mois', 'nombre', false, 'taux', false, false, false, false, 8),
+   'mois', 'nombre', false, 'taux', true, false, false, false, 8),
   ('entretien_problemes_signales', 'entretien', 'Problèmes signalés',
    'Problèmes d''entretien signalés dans le mois (locaux, matériel, propreté).',
    'mois', 'nombre', false, null, false, false, false, false, 1),
@@ -670,7 +672,7 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
    'a_ce_jour', 'nombre', false, null, false, true, false, false, 4),
   ('prodiges_junior_taux_de_presence', 'prodiges junior', 'Taux de présence',
    '« Enfants présents » divisés par « Enfants inscrits » en vigueur ce dimanche.',
-   'dimanche', 'nombre', false, 'taux', false, false, false, false, 5);
+   'dimanche', 'nombre', false, 'taux', true, false, false, false, 5);
 
 -- Suggestions communes (configuration-indicateurs.md 5.11 ; vague-1-decisions.md, « Suggestions
 -- communes ») : comptes simples, ajoutés par un ministère avec son « Pourquoi », validés par
@@ -986,8 +988,10 @@ end $$;
 -- une part (indicateur.part), si le haut dépasse le bas (haut_depasse_bas : « Non calculé, à
 -- vérifier », jamais 120 % ni un 100 % plafonné ; haut et bas restent lisibles). Sur l'année :
 -- Σ haut ÷ Σ bas sur les périodes attendues qui ont toutes leurs valeurs, jamais une moyenne de
--- taux ; une période d'une part dont le haut dépasse le bas en est écartée, et la complétude le
--- montre (« 8 mois sur 9 ») ; départ : le plus récent des départs de ses sources. Un calcul de
+-- taux ; pour une part, si Σ haut dépasse Σ bas, annee_resultat est null (P49 : la règle vaut
+-- aussi pour la somme de l'année ; annee_haut et annee_bas restent lisibles et la complétude
+-- reste celle des périodes saisies : l'écran lit « Non calculé, à vérifier » quand annee_resultat
+-- est null alors que annee_bas > 0) ; départ : le plus récent des départs de ses sources. Un calcul de
 -- deux « à ce jour » donne le résultat du jour, sans valeur sur l'année. Le taux est en pour cent,
 -- arrondi à l'entier ; un taux qui n'est pas une part peut dépasser 100 % (« Taux de résolution
 -- des demandes »). L'administration lit les lignes sans valeur ni raison.
@@ -1070,9 +1074,9 @@ par_periode as (
 ),
 annee as (
   select c.id as calcul_id,
-         sum(pp.haut) filter (where pp.complete and not (c.part and pp.haut > pp.bas)) as haut,
-         sum(pp.bas) filter (where pp.complete and not (c.part and pp.haut > pp.bas)) as bas,
-         count(*) filter (where pp.complete and not (c.part and pp.haut > pp.bas))::integer as nb_periodes,
+         sum(pp.haut) filter (where pp.complete) as haut,
+         sum(pp.bas) filter (where pp.complete) as bas,
+         count(*) filter (where pp.complete)::integer as nb_periodes,
          count(*)::integer as nb_attendues
     from calculs c
     join par_periode pp on pp.calcul_id = c.id
@@ -1092,7 +1096,7 @@ select c.id as indicateur_id, c.ministere_id, c.calcul, c.fin as periode,
        end as resultat,
        case when c.voit then a.haut::bigint end as annee_haut,
        case when c.voit then a.bas::bigint end as annee_bas,
-       case when c.voit and a.bas > 0 then
+       case when c.voit and a.bas > 0 and not (c.part and a.haut > a.bas) then
          case c.calcul when 'taux' then round(100.0 * a.haut / a.bas) else a.haut::numeric / a.bas end
        end as annee_resultat,
        case when c.voit and c.nature <> 'a_ce_jour' then coalesce(a.nb_periodes, 0) end as annee_nb_periodes,
@@ -1108,6 +1112,134 @@ select c.id as indicateur_id, c.ministere_id, c.calcul, c.fin as periode,
   left join par_periode pp on pp.calcul_id = c.id and pp.periode = c.fin
   left join annee a on a.calcul_id = c.id;
 
--- 6. Droits : la fonction du trigger n'est exécutable par personne (le trigger l'appelle au nom
--- du propriétaire de la table).
+-- 6. creer_calcul avec p_part (P49 : « posée à la création d'un calcul »). Même corps que
+-- 20261008110500_indicateurs_fonctions.sql sauf : le 7e paramètre p_part (null : la valeur du
+-- calcul remplacé, ou faux), refusé pour une moyenne, et la colonne part à l'insertion. La
+-- signature change : l'ancienne version (six paramètres) et son enveloppe publique sont supprimées,
+-- puis recréées avec leurs droits. Le paramètre par défaut garde valables les appels à six
+-- paramètres.
+drop function public.creer_calcul(text, text, text, uuid, uuid, uuid);
+drop function private.creer_calcul(text, text, text, uuid, uuid, uuid);
+
+create function private.creer_calcul(p_libelle text, p_definition text, p_type text, p_haut_id uuid,
+  p_bas_id uuid, p_remplace_id uuid, p_part boolean default null)
+returns uuid language plpgsql security definer set search_path = '' as $$
+declare
+  v_libelle text := btrim(regexp_replace(coalesce(p_libelle, ''), '\s+', ' ', 'g'));
+  v_definition text := btrim(regexp_replace(coalesce(p_definition, ''), '\s+', ' ', 'g'));
+  v_haut public.indicateur%rowtype;
+  v_bas public.indicateur%rowtype;
+  v_ministere_id uuid;
+  v_unite text;
+  v_message text;
+  v_pris text;
+  v_id uuid;
+  v_part_remplace boolean;
+  v_part boolean;
+begin
+  perform private.exige_aal2();
+  if not private.peut_configurer() then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  if p_type is null or p_type not in ('taux', 'moyenne') then
+    raise exception 'Choisissez un taux ou une moyenne.';
+  end if;
+  if p_part is true and p_type <> 'taux' then
+    raise exception 'Seul un taux peut être une part.';
+  end if;
+  -- Le verrou du ministère d'abord, les sources ensuite : retirer_indicateur prend les mêmes verrous
+  -- dans le même ordre, et un retrait validé entre la lecture et le verrou ne laisse pas un calcul
+  -- actif sur une source retirée.
+  select i.ministere_id into v_ministere_id from public.indicateur i where i.id = p_haut_id;
+  if not found then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  if v_ministere_id is not null then
+    perform private.verrouiller_ministere(v_ministere_id);
+  end if;
+  select i.* into v_haut from public.indicateur i where i.id = p_haut_id;
+  if not found then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  select i.* into v_bas from public.indicateur i where i.id = p_bas_id;
+  if not found then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  if v_haut.ministere_id is null or v_bas.ministere_id is null or v_haut.ministere_id <> v_bas.ministere_id
+     or v_haut.calcul is not null or v_bas.calcul is not null then
+    raise exception 'Ces deux chiffres ne se calculent pas ensemble.';
+  end if;
+  if v_haut.id = v_bas.id then
+    raise exception 'Un calcul se fait sur des chiffres distincts.';
+  end if;
+  if v_haut.sensible or v_bas.sensible then
+    raise exception 'Un indicateur sensible n''entre dans aucun calcul.';
+  end if;
+  if v_haut.etat <> 'actif' or v_bas.etat <> 'actif' then
+    raise exception 'Un calcul se fait sur des indicateurs actifs.';
+  end if;
+  if p_remplace_id is not null then
+    select i.part into v_part_remplace from public.indicateur i
+     where i.id = p_remplace_id and i.ministere_id = v_haut.ministere_id and i.etat in ('actif', 'en_attente')
+       and i.calcul is not null
+       for update;
+    if not found then
+      raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+    end if;
+  end if;
+  v_part := coalesce(p_part, coalesce(v_part_remplace, false) and p_type = 'taux');
+  if private.lignes_fiche(v_haut.ministere_id, p_remplace_id) >= 30 then
+    raise exception 'Cette fiche compte déjà 30 indicateurs. Retirez-en un pour en ajouter un autre.';
+  end if;
+  if char_length(v_libelle) not between 2 and 60 then
+    raise exception 'Donnez un libellé de 2 à 60 caractères.';
+  end if;
+  if char_length(v_definition) not between 10 and 140 then
+    raise exception 'Expliquez ce qu''on compte en 10 à 140 caractères.';
+  end if;
+  -- La famille « sensible » ne bloque pas le nom d'un calcul : ses deux sources sont non sensibles
+  -- (contrôlé plus haut et par le trigger de B1), le nom ne révèle donc aucun chiffre sensible, et
+  -- un nom comme « Taux d'enfants présents » reste permis (configuration-indicateurs.md 6.1).
+  v_message := private.texte_refuse(v_libelle, v_definition, v_haut.nature, false, false);
+  if v_message is not null then
+    raise exception '%', v_message;
+  end if;
+  v_pris := private.libelle_pris(v_haut.ministere_id, v_libelle, p_remplace_id);
+  if v_pris is not null then
+    raise exception 'Cette fiche a déjà « % ».', v_pris;
+  end if;
+  v_unite := case when p_type = 'moyenne' then v_haut.unite else 'nombre' end;
+
+  if p_remplace_id is not null then
+    update public.indicateur set etat = 'retire', retrait_motif = 'remplace' where id = p_remplace_id;
+  end if;
+  insert into public.indicateur (libelle, definition, nature, unite, calcul, part, ministere_id, etat, origine, remplace_id)
+  values (v_libelle, v_definition, v_haut.nature, v_unite, p_type, v_part, v_haut.ministere_id, 'actif', 'eglise', p_remplace_id)
+  returning id into v_id;
+  insert into public.indicateur_terme (calcul_id, ordre, role, source_id)
+  values (v_id, 1, 'haut', p_haut_id), (v_id, 2, 'bas', p_bas_id);
+
+  insert into public.journal (le, compte, ministere_id, action, cible, cible_id, detail)
+  values (statement_timestamp(), (select auth.uid()), v_haut.ministere_id, 'indicateur_cree', 'indicateur', v_id,
+          jsonb_build_object('nature', v_haut.nature, 'unite', v_unite, 'origine', 'eglise', 'remplace', p_remplace_id));
+  return v_id;
+end $$;
+
+create function public.creer_calcul(p_libelle text, p_definition text, p_type text, p_haut_id uuid,
+  p_bas_id uuid, p_remplace_id uuid, p_part boolean default null)
+returns uuid language sql security invoker set search_path = '' as $$
+  select private.creer_calcul(p_libelle, p_definition, p_type, p_haut_id, p_bas_id, p_remplace_id, p_part);
+$$;
+
+-- 7. Droits : la fonction du trigger n'est exécutable par personne (le trigger l'appelle au nom
+-- du propriétaire de la table) ; creer_calcul : authenticated seulement, comme avant.
 revoke all on function private.figer_part() from public, anon, authenticated, service_role;
+
+revoke all on function
+  private.creer_calcul(text, text, text, uuid, uuid, uuid, boolean),
+  public.creer_calcul(text, text, text, uuid, uuid, uuid, boolean)
+  from public, anon, authenticated, service_role;
+grant execute on function
+  private.creer_calcul(text, text, text, uuid, uuid, uuid, boolean),
+  public.creer_calcul(text, text, text, uuid, uuid, uuid, boolean)
+  to authenticated;

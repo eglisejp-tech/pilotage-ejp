@@ -368,6 +368,8 @@ export type FonctionsIndicateurs = {
       p_haut_id: string
       p_bas_id: string
       p_remplace_id: string | null
+      /** P49 : part du calcul ; omise, celle du calcul remplacé (sinon faux). */
+      p_part?: boolean | null
     }
     Returns: string
   }
