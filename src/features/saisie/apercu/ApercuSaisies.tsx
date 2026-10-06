@@ -1,8 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router'
 import { Aide } from '@/components/aide/Aide'
-import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
-import { lireEcranApercuE4 } from '@/features/saisie-fij/apercu/exemplesE4'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
@@ -23,18 +20,6 @@ export function ApercuSaisies() {
   const [propre, setPropre] = useState('3')
   const [message, setMessage] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
-  // Écrans du lot E4 (`?ecran=session`, `carte-fij`...) : ils ont leur propre aperçu.
-  const [parametres] = useSearchParams()
-  const ecranE4 = lireEcranApercuE4(parametres.get('ecran'))
-  if (ecranE4) {
-    return (
-      <ApercuSaisiesE4
-        ecran={ecranE4}
-        etat={parametres.get('etat')}
-        profil={parametres.get('profil')}
-      />
-    )
-  }
 
   return (
     <>

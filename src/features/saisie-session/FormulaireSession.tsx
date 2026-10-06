@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router'
-import { Aide } from '@/components/aide/Aide'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
+import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { erreursSession, PRESENTS_MAX } from '@/features/saisie-session/schemas'
 import type {
   ChampsSession,
@@ -14,15 +14,18 @@ import type {
 } from '@/features/saisie-session/schemas'
 import {
   adresseSaisieSession,
+  comptesDansTotal,
   ligneComptesDansTotal,
   ligneDejaSaisi,
   messageReussiteSession,
+  noteSessionPrecedente,
   phraseCompletudeSession,
+  signatureSession,
 } from '@/features/saisie-session/session'
+import type { PresencePrecedente } from '@/features/saisie-session/session'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import type { TypeSession } from '@/lib/base'
-import { nombre } from '@/lib/metier/texte'
 
 /** La session saisie, avec sa complétude (`v_session_completude`). */
 export interface SessionSaisie {
@@ -38,8 +41,8 @@ export interface SessionSaisie {
 interface Props {
   session: SessionSaisie
   ministereId: string
-  /** Présents saisis par le ministère à la session précédente du même type ; null : aucune. */
-  precedente: number | null
+  /** Session précédente du même type : null s'il n'y en a pas, sinon la saisie du ministère. */
+  precedente: PresencePrecedente | null
   /** Saisie la plus récente du ministère pour cette session (correction) ; null : première. */
   dejaSaisi: { valeur: number; deja_comptes: number; saisi_le: string } | null
   /** Enregistre la présence ; rejette en cas d'échec (les valeurs restent). */
@@ -65,6 +68,7 @@ export function FormulaireSession({
   })
   const [erreurs, setErreurs] = useState<ErreursSession>({})
   const envoi = useEnvoiSaisie()
+  const signature = signatureSession(champs)
   const completude = phraseCompletudeSession(
     session.nbSaisis,
     session.nbAttendus,
@@ -95,6 +99,7 @@ export function FormulaireSession({
           dejaComptes: Number(champs.dejaComptes),
         }),
       messageReussiteSession(session.type, session.intitule, session.date),
+      signature,
     )
   }
 
@@ -108,7 +113,7 @@ export function FormulaireSession({
           valeur={champs.presents}
           onChange={changer('presents')}
           max={PRESENTS_MAX}
-          note={precedente === null ? undefined : `Session précédente : ${nombre(precedente)}`}
+          note={noteSessionPrecedente(precedente)}
           erreur={erreurs.presents}
         />
       </div>
@@ -122,25 +127,34 @@ export function FormulaireSession({
         variante="compact"
         erreur={erreurs.dejaComptes}
       />
-      <p className="text-[15px] leading-normal font-semibold" aria-live="polite">
+      <p
+        className={
+          comptesDansTotal(champs) === null
+            ? 'text-[15px] leading-normal text-encre-3'
+            : 'text-[15px] leading-normal font-semibold'
+        }
+        aria-live="polite"
+      >
         {ligneComptesDansTotal(champs)}
       </p>
       {dejaSaisi ? (
         <p className="text-sm leading-normal text-encre-3">{ligneDejaSaisi(dejaSaisi)}</p>
       ) : null}
-      <div className="flex flex-wrap items-center">
-        <p className="min-w-0 flex-1 text-[15px] leading-normal">
-          {completude.texte}
-          {completude.manquants ? (
-            <>
-              <strong className="font-semibold text-attention">{completude.manquants}</strong>.
-            </>
-          ) : null}
-        </p>
-        <Aide code="session.completude" libelle="Ministères qui ont déjà saisi" />
-      </div>
+      <LigneAvecAide code="session.completude" libelle="Ministères qui ont déjà saisi">
+        {completude.texte}
+        {completude.manquants ? (
+          <>
+            <strong className="font-semibold text-attention">{completude.manquants}</strong>.
+          </>
+        ) : null}
+      </LigneAvecAide>
       <p className="text-sm text-encre-3">Un nombre de personnes seulement, jamais de noms.</p>
-      <BoutonEnregistrer libelle="Enregistrer la présence" enCours={envoi.enCours} />
+      <BoutonEnregistrer
+        libelle="Enregistrer la présence"
+        enCours={envoi.enCours}
+        dejaEnvoye={envoi.dejaEnvoye(signature)}
+        doublon={envoi.doublonRefuse(signature)}
+      />
       {envoi.echec ? <ErreurFormulaire message={envoi.echec.message ?? undefined} /> : null}
       <MessageReussite
         message={envoi.reussite?.message ?? null}

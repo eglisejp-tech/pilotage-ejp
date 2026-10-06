@@ -43,14 +43,24 @@ const CARTE = (['75', '77', '78', '91', '92', '93', '94', '95'] as const).map((d
   valeur: 3,
 }))
 
+const ID_SESSION = '3f1c0a54-0d3b-4c1f-9a53-0d6a7a6f2a11'
+
 describe('participations', () => {
   it('lit une session avec sa complétude (`v_session_completude`)', async () => {
-    const { faux } = client({ v_session_completude: { data: { session_id: 's1' }, error: null } })
-    expect(await lireSession('s1')).toEqual({ session_id: 's1' })
+    const { faux } = client({
+      v_session_completude: { data: { session_id: ID_SESSION }, error: null },
+    })
+    expect(await lireSession(ID_SESSION)).toEqual({ session_id: ID_SESSION })
     const appels = appelsDe(faux.de('v_session_completude')[0])
     expect(appels[0]).toContain('a_eu_lieu, nb_attendus, nb_saisis')
-    expect(appels).toContain('eq("session_id", "s1")')
+    expect(appels).toContain(`eq("session_id", "${ID_SESSION}")`)
     expect(appels).toContain('maybeSingle()')
+  })
+
+  it('un identifiant qui n’est pas un uuid : null, sans aucune requête (la base répondrait 400)', async () => {
+    const { faux } = client()
+    expect(await lireSession('inconnue')).toBeNull()
+    expect(faux.de('v_session_completude')).toHaveLength(0)
   })
 
   it('les 8 dernières sessions passées ou du jour, à l’heure de Paris (`a_eu_lieu`)', async () => {

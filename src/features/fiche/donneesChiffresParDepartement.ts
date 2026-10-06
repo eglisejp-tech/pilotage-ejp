@@ -12,6 +12,7 @@ import {
   RUBRIQUES_FIJ,
 } from '@/features/saisie-fij/departements'
 import { libelleDepartementsSur8 } from '@/features/saisie-fij/calculs'
+import { CODE_MINISTERE_FIJ } from '@/data/fij'
 import type { LigneStatistiqueFij } from '@/data/fij'
 import type { Departement, RubriqueFij, TypeCompte } from '@/lib/base'
 import type { DateIso } from '@/lib/metier/dates'
@@ -85,7 +86,9 @@ function description(points: readonly { valeur: number | null; nb: number }[]): 
 
 /**
  * Construit le bloc. Aucune ligne (profil sans droit de lecture) : null, le bloc ne s'affiche
- * pas. Aucune valeur sur les 10 dimanches : premier usage.
+ * pas. Aucune valeur sur les 10 dimanches : premier usage. La vue ne lit que 10 dimanches : si
+ * FIJ n'a rien saisi depuis plus longtemps, « premier usage » est le seul état qu'on puisse
+ * distinguer de « semaine vide » (c'est la limite de la vue, pas une erreur du bloc).
  */
 export function construireChiffresParDepartement(
   lignes: readonly LigneStatistiqueFij[],
@@ -107,6 +110,8 @@ export function construireChiffresParDepartement(
         const ligne = ligneDe(code, jour)
         return { valeur: ligne?.total ?? null, nb: ligne?.nb_departements ?? 0 }
       })
+      const referenceVide = points.at(-1)?.valeur === null
+      const dernierIndex = points.findLastIndex((point) => point.valeur !== null)
       return {
         code,
         libelle: libelles.get(code) ?? libelle,
@@ -115,9 +120,14 @@ export function construireChiffresParDepartement(
         completude: libelleDepartementsSur8(nbDepartements),
         complet: nbDepartements >= NOMBRE_DEPARTEMENTS,
         courbe: {
-          points: points.map(({ valeur, nb }) => ({
+          // Semaine de référence vide : le dernier point plein montrerait la semaine précédente
+          // comme la dernière valeur. Il devient un cercle vide, et le trou reste (même règle
+          // qu'une semaine incomplète).
+          points: points.map(({ valeur, nb }, index) => ({
             valeur,
-            incomplet: valeur !== null && nb < NOMBRE_DEPARTEMENTS,
+            incomplet:
+              valeur !== null &&
+              (nb < NOMBRE_DEPARTEMENTS || (referenceVide && index === dernierIndex)),
           })),
           description: description(points),
         },
@@ -149,5 +159,5 @@ export function construireChiffresParDepartement(
 
 /** Le bloc n'existe que sur la fiche du ministère `fij`, et jamais pour l'administration. */
 export function blocVisible(ministereCode: string | null, profil: TypeCompte): boolean {
-  return ministereCode === 'fij' && profil !== 'admin_eglise'
+  return ministereCode === CODE_MINISTERE_FIJ && profil !== 'admin_eglise'
 }

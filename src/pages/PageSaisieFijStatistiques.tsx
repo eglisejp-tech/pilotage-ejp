@@ -14,7 +14,12 @@ export function PageSaisieFijStatistiques({ titre }: ProprietesPage) {
   const retour = useRetourSaisie()
   if (!compte.ministereId) return <PageNonDisponible />
   return (
-    <GardeMinistereFij ministereId={compte.ministereId} titre={titre}>
+    <GardeMinistereFij
+      ministereId={compte.ministereId}
+      titre={titre}
+      onFermer={retour}
+      ecran="saisie_fij_statistiques"
+    >
       <SaisieStatistiquesConnectee titre={titre} onFermer={retour} />
     </GardeMinistereFij>
   )

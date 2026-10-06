@@ -10,6 +10,7 @@ import {
   messageReussiteStatistiques,
   semainesProposees,
   valeursCarte,
+  valeursEffacees,
   valeursStatistiques,
 } from '@/features/saisie-fij/calculs'
 import {
@@ -132,10 +133,27 @@ describe('chiffres par département', () => {
       '2026-09-13',
       '2026-09-06',
     ])
-    expect(semaines[0]?.libelle).toBe('Semaine 39, du 21 au 27 sept. (déjà saisie)')
+    // L'état est en tête : un menu natif coupe la fin du texte à 360 px.
+    expect(semaines[0]?.libelle).toBe('Déjà saisie, sem. 39, 21 au 27 sept.')
     const vides = semainesProposees('2026-09-27', [])
-    expect(vides[0]?.libelle).toBe('Semaine 39, du 21 au 27 sept.')
+    expect(vides[0]?.libelle).toBe('Sem. 39, 21 au 27 sept.')
     expect(vides.every((semaine) => !semaine.dejaSaisie)).toBe(true)
+  })
+
+  it('repère un champ préempli puis vidé : l’ancienne valeur resterait comptée en silence', () => {
+    const statistiques = statistiquesExemple()
+    const champs = champsStatistiques(statistiques, '2026-09-27')
+    expect(valeursEffacees(champs, statistiques, '2026-09-27')).toEqual([])
+    const vide = {
+      ...champs,
+      culte_ejp: { ...champs.culte_ejp, '75': '' },
+    }
+    const effacees = valeursEffacees(vide, statistiques, '2026-09-27')
+    expect(effacees).toEqual([
+      { rubrique: 'culte_ejp', departement: '75', valeur: Number(champs.culte_ejp['75']) },
+    ])
+    // Un département jamais saisi cette semaine peut rester vide.
+    expect(valeursEffacees(champs, statistiques, '2026-09-27').length).toBe(0)
   })
 
   it('« Chiffres par département de la semaine 39 enregistrés. »', () => {

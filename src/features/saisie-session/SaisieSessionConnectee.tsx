@@ -4,6 +4,7 @@ import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
 import { FormulaireSession } from '@/features/saisie-session/FormulaireSession'
 import { adresseSaisieSession, TEXTES_SESSION } from '@/features/saisie-session/session'
 import { useSaisieSession } from '@/features/saisie-session/useSaisieSession'
+import { LienSignalement } from '@/features/signalement/LienSignalement'
 import { titreSession } from '@/lib/metier/phrases'
 
 interface Props {
@@ -72,7 +73,10 @@ export function SaisieSessionConnectee({ sessionId, ministereId, titre, onFermer
           dejaSaisi={etat.dejaSaisi}
           enregistrer={etat.enregistrer}
         />
-      ) : null}
+      ) : (
+        // Le formulaire porte son propre lien ; session absente, future ou panne : celui-ci.
+        <LienSignalement ecran="saisie_session" />
+      )}
     </PanneauSaisie>
   )
 }

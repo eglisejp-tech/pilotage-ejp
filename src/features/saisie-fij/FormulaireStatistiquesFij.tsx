@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import type { LigneStatistiqueFij } from '@/data/fij'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
@@ -9,7 +8,9 @@ import {
   champsStatistiques,
   ligneTotalRubrique,
   messageReussiteStatistiques,
+  messageValeurEffacee,
   semainesProposees,
+  valeursEffacees,
   valeursStatistiques,
 } from '@/features/saisie-fij/calculs'
 import type { ChampsStatistiques } from '@/features/saisie-fij/calculs'
@@ -22,6 +23,7 @@ import {
 import { erreurValeurFij, MESSAGES_FIJ } from '@/features/saisie-fij/schemas'
 import type { SaisieStatistiquesFij } from '@/features/saisie-fij/schemas'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
+import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import type { Departement, RubriqueFij } from '@/lib/base'
@@ -36,7 +38,8 @@ interface Props {
   enregistrer: (saisie: SaisieStatistiquesFij) => Promise<void>
 }
 
-type ErreursStatistiques = Partial<Record<`${RubriqueFij}-${Departement}`, string>>
+type CleChamp = `${RubriqueFij}-${Departement}`
+type ErreursStatistiques = Partial<Record<CleChamp, string>>
 
 const idChamp = (rubrique: RubriqueFij, departement: Departement) =>
   `stat-${rubrique}-${departement}`
@@ -45,7 +48,8 @@ const idChamp = (rubrique: RubriqueFij, departement: Departement) =>
  * Chiffres par département (dérivé de 08, ministère `fij` seulement ; BRIEF section 9) : la
  * semaine, puis les quatre rubriques, une par section, chacune avec ses 8 départements et son
  * total en direct (« Total : 58, 6 dép. sur 8 »). Un champ vide n'est pas envoyé : un
- * département absent ne compte jamais pour 0. Toute la semaine part en un appel.
+ * département absent ne compte jamais pour 0. Toute la semaine part en un appel. Une valeur déjà
+ * enregistrée ne s'efface pas (ajout seulement) : la vider bloque l'envoi et le dit.
  */
 export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enregistrer }: Props) {
   const semaines = semainesProposees(dimancheReference, statistiques)
@@ -56,6 +60,9 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
   const [erreurs, setErreurs] = useState<ErreursStatistiques>({})
   const [aucuneValeur, setAucuneValeur] = useState(false)
   const envoi = useEnvoiSaisie()
+  const valeurs = valeursStatistiques(champs)
+  const signature = `${dimanche}|${valeurs.map((v) => `${v.rubrique}:${v.departement}:${v.valeur}`).join(',')}`
+  const effacees = valeursEffacees(champs, statistiques, dimanche)
 
   const choisirSemaine = (jour: DateIso) => {
     setDimanche(jour)
@@ -86,12 +93,17 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
         premier ??= idChamp(rubrique, departement)
       }
     }
+    // Une valeur enregistrée puis vidée n'est pas retirée par un envoi : la base garde la dernière
+    // saisie. L'envoi attend un 0 ou la bonne valeur, sinon le total resterait faux sans rien dire.
+    for (const { rubrique, departement, valeur } of effacees) {
+      trouvees[`${rubrique}-${departement}`] = messageValeurEffacee(valeur)
+      premier ??= idChamp(rubrique, departement)
+    }
     setErreurs(trouvees)
     if (premier) {
       document.getElementById(premier)?.focus()
       return
     }
-    const valeurs = valeursStatistiques(champs)
     if (valeurs.length === 0) {
       setAucuneValeur(true)
       return
@@ -99,6 +111,7 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
     await envoi.envoyer(
       () => enregistrer({ dimanche, valeurs }),
       messageReussiteStatistiques(dimanche),
+      signature,
     )
   }
 
@@ -121,12 +134,10 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
           ))}
         </select>
       </div>
-      <div className="flex flex-wrap items-center">
-        <p className="min-w-0 flex-1 text-[15px] leading-normal">
-          Laissez vide un département sans chiffre : il ne compte pas pour 0.
-        </p>
-        <Aide code="fij.departements" libelle="Chiffres par département" />
-      </div>
+      <LigneAvecAide code="fij.departements" libelle="Chiffres par département">
+        Laissez vide un département sans chiffre : il ne compte pas pour 0. Un chiffre déjà
+        enregistré se corrige, il ne s'efface pas.
+      </LigneAvecAide>
       {RUBRIQUES_FIJ.map((rubrique) => (
         <fieldset
           key={rubrique.code}
@@ -136,26 +147,39 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
             {statistiques.find((ligne) => ligne.rubrique === rubrique.code)?.rubrique_libelle ??
               rubrique.libelle}
           </legend>
-          <div className="clear-both grid grid-cols-2 items-end gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
-            {DEPARTEMENTS_FIJ.map((departement) => (
-              <ChampNombre
-                key={departement.code}
-                id={idChamp(rubrique.code, departement.code)}
-                libelle={libelleDepartement(departement)}
-                valeur={champs[rubrique.code][departement.code]}
-                onChange={changer(rubrique.code, departement.code)}
-                max={VALEUR_FIJ_MAX}
-                variante="compact"
-                erreur={erreurs[`${rubrique.code}-${departement.code}`]}
-              />
-            ))}
+          <div className="clear-both grid grid-cols-2 items-start gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
+            {DEPARTEMENTS_FIJ.map((departement) => {
+              const cle: CleChamp = `${rubrique.code}-${departement.code}`
+              const effacee = effacees.find(
+                (ligne) =>
+                  ligne.rubrique === rubrique.code && ligne.departement === departement.code,
+              )
+              return (
+                <ChampNombre
+                  key={departement.code}
+                  id={idChamp(rubrique.code, departement.code)}
+                  libelle={libelleDepartement(departement)}
+                  valeur={champs[rubrique.code][departement.code]}
+                  onChange={changer(rubrique.code, departement.code)}
+                  max={VALEUR_FIJ_MAX}
+                  variante="compact"
+                  erreur={erreurs[cle]}
+                  note={effacee && !erreurs[cle] ? messageValeurEffacee(effacee.valeur) : undefined}
+                />
+              )
+            })}
           </div>
           <p className="text-[15px] leading-normal font-semibold" aria-live="polite">
             {ligneTotalRubrique(champs[rubrique.code])}
           </p>
         </fieldset>
       ))}
-      <BoutonEnregistrer libelle="Enregistrer les chiffres" enCours={envoi.enCours} />
+      <BoutonEnregistrer
+        libelle="Enregistrer les chiffres"
+        enCours={envoi.enCours}
+        dejaEnvoye={envoi.dejaEnvoye(signature)}
+        doublon={envoi.doublonRefuse(signature)}
+      />
       {aucuneValeur ? <ErreurFormulaire message={MESSAGES_FIJ.aucuneValeur} /> : null}
       {envoi.echec ? <ErreurFormulaire message={envoi.echec.message ?? undefined} /> : null}
       <MessageReussite

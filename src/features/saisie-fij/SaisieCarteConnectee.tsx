@@ -3,6 +3,7 @@ import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { FormulaireCarteFij } from '@/features/saisie-fij/FormulaireCarteFij'
 import { useSaisieCarte } from '@/features/saisie-fij/useSaisiesFij'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
+import { LienSignalement } from '@/features/signalement/LienSignalement'
 
 interface Props {
   ministereId: string
@@ -26,7 +27,10 @@ export function SaisieCarteConnectee({ ministereId, titre, onFermer }: Props) {
       ) : null}
       {etat.etat === 'pret' ? (
         <FormulaireCarteFij carte={etat.carte} enregistrer={etat.enregistrer} />
-      ) : null}
+      ) : (
+        // Le formulaire porte son propre lien ; ici, un ministère bloqué en a aussi besoin.
+        <LienSignalement ecran="saisie_fij" />
+      )}
     </PanneauSaisie>
   )
 }

@@ -10,6 +10,7 @@ import {
 import { ChoixSession } from '@/features/saisie-session/ChoixSession'
 import { FormulaireSession } from '@/features/saisie-session/FormulaireSession'
 import type { SaisieParticipation } from '@/features/saisie-session/schemas'
+import type { PresencePrecedente } from '@/features/saisie-session/session'
 
 afterEach(() => {
   vi.restoreAllMocks()
@@ -18,13 +19,14 @@ afterEach(() => {
 function afficher(
   enregistrer: (saisie: SaisieParticipation) => Promise<void> = () => Promise.resolve(),
   dejaSaisi: typeof SAISIE_SESSION_EXEMPLE | null = null,
+  precedente: PresencePrecedente | null = { presents: 12 },
 ) {
   render(
     <MemoryRouter>
       <FormulaireSession
         session={SESSION_EXEMPLE}
         ministereId="m1"
-        precedente={12}
+        precedente={precedente}
         dejaSaisi={dejaSaisi}
         enregistrer={enregistrer}
       />
@@ -49,6 +51,16 @@ describe('FormulaireSession (maquette 09)', () => {
       'href',
       '/signaler?ecran=saisie_session',
     )
+  })
+
+  it('session précédente non saisie par le ministère : « non saisie », sans la cacher', () => {
+    afficher(undefined, null, { presents: null })
+    expect(screen.getByText('Session précédente : non saisie')).toBeInTheDocument()
+  })
+
+  it('aucune session précédente : pas de note', () => {
+    afficher(undefined, null, null)
+    expect(screen.queryByText(/^Session précédente/)).toBeNull()
   })
 
   it('trois aides au plus, celles du document des aides', () => {
@@ -82,6 +94,41 @@ describe('FormulaireSession (maquette 09)', () => {
     expect(screen.getByText('Ce nombre ne peut pas dépasser les présents.')).toBeInTheDocument()
     expect(dejaComptes).toHaveFocus()
     expect(enregistrer).not.toHaveBeenCalled()
+  })
+
+  it('déjà comptés au-delà des présents : la ligne du total dit « à corriger », pas l’inverse', async () => {
+    const utilisateur = userEvent.setup()
+    const { presents, dejaComptes } = afficher()
+    expect(
+      screen.getByText("Comptés dans le total de l'église : saisissez d'abord les présents."),
+    ).toBeInTheDocument()
+    await utilisateur.type(presents, '3')
+    await utilisateur.clear(dejaComptes)
+    await utilisateur.type(dejaComptes, '5')
+    expect(screen.getByText("Comptés dans le total de l'église : à corriger.")).toBeInTheDocument()
+    expect(screen.queryByText(/saisissez d'abord les présents/)).toBeNull()
+  })
+
+  it('second appui après une réussite : rien n’est renvoyé, la phrase le dit', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = vi.fn(() => Promise.resolve())
+    const { presents } = afficher(enregistrer)
+    await utilisateur.type(presents, '13')
+    const bouton = screen.getByRole('button', { name: 'Enregistrer la présence' })
+    await utilisateur.click(bouton)
+    await screen.findByText("Présence enregistrée pour Bâtir l'Église du 26 sept.")
+    expect(bouton).toHaveAttribute('aria-disabled', 'true')
+    await utilisateur.click(bouton)
+    await utilisateur.click(bouton)
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByText('Cette saisie est déjà enregistrée. Changez un chiffre pour la corriger.'),
+    ).toBeInTheDocument()
+    // Un chiffre change : l'envoi repart, et le bouton redevient actif.
+    await utilisateur.type(presents, '5')
+    expect(bouton).not.toHaveAttribute('aria-disabled')
+    await utilisateur.click(bouton)
+    expect(enregistrer).toHaveBeenCalledTimes(2)
   })
 
   it('un champ vide n’est pas un 0 : les présents sont demandés', async () => {
@@ -140,7 +187,7 @@ describe('ChoixSession', () => {
       </MemoryRouter>,
     )
     const liens = within(screen.getByRole('list')).getAllByRole('link')
-    expect(liens[0]).toHaveTextContent("Bâtir l'Église, samedi 26 sept.: à saisir")
+    expect(liens[0]).toHaveTextContent("Bâtir l'Église, samedi 26 sept. : à saisir")
     expect(liens[0]).toHaveAttribute('href', '/saisir/session/session-batir-26-sept')
     expect(screen.getByText('Choisissez la session à saisir.')).toBeInTheDocument()
   })

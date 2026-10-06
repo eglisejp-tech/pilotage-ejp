@@ -82,6 +82,14 @@ describe('lignesFij (« Vos saisies » du ministère FIJ)', () => {
     })
   })
 
+  it('une seule valeur dans la semaine : « 1 valeur » au singulier', () => {
+    const [, statistiques] = lignesFij({
+      ...base,
+      statistiques: [{ dimanche: '2026-09-27', nb_departements: 1 }],
+    })
+    expect(statistiques).toMatchObject({ etat: 'fait', detail: 'Fait, 1 valeur sur 32' })
+  })
+
   it('carte de 30 jours ou plus : À faire, avec la date du dernier envoi', () => {
     const [carte] = lignesFij({ ...base, semaine: { ...base.semaine, aujourdhui: '2026-10-21' } })
     expect(carte).toMatchObject({

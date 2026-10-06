@@ -5,6 +5,12 @@ import { z } from 'zod'
 // `deja_comptes` hors de 0 à `valeur` et `valeur` hors de 0 à 9 999 ; le schéma suit le BRIEF
 // (section 9, « Saisie d'une session » : 0 à 999 présents) et évite l'aller-retour.
 
+/**
+ * Identifiant d'une session dans l'adresse (`/saisir/session/:id`) : un uuid. Partagé entre la
+ * page et la lecture, pour qu'une adresse fausse ne devienne jamais une requête.
+ */
+export const schemaIdentifiantSession = z.guid()
+
 /** Présents d'un ministère à une session : 0 à 999 (BRIEF, section 9). */
 export const PRESENTS_MAX = 999
 

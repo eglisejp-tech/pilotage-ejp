@@ -14,7 +14,12 @@ export function PageSaisieFij({ titre }: ProprietesPage) {
   const retour = useRetourSaisie()
   if (!compte.ministereId) return <PageNonDisponible />
   return (
-    <GardeMinistereFij ministereId={compte.ministereId} titre={titre}>
+    <GardeMinistereFij
+      ministereId={compte.ministereId}
+      titre={titre}
+      onFermer={retour}
+      ecran="saisie_fij"
+    >
       <SaisieCarteConnectee ministereId={compte.ministereId} titre={titre} onFermer={retour} />
     </GardeMinistereFij>
   )

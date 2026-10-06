@@ -3,6 +3,7 @@ import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { FormulaireStatistiquesFij } from '@/features/saisie-fij/FormulaireStatistiquesFij'
 import { useSaisieStatistiques } from '@/features/saisie-fij/useSaisiesFij'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
+import { LienSignalement } from '@/features/signalement/LienSignalement'
 
 interface Props {
   titre: string
@@ -29,7 +30,10 @@ export function SaisieStatistiquesConnectee({ titre, onFermer }: Props) {
           statistiques={etat.statistiques}
           enregistrer={etat.enregistrer}
         />
-      ) : null}
+      ) : (
+        // Le formulaire porte son propre lien ; ici, un ministère bloqué en a aussi besoin.
+        <LienSignalement ecran="saisie_fij_statistiques" />
+      )}
     </PanneauSaisie>
   )
 }

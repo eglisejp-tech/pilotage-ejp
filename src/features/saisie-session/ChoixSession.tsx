@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { lignesChoixSession, TEXTES_SESSION } from '@/features/saisie-session/session'
+import { cn } from '@/lib/utils'
 import type { SessionAChoisir } from '@/features/saisie-session/session'
 
 interface Props {
@@ -34,11 +35,20 @@ export function ChoixSession({ sessions }: Props) {
           <li key={ligne.sessionId} className="border-b border-filet">
             <Link
               to={ligne.vers}
-              className="flex min-h-12 flex-wrap items-center gap-x-1 py-2 text-[15px] text-encre hover:bg-fond"
+              className="flex min-h-12 items-center py-2 text-[15px] text-encre hover:bg-fond"
             >
-              <span className="font-semibold underline underline-offset-4">{ligne.libelle}</span>
-              <span className={ligne.aSaisir ? 'text-attention' : 'text-encre-3'}>
-                : {ligne.etat}
+              <span>
+                <span className="font-semibold underline underline-offset-4">{ligne.libelle}</span>
+                {/* Espace insécable : le deux-points reste collé au nom, l'état passe seul à la ligne. */}
+                {' : '}
+                <span
+                  className={cn(
+                    'whitespace-nowrap',
+                    ligne.aSaisir ? 'text-attention' : 'text-encre-3',
+                  )}
+                >
+                  {ligne.etat}
+                </span>
               </span>
             </Link>
           </li>

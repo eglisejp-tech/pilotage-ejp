@@ -1,4 +1,4 @@
-// Données d'exemple des aperçus du lot E4 (/apercu/saisies?ecran=...), sans base ni envoi. Elles
+// Données d'exemple des aperçus du lot E4 (/apercu/saisies-e4?ecran=...), sans base ni envoi. Elles
 // suivent le jeu d'exemple (supabase/seed.sql, seed/41-fij-statistiques.sql) : dimanche de
 // référence le 27 sept. 2026, Bâtir l'Église le samedi 26 sept., carte des FIJ du 21 sept.
 // (29 FIJ), semaine du 20 sept. complète et semaine du 27 sept. sans le 77 ni le 95.
@@ -10,7 +10,7 @@ import type { SessionAChoisir } from '@/features/saisie-session/session'
 import type { Departement, LigneVue, RubriqueFij } from '@/lib/base'
 import { ajouterJours } from '@/lib/metier/dates'
 
-/** Écrans du lot E4 que montre /apercu/saisies (`?ecran=`). */
+/** Écrans du lot E4 que montre /apercu/saisies-e4 (`?ecran=`). */
 export const ECRANS_APERCU_E4 = [
   'session',
   'choix-session',
@@ -21,7 +21,7 @@ export const ECRANS_APERCU_E4 = [
 
 export type EcranApercuE4 = (typeof ECRANS_APERCU_E4)[number]
 
-/** Écran du lot E4 demandé par `?ecran=`, ou null (la saisie du dimanche du lot E3). */
+/** Écran du lot E4 demandé par `?ecran=`, ou null (aucun écran demandé). */
 export function lireEcranApercuE4(valeur: string | null): EcranApercuE4 | null {
   return ECRANS_APERCU_E4.find((ecran) => ecran === valeur) ?? null
 }

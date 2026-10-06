@@ -2,7 +2,7 @@ import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
-// Saisies du lot E4 sur les aperçus (/apercu/saisies?ecran=...), sans base ni écriture : saisie
+// Saisies du lot E4 sur les aperçus (/apercu/saisies-e4?ecran=...), sans base ni écriture : saisie
 // d'une session (09), « Choisir la session », carte des FIJ, chiffres par département et bloc
 // « Chiffres par département » de la fiche de Coordo FIJ, avec leurs états vides. Trois formats
 // par les projets Playwright ; les écritures sont dans e2e/base/*.ecriture.spec.ts.
@@ -10,7 +10,7 @@ import type { Page } from '@playwright/test'
 type Ecran = { ecran: string; profil?: string; etat?: string }
 
 const adresse = ({ ecran, profil = 'ministere', etat }: Ecran) =>
-  `/apercu/saisies?ecran=${ecran}&profil=${profil}${etat ? `&etat=${etat}` : ''}`
+  `/apercu/saisies-e4?ecran=${ecran}&profil=${profil}${etat ? `&etat=${etat}` : ''}`
 
 async function ouvrir(page: Page, ecran: Ecran) {
   await page.goto(adresse(ecran))

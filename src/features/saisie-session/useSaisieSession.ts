@@ -9,7 +9,7 @@ import {
 } from '@/data/participations'
 import type { ParticipationCourante, SessionCompletude } from '@/data/participations'
 import type { SaisieParticipation } from '@/features/saisie-session/schemas'
-import type { SessionAChoisir } from '@/features/saisie-session/session'
+import type { PresencePrecedente, SessionAChoisir } from '@/features/saisie-session/session'
 
 /** Premier élément des clés de requête des saisies de session. */
 const RACINE = 'saisie-session'
@@ -35,7 +35,7 @@ export type EtatSaisieSession =
   | {
       etat: 'pret'
       session: SessionCompletude
-      precedente: number | null
+      precedente: PresencePrecedente | null
       dejaSaisi: ParticipationCourante | null
       enregistrer: (saisie: SaisieParticipation) => Promise<void>
     }
@@ -97,7 +97,9 @@ export function useSaisieSession(sessionId: string, ministereId: string): EtatSa
     precedente:
       precedenteId === undefined
         ? null
-        : (mesSaisies.find((ligne) => ligne.session_id === precedenteId)?.valeur ?? null),
+        : {
+            presents: mesSaisies.find((ligne) => ligne.session_id === precedenteId)?.valeur ?? null,
+          },
     dejaSaisi: mesSaisies.find((ligne) => ligne.session_id === sessionId) ?? null,
     enregistrer,
   }

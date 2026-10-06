@@ -71,11 +71,43 @@ export function comptesDansTotal(champs: ChampsSession): number | null {
   return presents - dejaComptes
 }
 
+/**
+ * La ligne sous les deux champs. Trois cas : un résultat (en gras), une consigne si les présents
+ * manquent, et « à corriger » si les déjà comptés dépassent des présents pourtant saisis (la
+ * ligne ne dit jamais « saisissez les présents » quand ils sont saisis).
+ */
 export function ligneComptesDansTotal(champs: ChampsSession): string {
   const comptes = comptesDansTotal(champs)
-  return comptes === null
+  if (comptes !== null) return `Comptés dans le total de l'église : ${nombre(comptes)}.`
+  return lire(champs.presents) === null
     ? "Comptés dans le total de l'église : saisissez d'abord les présents."
-    : `Comptés dans le total de l'église : ${nombre(comptes)}.`
+    : "Comptés dans le total de l'église : à corriger."
+}
+
+/**
+ * Ce qui part à l'envoi, normalisé (« 05 » et « 5 » sont la même saisie) : un second appui sur
+ * « Enregistrer » avec la même signature n'envoie rien (`useEnvoiSaisie`).
+ */
+export function signatureSession(champs: ChampsSession): string {
+  const normaliser = (texte: string) => (texte === '' ? '' : String(Number(texte)))
+  return `${normaliser(champs.presents)}|${normaliser(champs.dejaComptes)}`
+}
+
+/**
+ * Note sous le champ des présents : la session précédente du même type. Null : il n'y en a pas
+ * (rien à dire). Un ministère qui ne l'a pas saisie le lit, comme « non saisi » à la saisie du
+ * dimanche (BRIEF, section 9).
+ */
+export function noteSessionPrecedente(precedente: PresencePrecedente | null): string | undefined {
+  if (precedente === null) return undefined
+  return precedente.presents === null
+    ? 'Session précédente : non saisie'
+    : `Session précédente : ${nombre(precedente.presents)}`
+}
+
+/** Saisie du ministère à la session précédente du même type (`presents` null : non saisie). */
+export interface PresencePrecedente {
+  presents: number | null
 }
 
 /** Phrase de complétude de la session : début en texte, puis les manquants mis en valeur. */

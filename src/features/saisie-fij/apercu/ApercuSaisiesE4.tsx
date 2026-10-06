@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router'
 import { BlocChiffresParDepartement } from '@/features/fiche/BlocChiffresParDepartement'
 import type { EtatBlocFij } from '@/features/fiche/BlocChiffresParDepartement'
 import { construireChiffresParDepartement } from '@/features/fiche/donneesChiffresParDepartement'
@@ -7,12 +8,12 @@ import {
   CARTE_EXEMPLE,
   DIMANCHE_EXEMPLE,
   envoiApercu,
+  lireEcranApercuE4,
   SAISIE_SESSION_EXEMPLE,
   SESSION_EXEMPLE,
   SESSIONS_A_CHOISIR,
   statistiquesExemple,
 } from '@/features/saisie-fij/apercu/exemplesE4'
-import type { EcranApercuE4 } from '@/features/saisie-fij/apercu/exemplesE4'
 import { FormulaireCarteFij } from '@/features/saisie-fij/FormulaireCarteFij'
 import { FormulaireStatistiquesFij } from '@/features/saisie-fij/FormulaireStatistiquesFij'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
@@ -21,14 +22,6 @@ import { FormulaireSession } from '@/features/saisie-session/FormulaireSession'
 import { TEXTES_SESSION } from '@/features/saisie-session/session'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import { titreSession } from '@/lib/metier/phrases'
-
-interface Props {
-  ecran: EcranApercuE4
-  /** `?etat=` : variante de l'écran (correction, erreur, premier-usage, vide...). */
-  etat: string | null
-  /** `?profil=` : le bloc de lecture montre l'action au seul ministère. */
-  profil: string | null
-}
 
 const fermer = () => undefined
 
@@ -45,11 +38,16 @@ function blocApercu(etat: string | null): EtatBlocFij {
 }
 
 /**
- * Aperçus de développement du lot E4, sans base ni envoi (/apercu/saisies?ecran=...) : saisie
+ * Aperçus de développement du lot E4, sans base ni envoi (/apercu/saisies-e4?ecran=...) : saisie
  * d'une session (09), « Choisir la session », carte des FIJ, chiffres par département et bloc de
- * lecture de la fiche de Coordo FIJ, chacun avec ses états (`?etat=`). Données d'exemple.
+ * lecture de la fiche de Coordo FIJ, chacun avec ses états (`?etat=`, variante de l'écran) et
+ * `?profil=` (le bloc de lecture montre l'action au seul ministère). Données d'exemple.
  */
-export function ApercuSaisiesE4({ ecran, etat, profil }: Props) {
+export function ApercuSaisiesE4() {
+  const [parametres] = useSearchParams()
+  const ecran = lireEcranApercuE4(parametres.get('ecran'))
+  const etat = parametres.get('etat')
+  const profil = parametres.get('profil')
   const echec = etat === 'erreur'
   switch (ecran) {
     case 'session':
@@ -68,7 +66,7 @@ export function ApercuSaisiesE4({ ecran, etat, profil }: Props) {
             <FormulaireSession
               session={SESSION_EXEMPLE}
               ministereId="ministere-exemple"
-              precedente={12}
+              precedente={etat === 'precedente-non-saisie' ? { presents: null } : { presents: 12 }}
               dejaSaisi={etat === 'correction' ? SAISIE_SESSION_EXEMPLE : null}
               enregistrer={envoiApercu(echec)}
             />
@@ -131,6 +129,8 @@ export function ApercuSaisiesE4({ ecran, etat, profil }: Props) {
           </PanneauSaisie>
         </>
       )
+    case null:
+      return <p className="text-encre-2">Choisissez un écran avec ?ecran=session.</p>
     case 'bloc-departements':
       return (
         <>

@@ -3,7 +3,7 @@
 // recompté ici. Les dates sont celles de Paris (`v_session_completude.a_eu_lieu` se calcule avec
 // `private.aujourdhui()`), jamais la date du navigateur.
 
-import { schemaParticipation } from '@/features/saisie-session/schemas'
+import { schemaIdentifiantSession, schemaParticipation } from '@/features/saisie-session/schemas'
 import type { SaisieParticipation } from '@/features/saisie-session/schemas'
 import type { LigneVue, TypeSession } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -17,8 +17,13 @@ const COLONNES_SESSION =
 /** Nombre de sessions passées que propose « Choisir la session » (BRIEF, section 9). */
 export const SESSIONS_PROPOSEES = 8
 
-/** Une session, avec sa complétude et ses manquants ; null si elle n'existe pas. */
+/**
+ * Une session, avec sa complétude et ses manquants ; null si elle n'existe pas. Un identifiant
+ * qui n'est pas un uuid (ancien lien, faute de frappe) ne part jamais à la base : elle répondrait
+ * 400 (22P02), et la page proposerait un « Réessayer » qui ne peut pas réussir.
+ */
 export async function lireSession(sessionId: string): Promise<SessionCompletude | null> {
+  if (!schemaIdentifiantSession.safeParse(sessionId).success) return null
   const { data, error } = await supabase()
     .from('v_session_completude')
     .select(COLONNES_SESSION)

@@ -91,6 +91,12 @@ describe('construireChiffresParDepartement', () => {
     expect(bloc.rubriques.every((rubrique) => rubrique.total === null)).toBe(true)
     expect(bloc.rubriques[0]?.completude).toBe('0 dép. sur 8')
   })
+
+  it('semaine de référence vide : la courbe finit sur un cercle vide, jamais sur un point plein', () => {
+    const points = donnees('semaine-vide').rubriques[0]?.courbe.points ?? []
+    expect(points.at(-1)?.valeur).toBeNull()
+    expect(points.findLast((point) => point.valeur !== null)?.incomplet).toBe(true)
+  })
 })
 
 describe('blocVisible', () => {

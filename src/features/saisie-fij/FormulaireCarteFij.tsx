@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
@@ -19,6 +18,7 @@ import {
 import { erreurValeurFij } from '@/features/saisie-fij/schemas'
 import type { SaisieCarteFij } from '@/features/saisie-fij/schemas'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
+import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { leJourAHeure } from '@/features/saisie-session/session'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -56,6 +56,9 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
   const [champs, setChamps] = useState<ChampsDepartements>(() => champsCarte(carte))
   const [erreurs, setErreurs] = useState<ErreursCarte>({})
   const envoi = useEnvoiSaisie()
+  const signature = DEPARTEMENTS_FIJ.map(({ code }) =>
+    champs[code] === '' ? '' : String(Number(champs[code])),
+  ).join(',')
 
   const changer = (departement: Departement) => (valeur: string) => {
     setChamps((precedents) => ({ ...precedents, [departement]: valeur }))
@@ -76,17 +79,16 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
       document.getElementById(`carte-${premier.code}`)?.focus()
       return
     }
-    await envoi.envoyer(() => enregistrer(valeursCarte(champs)), MESSAGE_REUSSITE_CARTE)
+    await envoi.envoyer(() => enregistrer(valeursCarte(champs)), MESSAGE_REUSSITE_CARTE, signature)
   }
 
   return (
     <form noValidate className="flex flex-col gap-5" onSubmit={(e) => void soumettre(e)}>
-      <div className="flex flex-wrap items-center">
-        <p className="min-w-0 flex-1 text-[15px] font-semibold">Nombre de FIJ par département</p>
-        <Aide code="fij.carte" libelle="Carte des FIJ" />
-      </div>
+      <LigneAvecAide code="fij.carte" libelle="Carte des FIJ" classe="font-semibold">
+        Nombre de FIJ par département
+      </LigneAvecAide>
       <p className="text-sm leading-normal text-encre-3">{ligneDernierEnvoi(carte)}</p>
-      <div className="grid grid-cols-2 items-end gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
+      <div className="grid grid-cols-2 items-start gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
         {DEPARTEMENTS_FIJ.map((departement) => (
           <ChampNombre
             key={departement.code}
@@ -103,7 +105,12 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
       <p className="text-[15px] leading-normal font-semibold" aria-live="polite">
         {ligneTotalCarte(champs)}
       </p>
-      <BoutonEnregistrer libelle="Enregistrer la carte" enCours={envoi.enCours} />
+      <BoutonEnregistrer
+        libelle="Enregistrer la carte"
+        enCours={envoi.enCours}
+        dejaEnvoye={envoi.dejaEnvoye(signature)}
+        doublon={envoi.doublonRefuse(signature)}
+      />
       {envoi.echec ? <ErreurFormulaire message={envoi.echec.message ?? undefined} /> : null}
       <MessageReussite
         message={envoi.reussite?.message ?? null}

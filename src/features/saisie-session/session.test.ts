@@ -45,6 +45,12 @@ describe('présents moins déjà comptés (BRIEF, règle 5)', () => {
       "Comptés dans le total de l'église : saisissez d'abord les présents.",
     )
   })
+
+  it('présents saisis mais déjà comptés au-delà : « à corriger », jamais « saisissez les présents »', () => {
+    expect(ligneComptesDansTotal({ presents: '3', dejaComptes: '5' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
+  })
 })
 
 describe('schemaParticipation, partagé entre le formulaire et l’appel', () => {

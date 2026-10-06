@@ -4,7 +4,7 @@ import type { Departement } from '@/lib/base'
 import { formaterJourCourt, jourDeParis, lireInstant } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import { joursDepuis } from '@/lib/metier/fraicheur'
-import { nombre } from '@/lib/metier/texte'
+import { accorder, nombre } from '@/lib/metier/texte'
 
 /** La carte est « Faite » si son dernier envoi a moins de 30 jours (BRIEF, section 9). */
 export const CARTE_A_JOUR_JOURS = 30
@@ -76,7 +76,7 @@ export function lignesFij({
           cle: 'fij_statistiques',
           libelle: 'Chiffres par département',
           etat: 'fait',
-          detail: `Fait, ${nombre(valeurs)} valeurs sur ${nombre(VALEURS_PAR_SEMAINE)}`,
+          detail: `Fait, ${nombre(valeurs)} ${accorder(valeurs, 'valeur', 'valeurs')} sur ${nombre(VALEURS_PAR_SEMAINE)}`,
           action: { libelle: 'Corriger', vers: '/saisir/fij-statistiques' },
         }
       : {

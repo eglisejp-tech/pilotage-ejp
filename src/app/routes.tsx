@@ -4,6 +4,7 @@ import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
+import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
 import { PageChoixMotDePasse } from '@/features/connexion/PageChoixMotDePasse'
 import { PageCompteDesactive } from '@/features/connexion/PageCompteDesactive'
@@ -35,6 +36,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.
           { path: 'fiche', element: <ApercuFiche /> },
           { path: 'saisies', element: <ApercuSaisies /> },
+          // Lot E4 : session, « Choisir la session », carte des FIJ, chiffres par département.
+          { path: 'saisies-e4', element: <ApercuSaisiesE4 /> },
           { path: 'evenements', element: <ApercuEvenements /> },
         ],
       },

@@ -57,8 +57,10 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+const ID_SESSION = '3f1c0a54-0d3b-4c1f-9a53-0d6a7a6f2a11'
+
 const SESSION = {
-  session_id: 's1',
+  session_id: ID_SESSION,
   type: 'batir',
   date: '2026-09-26',
   intitule: null,
@@ -128,7 +130,7 @@ describe('/saisir/session/:id', () => {
 
   it('une session passée : le formulaire de la maquette 09, titré par la session', async () => {
     connecteMinistere({ v_session_completude: [SESSION] })
-    afficher('/saisir/session/s1')
+    afficher(`/saisir/session/${SESSION.session_id}`)
     expect(
       await screen.findByRole(
         'heading',
@@ -144,7 +146,7 @@ describe('/saisir/session/:id', () => {
 
   it('une session future : aucune saisie avant son jour', async () => {
     connecteMinistere({ v_session_completude: [{ ...SESSION, a_eu_lieu: false }] })
-    afficher('/saisir/session/s1')
+    afficher(`/saisir/session/${SESSION.session_id}`)
     expect(
       await screen.findByText(
         "Cette session n'a pas encore eu lieu. Sa saisie ouvrira le jour de la session.",
@@ -155,9 +157,23 @@ describe('/saisir/session/:id', () => {
     expect(screen.queryByRole('button', { name: 'Enregistrer la présence' })).toBeNull()
   })
 
+  it('une adresse qui n’est pas un uuid : aucune requête, l’état « aucun résultat »', async () => {
+    const faux = connecteMinistere()
+    afficher('/saisir/session/inconnue')
+    expect(
+      await screen.findByText(
+        "Cette session n'existe pas ou n'est plus proposée.",
+        {},
+        ATTENTE_ECHEC,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull()
+    expect(faux.tables).not.toContain('v_session_completude')
+  })
+
   it('une session inconnue : aucun résultat, et le choix d’une autre session', async () => {
     connecteMinistere()
-    afficher('/saisir/session/inconnue')
+    afficher('/saisir/session/9d2b6c7e-1f4a-4e0b-8c3d-5a6b7c8d9e0f')
     expect(
       await screen.findByText(
         "Cette session n'existe pas ou n'est plus proposée.",
@@ -169,13 +185,19 @@ describe('/saisir/session/:id', () => {
       'href',
       '/saisir/session/choisir',
     )
+    // Un ministère bloqué (session absente, par exemple) peut le dire à EJP Tech.
+    expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
+      'href',
+      '/signaler?ecran=saisie_session',
+    )
   })
 
-  it('lecture en échec : le problème passager', async () => {
+  it('lecture en échec : le problème passager, avec le lien de signalement', async () => {
     connecteMinistere({}, ['v_session_completude'])
-    afficher('/saisir/session/s1')
+    afficher(`/saisir/session/${SESSION.session_id}`)
     expect(await screen.findByRole('alert', {}, ATTENTE_ECHEC)).toHaveTextContent(
       'La connexion a échoué. Réessayez.',
     )
+    expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toBeInTheDocument()
   })
 })

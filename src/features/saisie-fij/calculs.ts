@@ -11,7 +11,7 @@ import type { LigneStatistiqueFij } from '@/data/fij'
 import type { Departement, RubriqueFij, ValeurFijStatistique } from '@/lib/base'
 import { ajouterJours } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
-import { libelleSemaine, semaineIso } from '@/lib/metier/semaine'
+import { libellePeriode, semaineIso } from '@/lib/metier/semaine'
 import { nombre } from '@/lib/metier/texte'
 
 /** Les 8 champs d'une ligne de départements, en texte (vide : pas de valeur). */
@@ -87,7 +87,10 @@ export function valeursCarte(
 export interface SemaineProposee {
   /** Dimanche de la semaine (du lundi au dimanche). */
   dimanche: DateIso
-  /** « Semaine 39, du 21 au 27 sept. », avec « (déjà saisie) » s'il y a lieu. */
+  /**
+   * « Sem. 39, 21 au 27 sept. », ou « Déjà saisie, sem. 39, 21 au 27 sept. ». L'état est en
+   * tête : un menu natif coupe la fin du texte à 360 px, et c'est l'état qui ne doit pas manquer.
+   */
   libelle: string
   dejaSaisie: boolean
 }
@@ -108,9 +111,42 @@ export function semainesProposees(
     const dejaSaisie = statistiques.some(
       (ligne) => ligne.dimanche === dimanche && ligne.nb_departements > 0,
     )
-    const libelle = libelleSemaine(semaineIso(dimanche))
-    return { dimanche, dejaSaisie, libelle: dejaSaisie ? `${libelle} (déjà saisie)` : libelle }
+    const semaine = semaineIso(dimanche)
+    const periode = libellePeriode(semaine.lundi, semaine.dimanche).replace(/^du /, '')
+    const court = `sem. ${semaine.numero}, ${periode}`
+    return {
+      dimanche,
+      dejaSaisie,
+      libelle: dejaSaisie
+        ? `Déjà saisie, ${court}`
+        : `${court.charAt(0).toUpperCase()}${court.slice(1)}`,
+    }
   })
+}
+
+/** Sous un champ préempli puis vidé : l'ancienne valeur reste comptée tant qu'on n'en saisit pas une autre. */
+export function messageValeurEffacee(valeur: number): string {
+  return `La valeur enregistrée (${nombre(valeur)}) reste comptée. Saisissez 0 ou la bonne valeur.`
+}
+
+/**
+ * Valeurs déjà enregistrées pour la semaine dont le champ a été vidé. Un champ vide n'est pas
+ * envoyé : la base garderait l'ancienne valeur (la dernière saisie fait foi, ajout seulement),
+ * sans que rien ne le dise. Le formulaire demande 0 ou la bonne valeur.
+ */
+export function valeursEffacees(
+  champs: ChampsStatistiques,
+  statistiques: readonly Pick<LigneStatistiqueFij, 'rubrique' | 'dimanche' | 'departements'>[],
+  dimanche: DateIso,
+): { rubrique: RubriqueFij; departement: Departement; valeur: number }[] {
+  const enregistrees = champsStatistiques(statistiques, dimanche)
+  return RUBRIQUES_FIJ.flatMap(({ code: rubrique }) =>
+    DEPARTEMENTS_FIJ.flatMap(({ code: departement }) =>
+      enregistrees[rubrique][departement] !== '' && champs[rubrique][departement] === ''
+        ? [{ rubrique, departement, valeur: Number(enregistrees[rubrique][departement]) }]
+        : [],
+    ),
+  )
 }
 
 /**

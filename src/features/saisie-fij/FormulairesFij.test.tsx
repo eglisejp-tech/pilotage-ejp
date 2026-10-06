@@ -82,6 +82,23 @@ describe('FormulaireCarteFij', () => {
     expect(await screen.findByText('Carte des FIJ enregistrée.')).toBeInTheDocument()
   })
 
+  it('second appui après une réussite : 8 lignes ne partent pas deux fois', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = vi.fn(() => Promise.resolve())
+    afficherCarte(CARTE_EXEMPLE, enregistrer)
+    const bouton = screen.getByRole('button', { name: 'Enregistrer la carte' })
+    await utilisateur.click(bouton)
+    await screen.findByText('Carte des FIJ enregistrée.')
+    await utilisateur.click(bouton)
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByText('Cette saisie est déjà enregistrée. Changez un chiffre pour la corriger.'),
+    ).toBeInTheDocument()
+    await utilisateur.type(screen.getByLabelText('75 Paris'), '1')
+    await utilisateur.click(bouton)
+    expect(enregistrer).toHaveBeenCalledTimes(2)
+  })
+
   it('un refus de la base s’affiche sous le bouton, les valeurs restent', async () => {
     const utilisateur = userEvent.setup()
     afficherCarte(CARTE_EXEMPLE, () =>
@@ -155,6 +172,52 @@ describe('FormulaireStatistiquesFij', () => {
     })
     expect(
       await screen.findByText('Chiffres par département de la semaine 39 enregistrés.'),
+    ).toBeInTheDocument()
+  })
+
+  it('les semaines disent d’abord leur état : un menu natif coupe la fin du texte', () => {
+    afficherStatistiques()
+    const options = within(screen.getByLabelText('Semaine'))
+      .getAllByRole('option')
+      .map((option) => option.textContent)
+    expect(options[0]).toBe('Déjà saisie, sem. 39, 21 au 27 sept.')
+    expect(options.every((texte) => (texte ?? '').length <= 40)).toBe(true)
+  })
+
+  it('une valeur enregistrée puis vidée : l’envoi est bloqué et le champ le dit', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = vi.fn(() => Promise.resolve())
+    afficherStatistiques(statistiquesExemple(), enregistrer)
+    const premiere = screen.getAllByRole('group')[0] as HTMLElement
+    const champ = within(premiere).getByLabelText('75 Paris')
+    const ancienne = (champ as HTMLInputElement).value
+    await utilisateur.clear(champ)
+    const phrase = `La valeur enregistrée (${ancienne}) reste comptée. Saisissez 0 ou la bonne valeur.`
+    expect(within(premiere).getByText(phrase)).toBeInTheDocument()
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer les chiffres' }))
+    expect(enregistrer).not.toHaveBeenCalled()
+    expect(champ).toHaveFocus()
+    expect(champ).toHaveAccessibleDescription(phrase)
+    // Un département jamais saisi cette semaine (le 77) peut rester vide.
+    expect(within(premiere).getByLabelText('77 Seine-et-Marne')).toHaveValue('')
+    await utilisateur.type(champ, '0')
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer les chiffres' }))
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+  })
+
+  it('second appui après une réussite : rien n’est renvoyé', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = vi.fn(() => Promise.resolve())
+    afficherStatistiques(statistiquesExemple('premier-usage'), enregistrer)
+    const premiere = screen.getAllByRole('group')[0] as HTMLElement
+    await utilisateur.type(within(premiere).getByLabelText('75 Paris'), '12')
+    const bouton = screen.getByRole('button', { name: 'Enregistrer les chiffres' })
+    await utilisateur.click(bouton)
+    await screen.findByText('Chiffres par département de la semaine 39 enregistrés.')
+    await utilisateur.click(bouton)
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+    expect(
+      screen.getByText('Cette saisie est déjà enregistrée. Changez un chiffre pour la corriger.'),
     ).toBeInTheDocument()
   })
 

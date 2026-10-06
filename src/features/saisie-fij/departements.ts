@@ -24,6 +24,9 @@ export const DEPARTEMENTS_FIJ: readonly DepartementFij[] = [
 
 export const NOMBRE_DEPARTEMENTS = DEPARTEMENTS_FIJ.length
 
+/** Petit libellé au-dessus du titre des deux saisies FIJ. */
+export const SURTITRE_FIJ = 'FIJ en Île-de-France'
+
 /** « 75 Paris » : libellé d'un champ (BRIEF, section 9). */
 export function libelleDepartement(departement: DepartementFij): string {
   return `${departement.code} ${departement.nom}`

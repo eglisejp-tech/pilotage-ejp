@@ -424,12 +424,8 @@ const ADRESSES_AMORCES = [
   '/saisir/reunion',
   '/signaler',
 ]
-// Adresses dont le lot a remplacé l'amorce : leurs vraies pages sont testées à part (lot E4 :
-// `src/pages/saisiesSessionFij.test.tsx`). Elles restent dans la liste des douze déclarées.
-const ADRESSES_REMPLACEES = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
-const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter(
-  (adresse) =>
-    ADRESSES_AMORCES.includes(adresse.chemin) && !ADRESSES_REMPLACEES.includes(adresse.chemin),
+const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
+  ADRESSES_AMORCES.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
 
 describe("adresses de l'étape 4", () => {
@@ -459,7 +455,11 @@ describe("adresses de l'étape 4", () => {
     },
   )
 
-  it.each(AMORCES_PAR_PROFIL)(
+  // Pages que le lot E4 a remplacées : leurs vraies pages sont testées dans
+  // `src/pages/saisiesSessionFij.test.tsx`. Le filtre est ici, et non dans `AMORCES_PAR_PROFIL`,
+  // pour ne pas toucher les mêmes lignes que les autres lots (une page remplacée par lot).
+  const PAGES_REMPLACEES_PAR_E4 = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
+  it.each(AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif)))(
     '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
     async (motif, profil) => {
       const faux = connecte(profil)
