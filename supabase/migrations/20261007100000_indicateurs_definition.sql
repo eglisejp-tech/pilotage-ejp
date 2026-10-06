@@ -79,6 +79,15 @@ update public.indicateur set definition = case code
 update public.indicateur set definition = 'Définition à compléter par l''administration de l''église.'
  where definition is null;
 
+-- Textes déjà en base : mis sous la forme que le trigger leur donne (espaces réduits, puis
+-- retirés de part et d'autre), pour qu'une mise à jour sans rapport (un retrait, par exemple)
+-- ne passe pas pour un changement de texte.
+update public.indicateur
+   set libelle = btrim(regexp_replace(libelle, '\s+', ' ', 'g')),
+       definition = btrim(regexp_replace(definition, '\s+', ' ', 'g'))
+ where libelle is distinct from btrim(regexp_replace(libelle, '\s+', ' ', 'g'))
+    or definition is distinct from btrim(regexp_replace(definition, '\s+', ' ', 'g'));
+
 alter table public.indicateur
   alter column definition set not null,
   add constraint indicateur_nature_check check (nature in ('dimanche', 'mois', 'a_ce_jour')),
@@ -103,7 +112,9 @@ alter table public.indicateur
 
 -- Un libellé normalisé est unique sur une fiche, hors retirés : un remplaçant garde le nom de
 -- l'indicateur qu'il remplace (celui-ci est retiré d'abord), un libellé retiré peut renaître.
+-- Les NULL ne sont pas distincts : deux chiffres communs ne portent pas non plus le même libellé.
 create unique index indicateur_libelle_normalise on public.indicateur (ministere_id, private.normaliser(libelle))
+  nulls not distinct
   where etat <> 'retire';
 
 -- Plafond large : le plafond de chaque unité est contrôlé par controler_mesure.
@@ -154,8 +165,8 @@ begin
   end if;
 
   -- Textes : espaces de bord retirés, espaces réduits, longueurs.
-  new.libelle := regexp_replace(btrim(new.libelle), '\s+', ' ', 'g');
-  new.definition := regexp_replace(btrim(new.definition), '\s+', ' ', 'g');
+  new.libelle := btrim(regexp_replace(new.libelle, '\s+', ' ', 'g'));
+  new.definition := btrim(regexp_replace(new.definition, '\s+', ' ', 'g'));
   if new.libelle is null or char_length(new.libelle) not between 2 and 60 then
     raise exception 'Donnez un libellé de 2 à 60 caractères.';
   end if;
@@ -189,6 +200,10 @@ begin
     end if;
     if new.calcul is not null and new.ministere_id is null then
       raise exception 'Un chiffre commun ne se calcule pas.';
+    end if;
+    -- Un chiffre commun ne se crée que par une migration, comme il ne change que par elle.
+    if new.ministere_id is null and not v_migration then
+      raise exception 'Un chiffre commun ne change que par une migration.' using errcode = '42501';
     end if;
     -- Remplacement : un indicateur de la même fiche, jamais un commun ; le remplaçant d'un
     -- sensible est sensible.
@@ -319,8 +334,9 @@ begin
   end if;
   if new.source_id is not null then
     select i.* into v_source from public.indicateur i where i.id = new.source_id;
+    -- Une source est un indicateur saisi : jamais un autre calcul (il ne recevrait jamais de valeur).
     if not found or v_source.ministere_id is null or v_source.ministere_id is distinct from v_calcul.ministere_id
-       or v_source.id = v_calcul.id then
+       or v_source.id = v_calcul.id or v_source.calcul is not null then
       raise exception 'Ces deux chiffres ne se calculent pas ensemble.';
     end if;
     if v_source.sensible then
@@ -334,6 +350,13 @@ begin
             or (new.agregat = 'somme_dimanches_du_mois' and v_source.nature = 'dimanche' and v_calcul.nature = 'mois')
             or (new.agregat = 'fin_de_mois' and v_source.nature = 'a_ce_jour' and v_calcul.nature = 'mois')) then
       raise exception 'Ces deux chiffres ne se calculent pas ensemble.';
+    end if;
+    -- Des sources distinctes : le même chiffre, au même agrégat et au même décalage, ne
+    -- s'écrit pas deux fois dans un calcul.
+    if exists (select 1 from public.indicateur_terme t
+                where t.calcul_id = new.calcul_id and t.source_id = new.source_id
+                  and t.agregat = new.agregat and t.decalage = new.decalage) then
+      raise exception 'Un calcul se fait sur des chiffres distincts.';
     end if;
   elsif new.agregat <> 'periode' or v_calcul.nature <> 'mois' then
     raise exception 'Un comptage d''événements se lit par mois.';
@@ -378,6 +401,21 @@ begin
   return null;
 end $$;
 
+-- Un remplaçant ne coexiste pas avec l'indicateur qu'il remplace : à la fin de la transaction,
+-- l'ancien est retiré avec le motif « remplace » (dans l'ordre que choisit la fonction de
+-- l'API : le retrait avant l'ajout, ou l'inverse).
+create function private.verifier_remplacement() returns trigger
+language plpgsql security definer set search_path = '' as $$
+declare
+  v_ancien public.indicateur%rowtype;
+begin
+  select i.* into v_ancien from public.indicateur i where i.id = new.remplace_id;
+  if not found or v_ancien.etat <> 'retire' or v_ancien.retrait_motif is distinct from 'remplace' then
+    raise exception 'L''indicateur remplacé est retiré avec le motif « remplacé ».';
+  end if;
+  return null;
+end $$;
+
 create trigger controler_terme before insert on public.indicateur_terme
   for each row execute function private.controler_terme();
 create constraint trigger termes_complets after insert on public.indicateur
@@ -386,6 +424,9 @@ create constraint trigger termes_complets after insert on public.indicateur
 create constraint trigger termes_complets after insert on public.indicateur_terme
   deferrable initially deferred
   for each row execute function private.verifier_termes();
+create constraint trigger remplacement_complet after insert on public.indicateur
+  deferrable initially deferred
+  for each row when (new.remplace_id is not null) execute function private.verifier_remplacement();
 create trigger ajout_seulement before update or delete on public.indicateur_terme
   for each row execute function private.refuser_modification();
 create trigger ajout_seulement_vider before truncate on public.indicateur_terme
@@ -510,6 +551,7 @@ revoke all on function private.mois_courant() from public, anon, authenticated, 
 revoke all on function private.controler_indicateur() from public, anon, authenticated, service_role;
 revoke all on function private.controler_terme() from public, anon, authenticated, service_role;
 revoke all on function private.verifier_termes() from public, anon, authenticated, service_role;
+revoke all on function private.verifier_remplacement() from public, anon, authenticated, service_role;
 revoke all on function private.controler_mesure_le(uuid, date, integer, timestamptz)
   from public, anon, authenticated, service_role;
 revoke all on function private.controler_mesure() from public, anon, authenticated, service_role;
@@ -521,7 +563,7 @@ grant execute on function private.normaliser(text), private.mois_courant() to au
 -- « Système »).
 update public.ministere set code = 'coordination'
  where id = (select m.id from public.ministere m
-              where m.code is null and private.normaliser(m.nom) = 'coordination'
+              where m.code is null and m.desactive_le is null and private.normaliser(m.nom) = 'coordination'
               order by m.cree_le limit 1)
    and not exists (select 1 from public.ministere m where m.code = 'coordination');
 

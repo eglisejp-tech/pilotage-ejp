@@ -7,7 +7,7 @@
 -- (cinq profils, ministères porteur, autre, fij et coordination, aal1 et anonyme).
 begin;
 
-select plan(256);
+select plan(263);
 
 -- Contexte : comptes du jeu d'exemple ; indicateurs d'essai de Communication (le ministère
 -- porteur), écrits comme le ferait une fonction de configuration.
@@ -42,10 +42,18 @@ insert into public.indicateur (libelle, definition, nature, ministere_id, sensib
 select 'Essai t. sensible', 'Indicateur sensible d''essai des calculs.', 'mois', c.com_m, true from ctx c;
 insert into public.indicateur (libelle, definition, nature, ministere_id)
 select 'Essai t. Jeunesse', 'Source d''essai d''un autre ministère.', 'mois', c.jeu_m from ctx c;
+-- Un ajout à valider et un indicateur retiré de Communication : la lecture les compte (Q3 : le
+-- porteur lit tous les états, le berger, le conseil, l'administration et EJP Tech aussi).
+insert into public.indicateur (libelle, definition, nature, ministere_id, origine, etat)
+select 'Essai déf. attente lecture', 'Ajout d''un ministère, en attente de validation.', 'mois', c.com_m, 'ministere', 'en_attente'
+  from ctx c;
+insert into public.indicateur (libelle, definition, nature, ministere_id)
+select 'Essai déf. retiré lecture', 'Indicateur d''essai retiré avant la lecture.', 'mois', c.com_m from ctx c;
+update public.indicateur set etat = 'retire', retrait_motif = 'erreur' where libelle = 'Essai déf. retiré lecture';
 
 alter table ctx add column pub uuid, add column dem uuid, add column taux uuid, add column s1 uuid, add column s2 uuid,
   add column s3 uuid, add column s4 uuid, add column s5 uuid, add column s_dim uuid, add column s_jour uuid,
-  add column s_sens uuid, add column s_jeu uuid, add column coo_m uuid;
+  add column s_sens uuid, add column s_jeu uuid, add column coo_m uuid, add column att uuid, add column ret uuid;
 update ctx set pub = (select i.id from public.indicateur i where i.libelle = 'Essai déf. publications'),
                dem = (select i.id from public.indicateur i where i.libelle = 'Essai déf. demandes'),
                s1 = (select i.id from public.indicateur i where i.libelle = 'Essai t. ventes'),
@@ -57,7 +65,9 @@ update ctx set pub = (select i.id from public.indicateur i where i.libelle = 'Es
                s_jour = (select i.id from public.indicateur i where i.libelle = 'Essai t. stock'),
                s_sens = (select i.id from public.indicateur i where i.libelle = 'Essai t. sensible'),
                s_jeu = (select i.id from public.indicateur i where i.libelle = 'Essai t. Jeunesse'),
-               coo_m = (select m.id from public.ministere m where m.code = 'coordination');
+               coo_m = (select m.id from public.ministere m where m.code = 'coordination'),
+               att = (select i.id from public.indicateur i where i.libelle = 'Essai déf. attente lecture'),
+               ret = (select i.id from public.indicateur i where i.libelle = 'Essai déf. retiré lecture');
 
 -- Un calcul et ses termes, écrits ensemble ; le contrôle différé des termes complets est
 -- déclenché tout de suite (set constraints), puis remis en différé.
@@ -97,7 +107,7 @@ select ok((select count(*) from ctx
             where com is not null and jeu is not null and fij is not null and coo is not null and berger is not null
               and conseil is not null and admin is not null and tech is not null and service is not null
               and pub is not null and dem is not null and taux is not null and s_sens is not null and s_jeu is not null
-              and coo_m is not null) = 1,
+              and coo_m is not null and att is not null and ret is not null) = 1,
   'le jeu d''exemple et le contexte fournissent les comptes, les indicateurs et le calcul utilisés ici');
 
 -- Structure
@@ -150,8 +160,8 @@ select * from tests.verifier_matrice(
                  (4, 'ministère coordination'), (5, 'berger'), (6, 'conseil'), (7, 'administration'),
                  (8, 'EJP Tech')) as p(rang, profil)
    cross join (values
-     ('indicateur', 'lire', array['4', '1', '1', '1', '4', '4', '4', '4'],
-      'select 1 from public.indicateur i where i.id in (select c.service from ctx c union all select c.pub from ctx c union all select c.dem from ctx c union all select c.taux from ctx c)'),
+     ('indicateur', 'lire', array['6', '1', '1', '1', '6', '6', '6', '6'],
+      'select 1 from public.indicateur i where i.id in (select c.service from ctx c union all select c.pub from ctx c union all select c.dem from ctx c union all select c.taux from ctx c union all select c.att from ctx c union all select c.ret from ctx c)'),
      ('indicateur_terme', 'lire', array['2', '0', '0', '0', '2', '2', '2', '2'],
       'select 1 from public.indicateur_terme t where t.calcul_id = (select taux from ctx)'),
      ('indicateur', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
@@ -273,8 +283,19 @@ select throws_ok($$
   select 'Essai déf. minutes', 'Unité d''essai inconnue.', 'dimanche', com_m, 'minutes' from ctx
 $$, '23514', null, 'unité hors liste refusée (pas d''unité « minutes »)');
 select throws_ok($$
+  insert into public.indicateur (code, libelle, definition, nature, origine)
+  values ('essai_commun', 'Essai commun créé', 'Un commun ne se crée pas hors migration.', 'dimanche', 'commun')
+$$, '42501', 'Un chiffre commun ne change que par une migration.', 'un chiffre commun ne se crée que par une migration');
+select set_config('pilotage.migration', 'oui', true);
+select throws_ok($$
   insert into public.indicateur (code, libelle, definition, nature, origine) values ('essai', 'Essai commun', 'Commun d''essai.', 'mois', 'eglise')
 $$, '23514', null, 'origine « commun » si et seulement si le ministère est nul');
+select throws_ok($$
+  insert into public.indicateur (code, libelle, definition, nature, origine)
+  select 'essai_doublon', i.libelle, 'Doublon d''essai d''un chiffre commun.', 'dimanche', 'commun'
+    from public.indicateur i where i.code = 'service'
+$$, '23505', null, 'deux chiffres communs ne portent pas le même libellé (les NULL ne sont pas distincts)');
+select set_config('pilotage.migration', '', true);
 
 -- Libellé normalisé unique sur une fiche, hors retirés ; remplacement sous le même nom.
 select throws_ok($$
@@ -300,6 +321,31 @@ select throws_ok($$
   insert into public.indicateur (libelle, definition, nature, ministere_id, remplace_id)
   select 'Essai déf. commun', 'Remplaçant d''un commun.', 'dimanche', com_m, service from ctx
 $$, '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un commun ne se remplace pas');
+-- Le remplacé est retiré (motif « remplace ») à la fin de la transaction, dans l'ordre qu'on veut.
+create function pg_temp.remplacement_sans_retrait() returns void language plpgsql as $$
+begin
+  insert into public.indicateur (libelle, definition, nature, ministere_id, remplace_id)
+  select 'Essai déf. remplaçant sans retrait', 'Remplaçant d''essai dont l''ancien reste actif.', 'mois', com_m, dem from ctx;
+  set constraints all immediate;
+  set constraints all deferred;
+end $$;
+select throws_ok($$ select pg_temp.remplacement_sans_retrait() $$,
+  'P0001', 'L''indicateur remplacé est retiré avec le motif « remplacé ».',
+  'un remplaçant ne coexiste pas avec l''indicateur encore actif qu''il remplace');
+create function pg_temp.remplacement_ordre_libre() returns void language plpgsql as $$
+declare
+  v_ancien uuid;
+begin
+  insert into public.indicateur (libelle, definition, nature, ministere_id)
+  select 'Essai déf. à remplacer', 'Indicateur d''essai à remplacer.', 'mois', com_m from ctx returning id into v_ancien;
+  insert into public.indicateur (libelle, definition, nature, ministere_id, remplace_id)
+  select 'Essai déf. remplaçant libre', 'Remplaçant d''essai ajouté avant le retrait.', 'mois', com_m, v_ancien from ctx;
+  update public.indicateur set etat = 'retire', retrait_motif = 'remplace' where id = v_ancien;
+  set constraints all immediate;
+  set constraints all deferred;
+end $$;
+select lives_ok($$ select pg_temp.remplacement_ordre_libre() $$,
+  'le retrait de l''ancien peut suivre l''ajout du remplaçant dans la même transaction');
 select throws_ok($$
   insert into public.indicateur (libelle, definition, nature, ministere_id, remplace_id)
   select 'Essai déf. autre fiche', 'Remplaçant pris sur une autre fiche.', 'mois', jeu_m, dem from ctx
@@ -421,6 +467,25 @@ select throws_ok($$ select pg_temp.calcul('Essai t. calcul sur un sensible', 'ta
 select throws_ok($$ select pg_temp.calcul('Essai t. commun', 'taux', 'dimanche',
   jsonb_build_array(pg_temp.t('haut', (select s_dim from ctx)), pg_temp.t('bas', (select service from ctx)))) $$,
   'P0001', 'Ces deux chiffres ne se calculent pas ensemble.', 'source commune refusée');
+select throws_ok($$ select pg_temp.calcul('Essai t. calcul en source', 'taux', 'mois',
+  jsonb_build_array(pg_temp.t('haut', (select s1 from ctx)), pg_temp.t('bas', (select taux from ctx)))) $$,
+  'P0001', 'Ces deux chiffres ne se calculent pas ensemble.', 'un calcul n''est jamais la source d''un autre calcul');
+-- Sources distinctes : le même chiffre, au même agrégat et au même décalage, une seule fois (les
+-- termes s'écrivent un par un : le contrôle lit les termes déjà écrits du calcul).
+create function pg_temp.calcul_doublon() returns void language plpgsql as $$
+declare
+  v_id uuid;
+begin
+  insert into public.indicateur (libelle, definition, nature, ministere_id, calcul)
+  select 'Essai t. doublon', 'Calcul d''essai des termes.', 'mois', com_m, 'taux' from ctx returning id into v_id;
+  insert into public.indicateur_terme (calcul_id, ordre, role, source_id) select v_id, 1, 'haut', s1 from ctx;
+  insert into public.indicateur_terme (calcul_id, ordre, role, source_id) select v_id, 2, 'bas', s1 from ctx;
+end $$;
+select throws_ok($$ select pg_temp.calcul_doublon() $$,
+  'P0001', 'Un calcul se fait sur des chiffres distincts.', 'un taux dont le haut et le bas sont le même chiffre est refusé');
+select lives_ok($$ select pg_temp.calcul('Essai t. même chiffre décalé', 'taux', 'mois',
+  jsonb_build_array(pg_temp.t('haut', (select s1 from ctx)), pg_temp.t('bas', (select s1 from ctx), 'periode', 1))) $$,
+  'le même chiffre à un autre décalage reste une autre source');
 select throws_ok($$ select pg_temp.calcul('Essai t. autre fiche', 'taux', 'mois',
   jsonb_build_array(pg_temp.t('haut', (select s1 from ctx)), pg_temp.t('bas', (select s_jeu from ctx)))) $$,
   'P0001', 'Ces deux chiffres ne se calculent pas ensemble.', 'source d''un autre ministère refusée');
