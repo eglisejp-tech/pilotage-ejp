@@ -23,7 +23,7 @@ Outil web temporaire de prise d'information pour le berger et le conseil de l'EJ
 
 ## Règles métier à ne jamais casser
 
-- Mesures, carte des FIJ, participations, événements et leurs états, réunions, points, mentions, suivis de point, journal et modération, ainsi que `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique`, `evenement_mention`, `signalement` et `signalement_suivi` : **ajout seulement**. Pas d'`UPDATE`, pas de `DELETE` (seule exception pour un texte : `masquer_texte`). La base impose `saisi_le` et `saisi_par`.
+- Mesures, carte des FIJ, participations, événements et leurs états, réunions, points, mentions, suivis de point, journal et modération, ainsi que `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique`, `evenement_mention`, `signalement`, `signalement_suivi`, `ventilation_sensible` et `precision_sensible` : **ajout seulement**. Pas d'`UPDATE`, pas de `DELETE` (seule exception pour un texte : `masquer_texte`). La base impose `saisi_le` et `saisi_par`.
 - Le pourcentage FIJ se **calcule** (somme en FIJ ÷ somme actifs, sur les ministères qui ont les deux valeurs), il ne se saisit pas.
 - Tout total agrégé s'affiche avec sa **complétude** (« 6 sur 8 »).
 - Un STAR n'est compté qu'une fois : total d'une session = somme de (présents moins déjà comptés par leur ministère principal). Aucun nom, aucune liste de personnes.

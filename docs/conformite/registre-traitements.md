@@ -255,13 +255,29 @@ archivage du dépôt du code.
   - texte « Pourquoi cet indicateur ? » (10 à 280 caractères) quand un ministère demande un
     indicateur, et motif d'un refus par EJP Tech. Ce texte n'a pas de rappel sur les données
     personnelles (exception voulue par la personne responsable, T30). Il n'est lu que par le
-    ministère qui l'a écrit et par EJP Tech, et n'est jamais recopié dans le journal.
+    ministère qui l'a écrit et par EJP Tech, et n'est jamais recopié dans le journal ;
+  - répartition par catégories des indicateurs sensibles : nombres entiers par catégorie et par mois,
+    catégories fixées par la coordination.
 - **Données sensibles** : 11 indicateurs portent sur la santé, l'accompagnement social, l'écoute et
-  les enfants. Ce sont des **totaux par mois écoulé**, sans personne identifiable. Ils sont créés et
-  actifs dès la vague 1 (décision de la personne responsable, 6 octobre 2026, P42). Leurs protections,
-  construites à l'étape 4 avant la mise en service :
-  - seuls les mois finis se saisissent : la base refuse le mois en cours ;
-  - aucune ventilation, aucun texte attaché, aucun calcul tiré d'eux, aucun graphique de l'église ;
+  les enfants. Ce sont des **totaux par mois** (le mois en cours compris), sans personne identifiable,
+  avec deux ajouts facultatifs : une répartition par catégories et un texte « Précision ». Ils sont
+  créés et actifs dès la vague 1 (décisions de la personne responsable, 6 octobre 2026, P42 et suites).
+  Leurs protections, construites à l'étape 4 avant la mise en service :
+  - **mois en cours** : il se saisit et s'affiche « en cours », hors des sommes. Seule la dernière
+    saisie du mois est montrée aux lecteurs autres que le ministère ; les saisies intermédiaires ne
+    leur sont pas exposées (ni dans les vues, ni dans le journal, qui ne porte aucune ligne
+    d'indicateur sensible dans le détail d'une saisie). Risque de moment : une valeur, une catégorie
+    ou une précision qui change pendant le mois peut laisser voir qu'un cas a eu lieu entre deux
+    consultations ;
+  - **répartition par catégories** : le ministère répartit son total du mois entre les catégories de
+    l'indicateur. Les catégories sont fixées par la coordination (listes courtes et larges, avec un
+    « autre ») et écrites dans la base par une mise à jour d'EJP Tech ; sans liste, pas de répartition.
+    La somme des catégories ne dépasse jamais le total ; le reste s'affiche « non réparti ». Une
+    catégorie de 1 ou 2 s'affiche « moins de 3 » ; dès qu'une catégorie s'affiche « moins de 3 »,
+    l'outil masque aussi une autre catégorie, et toute la répartition si cela ne suffit pas, pour
+    qu'une différence avec le total ne révèle pas un nombre sous 3 ;
+  - **texte « Précision »** : voir la rubrique suivante ;
+  - aucun calcul tiré d'eux, aucun graphique de l'église ;
   - 1 et 2 s'affichent « moins de 3 » au berger, au conseil et à EJP Tech ; 0 reste 0 ; la somme de
     l'année ne compte que les mois affichés, pour qu'aucune différence ne révèle un mois masqué ;
   - les lignes brutes ne sont lisibles que par le ministère qui saisit ; les autres lisent une vue
@@ -270,10 +286,33 @@ archivage du dépôt du code.
 
   L'analyse complète est dans la note d'analyse des indicateurs sensibles.
 
+- **Texte « Précision » d'un chiffre sensible** :
+  - **Finalité** : permettre au ministère de faire remonter une information utile qu'un chiffre seul
+    ne dit pas, parce qu'une information sensible peut être importante (décision de la personne
+    responsable, 6 octobre 2026) ;
+  - **Données** : un texte facultatif de 10 à 280 caractères, attaché à un mois d'un indicateur
+    sensible, avec sa date de saisie et le compte qui l'a écrit. Le rappel sur les données
+    personnelles figure sous le champ. L'outil refuse les familles de texte que reconnaît la
+    vérification des textes. Il n'y a aucune donnée personnelle attendue : le risque est qu'un nom ou
+    une situation personnelle soit écrit par erreur, dans un domaine sensible ;
+  - **Destinataires** : le ministère qui l'a écrit, le berger, le conseil et EJP Tech. Ni
+    l'administration de l'église, ni les autres ministères. Jamais sur la vue de l'église, jamais
+    dans un email, jamais dans le journal ;
+  - **Durée** : comme les autres textes, toute la vie de l'outil. Un texte masqué reste dans les
+    sauvegardes jusqu'à leur expiration (7 jours) ;
+  - **Mesures** : ajout seulement (la précision du total le plus récent du mois remplace
+    l'affichage de la précédente, qui reste en base, lisible par le ministère et par EJP Tech
+    seuls) ; relecture et masquage par EJP Tech (motif « Santé ou situation personnelle », par
+    exemple), avec sa propre ligne de modération ; le journal note la relecture et le masquage,
+    jamais le texte ; affichage en texte
+    simple ; le journal garde l'identifiant, jamais le texte ; lecture réservée par les droits de la
+    base.
+
 - **Destinataires** :
   - le ministère concerné voit ses propres chiffres ;
   - le berger, le conseil et EJP Tech voient tous les chiffres, en lecture (avec le seuil pour les
-    indicateurs sensibles) ;
+    indicateurs sensibles, leurs catégories et leur mois en cours) ; ils lisent aussi les précisions
+    attachées aux chiffres sensibles ;
   - l'administration de l'église voit les définitions et l'usage (« saisi 4 mois sur 5 »), jamais
     une valeur d'indicateur propre ; elle voit les chiffres communs de la vue de l'église ;
   - les autres ministères voient seulement les chiffres communs de la vue de l'église.
@@ -285,8 +324,8 @@ archivage du dépôt du code.
 - **Mesures propres** :
   - ajout seulement : une correction est une nouvelle saisie, la plus récente fait foi ;
   - la base refuse les valeurs incohérentes (date future, « dont en FIJ » au-dessus des actifs,
-    mois en cours pour un indicateur sensible) ;
-  - le journal ne garde aucune valeur d'indicateur propre ;
+    somme des catégories d'un indicateur sensible au-dessus de son total) ;
+  - le journal ne garde aucune valeur d'indicateur propre, aucune catégorie ni aucune précision ;
   - la confirmation « Vérifiez ce chiffre » ne montre au ministère que ses propres valeurs ;
   - chaque définition dit « un total, sans liste » quand des personnes sont comptées.
 
@@ -455,11 +494,15 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
     elle (à la coordination).
 12. Confirmation par la coordination de la fiche 6 (signalement d'une difficulté), décidée le 6
     octobre 2026 : lue par le ministère qui l'écrit et par EJP Tech seulement.
+13. Confirmation par la coordination, pour la fiche 2, du mois en cours, du texte « Précision » et de
+    la répartition par catégories des indicateurs sensibles, décidés le 6 octobre 2026. Listes de
+    catégories par indicateur sensible (à la coordination).
 
 ## Historique
 
-| Version    | Date           | Auteur   | Changement                                        |
-| ---------- | -------------- | -------- | ------------------------------------------------- |
-| 1 (projet) | 6 octobre 2026 | EJP Tech | Première rédaction, à valider par la coordination |
+| Version      | Date           | Auteur   | Changement                                                                                                                                                 |
+| ------------ | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 (projet)   | 6 octobre 2026 | EJP Tech | Première rédaction, à valider par la coordination                                                                                                          |
+| 1.1 (projet) | 6 octobre 2026 | EJP Tech | Fiche 2 : mois en cours accepté, texte « Précision » et répartition par catégories des indicateurs sensibles, après la décision de la personne responsable |
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

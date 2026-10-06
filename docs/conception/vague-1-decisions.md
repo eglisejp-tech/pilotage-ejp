@@ -6,11 +6,18 @@
   (`docs/conception/kpi-ministeres.md`, section 8 et annexe), configuration
   (`docs/conception/configuration-indicateurs.md`), validation (`docs/conception/validation-metier.md`),
   `BRIEF.md`, `docs/decisions.md` (numéros du 6 octobre)
-- **Entrées du journal des décisions** : P32 à P41 et T36 (`docs/decisions.md`)
+- **Entrées du journal des décisions** : P32 à P41 et T36 (`docs/decisions.md`) ; révisions : P42,
+  P45 à P47 (indicateurs sensibles), modèle T41
 - **Révision du 6 octobre 2026** : la personne responsable a décidé que les indicateurs sensibles
   sont créés et actifs dès la vague 1 (P42, réponse à la question 4 de `docs/plan-etape-4.md`).
   K56, X4 et les sections 7 et 8 de ce document sont alignés ; toutes les protections de K5
   restent.
+- **Seconde révision du 6 octobre 2026** : après la lecture des libellés, la personne responsable a
+  décidé que le mois en cours d'un indicateur sensible se saisit (P45), qu'un texte « Précision »
+  peut accompagner le total du mois (P46) et que ce total se répartit entre des catégories fixées
+  par la coordination (P47 ; modèle T41, lot B8 de `docs/plan-etape-4.md`). K5a, K5b, K5c, K5d,
+  K38, K54a, K56, X4 et les sections 3 et 7 sont alignés : « mois écoulé » devient « mois », et les
+  onze indicateurs sensibles portent « catégories : à fixer par la coordination ».
 
 Ce document répond aux 112 questions de `kpi-ministeres.md` (C1 à C3, K1 à K57), aux questions Q1 à
 Q21 de `configuration-indicateurs.md`, et fixe la vague 1 des indicateurs. Là où il diffère de ces
@@ -173,12 +180,21 @@ ont été rapprochées (section 8).
   (Merch) ; jours de production, de résolution et d'attente (Film, Tech, Entretien) ; Événements
   commencés à l'heure (Coordination). « Non calculé » si le bas manque ou vaut 0. _Raison_ : un taux
   ne se saisit jamais, il lui faut ses deux comptes.
-- **K5a. Un total par mois écoulé pour Santé, Social, Call your sister, la plate-forme d'écoute ?**
+- **K5a. Un total par mois (révisé P45) pour Santé, Social, Call your sister, la plate-forme d'écoute ?**
   Oui, et pour les nouveaux enfants et les enfants déjà venus de Prodiges Junior : nature « mois »,
-  case sensible, compte entier, aucune ventilation, aucun texte attaché, aucun calcul sur eux. Onze
-  indicateurs sensibles en tout.
-- **K5b. Le mois en cours jamais saisi ?** Oui : `controler_mesure` refuse le mois en cours (heure
-  de Paris) pour un indicateur sensible ; le formulaire propose les deux derniers mois écoulés.
+  case sensible, compte entier, aucun calcul sur eux. Onze indicateurs sensibles en tout.
+  **Révisé le 6 octobre 2026 (P45 à P47, décision de la personne responsable)** : un total par
+  mois, le mois en cours compris ; « aucune ventilation, aucun texte attaché » est remplacé par une
+  répartition entre des catégories fixées par la coordination (P47, catégories : à fixer par la
+  coordination pour chacun des onze) et par un texte « Précision » facultatif de 10 à 280
+  caractères, lu par le ministère, le berger, le conseil et EJP Tech (P46).
+- **K5b. Le mois en cours jamais saisi ?** Première réponse : oui, `controler_mesure` refusait le
+  mois en cours pour un indicateur sensible. **Révisé le 6 octobre 2026 (P45)** : non. « Refuser le
+  mois en cours n'a pas de sens et posera problème aux équipes. » Le mois en cours se saisit (heure
+  de Paris), comme pour tout indicateur du mois ; le formulaire propose le mois en cours et les deux
+  précédents. La valeur du mois en cours s'affiche à part, marquée « en cours », hors de la somme
+  de l'année, avec le seuil ; aux lecteurs autres que le ministère, seule la dernière saisie du
+  mois est montrée.
 - **K5c. « Moins de 3 » pour les très petits nombres ?** Oui. Pour un indicateur sensible, une
   valeur de 1 ou 2 s'affiche « moins de 3 » au berger, au conseil et à EJP Tech, sur la fiche, la
   courbe et la somme ; 0 reste 0 ; le ministère voit ses valeurs exactes. Aucune somme ne permet de
@@ -189,9 +205,12 @@ ont été rapprochées (section 8).
   `private` qui applique le seuil. L'export de fin de vie se fait hors de l'API, par la personne
   responsable, avec un script SQL local (jamais dans le navigateur). _Raison_ : mandat (« petits
   nombres protégés ») ; un seuil appliqué seulement à l'écran serait contourné par PostgREST.
+  Depuis le 6 octobre 2026 (P45, P47), le seuil vaut aussi pour le mois en cours et pour chaque
+  catégorie d'une répartition, avec un masquage secondaire (une catégorie de plus est masquée pour
+  qu'aucune soustraction ne redonne un petit nombre).
 - **K5d. Prodiges Junior ?** Oui : « Enfants présents » chaque dimanche, un seul total, non
-  sensible ; « Nouveaux enfants » et « Enfants déjà venus » par mois écoulé, sensibles, avec le
-  seuil.
+  sensible ; « Nouveaux enfants » et « Enfants déjà venus » par mois (le mois en cours compris
+  depuis P45), sensibles, avec le seuil.
 - **K6a. Des chiffres financiers ?** Oui. Chiffre d'affaires et coût d'achat des articles vendus
   (Merch) et fonds levés (Social) en « euros », par mois ; budget matériel prévu (Production) en
   « euros », à ce jour ; panier moyen (moyenne) et marge estimée (différence signée) calculés.
@@ -229,18 +248,25 @@ ont été rapprochées (section 8).
 - **K56a et K56b. Registre, place des comptes sensibles, analyse d'impact ?** Les comptes ont leur
   place, avec les protections de K5. EJP Tech rédige l'entrée du registre (finalité ; catégories :
   totaux mensuels sans personne ; durée : fin de vie de l'outil ; destinataires : ministère, berger,
-  conseil, EJP Tech ; mesures : mois clos, seuil, aucune ventilation) et une note d'analyse courte
+  conseil, EJP Tech ; mesures : seuil, lignes brutes au seul ministère, journal sans valeur ; la
+  première version disait « mois clos, aucune ventilation », revue par P45 et P47) et une note d'analyse courte
   (risques, mesures, risque résiduel), et les remet à la coordination, qui décide au nom de l'église. Le responsable du traitement est
   l'Église des Jeunes Prodiges, par son ministère EJP Tech (P44, comme sur la page Confidentialité).
-  La coordination décide d'une analyse d'impact complète. La page Confidentialité dit que seuls
-  des totaux de mois écoulés sont saisis pour la santé, l'accompagnement, l'écoute et les enfants.
+  La coordination décide d'une analyse d'impact complète. La page Confidentialité dit que, pour la
+  santé, l'accompagnement, l'écoute et les enfants, seuls des totaux par mois (le mois en cours
+  compris), des répartitions par catégories larges et de courtes précisions sans information
+  personnelle sont saisis (P45 à P47).
   **Révisé le 6 octobre 2026 (P42, décision de la personne responsable)** : la première réponse
   n'activait les indicateurs sensibles qu'après la remise du registre et de la note. Elle est
   remplacée : « à partir du moment où ils sont présents dans les KPI, ils doivent être présents ».
   Les onze indicateurs sensibles sont créés et actifs dès la vague 1, comme les autres, sans aucun
-  réglage d'activation ; toutes les protections de K5 restent (mois écoulés seulement, « moins de
-  3 » sans fuite, lignes brutes au seul ministère, aucun calcul, jamais sur la vue de l'église,
-  journal sans valeur, page Confidentialité). EJP Tech rédige maintenant le registre et la note
+  réglage d'activation ; toutes les protections de K5 restent (« moins de 3 » sans fuite, lignes
+  brutes au seul ministère, aucun calcul, jamais sur la vue de l'église, journal sans valeur, page
+  Confidentialité). **Révisé le même jour (P45 à P47, décision de la personne responsable)** : la
+  protection « mois écoulés seulement » est retirée, le mois en cours se saisit et s'affiche « en
+  cours » ; un texte « Précision » et une répartition par catégories de la coordination
+  s'ajoutent, avec le seuil, le masquage secondaire et leurs lecteurs. Le registre et la note
+  d'analyse (`docs/conformite/`) reprennent ces changements. EJP Tech rédige maintenant le registre et la note
   (`docs/conformite/`) ; ils sont remis à la coordination avant la mise en service, sans rien
   conditionner dans l'outil.
 
@@ -374,7 +400,8 @@ ont été rapprochées (section 8).
 - **K38. Prise en charge, intervention, incident (Santé) ?** Prises en charge : personnes, une fois
   chacune ; interventions : gestes de l'équipe (soin, appel aux secours) ; incidents avec
   intervention : malaise, chute, accident ; orientations : personnes orientées vers une structure ou
-  un professionnel. Quatre totaux sensibles par mois écoulé.
+  un professionnel. Quatre totaux sensibles par mois (le mois en cours compris, P45), chacun avec
+  ses catégories à fixer par la coordination (P47).
 - **K39a. Ventes : quand ?** Au mois, tous lieux confondus.
 - **K39b. Marge ?** Chiffre d'affaires moins coût d'achat des articles vendus du mois (saisi en
   euros), différence signée, « estimée » parce que les frais généraux sont exclus.
@@ -439,7 +466,8 @@ ont été rapprochées (section 8).
 - **K53b. Recrutement abouti ?** Candidature du formulaire qui mène à une intégration dans une
   équipe, comptée le mois de l'intégration ; non abouti : close sans intégration, comptée le mois de
   la clôture.
-- **K54a. Nouveaux enfants ?** Venus pour la première fois à Prodiges Junior, par mois écoulé ;
+- **K54a. Nouveaux enfants ?** Venus pour la première fois à Prodiges Junior, par mois (le mois en
+  cours compris, P45) ;
   « Enfants déjà venus » compte ceux du mois qui étaient déjà venus avant. Aucun calcul ne combine
   ces deux sensibles.
 - **K54b. Une session est-elle un dimanche ?** Oui : « Sessions réalisées » = dimanches du mois où
@@ -586,15 +614,15 @@ le premier jour.
 
 ### Social (7 demandes, annexe : 7)
 
-| Ligne | Demande                          | Mécanisme        | Indicateur ou source                   | Rythme, unité             | Formule                         | Sensible | Lot |
-| ----- | -------------------------------- | ---------------- | -------------------------------------- | ------------------------- | ------------------------------- | -------- | --- |
-| 60    | Actions sociales réalisées       | Saisi            | Actions sociales                       | Mois, nombre              | valeur                          | non      | V1  |
-| 61    | Bénéficiaires                    | Saisi            | Bénéficiaires (passages)               | Mois écoulé, nombre       | valeur, seuil « moins de 3 »    | oui      | V1  |
-| 62    | Personnes accompagnées           | Saisi            | Personnes accompagnées                 | Mois écoulé, nombre       | valeur, seuil                   | oui      | V1  |
-| 63    | Nouveaux bénéficiaires           | Saisi            | Nouveaux bénéficiaires                 | Mois écoulé, nombre       | valeur, seuil                   | oui      | V1  |
-| 64    | Partenariats et actions externes | Saisi            | Partenariats actifs ; Actions externes | À ce jour et mois, nombre | deux valeurs                    | non      | V1  |
-| 65    | Actions réalisées depuis janvier | Somme de l'année | Actions sociales                       | Mois, nombre              | somme des mois depuis le départ | non      | V1  |
-| 66    | Fonds levés (en euros)           | Saisi            | Fonds levés                            | Mois, euros               | valeur et somme de l'année      | non      | V1  |
+| Ligne | Demande                          | Mécanisme        | Indicateur ou source                   | Rythme, unité             | Formule                                                                 | Sensible | Lot |
+| ----- | -------------------------------- | ---------------- | -------------------------------------- | ------------------------- | ----------------------------------------------------------------------- | -------- | --- |
+| 60    | Actions sociales réalisées       | Saisi            | Actions sociales                       | Mois, nombre              | valeur                                                                  | non      | V1  |
+| 61    | Bénéficiaires                    | Saisi            | Bénéficiaires (passages)               | Mois, nombre              | valeur, seuil « moins de 3 » ; catégories : à fixer par la coordination | oui      | V1  |
+| 62    | Personnes accompagnées           | Saisi            | Personnes accompagnées                 | Mois, nombre              | valeur, seuil ; catégories : à fixer par la coordination                | oui      | V1  |
+| 63    | Nouveaux bénéficiaires           | Saisi            | Nouveaux bénéficiaires                 | Mois, nombre              | valeur, seuil ; catégories : à fixer par la coordination                | oui      | V1  |
+| 64    | Partenariats et actions externes | Saisi            | Partenariats actifs ; Actions externes | À ce jour et mois, nombre | deux valeurs                                                            | non      | V1  |
+| 65    | Actions réalisées depuis janvier | Somme de l'année | Actions sociales                       | Mois, nombre              | somme des mois depuis le départ                                         | non      | V1  |
+| 66    | Fonds levés (en euros)           | Saisi            | Fonds levés                            | Mois, euros               | valeur et somme de l'année                                              | non      | V1  |
 
 ### Film (9 demandes, annexe : 9)
 
@@ -666,19 +694,21 @@ le premier jour.
 
 ### Santé (7 demandes, annexe : 7)
 
-| Ligne | Demande                                | Mécanisme       | Indicateur ou source                                                                   | Rythme, unité            | Formule                             | Sensible | Lot |
-| ----- | -------------------------------------- | --------------- | -------------------------------------------------------------------------------------- | ------------------------ | ----------------------------------- | -------- | --- |
-| 139   | Événements couverts                    | Saisi           | Événements couverts                                                                    | Mois, nombre             | valeur                              | non      | V1  |
-| 140   | Prises en charge                       | Saisi           | Prises en charge                                                                       | Mois écoulé, nombre      | valeur, seuil                       | oui      | V1  |
-| 141   | Interventions                          | Saisi           | Interventions                                                                          | Mois écoulé, nombre      | valeur, seuil                       | oui      | V1  |
-| 142   | Incidents nécessitant une intervention | Saisi           | Incidents avec intervention                                                            | Mois écoulé, nombre      | valeur, seuil                       | oui      | V1  |
-| 143   | Orientations vers une structure        | Saisi           | Orientations vers une structure ou un professionnel                                    | Mois écoulé, nombre      | valeur, seuil                       | oui      | V1  |
-| 144   | Personnes mobilisées                   | Commun et saisi | STARs au service de Santé, affiché « Personnes mobilisées » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences | non      | V1  |
-| 145   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                      | Mois, %                  | couverts ÷ à couvrir, plafond 100 % | non      | V1  |
+| Ligne | Demande                                | Mécanisme       | Indicateur ou source                                                                   | Rythme, unité            | Formule                                                  | Sensible | Lot |
+| ----- | -------------------------------------- | --------------- | -------------------------------------------------------------------------------------- | ------------------------ | -------------------------------------------------------- | -------- | --- |
+| 139   | Événements couverts                    | Saisi           | Événements couverts                                                                    | Mois, nombre             | valeur                                                   | non      | V1  |
+| 140   | Prises en charge                       | Saisi           | Prises en charge                                                                       | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
+| 141   | Interventions                          | Saisi           | Interventions                                                                          | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
+| 142   | Incidents nécessitant une intervention | Saisi           | Incidents avec intervention                                                            | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
+| 143   | Orientations vers une structure        | Saisi           | Orientations vers une structure ou un professionnel                                    | Mois, nombre             | valeur, seuil ; catégories : à fixer par la coordination | oui      | V1  |
+| 144   | Personnes mobilisées                   | Commun et saisi | STARs au service de Santé, affiché « Personnes mobilisées » ; Mobilisés aux événements | Dimanche et mois, nombre | chiffre commun ; somme de présences                      | non      | V1  |
+| 145   | Taux de couverture des événements      | Calcul          | Taux de couverture des événements                                                      | Mois, %                  | couverts ÷ à couvrir, plafond 100 %                      | non      | V1  |
 
 La ligne 146 de la source (« Les données médicales individuelles ne doivent pas apparaître dans le
 dashboard général ») est une règle et non une demande : elle est tenue par construction (totaux de
-mois écoulés, case sensible, seuil, jamais sur la vue de l'église ni dans un email).
+mois, case sensible, seuil, jamais sur la vue de l'église ni dans un email ; la « Précision »
+(P46) ne doit contenir aucune information personnelle, avec le rappel sous le champ, le refus des
+familles de texte et la relecture par EJP Tech).
 
 ### Merch (9 demandes, annexe : 9)
 
@@ -715,34 +745,34 @@ mois écoulés, case sensible, seuil, jamais sur la vue de l'église ni dans un 
 
 ### Kumi (13 demandes, annexe : 13)
 
-| Ligne | Demande                                         | Mécanisme              | Indicateur ou source                                    | Rythme, unité       | Formule                                                    | Sensible | Lot |
-| ----- | ----------------------------------------------- | ---------------------- | ------------------------------------------------------- | ------------------- | ---------------------------------------------------------- | -------- | --- |
-| 180   | Activités réalisées                             | Saisi                  | Activités réalisées                                     | Mois, nombre        | valeur                                                     | non      | V1  |
-| 181   | Participantes                                   | Saisi                  | Participantes                                           | Mois, nombre        | compte du mois, sans somme de l'année                      | non      | V1  |
-| 182   | Nouvelles participantes                         | Saisi                  | Nouvelles participantes                                 | Mois, nombre        | valeur                                                     | non      | V1  |
-| 183   | Femmes mobilisées                               | Commun                 | STARs au service de Kumi, affiché « Femmes mobilisées » | Dimanche, nombre    | chiffre commun (K8b)                                       | non      | V1  |
-| 184   | Projets réalisés                                | Saisi                  | Projets réalisés                                        | Mois, nombre        | valeur                                                     | non      | V1  |
-| 185   | Bénévoles actives                               | Commun                 | STARs actifs de Kumi, affiché « Bénévoles actives »     | À ce jour, nombre   | chiffre commun                                             | non      | V1  |
-| 186   | Taux de participation                           | Calcul                 | Taux de participation                                   | Mois, %             | participantes ÷ femmes inscrites en vigueur en fin de mois | non      | V1  |
-| 187   | Nouvelles intégrations dans les équipes         | Saisi                  | Nouvelles intégrations dans les équipes                 | Mois, nombre        | valeur (K55)                                               | non      | V1  |
-| 189   | Pages Roses : prestataires inscrites            | Relevé externe mensuel | Pages Roses : prestataires inscrites                    | À ce jour, nombre   | stock, courbe de fin de mois                               | non      | V1  |
-| 190   | Pages Roses : profils actifs                    | Relevé externe mensuel | Pages Roses : profils actifs                            | À ce jour, nombre   | stock, courbe de fin de mois                               | non      | V1  |
-| 191   | Pages Roses : demandes de mise en relation      | Relevé externe mensuel | Pages Roses : demandes de mise en relation              | Mois, nombre        | flux                                                       | non      | V1  |
-| 192   | Pages Roses : réservations                      | Relevé externe mensuel | Pages Roses : réservations                              | Mois, nombre        | flux                                                       | non      | V1  |
-| 194   | Call your sister : prises en charge par semaine | Saisi                  | Call your sister : prises en charge                     | Mois écoulé, nombre | valeur, seuil (jamais par semaine)                         | oui      | V1  |
+| Ligne | Demande                                         | Mécanisme              | Indicateur ou source                                    | Rythme, unité     | Formule                                                                       | Sensible | Lot |
+| ----- | ----------------------------------------------- | ---------------------- | ------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------- | -------- | --- |
+| 180   | Activités réalisées                             | Saisi                  | Activités réalisées                                     | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 181   | Participantes                                   | Saisi                  | Participantes                                           | Mois, nombre      | compte du mois, sans somme de l'année                                         | non      | V1  |
+| 182   | Nouvelles participantes                         | Saisi                  | Nouvelles participantes                                 | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 183   | Femmes mobilisées                               | Commun                 | STARs au service de Kumi, affiché « Femmes mobilisées » | Dimanche, nombre  | chiffre commun (K8b)                                                          | non      | V1  |
+| 184   | Projets réalisés                                | Saisi                  | Projets réalisés                                        | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 185   | Bénévoles actives                               | Commun                 | STARs actifs de Kumi, affiché « Bénévoles actives »     | À ce jour, nombre | chiffre commun                                                                | non      | V1  |
+| 186   | Taux de participation                           | Calcul                 | Taux de participation                                   | Mois, %           | participantes ÷ femmes inscrites en vigueur en fin de mois                    | non      | V1  |
+| 187   | Nouvelles intégrations dans les équipes         | Saisi                  | Nouvelles intégrations dans les équipes                 | Mois, nombre      | valeur (K55)                                                                  | non      | V1  |
+| 189   | Pages Roses : prestataires inscrites            | Relevé externe mensuel | Pages Roses : prestataires inscrites                    | À ce jour, nombre | stock, courbe de fin de mois                                                  | non      | V1  |
+| 190   | Pages Roses : profils actifs                    | Relevé externe mensuel | Pages Roses : profils actifs                            | À ce jour, nombre | stock, courbe de fin de mois                                                  | non      | V1  |
+| 191   | Pages Roses : demandes de mise en relation      | Relevé externe mensuel | Pages Roses : demandes de mise en relation              | Mois, nombre      | flux                                                                          | non      | V1  |
+| 192   | Pages Roses : réservations                      | Relevé externe mensuel | Pages Roses : réservations                              | Mois, nombre      | flux                                                                          | non      | V1  |
+| 194   | Call your sister : prises en charge par semaine | Saisi                  | Call your sister : prises en charge                     | Mois, nombre      | valeur, seuil (jamais par semaine) ; catégories : à fixer par la coordination | oui      | V1  |
 
 ### Eagles (8 demandes, annexe : 8)
 
-| Ligne | Demande                                                | Mécanisme | Indicateur ou source                                | Rythme, unité       | Formule                                           | Sensible | Lot |
-| ----- | ------------------------------------------------------ | --------- | --------------------------------------------------- | ------------------- | ------------------------------------------------- | -------- | --- |
-| 198   | Activités réalisées                                    | Saisi     | Activités réalisées                                 | Mois, nombre        | valeur                                            | non      | V1  |
-| 199   | Participants                                           | Saisi     | Participants                                        | Mois, nombre        | compte du mois, sans somme de l'année             | non      | V1  |
-| 200   | Nouveaux participants                                  | Saisi     | Nouveaux participants                               | Mois, nombre        | valeur                                            | non      | V1  |
-| 201   | Projets réalisés                                       | Saisi     | Projets réalisés                                    | Mois, nombre        | valeur                                            | non      | V1  |
-| 202   | Bénévoles actifs                                       | Commun    | STARs actifs d'Eagles, affiché « Bénévoles actifs » | À ce jour, nombre   | chiffre commun                                    | non      | V1  |
-| 203   | Taux de participation                                  | Calcul    | Taux de participation                               | Mois, %             | participants ÷ inscrits en vigueur en fin de mois | non      | V1  |
-| 204   | Nouvelles intégrations dans les équipes                | Saisi     | Nouvelles intégrations dans les équipes             | Mois, nombre        | valeur (K55)                                      | non      | V1  |
-| 206   | La plate-forme d'écoute : prises en charge par semaine | Saisi     | La plate-forme d'écoute : prises en charge          | Mois écoulé, nombre | valeur, seuil (jamais par semaine)                | oui      | V1  |
+| Ligne | Demande                                                | Mécanisme | Indicateur ou source                                | Rythme, unité     | Formule                                                                       | Sensible | Lot |
+| ----- | ------------------------------------------------------ | --------- | --------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------- | -------- | --- |
+| 198   | Activités réalisées                                    | Saisi     | Activités réalisées                                 | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 199   | Participants                                           | Saisi     | Participants                                        | Mois, nombre      | compte du mois, sans somme de l'année                                         | non      | V1  |
+| 200   | Nouveaux participants                                  | Saisi     | Nouveaux participants                               | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 201   | Projets réalisés                                       | Saisi     | Projets réalisés                                    | Mois, nombre      | valeur                                                                        | non      | V1  |
+| 202   | Bénévoles actifs                                       | Commun    | STARs actifs d'Eagles, affiché « Bénévoles actifs » | À ce jour, nombre | chiffre commun                                                                | non      | V1  |
+| 203   | Taux de participation                                  | Calcul    | Taux de participation                               | Mois, %           | participants ÷ inscrits en vigueur en fin de mois                             | non      | V1  |
+| 204   | Nouvelles intégrations dans les équipes                | Saisi     | Nouvelles intégrations dans les équipes             | Mois, nombre      | valeur (K55)                                                                  | non      | V1  |
+| 206   | La plate-forme d'écoute : prises en charge par semaine | Saisi     | La plate-forme d'écoute : prises en charge          | Mois, nombre      | valeur, seuil (jamais par semaine) ; catégories : à fixer par la coordination | oui      | V1  |
 
 ### Entretien (7 demandes, annexe : 7)
 
@@ -818,15 +848,15 @@ mois écoulés, case sensible, seuil, jamais sur la vue de l'église ni dans un 
 
 ### Prodiges Junior (7 demandes, annexe : 7)
 
-| Ligne | Demande                                | Mécanisme               | Indicateur ou source                                                  | Rythme, unité       | Formule                                                    | Sensible | Lot  |
-| ----- | -------------------------------------- | ----------------------- | --------------------------------------------------------------------- | ------------------- | ---------------------------------------------------------- | -------- | ---- |
-| 278   | Enfants présents chaque dimanche       | Saisi                   | Enfants présents                                                      | Dimanche, nombre    | valeur                                                     | non      | V1   |
-| 279   | Nouveaux enfants                       | Saisi                   | Nouveaux enfants                                                      | Mois écoulé, nombre | valeur, seuil                                              | oui      | V1   |
-| 280   | Inscrits                               | Saisi                   | Enfants inscrits                                                      | À ce jour, nombre   | valeur, date, courbe de fin de mois                        | non      | V1   |
-| 281   | Sessions réalisées                     | Lu dans la vue de suivi | « Sessions réalisées » de « Enfants présents »                        | Mois, nombre        | dimanches du mois où les enfants présents dépassent 0      | non      | V1+4 |
-| 282   | Taux de présence                       | Calcul                  | Taux de présence                                                      | Dimanche, %         | enfants présents ÷ enfants inscrits en vigueur ce dimanche | non      | V1   |
-| 283   | Animateurs mobilisés                   | Commun                  | STARs au service de Prodiges Junior, affiché « Animateurs mobilisés » | Dimanche, nombre    | chiffre commun                                             | non      | V1   |
-| 284   | Enfants revenus à une session suivante | Saisi                   | Enfants déjà venus                                                    | Mois écoulé, nombre | valeur, seuil                                              | oui      | V1   |
+| Ligne | Demande                                | Mécanisme               | Indicateur ou source                                                  | Rythme, unité     | Formule                                                    | Sensible | Lot  |
+| ----- | -------------------------------------- | ----------------------- | --------------------------------------------------------------------- | ----------------- | ---------------------------------------------------------- | -------- | ---- |
+| 278   | Enfants présents chaque dimanche       | Saisi                   | Enfants présents                                                      | Dimanche, nombre  | valeur                                                     | non      | V1   |
+| 279   | Nouveaux enfants                       | Saisi                   | Nouveaux enfants                                                      | Mois, nombre      | valeur, seuil ; catégories : à fixer par la coordination   | oui      | V1   |
+| 280   | Inscrits                               | Saisi                   | Enfants inscrits                                                      | À ce jour, nombre | valeur, date, courbe de fin de mois                        | non      | V1   |
+| 281   | Sessions réalisées                     | Lu dans la vue de suivi | « Sessions réalisées » de « Enfants présents »                        | Mois, nombre      | dimanches du mois où les enfants présents dépassent 0      | non      | V1+4 |
+| 282   | Taux de présence                       | Calcul                  | Taux de présence                                                      | Dimanche, %       | enfants présents ÷ enfants inscrits en vigueur ce dimanche | non      | V1   |
+| 283   | Animateurs mobilisés                   | Commun                  | STARs au service de Prodiges Junior, affiché « Animateurs mobilisés » | Dimanche, nombre  | chiffre commun                                             | non      | V1   |
+| 284   | Enfants revenus à une session suivante | Saisi                   | Enfants déjà venus                                                    | Mois, nombre      | valeur, seuil ; catégories : à fixer par la coordination   | oui      | V1   |
 
 ### Protocole
 
@@ -885,8 +915,11 @@ du ministère ; il compte dans les 30 lignes de la fiche.
   dispositif en tête (« Pages Roses : ») tient lieu de rubrique (R2).
 - **Ce qu'on compte exactement** : 10 à 140 caractères, affiché sous le champ et au clic sur le
   libellé.
-- **Rythme** : Dimanche ; Semaine = rythme « dimanche », semaine du lundi au dimanche ; Mois ; Mois
-  écoulé = mois, sensible ; À ce jour.
+- **Rythme** : Dimanche ; Semaine = rythme « dimanche », semaine du lundi au dimanche ; Mois ; À ce
+  jour. La première version écrivait « Mois écoulé » pour un indicateur sensible ; depuis le
+  6 octobre 2026 (P45), il se saisit aussi pour le mois en cours : son rythme s'écrit « Mois », et
+  la colonne « Sensible » dit qu'il l'est. Chaque indicateur sensible porte « catégories : à fixer par la coordination » (P47) :
+  sa répartition n'existe qu'une fois la liste donnée et écrite par migration.
 - **Borne** : nombre 9 999 ; grand nombre et euros 9 999 999 ; heure 0 h 00 à 23 h 59 ; jours 99 999.
 - **Somme** : « non » pose le drapeau `sans_somme` (pas de somme de l'année affichée : personnes
   différentes du mois, pic, heure, jours). Un « à ce jour » n'a jamais de somme.
@@ -964,17 +997,19 @@ Commun affiché : « Équipe présente au culte » (STARs au service).
 
 ### Social
 
-| Libellé                  | Ce qu'on compte exactement                                                                           | Rythme      | Unité, borne     | Rubrique | Sensible | Somme |
-| ------------------------ | ---------------------------------------------------------------------------------------------------- | ----------- | ---------------- | -------- | -------- | ----- |
-| Actions sociales         | Actions sociales menées et terminées dans le mois.                                                   | Mois        | nombre, 9 999    | aucune   | non      | oui   |
-| Bénéficiaires (passages) | Aides apportées dans le mois. Chaque passage compte une fois, même pour une personne déjà aidée.     | Mois écoulé | nombre, 9 999    | aucune   | oui      | oui   |
-| Personnes accompagnées   | Personnes qui ont eu au moins un entretien de suivi dans le mois. Une personne compte une fois.      | Mois écoulé | nombre, 9 999    | aucune   | oui      | oui   |
-| Nouveaux bénéficiaires   | Personnes aidées pour la première fois dans le mois. Un total, sans liste.                           | Mois écoulé | nombre, 9 999    | aucune   | oui      | oui   |
-| Partenariats actifs      | Partenariats en cours avec des structures extérieures, le jour de la saisie.                         | À ce jour   | nombre, 9 999    | aucune   | non      | non   |
-| Actions externes         | Actions menées avec un partenaire extérieur ou chez lui dans le mois.                                | Mois        | nombre, 9 999    | aucune   | non      | oui   |
-| Fonds levés              | Fonds levés dans le mois, à l'euro près, sans nom de donateur. La comptabilité de l'église fait foi. | Mois        | euros, 9 999 999 | aucune   | non      | oui   |
+| Libellé                  | Ce qu'on compte exactement                                                                           | Rythme    | Unité, borne     | Rubrique | Sensible | Somme |
+| ------------------------ | ---------------------------------------------------------------------------------------------------- | --------- | ---------------- | -------- | -------- | ----- |
+| Actions sociales         | Actions sociales menées et terminées dans le mois.                                                   | Mois      | nombre, 9 999    | aucune   | non      | oui   |
+| Bénéficiaires (passages) | Aides apportées dans le mois. Chaque passage compte une fois, même pour une personne déjà aidée.     | Mois      | nombre, 9 999    | aucune   | oui      | oui   |
+| Personnes accompagnées   | Personnes qui ont eu au moins un entretien de suivi dans le mois. Une personne compte une fois.      | Mois      | nombre, 9 999    | aucune   | oui      | oui   |
+| Nouveaux bénéficiaires   | Personnes aidées pour la première fois dans le mois. Un total, sans liste.                           | Mois      | nombre, 9 999    | aucune   | oui      | oui   |
+| Partenariats actifs      | Partenariats en cours avec des structures extérieures, le jour de la saisie.                         | À ce jour | nombre, 9 999    | aucune   | non      | non   |
+| Actions externes         | Actions menées avec un partenaire extérieur ou chez lui dans le mois.                                | Mois      | nombre, 9 999    | aucune   | non      | oui   |
+| Fonds levés              | Fonds levés dans le mois, à l'euro près, sans nom de donateur. La comptabilité de l'église fait foi. | Mois      | euros, 9 999 999 | aucune   | non      | oui   |
 
-Aucun calcul (les sensibles n'en ont pas).
+Aucun calcul (les sensibles n'en ont pas). Bénéficiaires (passages), Personnes accompagnées et
+Nouveaux bénéficiaires : catégories : à fixer par la coordination (P47) ; « Précision » possible
+(P46).
 
 ### Film
 
@@ -1065,21 +1100,23 @@ Commun affiché : « Équipiers mobilisés » (STARs au service). 21 lignes sur 
 
 ### Santé
 
-| Libellé                                             | Ce qu'on compte exactement                                                                                     | Rythme      | Unité, borne  | Rubrique | Sensible | Somme |
-| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------- | ------------- | -------- | -------- | ----- |
-| Événements couverts                                 | Événements EJP où l'équipe santé a assuré sa présence dans le mois, cultes compris.                            | Mois        | nombre, 9 999 | aucune   | non      | oui   |
-| Événements à couvrir                                | Événements EJP où l'équipe santé devait être présente dans le mois, couverts ou non.                           | Mois        | nombre, 9 999 | aucune   | non      | oui   |
-| Prises en charge                                    | Personnes prises en charge par l'équipe santé dans le mois, une fois chacune. Aucun détail.                    | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Interventions                                       | Gestes de l'équipe (soin, appel aux secours) dans le mois. Une prise en charge peut en compter plusieurs.      | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Incidents avec intervention                         | Incidents (malaise, chute, accident) du mois qui ont demandé l'équipe santé ou les secours.                    | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Orientations vers une structure ou un professionnel | Personnes orientées vers une structure de santé ou un professionnel dans le mois.                              | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Mobilisés aux événements                            | Présences de l'équipe santé aux événements hors dimanche. Une personne compte à chaque événement où elle sert. | Mois        | nombre, 9 999 | aucune   | non      | oui   |
+| Libellé                                             | Ce qu'on compte exactement                                                                                     | Rythme | Unité, borne  | Rubrique | Sensible | Somme |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ------ | ------------- | -------- | -------- | ----- |
+| Événements couverts                                 | Événements EJP où l'équipe santé a assuré sa présence dans le mois, cultes compris.                            | Mois   | nombre, 9 999 | aucune   | non      | oui   |
+| Événements à couvrir                                | Événements EJP où l'équipe santé devait être présente dans le mois, couverts ou non.                           | Mois   | nombre, 9 999 | aucune   | non      | oui   |
+| Prises en charge                                    | Personnes prises en charge par l'équipe santé dans le mois, une fois chacune. Aucun détail.                    | Mois   | nombre, 9 999 | aucune   | oui      | oui   |
+| Interventions                                       | Gestes de l'équipe (soin, appel aux secours) dans le mois. Une prise en charge peut en compter plusieurs.      | Mois   | nombre, 9 999 | aucune   | oui      | oui   |
+| Incidents avec intervention                         | Incidents (malaise, chute, accident) du mois qui ont demandé l'équipe santé ou les secours.                    | Mois   | nombre, 9 999 | aucune   | oui      | oui   |
+| Orientations vers une structure ou un professionnel | Personnes orientées vers une structure de santé ou un professionnel dans le mois.                              | Mois   | nombre, 9 999 | aucune   | oui      | oui   |
+| Mobilisés aux événements                            | Présences de l'équipe santé aux événements hors dimanche. Une personne compte à chaque événement où elle sert. | Mois   | nombre, 9 999 | aucune   | non      | oui   |
 
 | Calcul                            | Type                | Formule (sources)                          | Lot |
 | --------------------------------- | ------------------- | ------------------------------------------ | --- |
 | Taux de couverture des événements | taux, plafond 100 % | Événements couverts ÷ Événements à couvrir | V1  |
 
-Commun affiché : « Personnes mobilisées » (STARs au service).
+Commun affiché : « Personnes mobilisées » (STARs au service). Prises en charge, Interventions,
+Incidents avec intervention, Orientations vers une structure ou un professionnel : catégories : à
+fixer par la coordination (P47) ; « Précision » possible (P46).
 
 ### Merch
 
@@ -1133,43 +1170,46 @@ Valeurs de départ, saisies à la mise en service : Budget matériel prévu 5 16
 
 ### Kumi
 
-| Libellé                                    | Ce qu'on compte exactement                                                                               | Rythme      | Unité, borne  | Rubrique         | Sensible | Somme |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | ----------- | ------------- | ---------------- | -------- | ----- |
-| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                | Mois        | nombre, 9 999 | aucune           | non      | oui   |
-| Participantes                              | Femmes venues à au moins une activité dans le mois, comptées une fois, hors outil.                       | Mois        | nombre, 9 999 | aucune           | non      | non   |
-| Nouvelles participantes                    | Femmes venues à une activité pour la première fois dans le mois. Un total, sans liste.                   | Mois        | nombre, 9 999 | aucune           | non      | oui   |
-| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                | Mois        | nombre, 9 999 | aucune           | non      | oui   |
-| Femmes inscrites                           | Femmes inscrites aux activités de Kumi le jour de la saisie.                                             | À ce jour   | nombre, 9 999 | aucune           | non      | non   |
-| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe de Kumi dans le mois. Différent des nouveaux STARs comptés par MDS. | Mois        | nombre, 9 999 | aucune           | non      | oui   |
-| Pages Roses : prestataires inscrites       | Prestataires inscrites sur Pages Roses le jour du relevé, selon la plateforme. Relevé une fois par mois. | À ce jour   | nombre, 9 999 | Pages Roses      | non      | non   |
-| Pages Roses : profils actifs               | Profils que Pages Roses compte comme actifs le jour du relevé. Relevé une fois par mois.                 | À ce jour   | nombre, 9 999 | Pages Roses      | non      | non   |
-| Pages Roses : demandes de mise en relation | Demandes de mise en relation reçues sur Pages Roses dans le mois, selon la plateforme.                   | Mois        | nombre, 9 999 | Pages Roses      | non      | oui   |
-| Pages Roses : réservations                 | Réservations enregistrées sur Pages Roses dans le mois, selon la plateforme.                             | Mois        | nombre, 9 999 | Pages Roses      | non      | oui   |
-| Call your sister : prises en charge        | Prises en charge de Call your sister dans le mois. Mois fini seulement, aucun détail.                    | Mois écoulé | nombre, 9 999 | Call your sister | oui      | oui   |
+| Libellé                                    | Ce qu'on compte exactement                                                                               | Rythme    | Unité, borne  | Rubrique         | Sensible | Somme |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------- | --------- | ------------- | ---------------- | -------- | ----- |
+| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                | Mois      | nombre, 9 999 | aucune           | non      | oui   |
+| Participantes                              | Femmes venues à au moins une activité dans le mois, comptées une fois, hors outil.                       | Mois      | nombre, 9 999 | aucune           | non      | non   |
+| Nouvelles participantes                    | Femmes venues à une activité pour la première fois dans le mois. Un total, sans liste.                   | Mois      | nombre, 9 999 | aucune           | non      | oui   |
+| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                | Mois      | nombre, 9 999 | aucune           | non      | oui   |
+| Femmes inscrites                           | Femmes inscrites aux activités de Kumi le jour de la saisie.                                             | À ce jour | nombre, 9 999 | aucune           | non      | non   |
+| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe de Kumi dans le mois. Différent des nouveaux STARs comptés par MDS. | Mois      | nombre, 9 999 | aucune           | non      | oui   |
+| Pages Roses : prestataires inscrites       | Prestataires inscrites sur Pages Roses le jour du relevé, selon la plateforme. Relevé une fois par mois. | À ce jour | nombre, 9 999 | Pages Roses      | non      | non   |
+| Pages Roses : profils actifs               | Profils que Pages Roses compte comme actifs le jour du relevé. Relevé une fois par mois.                 | À ce jour | nombre, 9 999 | Pages Roses      | non      | non   |
+| Pages Roses : demandes de mise en relation | Demandes de mise en relation reçues sur Pages Roses dans le mois, selon la plateforme.                   | Mois      | nombre, 9 999 | Pages Roses      | non      | oui   |
+| Pages Roses : réservations                 | Réservations enregistrées sur Pages Roses dans le mois, selon la plateforme.                             | Mois      | nombre, 9 999 | Pages Roses      | non      | oui   |
+| Call your sister : prises en charge        | Prises en charge de Call your sister dans le mois. Aucun détail.                                         | Mois      | nombre, 9 999 | Call your sister | oui      | oui   |
 
 | Calcul                | Type | Formule (sources)                                            | Lot |
 | --------------------- | ---- | ------------------------------------------------------------ | --- |
 | Taux de participation | taux | Participantes ÷ Femmes inscrites en vigueur à la fin du mois | V1  |
 
 Communs affichés : « Femmes mobilisées » (STARs au service), « Bénévoles actives » (STARs actifs).
+Call your sister : prises en charge : catégories : à fixer par la coordination (P47) ;
+« Précision » possible (P46).
 
 ### Eagles
 
-| Libellé                                    | Ce qu'on compte exactement                                                                                | Rythme      | Unité, borne  | Rubrique                | Sensible | Somme |
-| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | ----------- | ------------- | ----------------------- | -------- | ----- |
-| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                 | Mois        | nombre, 9 999 | aucune                  | non      | oui   |
-| Participants                               | Personnes venues à au moins une activité dans le mois, comptées une fois, hors outil.                     | Mois        | nombre, 9 999 | aucune                  | non      | non   |
-| Nouveaux participants                      | Personnes venues à une activité pour la première fois dans le mois. Un total, sans liste.                 | Mois        | nombre, 9 999 | aucune                  | non      | oui   |
-| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                 | Mois        | nombre, 9 999 | aucune                  | non      | oui   |
-| Inscrits                                   | Personnes inscrites aux activités d'Eagles le jour de la saisie.                                          | À ce jour   | nombre, 9 999 | aucune                  | non      | non   |
-| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe d'Eagles dans le mois. Différent des nouveaux STARs comptés par MDS. | Mois        | nombre, 9 999 | aucune                  | non      | oui   |
-| La plate-forme d'écoute : prises en charge | Prises en charge de la plate-forme d'écoute dans le mois. Mois fini seulement, aucun détail.              | Mois écoulé | nombre, 9 999 | La plate-forme d'écoute | oui      | oui   |
+| Libellé                                    | Ce qu'on compte exactement                                                                                | Rythme    | Unité, borne  | Rubrique                | Sensible | Somme |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------- | ------------- | ----------------------- | -------- | ----- |
+| Activités réalisées                        | Activités ponctuelles tenues dans le mois (atelier, rencontre, sortie), une fois chacune.                 | Mois      | nombre, 9 999 | aucune                  | non      | oui   |
+| Participants                               | Personnes venues à au moins une activité dans le mois, comptées une fois, hors outil.                     | Mois      | nombre, 9 999 | aucune                  | non      | non   |
+| Nouveaux participants                      | Personnes venues à une activité pour la première fois dans le mois. Un total, sans liste.                 | Mois      | nombre, 9 999 | aucune                  | non      | oui   |
+| Projets réalisés                           | Projets de plusieurs semaines menés à terme dans le mois.                                                 | Mois      | nombre, 9 999 | aucune                  | non      | oui   |
+| Inscrits                                   | Personnes inscrites aux activités d'Eagles le jour de la saisie.                                          | À ce jour | nombre, 9 999 | aucune                  | non      | non   |
+| Nouvelles intégrations dans les équipes    | Personnes qui ont rejoint une équipe d'Eagles dans le mois. Différent des nouveaux STARs comptés par MDS. | Mois      | nombre, 9 999 | aucune                  | non      | oui   |
+| La plate-forme d'écoute : prises en charge | Prises en charge de la plate-forme d'écoute dans le mois. Aucun détail.                                   | Mois      | nombre, 9 999 | La plate-forme d'écoute | oui      | oui   |
 
 | Calcul                | Type | Formule (sources)                                   | Lot |
 | --------------------- | ---- | --------------------------------------------------- | --- |
 | Taux de participation | taux | Participants ÷ Inscrits en vigueur à la fin du mois | V1  |
 
-Commun affiché : « Bénévoles actifs » (STARs actifs).
+Commun affiché : « Bénévoles actifs » (STARs actifs). La plate-forme d'écoute : prises en charge :
+catégories : à fixer par la coordination (P47) ; « Précision » possible (P46).
 
 ### Entretien
 
@@ -1291,12 +1331,12 @@ l'église, déjà publics). Série dérivée : « Événements organisés » (é
 
 ### Prodiges Junior
 
-| Libellé            | Ce qu'on compte exactement                                                                               | Rythme      | Unité, borne  | Rubrique | Sensible | Somme |
-| ------------------ | -------------------------------------------------------------------------------------------------------- | ----------- | ------------- | -------- | -------- | ----- |
-| Enfants présents   | Enfants accueillis ce dimanche, en un seul total, sans âge ni nom.                                       | Dimanche    | nombre, 9 999 | aucune   | non      | oui   |
-| Nouveaux enfants   | Enfants accueillis pour la première fois à Prodiges Junior dans le mois. Mois fini seulement.            | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Enfants déjà venus | Enfants accueillis dans le mois qui l'avaient déjà été avant. Un total, sans liste. Mois fini seulement. | Mois écoulé | nombre, 9 999 | aucune   | oui      | oui   |
-| Enfants inscrits   | Enfants inscrits à Prodiges Junior le jour de la saisie.                                                 | À ce jour   | nombre, 9 999 | aucune   | non      | non   |
+| Libellé            | Ce qu'on compte exactement                                                          | Rythme    | Unité, borne  | Rubrique | Sensible | Somme |
+| ------------------ | ----------------------------------------------------------------------------------- | --------- | ------------- | -------- | -------- | ----- |
+| Enfants présents   | Enfants accueillis ce dimanche, en un seul total, sans âge ni nom.                  | Dimanche  | nombre, 9 999 | aucune   | non      | oui   |
+| Nouveaux enfants   | Enfants accueillis pour la première fois à Prodiges Junior dans le mois.            | Mois      | nombre, 9 999 | aucune   | oui      | oui   |
+| Enfants déjà venus | Enfants accueillis dans le mois qui l'avaient déjà été avant. Un total, sans liste. | Mois      | nombre, 9 999 | aucune   | oui      | oui   |
+| Enfants inscrits   | Enfants inscrits à Prodiges Junior le jour de la saisie.                            | À ce jour | nombre, 9 999 | aucune   | non      | non   |
 
 | Calcul           | Type | Formule (sources)                                          | Lot |
 | ---------------- | ---- | ---------------------------------------------------------- | --- |
@@ -1305,7 +1345,8 @@ l'église, déjà publics). Série dérivée : « Événements organisés » (é
 « Enfants présents » porte le libellé de sessions « Sessions réalisées » (X14). Commun affiché :
 « Animateurs mobilisés » (STARs au service). Le mot « enfant » déclenche l'avertissement « domaine
 sensible » : l'administration confirme que « Enfants présents » et « Enfants inscrits » ne le sont
-pas.
+pas. Nouveaux enfants et Enfants déjà venus : catégories : à fixer par la coordination (P47) ;
+« Précision » possible (P46).
 
 ### Protocole et Prodiges Academy
 
@@ -1347,16 +1388,16 @@ matrice des droits.
 
 ### Avant la mise en service (ce qui sert à saisir)
 
-| N°  | Extension                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Sert à                                               | Coût      |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------- |
-| X1  | Catalogue complet de la vague 1 : 161 prévus, 41 calculs, définitions, valeurs de départ, suggestions ; tests de création par « Créer »                                                                                                                                                                                                                                                                                                                                                                                                                                                      | tous les ministères                                  | 1,5 jour  |
-| X2  | Unités « heure » (0 à 1439, minutes depuis minuit, saisie en heures et minutes, affichage « 10 h 42 ») et « jours » (0 à 99 999) sur `indicateur.unite` ; contrôle de `mesure.valeur` par unité ; formulaire ; pgTAP                                                                                                                                                                                                                                                                                                                                                                         | Coordination, Film, Tech, Entretien                  | 1 jour    |
-| X3  | Drapeaux du catalogue, fixés à la création et contrôlés par `controler_indicateur` : `sans_somme`, `saisi_dimanche_matin` (le formulaire propose le dimanche du jour tant qu'on est dimanche, heure de Paris), `libelle_sessions`                                                                                                                                                                                                                                                                                                                                                            | MPI, Kumi, Eagles, MCAD, Coordo FIJ, Prodiges Junior | 0,5 jour  |
-| X4  | Seuil « moins de 3 » : vue `security_invoker` adossée à une fonction `private` ; somme sans fuite (mois affichés seulement) ; politique de lecture de `mesure` fermée aux lignes sensibles pour tout autre profil que le ministère ; sensibles actifs dès la vague 1, sans réglage d'activation (P42) ; pgTAP (0 reste 0, 1 et 2 masqués, valeur exacte pour le ministère, lecture directe refusée, somme sans fuite)                                                                                                                                                                        | Social, Santé, Kumi, Eagles, Prodiges Junior         | 1,5 jour  |
-| X5  | Statistiques FIJ par département : table `fij_statistique` (rubrique, département, dimanche, valeur, `saisi_le`, `saisi_par`), liste fermée `private.fij_rubrique`, fonction `saisir_fij_statistiques` (`private` en `security definer`, appelée par une fonction `public` en `security invoker`, une ligne de journal sans valeur), vue `v_fij_statistique` (dernière saisie par département, total, complétude, série), formulaire « Chiffres par département », pgTAP (le ministère `fij` écrit ; berger, conseil, EJP Tech lisent ; rien pour l'administration ni les autres ministères) | Coordo FIJ                                           | 2,5 jours |
-| X6  | Libellés des communs sur une fiche : `private.libelle_commun` (modèle, code du commun, libellé de 60 caractères au plus), jamais exposée, lue par la fiche ; lignes de référence de l'église pour MDS                                                                                                                                                                                                                                                                                                                                                                                        | 10 ministères et MDS                                 | 0,5 jour  |
-| X7  | Limites : 30 lignes par fiche, saisis et calculs, prévus compris ; plus de plafond de six ; code `coordination` posé sur le ministère Coordination par migration                                                                                                                                                                                                                                                                                                                                                                                                                             | tous                                                 | 0,25 jour |
-| X8  | Structure de `indicateur_terme` (calcul, côté haut ou bas, source, agrégat, décalage, ordre), écrite seulement à la création et figée, à la place de `haut_id` et `bas_id` dès la migration de définition ; seuls les taux et moyennes de T35 se lisent en V1                                                                                                                                                                                                                                                                                                                                | les 29 calculs de V1                                 | 0,5 jour  |
+| N°  | Extension                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Sert à                                               | Coût      |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | --------- |
+| X1  | Catalogue complet de la vague 1 : 161 prévus, 41 calculs, définitions, valeurs de départ, suggestions ; tests de création par « Créer »                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | tous les ministères                                  | 1,5 jour  |
+| X2  | Unités « heure » (0 à 1439, minutes depuis minuit, saisie en heures et minutes, affichage « 10 h 42 ») et « jours » (0 à 99 999) sur `indicateur.unite` ; contrôle de `mesure.valeur` par unité ; formulaire ; pgTAP                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | Coordination, Film, Tech, Entretien                  | 1 jour    |
+| X3  | Drapeaux du catalogue, fixés à la création et contrôlés par `controler_indicateur` : `sans_somme`, `saisi_dimanche_matin` (le formulaire propose le dimanche du jour tant qu'on est dimanche, heure de Paris), `libelle_sessions`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | MPI, Kumi, Eagles, MCAD, Coordo FIJ, Prodiges Junior | 0,5 jour  |
+| X4  | Seuil « moins de 3 » : vue `security_invoker` adossée à une fonction `private` ; somme sans fuite (mois affichés seulement) ; politique de lecture de `mesure` fermée aux lignes sensibles pour tout autre profil que le ministère ; sensibles actifs dès la vague 1, sans réglage d'activation (P42) ; mois en cours accepté et affiché « en cours » avec le seuil, dernière valeur seule d'un mois pour les autres lecteurs (P45) ; « Précision » et répartition par catégories de la coordination avec masquage secondaire (P46, P47 : lot B8 du plan, 2,5 jours de plus) ; pgTAP (0 reste 0, 1 et 2 masqués, valeur exacte pour le ministère, lecture directe refusée, somme sans fuite, aucune case « moins de 3 » recalculable dans une répartition) | Social, Santé, Kumi, Eagles, Prodiges Junior         | 1,5 jour  |
+| X5  | Statistiques FIJ par département : table `fij_statistique` (rubrique, département, dimanche, valeur, `saisi_le`, `saisi_par`), liste fermée `private.fij_rubrique`, fonction `saisir_fij_statistiques` (`private` en `security definer`, appelée par une fonction `public` en `security invoker`, une ligne de journal sans valeur), vue `v_fij_statistique` (dernière saisie par département, total, complétude, série), formulaire « Chiffres par département », pgTAP (le ministère `fij` écrit ; berger, conseil, EJP Tech lisent ; rien pour l'administration ni les autres ministères)                                                                                                                                                               | Coordo FIJ                                           | 2,5 jours |
+| X6  | Libellés des communs sur une fiche : `private.libelle_commun` (modèle, code du commun, libellé de 60 caractères au plus), jamais exposée, lue par la fiche ; lignes de référence de l'église pour MDS                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | 10 ministères et MDS                                 | 0,5 jour  |
+| X7  | Limites : 30 lignes par fiche, saisis et calculs, prévus compris ; plus de plafond de six ; code `coordination` posé sur le ministère Coordination par migration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | tous                                                 | 0,25 jour |
+| X8  | Structure de `indicateur_terme` (calcul, côté haut ou bas, source, agrégat, décalage, ordre), écrite seulement à la création et figée, à la place de `haut_id` et `bas_id` dès la migration de définition ; seuls les taux et moyennes de T35 se lisent en V1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | les 29 calculs de V1                                 | 0,5 jour  |
 
 Total avant la mise en service : **environ 8 jours**, en plus du lot 1 de T35 et de la validation de
 T30.
@@ -1434,7 +1475,10 @@ Tout ce document l'est. Comment une révision s'applique :
 - **Questions à poser pendant la relecture** : sens de la présence au culte (K19a) ; live et
   diffusion en direct (K32) ; catégories de Merch et de Prodiges Musique ; rubriques et étapes de
   Coordo FIJ ; jour des séances de Formation (formateurs mobilisés) ; définitions d'activité et de
-  projet de Kumi et d'Eagles.
+  projet de Kumi et d'Eagles ; **listes de catégories des onze indicateurs sensibles** (P47 : 3 à
+  6 catégories larges, dont « Autre », ou « Aucune » si l'indicateur reste un simple total),
+  proposées par Santé, Social, Kumi, Eagles et Prodiges Junior et fixées par la coordination
+  (section « Catégories des chiffres sensibles » de `docs/conformite/libelles-a-valider.md`).
 
 ## 8. Suites de la revue du 6 octobre
 

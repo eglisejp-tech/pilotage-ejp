@@ -6,6 +6,8 @@ l'étape 4, ses écrans à l'étape 6, le lot 2 après la mise en service. Les q
 ont reçu leur réponse (`docs/conception/vague-1-decisions.md`, 2.5), qui fait foi là où elle diffère.
 Date : 5 octobre 2026, revue appliquée le même jour, puis alignée sur T30 le même jour, et de
 nouveau le 6 octobre 2026.
+Revu le 6 octobre 2026 (P45 à P47) : le mois en cours d'un indicateur sensible se saisit ; la
+précision et la répartition par catégories sont décrites dans `docs/decisions.md` (P46, P47, T41).
 
 Alignement sur T30 (`docs/conception/validation-metier.md`) et sur les décisions de la personne
 responsable du 5 et du 6 octobre 2026 :
@@ -144,7 +146,7 @@ Huit mots suffisent à l'écran :
   couverts »), qu'un ministère ajoute en disant pourquoi, puis qu'EJP Tech valide.
 - **Retirer** : le geste qui arrête un indicateur ; ses saisies restent.
 
-Mentions affichées : « Ajouté par Kumi le 12 oct. », « Sensible : mois écoulés seulement »,
+Mentions affichées : « Ajouté par Kumi le 12 oct. », « Sensible : 1 et 2 s'affichent moins de 3 »,
 « Libellé corrigé le 14 oct. », « Retiré le 3 nov. », « À valider par EJP Tech depuis 2 jours »,
 « Refusé le 8 oct. » et, pour le ministère seulement, « Correction du nom envoyée le 9 oct. ».
 
@@ -378,8 +380,10 @@ activité se calcule :
   l. 140 à 143), Social (bénéficiaires, personnes accompagnées, nouveaux bénéficiaires, l. 61 à
   63), Call your sister (Kumi, l. 194), la plate-forme d'écoute (Eagles, l. 206), nouveaux enfants
   et enfants déjà venus (Prodiges Junior, l. 279 et 284).
-- Saisie des mois écoulés seulement (P22) : la base refuse le mois en cours. La fiche montre la
-  valeur du mois, jamais la suite des saisies ; le journal ne porte aucune valeur (5.10).
+- Saisie du mois, **mois en cours compris** (P45, qui remplace « mois écoulés seulement » de P22) :
+  la base accepte le mois en cours, refuse un mois futur. La fiche montre la valeur du mois, marquée
+  « en cours » pour le mois en cours, jamais la suite des saisies ; le journal ne porte aucune valeur
+  ni aucune ligne d'indicateur sensible (5.10).
 - **Lecture des lignes brutes** (proposé, à confirmer par EJP Tech, Q9) : `kpi-ministeres.md`
   (4.2) prévoyait de fixer à l'étape 4a une lecture par la vue du mois seulement. Cette conception
   propose de laisser les lignes de `mesure` lisibles par l'API pour le ministère, le berger, le
@@ -684,8 +688,8 @@ Le trigger `before insert` de `mesure` (une nouvelle version, même nom) refuse,
 3. une valeur au-dessus du plafond de sa sorte : « Entre 0 et 9 999. » ou « Entre 0 et 9 999 999. » ;
 4. pour un mois : un autre jour que le 1er, un mois après `private.mois_courant()` (nouvelle aide :
    le 1er du mois de `private.aujourdhui()`), un mois avant le 1er janvier de l'année précédente
-   (« Ce mois est trop ancien pour être saisi. ») et le mois en cours pour un indicateur sensible
-   (« Ce chiffre se saisit une fois le mois fini. »).
+   (« Ce mois est trop ancien pour être saisi. »). Le mois en cours d'un indicateur sensible est
+   accepté, comme celui de tout indicateur du mois (P45) ; aucun message « mois fini » n'existe.
 
 Les règles du dimanche et du « à ce jour » ne changent pas.
 
@@ -1086,7 +1090,7 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
   « Chaque mois, le total d'un mois », « À ce jour, où on en est aujourd'hui ») ; « Sorte de
   nombre » (trois boutons radio : « Un compte (jusqu'à 9 999) » coché, « Un grand compte (jusqu'à
   9 999 999) », « Des euros ») ; case « Domaine sensible (santé, accompagnement, enfants) » avec sa
-  conséquence (« Saisi chaque mois, une fois le mois fini. ») ; si le libellé touche la famille
+  conséquence (« Saisi chaque mois, mois en cours compris. ») ; si le libellé touche la famille
   sensible sans la case, le refus de 6.1 et une case « Ce n'est pas un domaine sensible » ;
   contrôles pendant la frappe ; aperçu (« Publications, septembre 2026 : __ ») ; bouton « Ajouter
   l'indicateur ».
@@ -1185,8 +1189,8 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
     lien « Choisir un autre mois » (« Octobre 2026, en cours », « Août 2026 (déjà saisi) », puis
     les mois plus anciens, jusqu'à janvier de l'année précédente) ;
   - champs vides, aide « Le total du mois. Si rien, enregistrez 0. » et la définition ;
-  - sur le mois en cours, un indicateur sensible s'affiche sans champ : « Se saisit une fois le mois
-    fini. » ;
+  - sur le mois en cours, un indicateur sensible a son champ comme les autres (P45) ; le message
+    « Se saisit une fois le mois fini. » est retiré ;
   - « Déjà saisi : 14, le 2 oct. Votre saisie la remplacera. » ; après la mise en service, la
     confirmation « Vérifiez ce chiffre » (`validation-metier.md`, 3.5), pour le ministère
     seulement ; un seul insert ; bouton « Enregistrer les chiffres du mois ».
@@ -1213,7 +1217,8 @@ téléphone ; cibles de 44 px ; boutons jamais grisés, l'erreur s'affiche sous 
 - Un calcul tient sur une ligne : « Taux de résolution : 80 % en septembre (16 sur 20). Depuis
   janvier : 78 % (9 mois sur 9). » Avec un bas « à ce jour » de plus de 30 jours : « Taux de
   complétion : 40 % (12 sur 30 inscrits, relevé le 12 août). »
-- Un indicateur sensible : la valeur du mois fini seulement, sans « en cours ».
+- Un indicateur sensible : la valeur du mois, marquée « en cours » pour le mois en cours (« Octobre
+  en cours : moins de 3 »), avec le seuil « moins de 3 » pour le berger, le conseil et EJP Tech.
 - Un ajout à valider : à sa place, avec « à valider par EJP Tech depuis 2 jours » ; ses valeurs,
   marquées, sans somme de l'année, sans courbe ni calcul (T30).
 - « Retirés (2) », replié, garde les valeurs ; un retiré sans saisie ou retiré pour confidentialité
