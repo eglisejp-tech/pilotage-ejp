@@ -38,8 +38,9 @@ update ctx set des = tests.creer_compte('essai-matrice-desactive@exemple.test', 
 update public.ministere set desactive_le = now() where id = (select des_m from ctx);
 update public.compte set desactive_le = now() where user_id = (select des from ctx);
 
-insert into public.indicateur (libelle, nature, ministere_id, ordre)
-select 'Essai matrice, propre à Jeunesse', 'dimanche', c.jeu_m, 90 from ctx c;
+insert into public.indicateur (libelle, definition, nature, ministere_id, ordre)
+select 'Essai matrice, propre à Jeunesse', 'Chiffre d''essai de la matrice des droits.', 'dimanche', c.jeu_m, 90
+from ctx c;
 insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur, saisi_par)
 select i.id, c.jeu_m, c.dimanche, 4, c.jeu
 from ctx c
@@ -53,7 +54,8 @@ create temp table profil (
   nom text not null,
   user_id uuid,
   cible uuid not null,
-  mesures integer
+  mesures integer,
+  indicateurs integer
 );
 insert into profil (ordre, code, nom, user_id, cible)
 select 1, 'ministere', 'ministère Communication', c.com, c.com_m from ctx c
@@ -77,6 +79,14 @@ update profil p set mesures = case
       (select count(*) from public.mesure m join public.indicateur i on i.id = m.indicateur_id
         where i.ministere_id is null)
     else 0
+  end;
+
+-- Indicateur (Q3, étape 4) : un ministère lit les définitions des communs et les siennes ; le
+-- berger, le conseil, l'administration et EJP Tech lisent toutes les définitions.
+update profil p set indicateurs = case
+    when p.code in ('ministere', 'ministere_fij') then
+      (select count(*) from public.indicateur i where i.ministere_id is null or i.ministere_id = p.cible)
+    else (select count(*) from public.indicateur)
   end;
 
 -- Tables, colonne modifiée par l'essai d'update, nombre de lignes (lu sans RLS).
@@ -106,7 +116,7 @@ select 'compte', 'insert into public.compte (user_id, type, libelle) values (gen
 from ctx
 union all
 select 'indicateur',
-       'insert into public.indicateur (libelle, nature, ministere_id) values (''Essai matrice'', ''dimanche'', {cible})'
+       'insert into public.indicateur (libelle, definition, nature, ministere_id) values (''Essai matrice'', ''Chiffre d''''essai de la matrice.'', ''dimanche'', {cible})'
 from ctx
 union all
 select 'mesure', format('insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) values (%L, {cible}, %L, 5)',
@@ -150,6 +160,7 @@ select (row_number() over (order by t.ordre, o.ordre, p.ordre, a.aal))::integer 
                  when a.aal = 'aal1' or p.code = 'desactive' then (case when t.nom = 'compte' then 1 else 0 end)
                  when t.nom in ('ministere', 'compte') then t.total
                  when t.nom = 'mesure' then p.mesures
+                 when t.nom = 'indicateur' then p.indicateurs
                  else t.total
                end)::text || ' lignes'
        end as attendu

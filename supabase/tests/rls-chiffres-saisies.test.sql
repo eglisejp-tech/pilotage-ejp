@@ -65,8 +65,9 @@ select c.s2, x.ministere_id
 from ctx c cross join lateral unnest(array[c.a_m, c.b_m, c.c_m, c.e_m]) as x(ministere_id);
 
 -- Indicateur propre de Jeunesse (posé d'ordinaire par une migration), avec un chiffre.
-insert into public.indicateur (libelle, nature, ministere_id, ordre)
-select 'Essai saisies, propre à Jeunesse', 'dimanche', c.jeu_m, 90 from ctx c;
+insert into public.indicateur (libelle, definition, nature, ministere_id, ordre)
+select 'Essai saisies, propre à Jeunesse', 'Chiffre d''essai des saisies des chiffres.', 'dimanche', c.jeu_m, 90
+from ctx c;
 update ctx set propre = (select i.id from public.indicateur i where i.libelle = 'Essai saisies, propre à Jeunesse');
 insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur, saisi_par)
 select c.propre, c.jeu_m, c.dimanche - 7, 3, c.jeu from ctx c;
