@@ -100,11 +100,13 @@ $$, $$
   union all select 'point_statut', a, a_m, 'point_attention', pt1, '{"statut": ["a_traiter", "en_cours"]}'::jsonb from ctx
   union all select 'point_cree', a, a_m, 'point_attention', pt2, '{"priorite": "normale", "mentions": []}'::jsonb from ctx
   union all select 'evenement_ajoute', a, a_m, 'evenement', ev,
-                   jsonb_build_object('date', private.aujourdhui() + 8, 'statut', 'brouillon') from ctx
+                   jsonb_build_object('date', private.aujourdhui() + 8, 'statut', 'brouillon',
+                                      'mentions', '[]'::jsonb) from ctx
   union all select 'reunion_saisie', a, a_m, 'reunion', reu,
                    jsonb_build_object('date', private.aujourdhui() + 4, 'heure', time '19:30') from ctx
   union all select 'evenement_modifie', a, a_m, 'evenement', ev,
-                   jsonb_build_object('date', private.aujourdhui() + 10, 'statut', 'valide') from ctx
+                   jsonb_build_object('date', private.aujourdhui() + 10, 'statut', 'valide',
+                                      'date_precedente', private.aujourdhui() + 8) from ctx
   union all select 'point_traite', b, a_m, 'point_attention', pt1, '{"avec_commentaire": true}'::jsonb from ctx
   union all select 'point_traite', berger, a_m, 'point_attention', pt2, '{"avec_commentaire": true}'::jsonb from ctx
 $$, 'journal : une ligne par écriture, bon code d''action, compte de l''auteur, ministère créateur, detail sans texte');

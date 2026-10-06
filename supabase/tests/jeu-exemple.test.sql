@@ -13,7 +13,8 @@ select results_eq($$ select count(*)::int from public.ministere where desactive_
 select results_eq($$ select count(*)::int from public.compte where desactive_le is null $$, $$ values (13) $$,
   '13 comptes : un par ministère, le berger, deux membres du conseil, l''administration, EJP Tech');
 select results_eq($$ select count(*)::int from public.session $$, $$ values (8) $$, '8 sessions');
-select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (11) $$, '11 événements');
+select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (12) $$,
+  '12 événements (11 de seed.sql, la réunion des responsables de seed/42-evenements.sql)');
 select results_eq($$ select count(*)::int from public.reunion $$, $$ values (7) $$, '7 réunions');
 select results_eq($$ select count(*) filter (where statut <> 'traite')::int, count(*) filter (where statut = 'traite')::int
                       from public.v_point $$,
@@ -108,7 +109,7 @@ select results_eq($$ select count(*)::int, max((detail ->> 'total')::int) from p
 select results_eq($$
   select count(*) filter (where action = 'evenement_ajoute')::int, count(*) filter (where action = 'evenement_modifie')::int
     from public.journal
-$$, $$ values (11, 4) $$, '11 événements ajoutés, 4 mises à jour');
+$$, $$ values (12, 5) $$, '12 événements ajoutés, 5 mises à jour (dont le report de la réunion des responsables)');
 
 -- Modération : un point de Social masqué, un point de Coordination relu
 select results_eq($$
