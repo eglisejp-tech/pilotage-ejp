@@ -6,10 +6,13 @@
 -- corriger_indicateur (avant et après saisie, doublon, mots refusés, commun, suggestion,
 -- retiré) ; creer_indicateur (domaine sensible, forme d'un sensible, remplacement d'une autre
 -- fiche) ; retirer_indicateur (motifs, saisies gardées, calculs retirés avec leur source,
--- confidentialité) ; journal sans texte.
+-- confidentialité) ; journal sans texte ; mot sensible refusé à la correction d'un indicateur non
+-- sensible ; remplacement d'un calcul d'une autre fiche ou d'une autre sorte ; calculs retirés avec
+-- l'indicateur remplacé ; verrou du ministère dans ajouter_suggestion, creer_indicateur et
+-- creer_calcul ; fiche désactivée refusée.
 begin;
 
-select plan(63);
+select plan(78);
 
 create temp table ctx as
 select tests.creer_ministere('Fonctions A') as a_m,
@@ -146,6 +149,9 @@ select results_eq($$ select j.detail from public.journal j where j.action = 'ind
 select tests.se_connecter((select admin from ctx), 'aal2');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai fonctions vierge corrigé', 'Définition corrigée de l''essai des fonctions.') $$,
   'P0001', 'Rien n''a changé : ce libellé et cette définition sont déjà enregistrés.', 'une correction sans changement est refusée');
+select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Enfants hospitalisés', 'Définition corrigée de l''essai des fonctions.') $$,
+  'P0001', 'Ce chiffre semble sensible : remplacez-le par un nouvel indicateur « Domaine sensible ».',
+  'un indicateur non sensible ne prend pas un mot du domaine sensible par une correction');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai fonctions haut', 'Définition corrigée de l''essai des fonctions.') $$,
   'P0001', 'Cette fiche a déjà « Essai fonctions haut ».', 'un libellé déjà sur la fiche est refusé');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Stars au service', 'Définition corrigée de l''essai des fonctions.') $$,
@@ -192,6 +198,15 @@ select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai
 select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai remplaçant', 'Remplaçant d''un indicateur d''une autre fiche.',
                                                    'mois', 'nombre', false, false, (select aut from ctx)) $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un indicateur d''une autre fiche ne se remplace pas');
+select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai remplaçant calcul', 'Remplaçant d''un calcul par un indicateur saisi.',
+                                                   'mois', 'nombre', false, false, (select c2 from ctx)) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un calcul ne se remplace pas par un indicateur saisi');
+select throws_ok($$ select public.creer_calcul('Part de remplacement', 'Calcul qui remplace un indicateur d''une autre fiche.', 'taux',
+                                               (select h from ctx), (select bs from ctx), (select aut from ctx)) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un calcul ne remplace pas un indicateur d''une autre fiche');
+select throws_ok($$ select public.creer_calcul('Part de remplacement', 'Calcul qui remplace un indicateur saisi.', 'taux',
+                                               (select h from ctx), (select bs from ctx), (select sai from ctx)) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un calcul ne remplace pas un indicateur saisi');
 select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai ministère', 'Compte écrit par le ministère.',
                                                    'mois', 'nombre', false, false, null, 'Pourquoi d''un compte écrit.') $$,
@@ -200,6 +215,30 @@ select tests.deconnecter();
 select results_eq($$ select i.sensible, i.etat, i.origine from public.indicateur i
                       where i.ministere_id = (select a_m from ctx) and i.libelle = 'Enfants orientés' $$,
   $$ values (true, 'actif'::text, 'eglise'::text) $$, 'un sensible créé par l''administration est actif dès sa création');
+
+-- Le remplacement d'une source retire les calculs qui en dépendent, et le journal en donne le nombre.
+insert into public.indicateur (libelle, definition, nature, ministere_id)
+select x.libelle, 'Indicateur d''essai du remplacement d''une source.', 'mois', c.a_m
+from ctx c cross join (values ('Essai fonctions racine'), ('Essai fonctions socle')) as x(libelle);
+alter table ctx add column r uuid, add column rb uuid;
+update ctx set
+  r = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.libelle = 'Essai fonctions racine'),
+  rb = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.libelle = 'Essai fonctions socle');
+select tests.se_connecter((select admin from ctx), 'aal2');
+select lives_ok($$ select public.creer_calcul('Taux de remplacement d''essai', 'Calcul d''essai du remplacement d''une source.', 'taux',
+                                              (select r from ctx), (select rb from ctx), null) $$,
+  'l''administration crée un calcul sur une racine et un socle');
+select lives_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai fonctions racine neuve', 'Nouvelle racine d''essai, qui remplace l''ancienne.',
+                                                  'mois', 'nombre', false, false, (select r from ctx)) $$,
+  'l''administration remplace la racine');
+select tests.deconnecter();
+select results_eq($$ select c.etat, c.retrait_motif from public.indicateur c
+                      where c.ministere_id = (select a_m from ctx) and c.libelle = 'Taux de remplacement d''essai' $$,
+  $$ values ('retire'::text, 'source_retiree'::text) $$, 'le calcul de la racine remplacée est retiré avec elle');
+select results_eq($$ select j.detail from public.journal j
+                      where j.action = 'indicateur_cree' and j.cible_id = (select i.id from public.indicateur i where i.remplace_id = (select r from ctx)) $$,
+  $$ select jsonb_build_object('nature', 'mois', 'unite', 'nombre', 'origine', 'eglise', 'remplace', r, 'calculs', 1) from ctx $$,
+  'la ligne de journal du remplaçant donne le nombre de calculs retirés');
 
 -- 5. retirer_indicateur
 select tests.se_connecter((select a from ctx), 'aal2');
@@ -245,6 +284,42 @@ select is(tests.lire((select a from ctx), 'aal2',
 select is(tests.compter((select b from ctx), 'aal2',
   format('select 1 from public.v_journal where cible_id = %L', (select vie from ctx))), 0,
   'un autre ministère ne lit pas ces lignes');
+
+-- 6. Verrou du ministère : une création en cours tient la ligne jusqu'à la fin de la transaction ;
+-- une fiche désactivée n'accepte plus de suggestion
+select tests.deconnecter();
+create temp table verrous as
+select tests.creer_ministere('Fonctions verrou suggestion') as m_sug,
+       tests.creer_ministere('Fonctions verrou indicateur') as m_ind,
+       tests.creer_ministere('Fonctions verrou calcul') as m_cal,
+       tests.creer_ministere('Fonctions fiche désactivée') as m_off;
+alter table verrous add column haut uuid, add column bas uuid;
+grant select on verrous to authenticated;
+insert into public.indicateur (libelle, definition, nature, ministere_id)
+select x.libelle, 'Indicateur d''essai du verrou d''un calcul.', 'mois', v.m_cal
+from verrous v cross join (values ('Essai verrou haut'), ('Essai verrou bas')) as x(libelle);
+update verrous set
+  haut = (select i.id from public.indicateur i where i.ministere_id = verrous.m_cal and i.libelle = 'Essai verrou haut'),
+  bas = (select i.id from public.indicateur i where i.ministere_id = verrous.m_cal and i.libelle = 'Essai verrou bas');
+update public.ministere set desactive_le = now() where id = (select m_off from verrous);
+select tests.se_connecter((select admin from ctx), 'aal2');
+select ok(public.ajouter_suggestion((select m_sug from verrous), 'essai_fn_sug') is not null,
+  'l''administration ajoute une suggestion sur une fiche');
+select ok(public.creer_indicateur((select m_ind from verrous), 'Essai verrou indicateur', 'Indicateur d''essai du verrou de la fiche.',
+                                  'mois', 'nombre', false, false, null) is not null,
+  'l''administration crée un indicateur sur une fiche');
+select ok(public.creer_calcul('Taux de verrou d''essai', 'Calcul d''essai du verrou de la fiche.', 'taux',
+                              (select haut from verrous), (select bas from verrous), null) is not null,
+  'l''administration crée un calcul sur une fiche');
+select throws_ok($$ select public.ajouter_suggestion((select m_off from verrous), 'essai_fn_sug') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'une fiche désactivée n''accepte aucune suggestion');
+select tests.deconnecter();
+select ok((select m.xmax::text = (txid_current() % 4294967296)::text from public.ministere m where m.id = (select m_sug from verrous)),
+  'ajouter_suggestion verrouille la ligne du ministère jusqu''à la fin de la transaction');
+select ok((select m.xmax::text = (txid_current() % 4294967296)::text from public.ministere m where m.id = (select m_ind from verrous)),
+  'creer_indicateur verrouille la ligne du ministère jusqu''à la fin de la transaction');
+select ok((select m.xmax::text = (txid_current() % 4294967296)::text from public.ministere m where m.id = (select m_cal from verrous)),
+  'creer_calcul verrouille la ligne du ministère jusqu''à la fin de la transaction');
 
 select * from finish();
 rollback;

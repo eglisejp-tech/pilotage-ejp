@@ -7,13 +7,14 @@
 -- limite de 30 lignes par fiche (31e refusée, remplacement accepté à 30).
 begin;
 
-select plan(35);
+select plan(37);
 
 create temp table ctx as
 select tests.creer_ministere('Catalogue A') as a_m,
        tests.creer_ministere('Catalogue B') as b_m,
        tests.creer_ministere('Catalogue C') as c_m,
        tests.creer_ministere('Catalogue D') as d_m,
+       tests.creer_ministere('Catalogue E') as e_m,
        tests.compte('Berger') as berger,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech;
@@ -37,7 +38,8 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
   ('essai_cat_sug_commun', 'suggestion', 'Stars au service', 'Suggestion d''essai qui imite un chiffre commun.', 'dimanche', 'nombre', false, null, 3),
   ('essai_conflit_un', 'essai conflit', 'Essai conflit un', 'Premier prévu d''essai du conflit.', 'mois', 'nombre', false, null, 1),
   ('essai_conflit_deux', 'essai conflit', 'Nombre de essai conflit un', 'Second prévu d''essai du conflit.', 'mois', 'nombre', false, null, 2),
-  ('essai_existant', 'essai existant', 'Essai existant pris', 'Prévu d''essai dont le nom est déjà pris.', 'mois', 'nombre', false, null, 1);
+  ('essai_existant', 'essai existant', 'Essai existant pris', 'Prévu d''essai dont le nom est déjà pris.', 'mois', 'nombre', false, null, 1),
+  ('essai_commun', 'essai commun', 'Stars au service', 'Prévu d''essai qui porte le nom d''un chiffre commun.', 'dimanche', 'nombre', false, null, 1);
 insert into private.indicateur_prevu_terme (prevu_code, ordre, role, source_code) values
   ('essai_cat_part', 1, 'haut', 'essai_cat_realisees'),
   ('essai_cat_part', 2, 'bas', 'essai_cat_activites');
@@ -122,6 +124,9 @@ select tests.deconnecter();
 select tests.se_connecter((select admin from ctx), 'aal2');
 select is(public.creer_indicateurs_prevus((select c_m from ctx), 'aucun'), 0, '« aucun » ne crée aucun indicateur');
 select is(public.creer_indicateurs_prevus((select c_m from ctx), 'aucun'), 0, '« aucun » une seconde fois non plus');
+select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'aucun') $$,
+  'P0001', 'Cette fiche a déjà des indicateurs prévus : « aucun » ne s''applique pas.',
+  '« aucun » est refusé pour une fiche qui porte déjà des prévus');
 select tests.deconnecter();
 select results_eq($$ select j.detail from public.journal j
                       where j.action = 'indicateurs_prevus_crees' and j.ministere_id = (select c_m from ctx) $$,
@@ -133,7 +138,8 @@ select is((select count(*)::int from public.indicateur i where i.ministere_id = 
 -- 5. Tout ou rien
 select tests.se_connecter((select admin from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select b_m from ctx), 'essai conflit') $$,
-  '23505', null, 'deux prévus au même libellé normalisé : l''appel échoue');
+  'P0001', 'Deux indicateurs prévus portent le même nom, « Essai conflit un » : le catalogue est à corriger.',
+  'deux prévus au même libellé normalisé : l''appel échoue, avec un message');
 select tests.deconnecter();
 select is((select count(*)::int from public.indicateur i where i.ministere_id = (select b_m from ctx))
           + (select count(*)::int from public.journal j where j.ministere_id = (select b_m from ctx)), 0,
@@ -144,6 +150,9 @@ select tests.se_connecter((select admin from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select b_m from ctx), 'essai existant') $$,
   'P0001', 'La fiche a déjà « Essai existant pris » : retirez-le avant de créer les indicateurs prévus.',
   'un prévu dont le nom est déjà sur la fiche est refusé, avec le nom en cause');
+select throws_ok($$ select public.creer_indicateurs_prevus((select e_m from ctx), 'essai commun') $$,
+  'P0001', 'Un indicateur prévu porte le nom du chiffre commun « STARs au service » : le catalogue est à corriger.',
+  'un prévu qui porte le nom d''un chiffre commun est refusé');
 select tests.deconnecter();
 
 -- 6. Trente lignes par fiche (P41) : 25 indicateurs et 6 prévus font 31, refusés ; 24 et 6

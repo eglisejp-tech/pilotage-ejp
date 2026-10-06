@@ -131,6 +131,7 @@ declare
   v_nombre integer;
   v_lignes integer;
   v_pris text;
+  v_commun boolean;
   v_manque text;
 begin
   perform private.exige_aal2();
@@ -141,6 +142,11 @@ begin
 
   -- Un ministère sans prévu (Protocole) : une ligne de journal la première fois, rien ensuite.
   if p_modele = 'aucun' then
+    if exists (select 1 from public.indicateur i
+                 join private.indicateur_prevu p on p.code = i.modele_code and p.modele <> 'suggestion'
+                where i.ministere_id = p_ministere_id) then
+      raise exception 'Cette fiche a déjà des indicateurs prévus : « aucun » ne s''applique pas.';
+    end if;
     if not exists (select 1 from public.journal j
                     where j.ministere_id = p_ministere_id and j.action = 'indicateurs_prevus_crees'
                       and j.detail ->> 'modele' = 'aucun') then
@@ -167,14 +173,30 @@ begin
     return 0;
   end if;
 
-  select i.libelle into v_pris
+  -- Doublon : un prévu au nom d'un indicateur de la fiche (hors retirés) ou d'un chiffre commun,
+  -- ou deux prévus du modèle au même nom normalisé (catalogue à corriger).
+  select i.libelle, i.ministere_id is null into v_pris, v_commun
     from public.indicateur i
     join private.indicateur_prevu p on p.code = any (v_codes)
                                    and private.normaliser(p.libelle) = private.normaliser(i.libelle)
-   where i.ministere_id = p_ministere_id and i.etat <> 'retire'
+   where (i.ministere_id = p_ministere_id or i.ministere_id is null) and i.etat <> 'retire'
+   order by i.ministere_id nulls last
    limit 1;
   if v_pris is not null then
+    if v_commun then
+      raise exception 'Un indicateur prévu porte le nom du chiffre commun « % » : le catalogue est à corriger.', v_pris;
+    end if;
     raise exception 'La fiche a déjà « % » : retirez-le avant de créer les indicateurs prévus.', v_pris;
+  end if;
+  select p1.libelle into v_pris
+    from private.indicateur_prevu p1
+    join private.indicateur_prevu p2 on (p2.ordre, p2.code) > (p1.ordre, p1.code)
+                                    and private.normaliser(p2.libelle) = private.normaliser(p1.libelle)
+   where p1.code = any (v_codes) and p2.code = any (v_codes)
+   order by p1.ordre, p1.code
+   limit 1;
+  if v_pris is not null then
+    raise exception 'Deux indicateurs prévus portent le même nom, « % » : le catalogue est à corriger.', v_pris;
   end if;
   v_lignes := private.lignes_fiche(p_ministere_id, null) + v_nombre;
   if v_lignes > 30 then
@@ -233,6 +255,7 @@ declare
   v_message text;
   v_pris text;
   v_id uuid;
+  v_calculs integer := 0;
 begin
   perform private.exige_aal2();
   if not private.peut_configurer() then
@@ -275,7 +298,7 @@ begin
 
   if p_remplace_id is not null then
     update public.indicateur set etat = 'retire', retrait_motif = 'remplace' where id = p_remplace_id;
-    perform private.retirer_calculs_de(p_remplace_id);
+    v_calculs := private.retirer_calculs_de(p_remplace_id);
   end if;
   insert into public.indicateur (libelle, definition, nature, unite, sensible, ministere_id, etat, origine, remplace_id)
   values (v_libelle, v_definition, p_nature, v_unite, v_sensible, p_ministere_id, 'actif', 'eglise', p_remplace_id)
@@ -283,7 +306,8 @@ begin
 
   insert into public.journal (le, compte, ministere_id, action, cible, cible_id, detail)
   values (statement_timestamp(), (select auth.uid()), p_ministere_id, 'indicateur_cree', 'indicateur', v_id,
-          jsonb_build_object('nature', p_nature, 'unite', v_unite, 'origine', 'eglise', 'remplace', p_remplace_id));
+          jsonb_build_object('nature', p_nature, 'unite', v_unite, 'origine', 'eglise', 'remplace', p_remplace_id)
+          || case when v_calculs > 0 then jsonb_build_object('calculs', v_calculs) else '{}'::jsonb end);
   return v_id;
 end $$;
 
@@ -299,6 +323,7 @@ declare
   v_definition text := btrim(regexp_replace(coalesce(p_definition, ''), '\s+', ' ', 'g'));
   v_haut public.indicateur%rowtype;
   v_bas public.indicateur%rowtype;
+  v_ministere_id uuid;
   v_unite text;
   v_message text;
   v_pris text;
@@ -310,6 +335,16 @@ begin
   end if;
   if p_type is null or p_type not in ('taux', 'moyenne') then
     raise exception 'Choisissez un taux ou une moyenne.';
+  end if;
+  -- Le verrou du ministère d'abord, les sources ensuite : retirer_indicateur prend les mêmes verrous
+  -- dans le même ordre, et un retrait validé entre la lecture et le verrou ne laisse pas un calcul
+  -- actif sur une source retirée.
+  select i.ministere_id into v_ministere_id from public.indicateur i where i.id = p_haut_id;
+  if not found then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  if v_ministere_id is not null then
+    perform private.verrouiller_ministere(v_ministere_id);
   end if;
   select i.* into v_haut from public.indicateur i where i.id = p_haut_id;
   if not found then
@@ -332,7 +367,6 @@ begin
   if v_haut.etat <> 'actif' or v_bas.etat <> 'actif' then
     raise exception 'Un calcul se fait sur des indicateurs actifs.';
   end if;
-  perform private.verrouiller_ministere(v_haut.ministere_id);
   if p_remplace_id is not null then
     perform 1 from public.indicateur i
      where i.id = p_remplace_id and i.ministere_id = v_haut.ministere_id and i.etat in ('actif', 'en_attente')
@@ -351,6 +385,9 @@ begin
   if char_length(v_definition) not between 10 and 140 then
     raise exception 'Expliquez ce qu''on compte en 10 à 140 caractères.';
   end if;
+  -- La famille « sensible » ne bloque pas le nom d'un calcul : ses deux sources sont non sensibles
+  -- (contrôlé plus haut et par le trigger de B1), le nom ne révèle donc aucun chiffre sensible, et
+  -- un nom comme « Taux d'enfants présents » reste permis (configuration-indicateurs.md 6.1).
   v_message := private.texte_refuse(v_libelle, v_definition, v_haut.nature, false, false);
   if v_message is not null then
     raise exception '%', v_message;
@@ -561,12 +598,22 @@ begin
   if char_length(v_definition) not between 10 and 140 then
     raise exception 'Expliquez ce qu''on compte en 10 à 140 caractères.';
   end if;
-  -- Le domaine sensible n'est pas redemandé : la case et la confirmation ont été données à la
-  -- création, et une correction ne change pas ce qu'on compte.
+  -- Le domaine sensible n'est pas redemandé pour un texte qui l'avait déjà (la case ou la
+  -- confirmation ont été données à la création). Mais un indicateur saisi non sensible ne prend
+  -- pas, par une correction, un mot de la famille « sensible » qu'il n'avait pas : sa case ne
+  -- se coche plus, et il resterait lu sans le seuil « moins de 3 » (configuration-indicateurs.md
+  -- 5.8 et 6.1). Un calcul n'est jamais sensible : ses sources le sont ou non.
   v_message := private.texte_refuse(v_libelle, v_definition, v_indicateur.nature, false,
                                     v_indicateur.calcul is null);
   if v_message is not null then
     raise exception '%', v_message;
+  end if;
+  if v_indicateur.calcul is null and not v_indicateur.sensible
+     and (exists (select 1 from private.verifier_texte(v_libelle, false) v where v.famille = 'sensible')
+          or exists (select 1 from private.verifier_texte(v_definition, false) v where v.famille = 'sensible'))
+     and not (exists (select 1 from private.verifier_texte(v_indicateur.libelle, false) v where v.famille = 'sensible')
+              or exists (select 1 from private.verifier_texte(v_indicateur.definition, false) v where v.famille = 'sensible')) then
+    raise exception 'Ce chiffre semble sensible : remplacez-le par un nouvel indicateur « Domaine sensible ».';
   end if;
   v_pris := private.libelle_pris(v_indicateur.ministere_id, v_libelle, p_indicateur_id);
   if v_pris is not null then
@@ -593,12 +640,17 @@ end $$;
 -- aussi le libellé et la définition (« [retiré pour confidentialité] », sous le réglage local
 -- pilotage.masquage). Les saisies restent ; un calcul qui en dépend est retiré avec lui (motif
 -- « source_retiree »). Les motifs posés par la base (remplace, source_retiree, refuse) ne se
--- choisissent pas. Rend le nombre de calculs retirés avec lui.
+-- choisissent pas. Rend le nombre de calculs retirés avec lui. Lot 2 : le retrait pour
+-- confidentialité d'un ajout de ministère masquera aussi demande_indicateur.libelle (le nom
+-- envoyé, lu par le ministère et EJP Tech), ce qui élargira à deux champs l'argument du trigger
+-- refuser_modification_sauf_masquage ; au lot 1, les noms viennent du catalogue ou de
+-- l'administration, et le nom envoyé n'existe pas.
 create function private.retirer_indicateur(p_indicateur_id uuid, p_motif text)
 returns integer language plpgsql security definer set search_path = '' as $$
 declare
   v_masque constant text := '[retiré pour confidentialité]';
   v_indicateur public.indicateur%rowtype;
+  v_ministere_id uuid;
   v_avec_saisies boolean;
   v_calculs integer;
 begin
@@ -610,8 +662,15 @@ begin
                                         'domaine_sensible', 'hors_regles', 'confidentialite') then
     raise exception 'Choisissez le motif du retrait.';
   end if;
+  -- Verrou du ministère avant celui de l'indicateur, comme creer_calcul : un calcul en cours de
+  -- création est vu ou attend. Le ministère désactivé reste verrouillé : on y retire encore.
+  select i.ministere_id into v_ministere_id from public.indicateur i where i.id = p_indicateur_id;
+  if not found or v_ministere_id is null then
+    raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
+  end if;
+  perform 1 from public.ministere m where m.id = v_ministere_id for update;
   select i.* into v_indicateur from public.indicateur i where i.id = p_indicateur_id for update;
-  if not found or v_indicateur.ministere_id is null then
+  if not found then
     raise exception 'Cet élément n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
   end if;
   if v_indicateur.etat = 'retire' then
@@ -800,3 +859,15 @@ grant execute on function
   public.verifier_libelle(text, text, uuid),
   public.limites_indicateurs(uuid)
   to authenticated;
+
+-- 13. Pour l'écran (étape 6, src/data/)
+-- - verifier_libelle et limites_indicateurs sont volatiles (limites_indicateurs pose un for share) :
+--   les appeler en POST (comportement par défaut de supabase-js rpc), jamais avec get: true, dont
+--   la transaction est en lecture seule.
+-- - corriger_indicateur rend « corrige » ; « envoye » viendra au lot 2.
+-- - creer_indicateur ajoute « calculs » (nombre de calculs retirés avec l'indicateur remplacé) au
+--   detail de indicateur_cree quand il n'est pas nul : amendement de la section 1 du contrat.
+-- - Journal : une décision ou un masquage d'EJP Tech porte le ministère de l'auteur du texte
+--   (null pour EJP Tech), et v_journal ne donne pas de cible_texte pour une ligne de cible
+--   validation au berger, au conseil ni à l'administration, qui ne lisent pas la demande : l'écran
+--   affiche alors la ligne sans nom d'indicateur.

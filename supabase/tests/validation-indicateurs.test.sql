@@ -9,7 +9,7 @@
 -- motif sans trace.
 begin;
 
-select plan(74);
+select plan(75);
 
 create temp table ctx as
 select tests.creer_ministere('Validation A') as a_m,
@@ -284,6 +284,11 @@ select throws_ok($$ select public.masquer_texte('validation', (select v.id from 
 select throws_ok($$ select public.masquer_texte('demande_indicateur', (select d3 from ctx), 'libelle', 'autre') $$,
   'P0001', 'Ce champ ne peut pas être masqué.', 'le nom envoyé d''une demande n''est pas un champ masquable');
 select tests.deconnecter();
+-- Le réglage de masquage retombe à vide à la fin de masquer_texte : le propriétaire ne masque pas
+-- lui-même un autre « Pourquoi », dans la même transaction.
+select throws_ok($$ update public.demande_indicateur set pourquoi = '[texte masqué par EJP Tech]' where id = (select d1 from ctx) $$,
+  '42501', 'La table demande_indicateur est en ajout seul : elle ne se modifie pas et ne s''efface pas.',
+  'après masquer_texte, le réglage de masquage est remis à vide : une modification directe est refusée');
 
 select is_empty($$
   select 'demande_indicateur' from public.demande_indicateur x where x::text like '%MARQUEUR-%'

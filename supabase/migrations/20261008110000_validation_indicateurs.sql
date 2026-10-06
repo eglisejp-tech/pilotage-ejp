@@ -376,7 +376,9 @@ where (select private.mon_type()) is distinct from 'admin_eglise'
    or private.journal_lisible_administration(j.action, j.detail);
 
 -- Droits des fonctions : rien pour public, anon ni service_role ; authenticated exécute les
--- fonctions lues par les vues et les politiques.
+-- fonctions lues par les vues et les politiques. private.peut_configurer() n'est appelée ici que
+-- par des fonctions en security definer ; elle garde ce droit pour une politique ou une vue d'un
+-- lot suivant, qui l'évaluerait au nom du lecteur. Sans danger : un booléen sur le compte appelant.
 revoke all on function
   private.controler_prevu_terme(),
   private.refuser_modification_sauf_masquage(),
