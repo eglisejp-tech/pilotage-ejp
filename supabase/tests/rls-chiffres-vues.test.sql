@@ -57,8 +57,9 @@ update public.ministere set desactive_le = now() - interval '30 days' where id =
 update public.compte set desactive_le = now() - interval '30 days' where user_id = (select n3 from ctx);
 
 -- Indicateur propre de Jeunesse (dimanche), saisi les deux derniers dimanches.
-insert into public.indicateur (libelle, nature, ministere_id, ordre)
-select 'Essai vues, propre à Jeunesse', 'dimanche', c.jeu_m, 90 from ctx c;
+insert into public.indicateur (libelle, definition, nature, ministere_id, ordre)
+select 'Essai vues, propre à Jeunesse', 'Chiffre d''essai des vues de lecture.', 'dimanche', c.jeu_m, 90
+from ctx c;
 update ctx set propre = (select i.id from public.indicateur i where i.libelle = 'Essai vues, propre à Jeunesse');
 insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur, saisi_par)
 select c.propre, c.jeu_m, c.dimanche - 7, 5, c.jeu from ctx c

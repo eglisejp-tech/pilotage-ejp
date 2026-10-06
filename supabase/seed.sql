@@ -40,7 +40,7 @@ insert into graine_ministere (code, ordre, ministere, compte, nom, description, 
    'Communication', 'Visuels, réseaux sociaux, annonces du dimanche.', 'communication@exemple.test'),
   ('int', 2, '10000000-0000-4000-8000-000000000002', '20000000-0000-4000-8000-000000000002',
    'Intégration', 'Accueil des nouveaux et suivi jusqu''à la FIJ.', 'integration@exemple.test'),
-  ('coo', 3, '10000000-0000-4000-8000-000000000003', '20000000-0000-4000-8000-000000000003',
+  ('coo', 3, (select m.id from public.ministere m where m.code = 'coordination'), '20000000-0000-4000-8000-000000000003',
    'Coordination', 'Planning général, salles, logistique des événements.', 'coordination@exemple.test'),
   ('jeu', 4, '10000000-0000-4000-8000-000000000004', '20000000-0000-4000-8000-000000000004',
    'Jeunesse', 'Activités et sorties des jeunes.', 'jeunesse@exemple.test'),
@@ -73,17 +73,19 @@ insert into graine_compte (code, compte, type, ministere, libelle, email) values
   ('admin', '20000000-0000-4000-8000-000000000021', 'admin_eglise', null, 'Administration de l''église', 'administration@exemple.test'),
   ('ejptech', '20000000-0000-4000-8000-000000000031', 'admin_plateforme', null, 'EJP Tech, compte 1', 'ejptech1@exemple.test');
 
--- Le ministère FIJ vient de la migration des données de référence : on lui donne sa
--- description et une date de création antérieure aux saisies.
+-- Les ministères FIJ et Coordination viennent des migrations (codes « fij » et
+-- « coordination », 20261007100000_indicateurs_definition.sql pour Coordination) : on leur
+-- donne leur description et une date de création antérieure aux saisies. Leur identifiant est
+-- celui de la migration : les fichiers de seed/ les retrouvent par leur code.
 insert into public.ministere (id, nom, description, cree_le)
 select g.ministere, g.nom, g.description, pg_temp.h(timestamp '2026-06-01 09:00')
 from graine_ministere g
-where g.code <> 'fij';
+where g.code not in ('fij', 'coo');
 
 update public.ministere m
    set description = g.description, cree_le = pg_temp.h(timestamp '2026-06-01 09:00')
   from graine_ministere g
- where g.code = 'fij' and m.id = g.ministere;
+ where g.code in ('fij', 'coo') and m.id = g.ministere;
 
 -- Utilisateurs Auth : colonnes minimales, plus les jetons vides que GoTrue lit comme du texte
 -- (l'étape 2 leur donne un mot de passe et un facteur TOTP par l'API d'administration).
@@ -111,7 +113,7 @@ select pg_temp.h(timestamp '2026-06-01 09:10'), a.compte, g.ministere, 'minister
        '{}'::jsonb
 from graine_ministere g
 cross join graine_compte a
-where a.code = 'admin' and g.code <> 'fij'
+where a.code = 'admin' and g.code not in ('fij', 'coo')
 union all
 select pg_temp.h(timestamp '2026-06-01 09:30'), a.compte, c.ministere, 'compte_cree', 'compte', c.compte,
        jsonb_build_object('type', c.type)
@@ -119,9 +121,12 @@ from graine_compte c
 cross join graine_compte a
 where a.code = 'admin' and c.code <> 'admin';
 
--- Indicateur propre des maquettes (Communication)
-insert into public.indicateur (libelle, nature, ministere_id, ordre)
-select 'Visuels livrés ce mois', 'a_ce_jour', g.ministere, 10
+-- Indicateur propre des maquettes (Communication), avec sa définition (étape 4, T35). Son
+-- libellé de l'étape 1 est gardé : le trigger controler_indicateur ne contrôle que la structure.
+insert into public.indicateur (libelle, definition, nature, ministere_id, ordre, cree_le, texte_le)
+select 'Visuels livrés ce mois',
+       'Visuels terminés et remis aux ministères qui les ont demandés, comptés le jour de la saisie.',
+       'a_ce_jour', g.ministere, 10, pg_temp.h(timestamp '2026-06-01 09:40'), pg_temp.h(timestamp '2026-06-01 09:40')
 from graine_ministere g
 where g.code = 'com';
 
