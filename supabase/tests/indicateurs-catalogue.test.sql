@@ -65,7 +65,7 @@ select is(tests.compter((select a from ctx), 'aal2', 'select 1 from public.v_cat
   'un ministère ne lit pas le catalogue');
 select is(tests.lire((select a from ctx), 'aal2',
   format('select code from public.v_suggestions where ministere_id = %L and code like %L', (select a_m from ctx), 'essai_cat%')),
-  '[{"code": "essai_cat_sug"}, {"code": "essai_cat_sug_prevu"}]'::jsonb,
+  '[{"code": "essai_cat_sug_prevu"}, {"code": "essai_cat_sug"}]'::jsonb,
   'un ministère lit les suggestions de sa fiche, sans celle qui porte le libellé d''un chiffre commun');
 
 -- 3. creer_indicateurs_prevus : profils et modèle
