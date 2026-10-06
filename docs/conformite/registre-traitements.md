@@ -44,15 +44,34 @@ elles ne créent aucun traitement.
 - **Délégué à la protection des données (DPO)** : À compléter par EJP Tech : dire si l'église a
   désigné un DPO. Si elle n'en a pas, l'écrire ici.
 - **Rôle de la coordination** : elle décide au nom de l'église. Elle valide ce registre, les textes
-  de l'outil, les indicateurs et la fin de vie de l'outil.
+  de l'outil, les indicateurs et la fin de vie de l'outil. Le responsable du traitement reste
+  l'Église des Jeunes Prodiges, par son ministère EJP Tech (P44, 6 octobre 2026).
 
 ### Prestataires (sous-traitants) et lieu des données
 
-| Prestataire | Ce qu'il fait pour l'outil                                                         | Où sont les données                                     | Cadre                                                                                                                                           |
-| ----------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Supabase    | Base de données, connexion, fonctions du serveur, journaux techniques, sauvegardes | Région Paris (Union européenne)                         | Contrat. À compléter par EJP Tech : accord de sous-traitance (article 28) accepté ou signé, avec sa date                                        |
-| Netlify     | Hébergement du site (les pages de l'application), journaux techniques              | À compléter par EJP Tech : région d'hébergement du site | Contrat. Société établie aux États-Unis. À compléter par EJP Tech : accord de sous-traitance accepté ou signé                                   |
-| Google      | Connexion avec Google ; envoi des emails par la messagerie Gmail de l'église       | États-Unis                                              | Contrat. À compléter par EJP Tech : type de compte de l'église (Gmail gratuit ou Google Workspace) et conditions de traitement qui s'appliquent |
+| Prestataire | Ce qu'il fait pour l'outil                                                         | Où sont les données                                     | Cadre                                                                                                                       |
+| ----------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Supabase    | Base de données, connexion, fonctions du serveur, journaux techniques, sauvegardes | Région Paris (Union européenne)                         | Contrat. À compléter par EJP Tech : accord de sous-traitance (article 28) accepté ou signé, avec sa date                    |
+| Netlify     | Hébergement du site (les pages de l'application), journaux techniques              | À compléter par EJP Tech : région d'hébergement du site | Contrat. Société établie aux États-Unis. À compléter par EJP Tech : accord de sous-traitance accepté ou signé               |
+| Google      | Connexion avec Google ; envoi des emails par la messagerie Gmail de l'église       | États-Unis                                              | Conditions grand public de Google (Gmail gratuit), sans accord de sous-traitance (article 28). Voir la note sous le tableau |
+
+**Note sur Google (fait donné par la personne responsable le 6 octobre 2026).** L'église envoie ses
+emails par une adresse Gmail gratuite, celle d'EJP Tech, qui figure sur la page « Confidentialité ».
+Cela a des conséquences :
+
+- un Gmail gratuit relève des conditions grand public de Google. Il n'y a pas d'accord de
+  sous-traitance (article 28) à signer avec Google pour ce compte ;
+- la phrase de la page « Confidentialité » qui dit que les prestataires « agissent sous contrat »
+  est donc inexacte pour Google : elle est nuancée, et la page est corrigée au lot I de l'étape 4 ;
+- recommandation d'EJP Tech, sans l'imposer : Google Workspace pour les associations (gratuit pour
+  une association éligible, avec un avenant sur la protection des données), ou un service d'envoi
+  européen avec contrat.
+
+L'adresse d'envoi des emails de l'outil est celle d'EJP Tech de la page « Confidentialité »
+(décision T08, 6 octobre 2026).
+
+Accès aux tableaux de bord de Supabase et de Netlify : EJP Tech seul. Double authentification sur
+ces deux comptes : À compléter par EJP Tech (confirmation, elle est recommandée).
 
 Deux projets Supabase existent :
 
@@ -389,13 +408,18 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 4. Société avec qui l'église a contracté pour Supabase, et accès possible aux données depuis
    l'extérieur de l'Union européenne.
 5. Région d'hébergement du site chez Netlify, et accord de sous-traitance de Netlify.
-6. Type de compte Google de l'église (Gmail gratuit ou Google Workspace) et conditions de
-   traitement qui s'appliquent à la connexion et à l'envoi des emails.
+6. Emails par un Gmail gratuit (fait donné le 6 octobre 2026) : pas d'accord de sous-traitance
+   avec Google, conditions grand public. Corriger la phrase « agissent sous contrat » de la page
+   « Confidentialité » pour Google : la page est corrigée au lot I de l'étape 4. Recommandation,
+   sans l'imposer : Google Workspace pour les associations (gratuit pour une association
+   éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec
+   contrat. Reste à décider par la personne responsable.
 7. Présence de Google et de Netlify sur la liste du cadre de protection des données, avec la date
    de la vérification.
-8. Adresse d'envoi des emails retenue.
-9. Personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et double
-   authentification sur ces accès.
+8. Adresse d'envoi des emails : décidée le 6 octobre 2026 (T08), c'est l'adresse d'EJP Tech de la
+   page « Confidentialité ». Rien à compléter.
+9. Double authentification sur les comptes de tableau de bord de Supabase et de Netlify, dont
+   seul EJP Tech a l'accès : à confirmer, elle est recommandée.
 10. Durée de conservation de l'export final et lieu où la coordination le garde (à la coordination).
 11. Confirmation que chaque titulaire de compte est membre de l'église ou en contact régulier avec
     elle (à la coordination).

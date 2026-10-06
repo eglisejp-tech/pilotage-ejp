@@ -4,7 +4,7 @@
 - **Statut** : à valider avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
-- **Date limite de réponse** : À compléter par EJP Tech
+- **Date limite de réponse** : vendredi 6 novembre 2026, un mois après l'envoi
 
 ## Pour commencer
 
@@ -128,7 +128,7 @@ Quelques règles pour écrire un texte corrigé :
 
 Un ministère relit sa section. La coordination relit toutes les sections et le tableau « Les choix à relire en priorité ». Si un chiffre demandé par votre ministère manque, écrivez-le dans les remarques en bas de votre section.
 
-Renvoyez le document rempli à EJP Tech avant la date limite de réponse (À compléter par EJP Tech). EJP Tech corrige les noms et les définitions à l'écran, puis relit le résultat avec vous en préproduction avant d'ouvrir les saisies.
+Renvoyez le document rempli à EJP Tech avant la date limite de réponse (vendredi 6 novembre 2026). EJP Tech corrige les noms et les définitions à l'écran, puis relit le résultat avec vous en préproduction avant d'ouvrir les saisies.
 
 ## Les choix à relire en priorité
 
@@ -903,7 +903,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | Total des STARs actifs de l'église     | STARs actifs de l'église     | À ce jour       |               |
 | Total des STARs au service de l'église | STARs au service de l'église | Chaque dimanche |               |
 
-Les deux dernières lignes sont des lignes de référence : les totaux de l'église, déjà publics, avec leur complétude (« 21 sur 22 »). MDS n'a rien à saisir pour elles.
+Les deux dernières lignes sont des lignes de référence : les totaux de l'église, déjà publics, avec leur complétude (« 21 sur 23 »). MDS n'a rien à saisir pour elles.
 
 ### Ce que le ministère saisit
 
@@ -967,6 +967,22 @@ L'outil affiche aussi, sous le nom « Sessions réalisées », le nombre de dima
 
 **Remarques du ministère :**
 
+## 23. Prodiges Academy
+
+Prodiges Academy est un ministère à part entière, distinct de Formation. Il ne figure pas dans la liste de la coordination, qui ne lui demande aucun indicateur. Il saisit les trois chiffres communs, pour que les totaux de l'église restent complets. Ses propres indicateurs viendront quand la coordination les ajoutera à son document, ou par une demande dans l'outil validée par EJP Tech.
+
+### Chiffres communs
+
+| Chiffre commun   | Nom affiché sur la fiche | Quand           | Votre réponse |
+| ---------------- | ------------------------ | --------------- | ------------- |
+| STARs au service | STARs au service         | Chaque dimanche |               |
+| STARs actifs     | STARs actifs             | À ce jour       |               |
+| Dont en FIJ      | Dont en FIJ              | À ce jour       |               |
+
+Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère.
+
+**Remarques du ministère :**
+
 ## Totaux
 
 | Ministère        | Chiffres saisis | dont sensibles | Chiffres calculés | Comptages d'événements | Graphiques |
@@ -993,11 +1009,12 @@ L'outil affiche aussi, sous le nom « Sessions réalisées », le nombre de dima
 | Protocole        | 0               | 0              | 0                 | 0                      | 0          |
 | MDS              | 8               | 0              | 0                 | 1                      | 1          |
 | Prodiges Junior  | 4               | 2              | 1                 | 0                      | 0          |
+| Prodiges Academy | 0               | 0              | 0                 | 0                      | 0          |
 | **Total**        | **161**         | **11**         | **41**            | **7**                  | **12**     |
 
 À ces totaux s'ajoutent :
 
-- les **trois chiffres communs** de chacun des 22 ministères, soit 66 chiffres à saisir, dont 11 portent sur la fiche le nom de la demande de la coordination (10 ministères, dont Kumi pour deux chiffres), auxquels s'ajoutent 2 lignes de référence de l'église pour MDS, soit 13 noms à valider ;
+- les **trois chiffres communs** de chacun des 23 ministères, soit 69 chiffres à saisir, dont 11 portent sur la fiche le nom de la demande de la coordination (10 ministères, dont Kumi pour deux chiffres), auxquels s'ajoutent 2 lignes de référence de l'église pour MDS, soit 13 noms à valider ;
 - les **4 rubriques par département** de Coordo FIJ, saisies chaque semaine pour 8 départements (32 valeurs par semaine) ;
 - 2 points d'attention de départ (Production et Entretien) et 3 valeurs de départ de Production.
 

@@ -28,8 +28,9 @@ graphiques compris, est produite ou retrouvable dans l'outil**. Aucune n'est aba
 périmètre ou laissée « à préciser ».
 
 Toutes les décisions de ce document ont le statut **« Décidé par EJP Tech le 6 octobre 2026,
-révisable par la coordination »**. La coordination reste responsable de traitement et peut revenir
-sur chacune.
+révisable par la coordination »**. Le responsable du traitement est l'Église des Jeunes Prodiges,
+par son ministère EJP Tech (P44) ; la coordination décide au nom de l'église et peut revenir sur
+chacune.
 
 ### Le principe
 
@@ -208,9 +209,12 @@ ont été rapprochées (section 8).
 - **K13b. Qui choisit les six ?** Sans objet : la liste de la coordination fait le choix. Un
   ministère qui veut arrêter un chiffre le demande à l'administration, qui le retire avec un motif
   (ses saisies restent).
-- **K14a. Les 22 ministères créés à la mise en service ?** Oui, tous, Protocole compris (il saisit
-  les chiffres communs), avant l'activation des comptes ; puis « Créer » des prévus à l'écran
-  Indicateurs (configuration, section 9).
+- **K14a. Les 23 ministères créés à la mise en service ?** Oui, tous, Protocole et Prodiges Academy
+  compris (ils saisissent les chiffres communs), avant l'activation des comptes ; puis « Créer » des
+  prévus à l'écran Indicateurs (configuration, section 9). **Révisé le 6 octobre 2026 (P43)** :
+  Prodiges Academy, ministère à part entière distinct de Formation, ne figure pas dans la liste de
+  la coordination. Décision d'EJP Tech, révisable par la coordination : c'est le 23e ministère. La
+  couverture reste « 185 demandes de la coordination » : Prodiges Academy n'en a aucune.
 - **K14b. Une boîte mail partagée par ministère ?** Oui, au nom de l'église, jamais d'une personne,
   créée par l'administration. Un ministère sans adresse n'est pas activé et manque à la complétude
   jusqu'à son activation. Le 6 octobre 2026, chaque ministère a été invité à créer sa boîte ; la
@@ -218,13 +222,16 @@ ont été rapprochées (section 8).
   liste ne va jamais dans le dépôt.
 - **K14c. Noms exacts ?** Ceux de la liste : Intégration, Coordination, Communication, Social, Film,
   Tech, MCAD, MPI, Santé, Merch, Production, Prodiges Musique, Kumi, Eagles, Entretien, Coordo FIJ
-  (le ministère de code `fij`), Multilingue, Sécurité, Formation, Protocole, MDS, Prodiges Junior.
+  (le ministère de code `fij`), Multilingue, Sécurité, Formation, Protocole, MDS, Prodiges Junior,
+  et, hors de la liste, Prodiges Academy (P43). Formation et Prodiges Academy ne se renomment jamais
+  l'un en l'autre.
   Le catalogue les compare sans accents ni majuscules ; un nom se corrige à l'écran 13 sans perte.
 - **K56a et K56b. Registre, place des comptes sensibles, analyse d'impact ?** Les comptes ont leur
   place, avec les protections de K5. EJP Tech rédige l'entrée du registre (finalité ; catégories :
   totaux mensuels sans personne ; durée : fin de vie de l'outil ; destinataires : ministère, berger,
   conseil, EJP Tech ; mesures : mois clos, seuil, aucune ventilation) et une note d'analyse courte
-  (risques, mesures, risque résiduel), et les remet à la coordination, responsable de traitement.
+  (risques, mesures, risque résiduel), et les remet à la coordination, qui décide au nom de l'église. Le responsable du traitement est
+  l'Église des Jeunes Prodiges, par son ministère EJP Tech (P44, comme sur la page Confidentialité).
   La coordination décide d'une analyse d'impact complète. La page Confidentialité dit que seuls
   des totaux de mois écoulés sont saisis pour la santé, l'accompagnement, l'écoute et les enfants.
   **Révisé le 6 octobre 2026 (P42, décision de la personne responsable)** : la première réponse
@@ -796,7 +803,7 @@ mois écoulés, case sensible, seuil, jamais sur la vue de l'église ni dans un 
 
 | Ligne | Demande                                    | Mécanisme             | Indicateur ou source                                | Rythme, unité     | Formule                                                                 | Sensible | Lot  |
 | ----- | ------------------------------------------ | --------------------- | --------------------------------------------------- | ----------------- | ----------------------------------------------------------------------- | -------- | ---- |
-| 262   | Nombre total de Stars actifs               | Commun (église)       | ligne de référence « STARs actifs de l'église »     | À ce jour, nombre | total de l'église, complétude « 21 sur 22 »                             | non      | V1   |
+| 262   | Nombre total de Stars actifs               | Commun (église)       | ligne de référence « STARs actifs de l'église »     | À ce jour, nombre | total de l'église, complétude « 21 sur 23 »                             | non      | V1   |
 | 263   | Nouveaux Stars                             | Saisi                 | Nouveaux STARs                                      | Mois, nombre      | valeur                                                                  | non      | V1   |
 | 264   | Stars désactivés                           | Saisi                 | STARs désactivés                                    | Mois, nombre      | valeur                                                                  | non      | V1   |
 | 265   | Évolution du nombre de Stars actifs        | Graphique             | G12 (série de l'église et deux barres)              | 12 mois           | total de l'église en fin de mois, complétude par point                  | non      | V1+4 |
@@ -826,6 +833,14 @@ mois écoulés, case sensible, seuil, jamais sur la vue de l'église ni dans un 
 Aucune demande dans la liste (K51) : Protocole saisit les trois chiffres communs, pour que les totaux
 de l'église restent complets. Modèle « aucun » au catalogue.
 
+### Prodiges Academy (hors de la liste de la coordination)
+
+Prodiges Academy est un ministère à part entière, distinct de Formation (P43). Il ne figure pas dans
+la liste de la coordination : aucune demande, aucune des 185. Comme Protocole, il saisit les trois
+chiffres communs, pour que les totaux de l'église restent complets. Modèle « aucun » au catalogue.
+Ses propres indicateurs viendront quand la coordination les ajoutera à son document, ou par une
+demande dans l'outil validée par EJP Tech (T30).
+
 ### Total
 
 | Ministère        | Demandes | Annexe  | Abandonnées |
@@ -852,6 +867,7 @@ de l'église restent complets. Modèle « aucun » au catalogue.
 | MDS              | 12       | 12      | 0           |
 | Prodiges Junior  | 7        | 7       | 0           |
 | Protocole        | 0        | 0       | 0           |
+| Prodiges Academy | 0        | 0       | 0           |
 | **Total**        | **185**  | **185** | **0**       |
 
 **185 demandes couvertes, 0 abandonnée, 0 « à préciser », 0 hors périmètre.** 157 sont servies
@@ -1291,7 +1307,7 @@ l'église, déjà publics). Série dérivée : « Événements organisés » (é
 sensible » : l'administration confirme que « Enfants présents » et « Enfants inscrits » ne le sont
 pas.
 
-### Protocole
+### Protocole et Prodiges Academy
 
 Modèle « aucun » : aucun prévu.
 
@@ -1314,7 +1330,7 @@ le ministère dans le mois »).
 | Communs affichés sous le nom de la demande | 13 (dont 2 lignes de référence de l'église pour MDS)                                |
 | Graphiques déclarés                        | 12, V1+4                                                                            |
 | Points d'attention de départ               | 2 (Production, Entretien)                                                           |
-| Ministères                                 | 22, dont 21 avec des prévus et Protocole sans                                       |
+| Ministères                                 | 23, dont 21 avec des prévus, Protocole et Prodiges Academy sans                     |
 | Plus grande fiche                          | MCAD, 21 lignes sur 30                                                              |
 
 Charge de saisie la plus lourde : MPI, 7 chiffres chaque dimanche ; Coordo FIJ, 32 valeurs par
