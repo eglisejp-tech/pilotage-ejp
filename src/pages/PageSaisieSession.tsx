@@ -1,7 +1,33 @@
-import { PageAVenir } from '@/pages/PageAVenir'
+import { useParams } from 'react-router'
+import { ChoixSessionConnecte } from '@/features/saisie-session/ChoixSessionConnecte'
+import { SaisieSessionConnectee } from '@/features/saisie-session/SaisieSessionConnectee'
+import { CHOIX_SESSION } from '@/features/saisie-session/session'
+import { useRetourSaisie } from '@/features/saisie-session/useRetourSaisie'
+import { useCompteConnecte } from '@/features/session/contexte'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
-/** Amorce de W0 pour `/saisir/session/:id` : le lot E4 la remplace (saisie d'une session, 09). */
+/**
+ * `/saisir/session/:id` (lot E4, maquette 09) : la saisie de la session `id`, ou le panneau
+ * « Choisir la session » pour `/saisir/session/choisir`. Le profil « ministère » est vérifié par
+ * `PageApplication` avant toute requête ; un compte de ministère sans ministère n'a rien à saisir.
+ */
 export function PageSaisieSession({ titre }: ProprietesPage) {
-  return <PageAVenir titre={titre} etape={4} />
+  const { id } = useParams()
+  const compte = useCompteConnecte()
+  const retour = useRetourSaisie()
+  const ministereId = compte.ministereId
+  if (!ministereId) return <PageNonDisponible />
+  if (!id || id === CHOIX_SESSION) {
+    return <ChoixSessionConnecte ministereId={ministereId} onFermer={retour} />
+  }
+  return (
+    <SaisieSessionConnectee
+      key={id}
+      sessionId={id}
+      ministereId={ministereId}
+      titre={titre}
+      onFermer={retour}
+    />
+  )
 }

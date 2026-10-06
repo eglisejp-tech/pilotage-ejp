@@ -1,10 +1,26 @@
-import { PageAVenir } from '@/pages/PageAVenir'
+import { GardeMinistereFij } from '@/features/saisie-fij/GardeMinistereFij'
+import { SaisieCarteConnectee } from '@/features/saisie-fij/SaisieCarteConnectee'
+import { useRetourSaisie } from '@/features/saisie-session/useRetourSaisie'
+import { useCompteConnecte } from '@/features/session/contexte'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
 /**
- * Amorce de W0 pour `/saisir/fij` : le lot E4 la remplace (carte des FIJ). Le ministère `fij`
- * seul y accède : un autre ministère reçoit la page non disponible, vérifiée par le lot E4.
+ * `/saisir/fij` (lot E4) : la carte des FIJ, réservée au ministère `fij`. Un autre ministère
+ * reçoit la page non disponible (`GardeMinistereFij`) ; les autres profils, dès `PageApplication`.
  */
 export function PageSaisieFij({ titre }: ProprietesPage) {
-  return <PageAVenir titre={titre} etape={4} />
+  const compte = useCompteConnecte()
+  const retour = useRetourSaisie()
+  if (!compte.ministereId) return <PageNonDisponible />
+  return (
+    <GardeMinistereFij
+      ministereId={compte.ministereId}
+      titre={titre}
+      onFermer={retour}
+      ecran="saisie_fij"
+    >
+      <SaisieCarteConnectee ministereId={compte.ministereId} titre={titre} onFermer={retour} />
+    </GardeMinistereFij>
+  )
 }

@@ -1,7 +1,14 @@
-import { PageAVenir } from '@/pages/PageAVenir'
-import type { ProprietesPage } from '@/pages/proprietesPage'
+import { SaisieReunion } from '@/features/evenements/SaisieReunion'
+import { useCompteConnecte } from '@/features/session/contexte'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
-/** Amorce de W0 pour `/saisir/reunion` : le lot E5 la remplace (prochaine réunion). */
-export function PageSaisieReunion({ titre }: ProprietesPage) {
-  return <PageAVenir titre={titre} etape={4} />
+/**
+ * `/saisir/reunion` : la prochaine réunion du ministère (panneau dérivé de 11), pour un compte de
+ * ministère seulement (`PageApplication` refuse les autres profils, sans requête). Le titre
+ * « Prochaine réunion » vient du panneau.
+ */
+export function PageSaisieReunion() {
+  const compte = useCompteConnecte()
+  if (compte.ministereId === null) return <PageNonDisponible />
+  return <SaisieReunion ministereId={compte.ministereId} libelleCompte={compte.libelle} />
 }

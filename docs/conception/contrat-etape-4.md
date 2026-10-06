@@ -91,6 +91,24 @@ test de matrice de B7 vérifie qu'une ligne `texte_masque` sur un signalement re
 le berger, le conseil, l'administration et un autre ministère, et lisible par le ministère auteur
 et par EJP Tech.
 
+**Lecture des lignes du texte « Pourquoi » (P51, décidé le 6 octobre 2026).** Une ligne
+`texte_relu` ou `texte_masque` dont la cible est `demande_indicateur` se lit par le ministère
+auteur, EJP Tech, le berger et le conseil, **jamais par l'administration** de l'église : le berger
+et le conseil suivent la modération des textes comme celle des points. Aujourd'hui (B2),
+`private.journal_lisible_administration` contient `texte_relu` et `texte_masque`, donc
+l'administration lit ces lignes pour toutes les cibles. B7, qui recrée la politique de lecture de
+`journal` et `v_journal`, ajoute à la branche de l'administration la condition :
+
+```sql
+coalesce(cible, '') <> 'demande_indicateur'
+or action not in ('texte_relu', 'texte_masque')
+```
+
+Les branches `private.lit_tout()` (berger, conseil, EJP Tech) et `ministere_id` (ministère
+auteur) ne changent pas. Le test de matrice de B7 vérifie qu'une ligne `texte_masque` et une ligne
+`texte_relu` de cible `demande_indicateur` sont lisibles par le ministère auteur, EJP Tech, le
+berger et le conseil, et invisibles pour l'administration et un autre ministère.
+
 Absents, réservés au lot 2 des indicateurs (refusés par la contrainte) :
 `indicateur_correction_demandee`, `indicateur_officiel`.
 
@@ -227,23 +245,24 @@ colonnes, et les fonctions de B3 (`corriger_indicateur`, `retirer_indicateur`,
 
 ### `indicateur`, colonnes ajoutées (B1)
 
-| Colonne                 | Type                  | Règle                                                                        |
-| ----------------------- | --------------------- | ---------------------------------------------------------------------------- |
-| `definition`            | `text`                | 10 à 140 caractères, obligatoire (remplie pour les communs par la migration) |
-| `unite`                 | `text`                | section 4, défaut `nombre`                                                   |
-| `sensible`              | `boolean`             | défaut `false` ; `mois` et `nombre` seulement, jamais source d'un calcul     |
-| `calcul`                | `text`                | section 4, null pour un indicateur saisi ; termes dans `indicateur_terme`    |
-| `etat`                  | `text`                | section 4, défaut `actif` ; `check (actif = (etat = 'actif'))`               |
-| `origine`               | `text`                | section 4 ; `commun` si et seulement si `ministere_id` est null              |
-| `modele_code`           | `text`                | code de `private.indicateur_prevu`, sinon null                               |
-| `remplace_id`           | `uuid`                | unique, référence `indicateur`                                               |
-| `cree_le`, `cree_par`   | `timestamptz`, `uuid` | `cree_par` null pour Système (migration)                                     |
-| `texte_le`, `texte_par` | `timestamptz`, `uuid` | dernière écriture des textes                                                 |
-| `retire_le`             | `timestamptz`         | posé avec `etat = 'retire'`                                                  |
-| `retrait_motif`         | `text`                | section 4, posé avec `retire_le`                                             |
-| `sans_somme`            | `boolean`             | défaut `false` : pas de somme de l'année                                     |
-| `saisi_dimanche_matin`  | `boolean`             | défaut `false` : le dimanche du jour se saisit dès le matin (heure de Paris) |
-| `libelle_sessions`      | `boolean`             | défaut `false` (X3)                                                          |
+| Colonne                 | Type                  | Règle                                                                                                         |
+| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `definition`            | `text`                | 10 à 140 caractères, obligatoire (remplie pour les communs par la migration)                                  |
+| `unite`                 | `text`                | section 4, défaut `nombre`                                                                                    |
+| `sensible`              | `boolean`             | défaut `false` ; `mois` et `nombre` seulement, jamais source d'un calcul                                      |
+| `calcul`                | `text`                | section 4, null pour un indicateur saisi ; termes dans `indicateur_terme`                                     |
+| `etat`                  | `text`                | section 4, défaut `actif` ; `check (actif = (etat = 'actif'))`                                                |
+| `origine`               | `text`                | section 4 ; `commun` si et seulement si `ministere_id` est null                                               |
+| `modele_code`           | `text`                | code de `private.indicateur_prevu`, sinon null                                                                |
+| `remplace_id`           | `uuid`                | unique, référence `indicateur`                                                                                |
+| `cree_le`, `cree_par`   | `timestamptz`, `uuid` | `cree_par` null pour Système (migration)                                                                      |
+| `texte_le`, `texte_par` | `timestamptz`, `uuid` | dernière écriture des textes                                                                                  |
+| `retire_le`             | `timestamptz`         | posé avec `etat = 'retire'`                                                                                   |
+| `retrait_motif`         | `text`                | section 4, posé avec `retire_le`                                                                              |
+| `sans_somme`            | `boolean`             | défaut `false` : pas de somme de l'année                                                                      |
+| `saisi_dimanche_matin`  | `boolean`             | défaut `false` : le dimanche du jour se saisit dès le matin (heure de Paris)                                  |
+| `libelle_sessions`      | `boolean`             | défaut `false` (X3)                                                                                           |
+| `part`                  | `boolean`             | défaut `false` (P49) : un calcul `taux` « part » ne dépasse jamais 100 % ; posé à la création, jamais modifié |
 
 `nature` accepte `mois`. `mesure.valeur` passe à 0 à 9 999 999, le plafond de l'unité étant
 contrôlé par `controler_mesure`. Changement du 6 octobre (P45) : `controler_mesure` accepte le mois
@@ -276,7 +295,8 @@ Telles que `validation-metier.md`, section 6.2 : `demande_indicateur` (`id uuid`
 ### `private.indicateur_prevu` (B3) et `private.libelle_commun` (B4)
 
 Illisibles par l'API. `indicateur_prevu` : `code text` (clé), `modele text`, `libelle text`,
-`definition text`, `nature text`, `unite text`, `sensible boolean`, `calcul text`, termes (codes
+`definition text`, `nature text`, `unite text`, `sensible boolean`, `part boolean` (P49, ajoutée par
+B4, copiée sur `indicateur.part` à la création), `calcul text`, termes (codes
 des sources du même modèle), drapeaux, `ordre smallint`. `libelle_commun` : `modele text`,
 `commun_code text`, `libelle text` (60 caractères au plus).
 
@@ -409,20 +429,20 @@ Un refusé et un retiré pour confidentialité n'y figurent pas (Q11).
 
 ### `v_calcul` (B2)
 
-| Colonne                   | Type      | Sens                                                                        |
-| ------------------------- | --------- | --------------------------------------------------------------------------- |
-| `indicateur_id`           | `uuid`    | le calcul                                                                   |
-| `ministere_id`            | `uuid`    |                                                                             |
-| `calcul`                  | `text`    | `taux` ou `moyenne` (V1)                                                    |
-| `periode`                 | `date`    | dernière période finie                                                      |
-| `haut`, `bas`             | `bigint`  | sommes de la période                                                        |
-| `resultat`                | `numeric` | pour un taux, en pour cent (plafond 100 pour une part) ; null : non calculé |
-| `annee_haut`, `annee_bas` | `bigint`  | Σ sur les périodes de l'année qui ont toutes les valeurs                    |
-| `annee_resultat`          | `numeric` | jamais une moyenne de taux                                                  |
-| `annee_nb_periodes`       | `integer` | complétude                                                                  |
-| `annee_nb_attendues`      | `integer` |                                                                             |
-| `non_calcule_raison`      | `text`    | `source_non_saisie` ou `bas_nul`, null si calculé (fixé par W0)             |
-| `non_calcule_source_id`   | `uuid`    | la source qui manque (« demandes reçues de septembre non saisies »)         |
+| Colonne                   | Type      | Sens                                                                                                                 |
+| ------------------------- | --------- | -------------------------------------------------------------------------------------------------------------------- |
+| `indicateur_id`           | `uuid`    | le calcul                                                                                                            |
+| `ministere_id`            | `uuid`    |                                                                                                                      |
+| `calcul`                  | `text`    | `taux` ou `moyenne` (V1)                                                                                             |
+| `periode`                 | `date`    | dernière période finie                                                                                               |
+| `haut`, `bas`             | `bigint`  | sommes de la période                                                                                                 |
+| `resultat`                | `numeric` | pour un taux, en pour cent ; jamais plus de 100 pour une part (`part`), non calculé sinon (P49) ; null : non calculé |
+| `annee_haut`, `annee_bas` | `bigint`  | Σ sur les périodes de l'année qui ont toutes les valeurs                                                             |
+| `annee_resultat`          | `numeric` | jamais une moyenne de taux                                                                                           |
+| `annee_nb_periodes`       | `integer` | complétude                                                                                                           |
+| `annee_nb_attendues`      | `integer` |                                                                                                                      |
+| `non_calcule_raison`      | `text`    | `source_non_saisie`, `bas_nul` ou `haut_depasse_bas` (P49, ajouté par B4), null si calculé                           |
+| `non_calcule_source_id`   | `uuid`    | la source qui manque (« demandes reçues de septembre non saisies »)                                                  |
 
 Les calculs étendus (différence, somme, évolution, agrégats, décalages, comptages) n'y figurent
 pas avant L1.
@@ -585,24 +605,28 @@ faire entre 10 et 280 caractères. » (B8, les nombres étant ceux de l'envoi).
 Celle de `docs/plan-etape-4.md`, section 4, avec la décision du 6 octobre 2026 sur les
 signalements, qui remplace les lignes « à confirmer » :
 
-| Objet                                                     | Ministère                                                    | Berger, conseil                                      | Administration                                                                                        | EJP Tech                           | `aal1`, anonyme |
-| --------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------- |
-| `signalement`                                             | L les siens ; A par `signaler_difficulte`                    | rien                                                 | rien                                                                                                  | L tous                             | rien            |
-| `signalement_suivi`                                       | L celui de ses signalements                                  | rien                                                 | rien                                                                                                  | L tous ; A par `clore_signalement` | rien            |
-| `signaler_difficulte`                                     | sa fiche seulement                                           | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
-| `clore_signalement`                                       | refusé                                                       | refusé                                               | refusé                                                                                                | oui                                | refusé          |
-| `journal` (codes nouveaux)                                | lignes de sa fiche                                           | toutes, sauf les lignes des signalements (section 1) | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements ; aucune ligne des signalements | toutes                             | rien            |
-| `categorie_sensible` (B8)                                 | L des siens (comme `indicateur`, Q3)                         | L                                                    | L (définitions, sans valeur)                                                                          | L                                  | rien            |
-| `ventilation_sensible` (B8)                               | L les siennes (lignes brutes) ; A par `saisir_chiffres_mois` | rien (par la vue)                                    | rien                                                                                                  | rien (par la vue)                  | rien            |
-| `v_ventilation_sensible` (B8)                             | valeurs exactes des siennes                                  | « moins de 3 », masquage secondaire, « non réparti » | rien                                                                                                  | comme le berger                    | rien            |
-| `precision_sensible` (B8, table brute)                    | L les siennes ; A par `saisir_chiffres_mois`                 | rien (par la vue)                                    | rien                                                                                                  | L (relecture et masquage)          | rien            |
-| `v_precision_sensible` (B8)                               | L la sienne (total le plus récent)                           | L (total le plus récent, sans date d'envoi)          | rien                                                                                                  | L comme le berger                  | rien            |
-| `saisir_chiffres_mois` (B8)                               | sa fiche seulement, ministère actif                          | refusé                                               | refusé                                                                                                | refusé                             | refusé          |
-| `moderation`, couple (`precision_sensible`, `texte`) (B8) | rien                                                         | rien                                                 | rien                                                                                                  | L, relecture et masquage           | rien            |
+| Objet                                                     | Ministère                                                    | Berger, conseil                                      | Administration                                                                                                                                                                   | EJP Tech                           | `aal1`, anonyme |
+| --------------------------------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | --------------- |
+| `signalement`                                             | L les siens ; A par `signaler_difficulte`                    | rien                                                 | rien                                                                                                                                                                             | L tous                             | rien            |
+| `signalement_suivi`                                       | L celui de ses signalements                                  | rien                                                 | rien                                                                                                                                                                             | L tous ; A par `clore_signalement` | rien            |
+| `signaler_difficulte`                                     | sa fiche seulement                                           | refusé                                               | refusé                                                                                                                                                                           | refusé                             | refusé          |
+| `clore_signalement`                                       | refusé                                                       | refusé                                               | refusé                                                                                                                                                                           | oui                                | refusé          |
+| `journal` (codes nouveaux)                                | lignes de sa fiche                                           | toutes, sauf les lignes des signalements (section 1) | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements ; aucune ligne des signalements ; aucun `texte_relu` ni `texte_masque` de cible `demande_indicateur` (P51) | toutes                             | rien            |
+| `categorie_sensible` (B8)                                 | L des siens (comme `indicateur`, Q3)                         | L                                                    | L (définitions, sans valeur)                                                                                                                                                     | L                                  | rien            |
+| `ventilation_sensible` (B8)                               | L les siennes (lignes brutes) ; A par `saisir_chiffres_mois` | rien (par la vue)                                    | rien                                                                                                                                                                             | rien (par la vue)                  | rien            |
+| `v_ventilation_sensible` (B8)                             | valeurs exactes des siennes                                  | « moins de 3 », masquage secondaire, « non réparti » | rien                                                                                                                                                                             | comme le berger                    | rien            |
+| `precision_sensible` (B8, table brute)                    | L les siennes ; A par `saisir_chiffres_mois`                 | rien (par la vue)                                    | rien                                                                                                                                                                             | L (relecture et masquage)          | rien            |
+| `v_precision_sensible` (B8)                               | L la sienne (total le plus récent)                           | L (total le plus récent, sans date d'envoi)          | rien                                                                                                                                                                             | L comme le berger                  | rien            |
+| `saisir_chiffres_mois` (B8)                               | sa fiche seulement, ministère actif                          | refusé                                               | refusé                                                                                                                                                                           | refusé                             | refusé          |
+| `moderation`, couple (`precision_sensible`, `texte`) (B8) | rien                                                         | rien                                                 | rien                                                                                                                                                                             | L, relecture et masquage           | rien            |
 
 Les lignes des signalements du journal (`difficulte_signalee`, `signalement_clos`, et
 `texte_relu` ou `texte_masque` de cible `signalement` ou `signalement_suivi`) ne se lisent que par
 le ministère auteur et par EJP Tech (T39, décidé ; condition de la section 1, écrite par B7).
+
+Les lignes `texte_relu` et `texte_masque` de cible `demande_indicateur` (le texte « Pourquoi »)
+se lisent par le ministère auteur, EJP Tech, le berger et le conseil, pas par l'administration
+(P51, décidé ; condition de la section 1, écrite par B7).
 
 Les sept dernières lignes viennent du changement du 6 octobre (P46, P47, T41) ; la matrice complète
 reste celle de `docs/plan-etape-4.md`, section 4.
