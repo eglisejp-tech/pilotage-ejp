@@ -122,9 +122,113 @@ language sql stable as $$
   select m.id from public.ministere m where m.nom = p_nom
 $$;
 
+-- Essai d'une requête au nom d'un compte (null : l'anonyme), en aal1 ou en aal2, puis
+-- annulation de tout ce qu'elle a fait. Mode « lignes » : rend le nombre de lignes lues.
+-- Autre mode : rend « ok » pour une écriture ou un appel accepté. Une erreur rend son code
+-- (42501 pour un droit refusé, 23514 pour un check, P0001 pour un refus d'une fonction).
+create or replace function tests.essai(p_compte uuid, p_aal text, p_requete text, p_mode text default 'code')
+returns text
+language plpgsql as $$
+declare
+  v_resultat text;
+begin
+  begin
+    if p_compte is null then
+      perform tests.anonyme(p_aal);
+    else
+      perform tests.se_connecter(p_compte, p_aal);
+    end if;
+    if p_mode = 'lignes' then
+      execute format('select count(*)::text from (%s) as x', p_requete) into v_resultat;
+    else
+      execute p_requete;
+      v_resultat := 'ok';
+    end if;
+    raise exception using errcode = 'ZZ002', message = 'essai annulé';
+  exception
+    when sqlstate 'ZZ002' then
+      null;
+    when others then
+      v_resultat := sqlstate;
+  end;
+  return v_resultat;
+end $$;
+
+-- Matrice des droits écrite en données (docs/plan-etape-4.md, section 3, point 8), que chaque
+-- lot de base alimente de ses lignes. Rend un test pgTAP par essai (select * from ...).
+--
+-- p_matrice : requête qui rend, dans cet ordre, six colonnes text :
+--   profil   nom d'un profil de p_profils, ou « anonyme » (sans compte) ;
+--   objet    table, vue ou fonction essayée (sert au libellé du test) ;
+--   action   « lire » compte les lignes rendues ; toute autre action (« ajouter »,
+--            « modifier », « supprimer », « appeler »...) exécute la requête ;
+--   aal      « aal1 » ou « aal2 » (ignoré pour l'anonyme) ;
+--   attendu  pour « lire » : le nombre de lignes, ou un code d'erreur (42501) ; sinon « ok »
+--            ou le code d'erreur attendu ;
+--   requete  la requête SQL essayée (select pour « lire »).
+-- p_profils : requête qui rend (profil text, compte uuid), un compte par profil.
+-- p_deriver : vrai pour ajouter à chaque ligne en aal2 d'un profil sa ligne en aal1 (zéro
+--   ligne lue, toute autre action refusée en 42501) et, une fois par objet, action et requête,
+--   la ligne de l'anonyme (42501 partout). Avec p_deriver, la matrice n'écrit que l'aal2.
+-- Les tables temporaires lues par les requêtes doivent être ouvertes à authenticated et à
+-- anon par le fichier de test (grant select). Chaque essai est annulé aussitôt.
+create or replace function tests.verifier_matrice(p_matrice text, p_profils text, p_deriver boolean default false)
+returns setof text
+language plpgsql as $$
+declare
+  r record;
+begin
+  for r in execute format($requete$
+    with m as (
+      select row_number() over () as rang, x.profil, x.objet, x.action, x.aal, x.attendu, x.requete
+        from (%s) as x(profil, objet, action, aal, attendu, requete)
+    ),
+    lignes as (
+      select m.rang, 1 as sous_rang, m.profil, m.objet, m.action, m.aal, m.attendu, m.requete
+        from m
+      union all
+      select m.rang, 2, m.profil, m.objet, m.action, 'aal1',
+             case when m.action = 'lire' then '0' else '42501' end, m.requete
+        from m
+       where $1 and m.aal = 'aal2' and m.profil <> 'anonyme'
+      union all
+      select min(m.rang), 3, 'anonyme', m.objet, m.action, null, '42501', m.requete
+        from m
+       where $1
+       group by m.objet, m.action, m.requete
+    )
+    select l.rang, l.sous_rang, l.profil, l.objet, l.action, l.aal, l.attendu, l.requete,
+           p.compte, p.profil is not null as connu
+      from lignes l
+      left join (%s) as p(profil, compte) on p.profil = l.profil
+     order by l.rang, l.sous_rang, l.profil
+  $requete$, p_matrice, p_profils) using p_deriver
+  loop
+    if r.profil <> 'anonyme' and (not r.connu or r.compte is null) then
+      return next fail(format('%s, %s, %s : profil sans compte dans p_profils', r.objet, r.action, r.profil));
+      continue;
+    end if;
+    return next is(
+      tests.essai(case when r.profil = 'anonyme' then null else r.compte end, r.aal, r.requete,
+                  case when r.action = 'lire' then 'lignes' else 'code' end),
+      r.attendu,
+      format('%s, %s, %s : %s', r.objet, r.action,
+             r.profil || case when r.profil = 'anonyme' then '' else coalesce(' en ' || r.aal, '') end,
+             case
+               when r.attendu = 'ok' then 'accepté'
+               when r.action = 'lire' and r.attendu ~ '^[0-9]{1,4}$' then r.attendu || ' ligne(s)'
+               else 'refusé (' || r.attendu || ')'
+             end));
+  end loop;
+end $$;
+
 grant execute on all functions in schema tests to anon, authenticated;
 
-select plan(2);
+select plan(4);
 select has_schema('tests', 'le schéma des outils de test existe');
 select has_function('tests', 'se_connecter', array['uuid', 'text'], 'tests.se_connecter(user_id, aal) existe');
+select has_function('tests', 'essai', array['uuid', 'text', 'text', 'text'],
+  'tests.essai(compte, aal, requête, mode) existe');
+select has_function('tests', 'verifier_matrice', array['text', 'text', 'boolean'],
+  'tests.verifier_matrice(matrice, profils, dériver) existe (matrice des droits en données)');
 select * from finish();
