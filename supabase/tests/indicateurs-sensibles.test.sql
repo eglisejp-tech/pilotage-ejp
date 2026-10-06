@@ -1,8 +1,8 @@
 -- Indicateurs sensibles (étape 4, lot B1 ; BRIEF, section 4, « Indicateurs sensibles » ; P42 ;
 -- configuration-indicateurs.md 3.7) : un sensible se crée et s'active comme les autres, sans
 -- aucun réglage d'activation ; sa forme est imposée (mois, nombre, aucun calcul) ; il n'est
--- jamais source d'un calcul ; le mois en cours se saisit (6 octobre 2026), pas un mois futur ; son remplaçant est
--- sensible ; la case ne change plus.
+-- jamais source d'un calcul ; le mois en cours se saisit (6 octobre 2026), pas un mois futur ;
+-- son remplaçant est sensible ; la case ne change plus.
 -- Les fonctions creer_indicateur et creer_indicateurs_prevus (B3) écrivent par une insertion
 -- du propriétaire des tables, comme ici : le trigger controler_indicateur s'applique quel que
 -- soit le chemin. B3 rejoue ces cas par ses fonctions.

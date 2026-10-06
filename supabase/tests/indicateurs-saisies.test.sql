@@ -8,7 +8,7 @@
 -- instant), que le trigger appelle avec now().
 begin;
 
-select plan(60);
+select plan(62);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -131,6 +131,10 @@ select is(pg_temp.saisir('Essai s. sensible', ((select mois from ctx) + interval
 select is(pg_temp.saisir('Essai s. sensible', (select mois_passe from ctx) + 14, 1), 'P0001 Un mois se saisit à la date de son 1er jour.',
   'sensible : le 15 du mois reste refusé');
 select is(pg_temp.saisir('Essai s. sensible', (select mois_passe from ctx), 1), 'ok', 'sensible : le dernier mois écoulé est accepté');
+select is(pg_temp.saisir('Essai s. sensible', (select mois_passe from ctx), 10000), 'P0001 Entre 0 et 9 999.',
+  'sensible : le plafond de 9 999 reste imposé');
+select is(pg_temp.saisir('Essai s. sensible', make_date(extract(year from private.aujourdhui())::int - 2, 12, 1), 1),
+  'P0001 Ce mois est trop ancien pour être saisi.', 'sensible : un mois trop ancien reste refusé');
 
 -- Bascule du mois le 31 octobre 2026 à 23 h 30 UTC : déjà le 1er novembre à Paris.
 select is(pg_temp.le('Essai s. nombre', date '2026-11-01', 5, timestamptz '2026-10-31 23:30+00'), 'ok',

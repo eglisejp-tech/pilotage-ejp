@@ -7,9 +7,6 @@
 -- (cinq profils, ministères porteur, autre, fij et coordination, aal1 et anonyme).
 begin;
 
--- 207 essais : la matrice n'en dérive plus en aal1 que pour les lignes acceptées en aal2 (W0).
-select plan(207);
-
 -- Contexte : comptes du jeu d'exemple ; indicateurs d'essai de Communication (le ministère
 -- porteur), écrits comme le ferait une fonction de configuration.
 create temp table ctx as
@@ -24,6 +21,53 @@ select tests.compte('Ministère Communication') as com,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech,
        (select i.id from public.indicateur i where i.code = 'service') as service;
+
+-- Matrice des droits (docs/plan-etape-4.md, section 4) : lignes de B1. Elle est une vue, pour
+-- que le plan en compte les essais (lignes dérivées comprises) sans nombre écrit en dur ; ses
+-- requêtes lisent ctx au moment de l'essai, une fois le jeu d'essai posé. Colonnes des
+-- attendus dans l'ordre des profils : porteur, autre ministère, FIJ, Coordination, berger,
+-- conseil, administration, EJP Tech.
+create temp view matrice_def (profil, objet, action, aal, attendu, requete) as
+  select p.profil, m.objet, m.action, 'aal2', m.attendu[p.rang], m.requete
+    from (values (1, 'ministère porteur'), (2, 'ministère autre'), (3, 'ministère fij'),
+                 (4, 'ministère coordination'), (5, 'berger'), (6, 'conseil'), (7, 'administration'),
+                 (8, 'EJP Tech')) as p(rang, profil)
+   cross join (values
+     ('indicateur', 'lire', array['6', '1', '1', '1', '6', '6', '6', '6'],
+      'select 1 from public.indicateur i where i.id in (select c.service from ctx c union all select c.pub from ctx c union all select c.dem from ctx c union all select c.taux from ctx c union all select c.att from ctx c union all select c.ret from ctx c)'),
+     ('indicateur_terme', 'lire', array['2', '0', '0', '0', '2', '2', '2', '2'],
+      'select 1 from public.indicateur_terme t where t.calcul_id = (select taux from ctx)'),
+     ('indicateur', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'insert into public.indicateur (libelle, definition, nature, ministere_id) select ''Essai direct'', ''Ajout direct d''''essai.'', ''mois'', com_m from ctx'),
+     ('indicateur', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'update public.indicateur set libelle = libelle where id = (select pub from ctx)'),
+     ('indicateur', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'delete from public.indicateur where id = (select pub from ctx)'),
+     ('indicateur_terme', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'insert into public.indicateur_terme (calcul_id, ordre, role, source_id) select taux, 3, ''bas'', s1 from ctx'),
+     ('indicateur_terme', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'update public.indicateur_terme set decalage = 1 where calcul_id = (select taux from ctx)'),
+     ('indicateur_terme', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'delete from public.indicateur_terme where calcul_id = (select taux from ctx)'),
+     ('mesure (indicateur propre)', 'ajouter', array['ok', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select pub, com_m, (private.mois_courant() - interval ''1 month'')::date, 5 from ctx')
+   ) as m(objet, action, attendu, requete)
+  union all
+  select 'ministère porteur', 'mesure (calcul)', 'ajouter', 'aal2', 'P0001',
+         'insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select taux, com_m, (private.mois_courant() - interval ''1 month'')::date, 5 from ctx';
+create temp view profil_def (profil, compte) as
+  select 'ministère porteur', c.com from ctx c union all select 'ministère autre', c.jeu from ctx c
+  union all select 'ministère fij', c.fij from ctx c union all select 'ministère coordination', c.coo from ctx c
+  union all select 'berger', c.berger from ctx c union all select 'conseil', c.conseil from ctx c
+  union all select 'administration', c.admin from ctx c union all select 'EJP Tech', c.tech from ctx c;
+grant select on matrice_def, profil_def to authenticated, anon;
+
+-- Le plan compte les 107 tests fixes (tout sauf la matrice) et, par tests.nombre_essais, les
+-- essais de la matrice : ses lignes, leurs lignes dérivées en aal1 et celles de l'anonyme.
+select plan(107 + tests.nombre_essais(
+  'select profil, objet, action, aal, attendu, requete from matrice_def',
+  'select profil, compte from profil_def',
+  true));
 
 insert into public.indicateur (libelle, definition, nature, ministere_id)
 select x.libelle, x.definition, x.nature, c.com_m
@@ -153,43 +197,10 @@ select is(tests.lire((select com from ctx), 'aal2', 'select private.mois_courant
   jsonb_build_array(jsonb_build_object('m', private.mois_courant())),
   'mois_courant est lisible par un compte connecté (vues des lots suivants)');
 
--- Matrice des droits (docs/plan-etape-4.md, section 4) : lignes de B1.
+-- Matrice des droits (définie en tête de fichier, avant le plan).
 select * from tests.verifier_matrice(
-  $$
-  select p.profil, m.objet, m.action, 'aal2', m.attendu[p.rang], m.requete
-    from (values (1, 'ministère porteur'), (2, 'ministère autre'), (3, 'ministère fij'),
-                 (4, 'ministère coordination'), (5, 'berger'), (6, 'conseil'), (7, 'administration'),
-                 (8, 'EJP Tech')) as p(rang, profil)
-   cross join (values
-     ('indicateur', 'lire', array['6', '1', '1', '1', '6', '6', '6', '6'],
-      'select 1 from public.indicateur i where i.id in (select c.service from ctx c union all select c.pub from ctx c union all select c.dem from ctx c union all select c.taux from ctx c union all select c.att from ctx c union all select c.ret from ctx c)'),
-     ('indicateur_terme', 'lire', array['2', '0', '0', '0', '2', '2', '2', '2'],
-      'select 1 from public.indicateur_terme t where t.calcul_id = (select taux from ctx)'),
-     ('indicateur', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'insert into public.indicateur (libelle, definition, nature, ministere_id) select ''Essai direct'', ''Ajout direct d''''essai.'', ''mois'', com_m from ctx'),
-     ('indicateur', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'update public.indicateur set libelle = libelle where id = (select pub from ctx)'),
-     ('indicateur', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'delete from public.indicateur where id = (select pub from ctx)'),
-     ('indicateur_terme', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'insert into public.indicateur_terme (calcul_id, ordre, role, source_id) select taux, 3, ''bas'', s1 from ctx'),
-     ('indicateur_terme', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'update public.indicateur_terme set decalage = 1 where calcul_id = (select taux from ctx)'),
-     ('indicateur_terme', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'delete from public.indicateur_terme where calcul_id = (select taux from ctx)'),
-     ('mesure (indicateur propre)', 'ajouter', array['ok', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select pub, com_m, (private.mois_courant() - interval ''1 month'')::date, 5 from ctx')
-   ) as m(objet, action, attendu, requete)
-  union all
-  select 'ministère porteur', 'mesure (calcul)', 'ajouter', 'aal2', 'P0001',
-         'insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur) select taux, com_m, (private.mois_courant() - interval ''1 month'')::date, 5 from ctx'
-  $$,
-  $$
-  select 'ministère porteur', c.com from ctx c union all select 'ministère autre', c.jeu from ctx c
-  union all select 'ministère fij', c.fij from ctx c union all select 'ministère coordination', c.coo from ctx c
-  union all select 'berger', c.berger from ctx c union all select 'conseil', c.conseil from ctx c
-  union all select 'administration', c.admin from ctx c union all select 'EJP Tech', c.tech from ctx c
-  $$,
+  'select profil, objet, action, aal, attendu, requete from matrice_def',
+  'select profil, compte from profil_def',
   true);
 
 -- Sens figé, même pour le propriétaire des tables (les migrations et les fonctions de
