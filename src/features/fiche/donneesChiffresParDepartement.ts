@@ -16,7 +16,7 @@ import type { LigneStatistiqueFij } from '@/data/fij'
 import type { Departement, RubriqueFij, TypeCompte } from '@/lib/base'
 import type { DateIso } from '@/lib/metier/dates'
 import { libelleSemaine, semaineIso } from '@/lib/metier/semaine'
-import { nombre } from '@/lib/metier/texte'
+import { nombre, terminerPhrase } from '@/lib/metier/texte'
 
 /** Texte d'un total ou d'une valeur absente : jamais un 0 (LISEZMOI, « États vides partout »). */
 export const PAS_DE_SAISIE = 'Pas de saisie'
@@ -31,8 +31,11 @@ export const TEXTES_BLOC_FIJ = {
   saisir: 'Saisir les chiffres par département',
   probleme: 'La connexion a échoué. Réessayez.',
   parDepartement: 'Par département',
+  // « sept. » finit déjà la phrase : pas de second point.
   semaineVide: (semaine: string) =>
-    `Aucun département saisi pour la ${semaine.charAt(0).toLowerCase()}${semaine.slice(1)}.`,
+    terminerPhrase(
+      `Aucun département saisi pour la ${semaine.charAt(0).toLowerCase()}${semaine.slice(1)}`,
+    ),
   note: 'Dernière saisie de chaque département pour la semaine. Un département sans saisie ne compte pas pour 0. Courbes : dix dernières semaines.',
 } as const
 
