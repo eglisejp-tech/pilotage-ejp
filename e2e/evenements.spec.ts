@@ -163,7 +163,7 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
 
     await ouvrir(page, 'introuvable')
     await expect(
-      page.getByText("Cet élément n'existe pas ou vous n'y avez pas accès."),
+      page.getByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
     ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
 

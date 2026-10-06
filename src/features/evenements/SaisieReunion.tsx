@@ -31,7 +31,13 @@ function valeursDe(reunion: LigneVue<'v_prochaine_reunion'>): ValeursReunion {
  * préremplit, « Renseigner » ouvre vide), puis ouvre le formulaire. Chaque envoi ajoute une
  * déclaration (règle 15).
  */
-export function SaisieReunion({ ministereId }: { ministereId: string }) {
+export function SaisieReunion({
+  ministereId,
+  libelleCompte,
+}: {
+  ministereId: string
+  libelleCompte: string
+}) {
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
   const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
@@ -52,6 +58,8 @@ export function SaisieReunion({ ministereId }: { ministereId: string }) {
       aujourdhui: semaine.data.aujourdhui,
       prochaine: prochaine.data === null ? null : valeursDe(prochaine.data),
       envoyer,
+      // Un refus de date : le jour de Paris a changé, `v_semaine` est relue.
+      actualiserJour: () => void semaine.refetch(),
     }
   } else if (enEchec([semaine, prochaine]) || semaine.data === null) {
     contenu = {
@@ -64,5 +72,5 @@ export function SaisieReunion({ ministereId }: { ministereId: string }) {
   } else {
     contenu = { etat: 'chargement' }
   }
-  return <PanneauReunion contenu={contenu} onFermer={fermer} />
+  return <PanneauReunion contenu={contenu} onFermer={fermer} surtitre={libelleCompte} />
 }

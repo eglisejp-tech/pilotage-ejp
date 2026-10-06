@@ -18,6 +18,8 @@ interface Props {
   /** Identifiant de l'adresse (`/saisir/evenement/:id`), tel quel. */
   id: string | undefined
   ministereId: string
+  /** Compte connecté, au-dessus du titre du panneau. */
+  libelleCompte: string
 }
 
 /** Porteur absent de la liste (cas limite) : la phrase reste juste, sans nom. */
@@ -30,7 +32,7 @@ const PORTEUR_SANS_NOM = 'le ministère qui le porte'
  * événement illisible aussi ; un ministère mentionné lit « Seul Communication met à jour cet
  * événement. ». Seul le porteur envoie une ligne d'état (la RLS refuse les autres).
  */
-export function SaisieMiseAJourEvenement({ id, ministereId }: Props) {
+export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Props) {
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
   const valide = estIdentifiant(id)
@@ -98,5 +100,5 @@ export function SaisieMiseAJourEvenement({ id, ministereId }: Props) {
   } else {
     contenu = { etat: 'chargement', mode: 'mise_a_jour' }
   }
-  return <PanneauEvenement contenu={contenu} onFermer={fermer} />
+  return <PanneauEvenement contenu={contenu} onFermer={fermer} surtitre={libelleCompte} />
 }

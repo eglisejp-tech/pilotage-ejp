@@ -10,5 +10,5 @@ import { PageNonDisponible } from '@/pages/PageNonDisponible'
 export function PageSaisieReunion() {
   const compte = useCompteConnecte()
   if (compte.ministereId === null) return <PageNonDisponible />
-  return <SaisieReunion ministereId={compte.ministereId} />
+  return <SaisieReunion ministereId={compte.ministereId} libelleCompte={compte.libelle} />
 }

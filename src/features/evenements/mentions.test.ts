@@ -6,32 +6,60 @@ import {
 } from '@/features/evenements/mentions'
 
 const MINISTERES = [
-  { id: 'm-social', code: null, nom: 'Social', desactive_le: null },
-  { id: 'm-communication', code: null, nom: 'Communication', desactive_le: null },
-  { id: 'm-ancien', code: null, nom: 'Accueil', desactive_le: '2026-09-01T10:00:00Z' },
-  { id: 'm-integration', code: null, nom: 'Intégration', desactive_le: null },
-  { id: 'm-coordination', code: 'coordination', nom: 'Coordination', desactive_le: null },
+  { id: '10000000-0000-4000-8000-000000000008', code: null, nom: 'Social', desactive_le: null },
+  {
+    id: '10000000-0000-4000-8000-000000000001',
+    code: null,
+    nom: 'Communication',
+    desactive_le: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000009',
+    code: null,
+    nom: 'Accueil',
+    desactive_le: '2026-09-01T10:00:00Z',
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000005',
+    code: null,
+    nom: 'Intégration',
+    desactive_le: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000002',
+    code: 'coordination',
+    nom: 'Coordination',
+    desactive_le: null,
+  },
 ]
 
 describe('mentions d’un événement (T32)', () => {
   it('à mentionner : les ministères actifs autres que soi, par ordre alphabétique', () => {
-    expect(ministeresAMentionner(MINISTERES, 'm-communication')).toEqual([
-      { id: 'm-coordination', nom: 'Coordination' },
-      { id: 'm-integration', nom: 'Intégration' },
-      { id: 'm-social', nom: 'Social' },
+    expect(ministeresAMentionner(MINISTERES, '10000000-0000-4000-8000-000000000001')).toEqual([
+      { id: '10000000-0000-4000-8000-000000000002', nom: 'Coordination' },
+      { id: '10000000-0000-4000-8000-000000000005', nom: 'Intégration' },
+      { id: '10000000-0000-4000-8000-000000000008', nom: 'Social' },
     ])
-    expect(ministeresAMentionner([MINISTERES[1]!], 'm-communication')).toEqual([])
+    expect(ministeresAMentionner([MINISTERES[1]!], '10000000-0000-4000-8000-000000000001')).toEqual(
+      [],
+    )
   })
 
   it('noms des mentions dans l’ordre alphabétique, un ministère désactivé compris', () => {
-    expect(nomsDesMentions(['m-social', 'm-ancien', 'm-inconnu'], MINISTERES)).toEqual([
-      'Accueil',
-      'Social',
-    ])
+    expect(
+      nomsDesMentions(
+        [
+          '10000000-0000-4000-8000-000000000008',
+          '10000000-0000-4000-8000-000000000009',
+          '10000000-0000-4000-8000-00000000000a',
+        ],
+        MINISTERES,
+      ),
+    ).toEqual(['Accueil', 'Social'])
   })
 
   it('nom du ministère porteur, ou null', () => {
-    expect(nomDuMinistere('m-communication', MINISTERES)).toBe('Communication')
-    expect(nomDuMinistere('m-inconnu', MINISTERES)).toBeNull()
+    expect(nomDuMinistere('10000000-0000-4000-8000-000000000001', MINISTERES)).toBe('Communication')
+    expect(nomDuMinistere('10000000-0000-4000-8000-00000000000a', MINISTERES)).toBeNull()
   })
 })

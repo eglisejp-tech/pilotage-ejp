@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -15,15 +15,25 @@ import type { ScenarioSession } from '@/test/fauxSupabase'
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
-const COMMUNICATION = 'm-communication'
-const COORDINATION = 'm-coordination'
+const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
+const COORDINATION = '10000000-0000-4000-8000-000000000002'
 const EVENEMENT = '42000000-0000-4000-8000-000000000001'
 
 const MINISTERES = [
   { id: COMMUNICATION, code: null, nom: 'Communication', desactive_le: null },
   { id: COORDINATION, code: 'coordination', nom: 'Coordination', desactive_le: null },
-  { id: 'm-integration', code: null, nom: 'Intégration', desactive_le: null },
-  { id: 'm-ancien', code: null, nom: 'Ancien ministère', desactive_le: '2026-09-01T10:00:00Z' },
+  {
+    id: '10000000-0000-4000-8000-000000000005',
+    code: null,
+    nom: 'Intégration',
+    desactive_le: null,
+  },
+  {
+    id: '10000000-0000-4000-8000-000000000009',
+    code: null,
+    nom: 'Ancien ministère',
+    desactive_le: '2026-09-01T10:00:00Z',
+  },
 ]
 
 const SEMAINE = {
@@ -65,7 +75,7 @@ function connecte(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}, enEc
 }
 
 function afficher(adresse: string) {
-  render(
+  return render(
     <QueryClientProvider client={clientRequetes}>
       <RouterProvider router={createMemoryRouter(routes, { initialEntries: [adresse] })} />
     </QueryClientProvider>,
@@ -92,6 +102,12 @@ describe('/saisir/evenement (ajout, maquette 11)', () => {
         .map((caseACocher) => caseACocher.closest('label')?.textContent),
     ).toEqual(['Coordination', 'Intégration'])
     expect(screen.getByLabelText('Date')).toHaveAttribute('min', '2026-10-06')
+    // Le compte connecté au-dessus du titre, comme dans la maquette 11.
+    expect(
+      within(screen.getByRole('heading', { level: 1 }).parentElement as HTMLElement).getByText(
+        'Ministère Communication',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Ajouter au calendrier' })).toBeInTheDocument()
     expect(new Set(faux.tables)).toEqual(new Set(['compte', 'v_semaine', 'ministere']))
   })
@@ -112,12 +128,12 @@ describe('/saisir/evenement (ajout, maquette 11)', () => {
     async (type) => {
       const faux = connecte(type)
       for (const adresse of ['/saisir/evenement', `/saisir/evenement/${EVENEMENT}`]) {
-        afficher(adresse)
+        const { unmount } = afficher(adresse)
         expect(
           await screen.findByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE }),
         ).toBeInTheDocument()
         expect(screen.queryByRole('button', { name: /Ajouter|Enregistrer/ })).toBeNull()
-        document.body.innerHTML = ''
+        unmount()
       }
       expect(faux.tables.every((table) => table === 'compte')).toBe(true)
     },
@@ -156,11 +172,11 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(faux.tables).not.toContain('evenement_mention')
   })
 
-  it('événement illisible (autre ministère) : « Cet élément n’existe pas ou vous n’y avez pas accès. »', async () => {
+  it('événement illisible (autre ministère) : « Cet événement n’existe pas ou vous n’y avez pas accès. »', async () => {
     connecte('ministere', { v_evenement: [] })
     afficher(`/saisir/evenement/${EVENEMENT}`)
     expect(
-      await screen.findByText("Cet élément n'existe pas ou vous n'y avez pas accès."),
+      await screen.findByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
     ).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
   })
@@ -169,7 +185,7 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     const faux = connecte('ministere')
     afficher('/saisir/evenement/pas-un-identifiant')
     expect(
-      await screen.findByText("Cet élément n'existe pas ou vous n'y avez pas accès."),
+      await screen.findByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
     ).toBeInTheDocument()
     expect(faux.tables.every((table) => table === 'compte')).toBe(true)
   })

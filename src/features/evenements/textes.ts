@@ -6,7 +6,7 @@
 // « Proposé » : texte que ni le BRIEF ni LISEZMOI ne donnent encore.
 
 import type { StatutEvenement } from '@/lib/base'
-import { formaterJourAbrege } from '@/lib/metier/dates'
+import { formaterJourAbrege, formaterJourLong } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import { listeNoms } from '@/lib/metier/texte'
 
@@ -41,6 +41,8 @@ export const TEXTES_EVENEMENT = {
   libelleNom: "Nom de l'événement",
   libelleStatut: 'Statut',
   libelleMentions: 'Ministères mentionnés',
+  /** Titre du groupe de cases : un champ facultatif le dit (LISEZMOI, « Validation »). */
+  titreMentions: 'Ministères mentionnés (facultatif)',
   /** Texte visible sous le statut (maquette 11), à l'ajout comme à la mise à jour. */
   noteStatut: "La validation se fait en dehors de l'outil. Ici, on reporte seulement le statut.",
   /** Note sous les mentions (BRIEF section 9, T32). */
@@ -67,7 +69,7 @@ export const TEXTES_EVENEMENT = {
   erreurStatut: 'Choisissez un statut.',
   erreurMention: 'Ce ministère ne peut pas être mentionné.',
   /** États de la mise à jour (plan de l'étape 4, E5). */
-  introuvable: MESSAGES_BASE.acces,
+  introuvable: "Cet événement n'existe pas ou vous n'y avez pas accès.",
   revenirFiche: 'Revenir à ma fiche',
 } as const
 
@@ -93,6 +95,11 @@ export function ligneReport(ancienne: DateIso, nouvelle: DateIso): string {
   return `Report : du ${jourDansLaPhrase(ancienne)} au ${jourDansLaPhrase(nouvelle)}`
 }
 
+/** « samedi 10 octobre 2026 » : la date choisie en toutes lettres, sous le champ (maquette 11). */
+export function dateEnToutesLettres(date: DateIso): string {
+  return `${formaterJourLong(date)} ${date.slice(0, 4)}`
+}
+
 export const TEXTES_REUNION = {
   titre: 'Prochaine réunion',
   libelleDate: 'Date',
@@ -105,7 +112,7 @@ export const TEXTES_REUNION = {
   erreurDateVide: 'Choisissez une date.',
   /** Date passée (proposé, sur le modèle du message de l'ajout d'un événement). */
   erreurDatePassee: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
-  erreurHeure: 'Saisissez une heure, par exemple 20:00.',
+  erreurHeure: 'Saisissez une heure, par exemple 20 h 00.',
   erreurObjetLong: "L'objet fait 80 caractères au plus.",
   erreurDecisionLongue: 'La décision attendue fait 80 caractères au plus.',
 } as const

@@ -10,7 +10,7 @@ import { EVENEMENT_COORDINATION, lire } from './outils-evenements.ts'
 // EJP Tech, qui n'ont ni ces adresses ni aucun bouton de saisie.
 
 const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
-const INTROUVABLE = "Cet élément n'existe pas ou vous n'y avez pas accès."
+const INTROUVABLE = "Cet événement n'existe pas ou vous n'y avez pas accès."
 
 async function attendreLaFinDuChargement(page: Page) {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })

@@ -59,6 +59,7 @@ export function FormulaireAjoutEvenement({
     defaultValues: VIDE,
   })
   const titre = useWatch({ control, name: 'titre' })
+  const date = useWatch({ control, name: 'date' })
   const [refus, setRefus] = useState<Refus | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
@@ -72,7 +73,7 @@ export function FormulaireAjoutEvenement({
       setReussite(TEXTES_EVENEMENT.reussiteAjout)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
-      const lu = lireRefus(erreur)
+      const lu = lireRefus(erreur, 'evenement')
       if (lu.ou === 'date') setError('date', { message: lu.message }, { shouldFocus: true })
       else setRefus(lu)
     }
@@ -95,6 +96,7 @@ export function FormulaireAjoutEvenement({
         libelle={TEXTES_EVENEMENT.libelleDate}
         aide="evenement.date"
         min={aujourdhui}
+        dateChoisie={date}
         erreur={errors.date?.message}
         ecran="saisie_evenement"
         {...register('date')}

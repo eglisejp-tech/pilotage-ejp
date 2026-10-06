@@ -13,7 +13,7 @@ import type { MiseAJourEvenement, ValeursMiseAJourEvenement } from '@/features/e
 import { ligneMentions, ligneReport, TEXTES_EVENEMENT } from '@/features/evenements/textes'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import type { StatutEvenement } from '@/lib/base'
-import { estDateIso, joursEntre } from '@/lib/metier/dates'
+import { estDateIso } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 
 /** État actuel de l'événement, tel que la base le donne (dernière ligne d'état). */
@@ -30,30 +30,42 @@ export interface ProprietesMiseAJourEvenement {
   titre: string
   /** Noms des ministères mentionnés à la création, qui ne changent plus (T32). */
   mentions: readonly string[]
+  /** Dernier état lu dans la base : relu après chaque envoi réussi. */
   actuel: EtatEvenement
   envoyer: (miseAJour: MiseAJourEvenement) => Promise<void>
 }
 
-/** Fenêtre de l'alerte « à confirmer » (T31), la même que `v_evenement.a_confirmer`. */
-const JOURS_AVANT_ALERTE = 3
+const ID_REPORT = 'evenement-date-report'
 
 /**
  * Formulaire « Mettre à jour l'événement » (dérivé de 11, BRIEF section 9) : nom et mentions en
  * lecture seule, date et statut préremplis. Pour un événement à confirmer, une ligne au-dessus du
- * statut (validation-metier.md, 4.4). Une nouvelle date passée est refusée sous le champ date,
- * avec le lien « Signaler une difficulté » ; la date actuelle, même passée, reste permise (T37).
- * Une ligne identique part à la base, qui la refuse : son message s'affiche sous le bouton, sans
- * lien. Deux aides : statut et report.
+ * statut (validation-metier.md, 4.4) ; la règle « à confirmer » vient de la base
+ * (`v_evenement.a_confirmer`), jamais recalculée ici : après un envoi, la ligne se retire jusqu'à
+ * la relecture de l'événement. Une nouvelle date passée est refusée sous le champ date, avec le
+ * lien « Signaler une difficulté » ; la date actuelle, même passée, reste permise (T37). Une
+ * ligne identique part à la base, qui la refuse : son message s'affiche sous le bouton, sans
+ * lien. Après une réussite, le bouton reste inactif jusqu'à la prochaine modification. Deux
+ * aides : statut et report.
  */
 export function FormulaireMiseAJourEvenement({
   aujourdhui,
   titre,
   mentions,
-  actuel: actuelDepart,
+  actuel: actuelLu,
   envoyer,
 }: ProprietesMiseAJourEvenement) {
-  // L'état enregistré : celui de la base au départ, puis celui du dernier envoi réussi.
-  const [actuel, setActuel] = useState(actuelDepart)
+  // Dernier envoi réussi : tant que la lecture n'a pas rattrapé, il fait foi pour la date et le
+  // statut, et la ligne « à confirmer » (calculée par la base) n'est plus fiable.
+  const [enregistre, setEnregistre] = useState<Pick<EtatEvenement, 'date' | 'statut'> | null>(null)
+  const relu =
+    enregistre === null ||
+    (enregistre.date === actuelLu.date && enregistre.statut === actuelLu.statut)
+  const actuel: EtatEvenement = {
+    date: enregistre?.date ?? actuelLu.date,
+    statut: enregistre?.statut ?? actuelLu.statut,
+    aConfirmer: relu && actuelLu.aConfirmer,
+  }
   const schema = useMemo(
     () => schemaMiseAJourEvenement({ aujourdhui, dateActuelle: actuel.date }),
     [aujourdhui, actuel.date],
@@ -64,15 +76,16 @@ export function FormulaireMiseAJourEvenement({
     handleSubmit,
     setError,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ValeursMiseAJourEvenement, unknown, MiseAJourEvenement>({
     resolver: zodResolver(schema),
-    defaultValues: { date: actuel.date, statut: actuel.statut },
+    defaultValues: { date: actuelLu.date, statut: actuelLu.statut },
   })
   const date = useWatch({ control, name: 'date' })
   const [refus, setRefus] = useState<Refus | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+  const dejaEnvoye = reussite !== null && !isDirty
 
   const report =
     estDateIso(date) && date !== actuel.date && date >= aujourdhui
@@ -84,18 +97,12 @@ export function FormulaireMiseAJourEvenement({
     setReussite(null)
     try {
       await envoyer(miseAJour)
-      setActuel({
-        date: miseAJour.date,
-        statut: miseAJour.statut,
-        aConfirmer:
-          miseAJour.statut === 'attente_validation' &&
-          joursEntre(aujourdhui, miseAJour.date) <= JOURS_AVANT_ALERTE,
-      })
+      setEnregistre({ date: miseAJour.date, statut: miseAJour.statut })
       reset({ date: miseAJour.date, statut: miseAJour.statut })
       setReussite(TEXTES_EVENEMENT.reussiteMiseAJour)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
-      const lu = lireRefus(erreur)
+      const lu = lireRefus(erreur, 'evenement')
       if (lu.ou === 'date') setError('date', { message: lu.message }, { shouldFocus: true })
       else setRefus(lu)
     }
@@ -106,7 +113,7 @@ export function FormulaireMiseAJourEvenement({
       noValidate
       className="flex flex-col gap-5"
       onSubmit={(evenement) => {
-        if (isSubmitting) {
+        if (isSubmitting || dejaEnvoye) {
           evenement.preventDefault()
           return
         }
@@ -123,13 +130,19 @@ export function FormulaireMiseAJourEvenement({
       <ChampDate
         id="evenement-date"
         libelle={TEXTES_EVENEMENT.libelleDate}
-        min={aujourdhui}
+        // La date actuelle reste choisissable même passée (T37) : le plancher ne la rend pas
+        // invalide dès l'ouverture.
+        min={actuel.date < aujourdhui ? actuel.date : aujourdhui}
+        dateChoisie={date}
         erreur={errors.date?.message}
         ecran="saisie_evenement"
+        idsDecrits={report ? [ID_REPORT] : []}
         apres={
           report ? (
             <div className="flex min-h-cible flex-wrap items-center">
-              <p className="text-[15px] text-encre-2">{report}</p>
+              <p id={ID_REPORT} className="text-[15px] text-encre-2">
+                {report}
+              </p>
               <Aide code="evenement.report" libelle={report} />
             </div>
           ) : null
@@ -155,6 +168,7 @@ export function FormulaireMiseAJourEvenement({
         libelle={TEXTES_EVENEMENT.boutonMiseAJour}
         enCours={isSubmitting}
         libelleEnCours={TEXTES_EVENEMENT.boutonEnCours}
+        dejaEnvoye={dejaEnvoye}
       />
       <ResultatEnvoi refus={refus} reussite={reussite} envoi={envoi} />
       <LienSignalement ecran="saisie_evenement" />

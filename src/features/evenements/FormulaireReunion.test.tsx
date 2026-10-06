@@ -99,6 +99,55 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
     expect(screen.getByLabelText('Objet (facultatif)')).toHaveValue('Bilan du trimestre')
   })
 
+  it('après une réussite, le bouton reste inactif : un second clic n’ajoute pas de doublon', async () => {
+    const envoyer = vi.fn<(reunion: Reunion) => Promise<void>>(() => Promise.resolve())
+    afficher(null, envoyer)
+    await userEvent.type(screen.getByLabelText('Date'), '2026-10-12')
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Réunion enregistrée.')).toBeInTheDocument()
+    expect(bouton()).toHaveAttribute('aria-disabled', 'true')
+    await userEvent.click(bouton())
+    expect(envoyer).toHaveBeenCalledTimes(1)
+    await userEvent.type(screen.getByLabelText('Objet (facultatif)'), 'Bilan')
+    expect(bouton()).not.toHaveAttribute('aria-disabled')
+  })
+
+  it('refus de droit de la base (jour passé à minuit) : sous le champ date, le jour est relu', async () => {
+    const actualiserJour = vi.fn()
+    render(
+      <MemoryRouter>
+        <FormulaireReunion
+          aujourdhui="2026-10-06"
+          prochaine={null}
+          envoyer={() => Promise.reject({ code: '42501', message: 'new row violates' })}
+          actualiserJour={actualiserJour}
+        />
+      </MemoryRouter>,
+    )
+    await userEvent.type(screen.getByLabelText('Date'), '2026-10-06')
+    await userEvent.click(bouton())
+    expect(
+      await screen.findByText("Cette date est passée. Choisissez aujourd'hui ou une date à venir."),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/n'existe pas ou vous n'y avez pas accès/)).toBeNull()
+    expect(actualiserJour).toHaveBeenCalledTimes(1)
+    expect(screen.getByLabelText('Date')).toHaveFocus()
+  })
+
+  it('aides au clavier (date, décision attendue) : Entrée ouvre, Échap ferme, le focus reste', async () => {
+    afficher()
+    const utilisateur = userEvent.setup()
+    for (const nom of ['Aide : Date', 'Aide : Décision attendue (facultatif)']) {
+      const aide = screen.getByRole('button', { name: nom })
+      aide.focus()
+      await utilisateur.keyboard('{Enter}')
+      expect(aide, nom).toHaveAttribute('aria-expanded', 'true')
+      await utilisateur.keyboard('{Escape}')
+      expect(aide, nom).toHaveAttribute('aria-expanded', 'false')
+      expect(aide, nom).toHaveFocus()
+    }
+  })
+
   it('connexion perdue : erreur de formulaire sous le bouton, valeurs gardées', async () => {
     afficher(null, () => Promise.reject(new TypeError('Failed to fetch')))
     await userEvent.type(screen.getByLabelText('Date'), '2026-10-12')

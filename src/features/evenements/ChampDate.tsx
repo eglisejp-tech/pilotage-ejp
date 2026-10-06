@@ -2,9 +2,11 @@ import type { ComponentProps, ReactNode } from 'react'
 import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
 import type { CodeAide } from '@/components/aide/textesAide'
 import { appelleUnSignalement } from '@/features/evenements/refus'
+import { dateEnToutesLettres } from '@/features/evenements/textes'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import type { EcranSignalement } from '@/lib/base'
+import { estDateIso } from '@/lib/metier/dates'
 
 type Props = Omit<
   ComponentProps<'input'>,
@@ -23,6 +25,14 @@ type Props = Omit<
   ecran?: EcranSignalement
   /** Ligne sous le champ, après l'erreur (« Report : du sam. 10 oct. au sam. 17 oct. »). */
   apres?: ReactNode
+  /** Identifiants d'autres lignes qui décrivent le champ (la ligne « Report » de `apres`). */
+  idsDecrits?: readonly string[]
+  /**
+   * Date choisie (AAAA-MM-JJ) : si elle est valide, elle s'écrit sous le champ en toutes lettres
+   * (« samedi 10 octobre 2026 », maquette 11), dans une zone annoncée poliment, pour vérifier le
+   * jour de la semaine.
+   */
+  dateChoisie?: string
 }
 
 /**
@@ -31,8 +41,19 @@ type Props = Omit<
  * pouvez pas choisir de date ? Signaler une difficulté » (aides-contextuelles.md, section 7) ;
  * les autres messages n'ont pas de lien.
  */
-export function ChampDate({ id, libelle, aide, erreur, ecran, apres, ...proprietes }: Props) {
+export function ChampDate({
+  id,
+  libelle,
+  aide,
+  erreur,
+  ecran,
+  apres,
+  idsDecrits = [],
+  dateChoisie,
+  ...proprietes
+}: Props) {
   const idErreur = `${id}-erreur`
+  const decritPar = [erreur ? idErreur : '', ...idsDecrits].filter(Boolean).join(' ')
   return (
     <div className="flex flex-col gap-1.5">
       {aide ? (
@@ -47,9 +68,14 @@ export function ChampDate({ id, libelle, aide, erreur, ecran, apres, ...propriet
         id={id}
         type="date"
         aria-invalid={erreur ? true : undefined}
-        aria-describedby={erreur ? idErreur : undefined}
+        aria-describedby={decritPar || undefined}
         className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
+      <p aria-live="polite" className="text-[15px] text-encre-2">
+        {dateChoisie !== undefined && estDateIso(dateChoisie)
+          ? dateEnToutesLettres(dateChoisie)
+          : null}
+      </p>
       {erreur ? (
         <p id={idErreur} className="text-[15px] leading-normal text-alerte">
           {erreur}

@@ -408,10 +408,9 @@ const ADRESSES_REFUSEES = ADRESSES_APPLICATION.flatMap((adresse) =>
   ),
 )
 
-// Adresses de saisie et de fiche de l'étape 4, chacune avec sa page : l'amorce de W0 (« Cet écran
-// arrive à l'étape 4. ») tant que son lot ne l'a pas remplacée. Le lot qui remplace une page
-// ajoute son adresse à ADRESSES_REMPLACEES et teste sa vraie page.
-const ADRESSES_ETAPE_4 = [
+// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cet écran arrive à l'étape 4. »).
+// Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie page.
+const ADRESSES_AMORCES = [
   '/ma-fiche',
   '/ministeres',
   '/ministeres/:id',
@@ -425,19 +424,18 @@ const ADRESSES_ETAPE_4 = [
   '/saisir/reunion',
   '/signaler',
 ]
-// E5 : saisies d'événement et de réunion (src/pages/PageSaisieEvenement.test.tsx).
+// Adresses dont le lot a remplacé l'amorce : leurs vraies pages sont testées à part (lot E5 :
+// `src/pages/PageSaisieEvenement.test.tsx`). Elles restent dans la liste des douze déclarées.
 const ADRESSES_REMPLACEES = ['/saisir/evenement', '/saisir/evenement/:id', '/saisir/reunion']
-const ADRESSES_AMORCES = ADRESSES_ETAPE_4.filter(
-  (adresse) => !ADRESSES_REMPLACEES.includes(adresse),
-)
-const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
-  ADRESSES_AMORCES.includes(adresse.chemin),
+const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter(
+  (adresse) =>
+    ADRESSES_AMORCES.includes(adresse.chemin) && !ADRESSES_REMPLACEES.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
 
 describe("adresses de l'étape 4", () => {
-  it('déclare les douze adresses de saisie et de fiche, chacune avec une page', () => {
-    expect(ADRESSES_ETAPE_4).toHaveLength(12)
-    for (const motif of ADRESSES_ETAPE_4) {
+  it('déclare les douze adresses de saisie et de fiche, chacune avec une page amorce', () => {
+    expect(ADRESSES_AMORCES).toHaveLength(12)
+    for (const motif of ADRESSES_AMORCES) {
       expect(
         ADRESSES_APPLICATION.some((adresse) => adresse.chemin === motif),
         motif,

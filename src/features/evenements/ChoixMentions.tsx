@@ -53,7 +53,7 @@ export function ChoixMentions({
     >
       <div className="flex min-h-cible flex-wrap items-center">
         <p id={idTitre} className="text-[15px] font-semibold">
-          {TEXTES_EVENEMENT.libelleMentions}
+          {TEXTES_EVENEMENT.titreMentions}
         </p>
         {vide ? null : (
           <Aide code="evenement.mentions" libelle={TEXTES_EVENEMENT.libelleMentions} />
@@ -74,6 +74,8 @@ export function ChoixMentions({
                   checked={valeur.includes(ministere.id)}
                   onChange={(evenement) => basculer(ministere.id, evenement.target.checked)}
                   onBlur={onBlur}
+                  aria-invalid={erreur ? true : undefined}
+                  aria-describedby={erreur ? idErreur : undefined}
                   className="size-5 accent-encre"
                 />
                 {ministere.nom}

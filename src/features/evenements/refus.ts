@@ -1,4 +1,4 @@
-import { MESSAGES_BASE } from '@/features/evenements/textes'
+import { MESSAGES_BASE, TEXTES_REUNION } from '@/features/evenements/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
 // Lecture d'un refus de la base après un envoi (docs/conception/contrat-etape-4.md, section 7) :
@@ -23,11 +23,19 @@ function lireErreur(erreur: unknown): { code: string; message: string } | null {
   return { code, message }
 }
 
-/** Place et texte d'un refus de la base, pour le formulaire qui l'a reçu. */
-export function lireRefus(erreur: unknown): Refus {
+/**
+ * Place et texte d'un refus de la base, pour le formulaire qui l'a reçu. Pour la réunion, un refus
+ * de droit (42501) vient de la politique d'ajout de `reunion` (date du jour ou à venir) : le jour
+ * a changé depuis l'ouverture du panneau, c'est donc une date passée, dite sous le champ date.
+ */
+export function lireRefus(erreur: unknown, saisie: 'evenement' | 'reunion' = 'evenement'): Refus {
   const lue = lireErreur(erreur)
   if (!lue) return { ou: 'connexion' }
-  if (lue.code === '42501') return { ou: 'bouton', message: MESSAGES_BASE.acces }
+  if (lue.code === '42501') {
+    return saisie === 'reunion'
+      ? { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
+      : { ou: 'bouton', message: MESSAGES_BASE.acces }
+  }
   if (lue.code !== 'P0001') return { ou: 'connexion' }
   switch (lue.message) {
     case MESSAGES_BASE.datePasseeAjout:

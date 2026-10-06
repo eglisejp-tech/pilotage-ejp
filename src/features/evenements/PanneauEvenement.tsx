@@ -24,6 +24,8 @@ interface Props {
   contenu: ContenuPanneauEvenement
   /** « Retour », Échap et le fond du panneau ramènent à la page d'origine. */
   onFermer: () => void
+  /** Compte connecté (« Ministère Communication »), au-dessus du titre comme dans la maquette 11. */
+  surtitre?: string
 }
 
 const VERS_MA_FICHE = { libelle: TEXTES_EVENEMENT.revenirFiche, vers: '/ma-fiche' }
@@ -42,9 +44,9 @@ function titreDe(contenu: ContenuPanneauEvenement): string {
  * chargement, problème passager avec « Réessayer », élément introuvable et ministère qui n'est
  * pas le porteur, chacun avec « Revenir à ma fiche ».
  */
-export function PanneauEvenement({ contenu, onFermer }: Props) {
+export function PanneauEvenement({ contenu, onFermer, surtitre }: Props) {
   return (
-    <PanneauSaisie titre={titreDe(contenu)} onFermer={onFermer}>
+    <PanneauSaisie titre={titreDe(contenu)} surtitre={surtitre} onFermer={onFermer}>
       {contenu.etat === 'chargement' ? <ChargementSaisie /> : null}
       {contenu.etat === 'probleme' ? (
         <EtatVide

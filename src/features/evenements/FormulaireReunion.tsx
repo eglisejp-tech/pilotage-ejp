@@ -21,6 +21,11 @@ export interface ProprietesReunion {
    */
   prochaine: ValeursReunion | null
   envoyer: (reunion: Reunion) => Promise<void>
+  /**
+   * La base a refusé la date (le jour de Paris a changé depuis l'ouverture du panneau) : relit le
+   * jour (`v_semaine`) pour que le contrôle du formulaire parte du bon plancher.
+   */
+  actualiserJour?: () => void
 }
 
 const VIDE: ValeursReunion = { date: '', heure: '', objet: '', decision: '' }
@@ -29,9 +34,16 @@ const VIDE: ValeursReunion = { date: '', heure: '', objet: '', decision: '' }
  * Formulaire « Prochaine réunion » (dérivé de 11, BRIEF section 9) : date obligatoire, du jour ou
  * à venir ; heure, objet et décision attendue facultatifs (80 caractères, rappel sous l'objet,
  * premier champ libre). Chaque envoi ajoute une déclaration, la plus récente fait foi (règle 15) :
- * le formulaire garde les valeurs envoyées. Deux aides : date et décision attendue.
+ * le formulaire garde les valeurs envoyées et son bouton reste inactif jusqu'à la prochaine
+ * modification (pas de doublon). Un refus de droit de la base vient d'une date devenue passée
+ * (minuit passé à Paris) : il se dit sous le champ date. Deux aides : date et décision attendue.
  */
-export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: ProprietesReunion) {
+export function FormulaireReunion({
+  aujourdhui,
+  prochaine,
+  envoyer,
+  actualiserJour,
+}: ProprietesReunion) {
   const schema = useMemo(() => schemaReunion({ aujourdhui }), [aujourdhui])
   const {
     register,
@@ -39,16 +51,18 @@ export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: Proprietes
     handleSubmit,
     setError,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isDirty },
   } = useForm<ValeursReunion, unknown, Reunion>({
     resolver: zodResolver(schema),
     defaultValues: prochaine ?? VIDE,
   })
+  const date = useWatch({ control, name: 'date' })
   const objet = useWatch({ control, name: 'objet' })
   const decision = useWatch({ control, name: 'decision' })
   const [refus, setRefus] = useState<Refus | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+  const dejaEnvoye = reussite !== null && !isDirty
 
   const soumettre = handleSubmit(async (reunion) => {
     setRefus(null)
@@ -64,9 +78,11 @@ export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: Proprietes
       setReussite(TEXTES_REUNION.reussite)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
-      const lu = lireRefus(erreur)
-      if (lu.ou === 'date') setError('date', { message: lu.message }, { shouldFocus: true })
-      else setRefus(lu)
+      const lu = lireRefus(erreur, 'reunion')
+      if (lu.ou === 'date') {
+        setError('date', { message: lu.message }, { shouldFocus: true })
+        actualiserJour?.()
+      } else setRefus(lu)
     }
   })
 
@@ -75,7 +91,7 @@ export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: Proprietes
       noValidate
       className="flex flex-col gap-5"
       onSubmit={(evenement) => {
-        if (isSubmitting) {
+        if (isSubmitting || dejaEnvoye) {
           evenement.preventDefault()
           return
         }
@@ -87,6 +103,7 @@ export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: Proprietes
         libelle={TEXTES_REUNION.libelleDate}
         aide="reunion.date"
         min={aujourdhui}
+        dateChoisie={date}
         erreur={errors.date?.message}
         {...register('date')}
       />
@@ -130,6 +147,7 @@ export function FormulaireReunion({ aujourdhui, prochaine, envoyer }: Proprietes
         libelle={TEXTES_REUNION.bouton}
         enCours={isSubmitting}
         libelleEnCours={TEXTES_REUNION.boutonEnCours}
+        dejaEnvoye={dejaEnvoye}
       />
       <ResultatEnvoi refus={refus} reussite={reussite} envoi={envoi} />
       <LienSignalement ecran="saisie_reunion" />

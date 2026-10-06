@@ -1,9 +1,15 @@
 // Saisies d'événement (maquette 11 et « Mettre à jour l'événement ») : ajout par la fonction
 // `ajouter_evenement` (B6, mentions comprises), mise à jour par un ajout direct dans
 // `evenement_etat` (une instruction, une ligne de journal). Les lectures du panneau de mise à jour
-// sont ici aussi ; celles du calendrier et de l'alerte sont dans `evenements.ts` (lot E6). Les
-// valeurs arrivent déjà validées par les schémas de `src/features/evenements/schemas.ts`.
+// sont ici aussi ; celles du calendrier et de l'alerte sont dans `evenements.ts` (lot E6). Chaque
+// écriture valide ses valeurs par les schémas de base de `src/features/evenements/schemas.ts`,
+// les mêmes que le formulaire : une valeur invalide lève une erreur avant tout appel à la base.
 
+import {
+  schemaBaseAjoutEvenement,
+  schemaBaseMiseAJourEvenement,
+  verifierIdentifiant,
+} from '@/features/evenements/schemas'
 import type { AjoutEvenement, MiseAJourEvenement } from '@/features/evenements/schemas'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -18,7 +24,8 @@ export type EvenementAMettreAJour = Pick<
  * (« La date ne peut pas être passée. ») et un ministère qu'on ne peut pas mentionner. Rend
  * l'identifiant de l'événement.
  */
-export async function ajouterEvenement(evenement: AjoutEvenement): Promise<string> {
+export async function ajouterEvenement(brut: AjoutEvenement): Promise<string> {
+  const evenement = schemaBaseAjoutEvenement.parse(brut)
   const { data, error } = await supabase().rpc('ajouter_evenement', {
     p_titre: evenement.titre,
     p_date: evenement.date,
@@ -35,11 +42,15 @@ export async function ajouterEvenement(evenement: AjoutEvenement): Promise<strin
  */
 export async function mettreAJourEvenement(
   evenementId: string,
-  miseAJour: MiseAJourEvenement,
+  brut: MiseAJourEvenement,
 ): Promise<void> {
-  const { error } = await supabase()
-    .from('evenement_etat')
-    .insert({ evenement_id: evenementId, date: miseAJour.date, statut: miseAJour.statut })
+  const miseAJour = schemaBaseMiseAJourEvenement.parse(brut)
+  const identifiant = verifierIdentifiant(evenementId)
+  const { error } = await supabase().from('evenement_etat').insert({
+    evenement_id: identifiant,
+    date: miseAJour.date,
+    statut: miseAJour.statut,
+  })
   if (error) throw error
 }
 

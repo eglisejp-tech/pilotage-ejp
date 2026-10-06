@@ -46,6 +46,15 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37)', () => {
     })
   })
 
+  it('réunion : un refus de droit est une date devenue passée, dite sous le champ date', () => {
+    expect(
+      lireRefus(erreurBase('new row violates row-level security policy', '42501'), 'reunion'),
+    ).toEqual({
+      ou: 'date',
+      message: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
+    })
+  })
+
   it('tout le reste est un problème de connexion', () => {
     expect(lireRefus(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
     expect(lireRefus({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({

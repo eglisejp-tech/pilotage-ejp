@@ -15,7 +15,13 @@ import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
  * formulaire d'ajout. L'envoi passe par `ajouter_evenement` ; une réussite fait relire les
  * lectures de l'application (calendrier, fraîcheur).
  */
-export function SaisieAjoutEvenement({ ministereId }: { ministereId: string }) {
+export function SaisieAjoutEvenement({
+  ministereId,
+  libelleCompte,
+}: {
+  ministereId: string
+  libelleCompte: string
+}) {
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
   const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
@@ -47,5 +53,5 @@ export function SaisieAjoutEvenement({ ministereId }: { ministereId: string }) {
   } else {
     contenu = { etat: 'chargement', mode: 'ajout' }
   }
-  return <PanneauEvenement contenu={contenu} onFermer={fermer} />
+  return <PanneauEvenement contenu={contenu} onFermer={fermer} surtitre={libelleCompte} />
 }

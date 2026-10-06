@@ -7,8 +7,10 @@ import {
 } from '@/features/evenements/apercu/exemples'
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import { PanneauReunion } from '@/features/evenements/PanneauReunion'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const fermer = () => undefined
+const COMPTE_EXEMPLE = 'Ministère Communication'
 
 /**
  * Aperçu de développement des saisies d'événement et de réunion (maquette 11 et panneaux
@@ -20,7 +22,8 @@ const fermer = () => undefined
  *   comme par la base, une nouvelle date fait paraître « Report : ... » et son aide) ;
  * - `pas-porteur`, `introuvable`, `chargement`, `probleme` : les états du panneau ;
  * - `reunion`, `reunion-modifier`, `reunion-probleme` : « Prochaine réunion ».
- * `&envoi=echec` simule une connexion perdue à l'envoi. Le lot E6 (calendrier, alerte) y ajoute
+ * `&envoi=echec` simule une connexion perdue à l'envoi ; `&profil=berger` (ou `conseil`,
+ * `admin_eglise`, `ejp_tech`) montre « Page non disponible » (seul le ministère saisit). Le lot E6 (calendrier, alerte) y ajoute
  * ses écrans. Enregistrée seulement en développement.
  */
 export function ApercuEvenements() {
@@ -31,10 +34,15 @@ export function ApercuEvenements() {
   const evenement = useMemo(() => contenuEvenement(ecran, echec), [ecran, echec])
   const reunion = useMemo(() => contenuReunion(ecran, echec), [ecran, echec])
 
+  // Un autre profil que le ministère (`?profil=berger`...) voit « Page non disponible », comme sur
+  // la vraie page : la revue visuelle couvre les cinq profils.
+  const profil = parametres.get('profil')
+  if (profil !== null && profil !== 'ministere') return <PageNonDisponible />
+
   // Le titre de l'onglet est celui du panneau (« Ajouter un événement, Pilotage EJP »).
   return ecran.startsWith('reunion') ? (
-    <PanneauReunion key={ecran} contenu={reunion} onFermer={fermer} />
+    <PanneauReunion key={ecran} contenu={reunion} onFermer={fermer} surtitre={COMPTE_EXEMPLE} />
   ) : (
-    <PanneauEvenement key={ecran} contenu={evenement} onFermer={fermer} />
+    <PanneauEvenement key={ecran} contenu={evenement} onFermer={fermer} surtitre={COMPTE_EXEMPLE} />
   )
 }

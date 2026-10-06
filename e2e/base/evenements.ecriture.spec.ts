@@ -15,6 +15,13 @@ import {
 // « ecritures » (en série, à 1440 px, après les projets de lecture). Chaque parcours crée ses
 // propres lignes (nom suffixé), jamais celles du jeu d'exemple que lisent d'autres tests, et
 // compare les comptes avant et après. Les dates viennent de `v_semaine` (heure de Paris).
+//
+// Exception : la prochaine réunion n'a qu'une ligne « à venir » par ministère. Le parcours de la
+// réunion écrit donc celle de Communication, qui remplace « Calendrier éditorial d'octobre » du jeu
+// d'exemple, et ajoute deux lignes `reunion_saisie` (fraîcheur de Communication). Dans la CI, le
+// projet `ecritures` passe en dernier : sans effet. En local, lancez `npx supabase db reset` avant
+// de relancer les projets de lecture après un passage d'`ecritures` (colonne « Prochaine réunion »
+// du berger, « Vos saisies »).
 
 const SUFFIXE = `${Date.now()}`
 const NOM = `Essai E5 ${SUFFIXE}`
@@ -210,28 +217,42 @@ test.describe('EJP Tech, lecture seule', () => {
     )
     expect(ligne).toBeDefined()
     const aujourdhui = await aujourdhuiDeLaBase(page)
-    const etatsAvant = await compter(page, `evenement_etat?select=id&evenement_id=eq.${ligne?.id}`)
+    const requeteEtats = `evenement_etat?select=id&evenement_id=eq.${ligne?.id}`
+    const requeteReunions = `reunion?select=id&ministere_id=eq.${MINISTERE_COMMUNICATION}`
+    const requeteAjout = `v_evenement?select=id&titre=eq.${encodeURIComponent(`${NOM} EJP Tech`)}`
+    const etatsAvant = await compter(page, requeteEtats)
+    const reunionsAvant = await compter(page, requeteReunions)
 
-    const ajout = await appeler(page, 'ajouter_evenement', {
-      p_titre: `${NOM} EJP Tech`,
-      p_date: plusJours(aujourdhui, 3),
-      p_statut: 'brouillon',
-      p_mentions: [],
-    })
-    expect(ajout.ok()).toBe(false)
-    const etat = await ajouter(page, 'evenement_etat', {
-      evenement_id: ligne?.id,
-      date: plusJours(aujourdhui, 20),
-      statut: 'valide',
-    })
-    expect(etat.ok()).toBe(false)
-    const reunion = await ajouter(page, 'reunion', {
-      ministere_id: MINISTERE_COMMUNICATION,
-      date: plusJours(aujourdhui, 3),
-    })
-    expect(reunion.ok()).toBe(false)
-    expect(await compter(page, `evenement_etat?select=id&evenement_id=eq.${ligne?.id}`)).toBe(
-      etatsAvant,
+    // Un refus de droit (42501, HTTP 403), pas une autre erreur (fonction introuvable, mauvais
+    // argument) : seul ce code prouve que la base refuse EJP Tech.
+    const refuse = async (reponse: Awaited<ReturnType<typeof appeler>>) => {
+      expect(reponse.status()).toBe(403)
+      expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+    }
+
+    await refuse(
+      await appeler(page, 'ajouter_evenement', {
+        p_titre: `${NOM} EJP Tech`,
+        p_date: plusJours(aujourdhui, 3),
+        p_statut: 'brouillon',
+        p_mentions: [],
+      }),
     )
+    await refuse(
+      await ajouter(page, 'evenement_etat', {
+        evenement_id: ligne?.id,
+        date: plusJours(aujourdhui, 20),
+        statut: 'valide',
+      }),
+    )
+    await refuse(
+      await ajouter(page, 'reunion', {
+        ministere_id: MINISTERE_COMMUNICATION,
+        date: plusJours(aujourdhui, 3),
+      }),
+    )
+    expect(await compter(page, requeteEtats)).toBe(etatsAvant)
+    expect(await compter(page, requeteReunions)).toBe(reunionsAvant)
+    expect(await compter(page, requeteAjout)).toBe(0)
   })
 })

@@ -1,8 +1,10 @@
 // Prochaine réunion du ministère (règle 15) : chaque envoi ajoute une déclaration, la plus récente
 // fait foi tant que sa date n'est pas passée. Ajout direct dans `reunion`, sous RLS (le ministère
 // du compte, date du jour ou à venir) : une instruction, une ligne de journal `reunion_saisie`.
-// Les valeurs arrivent déjà validées par `schemaReunion` (src/features/evenements/schemas.ts).
+// L'écriture valide ses valeurs par `schemaBaseReunion` (src/features/evenements/schemas.ts), le
+// même que le formulaire : une valeur invalide lève une erreur avant tout appel à la base.
 
+import { schemaBaseReunion, verifierIdentifiant } from '@/features/evenements/schemas'
 import type { Reunion } from '@/features/evenements/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -24,9 +26,11 @@ export async function lireProchaineReunion(
 }
 
 /** Déclare la prochaine réunion du ministère (une nouvelle ligne, jamais une mise à jour). */
-export async function enregistrerReunion(ministereId: string, reunion: Reunion): Promise<void> {
+export async function enregistrerReunion(ministereId: string, brut: Reunion): Promise<void> {
+  const reunion = schemaBaseReunion.parse(brut)
+  const identifiant = verifierIdentifiant(ministereId)
   const { error } = await supabase().from('reunion').insert({
-    ministere_id: ministereId,
+    ministere_id: identifiant,
     date: reunion.date,
     heure: reunion.heure,
     objet: reunion.objet,

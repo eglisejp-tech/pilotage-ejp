@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
   schemaAjoutEvenement,
+  schemaBaseAjoutEvenement,
+  schemaBaseMiseAJourEvenement,
+  schemaBaseReunion,
   schemaMiseAJourEvenement,
   schemaReunion,
 } from '@/features/evenements/schemas'
@@ -8,7 +11,7 @@ import { TEXTES_EVENEMENT, TEXTES_REUNION } from '@/features/evenements/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
 const AUJOURDHUI = '2026-10-06'
-const MOI = 'm-communication'
+const MOI = '10000000-0000-4000-8000-000000000001'
 
 /** Premier message d'erreur de chaque champ, ou null si les valeurs passent. */
 function erreurs(resultat: {
@@ -81,12 +84,70 @@ describe("ajout d'un événement", () => {
 
   it('mentions : sans doublon, jamais le ministère lui-même', () => {
     expect(
-      schema.parse({ ...valide, mentions: ['m-coordination', 'm-coordination', 'm-social'] })
-        .mentions,
-    ).toEqual(['m-coordination', 'm-social'])
-    expect(erreurs(schema.safeParse({ ...valide, mentions: ['m-coordination', MOI] }))).toEqual({
+      schema.parse({
+        ...valide,
+        mentions: [
+          '10000000-0000-4000-8000-000000000002',
+          '10000000-0000-4000-8000-000000000002',
+          '10000000-0000-4000-8000-000000000008',
+        ],
+      }).mentions,
+    ).toEqual(['10000000-0000-4000-8000-000000000002', '10000000-0000-4000-8000-000000000008'])
+    expect(
+      erreurs(
+        schema.safeParse({ ...valide, mentions: ['10000000-0000-4000-8000-000000000002', MOI] }),
+      ),
+    ).toEqual({
       mentions: TEXTES_EVENEMENT.erreurMention,
     })
+  })
+})
+
+describe('mentions : identifiants de la base', () => {
+  const schema = schemaAjoutEvenement({ aujourdhui: AUJOURDHUI, ministereId: MOI })
+  it('un identifiant qui n’est pas un uuid est refusé avec le message des mentions', () => {
+    const resultat = schema.safeParse({
+      date: '2026-10-10',
+      titre: 'Soirée',
+      statut: 'brouillon',
+      mentions: ['pas-un-uuid'],
+    })
+    expect(erreurs(resultat)).toEqual({ mentions: TEXTES_EVENEMENT.erreurMention })
+  })
+})
+
+describe('schémas de base, appliqués par src/data à chaque appel', () => {
+  it('ajout : date, titre de 1 à 80 caractères, statut de la liste, mentions uuid', () => {
+    const valide = {
+      date: '2026-10-10',
+      titre: 'Soirée',
+      statut: 'valide',
+      mentions: [],
+    }
+    expect(schemaBaseAjoutEvenement.safeParse(valide).success).toBe(true)
+    expect(schemaBaseAjoutEvenement.safeParse({ ...valide, titre: 'a'.repeat(81) }).success).toBe(
+      false,
+    )
+    expect(schemaBaseAjoutEvenement.safeParse({ ...valide, titre: '  ' }).success).toBe(false)
+    expect(schemaBaseAjoutEvenement.safeParse({ ...valide, statut: 'reporte' }).success).toBe(false)
+    expect(schemaBaseAjoutEvenement.safeParse({ ...valide, date: '10/10/2026' }).success).toBe(
+      false,
+    )
+    expect(schemaBaseAjoutEvenement.safeParse({ ...valide, mentions: ['x'] }).success).toBe(false)
+  })
+
+  it('mise à jour : date et statut ; réunion : heure HH:MM, textes de 80 caractères au plus', () => {
+    expect(
+      schemaBaseMiseAJourEvenement.safeParse({ date: '2026-10-10', statut: 'annule' }).success,
+    ).toBe(true)
+    expect(schemaBaseMiseAJourEvenement.safeParse({ date: '2026-10-10', statut: '' }).success).toBe(
+      false,
+    )
+    const reunion = { date: '2026-10-12', heure: null, objet: null, decision: null }
+    expect(schemaBaseReunion.safeParse(reunion).success).toBe(true)
+    expect(schemaBaseReunion.safeParse({ ...reunion, heure: '25:00' }).success).toBe(false)
+    expect(schemaBaseReunion.safeParse({ ...reunion, objet: 'a'.repeat(81) }).success).toBe(false)
+    expect(schemaBaseReunion.safeParse({ ...reunion, decision: '' }).success).toBe(false)
   })
 })
 

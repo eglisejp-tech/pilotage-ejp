@@ -9,17 +9,17 @@ import type { MinistreAMentionner } from '@/features/evenements/ChoixMentions'
 // avec son message, une date passée aussi, et `envoi=echec` simule une connexion perdue.
 
 export const AUJOURDHUI_EXEMPLE = '2026-10-06'
-export const MINISTERE_EXEMPLE = 'm-communication'
+export const MINISTERE_EXEMPLE = '10000000-0000-4000-8000-000000000001'
 
 /** Ministères actifs autres que Communication, par ordre alphabétique. */
 export const MINISTERES_EXEMPLE: MinistreAMentionner[] = [
-  { id: 'm-coordination', nom: 'Coordination' },
-  { id: 'm-fij', nom: 'Coordo FIJ' },
-  { id: 'm-formation', nom: 'EJP Formation' },
-  { id: 'm-integration', nom: 'Intégration' },
-  { id: 'm-jeunesse', nom: 'Jeunesse' },
-  { id: 'm-junior', nom: 'Prodiges Junior' },
-  { id: 'm-social', nom: 'Social' },
+  { id: '10000000-0000-4000-8000-000000000002', nom: 'Coordination' },
+  { id: '10000000-0000-4000-8000-000000000003', nom: 'Coordo FIJ' },
+  { id: '10000000-0000-4000-8000-000000000004', nom: 'EJP Formation' },
+  { id: '10000000-0000-4000-8000-000000000005', nom: 'Intégration' },
+  { id: '10000000-0000-4000-8000-000000000006', nom: 'Jeunesse' },
+  { id: '10000000-0000-4000-8000-000000000007', nom: 'Prodiges Junior' },
+  { id: '10000000-0000-4000-8000-000000000008', nom: 'Social' },
 ]
 
 /** Les écrans de l'aperçu, choisis par `?ecran=` (ajout par défaut). */

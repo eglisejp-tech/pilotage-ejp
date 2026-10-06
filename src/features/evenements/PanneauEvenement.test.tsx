@@ -25,7 +25,7 @@ describe('états du panneau d’événement (T36)', () => {
     afficher({ etat: 'introuvable' })
     expect(titre()).toHaveTextContent("Mettre à jour l'événement")
     expect(
-      screen.getByText("Cet élément n'existe pas ou vous n'y avez pas accès."),
+      screen.getByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',

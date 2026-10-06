@@ -15,15 +15,17 @@ export type ContenuPanneauReunion =
 interface Props {
   contenu: ContenuPanneauReunion
   onFermer: () => void
+  /** Compte connecté (« Ministère Communication »), au-dessus du titre comme dans la maquette 11. */
+  surtitre?: string
 }
 
 /**
  * Panneau « Prochaine réunion » (dérivé de 11) : page entière sous 600 px, panneau de 460 px
  * au-delà. Le chargement et le problème passager (« Réessayer ») gardent le cadre et le titre.
  */
-export function PanneauReunion({ contenu, onFermer }: Props) {
+export function PanneauReunion({ contenu, onFermer, surtitre }: Props) {
   return (
-    <PanneauSaisie titre={TEXTES_REUNION.titre} onFermer={onFermer}>
+    <PanneauSaisie titre={TEXTES_REUNION.titre} surtitre={surtitre} onFermer={onFermer}>
       {contenu.etat === 'chargement' ? <ChargementSaisie /> : null}
       {contenu.etat === 'probleme' ? (
         <EtatVide

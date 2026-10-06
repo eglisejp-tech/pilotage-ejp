@@ -55,7 +55,7 @@ export function ChoixStatut({
       {ligneAuDessus ? (
         <p
           id={idLigne}
-          className="border-l-4 border-attention bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre"
+          className="border border-filet bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre"
         >
           {ligneAuDessus}
         </p>
@@ -71,6 +71,8 @@ export function ChoixStatut({
               checked={valeur === statut.valeur}
               onChange={() => onChange(statut.valeur)}
               onBlur={onBlur}
+              aria-invalid={erreur ? true : undefined}
+              aria-describedby={erreur ? idErreur : undefined}
               className="peer sr-only"
             />
             <span className="flex min-h-12 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">

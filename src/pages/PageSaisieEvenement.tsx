@@ -15,8 +15,12 @@ export function PageSaisieEvenement() {
   const { id } = useParams()
   if (compte.ministereId === null) return <PageNonDisponible />
   return id === undefined ? (
-    <SaisieAjoutEvenement ministereId={compte.ministereId} />
+    <SaisieAjoutEvenement ministereId={compte.ministereId} libelleCompte={compte.libelle} />
   ) : (
-    <SaisieMiseAJourEvenement id={id} ministereId={compte.ministereId} />
+    <SaisieMiseAJourEvenement
+      id={id}
+      ministereId={compte.ministereId}
+      libelleCompte={compte.libelle}
+    />
   )
 }

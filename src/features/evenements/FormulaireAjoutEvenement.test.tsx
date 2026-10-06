@@ -8,8 +8,8 @@ import { MESSAGES_BASE } from '@/features/evenements/textes'
 import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
 
 const MINISTERES = [
-  { id: 'm-coordination', nom: 'Coordination' },
-  { id: 'm-integration', nom: 'Intégration' },
+  { id: '10000000-0000-4000-8000-000000000002', nom: 'Coordination' },
+  { id: '10000000-0000-4000-8000-000000000005', nom: 'Intégration' },
 ]
 
 function afficher(
@@ -20,7 +20,7 @@ function afficher(
     <MemoryRouter>
       <FormulaireAjoutEvenement
         aujourdhui="2026-10-06"
-        ministereId="m-communication"
+        ministereId="10000000-0000-4000-8000-000000000001"
         ministeres={ministeres}
         envoyer={envoyer}
       />
@@ -111,7 +111,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
       date: '2026-10-10',
       titre: 'Soirée de louange',
       statut: 'attente_validation',
-      mentions: ['m-coordination'],
+      mentions: ['10000000-0000-4000-8000-000000000002'],
     })
     expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('')
     expect(screen.getByRole('checkbox', { name: 'Coordination' })).not.toBeChecked()
@@ -146,6 +146,32 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     )
     expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('  Soirée de louange ')
     expect(screen.getByRole('radio', { name: 'En attente de validation' })).toBeChecked()
+  })
+
+  it('mentions facultatives : le titre du groupe le dit, l’aide garde son nom', () => {
+    afficher()
+    expect(screen.getByRole('group', { name: 'Ministères mentionnés (facultatif)' })).toBeVisible()
+    expect(screen.getByRole('button', { name: 'Aide : Ministères mentionnés' })).toBeVisible()
+  })
+
+  it('la date choisie s’écrit en toutes lettres sous le champ', async () => {
+    afficher()
+    await userEvent.type(screen.getByLabelText('Date'), '2026-10-10')
+    expect(screen.getByText('samedi 10 octobre 2026')).toBeInTheDocument()
+  })
+
+  it('statut manquant : l’erreur est reliée à chaque bouton radio', async () => {
+    afficher()
+    await userEvent.type(screen.getByLabelText('Date'), '2026-10-10')
+    await userEvent.type(screen.getByLabelText("Nom de l'événement"), 'Soirée')
+    await userEvent.click(bouton())
+    const erreur = await screen.findByText('Choisissez un statut.')
+    for (const radio of screen.getAllByRole('radio')) {
+      expect(radio).toHaveAttribute('aria-invalid', 'true')
+      expect(radio).toHaveAccessibleDescription(
+        expect.stringContaining(erreur.textContent ?? 'absent'),
+      )
+    }
   })
 
   it('aides au clavier : Entrée ouvre, Échap ferme, le focus reste sur le bouton', async () => {

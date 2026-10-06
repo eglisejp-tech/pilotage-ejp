@@ -81,6 +81,47 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(2)
   })
 
+  it('la ligne « Report » décrit le champ date et l’aide du report s’ouvre au clavier', async () => {
+    afficher()
+    const utilisateur = await changerDate('2026-10-17')
+    expect(champDate()).toHaveAccessibleDescription('Report : du sam. 10 oct. au sam. 17 oct.')
+    const aide = screen.getByRole('button', {
+      name: 'Aide : Report : du sam. 10 oct. au sam. 17 oct.',
+    })
+    aide.focus()
+    await utilisateur.keyboard('{Enter}')
+    expect(aide).toHaveAttribute('aria-expanded', 'true')
+    await utilisateur.keyboard('{Escape}')
+    expect(aide).toHaveAttribute('aria-expanded', 'false')
+    expect(aide).toHaveFocus()
+  })
+
+  it('la date choisie s’écrit en toutes lettres sous le champ', async () => {
+    afficher()
+    expect(screen.getByText('samedi 10 octobre 2026')).toBeInTheDocument()
+    await changerDate('2026-10-17')
+    expect(screen.getByText('samedi 17 octobre 2026')).toBeInTheDocument()
+  })
+
+  it('date actuelle passée : le champ n’est pas invalide à l’ouverture (plancher sur la date actuelle)', () => {
+    afficher({ date: '2026-10-01', statut: 'attente_validation', aConfirmer: true })
+    expect(champDate()).toHaveAttribute('min', '2026-10-01')
+    expect(champDate()).toBeValid()
+  })
+
+  it('après une réussite, le bouton reste inactif tant que le formulaire n’a pas changé', async () => {
+    const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher(undefined, envoyer)
+    await userEvent.click(screen.getByRole('radio', { name: 'Validé' }))
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    expect(bouton()).toHaveAttribute('aria-disabled', 'true')
+    await userEvent.click(bouton())
+    expect(envoyer).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))
+    expect(bouton()).not.toHaveAttribute('aria-disabled')
+  })
+
   it('événement à confirmer : la ligne au-dessus du statut, lue avec le groupe', () => {
     afficher({ date: '2026-10-08', statut: 'attente_validation', aConfirmer: true })
     const groupe = screen.getByRole('group', { name: 'Statut' })
