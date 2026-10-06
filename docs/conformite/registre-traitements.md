@@ -39,21 +39,23 @@ elles ne créent aucun traitement.
 - **Organisme** : l'Église des Jeunes Prodiges (EJP), association, par son ministère EJP Tech.
 - **Adresse** : 21 rue des Vieilles Vignes, 77183 Croissy-Beaubourg.
 - **Contact pour les données** : EJP Tech, eglisejp.tech@gmail.com.
-- **Représentant légal** : À compléter par EJP Tech : nom et fonction du représentant légal de
-  l'association.
-- **Délégué à la protection des données (DPO)** : À compléter par EJP Tech : dire si l'église a
-  désigné un DPO. Si elle n'en a pas, l'écrire ici.
+- **Représentant** : sans objet. L'article 30.1.a demande le nom et les coordonnées du responsable
+  du traitement : ce sont ceux ci-dessus (l'Église des Jeunes Prodiges, par son ministère EJP Tech,
+  avec le contact de la page « Confidentialité »). Le « représentant » au sens du RGPD ne concerne
+  que les responsables établis hors de l'Union européenne.
+- **Délégué à la protection des données (DPO)** : aucun délégué à la protection des données
+  désigné.
 - **Rôle de la coordination** : elle décide au nom de l'église. Elle valide ce registre, les textes
   de l'outil, les indicateurs et la fin de vie de l'outil. Le responsable du traitement reste
   l'Église des Jeunes Prodiges, par son ministère EJP Tech (P44, 6 octobre 2026).
 
 ### Prestataires (sous-traitants) et lieu des données
 
-| Prestataire | Ce qu'il fait pour l'outil                                                         | Où sont les données                                     | Cadre                                                                                                                       |
-| ----------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Supabase    | Base de données, connexion, fonctions du serveur, journaux techniques, sauvegardes | Région Paris (Union européenne)                         | Contrat. À compléter par EJP Tech : accord de sous-traitance (article 28) accepté ou signé, avec sa date                    |
-| Netlify     | Hébergement du site (les pages de l'application), journaux techniques              | À compléter par EJP Tech : région d'hébergement du site | Contrat. Société établie aux États-Unis. À compléter par EJP Tech : accord de sous-traitance accepté ou signé               |
-| Google      | Connexion avec Google ; envoi des emails par la messagerie Gmail de l'église       | États-Unis                                              | Conditions grand public de Google (Gmail gratuit), sans accord de sous-traitance (article 28). Voir la note sous le tableau |
+| Prestataire | Ce qu'il fait pour l'outil                                                         | Où sont les données                                 | Cadre                                                                                                                       |
+| ----------- | ---------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Supabase    | Base de données, connexion, fonctions du serveur, journaux techniques, sauvegardes | Région Paris (Union européenne)                     | Accord de protection des données (DPA) accepté avec les conditions d'utilisation. Voir la note sous le tableau              |
+| Netlify     | Hébergement du site (les pages de l'application), journaux techniques              | Réseau mondial, sans région au choix (voir la note) | Accord de protection des données (DPA) accepté avec les conditions. Société établie aux États-Unis. Voir la note            |
+| Google      | Connexion avec Google ; envoi des emails par la messagerie Gmail de l'église       | États-Unis                                          | Conditions grand public de Google (Gmail gratuit), sans accord de sous-traitance (article 28). Voir la note sous le tableau |
 
 **Note sur Google (fait donné par la personne responsable le 6 octobre 2026).** L'église envoie ses
 emails par une adresse Gmail gratuite, celle d'EJP Tech, qui figure sur la page « Confidentialité ».
@@ -69,6 +71,25 @@ Cela a des conséquences :
 
 L'adresse d'envoi des emails de l'outil est celle d'EJP Tech de la page « Confidentialité »
 (décision T08, 6 octobre 2026).
+
+**Note sur Supabase (fait donné le 6 octobre 2026).** L'accord de protection des données (DPA)
+« complète et fait partie des conditions d'utilisation » de Supabase. Son article 12.2 dit que
+l'acceptation de l'accord a le même effet que la signature des clauses contractuelles types. Il
+s'applique donc sans signature séparée depuis la création de l'organisation EJP TECH, le 5 octobre 2026. Recommandation : télécharger une copie sur https://supabase.com/legal/dpa et la garder avec ce
+registre. La société contractante reste À compléter.
+
+**Note sur Netlify (faits donnés le 6 octobre 2026).**
+
+- Son accord de protection des données est intégré par renvoi à l'accord d'abonnement en libre
+  service et s'applique dès l'acceptation des conditions, sans signature (sources :
+  https://www.netlify.com/blog/2023-terms-conditions et https://www.netlify.com/gdpr-ccpa.md).
+- Une source secondaire indique qu'il inclut les clauses contractuelles types de l'Union européenne
+  (module 2) et que Netlify est certifié au cadre de protection des données Union européenne et
+  États-Unis : à vérifier sur dataprivacyframework.gov.
+- Hébergement : Netlify sert les fichiers statiques du site depuis un réseau mondial. Aucune région
+  ne se choisit pour ce type de site. Netlify ne reçoit aucune donnée de l'outil, seulement ses
+  journaux techniques d'accès (adresses IP). Les comptes et les chiffres restent chez Supabase, à
+  Paris.
 
 Accès aux tableaux de bord de Supabase et de Netlify : EJP Tech seul. Double authentification sur
 ces deux comptes : À compléter par EJP Tech (confirmation, elle est recommandée).
@@ -88,7 +109,8 @@ Les données de production ne sont jamais copiées vers la préproduction.
   protection des données entre l'Union européenne et les États-Unis, ou sur les clauses
   contractuelles types de la Commission européenne.
 - À compléter par EJP Tech : vérifier que Google et Netlify figurent sur la liste du cadre de
-  protection des données (dataprivacyframework.gov), et noter la date de la vérification.
+  protection des données (dataprivacyframework.gov), et noter la date de la vérification. Pour
+  Netlify, ses clauses contractuelles types (module 2) sont à vérifier de la même façon.
 - À compléter par EJP Tech : société avec qui l'église a contracté pour Supabase, et accès possible
   aux données depuis l'extérieur de l'Union européenne (support, administration du service).
 
@@ -333,7 +355,7 @@ archivage du dépôt du code.
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
     Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et
     double authentification activée sur ces accès.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (À compléter par EJP Tech : région).
+- **Prestataires et lieu** : Supabase (région Paris), Netlify (réseau mondial, journaux d'accès seulement).
 - **Transferts hors UE** : journaux techniques de Netlify, voir « Transferts ».
 - **Durées** : journal de l'application toute la vie de l'outil ; journaux techniques au plus 1 an.
 - **Mesures propres** :
@@ -402,12 +424,16 @@ archivage du dépôt du code.
 
 Faits que les sources du projet ne donnent pas, à compléter avant la remise à la coordination :
 
-1. Nom et fonction du représentant légal de l'association.
-2. Désignation ou non d'un délégué à la protection des données (DPO).
-3. Accord de sous-traitance de Supabase (article 28) : accepté ou signé, avec sa date.
+1. (Réglé le 6 octobre 2026.) Pas de représentant légal à nommer : l'article 30.1.a demande le
+   responsable du traitement, indiqué plus haut. Aucun DPO désigné.
+2. Supabase : télécharger une copie de l'accord de protection des données
+   (https://supabase.com/legal/dpa) et la garder avec le registre.
+3. Netlify : rien à signer, l'accord s'applique à l'acceptation des conditions. Vérifier sa
+   certification et ses clauses contractuelles types (voir le point 7).
 4. Société avec qui l'église a contracté pour Supabase, et accès possible aux données depuis
    l'extérieur de l'Union européenne.
-5. Région d'hébergement du site chez Netlify, et accord de sous-traitance de Netlify.
+5. (Réglé le 6 octobre 2026.) Hébergement de Netlify : réseau mondial, sans région au choix,
+   journaux d'accès seulement.
 6. Emails par un Gmail gratuit (fait donné le 6 octobre 2026) : pas d'accord de sous-traitance
    avec Google, conditions grand public. Corriger la phrase « agissent sous contrat » de la page
    « Confidentialité » pour Google : la page est corrigée au lot I de l'étape 4. Recommandation,

@@ -4,7 +4,7 @@
 - **Statut** : à valider avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
-- **Date limite de réponse** : vendredi 6 novembre 2026, un mois après l'envoi
+- **Date limite de réponse** : mercredi 7 octobre 2026
 
 ## Pour commencer
 
@@ -128,7 +128,7 @@ Quelques règles pour écrire un texte corrigé :
 
 Un ministère relit sa section. La coordination relit toutes les sections et le tableau « Les choix à relire en priorité ». Si un chiffre demandé par votre ministère manque, écrivez-le dans les remarques en bas de votre section.
 
-Renvoyez le document rempli à EJP Tech avant la date limite de réponse (vendredi 6 novembre 2026). EJP Tech corrige les noms et les définitions à l'écran, puis relit le résultat avec vous en préproduction avant d'ouvrir les saisies.
+Renvoyez le document rempli à EJP Tech avant la date limite de réponse (mercredi 7 octobre 2026). EJP Tech corrige les noms et les définitions à l'écran, puis relit le résultat avec vous en préproduction avant d'ouvrir les saisies.
 
 ## Les choix à relire en priorité
 
