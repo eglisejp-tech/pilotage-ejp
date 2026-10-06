@@ -1,8 +1,8 @@
 # Aides contextuelles : règles et catalogue
 
-- **Statut** : principe décidé le 6 octobre 2026 (T38 de `docs/decisions.md`) ; forme et textes
-  « Proposé », à valider par la personne responsable (question 15 du plan de l'étape 4). Rien
-  n'est codé.
+- **Statut** : principe décidé le 6 octobre 2026 (T38 de `docs/decisions.md`), avec la forme ronde
+  du bouton d'aide (décidée le même jour) ; les textes restent « Proposé », à valider par la
+  personne responsable (question 15 du plan de l'étape 4). Rien n'est codé.
 - **Date** : 6 octobre 2026
 - **Origine** : demande du 6 octobre 2026 (réponse à la question 7 du plan de l'étape 4) : de petites
   aides contextuelles, bien placées, simplement rédigées, pour aider à la prise en main.
@@ -91,6 +91,9 @@ L'aide suit le modèle **toggletip** : une bulle d'information qui s'ouvre sur u
 action volontaire. Ce n'est **pas** une infobulle au survol : un survol n'existe pas au doigt, et au
 clavier il est fragile.
 
+- **Forme du bouton (décidée le 6 octobre 2026 par la personne responsable)** : le bouton d'aide est
+  **rond**. C'est une exception voulue à la règle « angles droits partout » : c'est le seul élément
+  rond de l'outil, ce qui le distingue d'un bouton d'action. La bulle, elle, garde ses angles droits.
 - **Bouton** : un petit « ? » rond, **juste après le libellé** (sur la même ligne). Disque visuel de
   **20 px**, **zone cliquable d'au moins 44 px** (`--cible`), centrée sur le disque, sans recouvrir
   un autre contrôle. Le libellé et son bouton sont dans une ligne de 44 px de haut au moins, pour
@@ -219,6 +222,7 @@ Aucune couleur en dur, aucune dépendance nouvelle.
 | Bordure du bouton, « ? » | `--encre-2`, `--encre`                                      |
 | Fond du bouton           | `--papier` (fermé), `--encre` (ouvert, « ? » en `--papier`) |
 | Zone cliquable           | `--cible` (44 px)                                           |
+| Forme du bouton          | Disque rond (arrondi complet), le seul de l'outil           |
 | Police                   | `--f-interface`, 14 px dans la bulle, 700 pour le « ? »     |
 | Focus                    | focus global du projet                                      |
 
@@ -483,9 +487,10 @@ et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté »
 
 ## 10. Points à confirmer
 
-1. **Le « ? » rond.** Les maquettes et le BRIEF (section 10) disent « angles droits partout ». Le
-   bouton d'aide est le seul élément rond : il se distingue ainsi d'un bouton d'action. À confirmer
-   comme exception, sinon un « ? » dans un carré de 20 px.
+1. **Le « ? » rond. Décidé le 6 octobre 2026 par la personne responsable.** Les maquettes et le
+   BRIEF (section 10) disent « angles droits partout ». Le bouton d'aide est rond : exception
+   voulue, c'est le seul élément rond, ce qui le distingue d'un bouton d'action. Plus rien à
+   confirmer sur ce point.
 2. **Fond sombre de la bulle** (`--encre` avec texte `--papier`) plutôt qu'une bulle claire à filet.
    Choisi pour qu'elle se détache d'un panneau blanc sans ombre. À confirmer.
 3. **Les deux placements** (Flux dans les formulaires, Flottante en lecture) : la bulle d'un

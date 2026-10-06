@@ -426,8 +426,9 @@ P14 « Calculs affichés » garde son numéro. P15 à P30 ne changent pas. T26 �
 - **Date** : 30 septembre 2026
 - **Sujet** : le service d'email intégré de Supabase n'écrit qu'à l'équipe du projet ; les liens peuvent être consommés par les antivirus.
 - **Décision** : SMTP personnalisé au nom de l'église (proposition : compte Google de l'église) ; liens vers `/acces`, qui demande un clic avant `verifyOtp` ; code avant le nouveau mot de passe ; liens valables 24 h.
-- **Origine** : Proposition EJP Tech
-- **Statut** : Proposé, à confirmer par EJP Tech
+- **Adresse d'envoi (décidé le 6 octobre 2026)** : l'adresse Gmail d'EJP Tech, celle qui figure sur la page Confidentialité (`src/pages/PageConfidentialite.tsx`). L'adresse n'est pas recopiée ici. Un Gmail gratuit relève des conditions grand public de Google, sans accord de sous-traitance : voir `docs/conformite/registre-traitements.md` (recommandation : Google Workspace pour les associations, ou un service d'envoi européen avec contrat).
+- **Origine** : Proposition EJP Tech ; adresse d'envoi donnée par la personne responsable (6 octobre 2026)
+- **Statut** : Décidé le 6 octobre 2026 sur l'adresse d'envoi seulement ; le reste (SMTP personnalisé, liens, code, durée) reste Proposé, à confirmer par EJP Tech
 - **BRIEF** : section 8
 
 ### T09. Double authentification
@@ -803,10 +804,10 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 
 - **Date** : 6 octobre 2026
 - **Sujet** : la personne responsable veut de petites aides, bien placées, professionnelles, rédigées simplement et clairement compréhensibles, pour aider à la prise en main, en suivant les bonnes pratiques de rédaction et de placement.
-- **Décision** : un composant partagé, une « toggletip » accessible : un bouton d'aide placé juste après le libellé qu'il explique, avec un nom accessible qui reprend ce libellé, qui ouvre une courte bulle au clic, à Entrée ou à Espace (jamais au seul survol), se ferme à Échap et au clic en dehors, annonce son texte au lecteur d'écran, a une cible de 44 px et tient dans l'écran à 360 px. Une aide complète un libellé et ne remplace jamais une information nécessaire à la saisie : une phrase qui sert à chaque usage reste visible sous le champ. Règles de rédaction et de placement, et catalogue des aides par écran : `docs/conception/aides-contextuelles.md`. Les textes vivent dans un seul fichier de l'interface (`src/components/aide/textesAide.ts`), écrit une fois par W0 avec les composants `Aide` et `LibelleAvecAide` ; chaque lot d'écran pose ses aides, et le lot I celles de la vue de l'église. Effort : 1 jour en W0, 0,25 jour par écran (E2 à E7), 0,25 jour en I. Les points de forme encore ouverts (bouton rond, fond sombre de la bulle, placement dans le flux des formulaires) sont dans la section 10 de `aides-contextuelles.md`.
+- **Décision** : un composant partagé, une « toggletip » accessible : un bouton d'aide placé juste après le libellé qu'il explique, avec un nom accessible qui reprend ce libellé, qui ouvre une courte bulle au clic, à Entrée ou à Espace (jamais au seul survol), se ferme à Échap et au clic en dehors, annonce son texte au lecteur d'écran, a une cible de 44 px et tient dans l'écran à 360 px. Une aide complète un libellé et ne remplace jamais une information nécessaire à la saisie : une phrase qui sert à chaque usage reste visible sous le champ. Règles de rédaction et de placement, et catalogue des aides par écran : `docs/conception/aides-contextuelles.md`. Les textes vivent dans un seul fichier de l'interface (`src/components/aide/textesAide.ts`), écrit une fois par W0 avec les composants `Aide` et `LibelleAvecAide` ; chaque lot d'écran pose ses aides, et le lot I celles de la vue de l'église. Effort : 1 jour en W0, 0,25 jour par écran (E2 à E7), 0,25 jour en I. **Forme décidée le 6 octobre 2026 par la personne responsable : le bouton d'aide est rond.** C'est une exception voulue à la règle « angles droits partout » : c'est le seul élément rond de l'outil (la bulle garde ses angles droits). Les points de forme encore ouverts (fond sombre de la bulle, placement dans le flux des formulaires) sont dans la section 10 de `aides-contextuelles.md`.
 - **Origine** : demande de la personne responsable (6 octobre 2026)
-- **Statut** : Décidé sur le principe ; textes « Proposé » jusqu'à leur validation par la personne responsable (plan de l'étape 4, question 15), puis relus en préproduction (K16)
-- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
+- **Statut** : Décidé sur le principe et sur la forme ronde du bouton (6 octobre 2026) ; textes « Proposé » jusqu'à leur validation par la personne responsable (plan de l'étape 4, question 15), puis relus en préproduction (K16)
+- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026 ; forme ronde à reporter) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
 
 ### T39. Signaler une difficulté
 
@@ -817,3 +818,30 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Origine** : demande de la personne responsable (6 octobre 2026) ; conception d'EJP Tech
 - **Statut** : Décidé le 6 octobre 2026, accord écrit de la personne responsable (plan de l'étape 4, question 14) : changement du modèle de données (deux tables), lecteurs réduits au ministère et à EJP Tech ; textes de l'interface « Proposé » jusqu'à leur validation
 - **BRIEF** : section 3 (règle 1 : tables en ajout seulement ; règle 6 : fraîcheur), section 6, section 7 (matrice), section 9 (formulaires, Modération, adresses) (reporté le 6 octobre 2026) ; CLAUDE.md (liste « ajout seulement », ce que voit un ministère) ; `docs/plan-etape-4.md`, B7, E8 et question 14
+
+### P43. Prodiges Academy, 23e ministère
+
+- **Date** : 6 octobre 2026
+- **Sujet** : Prodiges Academy est un ministère à part entière, distinct de Formation, mais il ne figure pas dans la liste de la coordination (document Google « KPI - Dashboard EJP », identique à `docs/sources/kpi-coordination-2026-10.md` au 6 octobre 2026).
+- **Décision** : Prodiges Academy est le 23e ministère de l'outil, avec son compte. Il saisit les trois chiffres communs chaque dimanche (STARs au service, STARs actifs, dont en FIJ), comme Protocole, et compte dans les totaux de l'église et dans leur complétude (« sur 23 »). Formation garde son nom et ses six KPI : on ne renomme jamais l'un en l'autre. Prodiges Academy n'a aucune des 185 demandes de la coordination : la couverture reste « 185 demandes ». Ses propres indicateurs viendront quand la coordination les ajoutera à son document, ou par une demande dans l'outil validée par EJP Tech (T30).
+- **Origine** : réponse de la personne responsable (6 octobre 2026) ; décision d'EJP Tech
+- **Statut** : Décidé par EJP Tech le 6 octobre 2026, révisable par la coordination
+- **BRIEF** : section 3 (nombre de ministères, complétude), section 4 (à reporter) ; `docs/conception/vague-1-decisions.md` (K14a, K14c) ; `docs/conformite/libelles-a-valider.md` (section Prodiges Academy)
+
+### P44. Responsable du traitement
+
+- **Date** : 6 octobre 2026
+- **Sujet** : la décision K56 et le mandat de la vague 1 disaient « la coordination, responsable de traitement », alors que la page Confidentialité validée dit autre chose.
+- **Décision** : le responsable du traitement est l'Église des Jeunes Prodiges, par son ministère EJP Tech, comme sur la page Confidentialité (`src/pages/PageConfidentialite.tsx`). La coordination décide au nom de l'église : elle valide le registre, les textes, les indicateurs et la fin de vie de l'outil. Le registre et la note d'analyse disent la même chose.
+- **Origine** : réponse de la personne responsable (6 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 6 octobre 2026
+- **BRIEF** : section 7 (données personnelles) (à reporter) ; `docs/conception/vague-1-decisions.md` (K56, mandat) ; `docs/conformite/registre-traitements.md`
+
+### T40. Envoi des emails par un Gmail gratuit
+
+- **Date** : 6 octobre 2026
+- **Sujet** : l'église envoie les emails de l'outil par une adresse Gmail gratuite, celle d'EJP Tech (voir la page Confidentialité).
+- **Décision** : un Gmail gratuit relève des conditions grand public de Google : il n'y a pas d'accord de sous-traitance (article 28) à signer. La phrase de la page Confidentialité qui dit que les prestataires « agissent sous contrat » est nuancée pour Google, et la page est corrigée au lot I de l'étape 4. Recommandation, sans l'imposer : Google Workspace pour les associations (gratuit pour une association éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec contrat. Accès aux tableaux de bord Supabase et Netlify : EJP Tech seul ; la double authentification sur ces deux comptes reste à confirmer et elle est recommandée.
+- **Origine** : faits donnés par la personne responsable (6 octobre 2026)
+- **Statut** : Décidé pour les faits ; la recommandation reste à décider par la personne responsable
+- **BRIEF** : section 8 (emails) (à reporter) ; T08 ; `docs/conformite/registre-traitements.md` ; `docs/plan-etape-4.md`, lot I
