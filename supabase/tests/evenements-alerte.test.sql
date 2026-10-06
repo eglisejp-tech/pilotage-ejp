@@ -114,11 +114,13 @@ select is(tests.lire((select tech from ctx), 'aal2', 'select * from alerte'),
 -- Bascule de minuit à Paris : le 14 oct. 2026 à 22 h 30 UTC, il est 0 h 30 le 15 oct. à Paris.
 -- private.aujourdhui() est remplacée dans cette transaction (annulée à la fin) par la même
 -- règle appliquée à cet instant fixe. Un événement du 18 oct. est à J+3 à Paris (alerte),
--- alors qu'il serait à J+4 avec la date UTC.
+-- alors qu'il serait à J+4 avec la date UTC. Remplacée au nom de postgres, son propriétaire.
+set local role postgres;
 create or replace function private.aujourdhui() returns date
 language sql stable set search_path = '' as $$
   select (timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date
 $$;
+reset role;
 select pg_temp.evenement(a_m, a, v.titre, v.jour, 'attente_validation')
   from ctx
  cross join (values ('Alerte minuit 18 oct.', date '2026-10-18'), ('Alerte minuit 19 oct.', date '2026-10-19')) as v(titre, jour);

@@ -137,11 +137,13 @@ select tests.deconnecter();
 
 -- Bascule de minuit à Paris : le 14 oct. 2026 à 22 h 30 UTC, il est 0 h 30 le 15 oct. à Paris.
 -- private.aujourdhui() est remplacée dans cette transaction (annulée à la fin) par la même
--- règle appliquée à cet instant fixe.
+-- règle appliquée à cet instant fixe, au nom de postgres, propriétaire de la fonction.
+set local role postgres;
 create or replace function private.aujourdhui() returns date
 language sql stable set search_path = '' as $$
   select (timestamptz '2026-10-14 22:30:00+00' at time zone 'Europe/Paris')::date
 $$;
+reset role;
 select is(private.aujourdhui(), date '2026-10-15', 'à 22 h 30 UTC le 14 oct., la date de Paris est le 15 oct.');
 select is((timestamptz '2026-10-14 22:30:00+00' at time zone 'UTC')::date, date '2026-10-14',
   'au même instant, la date UTC est encore le 14 oct.');

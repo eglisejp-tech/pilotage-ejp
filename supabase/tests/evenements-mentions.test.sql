@@ -125,7 +125,7 @@ select throws_ok($$ select public.ajouter_evenement('Mentions, berger', private.
 select tests.deconnecter();
 
 -- Structure
-select col_is_pk('public', 'evenement_mention', array['evenement_id', 'ministere_id'],
+select col_is_pk('public', 'evenement_mention', array['evenement_id', 'ministere_id']::name[],
   'clé de evenement_mention : (evenement_id, ministere_id)');
 select ok(exists (select 1 from pg_indexes i
                    where i.schemaname = 'public' and i.tablename = 'evenement_mention'
