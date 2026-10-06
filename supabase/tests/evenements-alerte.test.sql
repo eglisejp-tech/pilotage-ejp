@@ -120,7 +120,7 @@ $$), 0, 'minuit à Paris : jours se compte depuis la date de Paris');
 
 -- Structure de la vue
 select results_eq($$
-  select column_name::text, data_type::text from information_schema.columns
+  select column_name::text collate "default", data_type::text collate "default" from information_schema.columns
    where table_schema = 'public' and table_name = 'v_evenement' order by ordinal_position
 $$, $$ values ('id', 'uuid'), ('ministere_id', 'uuid'), ('titre', 'text'), ('date', 'date'),
               ('statut', 'USER-DEFINED'), ('mis_a_jour_le', 'timestamp with time zone'),
