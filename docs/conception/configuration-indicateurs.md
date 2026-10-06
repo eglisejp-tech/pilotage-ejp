@@ -1,8 +1,9 @@
 # Configuration des indicateurs
 
-Statut : **à l'étude, non appliqué** (décision T35 de `docs/decisions.md`). Rien n'est codé, aucune
-migration n'est écrite, `BRIEF.md` n'est pas modifié. Une session ne construit rien à partir de ce
-document tant qu'EJP Tech et la coordination n'ont pas répondu aux questions de la section 10.
+Statut : **Décidé le 6 octobre 2026, construit à l'étape 4** (décision T35 de `docs/decisions.md`,
+accord écrit de la personne responsable sur `docs/plan-etape-4.md`) : le lot 1 côté base à
+l'étape 4, ses écrans à l'étape 6, le lot 2 après la mise en service. Les questions de la section 10
+ont reçu leur réponse (`docs/conception/vague-1-decisions.md`, 2.5), qui fait foi là où elle diffère.
 Date : 5 octobre 2026, revue appliquée le même jour, puis alignée sur T30 le même jour, et de
 nouveau le 6 octobre 2026.
 

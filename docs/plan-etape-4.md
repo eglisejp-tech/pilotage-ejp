@@ -1,10 +1,10 @@
 # Plan de l'étape 4 : fiche ministère, saisies, indicateurs et événements
 
 - **Date** : 6 octobre 2026
-- **Statut** : plan revu le 6 octobre 2026 avec les réponses de la personne responsable (section 7).
-  Les questions 4 et 7 sont répondues, les questions 5, 6 et 8 à 13 approuvées. Rien n'est codé
-  tant que les questions 1 à 3 ne sont pas approuvées explicitement (CLAUDE.md, « Mode plan
-  d'abord, code ensuite »), et la question 14 doit l'être avant W0.
+- **Statut** : **plan approuvé le 6 octobre 2026** par la personne responsable (accord écrit,
+  section 7). Les questions 1 à 14 sont répondues et approuvées ; seule la question 15 (forme et
+  textes des aides contextuelles) reste ouverte, sans bloquer le code. Le signalement (T39) est
+  décidé : il n'est lu que par le ministère qui l'écrit et par EJP Tech.
 - **Sources** : `BRIEF.md` (sections 3, 4, 6, 7, 9 et 13), `docs/decisions.md` (P01 à P42, T01 à
   T39), `docs/conception/vague-1-decisions.md`, `docs/conception/configuration-indicateurs.md`,
   `docs/conception/validation-metier.md`, `docs/reference/maquettes/LISEZMOI.md` et le code de
@@ -35,7 +35,8 @@ Les réponses de la personne responsable du 6 octobre 2026 ajoutent trois choses
 sensibles sont créés et actifs dès la vague 1, avec toutes leurs protections (P42) ; la base refuse
 une nouvelle date d'événement déjà passée et une mise à jour identique à l'état actuel (T37) ; des
 aides contextuelles aident à la prise en main (T38). Elle demande aussi qu'un ministère puisse
-signaler une difficulté : ce plan le conçoit en proposition à confirmer (T39, question 14).
+signaler une difficulté : c'est décidé (T39, question 14), et seuls ce ministère et EJP Tech lisent
+le signalement.
 
 ### Dans l'étape 4 (avant la mise en service)
 
@@ -67,7 +68,7 @@ signaler une difficulté : ce plan le conçoit en proposition à confirmer (T39,
 - **Aides contextuelles** (T38) : un composant partagé (bouton d'aide qui ouvre une bulle au clic,
   accessible au clavier et au lecteur d'écran), posé par W0, et les aides de chaque écran, posées
   par le lot de l'écran ; règles et textes dans `docs/conception/aides-contextuelles.md`.
-- **Signaler une difficulté** (T39, proposition à confirmer, question 14) : tables
+- **Signaler une difficulté** (T39, décidé, question 14) : tables
   `signalement` et `signalement_suivi` en ajout seulement, fonctions `signaler_difficulte` et
   `clore_signalement`, lien en bas de chaque formulaire de saisie, page `/signaler` et bloc
   « Signalements » sur l'accueil d'EJP Tech (Modération).
@@ -126,7 +127,7 @@ Ce que ce plan change dans les propositions préliminaires du 6 octobre (non ver
 | B4  | Vague 1 : prévus, calculs, suggestions, communs (X1, X6)             | avant                    | 2,5            |
 | B5  | Statistiques FIJ par département, base (X5)                          | avant                    | 2              |
 | B6  | Événements, base : mentions, alerte, report, refus des dates (T37)   | avant                    | 2              |
-| B7  | Signalements, base (T39, à confirmer : question 14)                  | avant                    | 1,5            |
+| B7  | Signalements, base (T39, décidé)                                     | avant                    | 1,5            |
 | E1  | Données et métier des indicateurs                                    | avant                    | 1              |
 | E2  | Fiches 04 et 12, liste des ministères                                | avant                    | 3,25           |
 | E3  | Saisies des chiffres : dimanche et mois                              | avant                    | 2,75           |
@@ -134,7 +135,7 @@ Ce que ce plan change dans les propositions préliminaires du 6 octobre (non ver
 | E5  | Saisies d'événement et de réunion                                    | avant                    | 2,25           |
 | E6  | Calendrier, prochaine réunion et alerte                              | avant                    | 2,75           |
 | E7  | Accueil du ministère 07                                              | avant                    | 2,25           |
-| E8  | Signaler une difficulté et bloc « Signalements » (T39, à confirmer)  | avant                    | 1,5            |
+| E8  | Signaler une difficulté et bloc « Signalements » (T39, décidé)       | avant                    | 1,5            |
 | I   | Intégration, recette, captures, revues                               | avant                    | 3              |
 | L1  | Calculs étendus (X9)                                                 | 4 semaines après         | 3              |
 | L2  | Comptages d'événements (X10)                                         | 4 semaines après         | 2,5            |
@@ -158,14 +159,14 @@ du 6 octobre :
 | Aides contextuelles : composant, catalogue des textes, tests et parcours `e2e/aide.spec.ts` (T38)                   | W0                   | + 1        |
 | Aides contextuelles : pose et tests sur chaque écran (T38)                                                          | E2 à E7, 0,25 chacun | + 1,5      |
 | Sensibles actifs dès la vague 1 : plus de table `private.reglage` (P42)                                             | B1                   | − 0,25     |
-| Signaler une difficulté, base et écrans (T39, à confirmer)                                                          | B7, E8               | + 3        |
+| Signaler une difficulté, base et écrans (T39, décidé)                                                               | B7, E8               | + 3        |
 | Aides de la vue de l'église (écrans de l'étape 3), recette des aides et des signalements, report des textes validés | I                    | + 0,5      |
 | **Total**                                                                                                           |                      | **+ 5,75** |
 
 L'estimation du composant suit `docs/conception/aides-contextuelles.md` (section 9 : environ 1 jour
 en W0) ; la pose par écran y est estimée à 0,5 jour en tout, ce plan compte 0,25 jour par lot
-parce que chaque lot teste aussi ses aides au clavier et dans l'audit axe. Sans le signalement (si
-la question 14 reçoit un non) : 41,75 jours de travail, même calendrier (la vague 5 garde E7 seul).
+parce que chaque lot teste aussi ses aides au clavier et dans l'audit axe. Le signalement étant
+décidé, ses 3 jours sont dans le total (sans lui : 41,75 jours de travail, même calendrier).
 
 ### Dépendances
 
@@ -266,10 +267,9 @@ plusieurs lots toucheraient, puis ces fichiers sont figés jusqu'au lot I.
    Nouvelle cible de journal : `indicateur` (`ministere` existe déjà). Nouvelles cibles de
    modération : `demande_indicateur` et `validation`, avec les deux couples nouveaux
    (`demande_indicateur`, `pourquoi`) et (`validation`, `motif`) ajoutés aux sept couples actuels.
-   **Si la question 14 reçoit un oui avant W0** (signalement, T39) : codes d'action
-   `difficulte_signalee` et `signalement_clos`, cible de journal `signalement`, cibles de modération
-   `signalement` et `signalement_suivi` avec les couples (`signalement`, `texte`) et
-   (`signalement_suivi`, `commentaire`) ; sur un non, ces codes n'y sont pas, et B7 et E8 tombent.
+   **Signalement (T39, décidé)** : codes d'action `difficulte_signalee` et `signalement_clos`,
+   cible de journal `signalement`, cibles de modération `signalement` et `signalement_suivi` avec
+   les couples (`signalement`, `texte`) et (`signalement_suivi`, `commentaire`).
    Un test pgTAP de W0 insère une ligne de `moderation` pour chaque couple et vérifie la liste des
    codes et des cibles contre ces documents. Aucun lot ne retouche ces contraintes.
 3. **`supabase/config.toml`** : `sql_paths = ["./seed.sql", "./seed/*.sql"]`, vérifié en CI par W0
@@ -303,8 +303,8 @@ plusieurs lots toucheraient, puis ces fichiers sont figés jusqu'au lot I.
    libellé et aide des formulaires) et `textesAide.ts`, qui reçoit **une fois** tous les textes du
    catalogue, pour qu'aucun lot ne retouche ce fichier avant I ; leurs tests (`Aide.test.tsx`,
    `textesAide.test.ts`) et `e2e/aide.spec.ts` sur les aperçus. Une aide complète un libellé,
-   elle ne remplace jamais une information nécessaire à la saisie. **Signalement (T39, si la
-   question 14 reçoit un oui)** : `src/features/signalement/LienSignalement.tsx` (« Signaler une
+   elle ne remplace jamais une information nécessaire à la saisie. **Signalement (T39,
+   décidé)** : `src/features/signalement/LienSignalement.tsx` (« Signaler une
    difficulté », lien vers `/signaler?ecran=<code>`), que chaque formulaire de saisie pose en bas,
    sous ses boutons ; textes de la section 7 de `aides-contextuelles.md`.
 7. **Emplacements** : `src/features/fiche/emplacements.tsx` (blocs calendrier, réunion, statistiques
@@ -352,7 +352,7 @@ réservées ne servent qu'à la première écriture d'un lot.
 | B2  | `20261008100000_indicateurs_lectures.sql`, `20261008100500_indicateurs_seuil_sensibles.sql`, `20261008101000_journal_mesures.sql` |
 | B3  | `20261008110000_validation_indicateurs.sql`, `20261008110500_indicateurs_fonctions.sql`                                           |
 | B4  | `20261009100000_indicateurs_vague_1.sql`                                                                                          |
-| B7  | `20261009110000_signalements.sql` (si la question 14 reçoit un oui)                                                               |
+| B7  | `20261009110000_signalements.sql`                                                                                                 |
 | L   | horodatage réel du jour de création, après la dernière migration passée en production ; ordre L2, L4, L1, L3                      |
 
 B2 et B3 ne se lisent pas : `attente_jours` de `v_indicateur_suivi` se calcule sur
@@ -366,7 +366,7 @@ B2 et B3 ne se lisent pas : `attente_jours` de `v_indicateur_suivi` se calcule s
 | `supabase/seed/40-indicateurs.sql`      | B4  | prévus créés pour les ministères d'exemple, sensibles compris, actifs dès leur création comme les autres (P42) ; une valeur par unité ; un sensible (1, 2 et 0, dont un sensible à 2 pour le parcours « moins de 3 ») ; un ajout à valider, un validé, un refusé ; un retiré avec saisies ; mois et dimanches |
 | `supabase/seed/41-fij-statistiques.sql` | B5  | deux semaines des 4 rubriques, une semaine incomplète (« 6 dép. sur 8 »)                                                                                                                                                                                                                                      |
 | `supabase/seed/42-evenements.sql`       | B6  | « Réunion des responsables » (Coordination, en attente, reporté, @Communication), décalage de semaines recalculé                                                                                                                                                                                              |
-| `supabase/seed/43-signalements.sql`     | B7  | deux signalements de Communication, sans aucune donnée personnelle : un ouvert sur la saisie d'un événement, un clos avec un commentaire d'EJP Tech (si la question 14 reçoit un oui)                                                                                                                         |
+| `supabase/seed/43-signalements.sql`     | B7  | deux signalements de Communication, sans aucune donnée personnelle : un ouvert sur la saisie d'un événement, un clos avec un commentaire d'EJP Tech                                                                                                                                                           |
 
 `jeu-exemple.test.sql` n'est touché que par B6 (11 puis 12 événements) et B2 (ligne de journal de
 Communication, l. 104). Les signalements du jeu d'exemple ne passent pas par le journal (insertion
@@ -375,22 +375,22 @@ vérifient les tests de l'étape 3.
 
 ### Propriété des fichiers après W0
 
-| Fichier ou objet partagé                                                                                                      | Seul lot qui l'écrit                         |
-| ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| `private.journaliser_mesures`, `private.journal_lisible_administration`                                                       | B2                                           |
-| `v_journal` (cible `indicateur`), `masquer_texte` (couples des indicateurs)                                                   | B3                                           |
-| `masquer_texte` (couples des signalements, repris après B3), `private.tableau_ministeres()` (fraîcheur sans les signalements) | B7                                           |
-| `src/components/aide/*` (`Aide.tsx`, `LibelleAvecAide.tsx`, `textesAide.ts`), `LienSignalement.tsx`                           | W0 puis I                                    |
-| `private.journaliser_evenements`, `v_evenement`, politique de `evenement`                                                     | B6                                           |
-| `private.controler_mesure`, `private.controler_indicateur`, politique d'ajout de `mesure`                                     | B1                                           |
-| politiques de lecture de `indicateur` et `indicateur_terme` (Q3)                                                              | B1                                           |
-| politique de lecture de `mesure` (lignes sensibles, retirés pour confidentialité)                                             | B2                                           |
-| `v_commun_fiche` et `private.communs_de_fiche()` (libellés des communs)                                                       | B4                                           |
-| `playwright.config.ts`                                                                                                        | W0                                           |
-| `src/pages/PageConfidentialite.tsx` (texte K56, signalements)                                                                 | I                                            |
-| `audit.test.sql`, tests `rls-chiffres-*` (colonne `definition`)                                                               | B1 (`rls-chiffres-*`), B2 (`audit.test.sql`) |
-| `src/features/cette-semaine/*` hors emplacements                                                                              | E7                                           |
-| `structure.test.sql` (listes exhaustives), `LISEZMOI.md`, `BRIEF.md`, `docs/decisions.md`                                     | W0 puis I                                    |
+| Fichier ou objet partagé                                                                                                                                                                                                  | Seul lot qui l'écrit                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `private.journaliser_mesures`, `private.journal_lisible_administration`                                                                                                                                                   | B2                                           |
+| `v_journal` (cible `indicateur`), `masquer_texte` (couples des indicateurs)                                                                                                                                               | B3                                           |
+| `masquer_texte` (couples des signalements, repris après B3), `private.tableau_ministeres()` (fraîcheur sans les signalements), politique de lecture de `journal` (codes des signalements retirés au berger et au conseil) | B7                                           |
+| `src/components/aide/*` (`Aide.tsx`, `LibelleAvecAide.tsx`, `textesAide.ts`), `LienSignalement.tsx`                                                                                                                       | W0 puis I                                    |
+| `private.journaliser_evenements`, `v_evenement`, politique de `evenement`                                                                                                                                                 | B6                                           |
+| `private.controler_mesure`, `private.controler_indicateur`, politique d'ajout de `mesure`                                                                                                                                 | B1                                           |
+| politiques de lecture de `indicateur` et `indicateur_terme` (Q3)                                                                                                                                                          | B1                                           |
+| politique de lecture de `mesure` (lignes sensibles, retirés pour confidentialité)                                                                                                                                         | B2                                           |
+| `v_commun_fiche` et `private.communs_de_fiche()` (libellés des communs)                                                                                                                                                   | B4                                           |
+| `playwright.config.ts`                                                                                                                                                                                                    | W0                                           |
+| `src/pages/PageConfidentialite.tsx` (texte K56, signalements)                                                                                                                                                             | I                                            |
+| `audit.test.sql`, tests `rls-chiffres-*` (colonne `definition`)                                                                                                                                                           | B1 (`rls-chiffres-*`), B2 (`audit.test.sql`) |
+| `src/features/cette-semaine/*` hors emplacements                                                                                                                                                                          | E7                                           |
+| `structure.test.sql` (listes exhaustives), `LISEZMOI.md`, `BRIEF.md`, `docs/decisions.md`                                                                                                                                 | W0 puis I                                    |
 
 ## 4. Les lots
 
@@ -398,7 +398,7 @@ Règles communes à tous les lots, vérifiées par `rls-auditor` :
 
 - ajout seulement : aucun GRANT `update`, `delete` ni `truncate` ; triggers d'inaltérabilité sur
   `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique`, `evenement_mention`,
-  et, si la question 14 reçoit un oui, `signalement` et `signalement_suivi` (seule exception :
+  `signalement` et `signalement_suivi` (seule exception :
   `masquer_texte`, sous `pilotage.masquage`) ; `saisi_le` et `saisi_par` posés
   par `forcer_auteur` ;
 - RLS active, politique restrictive `aal2` sur chaque table nouvelle, GRANT explicites, rien pour
@@ -412,8 +412,8 @@ Règles communes à tous les lots, vérifiées par `rls-auditor` :
 - **EJP Tech lit tout et ne saisit rien** : aucune politique d'ajout et aucune fonction de saisie
   ne l'accepte (`mesure`, `fij_statistique`, `participation`, `evenement`, `evenement_etat`,
   `reunion`, `signalement`) ; ses écrans n'ont aucun bouton de saisie (`enLectureSeule`) ; seules
-  la validation des ajouts, la configuration sur demande écrite (Q13), la modération et, si la
-  question 14 reçoit un oui, la clôture des signalements (`clore_signalement`) lui sont ouvertes ;
+  la validation des ajouts, la configuration sur demande écrite (Q13), la modération et la
+  clôture des signalements (`clore_signalement`) lui sont ouvertes ;
 - textes : français simple, aucun tiret cadratin ni demi-cadratin, un rappel sur les données
   personnelles sous le premier champ libre de chaque formulaire (nom de l'événement, objet de la
   réunion, texte du signalement), sauf le champ « Pourquoi cet indicateur ? » qui n'en a jamais
@@ -448,37 +448,37 @@ Référence des tests pgTAP en données. Profils : ministère (un ministère por
 mentionné ou autre, le ministère `fij`, le ministère `coordination`), berger, conseil,
 administration de l'église, EJP Tech, session `aal1`, anonyme. « L » lire, « A » ajouter.
 
-| Objet                                                                                       | Ministère                                                             | Berger, conseil                        | Administration                                                        | EJP Tech                           | `aal1`, anonyme |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------- | --------------------------------------------------------------------- | ---------------------------------- | --------------- |
-| `indicateur`, `indicateur_terme`                                                            | L des communs et des siens (Q3)                                       | L tous, ajouts à valider compris       | L tous (définitions)                                                  | L tous                             | rien            |
-| `mesure` (lecture)                                                                          | L des communs de tous et des siens, sensibles compris                 | L, sauf lignes sensibles               | L des communs seulement                                               | comme le berger                    | rien            |
-| `mesure` (ajout)                                                                            | A le sien : actif ou à valider, non calculé, mois clos si sensible    | rien                                   | rien                                                                  | rien                               | rien            |
-| `v_mesure_periode`, `v_indicateur_serie`, `v_indicateur_suivi`, `v_calcul`                  | valeurs exactes des siens                                             | seuil « moins de 3 » sur les sensibles | lignes sans valeur, sauf communs                                      | comme le berger                    | rien            |
-| `v_usage_indicateurs`                                                                       | rien                                                                  | rien                                   | L                                                                     | L                                  | rien            |
-| `demande_indicateur`                                                                        | L les siennes                                                         | rien                                   | rien                                                                  | L                                  | rien            |
-| `validation`                                                                                | L les siennes                                                         | L                                      | L                                                                     | L                                  | rien            |
-| `v_a_valider`                                                                               | rien                                                                  | rien                                   | rien                                                                  | L                                  | rien            |
-| `valider_indicateur`                                                                        | refusé                                                                | refusé                                 | refusé                                                                | oui                                | refusé          |
-| `creer_indicateurs_prevus`, `creer_indicateur`, `corriger_indicateur`, `retirer_indicateur` | refusé                                                                | refusé                                 | oui                                                                   | oui                                | refusé          |
-| `ajouter_suggestion`                                                                        | sa fiche, « Pourquoi » obligatoire                                    | refusé                                 | oui                                                                   | oui                                | refusé          |
-| `limites_indicateurs`, `verifier_libelle`                                                   | sa fiche                                                              | refusé                                 | toute fiche                                                           | toute fiche                        | refusé          |
-| `fij_statistique`, `v_fij_statistique`                                                      | L et A (par `saisir_fij_statistiques`) si `fij` ; rien sinon          | L                                      | rien                                                                  | L                                  | rien            |
-| `evenement`, `evenement_etat`                                                               | L et A les siens ; L de ceux qui le mentionnent                       | L                                      | rien                                                                  | L                                  | rien            |
-| `evenement_mention`                                                                         | L des siens et de ceux qui le mentionnent ; A par `ajouter_evenement` | L                                      | rien                                                                  | L                                  | rien            |
-| `v_evenement` (`jours`, `a_confirmer`, `reporte_du`)                                        | siens et mentionnés                                                   | tous                                   | rien                                                                  | tous                               | rien            |
-| `journal` (codes nouveaux)                                                                  | lignes de sa fiche                                                    | toutes                                 | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements | toutes                             | rien            |
-| `moderation` (couples nouveaux)                                                             | rien                                                                  | rien                                   | rien                                                                  | L et masquage                      | rien            |
-| `creer_calcul`                                                                              | refusé                                                                | refusé                                 | oui                                                                   | oui                                | refusé          |
-| `v_commun_fiche` (libellé de la demande par commun, lignes de référence de MDS)             | les siens seulement                                                   | tous                                   | rien                                                                  | tous                               | rien            |
-| `private.indicateur_prevu`, `private.libelle_commun`, `private.fij_rubrique`                | rien                                                                  | rien                                   | rien                                                                  | rien                               | rien            |
-| `signalement` (T39, à confirmer)                                                            | L les siens ; A par `signaler_difficulte`                             | rien                                   | L tous                                                                | L tous                             | rien            |
-| `signalement_suivi` (T39, à confirmer)                                                      | L celui de ses signalements                                           | rien                                   | L tous                                                                | L tous ; A par `clore_signalement` | rien            |
-| `signaler_difficulte`                                                                       | sa fiche seulement                                                    | refusé                                 | refusé                                                                | refusé                             | refusé          |
-| `clore_signalement`                                                                         | refusé                                                                | refusé                                 | refusé                                                                | oui                                | refusé          |
-| Lot L : `v_evenements_mois`                                                                 | ses événements                                                        | tous                                   | rien                                                                  | tous                               | rien            |
-| Lot L : `evenements_eglise_mois()`                                                          | `coordination` seulement                                              | oui                                    | refusé                                                                | oui                                | refusé          |
-| Lot L : `v_graphique`, `v_stock_mois`                                                       | comme leurs sources, jamais une série sensible                        | comme leurs sources                    | rien                                                                  | comme leurs sources                | rien            |
-| Lot L : `v_serie_eglise`                                                                    | L                                                                     | L                                      | L                                                                     | L                                  | rien            |
+| Objet                                                                                       | Ministère                                                                                                             | Berger, conseil                                          | Administration                                                        | EJP Tech                           | `aal1`, anonyme |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------- | --------------- |
+| `indicateur`, `indicateur_terme`                                                            | L des communs et des siens (Q3)                                                                                       | L tous, ajouts à valider compris                         | L tous (définitions)                                                  | L tous                             | rien            |
+| `mesure` (lecture)                                                                          | L des communs de tous et des siens, sensibles compris                                                                 | L, sauf lignes sensibles                                 | L des communs seulement                                               | comme le berger                    | rien            |
+| `mesure` (ajout)                                                                            | A le sien : actif ou à valider, non calculé, mois clos si sensible                                                    | rien                                                     | rien                                                                  | rien                               | rien            |
+| `v_mesure_periode`, `v_indicateur_serie`, `v_indicateur_suivi`, `v_calcul`                  | valeurs exactes des siens                                                                                             | seuil « moins de 3 » sur les sensibles                   | lignes sans valeur, sauf communs                                      | comme le berger                    | rien            |
+| `v_usage_indicateurs`                                                                       | rien                                                                                                                  | rien                                                     | L                                                                     | L                                  | rien            |
+| `demande_indicateur`                                                                        | L les siennes                                                                                                         | rien                                                     | rien                                                                  | L                                  | rien            |
+| `validation`                                                                                | L les siennes                                                                                                         | L                                                        | L                                                                     | L                                  | rien            |
+| `v_a_valider`                                                                               | rien                                                                                                                  | rien                                                     | rien                                                                  | L                                  | rien            |
+| `valider_indicateur`                                                                        | refusé                                                                                                                | refusé                                                   | refusé                                                                | oui                                | refusé          |
+| `creer_indicateurs_prevus`, `creer_indicateur`, `corriger_indicateur`, `retirer_indicateur` | refusé                                                                                                                | refusé                                                   | oui                                                                   | oui                                | refusé          |
+| `ajouter_suggestion`                                                                        | sa fiche, « Pourquoi » obligatoire                                                                                    | refusé                                                   | oui                                                                   | oui                                | refusé          |
+| `limites_indicateurs`, `verifier_libelle`                                                   | sa fiche                                                                                                              | refusé                                                   | toute fiche                                                           | toute fiche                        | refusé          |
+| `fij_statistique`, `v_fij_statistique`                                                      | L et A (par `saisir_fij_statistiques`) si `fij` ; rien sinon                                                          | L                                                        | rien                                                                  | L                                  | rien            |
+| `evenement`, `evenement_etat`                                                               | L les siens et ceux qui le mentionnent ; A `evenement_etat` les siens ; `evenement` par `ajouter_evenement` seulement | L                                                        | rien                                                                  | L                                  | rien            |
+| `evenement_mention`                                                                         | L des siens et de ceux qui le mentionnent ; ajout par `ajouter_evenement` seulement, aucun GRANT insert               | L                                                        | rien                                                                  | L                                  | rien            |
+| `v_evenement` (`jours`, `a_confirmer`, `reporte_du`)                                        | siens et mentionnés                                                                                                   | tous                                                     | rien                                                                  | tous                               | rien            |
+| `journal` (codes nouveaux)                                                                  | lignes de sa fiche                                                                                                    | toutes, sauf `difficulte_signalee` et `signalement_clos` | `mesure_saisie` et `indicateur_*`, sans valeur ; ni FIJ ni événements | toutes                             | rien            |
+| `moderation` (couples nouveaux)                                                             | rien                                                                                                                  | rien                                                     | rien                                                                  | L et masquage                      | rien            |
+| `creer_calcul`                                                                              | refusé                                                                                                                | refusé                                                   | oui                                                                   | oui                                | refusé          |
+| `v_commun_fiche` (libellé de la demande par commun, lignes de référence de MDS)             | les siens seulement                                                                                                   | tous                                                     | rien                                                                  | tous                               | rien            |
+| `private.indicateur_prevu`, `private.libelle_commun`, `private.fij_rubrique`                | rien                                                                                                                  | rien                                                     | rien                                                                  | rien                               | rien            |
+| `signalement` (T39, décidé)                                                                 | L les siens ; A par `signaler_difficulte`                                                                             | rien                                                     | rien                                                                  | L tous                             | rien            |
+| `signalement_suivi` (T39, décidé)                                                           | L celui de ses signalements                                                                                           | rien                                                     | rien                                                                  | L tous ; A par `clore_signalement` | rien            |
+| `signaler_difficulte`                                                                       | sa fiche seulement                                                                                                    | refusé                                                   | refusé                                                                | refusé                             | refusé          |
+| `clore_signalement`                                                                         | refusé                                                                                                                | refusé                                                   | refusé                                                                | oui                                | refusé          |
+| Lot L : `v_evenements_mois`                                                                 | ses événements                                                                                                        | tous                                                     | rien                                                                  | tous                               | rien            |
+| Lot L : `evenements_eglise_mois()`                                                          | `coordination` seulement                                                                                              | oui                                                      | refusé                                                                | oui                                | refusé          |
+| Lot L : `v_graphique`, `v_stock_mois`                                                       | comme leurs sources, jamais une série sensible                                                                        | comme leurs sources                                      | rien                                                                  | comme leurs sources                | rien            |
+| Lot L : `v_serie_eglise`                                                                    | L                                                                                                                     | L                                                        | L                                                                     | L                                  | rien            |
 
 Un indicateur retiré pour confidentialité ne se lit plus par l'API, pour aucun profil, EJP Tech
 compris, ni dans `mesure` ni dans aucune vue (Q11) : B2 l'écrit dans la politique de `mesure` et
@@ -498,7 +498,7 @@ communs et des siennes, termes compris (Q3) : B1 réécrit les politiques de `in
 | `/saisir/session/:id`                                                  | ministère                                 | E4  |
 | `/saisir/fij`, `/saisir/fij-statistiques`                              | ministère `fij`                           | E4  |
 | `/saisir/evenement`, `/saisir/evenement/:id`, `/saisir/reunion`        | ministère                                 | E5  |
-| `/signaler` (`ecran=<code>`, T39 à confirmer)                          | ministère                                 | E8  |
+| `/signaler` (`ecran=<code>`, T39, décidé)                              | ministère                                 | E8  |
 | `/moderation` (bloc « Signalements » seulement ; le reste à l'étape 6) | EJP Tech                                  | E8  |
 
 Une adresse réservée à un autre profil donne la page non disponible, sans aucune requête.
@@ -511,7 +511,7 @@ L'administration de l'église n'a aucune adresse nouvelle à l'étape 4.
   vérifie pendant qu'on écrit les types, les routes et les briques.
 - **Aides contextuelles (T38, + 1 jour)** : `Aide`, `LibelleAvecAide` et `textesAide.ts`, rempli
   une fois depuis `docs/conception/aides-contextuelles.md` (textes « Proposé » tant qu'ils ne sont
-  pas validés), et `LienSignalement` si la question 14 reçoit un oui. W0 ne pose aucune aide sur
+  pas validés), et `LienSignalement`. W0 ne pose aucune aide sur
   un écran : chaque lot pose les siennes.
 - **Écrans** : aucun ; pages amorces seulement.
 - **Tests** : `structure.test.sql` en contrôles génériques ; test de la migration de contrats
@@ -738,7 +738,11 @@ L'administration de l'église n'a aucune adresse nouvelle à l'étape 4.
     `aal2`, GRANT `select` seulement ; `private.evenements_mentionnant_mon_ministere()` contre la
     récursion ; politique de lecture de `evenement` recréée avec les événements qui mentionnent le
     ministère ; `evenement_etat` suit ;
-  - `ajouter_evenement(text, date, statut_evenement, uuid[])` : contrôles de `creer_point`
+  - `ajouter_evenement(text, date, statut_evenement, uuid[])` : partie `private` en `security
+definer` derrière la fonction `public` en `security invoker` (comme la version à trois
+    arguments, depuis `20260930194240_correctifs_audit.sql`, qui a retiré l'insertion directe dans
+    `evenement`) ; `evenement_mention` ne reçoit aucun GRANT `insert` ni aucune politique d'ajout :
+    seule cette fonction y écrit. Contrôles de `creer_point`
     (doublons, ministères actifs, jamais soi-même), mentions insérées avant le premier état ; la
     version à trois arguments délègue avec `'{}'` ; le refus d'une date passée de l'étape 3 reste,
     avec son message (« La date ne peut pas être passée. ») ;
@@ -765,11 +769,15 @@ L'administration de l'église n'a aucune adresse nouvelle à l'étape 4.
   ministère ne voient rien) ; `evenements-report.test.sql` ; `jeu-exemple.test.sql` (12 événements) ;
   `seed/42-evenements.sql`.
 
-### B7. Signalements, base (1,5 jour, si la question 14 reçoit un oui)
+### B7. Signalements, base (1,5 jour)
 
-Proposition à confirmer (T39). Un ministère qui bloque sur un écran (par exemple une date qu'il ne
-peut pas poser) l'écrit en quelques mots ; EJP Tech le lit, l'aide en dehors de l'outil, puis clôt
-le signalement.
+Décidé le 6 octobre 2026 (T39). Un ministère qui bloque sur un écran (par exemple une date qu'il ne
+peut pas poser) l'écrit en quelques mots ; **seuls ce ministère et EJP Tech le lisent** (ni
+l'administration, ni le berger, ni le conseil) ; EJP Tech l'aide en dehors de l'outil, puis clôt le
+signalement. Ce que l'administration doit connaître (une session absente, des ministères
+attendus), EJP Tech le lui transmet hors de l'outil et l'écrit dans le commentaire de clôture
+(« transmis à l'administration »). Un problème de compte ou de connexion ne passe jamais par le
+signalement : un ministère qui ne peut pas se connecter écrit à l'administration.
 
 - **Migration** : `20261009110000_signalements.sql`, fusionnée après B1 (`verifier_texte`) et B3
   (`masquer_texte`).
@@ -792,15 +800,25 @@ le signalement.
   - `clore_signalement(p_signalement_id uuid, p_commentaire text)` : même construction ; EJP Tech
     seul, sous verrou, refus d'une seconde clôture (« Ce signalement est déjà clos. ») ; une ligne
     de journal `signalement_clos` sans le commentaire ;
-  - RLS : le ministère lit ses signalements et leur clôture ; EJP Tech et l'administration lisent
-    tout (l'administration crée les comptes et les sessions, que beaucoup de difficultés touchent) ;
-    berger et conseil n'en ont pas besoin et ne lisent rien ; personne ne met à jour ni ne supprime ;
+  - RLS : le ministère lit ses signalements et leur clôture ; EJP Tech lit tout ; l'administration,
+    le berger et le conseil ne lisent rien (l'administration ne voit ni les pages des ministères ni
+    les points, BRIEF section 2, et un signalement parle du contenu d'une page) ; la politique de
+    lecture se fait par `ministere_id = (select private.mon_ministere())` ou
+    `(select private.mon_type()) = 'admin_plateforme'`, **jamais par `private.lit_tout()`** (qui
+    rendrait vrai pour le berger et le conseil) ; personne ne met à jour ni ne supprime ;
+  - **journal** : la politique de lecture de `journal` est recréée par B7, depuis sa dernière
+    version en vigueur dans les migrations, et retire les codes
+    `difficulte_signalee` et `signalement_clos` au berger et au conseil :
+    `(select private.lit_tout()) and (action not in ('difficulte_signalee','signalement_clos') or
+(select private.mon_type()) = 'admin_plateforme')`. Le ministère auteur les garde dans « Mon
+    journal », EJP Tech les lit ; sans cela le berger verrait qu'un signalement existe, ce que la
+    décision du 6 octobre interdit ;
     GRANT `select` seulement, l'ajout passant par les deux fonctions ; politique restrictive `aal2` ;
   - `masquer_texte` étendu aux couples (`signalement`, `texte`) et (`signalement_suivi`,
     `commentaire`), repris après B3 ;
   - **fraîcheur** : un signalement n'est pas une saisie ; `private.tableau_ministeres()` est recréé
     depuis sa dernière version (`20261005172228_droits_lecture_ejp_tech.sql`) pour ignorer
-    `difficulte_signalee` dans la fraîcheur (règle 6 du BRIEF, à préciser au report, question 14) ;
+    `difficulte_signalee` dans la fraîcheur (règle 6 du BRIEF, à préciser au report) ;
   - aucun email, aucune notification : EJP Tech voit les signalements ouverts sur son accueil.
 - **Écrans** : aucun (E8).
 - **Tests pgTAP** : `signalements.test.sql` (texte de 9, 10, 280 et 281 caractères ; code d'écran
@@ -809,9 +827,14 @@ le signalement.
   refusée ; commentaire facultatif ; fraîcheur inchangée après un signalement ; masquage du texte
   et du commentaire) ; **`rls-signalements-matrice.test.sql`** (chaque ligne de la section 4 pour
   `signalement`, `signalement_suivi`, `signaler_difficulte` et `clore_signalement` : sept comptes
-  et l'anonyme, en `aal1` et `aal2`, un ministère ne lit pas les signalements d'un autre, berger et
-  conseil ne lisent rien, EJP Tech ne signale pas, écriture directe refusée, inaltérabilité même
-  au propriétaire, sauf masquage), construit sur l'aide de matrice de W0 ; `seed/43-signalements.sql`.
+  et l'anonyme, en `aal1` et `aal2`, un ministère ne lit pas les signalements d'un autre, **un
+  test précis : l'administration, le berger et le conseil ne lisent aucune ligne de `signalement`
+  ni de `signalement_suivi` et se voient refuser `signaler_difficulte` et `clore_signalement`**,
+  EJP Tech ne signale pas, écriture directe refusée, inaltérabilité même au propriétaire, sauf
+  masquage ; **second test précis : le berger et le conseil ne lisent aucune ligne de `journal`
+  `difficulte_signalee` ni `signalement_clos`, l'administration et un autre ministère non plus,
+  le ministère auteur et EJP Tech les lisent**), construit sur l'aide de matrice de W0 ;
+  `seed/43-signalements.sql`.
 
 ### E1. Données et métier des indicateurs (1 jour)
 
@@ -899,7 +922,7 @@ le signalement.
   `docs/conception/aides-contextuelles.md`, à côté du libellé qu'elles expliquent, jamais à la
   place de la définition affichée sous le champ ; le format de l'heure et « Déjà saisi » restent
   des textes visibles (section 8 du document).
-- **Signalement (T39, si la question 14 reçoit un oui)** : `LienSignalement` en bas des deux
+- **Signalement (T39, décidé)** : `LienSignalement` en bas des deux
   formulaires, sous les boutons (`ecran=saisie_dimanche` ou `saisie_mois`).
 - **Tests** : Vitest des schémas (bornes de chaque unité, heure), de la période proposée (bascule
   du dimanche à 12 h, du 31 octobre à minuit à Paris ; mois en cours et deux précédents, deux mois
@@ -944,7 +967,7 @@ le signalement.
   des FIJ et de « Chiffres par département » dans `docs/conception/aides-contextuelles.md` (par
   exemple « déjà comptés par leur ministère principal », les quatre rubriques, la complétude
   « 6 dép. sur 8 » du bloc de lecture).
-- **Signalement (T39, si la question 14 reçoit un oui)** : `LienSignalement` en bas des trois
+- **Signalement (T39, décidé)** : `LienSignalement` en bas des trois
   formulaires (`saisie_session`, `saisie_fij`, `saisie_fij_statistiques`).
 - **Tests** : Vitest (schémas, présents moins déjà comptés, total en direct, lignes de « Vos
   saisies » ; bloc de lecture : total par rubrique avec « 8 dép. sur 8 » et « 6 dép. sur 8 »,
@@ -977,8 +1000,8 @@ le signalement.
   reste la garde. Les textes affichés sont ceux de la section 7 de
   `docs/conception/aides-contextuelles.md` : sous le champ date pour une date refusée, à l'ajout
   « Cette date est passée. Choisissez aujourd'hui ou une date à venir. » et en mise à jour « La
-  nouvelle date doit être aujourd'hui ou plus tard. », chacun suivi, si la question 14 reçoit un
-  oui, de « Vous ne pouvez pas choisir de date ? Signaler une difficulté » (lien vers
+  nouvelle date doit être aujourd'hui ou plus tard. », chacun suivi
+  de « Vous ne pouvez pas choisir de date ? Signaler une difficulté » (lien vers
   `/signaler?ecran=saisie_evenement`) ; sous le bouton pour une ligne identique, sans lien.
   Formulaire et valeurs gardés.
 - **Aides contextuelles (T38, + 0,25 jour)** : celles du formulaire 11 (`evenement.date`,
@@ -989,7 +1012,7 @@ le signalement.
   reporte seulement le statut. » reste visible sous le statut, pas une bulle, parce qu'elle sert à
   chaque mise à jour ; texte visible à ajouter sous les mentions : « Les mentions se choisissent à
   la création et ne changent plus. » (proposé, section 8 du document).
-- **Signalement (T39, si la question 14 reçoit un oui)** : `LienSignalement` en bas des deux
+- **Signalement (T39, décidé)** : `LienSignalement` en bas des deux
   formulaires (`saisie_evenement`, `saisie_reunion`).
 - **États vides** : « Aucun autre ministère actif à mentionner. » ; « Seul Communication met à jour
   cet événement. » avec « Revenir à ma fiche » ; « Cet élément n'existe pas ou vous n'y avez pas
@@ -1059,7 +1082,7 @@ le signalement.
   lecture seule ; `@captures` de 07 en 390 px et de la grille en 1440 et 834 px. La revue de
   l'étape 4 vérifie l'ouverture de 07 (`LISEZMOI.md`).
 
-### E8. Signaler une difficulté et bloc « Signalements » (1,5 jour, si la question 14 reçoit un oui)
+### E8. Signaler une difficulté et bloc « Signalements » (1,5 jour)
 
 - **Fichiers** : `src/features/signalement/` (`FormulaireSignalement.tsx`, `BlocSignalements.tsx`,
   `schemas.ts`, `textes.ts`), `src/data/signalements.ts`, `src/lib/base/signalements.ts`, page
@@ -1079,10 +1102,9 @@ le signalement.
   l'écran Modération (étape 6) : les signalements ouverts, du plus ancien au plus récent (ministère,
   écran, texte, date), puis les clos des 30 derniers jours ; « Clore le signalement » ouvre un
   petit panneau avec un commentaire facultatif (10 à 280 caractères, rappel en dessous) et le
-  bouton « Clore définitivement ». « N signalements ouverts » dans le titre du bloc. L'administration
-  lit les mêmes signalements, sans bouton, sur la même vue en lecture seule à l'étape 6 (aucune
-  adresse nouvelle pour elle à l'étape 4). Le masquage d'un texte vient avec l'écran Modération
-  (étape 6).
+  bouton « Clore définitivement ». « N signalements ouverts » dans le titre du bloc. Le berger, le
+  conseil et l'administration ne lisent aucun signalement et n'ont aucun accès à ce bloc ni à
+  `/signaler`. Le masquage d'un texte vient avec l'écran Modération (étape 6).
 - **États vides** : bloc « Signalements », tout est fait : « Aucun signalement. Les difficultés
   signalées par les ministères arriveront ici. » (`aides-contextuelles.md`, section 7), le titre et
   les clos des 30 derniers jours gardés ; « Vos derniers signalements », premier usage : rien n'est affiché (pas de bloc vide
@@ -1096,8 +1118,8 @@ le signalement.
   seul à voir « Clore le signalement ») ; `e2e/base/signalements.ecriture.spec.ts` dans le projet
   `ecritures` : Communication part du refus d'une date passée sur le formulaire 11, suit le lien,
   envoie un signalement créé par le test, et une ligne de journal sans le texte apparaît ; EJP Tech
-  le voit dans le bloc, le clôt avec un commentaire, et Communication lit « Clos » ; le berger sur
-  `/signaler` reçoit la page non disponible ; `@captures` du formulaire et du bloc en 1440, 834 et
+  le voit dans le bloc, le clôt avec un commentaire, et Communication lit « Clos » ; le berger et
+  l'administration sur `/signaler` reçoivent la page non disponible ; `@captures` du formulaire et du bloc en 1440, 834 et
   390 px.
 
 ### I. Intégration, recette, captures, revues (3 jours)
@@ -1106,8 +1128,8 @@ le signalement.
 - **Page Confidentialité** (`src/pages/PageConfidentialite.tsx`, K56, P42) : elle dit que seuls
   des totaux de mois écoulés sont saisis pour la santé, l'accompagnement, l'écoute et les enfants,
   qu'un nombre de 1 ou 2 s'affiche « moins de 3 » et que seul le ministère qui les saisit voit ses
-  valeurs exactes ; si la question 14 reçoit un oui, elle dit aussi qui lit un signalement (EJP
-  Tech et l'administration de l'église). Test Vitest. Elle est en place avant la mise en service,
+  valeurs exactes ; elle dit aussi qui lit un signalement (le ministère qui l'écrit et EJP Tech,
+  personne d'autre). Test Vitest. Elle est en place avant la mise en service,
   puisque les indicateurs sensibles sont actifs dès le premier jour.
 - **Aides contextuelles** : les textes validés de `docs/conception/aides-contextuelles.md`
   remplacent les textes « Proposé » dans `textesAide.ts` ; les aides `eglise.*` se posent sur la
@@ -1200,7 +1222,7 @@ Par lot :
    Paris (bascules du dimanche à 12 h, de minuit, du 31 octobre) ; les 12 calculs étendus s'écrivent
    et se figent ; sensibles actifs dès leur création, avec mois clos, seuil, lignes brutes au seul
    ministère et aucune source de calcul ; refus d'une nouvelle date passée et d'une mise à jour
-   identique ; retrait pour confidentialité ; signalements (si la question 14 reçoit un oui) ;
+   identique ; retrait pour confidentialité ; signalements (dont l'administration, le berger et le conseil, qui ne lisent rien) ;
    `structure.test.sql` exhaustif.
 3. **Vitest** : `npm test -- --run` vert, dont chaque état vide, EJP Tech sans bouton et chaque
    aide contextuelle au clavier.
@@ -1217,19 +1239,23 @@ Par lot :
 
 ## 7. Ce qui bloque et questions à la personne responsable
 
-Chaque question porte une recommandation. **État au 6 octobre 2026**, après les réponses de la
-personne responsable :
+Chaque question porte une recommandation. **État au 6 octobre 2026**, après l'accord écrit de la
+personne responsable, qui **approuve le plan** :
 
-| Questions    | État                                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------ |
-| 1, 2 et 3    | **ouvertes** : à approuver explicitement ; rien n'est codé avant                           |
-| 4            | **répondue, recommandation inversée** : sensibles créés et actifs dès la vague 1 (P42)     |
-| 7            | **répondue** : oui (T37), avec deux demandes en plus (aides contextuelles, signalement)    |
-| 5, 6, 8 à 13 | **approuvées** (« ok » aux recommandations)                                                |
-| 14           | **nouvelle** : signaler une difficulté (T39), à trancher avant W0                          |
-| 15           | **nouvelle** : forme (avant W0) et textes (avant la vague 4) des aides contextuelles (T38) |
+| Questions | État                                                                                                              |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| 1 à 3     | **approuvées** le 6 octobre 2026 (report dans le BRIEF, ajouts à CLAUDE.md, une migration W0 pour les codes)      |
+| 4         | **répondue, recommandation inversée** : sensibles créés et actifs dès la vague 1, sans réglage de blocage (P42)   |
+| 5 et 6    | **approuvées**                                                                                                    |
+| 7         | **répondue : oui** (T37), avec deux demandes en plus (signalement, décidé ; aides contextuelles, principe décidé) |
+| 8 à 13    | **approuvées**                                                                                                    |
+| 14        | **répondue** : signalement décidé (T39), lu par le ministère qui l'écrit et par EJP Tech seulement                |
+| 15        | **ouverte** : forme (avant W0) et textes (avant la vague 4) des aides contextuelles (T38)                         |
 
-1. **Accord sur ce plan et report dans le BRIEF.** _Encore ouverte._ T35 et les décisions de la vague 1 (P32 à P41)
+Seule la question 15 reste ouverte. Les questions 1 à 14 gardent ci-dessous leur texte et leur
+recommandation, avec leur réponse.
+
+1. **Accord sur ce plan et report dans le BRIEF.** _Approuvée le 6 octobre 2026._ T35 et les décisions de la vague 1 (P32 à P41)
    changent le modèle : CLAUDE.md demande votre accord avant le code, et le BRIEF n'est pas encore
    modifié (sections 3, 4, 6, 7, 9, 11 et 13). _Recommandation_ : après votre accord, W0 commence
    par un commit de documents seul qui reporte dans le BRIEF : section 3 (règle 1 : tables en ajout
@@ -1254,22 +1280,22 @@ personne responsable :
    configuration. Le même commit reporte aussi les réponses du 6 octobre : section 4 (indicateurs
    sensibles actifs dès la vague 1, P42 ; aides contextuelles, T38) ; section 3, règle 14, et
    section 7 (refus d'une nouvelle date passée et d'une mise à jour identique, T37) ; section 9
-   (aides contextuelles sur chaque écran) ; et, si la question 14 reçoit un oui, sections 3
+   (aides contextuelles sur chaque écran) ; et le signalement (T39, décidé), sections 3
    (règle 1 : `signalement`, `signalement_suivi` ; règle 6 : la fraîcheur ignore les
-   signalements), 6, 7 et 9 (« Signaler une difficulté », bloc « Signalements », adresse
-   `/signaler`).
-2. **CLAUDE.md.** _Encore ouverte._ Deux ajouts, dans le même commit que le BRIEF. (a) La liste
+   signalements), 6, 7 (lu par le ministère qui l'écrit et par EJP Tech seulement) et 9
+   (« Signaler une difficulté », bloc « Signalements », adresse `/signaler`).
+2. **CLAUDE.md.** _Approuvée le 6 octobre 2026._ Deux ajouts, dans le même commit que le BRIEF. (a) La liste
    « ajout seulement » ne nomme pas les tables nouvelles. _Recommandation_ : ajouter
    `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique` et
-   `evenement_mention`, et `signalement` et `signalement_suivi` si la question 14 reçoit un oui.
+   `evenement_mention`, `signalement` et `signalement_suivi`.
    (b) La règle « un ministère ne voit que sa fiche, la vue de l'église et les points qu'il a créés
    ou qui le mentionnent » doit dire aussi « et les événements qui le mentionnent » (T32), « et
-   ses signalements » si la question 14 reçoit un oui, et nommer l'exception de Coordination, qui
+   ses signalements », et nommer l'exception de Coordination, qui
    lit les totaux d'événements de l'église (K11).
-3. **Codes du journal.** _Encore ouverte._ Une version préliminaire proposait des tables de
+3. **Codes du journal.** _Approuvée le 6 octobre 2026._ Une version préliminaire proposait des tables de
    référence (`private.action_journal`), qui changent le modèle. _Recommandation_ : une seule
    migration W0 qui réécrit les `check` (codes, cibles et couples de modération) avec l'union de
-   tous les codes de l'étape, codes des signalements compris si la question 14 reçoit un oui
+   tous les codes de l'étape, codes des signalements compris
    (section 3, point 2) ; les tables de référence seulement si une étape suivante en a besoin.
 4. **Indicateurs sensibles (K56).** _Répondue le 6 octobre 2026, recommandation inversée._ La
    recommandation était de fermer leur création par un réglage `sensibles_actives` jusqu'à la
@@ -1301,8 +1327,8 @@ personne responsable :
    en B6 et E5 ; le report se compte dans le mois de la date quittée (K10b). **Ce que le plan
    applique** : le trigger de B6 et ses tests (`evenements-mise-a-jour.test.sql`), les messages
    repris par E5. **Deux demandes en plus de la personne responsable** : (a) qu'un ministère puisse
-   signaler une difficulté, par exemple quand il ne peut pas poser une date : conçu en B7 et E8,
-   à confirmer (question 14) ; (b) de petites aides contextuelles, bien placées, professionnelles,
+   signaler une difficulté, par exemple quand il ne peut pas poser une date : décidé (question 14),
+   conçu en B7 et E8 ; (b) de petites aides contextuelles, bien placées, professionnelles,
    rédigées simplement et clairement compréhensibles, pour aider à la prise en main : décidé sur
    le principe (T38), composant en W0, aides de chaque écran dans son lot, règles et textes dans
    `docs/conception/aides-contextuelles.md` (question 15 pour leur validation).
@@ -1329,30 +1355,35 @@ personne responsable :
     d'indicateur, de calcul, de comptage, de rubrique FIJ et de l'église) dépend de L2 et de L4.
     _Recommandation_ : L3. Autre choix : les écrire dès B4 dans un schéma fixé à l'avance, au
     risque d'une migration corrective en L3.
-14. **Signaler une difficulté (T39).** _Nouvelle, à trancher avant W0_, parce que W0 écrit les
-    codes du journal, les routes et le lien partagé. Vous demandez qu'un ministère puisse signaler
-    une difficulté, par exemple quand il ne peut pas poser une date. Cela ajoute deux tables, donc
-    un changement du modèle de données (CLAUDE.md). _Recommandation_ : oui, tel que conçu en B7 et
-    E8 : le ministère envoie un texte court (10 à 280 caractères, rappel sur les données
+14. **Signaler une difficulté (T39).** _Répondue le 6 octobre 2026 : décidé, avec un lecteur de
+    moins que la recommandation._ W0 écrit les codes du journal, les routes et le lien partagé.
+    Vous demandez qu'un ministère puisse signaler une difficulté, par exemple quand il ne peut pas
+    poser une date. Cela ajoute deux tables, donc un changement du modèle de données (CLAUDE.md).
+    **Réponse de la personne responsable** : oui, **lu seulement par le ministère qui l'écrit et
+    par EJP Tech**. Ni l'administration, ni le berger, ni le conseil : l'administration ne voit ni
+    les pages des ministères ni les points (BRIEF section 2), et un signalement parle du contenu
+    d'une page. EJP Tech transmet à l'administration ce qui la concerne (une session absente, des
+    ministères attendus) et écrit « transmis à l'administration » en marquant le signalement
+    traité. Un problème de compte ou de connexion ne passe jamais par le signalement : un
+    ministère qui ne peut pas se connecter écrit à l'administration. **Ce que le plan applique** :
+    B7 et E8, sans lecture pour l'administration, avec un test pgTAP qui vérifie que
+    l'administration, le berger et le conseil ne lisent rien. _Recommandation initiale_ (reprise
+    sauf pour l'administration) : le ministère envoie un texte court (10 à 280 caractères, rappel sur les données
     personnelles sous le champ) depuis un lien en bas de chaque formulaire de saisie et sous le
     message d'une date refusée ; **EJP Tech le reçoit** sur son accueil (bloc « Signalements »),
     aide le ministère en dehors de l'outil, puis clôt le signalement avec un commentaire
-    facultatif ; **l'administration de l'église lit** tous les signalements, sans agir, parce que
-    beaucoup de difficultés touchent les comptes et les sessions qu'elle gère ; le berger et le
-    conseil ne les lisent pas, car ce sont des questions d'usage de l'outil, pas des décisions ;
-    aucun email ; la fraîcheur d'un ministère ignore ses signalements (un signalement n'est pas une
+    facultatif ; le berger et le conseil ne les lisent pas, car ce sont des questions d'usage de
+    l'outil, pas des décisions (la recommandation initiale faisait lire l'administration : la
+    personne responsable l'a retirée) ; aucun email ; la fraîcheur d'un ministère ignore ses signalements (un signalement n'est pas une
     saisie). Effort : 3 jours (B7 1,5, E8 1,5), sans allonger le calendrier. _Autre choix_ : passer
     par un point d'attention. Non recommandé : un point d'attention est lu et tranché par le berger
     et le conseil (« Marquer traité ») ; y mêler l'aide technique encombrerait « À décider », ferait
     lire au berger des questions d'usage qui ne sont pas les siennes, et fausserait la lecture des
-    points ouverts d'un ministère. Points à confirmer avec le oui : qui reçoit (EJP Tech,
-    recommandé) ; l'administration en lecture (recommandé) ; un ministère seulement peut signaler
-    (le berger, le conseil et l'administration parlent déjà à EJP Tech directement) ; le lien en
-    bas de **chaque** formulaire de saisie (recommandé ici, et repris par la section 7 de
-    `aides-contextuelles.md`) ou seulement sur les formulaires d'événement et de réunion (autre
-    choix) ; la phrase du panneau, « EJP Tech et l'administration de l'église lisent votre
-    signalement. », suit la recommandation et redevient « EJP Tech lit votre signalement. » si
-    l'administration ne lit pas.
+    points ouverts d'un ministère. Réglé avec la réponse : EJP Tech reçoit ; l'administration ne
+    lit pas ; un ministère seulement peut signaler (le berger, le conseil et l'administration
+    parlent déjà à EJP Tech directement) ; le lien est en bas de **chaque** formulaire de saisie
+    (repris par la section 7 de `aides-contextuelles.md`) ; la phrase du panneau devient « EJP Tech
+    lit votre signalement. ».
 15. **Textes et forme des aides contextuelles (T38).** _Nouvelle, sans bloquer le code._ Le
     principe est décidé ; les textes du catalogue de `docs/conception/aides-contextuelles.md` et
     ses points de forme (section 10 : bouton rond, fond sombre de la bulle, placement dans le flux
@@ -1384,7 +1415,7 @@ conditionne plus l'activation d'un indicateur) :
 | 44,75 jours de travail avant la mise en service (23 jours de calendrier avec la marge de 20 %) | date repoussée                                                                                   | quatre worktrees ; couper les lots les plus longs (E2, E4) ; rien de ce qui sert à saisir ne passe après la mise en service, car une saisie construite après coup perd des données ; si le temps manque, E8 (bloc et formulaire) peut passer en tête de l'étape 6, avec l'écran Modération, sans perte de donnée |
 | Indicateurs sensibles actifs dès le premier jour (P42)                                         | un petit nombre ou une ligne brute désigne une personne avant toute relecture de la coordination | toutes les protections testées par pgTAP dès leur lot (mois clos, seuil sans fuite, lignes brutes au seul ministère, aucune source de calcul, journal sans valeur) ; revue `rls-auditor` dédiée en I ; page Confidentialité en place avant la mise en service ; registre et note remis avant la mise en service  |
 | Aides contextuelles trop nombreuses ou mal placées                                             | écran chargé, information utile cachée dans une bulle                                            | règles de `aides-contextuelles.md` ; une aide complète un libellé et ne remplace jamais une information nécessaire ; revue `ui-reviewer` à 1440, 834 et 390 px                                                                                                                                                   |
-| Signalements qui contiennent une donnée personnelle                                            | texte libre lu par EJP Tech et l'administration                                                  | rappel sous le champ, familles « données personnelles » de `verifier_texte` refusées, journal sans texte, `masquer_texte` étendu, aucun email                                                                                                                                                                    |
+| Signalements qui contiennent une donnée personnelle                                            | texte libre lu par le ministère et par EJP Tech seulement                                        | rappel sous le champ, familles « données personnelles » de `verifier_texte` refusées, journal sans texte, `masquer_texte` étendu, aucun email                                                                                                                                                                    |
 | Docker absent du poste : pgTAP et e2e de base seulement en CI                                  | retour lent, erreurs de migration vues tard                                                      | chaque lot pousse sa branche `etape-4-<lot>` tôt ; tests écrits avant la migration                                                                                                                                                                                                                               |
 | Types écrits à la main                                                                         | écart entre migrations et `src/lib/base/*.ts`                                                    | un fichier de types par lot ; tests de `src/data/` sur les colonnes du contrat ; revue en I                                                                                                                                                                                                                      |
 | Une migration fusionnée est figée                                                              | une erreur du catalogue ne se corrige que par une migration                                      | relecture du catalogue en B4 avant fusion ; correction avant la première saisie par l'écran de l'étape 6 (Q7)                                                                                                                                                                                                    |

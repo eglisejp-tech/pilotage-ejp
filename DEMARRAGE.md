@@ -50,7 +50,7 @@ git config user.email "eglisejptech@gmail.com"
 npm ci
 ```
 
-Le serveur MCP Supabase lit l'identifiant du projet de préproduction dans la variable `SUPABASE_DEV_PROJECT_REF`. Sous Windows, un `export` dans Git Bash ne suffit pas : Claude Code hérite de l'environnement de VS Code. Enregistre la variable pour ton utilisateur, puis ferme et rouvre VS Code :
+Le serveur MCP Supabase pointe par défaut sur le projet de préproduction (`ugbitornbspatpcowlvg`, en lecture seule) : rien à régler. Cet identifiant n'est pas un secret, il figure déjà dans l'adresse publique du projet. Pour viser un autre projet, enregistre la variable `SUPABASE_DEV_PROJECT_REF` pour ton utilisateur, puis ferme et rouvre VS Code (un `export` dans Git Bash ne suffit pas : Claude Code hérite de l'environnement de VS Code) :
 
 ```powershell
 [Environment]::SetEnvironmentVariable('SUPABASE_DEV_PROJECT_REF', 'identifiant_du_projet_de_preproduction', 'User')
@@ -116,5 +116,5 @@ Claude ne pousse jamais. Tu pousses toi-même, dans ton terminal (pas dans Claud
 - Un hook refuse « par précaution » : il n'a pas pu lire son entrée ou lancer node ou git. Vérifie que node et Git Bash répondent, puis recommence.
 - `git`, `npm` ou `bash` échouent sans raison claire : vérifie que tu travailles bien dans `C:\Users\GraceManassePASSIDEM\dev\pilotage-ejp`, pas dans Documents ni OneDrive (accès contrôlé aux dossiers).
 - `npx supabase start` ou `npx supabase test db` échouent en local : c'est attendu tant que Docker manque. Envoie la branche et lis le job « base » de la CI.
-- Le MCP Supabase ne répond pas : vérifie `SUPABASE_DEV_PROJECT_REF` (VS Code relancé ?), relance `/mcp` et reconnecte-toi.
+- Le MCP Supabase ne répond pas : relance `/mcp` et reconnecte-toi avec le compte de l'organisation EJP TECH. Le message « Resource must be a valid MCP endpoint » veut dire que l'adresse du serveur est invalide : vérifie l'identifiant du projet dans `.mcp.json` (et `SUPABASE_DEV_PROJECT_REF` si tu l'as enregistrée).
 - Les tests RLS échouent : ne pas désactiver la RLS pour « faire passer ». Demander à `rls-auditor` d'analyser l'échec.
