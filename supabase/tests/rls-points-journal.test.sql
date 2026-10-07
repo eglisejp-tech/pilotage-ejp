@@ -7,7 +7,7 @@
 -- (docs/decisions.md, T29).
 begin;
 
-select plan(73);
+select plan(77);
 
 -- Jeu d'essai : deux ministères et un compte par profil (tests.creer_compte désactive le
 -- berger du jeu d'exemple dans cette transaction).
@@ -133,8 +133,8 @@ select tests.deconnecter();
 select is((select string_agg(a.attname::text, ', ' order by a.attnum) collate "default"
              from pg_attribute a
             where a.attrelid = 'public.v_textes_a_relire'::regclass and a.attnum > 0 and not a.attisdropped),
-  'cible, cible_id, ministere_id, auteur_libelle, ecrit_le, champs, etat, decision_le, motif',
-  'la file de relecture n''a que des textes et leur suivi : ni priorité, ni statut, ni chiffre');
+  'cible, cible_id, ministere_id, auteur_libelle, ecrit_le, champs, etat, decision_le, motif, indicateur_libelle, mois',
+  'la file de relecture n''a que des textes, leur suivi, et pour une précision le libellé et le mois : ni priorité, ni statut, ni chiffre');
 
 select is(tests.compter((select a from ctx), 'aal2', 'select 1 from public.v_textes_a_relire'), 0,
   'file de relecture : un ministère n''y lit rien');
@@ -244,6 +244,23 @@ $$, $$
   union all select 'texte_masque', tech, a_m, 'reunion', reu, '{"champ": "objet", "motif": "coordonnees"}'::jsonb from ctx
   union all select 'texte_masque', tech, a_m, 'evenement', ev, '{"champ": "titre", "motif": "nom_personne"}'::jsonb from ctx
 $$, 'journal : une ligne par décision de modération, ministère de l''auteur (aucun pour le berger), sans texte');
+
+-- T47 (lot I) : ces lignes se lisent par le berger, le conseil et le ministère de la ligne, pas
+-- par l'administration (ni par journal, ni par v_journal).
+select is(tests.compter((select admin from ctx), 'aal2',
+  'select 1 from public.journal j where j.action in (''texte_relu'', ''texte_masque'') and j.cible_id in (select id from objets)
+   union all
+   select 1 from public.v_journal j where j.action in (''texte_relu'', ''texte_masque'') and j.cible_id in (select id from objets)'), 0,
+  'T47 : l''administration ne lit aucune relecture ni aucun masquage d''un point, d''un suivi, d''un événement ou d''une réunion');
+select is(tests.compter((select berger from ctx), 'aal2',
+  'select 1 from public.v_journal j where j.action in (''texte_relu'', ''texte_masque'') and j.cible_id in (select id from objets)'), 6,
+  'T47 : le berger lit les six lignes de modération');
+select is(tests.compter((select conseil from ctx), 'aal2',
+  'select 1 from public.journal j where j.action in (''texte_relu'', ''texte_masque'') and j.cible_id in (select id from objets)'), 6,
+  'T47 : le conseil lit les six lignes de modération');
+select is(tests.compter((select a from ctx), 'aal2',
+  'select 1 from public.v_journal j where j.action in (''texte_relu'', ''texte_masque'') and j.cible_id in (select id from objets)'), 4,
+  'T47 : le ministère A lit les lignes de modération de ses textes (point, réunion, événement)');
 
 select is(tests.lire((select tech from ctx), 'aal2',
   'select t.champs, t.etat, t.motif from public.v_textes_a_relire t where t.cible_id = (select pt1 from ctx)'),

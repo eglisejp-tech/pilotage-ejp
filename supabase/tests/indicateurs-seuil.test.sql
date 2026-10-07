@@ -1,17 +1,19 @@
--- Seuil des indicateurs sensibles (lot B2 ; docs/plan-etape-4.md, section 4, « B2 » ;
--- vague-1-decisions.md, K5c et X4 ; docs/decisions.md, P35, P42 et P45).
+-- Valeurs des indicateurs sensibles selon le lecteur (lot B2, revu par le lot I ;
+-- docs/plan-etape-4.md, section 4, « B2 » et « I » ; vague-1-decisions.md, K5c et X4 ;
+-- docs/decisions.md, P35, P42, P45, P50 et P52).
 --
--- 0 reste 0 ; 1 et 2 rendus « moins de 3 » au berger, au conseil et à EJP Tech ; valeur exacte
--- pour le ministère ; lecture directe des lignes sensibles de mesure refusée à tout autre
--- profil ; somme de l'année des seuls mois affichés, sans fuite par différence avec la courbe ;
--- un autre ministère, l'administration, aal1 et l'anonyme ne reçoivent aucune valeur sensible
--- par aucune vue ; aucune vue de l'église ni ligne de journal ne porte un sensible ; mois en
--- cours d'un sensible (P45) : rendu « moins de 3 » au berger et exact au ministère, hors de la
--- somme et de sa complétude ; après deux saisies du même mois (1, puis 4), le berger ne lit que
--- 4, sur une seule ligne, sans la date de la première saisie.
+-- P52 (7 octobre 2026) : le berger, le conseil et EJP Tech lisent les valeurs EXACTES d'un
+-- sensible (plus de « moins de 3 ») : mois finis, mois en cours, somme de l'année et courbe ;
+-- moins_de_3 reste dans les vues, toujours faux. Valeur exacte aussi pour le ministère. Lecture
+-- directe des lignes sensibles de mesure refusée à tout autre profil que le ministère ; un autre
+-- ministère, l'administration (lignes sans valeur, P50), aal1 et l'anonyme ne reçoivent aucune
+-- valeur sensible par aucune vue ; aucune vue de l'église ni ligne de journal ne porte un
+-- sensible ; mois en cours (P45) hors de la somme et de sa complétude ; après deux saisies du
+-- même mois (1, puis 4), le berger ne lit que 4, sur une seule ligne, sans la date de la
+-- première saisie.
 begin;
 
-select plan(42);
+select plan(47);
 
 select tests.creer_ministere('Essai seuil');
 update public.ministere set cree_le = now() - interval '2 years' where nom = 'Essai seuil';
@@ -74,67 +76,74 @@ select pg_temp.saisir(sens, mc, 2) from ind, ctx;
 select pg_temp.saisir(corr, mc, 1, now() - interval '3 hours') from ind, ctx;
 select pg_temp.saisir(corr, mc, 4, now() - interval '2 hours') from ind, ctx;
 
--- Attendus du berger : somme des seuls mois affichés de l'année (ni 1 ni 2), complétude de tous
--- les mois saisis de l'année.
+-- Attendus : somme exacte des mois finis de l'année, complétude de tous les mois saisis de
+-- l'année (le mois en cours hors des deux).
 create temp table attendu as
 select k.cle,
-       (select sum(v.valeur) filter (where v.valeur not in (1, 2)) from vals v, ctx
-         where v.cle = k.cle and v.mois between ctx.janvier and ctx.m1)::int as somme_affichee,
        (select sum(v.valeur) from vals v, ctx
          where v.cle = k.cle and v.mois between ctx.janvier and ctx.m1)::int as somme_exacte,
        (select count(*) from vals v, ctx where v.cle = k.cle and v.mois between ctx.janvier and ctx.m1)::int as nb
   from (values ('sens'), ('corr'), ('petits'), ('un')) as k(cle);
 grant select on attendu to authenticated;
 
--- 1. Le seuil
+-- 1. Plus aucun seuil (P52)
 
-select results_eq($$
-  select private.sous_seuil(0), private.sous_seuil(1), private.sous_seuil(2), private.sous_seuil(3),
-         private.sous_seuil(null)
-$$, $$ values (false, true, true, false, false) $$, 'seuil : 1 et 2 sont « moins de 3 », 0 et 3 non, une absence non plus');
+select hasnt_function('private', 'sous_seuil', array['bigint'], 'P52 : la fonction du seuil « moins de 3 » n''existe plus');
+select hasnt_function('private', 'repartition_protegee', array['integer[]'],
+  'P52 : la fonction du masquage des répartitions n''existe plus');
 
--- 2. Le berger : seuil sur chaque mois, mois en cours compris
+-- 2. Le berger : valeurs exactes, mois en cours compris
 
 select tests.se_connecter((select berger from ctx), 'aal2');
 select results_eq($$
   select periode, valeur, moins_de_3 from public.v_mesure_periode
    where indicateur_id = (select sens from ind) order by periode
-$$, $$ select m4, null::int, true from ctx union all select m3, 5, false from ctx
-       union all select m2, 0, false from ctx union all select m1, null, true from ctx
-       union all select mc, null, true from ctx $$,
-  'berger : 1 et 2 rendus « moins de 3 » (valeur nulle), 0 reste 0, 5 reste 5, mois en cours compris');
+$$, $$ select m4, 1, false from ctx union all select m3, 5, false from ctx
+       union all select m2, 0, false from ctx union all select m1, 2, false from ctx
+       union all select mc, 2, false from ctx $$,
+  'P52 : le berger lit 1 et 2 tels quels, 0 et 5 aussi, mois en cours compris, jamais « moins de 3 »');
 select results_eq($$
   select derniere_periode, derniere_valeur, derniere_moins_de_3, mois_en_cours_valeur, mois_en_cours_moins_de_3
     from public.v_indicateur_suivi where indicateur_id = (select sens from ind)
-$$, $$ select m1, null::int, true, null::int, true from ctx $$,
-  'berger : dernier mois écoulé et mois en cours « moins de 3 » (P45)');
+$$, $$ select m1, 2, false, 2, false from ctx $$,
+  'P52 : le berger lit le dernier mois écoulé (2) et le mois en cours (2) exacts');
 select results_eq($$
   select s.somme_annee::int, s.somme_moins_de_3, s.somme_nb_saisies
     from public.v_indicateur_suivi s where s.indicateur_id = (select sens from ind)
-$$, $$ select somme_affichee, false, nb from attendu where cle = 'sens' $$,
-  'berger : la somme de l''année ne compte que les mois affichés ; la complétude compte tous les mois saisis, hors mois en cours');
+$$, $$ select somme_exacte, false, nb from attendu where cle = 'sens' $$,
+  'P52 : le berger lit la somme exacte de l''année ; la complétude compte tous les mois saisis, hors mois en cours');
 select is((select s.somme_annee::int from public.v_indicateur_suivi s where s.indicateur_id = (select sens from ind)),
   (select sum(x.valeur)::int from public.v_indicateur_serie x, public.v_indicateur_suivi s
     where x.indicateur_id = (select sens from ind) and s.indicateur_id = x.indicateur_id
       and x.periode >= s.somme_depuis),
-  'aucune différence entre la somme affichée et la courbe affichée ne révèle un mois masqué');
+  'la somme de l''année est celle de la courbe depuis son départ');
 select results_eq($$
   select rang::int, valeur, moins_de_3 from public.v_indicateur_serie
    where indicateur_id = (select sens from ind) and rang >= 9 order by rang
-$$, $$ values (9, null::int, true), (10, 5, false), (11, 0, false), (12, null, true) $$,
-  'berger : la courbe applique le même seuil');
+$$, $$ values (9, 1, false), (10, 5, false), (11, 0, false), (12, 2, false) $$,
+  'P52 : le berger lit la courbe exacte');
 select results_eq($$
-  select s.somme_annee, s.somme_moins_de_3, s.somme_nb_saisies
+  select s.somme_annee::int, s.somme_moins_de_3, s.somme_nb_saisies
     from public.v_indicateur_suivi s where s.indicateur_id = (select petits from ind)
-$$, $$ select null::bigint, false, nb from attendu where cle = 'petits' $$,
-  'berger : une année de mois tous sous 3 n''a aucune somme affichée (ni 3, ni « moins de 3 »)');
+$$, $$ select somme_exacte, false, nb from attendu where cle = 'petits' $$,
+  'P52 : une année de mois tous sous 3 a sa somme exacte pour le berger');
+select results_eq($$
+  select s.somme_annee::int, s.somme_moins_de_3
+    from public.v_indicateur_suivi s where s.indicateur_id = (select un from ind)
+$$, $$ select somme_exacte, false from attendu where cle = 'un' $$,
+  'P52 : une somme de 1 reste exacte pour le berger');
+select is((select count(*)::int from public.v_mesure_periode
+            where indicateur_id in (select sens from ind union all select corr from ind union all select petits from ind
+                                    union all select un from ind)
+              and (moins_de_3 or valeur is null)), 0,
+  'P52 : aucune ligne « moins de 3 » ni sans valeur pour le berger');
 select results_eq($$
   select count(*)::int, max(valeur), max(saisi_le) from public.v_mesure_periode
    where indicateur_id = (select corr from ind) and periode = (select mc from ctx)
 $$, $$ values (1, 4, now() - interval '2 hours') $$,
   'P45 : après 1 puis 4 dans le mois en cours, le berger lit 4, une seule ligne, l''heure de la seconde saisie');
 select is((select mois_en_cours_valeur from public.v_indicateur_suivi where indicateur_id = (select corr from ind)), 4,
-  'P45 : le suivi rend la saisie qui fait foi du mois en cours (4, pas « moins de 3 »)');
+  'P45 : le suivi rend la saisie qui fait foi du mois en cours (4)');
 select is((select count(*)::int from public.v_mesure_periode
             where indicateur_id in (select sens from ind union all select corr from ind union all select petits from ind
                                     union all select un from ind)
@@ -153,18 +162,28 @@ select tests.deconnecter();
 select is(tests.lire((select conseil from ctx), 'aal2', $$
   select valeur, moins_de_3 from public.v_mesure_periode
    where indicateur_id = (select sens from ind) and periode in ((select m1 from ctx), (select m2 from ctx))
-$$), '[{"valeur": 0, "moins_de_3": false}, {"valeur": null, "moins_de_3": true}]'::jsonb,
-  'conseil : 2 rendu « moins de 3 », 0 reste 0');
+$$), '[{"valeur": 0, "moins_de_3": false}, {"valeur": 2, "moins_de_3": false}]'::jsonb,
+  'P52 : le conseil lit 2 et 0 exacts');
 select is(tests.lire((select tech from ctx), 'aal2', $$
   select valeur, moins_de_3 from public.v_mesure_periode
    where indicateur_id = (select sens from ind) and periode in ((select m1 from ctx), (select m2 from ctx))
-$$), '[{"valeur": 0, "moins_de_3": false}, {"valeur": null, "moins_de_3": true}]'::jsonb,
-  'EJP Tech : 2 rendu « moins de 3 », 0 reste 0');
+$$), '[{"valeur": 0, "moins_de_3": false}, {"valeur": 2, "moins_de_3": false}]'::jsonb,
+  'P52 : EJP Tech lit 2 et 0 exacts');
 select is(tests.lire((select tech from ctx), 'aal2', $$
-  select mois_en_cours_valeur, mois_en_cours_moins_de_3 from public.v_indicateur_suivi
+  select mois_en_cours_valeur, mois_en_cours_moins_de_3, somme_moins_de_3 from public.v_indicateur_suivi
    where indicateur_id = (select sens from ind)
-$$), '[{"mois_en_cours_valeur": null, "mois_en_cours_moins_de_3": true}]'::jsonb,
-  'EJP Tech : mois en cours « moins de 3 »');
+$$), '[{"somme_moins_de_3": false, "mois_en_cours_valeur": 2, "mois_en_cours_moins_de_3": false}]'::jsonb,
+  'P52 : EJP Tech lit le mois en cours exact');
+select is(tests.lire((select conseil from ctx), 'aal2', $$
+  select * from public.v_indicateur_suivi where ministere_id = (select m from ctx)
+$$), tests.lire((select berger from ctx), 'aal2', $$
+  select * from public.v_indicateur_suivi where ministere_id = (select m from ctx)
+$$), 'le conseil lit le même suivi que le berger');
+select is(tests.lire((select tech from ctx), 'aal2', $$
+  select * from public.v_indicateur_serie where ministere_id = (select m from ctx)
+$$), tests.lire((select berger from ctx), 'aal2', $$
+  select * from public.v_indicateur_serie where ministere_id = (select m from ctx)
+$$), 'EJP Tech lit les mêmes courbes que le berger (T29)');
 select is(tests.compter((select conseil from ctx), 'aal2', $$
   select 1 from public.mesure where indicateur_id = (select sens from ind)
 $$), 0, 'conseil : lecture directe des lignes sensibles refusée');
@@ -215,8 +234,9 @@ select tests.deconnecter();
 
 select tests.se_connecter((select admin from ctx), 'aal2');
 select results_eq($$
-  select count(valeur)::int, bool_or(moins_de_3) from public.v_mesure_periode where ministere_id = (select m from ctx)
-$$, $$ values (0, false) $$, 'administration : aucune valeur sensible par v_mesure_periode (lignes sans valeur)');
+  select count(*)::int, count(valeur)::int, bool_or(moins_de_3) from public.v_mesure_periode where ministere_id = (select m from ctx)
+$$, $$ values (10, 0, false) $$,
+  'administration : les lignes sensibles, avec leur date, sans aucune valeur (P50)');
 select is((select count(*)::int from public.v_indicateur_serie
             where ministere_id = (select m from ctx) and (valeur is not null or moins_de_3)), 0,
   'administration : aucune valeur sensible par la courbe');

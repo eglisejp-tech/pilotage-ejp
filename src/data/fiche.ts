@@ -1,6 +1,6 @@
 // Lectures de la fiche d'un ministère (maquettes 04 et 12, lot E2) : une fonction typée par
-// requête. Les vues font les sommes, la complétude, le seuil « moins de 3 » et le masquage des
-// répartitions ; rien n'est recompté ici. Les autres lectures de la fiche sont celles du lot E1
+// requête. Les vues font les sommes et la complétude ; rien n'est recompté ici. Un sensible se lit
+// exact par son ministère, le berger, le conseil et EJP Tech (P52). Les autres lectures de la fiche sont celles du lot E1
 // (`src/data/indicateurs.ts` : suivi, calculs, courbes, libellés des communs, catégories) et de
 // l'étape 3 (`src/data/eglise.ts` : semaine, communs, totaux de l'église).
 //
@@ -81,7 +81,7 @@ export async function lireSensiblesMinistere(ministereId: string): Promise<Sensi
 
 /**
  * Répartitions des indicateurs sensibles du ministère, une ligne par case, dans l'ordre des
- * catégories (« Non réparti » en dernier). La vue applique le seuil et le masquage (P47).
+ * catégories (« Non réparti » en dernier). Valeurs exactes pour tous ses lecteurs (P52).
  */
 export async function lireRepartitionsMinistere(
   ministereId: string,

@@ -1,11 +1,13 @@
 -- EJP Tech lit tout comme le berger, en lecture seule (docs/decisions.md, T29 ; BRIEF, section 7,
 -- « Matrice des droits » et « Tests obligatoires ») : chaque table et chaque vue lue par le
--- berger rend les mêmes lignes à EJP Tech ; la modération reste à EJP Tech, l'état des comptes à
+-- berger rend les mêmes lignes à EJP Tech (les objets de l'étape 4 compris, depuis le lot I :
+-- indicateurs, calculs, statistiques FIJ, mentions, validations, et les sensibles avec leurs
+-- valeurs exactes, P52) ; la modération reste à EJP Tech, l'état des comptes à
 -- l'administration ; EJP Tech n'ajoute rien, n'appelle aucune fonction d'action du berger, du
 -- conseil, d'un ministère ou de l'administration, et ne lit rien en aal1.
 begin;
 
-select plan(135);
+select plan(174);
 
 -- Jeu d'essai : comptes du jeu d'exemple, plus un ministère A qui crée un point (il mentionne
 -- Communication), un événement et sa prochaine réunion.
@@ -56,9 +58,14 @@ insert into relation (ordre, nom) values
   (16, 'v_semaine'), (17, 'v_derniere_mesure'), (18, 'v_mesure_dimanche'), (19, 'v_total_dimanche'),
   (20, 'v_total_a_ce_jour'), (21, 'v_pourcentage_fij'), (22, 'v_carte_fij'), (23, 'v_participation_courante'),
   (24, 'v_session_completude'), (25, 'v_ecart_dimanche'), (26, 'v_ecart_session'), (27, 'v_evenement'),
-  (28, 'v_prochaine_reunion'), (29, 'v_point'), (30, 'v_journal'), (31, 'v_tableau_ministeres');
+  (28, 'v_prochaine_reunion'), (29, 'v_point'), (30, 'v_journal'), (31, 'v_tableau_ministeres'),
+  -- Étape 4 (lot I) : tables et vues nouvelles lues par le berger, sensibles compris (P52).
+  (32, 'indicateur_terme'), (33, 'evenement_mention'), (34, 'fij_statistique'), (35, 'validation'),
+  (36, 'categorie_sensible'), (37, 'v_mesure_periode'), (38, 'v_indicateur_serie'), (39, 'v_indicateur_suivi'),
+  (40, 'v_calcul'), (41, 'v_commun_fiche'), (42, 'v_fij_statistique'), (43, 'v_ventilation_sensible'),
+  (44, 'v_precision_sensible');
 
--- 31 relations x 3 essais = 93 assertions.
+-- 44 relations x 3 essais = 132 assertions.
 create function pg_temp.lectures() returns setof text
 language plpgsql as $$
 declare
