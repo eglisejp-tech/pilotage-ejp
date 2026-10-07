@@ -97,8 +97,8 @@ $$, 'toutes les politiques visent authenticated seulement (rien pour anon)');
 -- un ministère, « ajout » (insert). Aucune politique update ni delete. Les autres tables
 -- s'écrivent par l'API.
 select bag_eq($$
-  select p.tablename::text collate "default", p.policyname::text collate "default",
-         p.cmd::text collate "default", p.permissive::text collate "default"
+  select p.tablename::text collate "default" as nom_table, p.policyname::text collate "default" as nom,
+         p.cmd::text collate "default" as operation, p.permissive::text collate "default" as nature
     from pg_policies p
    where p.schemaname = 'public'
 $$, $$ values
@@ -299,9 +299,9 @@ $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par
 -- private security definer du même nom. Les fonctions serveur des comptes sont les seules à
 -- l'être par service_role.
 select bag_eq($$
-  select p.proname::text collate "default", p.pronargs::int, p.prosecdef,
-         has_function_privilege('authenticated', p.oid, 'EXECUTE'),
-         has_function_privilege('service_role', p.oid, 'EXECUTE')
+  select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
+         has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
+         has_function_privilege('service_role', p.oid, 'EXECUTE') as service
     from pg_proc p
    where p.pronamespace = 'public'::regnamespace
 $$, $$ values
@@ -340,9 +340,9 @@ $$, $$ values
   ('verifier_libelle', 3, false, true, false)
 $$, 'les 33 fonctions de public : 23 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
-  select p.proname::text collate "default", p.pronargs::int, p.prosecdef,
-         has_function_privilege('authenticated', p.oid, 'EXECUTE'),
-         has_function_privilege('service_role', p.oid, 'EXECUTE')
+  select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
+         has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
+         has_function_privilege('service_role', p.oid, 'EXECUTE') as service
     from pg_proc p
    where p.pronamespace = 'private'::regnamespace
 $$, $$ values
@@ -561,8 +561,8 @@ $$, 'toute table nouvelle de l''étape 4 a un trigger d''inaltérabilité (avant
 -- et de ventilation, inaltérabilité (avant update et delete, avant truncate) et triggers
 -- différés qui exigent les termes d'un indicateur.
 select bag_eq($$
-  select (c.relnamespace::regnamespace::text || '.' || c.relname::text) collate "default",
-         t.tgname::text collate "default"
+  select (c.relnamespace::regnamespace::text || '.' || c.relname::text) collate "default" as relation,
+         t.tgname::text collate "default" as declencheur
     from pg_trigger t
     join pg_class c on c.oid = t.tgrelid
    where c.relnamespace in ('public'::regnamespace, 'private'::regnamespace) and not t.tgisinternal
