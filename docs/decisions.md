@@ -1,13 +1,14 @@
 # Journal des décisions : Pilotage EJP
 
-Une entrée par décision ou proposition. Six statuts :
+Une entrée par décision ou proposition. Sept statuts :
 
 - **Décidé** : tranché par la coordination et EJP Tech ; `BRIEF.md` l'applique.
 - **Proposé, à confirmer par la coordination** : règle métier proposée par EJP Tech après la revue du kit ; `BRIEF.md` l'applique en attendant la réponse.
 - **Proposé, à confirmer par EJP Tech** : choix technique proposé par la revue du kit ; `BRIEF.md` l'applique en attendant la validation.
 - **À l'étude, non appliqué (conception des KPI)** : proposition issue de l'analyse des KPI de la coordination (P15 à P30, T33 et T34, détail dans `docs/conception/kpi-ministeres.md`). T30 et T35 ne sont plus à l'étude : décidées le 6 octobre 2026 et reportées dans le BRIEF (voir leur statut). Ni `BRIEF.md` ni le code ne l'appliquent, même en attendant la réponse : la règle « une proposition s'applique en attendant » ne vaut pas pour elle. Une session ne construit rien à partir d'elle tant que la coordination ou EJP Tech ne l'a pas confirmée. Une seule s'applique dès qu'EJP Tech la confirme : P30 (listes de noms bornées, étape 3).
 - **Décidé par EJP Tech le 6 octobre 2026, révisable par la coordination** : décision prise sur mandat de la personne responsable (P32 à P41, détail dans `docs/conception/vague-1-decisions.md`). Elle remplace les propositions « à l'étude » qu'elle cite, qui portent un renvoi. Elle s'applique à l'étape 4a ; le BRIEF l'a reçue le 6 octobre 2026, après l'accord de la personne responsable sur le plan. La coordination peut la réviser : correction tant que rien n'est saisi, remplacement ensuite.
-- **Décidé par la personne responsable le 6 octobre 2026** : réponse de la personne responsable à une question du plan de l'étape 4 qui renverse une décision d'EJP Tech (P42), ou décision prise après la lecture des libellés à valider (P45 à P48), ou réponse écrite après les audits de B2 et B3 (P49 à P51, non reportées dans le BRIEF à ce jour). Elle s'applique à l'étape 4 et remplace ce qu'elle cite, qui porte un renvoi ; le BRIEF a reçu P42 au commit de documents qui ouvre W0, et P45 à P48 au commit de documents du changement du 6 octobre (6 octobre 2026).
+- **Décidé par la personne responsable le 6 octobre 2026** : réponse de la personne responsable à une question du plan de l'étape 4 qui renverse une décision d'EJP Tech (P42), ou décision prise après la lecture des libellés à valider (P45 à P48), ou réponse écrite après les audits de B2 et B3 (P49 à P51). Elle s'applique à l'étape 4 et remplace ce qu'elle cite, qui porte un renvoi ; le BRIEF a reçu P42 au commit de documents qui ouvre W0, P45 à P48 au commit de documents du changement du 6 octobre (6 octobre 2026), et P49 à P51 au commit de documents du lot I (7 octobre 2026).
+- **Décidé par la personne responsable le 7 octobre 2026** : décisions écrites de la personne responsable sur l'affichage des indicateurs sensibles (P52) et sur la lecture du journal (T45 à T47). Elle s'applique à l'étape 4 et remplace ce qu'elle cite, qui porte un renvoi ; le BRIEF la reçoit au commit de documents du lot I (7 octobre 2026).
 
 Quand une proposition est confirmée ou changée, mets à jour son statut ici, puis `BRIEF.md` (section 4 et la section citée). Questions encore ouvertes : la date de mise en ligne et l'existence d'une charte visuelle EJP.
 
@@ -425,10 +426,10 @@ P14 « Calculs affichés » garde son numéro. P15 à P30 ne changent pas. T26 �
 
 - **Date** : 30 septembre 2026
 - **Sujet** : le service d'email intégré de Supabase n'écrit qu'à l'équipe du projet ; les liens peuvent être consommés par les antivirus.
-- **Décision** : SMTP personnalisé au nom de l'église (proposition : compte Google de l'église) ; liens vers `/acces`, qui demande un clic avant `verifyOtp` ; code avant le nouveau mot de passe ; liens valables 24 h.
+- **Décision** : SMTP personnalisé, par le Gmail gratuit d'EJP Tech (`smtp.gmail.com`, port 587, mot de passe d'application ; décidé le 7 octobre 2026, voir le BRIEF section 8) ; liens vers `/acces`, qui demande un clic avant `verifyOtp` ; code avant le nouveau mot de passe ; liens valables 24 h.
 - **Adresse d'envoi (décidé le 6 octobre 2026)** : l'adresse Gmail d'EJP Tech, celle qui figure sur la page Confidentialité (`src/pages/PageConfidentialite.tsx`). L'adresse n'est pas recopiée ici. Un Gmail gratuit relève des conditions grand public de Google, sans accord de sous-traitance : voir `docs/conformite/registre-traitements.md` (recommandation : Google Workspace pour les associations, ou un service d'envoi européen avec contrat).
 - **Origine** : Proposition EJP Tech ; adresse d'envoi donnée par la personne responsable (6 octobre 2026)
-- **Statut** : Décidé le 6 octobre 2026 sur l'adresse d'envoi seulement ; le reste (SMTP personnalisé, liens, code, durée) reste Proposé, à confirmer par EJP Tech
+- **Statut** : Décidé le 6 octobre 2026 pour l'adresse d'envoi, puis le 7 octobre 2026 pour le SMTP (Gmail gratuit d'EJP Tech, `smtp.gmail.com`, port 587, mot de passe d'application) ; le reste (liens, code, durée) reste Proposé, à confirmer par EJP Tech
 - **BRIEF** : section 8
 
 ### T09. Double authentification
@@ -788,7 +789,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Sujet** : P35 et K56 n'activaient les onze indicateurs sensibles (santé, écoute, accompagnement, enfants) qu'après la remise du registre et de la note d'analyse à la coordination ; la première version du plan de l'étape 4 fermait leur création par un réglage `sensibles_actives`.
 - **Décision** : les indicateurs sensibles sont créés et actifs dès la vague 1, comme tout indicateur demandé par la coordination : « à partir du moment où ils sont présents dans les KPI, ils doivent être présents » ; à EJP Tech de prendre toute l'ingénierie et toutes les mesures nécessaires pour bien les créer. Aucun réglage d'activation, aucune table `private.reglage`, aucune migration d'activation. Toutes les protections restent, testées par pgTAP dans leur lot : seuls des totaux de mois écoulés, jamais le mois en cours ; « moins de 3 » pour 1 et 2 au berger, au conseil et à EJP Tech, sans fuite par différence ; lignes brutes lisibles par le seul ministère qui les saisit ; jamais source d'un calcul ; jamais sur la vue de l'église ni dans un graphique ; journal sans valeur ; mention sur la page Confidentialité, en place avant la mise en service. EJP Tech rédige maintenant, pour la coordination, l'entrée du registre des traitements et la note d'analyse (`docs/conformite/`) ; la personne responsable les remet avant la mise en service, mais elles ne conditionnent plus rien dans l'outil. La coordination reste libre de demander une analyse d'impact complète.
 - **Origine** : décision de la personne responsable (6 octobre 2026), réponse à la question 4 du plan de l'étape 4
-- **Statut** : Décidé par la personne responsable le 6 octobre 2026. Revue par P45 (même jour, décidé par la personne responsable) : la protection « seuls des totaux de mois écoulés, jamais le mois en cours » ne s'applique plus, le mois en cours se saisit et s'affiche « en cours » avec les autres protections ; P46 et P47 ajoutent la « Précision » et la répartition par catégories
+- **Statut** : Décidé par la personne responsable le 6 octobre 2026. Revue par P45 (même jour, décidé par la personne responsable) : la protection « seuls des totaux de mois écoulés, jamais le mois en cours » ne s'applique plus, le mois en cours se saisit et s'affiche « en cours » avec les autres protections ; P46 et P47 ajoutent la « Précision » et la répartition par catégories. **Revue par P52 (7 octobre 2026, décidé par la personne responsable) : les règles d'affichage « moins de 3 » et « sans fuite par différence » de cette entrée ne s'appliquent plus au berger, au conseil ni à EJP Tech, qui voient les valeurs exactes ; les autres protections restent**
 - **BRIEF** : section 4 (sensibles), section 7 (politique de `mesure`, données personnelles) (reporté le 6 octobre 2026) ; revoit P22 et P35 ; `docs/conception/vague-1-decisions.md`, K56 et section 7 ; `docs/plan-etape-4.md`, B1, B3, B4, I et question 4
 
 ### T37. Refus d'une date d'événement passée et d'une mise à jour identique
@@ -807,7 +808,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : un composant partagé, une « toggletip » accessible : un bouton d'aide placé juste après le libellé qu'il explique, avec un nom accessible qui reprend ce libellé, qui ouvre une courte bulle au clic, à Entrée ou à Espace (jamais au seul survol), se ferme à Échap et au clic en dehors, annonce son texte au lecteur d'écran, a une cible de 44 px et tient dans l'écran à 360 px. Une aide complète un libellé et ne remplace jamais une information nécessaire à la saisie : une phrase qui sert à chaque usage reste visible sous le champ. Règles de rédaction et de placement, et catalogue des aides par écran : `docs/conception/aides-contextuelles.md`. Les textes vivent dans un seul fichier de l'interface (`src/components/aide/textesAide.ts`), écrit une fois par W0 avec les composants `Aide` et `LibelleAvecAide` ; chaque lot d'écran pose ses aides, et le lot I celles de la vue de l'église. Effort : 1 jour en W0, 0,25 jour par écran (E2 à E7), 0,25 jour en I. **Forme décidée le 6 octobre 2026 par la personne responsable : le bouton d'aide est rond.** C'est une exception voulue à la règle « angles droits partout » : c'est le seul élément rond de l'outil (la bulle garde ses angles droits). Les points de forme encore ouverts (fond sombre de la bulle, placement dans le flux des formulaires) sont dans la section 10 de `aides-contextuelles.md`.
 - **Origine** : demande de la personne responsable (6 octobre 2026)
 - **Statut** : Décidé sur le principe et sur la forme ronde du bouton (6 octobre 2026) ; textes « Proposé » jusqu'à leur validation par la personne responsable (plan de l'étape 4, question 15), puis relus en préproduction (K16)
-- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026 ; forme ronde à reporter) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
+- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026 ; forme ronde reportée le 7 octobre 2026, sections 9 et 10) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
 
 ### T39. Signaler une difficulté
 
@@ -826,7 +827,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : Prodiges Academy est le 23e ministère de l'outil, avec son compte. Il saisit les trois chiffres communs chaque dimanche (STARs au service, STARs actifs, dont en FIJ), comme Protocole, et compte dans les totaux de l'église et dans leur complétude (« sur 23 »). Formation garde son nom et ses six KPI : on ne renomme jamais l'un en l'autre. Prodiges Academy n'a aucune des 185 demandes de la coordination : la couverture reste « 185 demandes ». Ses propres indicateurs viendront quand la coordination les ajoutera à son document, ou par une demande dans l'outil validée par EJP Tech (T30).
 - **Origine** : réponse de la personne responsable (6 octobre 2026) ; décision d'EJP Tech
 - **Statut** : Décidé par EJP Tech le 6 octobre 2026, révisable par la coordination
-- **BRIEF** : section 3 (nombre de ministères, complétude), section 4 (à reporter) ; `docs/conception/vague-1-decisions.md` (K14a, K14c) ; `docs/conformite/libelles-a-valider.md` (section Prodiges Academy)
+- **BRIEF** : section 3 (nombre de ministères, complétude), section 4 (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (K14a, K14c) ; `docs/conformite/libelles-a-valider.md` (section Prodiges Academy)
 
 ### P44. Responsable du traitement
 
@@ -835,7 +836,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : le responsable du traitement est l'Église des Jeunes Prodiges, par son ministère EJP Tech, comme sur la page Confidentialité (`src/pages/PageConfidentialite.tsx`). La coordination décide au nom de l'église : elle valide le registre, les textes, les indicateurs et la fin de vie de l'outil. Le registre et la note d'analyse disent la même chose.
 - **Origine** : réponse de la personne responsable (6 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (données personnelles) (à reporter) ; `docs/conception/vague-1-decisions.md` (K56, mandat) ; `docs/conformite/registre-traitements.md`
+- **BRIEF** : section 7 (données personnelles) (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (K56, mandat) ; `docs/conformite/registre-traitements.md`
 
 ### T40. Envoi des emails par un Gmail gratuit
 
@@ -843,8 +844,8 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Sujet** : l'église envoie les emails de l'outil par une adresse Gmail gratuite, celle d'EJP Tech (voir la page Confidentialité).
 - **Décision** : un Gmail gratuit relève des conditions grand public de Google : il n'y a pas d'accord de sous-traitance (article 28) à signer. La phrase de la page Confidentialité qui dit que les prestataires « agissent sous contrat » est nuancée pour Google, et la page est corrigée au lot I de l'étape 4. Recommandation, sans l'imposer : Google Workspace pour les associations (gratuit pour une association éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec contrat. Accès aux tableaux de bord Supabase et Netlify : EJP Tech seul ; la double authentification sur ces deux comptes reste à confirmer et elle est recommandée.
 - **Origine** : faits donnés par la personne responsable (6 octobre 2026)
-- **Statut** : Décidé pour les faits ; la recommandation reste à décider par la personne responsable
-- **BRIEF** : section 8 (emails) (à reporter) ; T08 ; `docs/conformite/registre-traitements.md` ; `docs/plan-etape-4.md`, lot I
+- **Statut** : Décidé pour les faits ; la recommandation reste à décider par la personne responsable. Précision (revue du 7 octobre 2026) : l'église n'a aucun contrat de sous-traitance avec Google, ni pour l'envoi des emails ni pour la connexion avec Google ; la page Confidentialité le dit (plan de l'étape 4, section 9, question 12)
+- **BRIEF** : section 8 (emails) et section 7 (données personnelles) (reporté le 7 octobre 2026) ; T08 ; `docs/conformite/registre-traitements.md` ; `docs/plan-etape-4.md`, lot I
 
 ## Décisions de la personne responsable du 6 octobre 2026 sur les indicateurs sensibles
 
@@ -856,7 +857,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Sujet** : P22, P35, K5b et P42 faisaient refuser par la base le mois en cours d'un indicateur sensible : seuls des totaux de mois écoulés se saisissaient. Réponse de la personne responsable : « refuser le mois en cours n'a pas de sens et posera problème aux équipes ».
 - **Décision** : la base accepte la saisie du mois en cours d'un indicateur sensible, comme pour tout indicateur du mois : le formulaire propose le mois en cours et les deux précédents ; un mois futur reste refusé, et le rattrapage remonte jusqu'au 1er janvier de l'année précédente (heure de Paris, `private.aujourdhui()`). La valeur du mois en cours s'affiche comme celle de tout indicateur du mois, à part et marquée « en cours » (« Octobre en cours : moins de 3 »), hors de la somme de l'année et hors de sa complétude. Les protections restent les mêmes : « moins de 3 » pour 1 et 2 au berger, au conseil et à EJP Tech, sans fuite par différence ; valeurs exactes pour le ministère seul ; lecteurs inchangés (rien pour l'administration de l'église ni pour les autres ministères) ; aux lecteurs autres que le ministère, seule la saisie la plus récente d'un mois est montrée, jamais les saisies intermédiaires (lignes brutes de `mesure` lisibles par le seul ministère) ; journal sans valeur **et sans ligne d'indicateur sensible** : `journaliser_mesures` n'écrit dans le `detail` de `mesure_saisie` ni l'indicateur, ni la date du mois, ni le drapeau `corrige` d'une ligne sensible, car chaque saisie intermédiaire et sa date seraient sinon lisibles au journal par le berger, le conseil, EJP Tech et l'administration (la ligne `mesure_saisie` reste, une par envoi, et un envoi qui ne contient que des sensibles a un `detail` vide) ; jamais sur la vue de l'église, ni dans un graphique, ni source d'un calcul. **Risque résiduel**, écrit pour la note d'analyse : un lecteur qui ouvre la fiche deux fois dans le mois voit que la valeur a changé (« 0 », puis « moins de 3 ») ; l'outil ne peut pas l'empêcher sans refuser le mois en cours, ce que cette décision écarte. Le journal, lui, garde l'heure d'un envoi (une ligne « A saisi des chiffres »), sans dire ce qu'il contient s'il ne contient que des sensibles. Le seuil, la lecture de la seule dernière valeur et le journal sans ligne sensible en limitent la portée.
 - **Origine** : décision de la personne responsable (6 octobre 2026), après la lecture des libellés à valider
-- **Statut** : Décidé par la personne responsable le 6 octobre 2026. Précision (P50, même jour) : « rien pour l'administration de l'église » veut dire **aucune valeur ; les lignes sans valeur, avec leur date, restent**
+- **Statut** : Décidé par la personne responsable le 6 octobre 2026. Précision (P50, même jour) : « rien pour l'administration de l'église » veut dire **aucune valeur ; les lignes sans valeur, avec leur date, restent**. **Revue par P52 (7 octobre 2026)** : la règle d'affichage « moins de 3 » (« Octobre en cours : moins de 3 ») est remplacée par la valeur exacte pour le berger, le conseil et EJP Tech ; le mois en cours reste à part, marqué « en cours », hors de la somme de l'année et de sa complétude, et seule la saisie la plus récente d'un mois reste montrée aux lecteurs autres que le ministère
 - **BRIEF** : section 4 (« Indicateurs sensibles »), section 6 (`controler_mesure`), section 7 (matrice, ligne `mesure` ; données personnelles), section 9 (« Chiffres du mois ») (reporté le 6 octobre 2026) ; revoit P22, P35 et P42, qui portent un renvoi ; `docs/conception/vague-1-decisions.md` (K5a, K5b, K5d, K38, K54a, K56, X4, section 7) ; `docs/plan-etape-4.md` (B1, B2, E2, E3, I)
 
 ### P46. « Précision » : un texte court joint au total d'un mois sensible
@@ -882,7 +883,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
   6. Toute la répartition est aussi masquée quand toutes les cases « moins de 3 » valent 1 et que la case masquée vaut exactement le plus petit nombre que le lecteur peut lui supposer : le plus grand de 3 et, pour chaque case affichée de 3 ou plus, de sa valeur plus 1 si elle est avant la case masquée dans la liste (à égalité, c'est la première qui est masquée, donc le lecteur sait que la masquée est strictement plus grande). Sans cela, la soustraction redonnerait les valeurs. Exemple : total 10, ordre B, A, C, avec B = 4, A = 5 et C = 1 : A est masquée, le plus petit nombre qu'on peut lui supposer est 5 (B = 4 est avant elle : 4 plus 1) et A vaut 5 ; tout est masqué, sinon C = 1 se retrouverait par soustraction.
 - **Contrôle de la règle** : la base l'applique (B8). Un test pgTAP joue le lecteur : pour chaque nombre de cases de 4 à 7 (3 à 6 catégories, plus « non réparti ») et chaque total de 3 à 16 (16 couvre le cas limite de 7 cases toutes à 2), il énumère toutes les répartitions, dans un ordre de liste fixé, calcule l'affichage de chacune avec la fonction de la vue elle-même, regroupe celles qui donnent le même affichage et vérifie qu'aucune case n'a une seule valeur possible de 1 ou de 2 dans son groupe. Le cas « B = 4, A = 5, C = 1 » est un test nommé. EJP Tech a joué cette simulation sur la règle avant de l'écrire ici : la version précédente de la règle (sans départage et avec une borne plus grossière) laissait déduire une valeur de 1 ou de 2 dans 23 705 cas (un affichage et une case) pour 4 à 7 cases ; la règle ci-dessus n'en laisse aucun.
 - **Origine** : décision de la personne responsable (6 octobre 2026), après la lecture des libellés à valider ; règle d'affichage et modèle proposés par EJP Tech (T41)
-- **Statut** : Décidé par la personne responsable le 6 octobre 2026 ; **les listes de catégories restent à donner par la coordination**, indicateur par indicateur (questions de la relecture, `vague-1-decisions.md`, section 7) ; le modèle (T41) attend l'accord de la personne responsable (plan de l'étape 4, question 16)
+- **Statut** : Décidé par la personne responsable le 6 octobre 2026. **Revue par P52 (7 octobre 2026) : la « Règle d'affichage, pour le berger, le conseil et EJP Tech » ci-dessus (seuil par case, masquage secondaire, répartition masquée en entier, test par énumération) ne s'applique plus ; ces lecteurs voient chaque catégorie exacte, « Non réparti » compris, et la répartition du total le plus récent d'un mois. Le ministère, les lecteurs exclus (administration, autres ministères) et la consigne de 3 à 6 catégories ne changent pas.** **Les listes de catégories restent à donner par la coordination**, indicateur par indicateur (questions de la relecture, `vague-1-decisions.md`, section 7) ; le modèle (T41) attend l'accord de la personne responsable (plan de l'étape 4, question 16)
 - **BRIEF** : section 4, section 6, section 7 (matrice), section 9 (« Chiffres du mois », fiche) (reporté le 6 octobre 2026) ; revoit P22 et P35 ; `docs/conception/vague-1-decisions.md` (K5a, section 7 : « catégories : à fixer par la coordination » pour les onze) ; `docs/plan-etape-4.md` (B8, E2, E3, I)
 
 ### P48. Document des libellés validé pour EJP Tech
@@ -908,7 +909,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
     Autre choix écarté : écrire la précision et la répartition par une fonction à part, après l'insertion directe du total. Un envoi aurait alors deux lignes de journal, contre la règle 10, et pourrait s'arrêter à moitié.
 - **Origine** : proposition d'EJP Tech (6 octobre 2026), sur le modèle recommandé avec la décision
 - **Statut** : Décidé le 6 octobre 2026, accord écrit de la personne responsable sur ce changement du modèle de données (trois tables, une fonction, une vue sur fonction ; plan de l'étape 4, question 16). Le code de B8 se construit en vague 4, après B3 et B4
-- **BRIEF** : sections 3, 6 et 7 (reporté le 6 octobre 2026, comme le reste de l'étape 4, en attendant l'accord) ; `docs/conception/contrat-etape-4.md` (sections 1, 2, 3, 5, 6, 7 et 8) ; `docs/plan-etape-4.md` (B8)
+- **BRIEF** : sections 3, 6 et 7 (reporté le 6 octobre 2026, comme le reste de l'étape 4 ; accord écrit de la personne responsable reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (sections 1, 2, 3, 5, 6, 7 et 8) ; `docs/plan-etape-4.md` (B8)
 
 ### P49. Une part ne dépasse jamais 100 %
 
@@ -918,7 +919,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : une part au-dessus de 100 % révèle une erreur de saisie (un haut ou un bas mal compté) ; la plafonner à 100 % la cacherait et ferait croire à un résultat parfait.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après les audits de B2 et B3. La liste des 19 parts réunit les 15 taux que la coordination avait notés « plafond 100 % » et 4 taux de même nature ajoutés par EJP Tech (Coordination, taux de réalisation des événements ; Kumi et Eagles, taux de participation ; Prodiges Junior, taux de présence), confirmés par la personne responsable le 6 octobre 2026
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 6 (calculs, `v_calcul`), section 3 (colonne `part`) (non reporté à ce jour) ; `docs/conception/vague-1-decisions.md` (liste des 19 parts) ; `docs/conception/contrat-etape-4.md` (`indicateur`, `private.indicateur_prevu`, `v_calcul`) ; `docs/plan-etape-4.md` (B4)
+- **BRIEF** : section 6 (calculs, `v_calcul`, colonne `part`), section 3 (règle 13), section 4 (calculs) (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (liste des 19 parts) ; `docs/conception/contrat-etape-4.md` (`indicateur`, `private.indicateur_prevu`, `v_calcul`) ; `docs/plan-etape-4.md` (B4)
 
 ### P50. Lignes des indicateurs sensibles : l'administration les garde, sans valeur
 
@@ -928,7 +929,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : l'administration suit la régularité des saisies (qui a saisi, quel mois) ; elle n'a pas besoin du chiffre, qui reste protégé.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après l'audit de B2
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (matrice, ligne `mesure`) (non reporté à ce jour) ; précise P45 ; `docs/plan-etape-4.md` (matrice, question 17)
+- **BRIEF** : section 7 (matrice, vues de lecture de `mesure`) (reporté le 7 octobre 2026) ; précise P45 ; `docs/plan-etape-4.md` (matrice, question 17)
 
 ### P51. Journal du texte « Pourquoi » : le berger et le conseil le lisent, pas l'administration
 
@@ -938,7 +939,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : le berger et le conseil suivent la modération des textes comme celle des points ; l'administration ne voit pas les pages des ministères.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après l'audit de B3
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (matrice, ligne `journal`) (non reporté à ce jour) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; `docs/plan-etape-4.md` (B7)
+- **BRIEF** : section 7 (matrice, ligne `journal`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; `docs/plan-etape-4.md` (B7)
 
 ### T42. Répartition d'un indicateur sensible : toute la liste, de 3 à 6 catégories
 
@@ -948,7 +949,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : la règle d'affichage de P47 suppose au moins 4 cases (3 catégories plus « Non réparti ») et n'a été simulée que jusqu'à 7 cases. Une répartition creuse (seulement les catégories renseignées) aurait 2 ou 3 cases : un total de 6 réparti 2, 2 et 2 se lirait case par case. Écrire toute la liste évite cette fuite ; imposer la plage par la base empêche qu'une liste de 2 catégories (migration, retrait) ou de 7 et plus rouvre la fuite.
 - **Origine** : audit de sécurité de B8 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
-- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)
+- **BRIEF** : section 4 (décisions du 7 octobre 2026) et section 6 (`categorie_sensible`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)
 
 ### T43. Signalement et commentaire de clôture : les crochets sont refusés comme les données personnelles
 
@@ -958,7 +959,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : cohérence avec les autres textes libres de l'étape 4 ; coût pour le ministère : reformuler sans crochets (le message de refus le dit).
 - **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
-- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (section 1, `texte_relu` et `texte_masque`, et section 7) ; `docs/plan-etape-4.md` (B7)
+- **BRIEF** : section 4 (décisions du 7 octobre 2026) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, `texte_relu` et `texte_masque`, et section 7) ; `docs/plan-etape-4.md` (B7)
 
 ### T44. Journal : un trou dans la suite des identifiants révèle une ligne que le lecteur ne voit pas
 
@@ -967,5 +968,74 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Décision proposée** : accepter ce risque résiduel pour la mise en service, sans changer la base. Il faut un accès direct à l'API, aucun droit en plus n'est donné (ni le texte, ni le ministère, ni le contenu : seulement « une ligne manque »), et les écrans n'affichent jamais l'identifiant. Si la personne responsable le refuse : le berger et le conseil ne liraient le journal que par `v_journal`, avec une clé opaque (par exemple `md5(id::text)`) à la place de l'identifiant, sans `select` direct sur `journal` ; cela change la matrice et un lot d'écrans (journal), donc une décision de la personne responsable.
 - **Raison** : le correctif réduit un signal faible au prix d'un changement de modèle d'accès ; la note d'analyse doit citer le risque pour que la personne responsable tranche.
 - **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
-- **Statut** : Décidé par la personne responsable le 7 octobre 2026 : risque accepté (un numéro manquant ne dit ni le ministère, ni l'écran, ni le texte ; la base saute déjà des numéros à chaque saisie refusée ; seuls le berger et le conseil, avec un accès technique direct, pourraient le voir). Rien ne change dans le code
-- **BRIEF** : section 7 (matrice, ligne `journal`) et note d'analyse (risques résiduels) ; `docs/conception/contrat-etape-4.md` (section 1, lecture des lignes des signalements)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026 : risque accepté (un numéro manquant ne dit ni le ministère, ni l'écran, ni le texte ; la base saute déjà des numéros à chaque saisie refusée ; seuls les lecteurs du journal, avec un accès technique direct, pourraient le voir : le berger et le conseil, et l'administration qui ne lit qu'une liste fermée de lignes, précision de la revue du 7 octobre 2026). Rien ne change dans le code
+- **BRIEF** : section 7 (« Données personnelles », risques résiduels acceptés) et note d'analyse (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, lecture des lignes des signalements)
+
+## Décisions de la personne responsable du 7 octobre 2026 sur les chiffres sensibles et le journal
+
+La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger et le conseil voient les valeurs exactes des indicateurs sensibles (P52), et trois points de lecture du journal (T45 à T47). P52 revoit les règles d'affichage de P42, P45 et P47. Le BRIEF les reçoit au commit de documents du lot I (7 octobre 2026) ; le code déjà fusionné (B2, B8, E2) se change par des migrations et des lots neufs, jamais en rouvrant une migration fusionnée (le lot I, base, l'a fait par `20261009120000_lot_i_correctifs.sql`).
+
+### P52. Indicateurs sensibles : valeurs exactes pour le berger, le conseil et EJP Tech
+
+- **Date** : 7 octobre 2026
+- **Sujet** : P42, P45 et P47 faisaient afficher « moins de 3 » à la place de 1 ou 2 au berger, au conseil et à EJP Tech, avec un masquage secondaire dans les répartitions. La personne responsable a lu le texte d'aide du champ sensible de « Chiffres du mois » (clé `mois.sensible`), qui disait que le berger et le conseil voient « moins de 3 » à la place de 1 ou 2, mois en cours compris, et elle refuse cette règle.
+- **Raison, dans les mots de la personne responsable** : « même d'un point de vue conceptuel, le berger et le conseil ont besoin de savoir précisément ce qu'il en est, pas d'avoir des éléments approximatifs ! »
+- **Décision** : le berger, le conseil et EJP Tech voient les valeurs **exactes** des indicateurs sensibles (santé, accompagnement, écoute, enfants) : ni « moins de 3 », ni « masqué », ni suppression secondaire, pour les totaux, le mois en cours, la somme de l'année, la petite courbe de la fiche et les répartitions par catégories (« Non réparti » compris). La somme de l'année additionne tous les mois écoulés saisis et dit sa complétude comme celle de tout indicateur du mois ; la phrase « Somme des mois affichés : 14, plus 2 mois sous 3 » disparaît.
+- **Ce qui ne change pas** : l'administration de l'église ne voit jamais une valeur (elle garde les lignes sans valeur, avec leur date, P50) ; les autres ministères non plus ; jamais sur la vue de l'église ; jamais source d'un calcul ; le journal n'écrit jamais une valeur sensible ; les lecteurs d'une précision restent le ministère, le berger, le conseil et EJP Tech ; aucune valeur sensible dans un graphique de l'étape 4 bis ; seule la saisie la plus récente d'un mois est montrée aux lecteurs autres que le ministère ; le mois en cours reste à part, marqué « en cours », hors de la somme de l'année et de sa complétude (P45). T42 (3 à 6 catégories, toute la liste en cours, zéros écrits) reste appliquée en attendant la coordination : sa raison, éviter une lecture case par case, ne protège plus ces trois lecteurs ; la consigne garde son intérêt de lisibilité, et la coordination peut la rouvrir.
+- **Risque accepté, écrit pour la note d'analyse** (`docs/conformite/note-indicateurs-sensibles.md`, version 1.2) : avec des chiffres exacts, le berger, le conseil ou EJP Tech peuvent reconnaître une personne dans un très petit groupe (un seul cas de santé dans un ministère de quelques STARs, par exemple). La personne responsable l'accepte : ces profils ont besoin de la valeur précise. Les protections gardées en limitent la portée : l'administration, les autres ministères et la vue de l'église ne voient aucune valeur ; aucune valeur ne sert de source à un calcul ; le journal n'en écrit jamais ; les textes libres restent sans information sur une personne (rappel, refus des familles de texte, relecture et masquage) ; la double authentification et les droits par profil restent. Ce risque s'ajoute à ceux de P45 (valeur lue deux fois dans le mois), de P46 (texte libre) et de T44 (numéro manquant du journal).
+- **Origine** : décision écrite de la personne responsable (7 octobre 2026), après la lecture des textes d'aide
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026. Revoit les règles d'affichage de P42, P45 et P47 (ces entrées portent un renvoi). Les textes d'aide `mois.sensible` et `fiche.moinsDe3` de `docs/conception/aides-contextuelles.md` et la phrase « Répartition masquée pour protéger les petits nombres. » ne sont plus justes : la réécriture des aides les retire ou les remplace
+- **BRIEF** : section 3 (règles 10 et 13), section 4 (« Indicateurs sensibles »), section 7 (matrice : `v_mesure_periode`, `v_ventilation_sensible` ; données personnelles et risques acceptés), section 9 (« Chiffres du mois », fiche) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (`moins_de_3` toujours faux pour le berger, le conseil et EJP Tech) ; `docs/conformite/note-indicateurs-sensibles.md`, `registre-traitements.md` et `libelles-a-valider.md` ; `docs/plan-etape-4.md` (réponses du 7 octobre)
+
+### T45. Journal : le berger et le conseil gardent les lignes de relecture et de masquage d'une précision
+
+- **Date** : 7 octobre 2026
+- **Sujet** : les lignes `texte_relu` et `texte_masque` dont la cible est `precision_sensible` disent qu'EJP Tech a relu ou masqué une précision, jamais son texte.
+- **Décision** : le berger et le conseil continuent de lire ces lignes. Rien ne change. L'administration ne les lit pas (B8).
+- **Raison** : le berger et le conseil suivent la modération des textes comme celle des points (P51) ; la ligne ne dit ni le texte ni la valeur.
+- **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : section 7 (matrice, ligne `journal`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; précise P51
+
+### T46. Journal : l'heure exacte d'une saisie sensible reste lisible
+
+- **Date** : 7 octobre 2026
+- **Sujet** : un envoi de chiffres qui ne contient que des sensibles laisse une ligne `mesure_saisie` sans détail, avec son heure (P45). Faut-il aussi cacher l'heure ?
+- **Décision** : non. L'heure exacte de la ligne `mesure_saisie` reste lisible par les profils qui lisent cette ligne. Rien ne change.
+- **Raison** : le journal sert à suivre qui a saisi et quand ; la ligne ne dit ni l'indicateur, ni le mois, ni la valeur (P45).
+- **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : section 7 (« Données personnelles », risques résiduels acceptés) (reporté le 7 octobre 2026) ; précise P45
+
+### T47. Journal : l'administration ne lit plus les lignes de relecture et de masquage des pages et des points
+
+- **Date** : 7 octobre 2026
+- **Sujet** : les lignes `texte_relu` et `texte_masque` figurent dans la liste fermée de l'administration (B2). Celles dont la cible est `point_attention`, `point_suivi`, `evenement` ou `reunion` disent qu'un texte d'une page ou d'un point a été relu ou masqué ; l'administration ne voit ni les pages des ministères ni les points (BRIEF section 2).
+- **Décision** : l'administration ne lit plus les lignes `texte_relu` et `texte_masque` dont la cible est `point_attention`, `point_suivi`, `evenement` ou `reunion`, pour la même raison que P51 (cible `demande_indicateur`) et que B8 (cible `precision_sensible`). Le ministère concerné, EJP Tech, le berger et le conseil les lisent comme avant. La condition s'ajoute à `private.journal_lisible_administration` par une migration nouvelle (la migration fusionnée n'est jamais rouverte), avec un test de matrice.
+- **Raison** : la même que P51 : le berger et le conseil suivent la modération des textes ; l'administration ne voit ni les pages ni les points.
+- **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : section 7 (matrice, ligne `journal`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; complète P51 ; migration et test de matrice à écrire
+
+## Décisions de la personne responsable du 7 octobre 2026 sur les comptes d'EJP Tech et la page Confidentialité
+
+### T48. EJP Tech a deux comptes : la plateforme et le ministère Tech
+
+- **Date** : 7 octobre 2026
+- **Sujet** : EJP Tech doit aussi avoir un espace de ministère « normal » (sa fiche, ses saisies), en plus de l'administration de la plateforme.
+- **Décision** : deux comptes. Le compte de la plateforme (`admin_plateforme` : lit tout, ne saisit rien, T29) et un compte de ministère pour le ministère Tech (type `ministere` : sa fiche et ses saisies, comme tout ministère). Le second se crée par l'écran 13 comme les autres, avec une adresse distincte (proposé : l'alias Gmail « +ministere » de l'adresse d'EJP Tech, même boîte). Il se connecte par mot de passe et code : Google rend l'adresse sans l'alias et ouvrirait le compte de la plateforme.
+- **Adresse du compte de la plateforme** : saisie exactement comme Google la rend, avec le point. Gmail ignore les points, mais Supabase compare les adresses telles quelles : sans le point, la connexion Google répond « pas encore de compte actif » (constaté en préproduction le 7 octobre 2026).
+- **Autre choix écarté** : un seul compte à deux rôles. Il change le modèle des comptes et toutes les règles d'accès, et casse T29.
+- **Suite demandée** : un bouton « Changer d'espace » pour passer d'un compte à l'autre sans se déconnecter à la main. D'ici là, deux fenêtres du navigateur (dont une privée).
+- **Origine** : choix écrit de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026 pour les deux comptes ; « Changer d'espace » : Proposé, après l'ouverture
+- **BRIEF** : section 2 (tableau des profils, ligne EJP Tech) ; `docs/exploitation.md` (comptes à créer)
+
+### T49. Page Confidentialité : textes du lot I validés, les signalements hors de « l'ensemble »
+
+- **Date** : 7 octobre 2026
+- **Sujet** : le lot I a réécrit la page Confidentialité : chiffres sensibles, « Précision », lecteurs des valeurs exactes (P52), signalements, sous-traitants et transferts, conservation des copies d'emails. La phrase validée le 5 octobre « le berger et le conseil voient l'ensemble » contredisait celle des signalements, que seuls le ministère et EJP Tech lisent (T39).
+- **Décision** : les textes du lot I sont validés tels quels, et la phrase devient « le berger et le conseil voient l'ensemble, sauf les signalements ».
+- **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : aucun changement ; la page fait foi (`src/pages/PageConfidentialite.tsx`, « Dernière mise à jour : 7 octobre 2026 »)

@@ -1,5 +1,5 @@
 // Données de la fiche d'un ministère (maquettes 04 et 12), prêtes à afficher : les textes arrivent
-// déjà écrits (dates à l'heure de Paris, complétude, « moins de 3 »). Les composants ne calculent
+// déjà écrits (dates à l'heure de Paris, complétude). Les composants ne calculent
 // aucune règle métier. Contrat entre `construireFiche.ts` (lectures de la base ou de l'aperçu) et
 // les composants de `src/features/fiche/`.
 //
@@ -31,16 +31,17 @@ export interface PointCourbeFiche {
 export interface CourbeFiche {
   /** Du plus ancien au plus récent : dix dimanches ou douze mois. */
   points: PointCourbeFiche[]
-  /** Équivalent texte : « Douze derniers mois : 6, moins de 3, sans saisie, 2. » */
+  /** Équivalent texte : « Douze derniers mois : 6, 1, sans saisie, 2. » */
   description: string
 }
 
-/** Valeur d'une ligne de chiffres. */
+/**
+ * Valeur d'une ligne de chiffres. Un sensible s'affiche exact pour son ministère, le berger, le
+ * conseil et EJP Tech (P52) : jamais « moins de 3 » ni « masqué ».
+ */
 export type ValeurFiche =
   /** « 10 », « 5 164 € », « 79 » avec l'unité « % ». */
   | { etat: 'saisie'; texte: string; unite: '%' | null }
-  /** Sensible lu par un autre profil que son ministère : 1 ou 2. */
-  | { etat: 'moins_de_3' }
   /** Jamais saisi : « Pas encore de saisie » (jamais 0). */
   | { etat: 'vide' }
   /** Calcul ou pourcentage qui ne se calcule pas : « Non calculé », « Non calculé, à vérifier ». */
@@ -71,26 +72,21 @@ export interface LigneCommune {
 
 /** Somme de l'année d'un indicateur, avec son départ et sa complétude. */
 export interface SommeFiche {
-  /** « Depuis janvier : 112 », « Somme des mois affichés : 6, plus 2 mois sous 3 ». */
+  /** « Depuis janvier : 112 ». */
   texte: string
   /** « 9 mois sur 9 », qui porte l'aide `fiche.sommeAnnee` sur la première ligne. */
   completude: string | null
-  /** La somme vaut « moins de 3 » pour ce profil. */
-  moinsDe3: boolean
 }
 
-/** Valeur du mois en cours d'un indicateur du mois : « Octobre en cours : moins de 3 ». */
+/** Valeur du mois en cours d'un indicateur du mois : « Octobre en cours : 2 ». */
 export interface MoisEnCoursFiche {
   texte: string
-  moinsDe3: boolean
 }
 
-/** Une case de répartition : « Malaise : 4 », « Blessure : moins de 3 », « Autre : masqué ». */
+/** Une case de répartition : « Malaise : 4 », « Blessure : 1 », « Non réparti : 0 ». */
 export interface CaseRepartition {
   libelle: string
   texte: string
-  masquee: boolean
-  moinsDe3: boolean
 }
 
 /** Répartition d'un mois d'un indicateur sensible. */
@@ -98,8 +94,6 @@ export type RepartitionMois =
   | { mois: string; titre: string; etat: 'cases'; cases: CaseRepartition[] }
   /** « Pas de répartition pour septembre. » */
   | { mois: string; titre: string; etat: 'aucune'; texte: string }
-  /** « Répartition masquée pour protéger les petits nombres. » */
-  | { mois: string; titre: string; etat: 'masquee'; texte: string }
 
 /** Précision d'un mois (P46) : « Précision d'octobre : ... ». */
 export interface PrecisionFiche {
@@ -120,12 +114,8 @@ export interface DetailSensible {
 export interface AidesLigne {
   /** `fiche.calcule`, sur le libellé de la première ligne calculée. */
   calcule?: boolean
-  /** `fiche.moinsDe3`, sur la première valeur « moins de 3 » (jamais pour le ministère). */
-  moinsDe3?: 'valeur' | 'moisEnCours' | 'somme'
   /** `fiche.sommeAnnee`, à côté de la complétude de la première somme de l'année. */
   somme?: boolean
-  /** `fiche.repartition`, sur la première case « masqué » (jamais pour le ministère). */
-  repartition?: boolean
 }
 
 /** Une ligne d'indicateur propre (ou d'un calcul) de la fiche. */

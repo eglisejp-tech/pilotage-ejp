@@ -21,6 +21,14 @@ function Champ({
   )
 }
 
+const proprietes = (valeur: string): Parameters<typeof ChampNombre>[0] => ({
+  id: 'service',
+  libelle: 'STARs au service ce dimanche',
+  valeur,
+  onChange: () => undefined,
+  max: 9999,
+})
+
 describe('ChampNombre', () => {
   it('relie le libellé au champ numérique', () => {
     render(<Champ />)
@@ -83,6 +91,43 @@ describe('ChampNombre', () => {
     expect(decrit).toHaveLength(3)
     expect(document.getElementById(decrit[0] ?? '')).toHaveTextContent('Les STARs qui ont servi.')
     expect(document.getElementById(decrit[2] ?? '')).toHaveTextContent('Entre 0 et 9 999.')
+  })
+
+  it('relie aussi la mention, la phrase « déjà saisi » et les éléments donnés par decritAussi', () => {
+    render(
+      <>
+        <p id="message-groupe">Le message du groupe.</p>
+        <Champ
+          mention="À valider par EJP Tech."
+          dejaSaisi="Déjà saisi : 10."
+          decritAussi="message-groupe"
+          invalide
+        />
+      </>,
+    )
+    const champ = screen.getByLabelText('STARs au service ce dimanche')
+    // Sans message à lui, le champ est tout de même marqué en erreur.
+    expect(champ).toHaveAttribute('aria-invalid', 'true')
+    expect(champ).toHaveAccessibleDescription(
+      'À valider par EJP Tech. Déjà saisi : 10. Le message du groupe.',
+    )
+  })
+
+  it('le nombre domine : 112 px, réduit seulement au-delà de 3 chiffres', () => {
+    const { rerender } = render(<ChampNombre {...proprietes('120')} />)
+    expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[112px]')
+    rerender(<ChampNombre {...proprietes('1200')} />)
+    expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[84px]')
+  })
+
+  it('« moins » est un carré bordé, « plus » est plein (maquette 08)', () => {
+    render(<Champ />)
+    expect(
+      screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' }),
+    ).toHaveClass('border', 'border-encre', 'bg-papier')
+    expect(
+      screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' }),
+    ).toHaveClass('bg-encre')
   })
 
   it('pose l’aide à côté du libellé, hors du <label>', () => {
