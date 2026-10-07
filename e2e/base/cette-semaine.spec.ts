@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
-import { fichierSession, suivreRequetesDeDonnees } from '../comptes.ts'
+import { fichierSession } from '../comptes.ts'
 import type { CompteTest } from '../comptes.ts'
 
 // « Cette semaine » avec la base locale et le jeu d'exemple (job « e2e » de la CI, E2E_BASE=1),
@@ -95,13 +95,12 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
 test.describe('ministère (Communication) : « L’église cette semaine »', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('phrase de l’église, ni « À décider » ni points lus, seul son nom ouvre « Ma fiche »', async ({
+  // L'ouverture de 07 (phrase, boutons, « Vos saisies », « Vos points ») : accueil-ministere.spec.ts.
+  test('les blocs de l’église, sans « À décider », seul son nom ouvre « Ma fiche »', async ({
     page,
   }, infos) => {
-    const requetes = suivreRequetesDeDonnees(page)
     await ouvrir(page)
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(phraseEglise)
-    await expect(page.locator('mark')).toHaveCount(0)
+    await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(phraseEglise)
     await expect(
       page.getByRole('heading', { level: 2, name: "L'église cette semaine" }),
     ).toBeVisible()
@@ -127,9 +126,6 @@ test.describe('ministère (Communication) : « L’église cette semaine »', ()
     await expect(liens).toHaveCount(1)
     await expect(liens).toHaveText('Communication')
     await expect(liens).toHaveAttribute('href', '/ma-fiche')
-
-    // Un ministère ne lit pas les points de l'église (BRIEF section 7).
-    expect(requetes.filter((chemin) => /\/v_point|\/point_mention/.test(chemin))).toEqual([])
   })
 })
 
