@@ -100,28 +100,32 @@ export const TEXTES_AIDE = {
   // responsable (question Q7 du plan), avec les règles de aides-contextuelles.md, section 2.
   // Le catalogue de ce document les reprend au lot d'intégration.
 
-  // Ministères et comptes (écran 13, lot L1). Panneaux : une aide par champ d'email ; tableau :
-  // l'en-tête « Double authentification » et la colonne des indicateurs.
+  // Ministères et comptes (écran 13, lot L1, BRIEF section 9). Panneaux : `comptes.emailMinistere`
+  // sur « Email partagé du ministère » (remplace le texte du BRIEF, écrit en négatif, règle 3) et
+  // `comptes.emailPersonnel` sur « Email personnel » (berger, conseil, EJP Tech). Tableau : en-tête
+  // « Double authentification » (`comptes.etat`, états de `v_etat_comptes`) et colonne des
+  // indicateurs (`comptes.indicateurs`, un nombre et un lien vers /indicateurs, 7.1).
   'comptes.emailMinistere':
-    "L'adresse d'une boîte mail que partage l'équipe du ministère. Tous ses responsables se connectent avec elle.",
+    "La boîte mail que partage l'équipe du ministère. Toutes les personnes du ministère se connectent avec elle.",
   'comptes.emailPersonnel':
     "L'adresse de la personne qui utilisera ce compte. L'invitation à se connecter part à cette adresse.",
   'comptes.etat':
-    "« À activer » : l'invitation est acceptée, la double authentification reste à activer. « Activée » : le compte est prêt.",
+    '« Invitation envoyée » : la personne doit encore ouvrir le lien reçu. « À activer » : elle doit encore activer son code.',
   'comptes.indicateurs':
-    "Nombre d'indicateurs que le ministère suit en plus des chiffres communs. Ils se règlent dans l'onglet Indicateurs.",
+    'Indicateurs que le ministère suit en plus des chiffres communs, calculs compris.',
 
   // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
-  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs. `indicateurs.prevus` : colonne
-  // « Prévus » de /indicateurs et titre du bloc « Prévus par la coordination » de
-  // /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la coordination ».
-  // `indicateurs.usage` : première ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
+  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 12 »).
+  // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Prévus par la
+  // coordination » de /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la
+  // coordination », quand le nom du ministère n'est pas reconnu. `indicateurs.usage` : première
+  // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
   'indicateurs.nombre':
-    'Indicateurs actifs ou à valider du ministère, calculs compris. Une fiche en compte 12 au plus.',
+    'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 12 » : 8 suivis, 12 au plus par fiche.',
   'indicateurs.prevus':
     'Indicateurs que la coordination a choisis pour ce ministère. Une fois créés, ils entrent dans ses saisies et sa fiche.',
   'indicateurs.modele':
-    'Les prévus de la coordination, par nom de ministère. « Aucun prévu » : le ministère saisit les chiffres communs.',
+    'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
   'indicateurs.usage':
     "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
 } as const
