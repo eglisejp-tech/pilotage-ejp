@@ -245,14 +245,24 @@ describe('routes', () => {
 
   // Garde des étapes 4 et 5 : ces écrans s'ouvrent à EJP Tech pour la lecture (LECTEURS), mais
   // leurs boutons d'action suivent estDecideur ou le lien du ministère au point, jamais ce droit.
+  // La fiche d'un ministère (`/ministeres/:id`) n'est pas ici : son identifiant doit être un uuid
+  // et elle lit une quinzaine de vues. Sa lecture seule pour EJP Tech est testée sur la vraie
+  // fiche dans `src/pages/fiche.test.tsx`.
   it.each([
     ['/ministeres', 'Ministères'],
-    ['/ministeres/m-communication', 'Fiche du ministère'],
     ['/points?vue=ouverts', "Points d'attention"],
   ])(
     'EJP Tech sur %s : écran de lecture du berger, sans « Marquer traité », « Changer le statut » ni saisie (T29)',
     async (adresse, titre) => {
-      connecte('admin_plateforme')
+      // Lot E2 : la liste lit le jour de Paris ; sans lui, elle afficherait « Réessayer ».
+      installer({
+        ...scenarioDe('admin_plateforme'),
+        lignes: {
+          v_semaine: [
+            { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
+          ],
+        },
+      })
       const routeur = afficher(adresse)
       expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
       expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
@@ -464,13 +474,15 @@ describe("adresses de l'étape 4", () => {
   // `src/pages/saisiesSessionFij.test.tsx`. Le filtre est ici, et non dans `AMORCES_PAR_PROFIL`,
   // pour ne pas toucher les mêmes lignes que les autres lots (une page remplacée par lot).
   const PAGES_REMPLACEES_PAR_E4 = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
+  // Pages que le lot E2 a remplacées : testées dans `src/pages/fiche.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E2 = ['/ma-fiche', '/ministeres', '/ministeres/:id']
   // Page que le lot E8 a remplacée (« Signaler une difficulté ») : testée plus bas et dans
   // `src/pages/PageSignalement.test.tsx`.
   const PAGES_REMPLACEES_PAR_E8 = ['/signaler']
   it.each(
-    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif)).filter(
-      ([motif]) => !PAGES_REMPLACEES_PAR_E8.includes(motif),
-    ),
+    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E8.includes(motif)),
   )(
     '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
     async (motif, profil) => {
@@ -570,7 +582,8 @@ describe("adresses de l'étape 4", () => {
   )
 
   it.each([
-    ['/apercu/fiche', 5],
+    // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »).
+    ['/apercu/fiche', 4],
     ['/apercu/saisies', 4],
     ['/apercu/evenements', 3],
   ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
