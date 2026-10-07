@@ -67,10 +67,18 @@ export function VueFiche({
     rendreEmplacement === null ? null : rendreEmplacement(emplacement, fiche)
   return (
     <div className="flex flex-col gap-12">
-      <EnTeteFiche donnees={donnees} reunion={poser('reunion')} />
+      <EnTeteFiche
+        donnees={donnees}
+        reunion={poser('reunion')}
+        nouveauPoint={poser('nouveauPoint')}
+      />
       <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16">
         <div className="flex min-w-0 flex-col gap-12">
-          <ChiffresDuMinistere donnees={donnees} reessayerDetails={reessayerDetailsSensibles} />
+          <ChiffresDuMinistere
+            donnees={donnees}
+            reessayerDetails={reessayerDetailsSensibles}
+            gererIndicateurs={poser('gererIndicateurs')}
+          />
           {poser('statistiquesFij')}
           {poser('calendrier')}
           {poser('comptages')}

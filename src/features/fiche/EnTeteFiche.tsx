@@ -11,6 +11,8 @@ interface Props {
   donnees: DonneesFiche
   /** Emplacement « Prochaine réunion » (lot E6), sous la fraîcheur ; rien tant qu'il est vide. */
   reunion?: ReactNode
+  /** Emplacement du bouton « Nouveau point » (lot P4), à la suite des boutons de saisie. */
+  nouveauPoint?: ReactNode
 }
 
 const classeBouton =
@@ -22,7 +24,7 @@ const classeBouton =
  * prochaine réunion (emplacement de E6), puis, pour le ministère seulement, ses boutons de saisie.
  * EJP Tech lit la fiche sans aucun bouton (T29).
  */
-export function EnTeteFiche({ donnees, reunion }: Props) {
+export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
   const { ministere, profil, fraicheur } = donnees
   const estMinistere = profil === 'ministere'
   return (
@@ -72,6 +74,7 @@ export function EnTeteFiche({ donnees, reunion }: Props) {
           <Link to={adresseSaisieSession()} className={classeBouton}>
             {TEXTES_FICHE.saisirSession}
           </Link>
+          {nouveauPoint}
         </div>
       ) : null}
     </header>

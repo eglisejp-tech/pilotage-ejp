@@ -12,6 +12,17 @@ export interface ProprietesEmplacementFiche {
   profil: TypeCompte
 }
 
-/** Les emplacements de la fiche, dans l'ordre où `emplacements.tsx` les range. */
+/**
+ * Les emplacements de la fiche, dans l'ordre où `emplacements.tsx` les range. `nouveauPoint` (bouton
+ * « Nouveau point », lot P4) et `gererIndicateurs` (lien « Gérer mes indicateurs », lot L4) ont
+ * été ajoutés par le lot C0, chacun dans son fichier, pour que ces deux lots ne touchent jamais le
+ * même fichier de la fiche.
+ */
 export type EmplacementFiche =
-  'calendrier' | 'reunion' | 'statistiquesFij' | 'comptages' | 'graphiques'
+  | 'calendrier'
+  | 'reunion'
+  | 'statistiquesFij'
+  | 'comptages'
+  | 'graphiques'
+  | 'nouveauPoint'
+  | 'gererIndicateurs'
