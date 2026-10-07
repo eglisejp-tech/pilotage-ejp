@@ -15,7 +15,7 @@
 --    période écartée) ; un haut de 0 donne 0, un bas de 0 donne bas_nul avant tout ; un taux qui
 --    n'est pas une part dépasse 100 % ; une part à 100 % se calcule ; part figée et réservée aux
 --    taux. La création et le remplacement d'une part par creer_calcul : calcul-part.test.sql.
--- 4. Jeu d'exemple (seed/40-indicateurs.sql) : sensible à 2 rendu « moins de 3 » au berger, part
+-- 4. Jeu d'exemple (seed/40-indicateurs.sql) : sensible à 2 lu exact par le berger (P52), part
 --    à vérifier de Formation, une valeur par unité, un ajout à valider, un validé, un refusé, un
 --    retiré avec saisies.
 begin;
@@ -389,8 +389,8 @@ select is(tests.lire((select berger from ctx), 'aal2', $$
     from public.v_indicateur_suivi s
     join public.indicateur i on i.id = s.indicateur_id
    where i.modele_code = 'social_beneficiaires_passages' and i.ministere_id = tests.ministere('Social')
-$$), '[{"dernier_mois": true, "derniere_valeur": null, "derniere_moins_de_3": true}]'::jsonb,
-  'jeu d''exemple : le sensible de Social vaut 2 le dernier mois, « moins de 3 » pour le berger');
+$$), '[{"dernier_mois": true, "derniere_valeur": 2, "derniere_moins_de_3": false}]'::jsonb,
+  'jeu d''exemple : le sensible de Social vaut 2 le dernier mois, et le berger lit 2 (P52)');
 select is(tests.lire((select berger from ctx), 'aal2', $$
   select c.haut, c.bas, c.resultat, c.non_calcule_raison
     from public.v_calcul c

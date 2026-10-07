@@ -88,8 +88,8 @@ cross join lateral (values
 -- refusé à tous. Journal du jeu d'essai (6 lignes) : point_cree des deux points,
 -- evenement_ajoute des deux événements, reunion_saisie de A (ministère A) ; texte_relu de
 -- l'événement de B (ministère B). L'administration de l'église ne lit aucune ligne de journal
--- sur les points, les événements et les réunions (private.journal_lisible_administration) :
--- elle lit seulement la ligne technique texte_relu. EJP Tech lit tout ce que lit le berger, en
+-- sur les points, les événements et les réunions (private.journal_lisible_administration),
+-- ni, depuis le lot I (T47), leur relecture texte_relu. EJP Tech lit tout ce que lit le berger, en
 -- lecture seule (docs/decisions.md, T29) : ses ajouts restent refusés ; seul EJP Tech lit la
 -- modération.
 -- Pour tous les profils : update et delete refusés (42501). En aal1 : zéro ligne, écritures
@@ -131,7 +131,7 @@ cross join lateral (values
       format('insert into public.reunion (ministere_id, date, heure) values (%L, %L, %L)',
              ctx.a_m, private.aujourdhui() + 2, '19:00')),
   (7, 'journal',
-      '{4, 2, 0, 6, 6, 1, 6}'::int[],
+      '{4, 2, 0, 6, 6, 0, 6}'::int[],
       '{42501, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('cible_id in (%L, %L, %L, %L, %L)', ctx.p1, ctx.p2, ctx.ev_a, ctx.ev_b, ctx.reunion_a), 'detail',
       format('insert into public.journal (compte, ministere_id, action, cible, cible_id) values (%L, %L, %L, %L, %L)',
@@ -240,8 +240,8 @@ select is(tests.compter((select admin from ctx), 'aal2',
 select is(tests.lire((select admin from ctx), 'aal2',
   'select j.action from public.v_journal j
     where j.cible_id in (select ev_a from ctx union all select ev_b from ctx union all select reunion_a from ctx)'),
-  '[{"action": "texte_relu"}]'::jsonb,
-  'l''administration ne lit ni les événements ni les réunions au journal, seulement la relecture d''EJP Tech');
+  '[]'::jsonb,
+  'l''administration ne lit ni les événements ni les réunions au journal, ni leur relecture par EJP Tech (T47)');
 select is(tests.lire((select berger from ctx), 'aal2',
   'select j.action, j.cible_texte from public.v_journal j where j.cible_id = (select p1 from ctx)'),
   '[{"action": "point_cree", "cible_texte": "Matrice point 1"}]'::jsonb,
