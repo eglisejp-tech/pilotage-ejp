@@ -11,8 +11,9 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * Page « Confidentialité » (BRIEF section 7, « Données personnelles ») : texte statique, lisible
  * sans connexion, depuis l'écran 16, le menu et le pied de page. Texte validé par EJP Tech et la
  * coordination le 5 octobre 2026 (docs/decisions.md, T17). Mise à jour du 7 octobre 2026 pour
- * l'étape 4 (lot I) : chiffres sensibles (K56, P42, P45 à P47), signalements (T39) et envoi des
- * emails par le Gmail gratuit d'EJP Tech (T40), selon docs/conformite/.
+ * l'étape 4 (lot I) : chiffres sensibles (K56, P42, P45 à P47, P50, et P52 : valeurs exactes pour
+ * le berger, le conseil et EJP Tech), signalements (T39) et envoi des emails par le Gmail gratuit
+ * d'EJP Tech (T40), selon docs/conformite/.
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
@@ -60,6 +61,10 @@ export function PageConfidentialite() {
               Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une
               personne : ce qui y est écrit par erreur est masqué.
             </li>
+            <li>
+              Les signalements (« Signaler une difficulté ») qu'un ministère adresse à EJP Tech.
+              Seuls ce ministère et EJP Tech les lisent.
+            </li>
           </ul>
         </PartieTexte>
         <PartieTexte titre="Qui voit les données">
@@ -69,21 +74,29 @@ export function PageConfidentialite() {
             EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs
             libres.
           </p>
-          <p>
-            Un signalement (« Signaler une difficulté ») n'est lu que par le ministère qui l'écrit
-            et par EJP Tech.
-          </p>
         </PartieTexte>
         <PartieTexte titre="Chiffres sensibles">
           <p>
-            Pour la santé, l'accompagnement, l'écoute et les enfants, seuls des totaux par mois (le
-            mois en cours compris), des répartitions par catégories larges fixées par la
-            coordination et de courtes précisions sans information personnelle sont saisis.
+            Certains indicateurs de la santé, de l'accompagnement, de l'écoute et de l'accueil des
+            enfants sont sensibles (onze en tout). Pour chacun, le ministère concerné saisit un
+            total par mois, le mois en cours compris : un nombre, jamais un nom.
           </p>
           <p>
-            Un nombre de 1 ou 2 s'affiche « moins de 3 » : seul le ministère qui les saisit voit ses
-            valeurs exactes. Une précision est lue par le ministère qui l'écrit, le berger, le
-            conseil et EJP Tech.
+            Le ministère peut répartir ce total entre quelques catégories larges, quand la
+            coordination en a fixé la liste. Il peut aussi joindre à ce total une « Précision » de
+            280 caractères au plus.
+          </p>
+          <p>
+            La « Précision » ne doit contenir aucune information sur une personne. L'outil refuse un
+            texte qui contient une adresse email, un lien, une suite de 5 chiffres ou plus, ou une
+            civilité suivie d'un nom. EJP Tech relit chaque précision et peut la masquer.
+          </p>
+          <p>
+            Les valeurs exactes de ces indicateurs, leur répartition et la « Précision » sont lues
+            par le ministère qui les saisit, le berger, le conseil et EJP Tech. L'administration de
+            l'église voit la date de chaque saisie, jamais sa valeur. Les autres ministères ne
+            voient pas ces valeurs, et la vue de l'église ne les affiche jamais. Le journal de
+            l'outil ne garde jamais ces valeurs.
           </p>
         </PartieTexte>
         <PartieTexte titre="Sous-traitants">
@@ -98,9 +111,10 @@ export function PageConfidentialite() {
           <p>
             Supabase et Netlify agissent sous contrat. Pour Google, il n'y a pas de contrat de
             sous-traitance : le Gmail gratuit d'EJP Tech relève des conditions grand public de
-            Google. Google et Netlify sont établis aux États-Unis : les transferts s'appuient sur le
-            cadre de protection des données entre l'Union européenne et les États-Unis, ou sur les
-            clauses contractuelles types de la Commission européenne.
+            Google. Google et Netlify sont établis aux États-Unis. Les transferts vers Google
+            s'appuient sur le cadre de protection des données entre l'Union européenne et les
+            États-Unis ; ceux vers Netlify, sur les clauses contractuelles types de la Commission
+            européenne.
           </p>
         </PartieTexte>
         <PartieTexte titre="Durées de conservation">
@@ -129,7 +143,7 @@ export function PageConfidentialite() {
             </li>
             <li>
               <strong className="text-encre">Copies des emails envoyés</strong> : dans la boîte
-              d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil.
+              d'envoi Gmail d'EJP Tech, supprimées au plus tard à l'arrêt de l'outil.
             </li>
           </ul>
         </PartieTexte>
