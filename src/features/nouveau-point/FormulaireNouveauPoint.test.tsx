@@ -2,7 +2,11 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { MESSAGES_POINT } from '@/data/pointsEcriture'
+import {
+  LONGUEUR_DESCRIPTION_POINT,
+  LONGUEUR_TITRE_POINT,
+  MESSAGES_POINT,
+} from '@/data/pointsEcriture'
 import { FormulaireNouveauPoint } from '@/features/nouveau-point/FormulaireNouveauPoint'
 import type { NouveauPoint } from '@/features/nouveau-point/schemas'
 import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
@@ -137,6 +141,15 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     expect(screen.queryByText(/sur 80/)).toBeNull()
     await utilisateur.type(titre(), 'b'.repeat(62))
     expect(screen.getByText('62 sur 80')).toBeInTheDocument()
+  })
+
+  it('compteurs : les maximums sont ceux du point (titre, description), pas ceux d’un autre écran', async () => {
+    afficher()
+    const utilisateur = userEvent.setup()
+    await utilisateur.type(screen.getByLabelText('Ce qui se passe (facultatif)'), 'a')
+    await utilisateur.type(titre(), 'b'.repeat(60))
+    expect(screen.getByText(`1 sur ${LONGUEUR_DESCRIPTION_POINT}`)).toBeInTheDocument()
+    expect(screen.getByText(`60 sur ${LONGUEUR_TITRE_POINT}`)).toBeInTheDocument()
   })
 
   it('échéance passée : refusée avant l’envoi, sous le champ, avec le message de la base', async () => {

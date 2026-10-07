@@ -24,7 +24,12 @@ export function SaisieNouveauPoint({
 }) {
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
-  const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
+  // Relu à chaque ouverture : un onglet resté ouvert après minuit (Paris) ne garde pas la veille.
+  const semaine = useQuery({
+    queryKey: ['eglise', 'semaine'],
+    queryFn: lireSemaine,
+    refetchOnMount: 'always',
+  })
   const ministeres = useQuery({ queryKey: ['ministeres', 'liste'], queryFn: lireMinisteres })
 
   const envoyer = async (point: NouveauPoint) => {

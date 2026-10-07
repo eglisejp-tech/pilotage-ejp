@@ -1,13 +1,14 @@
 import type { Ref } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import { PRIORITES_POINT, TEXTES_POINT } from '@/features/nouveau-point/textes'
+import type { Priorite } from '@/lib/base'
 
 interface Props {
   /** Préfixe des identifiants et nom du groupe de boutons radio. */
   id: string
   /** Priorité choisie (« normale » au départ). */
-  valeur: string
-  onChange: (priorite: string) => void
+  valeur: Priorite
+  onChange: (priorite: Priorite) => void
   onBlur?: () => void
   /** Reçoit le premier bouton. */
   refPremier?: Ref<HTMLInputElement>

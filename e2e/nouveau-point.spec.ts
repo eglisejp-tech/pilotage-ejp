@@ -154,6 +154,32 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     await ouvrir(page, 'sans-mention')
     await expect(page.getByText('Aucun autre ministère actif à mentionner.')).toBeVisible()
     await expect(page.getByRole('checkbox')).toHaveCount(0)
+    // Le bouton garde, sous la phrase, au moins l'espace du formulaire (20 px entre les blocs).
+    const phrase = await page.getByText('Aucun autre ministère actif à mentionner.').boundingBox()
+    const bouton = await creer(page).boundingBox()
+    expect(phrase).not.toBeNull()
+    expect(bouton).not.toBeNull()
+    expect((bouton?.y ?? 0) - ((phrase?.y ?? 0) + (phrase?.height ?? 0))).toBeGreaterThanOrEqual(19)
+  })
+
+  test('un ministère coché prend le fond sombre, le gras et un « ✓ » (pas la couleur seule)', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    const groupe = page.getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
+    const puce = (nom: string) => groupe.locator('label', { hasText: nom }).locator('span').first()
+    const style = (nom: string) =>
+      puce(nom).evaluate((element) => {
+        const calcule = getComputedStyle(element)
+        return { fond: calcule.backgroundColor, graisse: Number(calcule.fontWeight) }
+      })
+    const avant = await style('Coordination')
+    await mentionner(page, 'Coordination')
+    const apres = await style('Coordination')
+    expect(apres.fond).not.toBe(avant.fond)
+    expect(apres.graisse).toBeGreaterThan(avant.graisse)
+    await expect(puce('Coordination')).toContainText('✓')
+    await expect(puce('Intégration')).not.toContainText('✓')
   })
 
   test('problème passager : « Réessayer » à la place du formulaire', async ({ page }) => {

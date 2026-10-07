@@ -1,10 +1,6 @@
 import type { Ref } from 'react'
+import type { MinistreAMentionner } from '@/features/evenements/ChoixMentions'
 import { TEXTES_POINT } from '@/features/nouveau-point/textes'
-
-export interface MinistreAMentionner {
-  id: string
-  nom: string
-}
 
 interface Props {
   id: string
