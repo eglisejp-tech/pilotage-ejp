@@ -19,7 +19,11 @@ async function ouvrir(page: Page, ecran: Ecran) {
 const boutonsAide = (page: Page) => page.getByRole('button', { name: /^Aide : / })
 
 /** Boutons et liens d'action qu'EJP Tech ne voit jamais (T29). */
-const ACTIONS = /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Modifier|Mettre à jour/
+const ACTIONS =
+  /Marquer traité|Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Modifier|Mettre à jour/
+/** Ce que le berger et le conseil n'ont pas : « Marquer traité » leur revient (étape 5). */
+const ACTIONS_SANS_TRAITE =
+  /Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Modifier|Mettre à jour/
 
 const TOUS: Ecran[] = [
   { profil: 'berger' },
@@ -89,7 +93,10 @@ test.describe('fiche 04 lue par le berger (aperçu)', () => {
       await ouvrir(page, { profil })
       const contenu = page.getByRole('main')
       await expect(contenu.getByRole('link', { name: ACTIONS })).toHaveCount(0)
-      await expect(contenu.getByRole('button', { name: ACTIONS })).toHaveCount(0)
+      // Le berger et le conseil marquent un point traité (étape 5) : c'est le seul bouton qu'ils
+      // ont sur la fiche. EJP Tech n'en a aucun, pas même celui-là (T29).
+      const interdits = profil === 'admin_plateforme' ? ACTIONS : ACTIONS_SANS_TRAITE
+      await expect(contenu.getByRole('button', { name: interdits })).toHaveCount(0)
     }
   })
 

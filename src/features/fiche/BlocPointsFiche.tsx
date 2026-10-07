@@ -5,11 +5,23 @@ import { CartePointFiche } from '@/features/fiche/CartePointFiche'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc, PointFiche, ProfilFiche } from '@/features/fiche/modeleFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
+import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 
 interface Props {
   bloc: EtatBloc<PointFiche[]>
   profil: ProfilFiche
+  /** Ministère de la fiche : celui du compte quand le ministère lit la sienne. */
+  ministereId: string
   nomMinistere: string
+}
+
+/**
+ * Compte qui lit la fiche, pour les boutons de ses points. EJP Tech lit sans aucun bouton (T29) :
+ * pas de compte. Le berger et le conseil n'ont pas de ministère ; le ministère lit sa fiche.
+ */
+function compteDeLaFiche(profil: ProfilFiche, ministereId: string): CompteDesActions | null {
+  if (profil === 'admin_plateforme') return null
+  return { type: profil, ministereId: profil === 'ministere' ? ministereId : null }
 }
 
 /**
@@ -18,10 +30,11 @@ interface Props {
  * votre ministère. » (ministère) ou « Aucun point ouvert pour Social. » (berger, conseil, EJP Tech).
  * Lu à part : son problème passager garde le titre et propose « Réessayer ».
  */
-export function BlocPointsFiche({ bloc, profil, nomMinistere }: Props) {
+export function BlocPointsFiche({ bloc, profil, ministereId, nomMinistere }: Props) {
   const idTitre = useId()
+  const compte = compteDeLaFiche(profil, ministereId)
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
+    <section aria-labelledby={idTitre} data-repli-focus className="flex min-w-0 flex-col">
       <TitreSection
         id={idTitre}
         titre={TEXTES_FICHE.titrePoints}
@@ -46,7 +59,7 @@ export function BlocPointsFiche({ bloc, profil, nomMinistere }: Props) {
         ) : (
           <div className="flex flex-col divide-y divide-filet">
             {bloc.donnees.map((point) => (
-              <CartePointFiche key={point.id} point={point} />
+              <CartePointFiche key={point.id} point={point} compte={compte} />
             ))}
           </div>
         )

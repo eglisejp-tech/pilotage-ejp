@@ -638,8 +638,10 @@ function nomAvecEtat(contexte: Contexte, id: string): string {
 }
 
 function pointADecider(point: LigneVue<'v_point'>, contexte: Contexte): PointADecider {
-  const mentions = (contexte.lectures.points?.mentions ?? [])
-    .filter((mention) => mention.point_id === point.id)
+  const mentionsDuPoint = (contexte.lectures.points?.mentions ?? []).filter(
+    (mention) => mention.point_id === point.id,
+  )
+  const mentions = mentionsDuPoint
     .map((mention) => nomAvecEtat(contexte, mention.ministere_id))
     .sort(comparerNoms)
   return {
@@ -657,6 +659,9 @@ function pointADecider(point: LigneVue<'v_point'>, contexte: Contexte): PointADe
     description: texteLibreOuNull(point.description),
     attendu: texteLibreOuNull(point.action_attendue),
     mentions,
+    statut: point.statut,
+    ministereId: point.ministere_id,
+    mentionIds: mentionsDuPoint.map((mention) => mention.ministere_id),
   }
 }
 

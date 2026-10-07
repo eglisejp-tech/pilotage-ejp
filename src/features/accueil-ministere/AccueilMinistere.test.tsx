@@ -15,6 +15,7 @@ import {
   LIGNE_EVENEMENT_MENTIONNE,
   LIGNE_REUNION_A_FAIRE,
   LIGNE_REUNION_FAITE,
+  MINISTERE_EXEMPLE,
   POINTS_EXEMPLE,
 } from '@/features/accueil-ministere/exempleAccueil'
 import { OuvertureMinistere } from '@/features/accueil-ministere/OuvertureMinistere'
@@ -100,7 +101,10 @@ describe('BlocVosSaisies', () => {
 })
 
 describe('BlocVosPoints', () => {
-  const afficher = (bloc: EtatBloc<PointFiche[]>) => dans(<BlocVosPoints bloc={bloc} />)
+  const afficher = (bloc: EtatBloc<PointFiche[]>) =>
+    dans(
+      <BlocVosPoints bloc={bloc} compte={{ type: 'ministere', ministereId: MINISTERE_EXEMPLE }} />,
+    )
 
   it('titre, « Créés ou mentionnés », aide `accueil.points` hors du titre, puis les points', async () => {
     afficher({ etat: 'donnees', donnees: POINTS_EXEMPLE })
@@ -120,8 +124,8 @@ describe('BlocVosPoints', () => {
     expect(bloc).toHaveTextContent(
       'Les points créés par votre ministère ou qui le mentionnent. Un point traité reste affiché 7 jours.',
     )
-    // Les boutons « Changer le statut » et « Marquer traité » arrivent à l'étape 5.
-    expect(within(bloc).queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()
+    // Les boutons de chaque point sont ceux d'`ActionsPoint` (étape 5) : leur pose est vérifiée
+    // par `PoseActionsPoint.test.tsx`, avec les propriétés qu'elle lui donne.
   })
 
   it('tout est fait : « Aucun point ouvert pour votre ministère. »', () => {
@@ -158,7 +162,11 @@ describe('OuvertureMinistere', () => {
       within(actions)
         .getAllByRole('link')
         .map((lien) => lien.textContent),
-    ).toEqual(['Renseigner la prochaine réunion', 'Saisir une session'])
+    ).toEqual(['Renseigner la prochaine réunion', 'Saisir une session', 'Nouveau point'])
+    expect(within(actions).getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
     expect(
       within(actions).getByRole('link', { name: 'Renseigner la prochaine réunion' }),
     ).toHaveClass('bg-lumiere')
@@ -182,6 +190,7 @@ describe('OuvertureMinistere', () => {
     expect(container.querySelector('.bg-lumiere')).toBeNull()
     expect(screen.getAllByRole('link').map((lien) => lien.textContent)).toEqual([
       'Saisir une session',
+      'Nouveau point',
     ])
   })
 })

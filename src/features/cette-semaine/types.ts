@@ -9,6 +9,7 @@
 // par une union discriminée (`etat`), par `null` ou par une liste vide, documentés champ par
 // champ. Le texte affiché vient de TEXTES_VIDES (textesVides.ts), jamais d'un composant.
 
+import type { StatutPoint } from '@/lib/base'
 import type { TypeSession } from '@/lib/metier/phrases'
 
 /**
@@ -137,6 +138,12 @@ export interface PointADecider {
   attendu: TexteLibre | null
   /** Noms complets des ministères mentionnés, sans l'arobase : « Prodiges Junior » (T24). */
   mentions: string[]
+  /** Statut du point (`v_point.statut`) : les boutons d'action en lisent les droits (étape 5). */
+  statut: StatutPoint
+  /** Ministère créateur (`v_point.ministere_id`), pour les droits des boutons, jamais son nom. */
+  ministereId: string
+  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`), pour les droits. */
+  mentionIds: string[]
 }
 
 /** Bloc « À décider » (berger et conseil ; EJP Tech en lecture seule). */

@@ -58,8 +58,10 @@ test.describe('Cette semaine, aperçu', () => {
       'Planning du trimestre à valider',
       'Salle pour la soirée de louange',
     ])
-    // « Marquer traité » arrive avec sa fenêtre à l'étape 5 (T19).
-    await expect(aDecider.getByRole('button')).toHaveCount(0)
+    // Seul « Marquer traité » (étape 5, berger et conseil) peut se poser sous un point.
+    await expect(aDecider.getByRole('button').filter({ hasNotText: 'Marquer traité' })).toHaveCount(
+      0,
+    )
     await expect(aDecider.getByText('avant le 28 sept., dépassée')).toBeVisible()
     await expect(aDecider.getByRole('link', { name: 'Tous les points' })).toHaveAttribute(
       'href',

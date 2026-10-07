@@ -30,6 +30,7 @@ export const TEXTES_FICHE = {
   saisirDimanche: 'Saisir les chiffres du dimanche',
   saisirMois: 'Saisir les chiffres du mois',
   saisirSession: 'Saisir une session',
+  nouveauPoint: 'Nouveau point',
   /** Premier usage d'un indicateur du mois, au-dessus de son action. Proposé (E2). */
   premiereSaisieDuMois: 'Un indicateur du mois attend sa première saisie.',
   /**

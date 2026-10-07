@@ -88,6 +88,7 @@ export function VueFiche({
           <BlocPointsFiche
             bloc={points}
             profil={donnees.profil}
+            ministereId={donnees.ministere.id}
             nomMinistere={donnees.ministere.nom}
           />
           <DernieresSaisies

@@ -146,6 +146,8 @@ export function construireOuverture(
       vers: adresseSaisirUneSession(sessionsASaisir(lignes)),
     })
   }
+  // « Nouveau point » (maquette 07, BRIEF section 9) : jamais le bouton principal, donc toujours là.
+  secondaires.push({ libelle: TEXTES_ACCUEIL.nouveauPoint, vers: '/saisir/point' })
   if (contexte.estFij && premiere?.saisie.type !== 'carte_fij') {
     secondaires.push({ libelle: TEXTES_ACCUEIL.carteFij, vers: '/saisir/fij' })
   }
