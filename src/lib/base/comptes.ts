@@ -7,10 +7,31 @@
 // Déjà typées ailleurs, à ne pas redéclarer ici : `v_session_completude` (communs.ts) et
 // `v_usage_indicateurs` (indicateurs.ts).
 
-import type { Aucun } from './communs'
+import type { Aucun, TypeCompte, Vue } from './communs'
 
 export type TablesComptes = Aucun
 
-export type VuesComptes = Aucun
+/**
+ * État de la double authentification d'un compte, calculé par `private.etat_comptes()` : compte
+ * désactivé, adresse pas encore confirmée (invitation envoyée), confirmée sans facteur TOTP
+ * vérifié (à activer), ou avec un facteur vérifié (activée).
+ */
+export type EtatCompte = 'desactive' | 'invitation_envoyee' | 'a_activer' | 'activee'
+
+export type VuesComptes = {
+  /**
+   * Tous les comptes avec leur adresse (lue dans Auth) et leur état (L1). Une ligne pour
+   * l'administration de l'église en aal2 seulement ; aucune pour les autres profils, ni en aal1.
+   */
+  v_etat_comptes: Vue<{
+    user_id: string
+    type: TypeCompte
+    libelle: string
+    ministere_id: string | null
+    email: string | null
+    desactive_le: string | null
+    etat: EtatCompte
+  }>
+}
 
 export type FonctionsComptes = Aucun

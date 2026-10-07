@@ -618,7 +618,6 @@ const ADRESSES_AMORCES_C0 = [
   '/points',
   '/journal',
   '/journal-technique',
-  '/comptes',
   '/sessions',
   '/indicateurs',
   '/indicateurs/:id',
