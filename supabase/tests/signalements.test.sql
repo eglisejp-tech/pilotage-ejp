@@ -295,12 +295,12 @@ $$, $$ values ('id'), ('ministere_id'), ('ministere_nom'), ('ecran'), ('texte'),
               ('commentaire'), ('clos_le'), ('ouvert'), ('clos_recent') $$,
   'v_signalement : les colonnes annoncées à E8, dans l''ordre');
 select is(tests.lire((select tech from ctx), 'aal2',
-  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx) order by saisi_le'),
-  '[{"ouvert": false, "clos_recent": false}, {"ouvert": true, "clos_recent": false}, {"ouvert": false, "clos_recent": true}]'::jsonb,
-  'EJP Tech : clos il y a 40 jours, ouvert, clos à l''instant (clos_recent vaut faux, faux, vrai)');
+  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx)'),
+  '[{"ouvert": false, "clos_recent": false}, {"ouvert": false, "clos_recent": true}, {"ouvert": true, "clos_recent": false}]'::jsonb,
+  'EJP Tech : v_signalement donne clos il y a 40 jours, clos à l''instant, ouvert (lignes triées par tests.lire)');
 select is(tests.lire((select a from ctx), 'aal2',
-  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx) order by saisi_le'),
-  '[{"ouvert": false, "clos_recent": false}, {"ouvert": true, "clos_recent": false}, {"ouvert": false, "clos_recent": true}]'::jsonb,
+  'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx)'),
+  '[{"ouvert": false, "clos_recent": false}, {"ouvert": false, "clos_recent": true}, {"ouvert": true, "clos_recent": false}]'::jsonb,
   'le ministère auteur lit les mêmes trois lignes de v_signalement');
 select is(tests.lire((select a from ctx), 'aal2',
   'select ministere_nom, commentaire is not null as avec_commentaire from public.v_signalement where id = (select s1 from ctx)'),
