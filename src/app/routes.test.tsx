@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -94,7 +94,11 @@ function afficher(adresse: string) {
   return routeur
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Démonter d'abord, puis annuler les requêtes encore en vol : sinon une réponse du test
+  // précédent (son compte, ses onglets) peut revenir dans le cache après le clear().
+  cleanup()
+  await clientRequetes.cancelQueries()
   clientRequetes.clear()
   effacerMotDePasseAChoisir()
   vi.clearAllMocks()
