@@ -22,8 +22,10 @@ function nombreDePhrases(texte: string): number {
 }
 
 describe('catalogue des aides (T38)', () => {
-  it('compte 28 textes de référence et 3 codes à retirer (aides-contextuelles.md, section 6)', () => {
-    expect(ENTREES).toHaveLength(31)
+  // Étapes 5 et 6 (lot C0) : 8 aides proposées, ajoutées à la fin du catalogue (écran 13 et
+  // configuration des indicateurs).
+  it('compte 28 textes de référence, 3 codes à retirer et 8 aides de l’étape 6 (aides-contextuelles.md, section 6)', () => {
+    expect(ENTREES).toHaveLength(31 + 8)
     expect(CODES_A_RETIRER).toHaveLength(3)
     for (const code of CODES_A_RETIRER) expect(Object.keys(TEXTES_AIDE)).toContain(code)
   })

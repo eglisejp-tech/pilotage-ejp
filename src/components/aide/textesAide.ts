@@ -94,6 +94,36 @@ export const TEXTES_AIDE = {
     "Seuls le jour et le nom s'enregistrent : l'outil ne garde ni l'heure ni le lieu.",
   'evenement.report':
     "L'ancienne date reste dans l'historique : le berger et le conseil voient que l'événement a été reporté.",
+
+  // ÉTAPES 5 ET 6 (lot C0, plan des étapes 5 à 8, section 3.0). Ajoutées à la fin du catalogue
+  // seulement ; statut « Proposé, écrit le 7 octobre 2026 », à valider par la personne
+  // responsable (question Q7 du plan), avec les règles de aides-contextuelles.md, section 2.
+  // Le catalogue de ce document les reprend au lot d'intégration.
+
+  // Ministères et comptes (écran 13, lot L1). Panneaux : une aide par champ d'email ; tableau :
+  // l'en-tête « Double authentification » et la colonne des indicateurs.
+  'comptes.emailMinistere':
+    "L'adresse d'une boîte mail que partage l'équipe du ministère. Tous ses responsables se connectent avec elle.",
+  'comptes.emailPersonnel':
+    "L'adresse de la personne qui utilisera ce compte. L'invitation à se connecter part à cette adresse.",
+  'comptes.etat':
+    "« À activer » : l'invitation est acceptée, la double authentification reste à activer. « Activée » : le compte est prêt.",
+  'comptes.indicateurs':
+    "Nombre d'indicateurs que le ministère suit en plus des chiffres communs. Ils se règlent dans l'onglet Indicateurs.",
+
+  // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
+  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs. `indicateurs.prevus` : colonne
+  // « Prévus » de /indicateurs et titre du bloc « Prévus par la coordination » de
+  // /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la coordination ».
+  // `indicateurs.usage` : première ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
+  'indicateurs.nombre':
+    'Indicateurs actifs ou à valider du ministère, calculs compris. Une fiche en compte 12 au plus.',
+  'indicateurs.prevus':
+    'Indicateurs que la coordination a choisis pour ce ministère. Une fois créés, ils entrent dans ses saisies et sa fiche.',
+  'indicateurs.modele':
+    'Les prévus de la coordination, par nom de ministère. « Aucun prévu » : le ministère saisit les chiffres communs.',
+  'indicateurs.usage':
+    "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
 } as const
 
 /**

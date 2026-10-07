@@ -61,8 +61,8 @@ export type AdresseApplication = {
 
 /**
  * Table des adresses (BRIEF section 9, « Adresses » ; plan de l'étape 4, section 4). Les saisies
- * arrivent aux étapes 4 et 5 ; l'étape 4 les déclare toutes une fois, ce fichier est ensuite figé
- * jusqu'au lot I.
+ * arrivent aux étapes 4 et 5. Le lot C0 (plan des étapes 5 à 8, section 3.0) ajoute les adresses
+ * des étapes 5 et 6 ; ce fichier est ensuite figé jusqu'à leur intégration.
  * Les adresses de lecture du berger s'ouvrent à LECTEURS (berger, conseil, et EJP Tech en
  * lecture seule, T29) ; leurs boutons d'action se montrent par estDecideur
  * (src/lib/metier/droits.ts), jamais par ce droit d'adresse.

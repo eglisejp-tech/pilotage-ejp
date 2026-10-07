@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
-import { accueil, ADRESSES_APPLICATION } from '@/features/navigation/profils'
+import { accueil, ADRESSES_APPLICATION, titrePour } from '@/features/navigation/profils'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -169,9 +169,13 @@ describe('routes', () => {
     [
       'admin_eglise',
       'Cette semaine',
-      ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Journal'],
+      ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Indicateurs', 'Journal'],
     ],
-    ['admin_plateforme', 'Modération', ['Modération', 'Cette semaine', 'Journal technique']],
+    [
+      'admin_plateforme',
+      'Modération',
+      ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
+    ],
   ])(
     '%s en aal2 : son accueil, ses onglets seulement, son libellé',
     async (type, titre, onglets) => {
@@ -603,4 +607,65 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(nombreDAides)
     expect(faux.from).not.toHaveBeenCalled()
   })
+})
+
+// Adresses des étapes 5 et 6 posées par le lot C0, chacune avec sa page amorce (« Cet écran arrive
+// à l'étape 5. »). Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie
+// page à part. Leurs refus (page non disponible, aucune requête) sont déjà couverts par
+// `ADRESSES_REFUSEES`, qui parcourt toute la table des adresses.
+const ADRESSES_AMORCES_C0 = [
+  '/saisir/point',
+  '/points',
+  '/journal',
+  '/journal-technique',
+  '/comptes',
+  '/sessions',
+  '/indicateurs',
+  '/indicateurs/:id',
+  '/ma-fiche/indicateurs',
+]
+const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
+  ADRESSES_AMORCES_C0.includes(adresse.chemin),
+).flatMap((adresse) => adresse.profils.map((profil) => [adresse, profil] as const))
+
+describe('adresses des étapes 5 et 6 (lot C0)', () => {
+  it('déclare chaque adresse amorce dans la table des adresses', () => {
+    for (const motif of ADRESSES_AMORCES_C0) {
+      expect(
+        ADRESSES_APPLICATION.some((adresse) => adresse.chemin === motif),
+        motif,
+      ).toBe(true)
+    }
+  })
+
+  it.each(AMORCES_C0_PAR_PROFIL.map(([adresse, profil]) => [adresse.chemin, profil, adresse]))(
+    '%s ouverte au profil %s : la page amorce de son étape, sans aucune requête de données',
+    async (motif, profil, adresse) => {
+      const faux = connecte(profil)
+      const routeur = afficher(exempleDe(motif))
+      expect(
+        await screen.findByText(`Cet écran arrive à l'étape ${adresse.etape}.`),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        titrePour(adresse, profil),
+      )
+      expect(routeur.state.location.pathname).toBe(exempleDe(motif))
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
+
+  it.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])(
+    '%s : l’onglet « Indicateurs » est l’onglet courant sur /indicateurs',
+    async (profil) => {
+      connecte(profil)
+      afficher('/indicateurs')
+      expect(await screen.findByText("Cet écran arrive à l'étape 6.")).toBeInTheDocument()
+      await waitFor(() =>
+        expect(within(navigation()[0]!).getByRole('link', { name: 'Indicateurs' })).toHaveAttribute(
+          'aria-current',
+          'page',
+        ),
+      )
+    },
+  )
 })
