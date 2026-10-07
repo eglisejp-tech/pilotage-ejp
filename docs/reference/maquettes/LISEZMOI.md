@@ -3,6 +3,7 @@
 Ces maquettes fixent l'apparence de l'application. Pour le visuel, **elles priment sur `prototype.html`**. Le prototype reste la référence pour le comportement (ce qui se passe quand on clique, les données d'exemple).
 
 Chaque écran existe en deux formes :
+
 - `NN-nom.png` : la capture, à regarder ;
 - `html/NN-nom.html` : la même maquette en HTML statique, pour lire les valeurs exactes (tailles, espacements, couleurs). Ce n'est **pas** du code à copier : reconstruis avec les composants React, Tailwind et les tokens de `docs/reference/tokens.css`.
 
@@ -14,25 +15,25 @@ L'outil s'appelle **Pilotage EJP** (décision du 30 septembre 2026). Les maquett
 
 ## Écrans par profil
 
-| Fichier | Profil | Écran | Format dessiné |
-|---|---|---|---|
-| 00 | Tous | Qui voit quoi, navigation de chaque profil | Planche |
-| 01, 02, 03 | Berger et conseil | Cette semaine (accueil) | Ordinateur, tablette, téléphone |
-| 04 | Berger et conseil | Fiche d'un ministère | Ordinateur |
-| 05 | Berger et conseil | Points d'attention | Ordinateur |
-| 06 | Berger et conseil | Journal | Ordinateur |
-| 07 | Ministère | Accueil | Téléphone |
-| 08 | Ministère | Saisie du dimanche | Téléphone |
-| 09 | Ministère | Saisie d'une session | Téléphone |
-| 10 | Ministère | Nouveau point d'attention | Téléphone |
-| 11 | Ministère | Ajouter un événement | Téléphone |
-| 12 | Ministère | Ma fiche | Ordinateur |
-| 13 | Administration de l'église | Ministères et comptes | Ordinateur |
-| 14 | Administration de l'église | Sessions | Ordinateur |
-| 15 | EJP Tech | Modération des champs libres | Ordinateur |
-| 16 | Tous | Connexion : Google ou email et mot de passe (avec message d'erreur) | Téléphone |
-| 17 | Tous | Activer la double authentification (première connexion) | Téléphone |
-| 18 | Tous | Code de double authentification (chaque connexion) | Téléphone |
+| Fichier    | Profil                     | Écran                                                               | Format dessiné                  |
+| ---------- | -------------------------- | ------------------------------------------------------------------- | ------------------------------- |
+| 00         | Tous                       | Qui voit quoi, navigation de chaque profil                          | Planche                         |
+| 01, 02, 03 | Berger et conseil          | Cette semaine (accueil)                                             | Ordinateur, tablette, téléphone |
+| 04         | Berger et conseil          | Fiche d'un ministère                                                | Ordinateur                      |
+| 05         | Berger et conseil          | Points d'attention                                                  | Ordinateur                      |
+| 06         | Berger et conseil          | Journal                                                             | Ordinateur                      |
+| 07         | Ministère                  | Accueil                                                             | Téléphone                       |
+| 08         | Ministère                  | Saisie du dimanche                                                  | Téléphone                       |
+| 09         | Ministère                  | Saisie d'une session                                                | Téléphone                       |
+| 10         | Ministère                  | Nouveau point d'attention                                           | Téléphone                       |
+| 11         | Ministère                  | Ajouter un événement                                                | Téléphone                       |
+| 12         | Ministère                  | Ma fiche                                                            | Ordinateur                      |
+| 13         | Administration de l'église | Ministères et comptes                                               | Ordinateur                      |
+| 14         | Administration de l'église | Sessions                                                            | Ordinateur                      |
+| 15         | EJP Tech                   | Modération des champs libres                                        | Ordinateur                      |
+| 16         | Tous                       | Connexion : Google ou email et mot de passe (avec message d'erreur) | Téléphone                       |
+| 17         | Tous                       | Activer la double authentification (première connexion)             | Téléphone                       |
+| 18         | Tous                       | Code de double authentification (chaque connexion)                  | Téléphone                       |
 
 ## Détails de l'authentification
 
@@ -47,6 +48,7 @@ L'outil s'appelle **Pilotage EJP** (décision du 30 septembre 2026). Les maquett
 ## Ce qui n'est pas dessiné, et comment le faire
 
 Chaque écran doit fonctionner de 360 px à 1440 px. Pour les formats non dessinés, applique les règles de `BRIEF_DESIGN.md`, sections 6 et 7 :
+
 - un tableau devient une liste sous 600 px (voir 03 : le tableau des chiffres de 01 devenu liste) ;
 - une colonne de droite passe sous le contenu principal sur tablette et téléphone (voir 02 et 03) ;
 - les onglets passent dans le menu en dessous de 1024 px, sur téléphone comme sur tablette : ne reproduis pas l'en-tête de 02 ;
@@ -54,22 +56,23 @@ Chaque écran doit fonctionner de 360 px à 1440 px. Pour les formats non dessin
 
 Écrans non dessinés, et d'où les dériver (contenu exact dans `BRIEF.md`, sections 8 et 9) :
 
-| Écran | Dérivé de | Remarque |
-|---|---|---|
-| Marquer traité (fenêtre) | 10 | Pour le berger, le conseil et le ministère ; commentaire obligatoire pour un ministère |
-| Changer le statut d'un point | choix de priorité de 10 | Trois boutons segmentés : À traiter, En cours, En attente de décision |
-| Mettre à jour l'événement | 11 | Nom en lecture seule, date et statut préremplis |
-| Prochaine réunion | 11 | Date, heure, objet, décision attendue |
-| FIJ par département | 08 | 8 champs, total en direct, ministère FIJ seulement |
-| Choisir la session | liste de 48 px par ligne | Quand plusieurs sessions attendent la saisie |
-| Ministères (berger, conseil) | bloc « Les ministères » de 01 | Description sous le nom, chaque nom ouvre la fiche |
-| Journal technique (EJP Tech) | 06 | Comme le Journal du berger : tout le journal, en lecture (`docs/decisions.md`, T29) |
-| Ajouter un ministère, ajouter un compte, confirmations (13) | colonne « Déclarer une session » de 14 | États des comptes : Invitation envoyée, À activer, Activée, Désactivé |
-| Accès par lien, Choisissez votre mot de passe, Mot de passe oublié, Nouveau mot de passe | 16 à 18 | Même colonne de 390 à 440 px |
-| Page non disponible, page introuvable | 16 à 18 | Titre, une phrase, bouton « Revenir à l'accueil » |
-| Confidentialité | texte simple | Page statique |
+| Écran                                                                                    | Dérivé de                              | Remarque                                                                               |
+| ---------------------------------------------------------------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------- |
+| Marquer traité (fenêtre)                                                                 | 10                                     | Pour le berger, le conseil et le ministère ; commentaire obligatoire pour un ministère |
+| Changer le statut d'un point                                                             | choix de priorité de 10                | Trois boutons segmentés : À traiter, En cours, En attente de décision                  |
+| Mettre à jour l'événement                                                                | 11                                     | Nom en lecture seule, date et statut préremplis                                        |
+| Prochaine réunion                                                                        | 11                                     | Date, heure, objet, décision attendue                                                  |
+| FIJ par département                                                                      | 08                                     | 8 champs, total en direct, ministère FIJ seulement                                     |
+| Choisir la session                                                                       | liste de 48 px par ligne               | Quand plusieurs sessions attendent la saisie                                           |
+| Ministères (berger, conseil)                                                             | bloc « Les ministères » de 01          | Description sous le nom, chaque nom ouvre la fiche                                     |
+| Journal technique (EJP Tech)                                                             | 06                                     | Comme le Journal du berger : tout le journal, en lecture (`docs/decisions.md`, T29)    |
+| Ajouter un ministère, ajouter un compte, confirmations (13)                              | colonne « Déclarer une session » de 14 | États des comptes : Invitation envoyée, À activer, Activée, Désactivé                  |
+| Accès par lien, Choisissez votre mot de passe, Mot de passe oublié, Nouveau mot de passe | 16 à 18                                | Même colonne de 390 à 440 px                                                           |
+| Page non disponible, page introuvable                                                    | 16 à 18                                | Titre, une phrase, bouton « Revenir à l'accueil »                                      |
+| Confidentialité                                                                          | texte simple                           | Page statique                                                                          |
 
 Vues d'un profil déduites d'un autre :
+
 - **Conseil** : identique au berger (01 à 06), seul le nom du compte change.
 - **Ministère, Cette semaine** : l'ouverture de 07 (phrase de ce qu'il reste à faire, bouton principal, « Vos saisies », « Vos points »), puis les blocs de l'église de 01, **sans « À décider »** et sans les colonnes « Prochaine réunion » et « Point ouvert » du tableau des ministères. Même contenu à toutes les tailles ; à partir de 1024 px, « Vos points » prend la colonne de droite (`BRIEF.md`, section 9).
 - **EJP Tech, Cette semaine** : identique au berger (01 à 03), en lecture seule : aucun bouton d'action, ni « Marquer traité », ni « Changer le statut », ni saisie. Ses autres écrans de lecture (Ministères, 04, 05) suivent la même règle (`docs/decisions.md`, T29).
@@ -79,6 +82,7 @@ Vues d'un profil déduites d'un autre :
 ## Écarts connus avec le brief
 
 Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
+
 - **00** : la planche dit du ministère « Marquer traité ses propres points ». Lis : « Marquer traités ses points et ceux qui le mentionnent, avec un commentaire ».
 - **00, EJP Tech** : la planche montre EJP Tech sans les chiffres, avec deux onglets. EJP Tech lit maintenant tout comme le berger, en lecture seule, et a l'onglet « Cette semaine » entre « Modération » (son accueil) et « Journal technique » (`docs/decisions.md`, T29).
 - **07 et 12** : la phrase « Seuls Intégration, le berger et le conseil peuvent le marquer traité. » est remplacée par « Mentionné par Intégration. », suivie des boutons « Changer le statut » et « Marquer traité » (décision du 30 septembre 2026).
@@ -89,6 +93,13 @@ Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 - **04 et 12** : la ligne d'un indicateur propre affiche la date de sa dernière saisie à la place de « Indicateur propre au ministère ».
 - **12 et 13** : les boutons dessinés à 40 px font 44 px dans l'application.
 - **13** : « Conseil, compte 3 », qui a le bouton « Relancer l'invitation », est à l'état « Invitation envoyée ». Ajoute la section « EJP Tech » et l'état « Désactivé » avec « Réactiver ».
+- **13, colonne « Indicateurs »** (lot L1) : elle remplace « Indicateur propre » (le nom d'un indicateur, « Visuels livrés ce mois »). Elle donne le nombre d'indicateurs propres du ministère (« Aucun », « 1 indicateur », « 2 indicateurs »), en lien vers son écran d'indicateurs, où ils s'ajoutent et se retirent (`docs/conception/configuration-indicateurs.md`, 7.1), et « et FIJ par département » pour FIJ. Le nombre compte les indicateurs actifs et ceux qui attendent la validation d'EJP Tech : **Proposé, à trancher par la personne responsable** (les actifs seulement, ou « 2 indicateurs, dont 1 à valider »).
+- **13, ministère sans compte** : un ministère actif qui n'a pas de compte (Coordination, comme en production) a sa ligne, avec « Pas encore de compte » à la place de l'adresse, l'état « Sans compte » et le bouton « Créer le compte » (panneau « Créer le compte de Coordination »).
+- **13, désactivé** : l'état affiche sa date, « Désactivé le 2 oct. », avec le seul bouton « Réactiver ».
+- **13, administration de l'église** : ses comptes n'apparaissent dans aucune section. L'écran ne crée ni ne désactive un compte de l'administration.
+- **13, de 600 à 1023 px** : l'adresse passe sous le nom, sans colonne à elle, pour que les boutons tiennent. Sous 600 px, chaque compte devient un bloc, boutons en pleine largeur.
+- **13, notes** : la note du brief sous le tableau est découpée. Sous les ministères : « Pour ajouter ou retirer un indicateur propre, ouvrez l'écran Indicateurs. » (lien). Sous les statuts d'événement : « Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech. » (Proposé).
+- **13, résultat d'une action** : la réussite ou le refus de « Relancer l'invitation », « Désactiver », « Réactiver » et « Refaire l'activation » s'affiche sous les boutons de la ligne, là où la personne a cliqué (même en bas de la liste sur téléphone). La réussite d'une création s'affiche en haut de la page. Quand le bouton cliqué disparaît (« Désactiver » remplacé par « Réactiver »), le focus va au premier bouton de la même ligne ; au retour d'un panneau en page entière, au titre de la page.
 - **14** : troisième type « Autre rassemblement », avec le champ « Nom du rassemblement » ; « Modifier » et « Supprimer » sur les sessions.
 - **15** : le premier texte montre un masquage partiel (« Relancer [texte masqué] pour les colis... »). Dans l'application, tout le champ est remplacé par « [texte masqué par EJP Tech] », et le motif se choisit dans une liste.
 - **Carte des FIJ** (01, 03) : les teintes en `rgba` écrites en dur deviennent cinq tokens pleins, et le blanc sur la deuxième teinte (3,86:1) devient `--encre`. Pas de largeur fixe de 346 px : la carte suit la largeur de son bloc.
@@ -111,30 +122,37 @@ Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 
 ## États (non dessinés)
 
-| État | Où | Texte et comportement |
-|---|---|---|
-| Chargement | toute page | Titres de section et filets tout de suite ; après 300 ms, « Chargement » en `--encre-3` à la place du contenu, avec `aria-busy`. Pas d'animation. Au-delà de 10 s : erreur de page. |
-| Erreur de page | écrans de lecture | Bandeau en haut du contenu, fond `--alerte-fond`, `role="alert"` : « La connexion a échoué. Réessayez. », bouton « Réessayer ». |
-| Erreur de formulaire | saisies | Sous le bouton d'enregistrement : « La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez. » Les valeurs restent, le bouton redevient actif. |
-| Hors ligne | toute page | « Pas de connexion internet. Les chiffres affichés peuvent dater. » |
-| Réussite | après une saisie | Retour à la page d'origine et message pendant 6 s (`role="status"`) : « Chiffres du dimanche 27 sept. enregistrés. », « Présence enregistrée pour Bâtir l'Église du 26 sept. », « Point créé. », « Statut enregistré : En cours. », « Point marqué traité. », « Événement ajouté au calendrier. », « Réunion enregistrée. » |
-| Session expirée | toute page | « Votre session a expiré. Reconnectez-vous. », puis la connexion, et retour à la même adresse. |
-| Compte désactivé | connexion, renouvellement de session | « Ce compte est désactivé. Adressez-vous à l'administration de l'église. », puis déconnexion. |
-| Vide | 05 | Ouverts : « Aucun point ouvert. » ; Traités : « Aucun point traité pour l'instant. » |
-| Vide | 06, journal technique | « Aucune ligne pour ces filtres. », bouton « Retirer les filtres ». |
-| Vide | 07, 12 (points) | « Aucun point ouvert pour votre ministère. » |
-| Vide | 04, 12 (calendrier) | « Aucun événement prévu. » (et « Ajouter un événement » pour le ministère) |
-| Vide | 14, 15 | « Aucune session déclarée. Déclarez la première avec le panneau. » ; « Aucun texte à relire. » |
-| Premier dimanche | 01 à 03 | « Pas encore de saisie » à la place de la valeur, complétude « 0 sur 8 », pas d'écart ni de courbe. Session : « Aucune session déclarée. » Carte : « La carte s'affichera quand FIJ aura saisi ses chiffres. » |
-| Premier usage | 01 à 03, courbes | Une seule phrase sous le tableau, pas une par ligne : « Les courbes apparaîtront avec les premières saisies. » (berger, conseil, EJP Tech) |
-| En attente des autres | carte des FIJ (tous les profils) | « La carte s'affichera quand FIJ aura saisi ses chiffres. » Chaque département vide porte « À saisir ». Le ministère FIJ voit en plus le bouton « Saisir la carte » ; les autres profils n'ont aucune action. |
-| Tout est fait | Indicateurs, bloc « À valider » (EJP Tech) | « Rien à valider. Les demandes d'indicateurs des ministères arriveront ici. » Le bloc garde sa place, pour qu'EJP Tech sache où regarder. |
-| Premier usage | Mes indicateurs (ministère) | « Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche. », bouton « Demander un indicateur ». |
-| Premier usage | Indicateurs d'un ministère sans prévu (administration, EJP Tech) | « Aucun indicateur pour Protocole. Il saisit les chiffres communs. », bouton « Ajouter un indicateur ». |
-| Tout est fait | blocs d'alerte (événements en attente de validation, T31) | Une alerte n'a pas d'état vide : quand rien n'est à signaler, le bloc disparaît. |
-| Validation | formulaires | Un champ facultatif porte « (facultatif) » dans son libellé. Messages sous le champ, reliés par `aria-describedby` (« Donnez un titre au point. », « Choisissez une date à venir. »). Un compteur « 12 sur 80 » s'affiche à partir de 60 caractères. |
+| État                  | Où                                                               | Texte et comportement                                                                                                                                                                                                                                                                                                       |
+| --------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Chargement            | toute page                                                       | Titres de section et filets tout de suite ; après 300 ms, « Chargement » en `--encre-3` à la place du contenu, avec `aria-busy`. Pas d'animation. Au-delà de 10 s : erreur de page.                                                                                                                                         |
+| Erreur de page        | écrans de lecture                                                | Bandeau en haut du contenu, fond `--alerte-fond`, `role="alert"` : « La connexion a échoué. Réessayez. », bouton « Réessayer ».                                                                                                                                                                                             |
+| Erreur de formulaire  | saisies                                                          | Sous le bouton d'enregistrement : « La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez. » Les valeurs restent, le bouton redevient actif.                                                                                                                                                       |
+| Hors ligne            | toute page                                                       | « Pas de connexion internet. Les chiffres affichés peuvent dater. »                                                                                                                                                                                                                                                         |
+| Réussite              | après une saisie                                                 | Retour à la page d'origine et message pendant 6 s (`role="status"`) : « Chiffres du dimanche 27 sept. enregistrés. », « Présence enregistrée pour Bâtir l'Église du 26 sept. », « Point créé. », « Statut enregistré : En cours. », « Point marqué traité. », « Événement ajouté au calendrier. », « Réunion enregistrée. » |
+| Session expirée       | toute page                                                       | « Votre session a expiré. Reconnectez-vous. », puis la connexion, et retour à la même adresse.                                                                                                                                                                                                                              |
+| Compte désactivé      | connexion, renouvellement de session                             | « Ce compte est désactivé. Adressez-vous à l'administration de l'église. », puis déconnexion.                                                                                                                                                                                                                               |
+| Vide                  | 05                                                               | Ouverts : « Aucun point ouvert. » ; Traités : « Aucun point traité pour l'instant. »                                                                                                                                                                                                                                        |
+| Vide                  | 06, journal technique                                            | « Aucune ligne pour ces filtres. », bouton « Retirer les filtres ».                                                                                                                                                                                                                                                         |
+| Vide                  | 07, 12 (points)                                                  | « Aucun point ouvert pour votre ministère. »                                                                                                                                                                                                                                                                                |
+| Vide                  | 04, 12 (calendrier)                                              | « Aucun événement prévu. » (et « Ajouter un événement » pour le ministère)                                                                                                                                                                                                                                                  |
+| Vide                  | 14, 15                                                           | « Aucune session déclarée. Déclarez la première avec le panneau. » ; « Aucun texte à relire. »                                                                                                                                                                                                                              |
+| Vide                  | 13, Ministères                                                   | « Aucun ministère pour le moment. », puis « Ajoutez le premier : son email partagé reçoit une invitation. » L'en-tête « 8 actifs, un email partagé chacun » disparaît (Proposé, T36).                                                                                                                                       |
+| Vide                  | 13, Berger et conseil ; EJP Tech                                 | « Aucun compte pour le berger ni pour le conseil pour l'instant. », puis « Chaque compte reçoit une invitation à son email personnel. » ; « Aucun compte EJP Tech pour l'instant. », puis « EJP Tech demande son compte à l'administration de l'église. » (Proposé)                                                         |
+| Panneau               | 13                                                               | Sous le titre : « L'adresse reçoit une invitation par email. Le compte choisit son mot de passe, puis active sa double authentification. » (Proposé)                                                                                                                                                                        |
+| Confirmation          | 13, compte personnel                                             | Désactiver : « Plus personne ne pourra se connecter avec conseil3@exemple.test. Son historique reste. » ; refaire l'activation : « À faire quand la personne perd son téléphone. Elle choisit ensuite « Mot de passe oublié », puis active un nouveau code. » (Proposé)                                                     |
+| Réussite              | 13                                                               | « Ministère Tech créé. Invitation envoyée à ... », « Compte créé. Invitation envoyée à ... », « Invitation renvoyée à ... », « Ministère Social désactivé. », « Berger réactivé. », « Activation à refaire pour ... » (Proposé)                                                                                             |
+| Erreur d'action       | 13                                                               | Chaque code des fonctions de comptes a sa phrase (`src/data/comptes.ts`). Réponse perdue : « La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer. », et la liste est relue (Proposé).                                                                                                                        |
+| Premier dimanche      | 01 à 03                                                          | « Pas encore de saisie » à la place de la valeur, complétude « 0 sur 8 », pas d'écart ni de courbe. Session : « Aucune session déclarée. » Carte : « La carte s'affichera quand FIJ aura saisi ses chiffres. »                                                                                                              |
+| Premier usage         | 01 à 03, courbes                                                 | Une seule phrase sous le tableau, pas une par ligne : « Les courbes apparaîtront avec les premières saisies. » (berger, conseil, EJP Tech)                                                                                                                                                                                  |
+| En attente des autres | carte des FIJ (tous les profils)                                 | « La carte s'affichera quand FIJ aura saisi ses chiffres. » Chaque département vide porte « À saisir ». Le ministère FIJ voit en plus le bouton « Saisir la carte » ; les autres profils n'ont aucune action.                                                                                                               |
+| Tout est fait         | Indicateurs, bloc « À valider » (EJP Tech)                       | « Rien à valider. Les demandes d'indicateurs des ministères arriveront ici. » Le bloc garde sa place, pour qu'EJP Tech sache où regarder.                                                                                                                                                                                   |
+| Premier usage         | Mes indicateurs (ministère)                                      | « Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche. », bouton « Demander un indicateur ».                                                                                                                                                       |
+| Premier usage         | Indicateurs d'un ministère sans prévu (administration, EJP Tech) | « Aucun indicateur pour Protocole. Il saisit les chiffres communs. », bouton « Ajouter un indicateur ».                                                                                                                                                                                                                     |
+| Tout est fait         | blocs d'alerte (événements en attente de validation, T31)        | Une alerte n'a pas d'état vide : quand rien n'est à signaler, le bloc disparaît.                                                                                                                                                                                                                                            |
+| Validation            | formulaires                                                      | Un champ facultatif porte « (facultatif) » dans son libellé. Messages sous le champ, reliés par `aria-describedby` (« Donnez un titre au point. », « Choisissez une date à venir. »). Un compteur « 12 sur 80 » s'affiche à partir de 60 caractères.                                                                        |
 
 **États vides partout** (`docs/decisions.md`, T36, décidé le 6 octobre 2026) : le catalogue des états du canevas de conception (https://claude.ai/artifact/XCCBJHgKrHGBYGwW8nLUQ2) est validé. Chaque écran et chaque bloc a un état vide conçu, rangé dans l'une des six situations : premier usage, en attente des autres, tout est fait, aucun résultat, pas pour ce profil, problème passager. Règles :
+
 - garder la forme du bloc rempli : titre, filets, mise en page ;
 - une phrase complète qui dit ce qui se passe, puis ce qui viendra ou qui doit agir (« L'administration de l'église déclare les sessions. ») ;
 - jamais un zéro trompeur : « Pas encore de saisie » et la complétude, car 0 est une vraie valeur saisie ;

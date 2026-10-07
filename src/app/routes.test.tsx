@@ -618,7 +618,6 @@ const ADRESSES_AMORCES_C0 = [
   '/points',
   '/journal',
   '/journal-technique',
-  '/comptes',
   '/sessions',
   '/indicateurs',
   '/indicateurs/:id',
@@ -668,4 +667,62 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
       )
     },
   )
+})
+
+// Lot L1 : la vraie page /comptes (retirée des amorces de C0), branchée sur ses lectures.
+describe('/comptes, écran 13 (lot L1)', () => {
+  it('admin_eglise en aal2 : titre, onglet courant, ses quatre lectures et aucun appel de fonction', async () => {
+    const faux = installer({
+      ...scenarioDe('admin_eglise'),
+      lignes: {
+        v_etat_comptes: [
+          {
+            user_id: 'u-com',
+            type: 'ministere',
+            libelle: 'Ministère Communication',
+            ministere_id: 'm-communication',
+            email: 'communication@exemple.test',
+            desactive_le: null,
+            etat: 'activee',
+          },
+          {
+            user_id: 'u-admin_eglise',
+            type: 'admin_eglise',
+            libelle: "Administration de l'église",
+            ministere_id: null,
+            email: 'admin_eglise@exemple.test',
+            desactive_le: null,
+            etat: 'activee',
+          },
+        ],
+        ministere: [
+          { id: 'm-communication', code: null, nom: 'Communication', desactive_le: null },
+        ],
+        indicateur: [{ ministere_id: 'm-communication' }, { ministere_id: 'm-communication' }],
+      },
+    })
+    const invoke = vi.fn()
+    courant.client = { ...faux.client, functions: { invoke } }
+    afficher('/comptes')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Ministères et comptes' }),
+    ).toBeInTheDocument()
+    const ministeres = await screen.findByRole('region', { name: 'Ministères' })
+    await waitFor(() => expect(ministeres).toHaveTextContent('communication@exemple.test'))
+    expect(
+      within(ministeres).getByRole('link', { name: '2 indicateurs pour Communication' }),
+    ).toHaveAttribute('href', '/indicateurs/m-communication')
+    // Le compte de l'administration n'apparaît pas sur l'écran.
+    expect(screen.getByRole('main')).not.toHaveTextContent('admin_eglise@exemple.test')
+    expect(
+      within(navigation()[0]!).getByRole('link', { name: 'Ministères et comptes' }),
+    ).toHaveAttribute('aria-current', 'page')
+    expect([...new Set(faux.tables)].sort()).toEqual([
+      'compte',
+      'indicateur',
+      'ministere',
+      'v_etat_comptes',
+    ])
+    expect(invoke).not.toHaveBeenCalled()
+  })
 })
