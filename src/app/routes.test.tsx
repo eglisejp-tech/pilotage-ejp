@@ -84,6 +84,28 @@ function installerVueDeLEglise(type: TypeCompte) {
   })
 }
 
+/** Une rangée de `v_point` (ministère créateur « Communication »), ouverte ou traitée. */
+function pointExemple(id: string, titre: string, statut: 'attente_decision' | 'traite') {
+  const traite = statut === 'traite'
+  return {
+    id,
+    ministere_id: 'min-a',
+    titre,
+    description: null,
+    action_attendue: null,
+    priorite: 'normale',
+    echeance: null,
+    cree_le: '2026-10-01T10:00:00+02:00',
+    cree_par: 'compte-createur',
+    statut,
+    statut_le: '2026-10-01T10:00:00+02:00',
+    traitement_id: traite ? `traitement-${id}` : null,
+    traite_le: traite ? '2026-10-05T10:00:00+02:00' : null,
+    traite_par: null,
+    traite_commentaire: null,
+  }
+}
+
 function afficher(adresse: string) {
   const routeur = createMemoryRouter(routes, { initialEntries: [adresse] })
   render(
@@ -273,14 +295,35 @@ describe('routes', () => {
           v_semaine: [
             { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
           ],
+          // Écran 05 : un point ouvert et un point traité, pour que le test lise de vraies rangées.
+          ministere: [
+            { id: 'min-a', code: null, nom: 'Communication', desactive_le: null },
+            { id: 'min-b', code: null, nom: 'Intégration', desactive_le: null },
+          ],
+          v_point: [
+            pointExemple('point-ouvert', 'Salle pour la soirée', 'attente_decision'),
+            pointExemple('point-traite', 'Micros à remplacer', 'traite'),
+          ],
+          point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
         },
       })
       const routeur = afficher(adresse)
       expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      // Les rangées de l'écran 05 sont chargées avant de chercher des boutons : sans cette
+      // attente, le test ne contrôlerait que l'écran de chargement.
+      if (adresse.startsWith('/points')) {
+        expect(await screen.findAllByRole('article')).toHaveLength(1)
+        expect(screen.getByRole('region', { name: 'Traités récemment' })).toHaveTextContent(
+          'Micros à remplacer',
+        )
+      }
       expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
       expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
       expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
-      expect(within(screen.getByRole('main')).queryByRole('button')).toBeNull()
+      // Les boutons « ? » des aides (« Aide : Filtrer par ministère ») informent, ils n'agissent pas.
+      expect(
+        within(screen.getByRole('main')).queryByRole('button', { name: /^(?!Aide : )/ }),
+      ).toBeNull()
     },
   )
 
@@ -625,6 +668,10 @@ const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
   ADRESSES_AMORCES_C0.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse, profil] as const))
 
+// Page que le lot P3 a remplacée (écran 05 et « Mes points ») : testée dans
+// `src/pages/PagePoints.test.tsx` et `src/features/points/`.
+const PAGES_REMPLACEES_PAR_P3 = ['/points']
+
 describe('adresses des étapes 5 et 6 (lot C0)', () => {
   it('déclare chaque adresse amorce dans la table des adresses', () => {
     for (const motif of ADRESSES_AMORCES_C0) {
@@ -635,7 +682,11 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     }
   })
 
-  it.each(AMORCES_C0_PAR_PROFIL.map(([adresse, profil]) => [adresse.chemin, profil, adresse]))(
+  it.each(
+    AMORCES_C0_PAR_PROFIL.filter(
+      ([adresse]) => !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin),
+    ).map(([adresse, profil]) => [adresse.chemin, profil, adresse]),
+  )(
     '%s ouverte au profil %s : la page amorce de son étape, sans aucune requête de données',
     async (motif, profil, adresse) => {
       const faux = connecte(profil)
