@@ -7,9 +7,10 @@ import type { IndicateurConfiguration, LigneUsage } from '@/data/indicateursConf
 import type { CalculIndicateur, MotifRetrait, NatureIndicateur, UniteIndicateur } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
 import { libelleRythme, RYTHMES, trierIndicateurs } from '@/lib/metier/indicateurs'
-import { comparerNoms, terminerPhrase } from '@/lib/metier/texte'
+import { PLAFOND_UNITE } from '@/lib/metier/unites'
+import { comparerNoms, nombre, terminerPhrase } from '@/lib/metier/texte'
 import { texteDepuisJours } from '@/features/indicateurs/configuration/phrases'
-import { estPeuSaisi, texteUsage } from '@/features/indicateurs/configuration/usage'
+import { estJamaisSaisi, estPeuSaisi, texteUsage } from '@/features/indicateurs/configuration/usage'
 
 /** Titre de la section des calculs. */
 export const TITRE_CALCULS = 'Calculs'
@@ -23,13 +24,15 @@ export interface LigneConfiguration {
   calcul: CalculIndicateur | null
   /** Ajout d'un ministère qui attend EJP Tech. */
   enAttente: boolean
-  /** « grand compte », « en euros », « sensible », « ajouté par Kumi le 12 oct. »... */
+  /** Mentions qui commencent par une majuscule : « Ajouté par Kumi le 12 oct. », « En euros »... */
   mentions: string[]
-  /** « à valider par EJP Tech depuis 2 jours », avec le lien « Voir dans À valider » ; sinon null. */
+  /** « À valider par EJP Tech depuis 2 jours », avec le lien « Voir dans À valider » ; sinon null. */
   aValider: string | null
   /** « Saisi 4 mois sur 5, dernier le 2 oct. » ; null pour un calcul. */
   usage: string | null
   peuSaisi: boolean
+  /** Aucune saisie depuis l'ajout : l'usage s'affiche alors comme un « peu saisi », partout. */
+  jamaisSaisi: boolean
 }
 
 export interface SectionConfiguration {
@@ -63,19 +66,12 @@ const MOTIFS: Readonly<Record<MotifRetrait, string>> = {
   refuse: 'refusé',
 }
 
-const NOMS_CALCUL: Readonly<Record<CalculIndicateur, string>> = {
-  taux: 'taux',
-  moyenne: 'moyenne',
-  difference: 'différence',
-  somme: 'somme',
-  evolution: 'évolution',
-}
-
+/** Ce que dit une unité autre que le simple nombre : la mention se lit seule, sans définition. */
 const MENTIONS_UNITE: Readonly<Partial<Record<UniteIndicateur, string>>> = {
-  grand_nombre: 'grand compte',
-  euros: 'en euros',
-  heure: 'en heures',
-  jours: 'en jours',
+  grand_nombre: `Grand nombre, jusqu'à ${nombre(PLAFOND_UNITE.grand_nombre)}`,
+  euros: 'En euros',
+  heure: 'Heure et minutes',
+  jours: 'Compté en jours',
 }
 
 /** Jour de Paris d'un instant, écrit « 12 oct. ». */
@@ -102,22 +98,22 @@ function mentionsDe(
   libellesParId: ReadonlyMap<string, IndicateurConfiguration>,
 ): string[] {
   const mentions: string[] = []
-  if (indicateur.calcul !== null) mentions.push(`calcul : ${NOMS_CALCUL[indicateur.calcul]}`)
+  // Le calcul n'a pas de mention : la colonne de droite dit déjà « Se calcule tout seul ».
   const unite = MENTIONS_UNITE[indicateur.unite]
   if (unite !== undefined) mentions.push(unite)
-  if (indicateur.sensible) mentions.push('domaine sensible')
+  if (indicateur.sensible) mentions.push('Domaine sensible')
   if (indicateur.modele_code !== null && catalogue.suggestions.has(indicateur.modele_code)) {
-    mentions.push('suggestion')
+    mentions.push('Suggestion de la coordination')
   }
   if (indicateur.origine === 'ministere') {
-    mentions.push(`ajouté par ${nomMinistere} le ${jour(indicateur.cree_le)}`)
+    mentions.push(`Ajouté par ${nomMinistere} le ${jour(indicateur.cree_le)}`)
   }
-  if (aEteCorrige(indicateur)) mentions.push(`libellé corrigé le ${jour(indicateur.texte_le)}`)
+  if (aEteCorrige(indicateur)) mentions.push(`Libellé corrigé le ${jour(indicateur.texte_le)}`)
   const remplace =
     indicateur.remplace_id === null ? undefined : libellesParId.get(indicateur.remplace_id)
   if (remplace !== undefined) {
     mentions.push(
-      `remplace « ${remplace.libelle} » (${libelleRythme(remplace.nature).toLowerCase()})`,
+      `Remplace « ${remplace.libelle} » (${libelleRythme(remplace.nature).toLowerCase()})`,
     )
   }
   return mentions
@@ -148,10 +144,11 @@ export function construireSections(
       enAttente,
       mentions: mentionsDe(indicateur, nomMinistere, catalogue, parId),
       aValider: enAttente
-        ? `à valider par EJP Tech${usageIndicateur?.attente_jours == null ? '' : ` ${texteDepuisJours(usageIndicateur.attente_jours)}`}`
+        ? `À valider par EJP Tech${usageIndicateur?.attente_jours == null ? '' : ` ${texteDepuisJours(usageIndicateur.attente_jours)}`}`
         : null,
       usage: indicateur.calcul === null ? texteUsage(usageIndicateur, indicateur.nature) : null,
       peuSaisi: indicateur.calcul === null && estPeuSaisi(usageIndicateur),
+      jamaisSaisi: indicateur.calcul === null && estJamaisSaisi(usageIndicateur),
     }
   }
   const saisis = trierIndicateurs(suivis.filter((indicateur) => indicateur.calcul === null))

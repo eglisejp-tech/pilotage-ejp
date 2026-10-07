@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { CellulePrevus } from '@/features/indicateurs/configuration/CellulePrevus'
 import { CelluleSaisie } from '@/features/indicateurs/configuration/CelluleSaisie'
 import type { LigneMinistereConfiguration } from '@/features/indicateurs/configuration/construire'
+import { RefusCreation } from '@/features/indicateurs/configuration/RefusCreation'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 
@@ -15,7 +16,8 @@ const textes = TEXTES_CONFIGURATION.liste
 
 /**
  * Les ministères sous 600 px (le tableau devenu liste, comme 03) : le nom qui ouvre l'écran du
- * ministère, puis une ligne par colonne du tableau, avec son titre.
+ * ministère, puis une ligne par colonne du tableau, avec son titre. Le refus de la base à un
+ * « Créer » s'affiche sous le ministère concerné.
  */
 export function ListeIndicateursTelephone({ lignes, creation, idTitre }: Props) {
   return (
@@ -45,6 +47,7 @@ export function ListeIndicateursTelephone({ lignes, creation, idTitre }: Props) 
             <dt className="text-note text-encre-3">{textes.colonneChangement}</dt>
             <dd className="text-encre-2">{ligne.dernierChangement ?? textes.aucunChangement}</dd>
           </dl>
+          {creation.dernier === ligne.id ? <RefusCreation refus={creation.refus} /> : null}
         </li>
       ))}
     </ul>

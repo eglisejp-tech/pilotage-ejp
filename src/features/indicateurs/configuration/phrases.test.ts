@@ -26,8 +26,7 @@ describe('phrasesEglise (7.1)', () => {
   it("ajoute « 1 ajout attend la validation d'EJP Tech. » et, pour l'administration seulement, le rappel de plus de 7 jours", () => {
     expect(phrasesEglise(EGLISE, 'admin_eglise')).toEqual([
       '94 indicateurs actifs pour 22 ministères, dont 7 ajoutés par les ministères.',
-      "1 ajout attend la validation d'EJP Tech.",
-      '1 ajout attend EJP Tech depuis plus de 7 jours. Prévenez EJP Tech.',
+      "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
     ])
   })
 
@@ -40,9 +39,18 @@ describe('phrasesEglise (7.1)', () => {
 
   it('accorde le pluriel des ajouts qui attendent', () => {
     const phrases = phrasesEglise({ ...EGLISE, enAttente: 3, enAttenteLongue: 2 }, 'admin_eglise')
-    expect(phrases[1]).toBe("3 ajouts attendent la validation d'EJP Tech.")
-    expect(phrases[2]).toBe(
-      '2 ajouts attendent EJP Tech depuis plus de 7 jours. Prévenez EJP Tech.',
+    expect(phrases).toHaveLength(2)
+    expect(phrases[1]).toBe(
+      "3 ajouts attendent la validation d'EJP Tech, dont 2 depuis plus de 7 jours. Prévenez EJP Tech.",
+    )
+    expect(phrasesEglise({ ...EGLISE, enAttente: 2, enAttenteLongue: 2 }, 'admin_eglise')[1]).toBe(
+      "2 ajouts attendent la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
+    )
+  })
+
+  it("sans attente longue, la phrase des ajouts ne demande rien à l'administration", () => {
+    expect(phrasesEglise({ ...EGLISE, enAttente: 3, enAttenteLongue: 0 }, 'admin_eglise')[1]).toBe(
+      "3 ajouts attendent la validation d'EJP Tech.",
     )
   })
 
@@ -90,7 +98,7 @@ describe('phraseMinistere (7.2)', () => {
         ajoutesParLEglise: 1,
       }),
     ).toBe(
-      "Jeunesse suit 9 indicateurs sur 30 au plus : 5 prévus par la coordination, 3 ajoutés par Jeunesse et 1 ajouté par l'église.",
+      "Jeunesse suit 9 indicateurs sur 30 au plus : 5 prévus par la coordination, 3 ajoutés par Jeunesse et 1 ajouté par l'administration de l'église ou EJP Tech.",
     )
   })
 

@@ -1,8 +1,10 @@
+import { Fragment } from 'react'
 import { Link } from 'react-router'
 import { Aide } from '@/components/aide/Aide'
 import { CellulePrevus } from '@/features/indicateurs/configuration/CellulePrevus'
 import { CelluleSaisie } from '@/features/indicateurs/configuration/CelluleSaisie'
 import type { LigneMinistereConfiguration } from '@/features/indicateurs/configuration/construire'
+import { RefusCreation } from '@/features/indicateurs/configuration/RefusCreation'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import { cn } from '@/lib/utils'
@@ -20,7 +22,8 @@ const textes = TEXTES_CONFIGURATION.liste
 /**
  * Tableau des ministères à partir de 600 px (7.1) : le nom, qui ouvre l'écran du ministère ;
  * « Indicateurs » (« 8 sur 30, dont 1 ajouté par Kumi ») ; « Prévus » et son bouton « Créer » ;
- * « Saisie » ; « Dernier changement ». Aucune valeur d'indicateur.
+ * « Saisie » ; « Dernier changement ». Le refus de la base à un « Créer » s'affiche dans une ligne
+ * sous le ministère concerné. Aucune valeur d'indicateur.
  */
 export function TableauIndicateurs({ lignes, creation, idTitre }: Props) {
   return (
@@ -60,26 +63,35 @@ export function TableauIndicateurs({ lignes, creation, idTitre }: Props) {
       </thead>
       <tbody>
         {lignes.map((ligne) => (
-          <tr key={ligne.id} className="border-t border-filet text-[15px]">
-            <th scope="row" className={cn(cellule, 'text-left font-normal')}>
-              <Link
-                to={ligne.href}
-                className="-my-3 inline-flex min-h-cible items-center font-semibold underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
-              >
-                {ligne.nom}
-              </Link>
-            </th>
-            <td className={cn(cellule, 'text-encre-2')}>{ligne.texteIndicateurs}</td>
-            <td className={cellule}>
-              <CellulePrevus ligne={ligne} creation={creation} />
-            </td>
-            <td className={cellule}>
-              <CelluleSaisie ligne={ligne} />
-            </td>
-            <td className={cn(cellule, 'pr-0 text-encre-2')}>
-              {ligne.dernierChangement ?? textes.aucunChangement}
-            </td>
-          </tr>
+          <Fragment key={ligne.id}>
+            <tr className="border-t border-filet text-[15px]">
+              <th scope="row" className={cn(cellule, 'text-left font-normal')}>
+                <Link
+                  to={ligne.href}
+                  className="-my-3 inline-flex min-h-cible items-center font-semibold underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
+                >
+                  {ligne.nom}
+                </Link>
+              </th>
+              <td className={cn(cellule, 'text-encre-2')}>{ligne.texteIndicateurs}</td>
+              <td className={cellule}>
+                <CellulePrevus ligne={ligne} creation={creation} />
+              </td>
+              <td className={cellule}>
+                <CelluleSaisie ligne={ligne} />
+              </td>
+              <td className={cn(cellule, 'pr-0 text-encre-2')}>
+                {ligne.dernierChangement ?? textes.aucunChangement}
+              </td>
+            </tr>
+            {creation.dernier === ligne.id && creation.refus !== null ? (
+              <tr>
+                <td colSpan={5} className="pb-3">
+                  <RefusCreation refus={creation.refus} />
+                </td>
+              </tr>
+            ) : null}
+          </Fragment>
         ))}
       </tbody>
     </table>

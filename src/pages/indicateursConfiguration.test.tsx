@@ -119,6 +119,27 @@ describe.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])('/indicateurs, %
     expect(screen.getByRole('button', { name: 'Créer ces 6 indicateurs' })).toBeInTheDocument()
   })
 
+  it('un refus de la base reste sous le bouton, et ne suit pas le navigateur vers un autre ministère', async () => {
+    const faux = connecte(profil)
+    faux.rpc.mockRejectedValueOnce({
+      code: 'P0001',
+      message:
+        'La fiche a déjà « Publications » : retirez-le avant de créer les indicateurs prévus.',
+    })
+    const routeur = afficher(`/indicateurs/${ID_KUMI}`)
+    const bouton = await screen.findByRole('button', { name: 'Créer ces 6 indicateurs' })
+    await userEvent.click(bouton)
+    const alerte = await screen.findByRole('alert')
+    expect(alerte).toHaveTextContent('La fiche a déjà « Publications »')
+    expect(bouton.compareDocumentPosition(alerte) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+
+    await routeur.navigate(`/indicateurs/${ID_COMMUNICATION}`)
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Indicateurs de Communication' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
   it('un identifiant mal formé : « Ce ministère n’existe pas », aucune lecture de plus', async () => {
     const faux = connecte(profil)
     afficher('/indicateurs/pas-un-identifiant')

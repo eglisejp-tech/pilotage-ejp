@@ -46,6 +46,7 @@ function useCreationSimulee(
   envoi: string | null,
 ): CreationPrevus {
   const [enCours, setEnCours] = useState<string | null>(null)
+  const [dernier, setDernier] = useState<string | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [numero, setNumero] = useState(0)
   const [refus, setRefus] = useState<string | null>(null)
@@ -55,6 +56,7 @@ function useCreationSimulee(
       if (occupe.current) return
       occupe.current = true
       setEnCours(ministere.id)
+      setDernier(ministere.id)
       setRefus(null)
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
       if (envoi === 'echec') {
@@ -78,7 +80,7 @@ function useCreationSimulee(
     },
     [envoi, lectures, setLectures],
   )
-  return { creer, enCours, reussite, envoi: numero, refus }
+  return { creer, enCours, dernier, reussite, envoi: numero, refus }
 }
 
 const reessayer = () => undefined

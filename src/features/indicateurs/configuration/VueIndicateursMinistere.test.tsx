@@ -19,6 +19,7 @@ function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   return {
     creer: vi.fn(() => Promise.resolve()),
     enCours: null,
+    dernier: null,
     reussite: null,
     envoi: 0,
     refus: null,
@@ -96,8 +97,26 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     const corrigee = screen
       .getByText('Demandes reçues', { selector: 'span.font-semibold' })
       .closest('li')!
-    expect(within(corrigee).getByText('libellé corrigé le 5 oct.')).toBeInTheDocument()
+    expect(within(corrigee).getByText('Libellé corrigé le 5 oct.')).toBeInTheDocument()
     expect(within(corrigee).getByText('Jamais saisi')).toHaveClass('text-attention')
+  })
+
+  it('« Jamais saisi » a la même mise en forme dans toutes les sections, « À ce jour » compris', () => {
+    afficherMinistere(ID_COMMUNICATION)
+    const ligne = screen
+      .getByText('Projets en cours', { selector: 'span.font-semibold' })
+      .closest('li')!
+    expect(within(ligne).getByText('Jamais saisi')).toHaveClass('text-attention', 'font-semibold')
+  })
+
+  it('les mentions et l’état « À valider » commencent par une majuscule et se lisent à 14 px', () => {
+    afficherMinistere(ID_COMMUNICATION)
+    const ligne = screen
+      .getByText('Projets en cours', { selector: 'span.font-semibold' })
+      .closest('li')!
+    const mentions = within(ligne).getByText(/^Suggestion de la coordination/)
+    expect(mentions).toHaveClass('text-[14px]')
+    expect(within(ligne).getByText(/^À valider par EJP Tech/)).toHaveClass('text-[14px]')
   })
 
   it('un ajout à valider : mentions, durée, lien « Voir dans À valider » vers le bloc', () => {
@@ -106,9 +125,11 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
       .getByText('Projets en cours', { selector: 'span.font-semibold' })
       .closest('li')!
     expect(
-      within(ligne).getByText(/suggestion · ajouté par Communication le 28 sept\./),
+      within(ligne).getByText(
+        /Suggestion de la coordination · Ajouté par Communication le 28 sept\./,
+      ),
     ).toBeInTheDocument()
-    expect(within(ligne).getByText(/à valider par EJP Tech depuis 9 jours/)).toBeInTheDocument()
+    expect(within(ligne).getByText(/À valider par EJP Tech depuis 9 jours/)).toBeInTheDocument()
     expect(within(ligne).getByRole('link', { name: 'Voir dans À valider' })).toHaveAttribute(
       'href',
       '/indicateurs#a-valider',
@@ -119,7 +140,7 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     afficherMinistere(ID_COMMUNICATION)
     const calculs = screen.getByRole('region', { name: 'Calculs' })
     expect(within(calculs).getByText('Se calcule tout seul')).toBeInTheDocument()
-    expect(within(calculs).getByText('calcul : taux')).toBeInTheDocument()
+    expect(within(calculs).queryByText(/^calcul : /i)).toBeNull()
   })
 
   it('« Retirés (2) », replié, avec la date et le motif', async () => {
@@ -224,11 +245,41 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
     expect(bouton).not.toBeDisabled()
   })
 
-  it('le message de réussite et le refus de la base sous le titre', () => {
+  it('le message de réussite sous la phrase du ministère', () => {
     afficherMinistere(ID_KUMI, creationDe({ reussite: '6 indicateurs prévus créés.', envoi: 1 }))
     expect(
       screen.getByText('6 indicateurs prévus créés.', { selector: '[role="status"] p' }),
     ).toBeInTheDocument()
+  })
+
+  it('le refus de la base s’affiche sous le bouton qui l’a provoqué, dans le bloc', () => {
+    const refus =
+      'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
+    afficherMinistere(ID_KUMI, creationDe({ dernier: ID_KUMI, refus }))
+    const bloc = screen.getByRole('region', { name: 'Prévus par la coordination' })
+    const alerte = within(bloc).getByRole('alert')
+    expect(alerte).toHaveTextContent(refus)
+    const bouton = within(bloc).getByRole('button', { name: 'Créer ces 6 indicateurs' })
+    // Dans l'ordre du document, le refus suit le bouton.
+    expect(bouton.compareDocumentPosition(alerte) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('le refus d’un autre ministère ne s’affiche pas dans ce bloc', () => {
+    afficherMinistere(ID_KUMI, creationDe({ dernier: ID_JEUNESSE, refus: 'Refus ailleurs.' }))
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  it('nom non reconnu : une phrase attend le choix, puis disparaît quand il est fait', async () => {
+    afficherMinistere(ID_JEUNESSE)
+    const phrase =
+      "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite."
+    expect(screen.getByText(phrase)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' }),
+      'Film',
+    )
+    expect(screen.queryByText(phrase)).toBeNull()
   })
 })
 

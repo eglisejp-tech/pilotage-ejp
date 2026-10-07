@@ -20,7 +20,7 @@ const textes = TEXTES_CONFIGURATION.ministere
 
 /**
  * Une ligne d'indicateur de `/indicateurs/:id` (7.2) : libellé, définition, mentions
- * (« grand compte », « ajouté par Kumi le 12 oct. »), « à valider par EJP Tech depuis 2 jours » avec
+ * (« En euros », « Ajouté par Kumi le 12 oct. »), « À valider par EJP Tech depuis 2 jours » avec
  * le lien « Voir dans À valider », et l'usage (« Saisi 4 mois sur 5, dernier le 2 oct. »), jamais
  * une valeur. Les actions (L3b) viennent de l'emplacement `ActionsLigne`.
  */
@@ -32,10 +32,10 @@ export function LigneConfiguration({ ligne, ministereId, ministereNom, profil, a
         <span className="font-semibold break-words">{ligne.libelle}</span>
         <span className="text-[15px] break-words text-encre-2">{ligne.definition}</span>
         {ligne.mentions.length > 0 ? (
-          <span className="text-note text-encre-3">{ligne.mentions.join(' · ')}</span>
+          <span className="text-[14px] text-encre-3">{ligne.mentions.join(' · ')}</span>
         ) : null}
         {ligne.aValider !== null ? (
-          <span className="text-note font-semibold text-attention">
+          <span className="text-[14px] font-semibold text-attention">
             {ligne.aValider}
             {' · '}
             <Link
@@ -53,7 +53,9 @@ export function LigneConfiguration({ ligne, ministereId, ministereNom, profil, a
             <span
               className={cn(
                 'text-[15px]',
-                ligne.peuSaisi ? 'font-semibold text-attention' : 'text-encre-2',
+                ligne.peuSaisi || ligne.jamaisSaisi
+                  ? 'font-semibold text-attention'
+                  : 'text-encre-2',
               )}
             >
               {usage}

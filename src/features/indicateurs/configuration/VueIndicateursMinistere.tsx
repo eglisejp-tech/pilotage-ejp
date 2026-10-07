@@ -8,7 +8,7 @@ import { BlocPrevus } from '@/features/indicateurs/configuration/BlocPrevus'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
 import { deMinistere } from '@/features/indicateurs/configuration/phrases'
 import { resteAChoisirOuCreer } from '@/features/indicateurs/configuration/prevus'
-import { ResultatCreation } from '@/features/indicateurs/configuration/ResultatCreation'
+import { ReussiteCreation } from '@/features/indicateurs/configuration/ReussiteCreation'
 import { RetiresConfiguration } from '@/features/indicateurs/configuration/RetiresConfiguration'
 import { SectionConfiguration } from '@/features/indicateurs/configuration/SectionConfiguration'
 import {
@@ -51,7 +51,7 @@ function Donnees({
         <p className="mt-4 max-w-prose text-encre-2">{donnees.phrase}</p>
       ) : null}
       <ActionsMinistere ministereId={donnees.id} ministereNom={donnees.nom} profil={profil} />
-      <ResultatCreation creation={creation} />
+      <ReussiteCreation creation={creation} />
       <BlocPrevus key={donnees.id} donnees={donnees} creation={creation} />
       {donnees.sansIndicateur && !resteAChoisirOuCreer(donnees.prevus) ? (
         <EtatVide situation="premier_usage">{aucunIndicateurPour(donnees.nom)}</EtatVide>

@@ -11,9 +11,10 @@ const LIGATURES: ReadonlyArray<readonly [string, string]> = [
   ['Æ', 'AE'],
 ]
 
-// `translate` de la base : les 56 lettres accentuées de la liste, dans l'ordre.
-const AVEC_ACCENTS = 'àâäáãåçéèêëíìîïñóòôöõúùûüýÿÀÂÄÁÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÝŸ'
-const SANS_ACCENTS = 'aaaaaaceeeeiiiinooooouuuuyyAAAAAACEEEEIIIINOOOOOUUUUYY'
+// `translate` de la base : les 54 lettres accentuées de la liste (27 minuscules, 27 majuscules),
+// dans l'ordre. Les deux chaînes ont la même longueur (vérifié par `normaliser.test.ts`).
+export const AVEC_ACCENTS = 'àâäáãåçéèêëíìîïñóòôöõúùûüýÿÀÂÄÁÃÅÇÉÈÊËÍÌÎÏÑÓÒÔÖÕÚÙÛÜÝŸ'
+export const SANS_ACCENTS = 'aaaaaaceeeeiiiinooooouuuuyyAAAAAACEEEEIIIINOOOOOUUUUYY'
 
 const CORRESPONDANCE = new Map<string, string>(
   Array.from(AVEC_ACCENTS).map((lettre, rang) => [lettre, SANS_ACCENTS.charAt(rang)]),

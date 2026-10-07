@@ -6,7 +6,9 @@ import { compter, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 
 // Configuration des indicateurs (lot L3a) avec la base locale (job « e2e » de la CI, E2E_BASE=1),
 // en lecture seulement : la création des prévus est dans
-// `indicateurs-configuration.ecriture.spec.ts` (projet « ecritures »). Jeu d'exemple (seed/40) :
+// `indicateurs-configuration.ecriture.spec.ts` (projet « ecritures »). En local, lancez
+// `npx supabase db reset` avant de relancer ce fichier après un passage d'`ecritures` (qui crée
+// trois ministères d'essai : « pour 8 ministères » n'est plus vrai). Jeu d'exemple (seed/40) :
 // les prévus sont créés pour Communication, Intégration, Coordination, Social, FIJ, Prodiges Junior
 // et EJP Formation ; Jeunesse n'a aucun prévu et son nom n'est pas dans la liste de la coordination.
 // Seuls l'administration de l'église et EJP Tech ont la page ; les autres profils reçoivent la page

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { LIMITE_CHANGEMENTS } from '@/data/indicateursConfiguration'
 import {
   apresCreation,
   ID_ANCIEN,
@@ -15,6 +16,7 @@ import {
   construireMinistere,
 } from '@/features/indicateurs/configuration/construire'
 import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
+import { nombre } from '@/lib/metier/texte'
 
 describe('catalogue : modèles', () => {
   const modeles = modelesDuCatalogue(lecturesExemple().catalogue)
@@ -121,8 +123,7 @@ describe('construireConfiguration : écran /indicateurs', () => {
   it('phrases : actifs, ministères, ajout à valider, rappel de plus de 7 jours pour l’administration', () => {
     expect(configuration.phrases).toEqual([
       '8 indicateurs actifs pour 5 ministères.',
-      "1 ajout attend la validation d'EJP Tech.",
-      '1 ajout attend EJP Tech depuis plus de 7 jours. Prévenez EJP Tech.',
+      "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
     ])
     expect(construireConfiguration(lecturesExemple(), 'admin_plateforme').phrases).toEqual([
       '8 indicateurs actifs pour 5 ministères.',
@@ -149,6 +150,21 @@ describe('construireConfiguration : écran /indicateurs', () => {
     expect(ligne('Communication')?.dernierChangement).toBe('5 oct.')
     expect(ligne('Eagles')?.dernierChangement).toBe('2 oct.')
     expect(ligne('Jeunesse')?.dernierChangement).toBeNull()
+  })
+
+  it('journal lu jusqu’à sa limite : un ministère sans geste lu n’affiche pas « Aucun » mais « Plus ancien »', () => {
+    const lectures = lecturesExemple()
+    const modele = lectures.changements[0]!
+    lectures.changements = Array.from({ length: LIMITE_CHANGEMENTS }, () => ({
+      ...modele,
+      ministere_id: ID_COMMUNICATION,
+    }))
+    const resultat = construireConfiguration(lectures, 'admin_eglise')
+    const dernier = (nom: string) =>
+      resultat.lignes.find((candidate) => candidate.nom === nom)?.dernierChangement
+    expect(dernier('Jeunesse')).toBe('Plus ancien')
+    expect(dernier('Communication')).not.toBe('Plus ancien')
+    expect(dernier('Communication')).not.toBeNull()
   })
 
   it('colonne « Prévus » : à créer, créés, à choisir, aucun prévu', () => {
@@ -211,7 +227,8 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     expect(demandes).toMatchObject({
       usage: 'Jamais saisi',
       peuSaisi: true,
-      mentions: ['libellé corrigé le 5 oct.'],
+      jamaisSaisi: true,
+      mentions: ['Libellé corrigé le 5 oct.'],
       aValider: null,
     })
     const publications = lignes.find((l) => l.libelle === 'Publications')
@@ -228,15 +245,21 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     const ajout = lignes.find((l) => l.libelle === 'Projets en cours')
     expect(ajout).toMatchObject({
       enAttente: true,
-      aValider: 'à valider par EJP Tech depuis 9 jours',
-      mentions: ['suggestion', 'ajouté par Communication le 28 sept.'],
+      aValider: 'À valider par EJP Tech depuis 9 jours',
+      mentions: ['Suggestion de la coordination', 'Ajouté par Communication le 28 sept.'],
       peuSaisi: false,
+      jamaisSaisi: true,
     })
   })
 
-  it('un calcul : mention du calcul, aucun usage', () => {
+  it('un calcul : aucun usage, aucune mention technique (la colonne de droite dit « Se calcule tout seul »)', () => {
     const calcul = donnees?.sections.at(-1)?.lignes[0]
-    expect(calcul).toMatchObject({ calcul: 'taux', usage: null, mentions: ['calcul : taux'] })
+    expect(calcul).toMatchObject({
+      calcul: 'taux',
+      usage: null,
+      mentions: [],
+      jamaisSaisi: false,
+    })
   })
 
   it('retirés : rangés par rythme, avec la date et le motif', () => {
@@ -274,10 +297,10 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     const jeunesse = construireMinistere(ID_JEUNESSE, lecturesExemple())
     expect(jeunesse?.prevus.genre).toBe('a_choisir')
     expect(jeunesse?.phrase).toBe(
-      "Jeunesse suit 2 indicateurs sur 30 au plus : 2 ajoutés par l'église.",
+      "Jeunesse suit 2 indicateurs sur 30 au plus : 2 ajoutés par l'administration de l'église ou EJP Tech.",
     )
     const mentions = jeunesse?.sections.flatMap((s) => s.lignes).map((l) => l.mentions)
-    expect(mentions).toEqual([['grand compte'], ['en jours']])
+    expect(mentions).toEqual([[`Grand nombre, jusqu'à ${nombre(9_999_999)}`], ['Compté en jours']])
   })
 
   it('Protocole : « Aucun prévu », rien à suivre', () => {
@@ -286,7 +309,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     expect(protocole?.sansIndicateur).toBe(true)
   })
 
-  it('un remplacement garde la trace de l’ancien : « remplace « X » (chaque dimanche) »', () => {
+  it('un remplacement garde la trace de l’ancien : « Remplace « X » (chaque dimanche) »', () => {
     const lectures = lecturesExemple()
     const ancien = lectures.indicateurs.find((i) => i.libelle === 'Affiches distribuées')
     const nouveau = {
@@ -300,7 +323,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     const ligne = resultat?.sections
       .flatMap((s) => s.lignes)
       .find((l) => l.libelle === 'Affiches posées')
-    expect(ligne?.mentions).toContain('remplace « Affiches distribuées » (chaque dimanche)')
+    expect(ligne?.mentions).toContain('Remplace « Affiches distribuées » (chaque dimanche)')
   })
 })
 

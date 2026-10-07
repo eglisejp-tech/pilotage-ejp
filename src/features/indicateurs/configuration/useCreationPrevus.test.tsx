@@ -43,6 +43,12 @@ describe('messageDeRefusPrevus', () => {
     )
   })
 
+  it('la double authentification perdue (42501 aussi) garde le message de la base', () => {
+    expect(
+      messageDeRefusPrevus({ code: '42501', message: 'Double authentification requise.' }),
+    ).toBe('Double authentification requise.')
+  })
+
   it('un problème de connexion n’a pas de message de la base', () => {
     expect(messageDeRefusPrevus(new TypeError('Failed to fetch'))).toBeNull()
     expect(messageDeRefusPrevus({ code: 'PGRST000', message: 'x' })).toBeNull()
@@ -63,6 +69,29 @@ describe('useCreationPrevus', () => {
     expect(result.current.envoi).toBe(1)
     expect(result.current.refus).toBeNull()
     expect(result.current.enCours).toBeNull()
+    expect(result.current.dernier).toBe('m-kumi')
+  })
+
+  it('après une réussite, relit aussi la fiche et les saisies du ministère', async () => {
+    appel.creer.mockResolvedValue(6)
+    const { result, invalidation } = monter()
+    await act(async () => {
+      await result.current.creer(KUMI, 'kumi')
+    })
+    expect(invalidation).toHaveBeenCalledWith({ queryKey: ['fiche', 'm-kumi'] })
+    expect(invalidation).toHaveBeenCalledWith({
+      queryKey: ['saisie-chiffres', 'indicateurs', 'm-kumi'],
+    })
+  })
+
+  it('un refus 42501 de double authentification : le message de la base, pas « n’existe pas »', async () => {
+    appel.creer.mockRejectedValue({ code: '42501', message: 'Double authentification requise.' })
+    const { result } = monter()
+    await act(async () => {
+      await result.current.creer(KUMI, 'kumi')
+    })
+    expect(result.current.refus).toBe('Double authentification requise.')
+    expect(result.current.dernier).toBe('m-kumi')
   })
 
   it('un seul prévu : « 1 indicateur prévu créé. »', async () => {

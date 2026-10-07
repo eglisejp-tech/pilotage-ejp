@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { LigneUsage } from '@/data/indicateursConfiguration'
-import { estPeuSaisi, texteUsage, textePeuSaisis } from '@/features/indicateurs/configuration/usage'
+import {
+  estJamaisSaisi,
+  estPeuSaisi,
+  texteUsage,
+  textePeuSaisis,
+} from '@/features/indicateurs/configuration/usage'
 
 function usage(
   saisies: number,
@@ -29,6 +34,16 @@ describe('usage d’un indicateur (7.2)', () => {
 
   it('« Jamais saisi »', () => {
     expect(texteUsage(usage(0, 3, null), 'mois')).toBe('Jamais saisi')
+  })
+
+  it('« Jamais saisi » se reconnaît pour tous les rythmes, même sans période attendue', () => {
+    expect(estJamaisSaisi(usage(0, 3, null))).toBe(true)
+    expect(estJamaisSaisi(usage(0, 0, null))).toBe(true)
+    expect(estJamaisSaisi(usage(0, 1, null))).toBe(true)
+    expect(estJamaisSaisi(usage(1, 3))).toBe(false)
+    expect(estJamaisSaisi(undefined)).toBe(false)
+    // Un seul « à ce jour » attendu n'est pas « peu saisi », mais il est bien « jamais saisi ».
+    expect(estPeuSaisi(usage(0, 1, null))).toBe(false)
   })
 
   it('un dimanche se compte en dimanches, un « à ce jour » en mois', () => {

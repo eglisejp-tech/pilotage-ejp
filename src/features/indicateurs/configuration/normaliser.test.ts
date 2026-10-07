@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { normaliser } from '@/features/indicateurs/configuration/normaliser'
+import {
+  AVEC_ACCENTS,
+  normaliser,
+  SANS_ACCENTS,
+} from '@/features/indicateurs/configuration/normaliser'
 
 // Même règle que `private.normaliser` de la base : le nom d'un ministère doit donner le code du
 // modèle de la coordination (« coordo fij », « sante »).
@@ -20,6 +24,11 @@ describe('normaliser', () => {
     ['FIJ', 'fij'],
   ])('%s donne %s', (texte, attendu) => {
     expect(normaliser(texte)).toBe(attendu)
+  })
+
+  it('les deux listes de `translate` ont la même longueur : 54 lettres, comme la base', () => {
+    expect(Array.from(AVEC_ACCENTS)).toHaveLength(54)
+    expect(Array.from(SANS_ACCENTS)).toHaveLength(Array.from(AVEC_ACCENTS).length)
   })
 
   it('retire chaque lettre accentuée de la liste de la base, en minuscule et en majuscule', () => {

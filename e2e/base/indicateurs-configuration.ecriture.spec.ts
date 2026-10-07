@@ -17,6 +17,12 @@ import { appeler, compter, lire, MINISTERE_COMMUNICATION } from './outils-evenem
 // - « Essai sans prévu » : l'administration enregistre « Aucun prévu », une seule fois.
 // Puis le refus d'un doublon (Jeunesse a déjà « Activités réalisées ») : tout ou rien, aucune
 // ligne de journal. Le ministère et le berger n'ont aucun droit sur la fonction.
+//
+// Ce parcours ne se rejoue pas sur la même base : les trois ministères d'essai et leurs
+// indicateurs y restent (« Kumi » doit être vide au départ, les lectures comptent 8 ministères).
+// Dans la CI, le projet `ecritures` passe en dernier sur une base neuve : sans effet. En local,
+// lancez `npx supabase db reset` avant de rejouer ce fichier, et avant de relancer les projets de
+// lecture (`indicateurs-configuration.spec.ts`) après un passage d'`ecritures`.
 
 const ACTION_PREVUS = 'indicateurs_prevus_crees'
 

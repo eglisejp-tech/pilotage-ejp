@@ -2,6 +2,7 @@
 // 7.2), prêtes à afficher : fonctions pures, sans appel à la base. Les lectures arrivent déjà
 // faites (`src/data/indicateursConfiguration.ts`). Aucune valeur d'indicateur ici, jamais.
 
+import { LIMITE_CHANGEMENTS } from '@/data/indicateursConfiguration'
 import type {
   IndicateurConfiguration,
   LigneCatalogue,
@@ -27,6 +28,7 @@ import {
 } from '@/features/indicateurs/configuration/phrases'
 import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
 import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
+import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import { estPeuSaisi } from '@/features/indicateurs/configuration/usage'
 import type { TypeCompte } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
@@ -57,7 +59,10 @@ export interface LigneMinistereConfiguration {
   peuSaisis: number
   /** Indicateurs suivis (actifs ou à valider) : sans eux, la colonne « Saisie » n'a rien à dire. */
   suivis: number
-  /** « 12 oct. », ou `null` : aucun geste de configuration encore. */
+  /**
+   * « 12 oct. » ; « Plus ancien » quand le journal lu est plein et ne montre aucun geste de ce
+   * ministère (le geste est plus ancien que ceux qui ont été lus) ; `null` : aucun geste encore.
+   */
   dernierChangement: string | null
 }
 
@@ -113,6 +118,8 @@ export function construireConfiguration(
     }
   }
   const identifiantsActifs = new Set(actifs.map((ministere) => ministere.id))
+  // Journal lu jusqu'à sa limite : l'absence d'un ministère ne prouve plus « aucun geste ».
+  const journalPlein = lectures.changements.length >= LIMITE_CHANGEMENTS
 
   const lignes = actifs.map((ministere): LigneMinistereConfiguration => {
     const siens = indicateursParMinistere.get(ministere.id) ?? []
@@ -127,7 +134,12 @@ export function construireConfiguration(
       prevus: etatPrevus(ministere.nom, siens, modeles, sansPrevu.has(ministere.id)),
       peuSaisis: suivis.filter((indicateur) => estPeuSaisi(usageParId.get(indicateur.id))).length,
       suivis: suivis.length,
-      dernierChangement: dernier === undefined ? null : formaterJourCourt(jourDeParis(dernier)),
+      dernierChangement:
+        dernier !== undefined
+          ? formaterJourCourt(jourDeParis(dernier))
+          : journalPlein
+            ? TEXTES_CONFIGURATION.liste.changementAncien
+            : null,
     }
   })
 

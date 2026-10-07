@@ -5,8 +5,9 @@ import {
   lireCreationsPrevus,
   lireIndicateursPropres,
   lireMinisteresConfiguration,
+  lireUsageConfiguration,
 } from '@/data/indicateursConfiguration'
-import { lireCatalogue, lireUsageIndicateurs } from '@/data/indicateurs'
+import { lireCatalogue } from '@/data/indicateurs'
 import { CLES_CONFIGURATION } from '@/features/indicateurs/configuration/cles'
 import {
   construireConfiguration,
@@ -39,7 +40,7 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
   })
   const usage = useQuery({
     queryKey: CLES_CONFIGURATION.usage,
-    queryFn: lireUsageIndicateurs,
+    queryFn: lireUsageConfiguration,
     enabled: activer,
   })
   const catalogue = useQuery({

@@ -27,6 +27,8 @@ export const TEXTES_CONFIGURATION = {
     aucuneSaisieASuivre: 'Rien à suivre',
     /** Colonne « Dernier changement » d'un ministère sans geste de configuration : proposé. */
     aucunChangement: 'Aucun',
+    /** Proposé : le journal lu est plein et ne montre aucun geste de ce ministère. */
+    changementAncien: 'Plus ancien',
   },
   ministere: {
     retour: 'Tous les indicateurs',
@@ -34,6 +36,9 @@ export const TEXTES_CONFIGURATION = {
     titrePrevus: 'Prévus par la coordination',
     choixModele: 'Choisir dans la liste de la coordination',
     choixModelePlaceholder: 'Choisissez un ministère de la liste',
+    /** Proposé : sous le titre du bloc, tant que rien n'est choisi. */
+    attenteChoix:
+      "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite.",
     /** Dernier choix de la liste (7.2). */
     aucunPrevu: 'Aucun prévu',
     /** Proposé : le choix « Aucun prévu » est retenu. */

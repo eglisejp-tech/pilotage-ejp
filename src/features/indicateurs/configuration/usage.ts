@@ -26,6 +26,14 @@ export function estPeuSaisi(
   )
 }
 
+/**
+ * Vrai si la base ne connaît aucune saisie de l'indicateur. Quel que soit son rythme (un « À ce
+ * jour » compris), « Jamais saisi » s'affiche comme « Peu saisi » : en orange, avec le mot.
+ */
+export function estJamaisSaisi(usage: LigneUsage | undefined): boolean {
+  return usage !== undefined && (usage.jamais_saisi || usage.derniere_saisie_le === null)
+}
+
 /** Un « à ce jour » se compte par mois : seul le dimanche compte des dimanches. */
 function periodes(nature: NatureIndicateur, n: number): string {
   return nature === 'dimanche' ? accorder(n, 'dimanche', 'dimanches') : 'mois'
@@ -38,10 +46,11 @@ function periodes(nature: NatureIndicateur, n: number): string {
  */
 export function texteUsage(usage: LigneUsage | undefined, nature: NatureIndicateur): string | null {
   if (usage === undefined) return null
-  if (usage.jamais_saisi || usage.derniere_saisie_le === null) return 'Jamais saisi'
+  const derniere = usage.derniere_saisie_le
+  if (estJamaisSaisi(usage) || derniere === null) return 'Jamais saisi'
   const rapport = `${nombre(usage.nb_periodes_saisies)} ${periodes(nature, usage.nb_periodes_saisies)} sur ${nombre(usage.nb_periodes_attendues)}`
   if (estPeuSaisi(usage)) return `Peu saisi : ${rapport}`
-  return `Saisi ${rapport}, dernier le ${formaterJourCourt(jourDeParis(usage.derniere_saisie_le))}`
+  return `Saisi ${rapport}, dernier le ${formaterJourCourt(jourDeParis(derniere))}`
 }
 
 /** « 2 peu saisis », en orange avec le mot (jamais la couleur seule). */

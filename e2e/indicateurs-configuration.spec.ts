@@ -48,8 +48,7 @@ const TOUS: Ecran[] = [
 
 const PHRASES_ADMIN = [
   '8 indicateurs actifs pour 5 ministères.',
-  "1 ajout attend la validation d'EJP Tech.",
-  '1 ajout attend EJP Tech depuis plus de 7 jours. Prévenez EJP Tech.',
+  "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
 ]
 
 test.describe('/indicateurs (aperçu)', () => {
@@ -124,8 +123,17 @@ test.describe('/indicateurs (aperçu)', () => {
 
   test('refus de la base : son texte tel quel', async ({ page }) => {
     await ouvrir(page, { envoi: 'refus' })
-    await page.getByRole('button', { name: 'Créer les 6 indicateurs prévus de Kumi' }).click()
-    await expect(page.getByRole('alert')).toContainText('La fiche a déjà « Activités réalisées »')
+    const bouton = page.getByRole('button', { name: 'Créer les 6 indicateurs prévus de Kumi' })
+    await bouton.click()
+    const alerte = page.getByRole('alert')
+    await expect(alerte).toContainText('La fiche a déjà « Activités réalisées »')
+    // Le refus suit le bouton qui l'a provoqué : sous sa ligne, à quelques centimètres de lui.
+    const boiteBouton = await bouton.boundingBox()
+    const boiteAlerte = await alerte.boundingBox()
+    expect(boiteBouton).not.toBeNull()
+    expect(boiteAlerte).not.toBeNull()
+    expect(boiteAlerte!.y).toBeGreaterThan(boiteBouton!.y)
+    expect(boiteAlerte!.y - boiteBouton!.y).toBeLessThan(200)
   })
 
   test('aucun ministère : la phrase et l’action vers Ministères et comptes (administration)', async ({
@@ -189,8 +197,9 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     ])
     await expect(page.getByText('Saisi 4 mois sur 5, dernier le 2 oct.')).toBeVisible()
     await expect(page.getByText('Peu saisi : 1 mois sur 4')).toBeVisible()
-    await expect(page.getByText('libellé corrigé le 5 oct.')).toBeVisible()
-    await expect(page.getByText(/à valider par EJP Tech depuis 9 jours/)).toBeVisible()
+    await expect(page.getByText('Libellé corrigé le 5 oct.')).toBeVisible()
+    await expect(page.getByText(/À valider par EJP Tech depuis 9 jours/)).toBeVisible()
+    await expect(page.getByText(/calcul : /)).toHaveCount(0)
     await expect(page.getByRole('link', { name: 'Voir dans À valider' })).toHaveAttribute(
       'href',
       '/indicateurs#a-valider',
@@ -231,6 +240,11 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, { vue: 'jeunesse' })
+    await expect(
+      page.getByText(
+        "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite.",
+      ),
+    ).toBeVisible()
     const choix = page.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
     await expect(choix.locator('option')).toHaveText([
       'Choisissez un ministère de la liste',

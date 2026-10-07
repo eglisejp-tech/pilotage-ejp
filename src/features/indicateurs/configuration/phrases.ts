@@ -29,10 +29,11 @@ export interface ComptesEglise {
 
 /**
  * Phrases de l'écran Indicateurs : « 94 indicateurs actifs pour 22 ministères, dont 7 ajoutés par
- * les ministères. », puis, s'il y a lieu, « 1 ajout attend la validation d'EJP Tech. » et, pour
- * l'administration seulement et au-delà de 7 jours, « 1 ajout attend EJP Tech depuis plus de 7
- * jours. Prévenez EJP Tech. ». EJP Tech décide dans le bloc « À valider » : il ne reçoit pas ce
- * rappel.
+ * les ministères. », puis, s'il y a lieu, « 1 ajout attend la validation d'EJP Tech. ». Pour
+ * l'administration seulement et au-delà de 7 jours, la même phrase se complète : « 1 ajout attend la
+ * validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech. » (ou « 3 ajouts attendent la
+ * validation d'EJP Tech, dont 1 depuis plus de 7 jours. Prévenez EJP Tech. »). EJP Tech décide dans
+ * le bloc « À valider » : il ne reçoit pas ce rappel.
  */
 export function phrasesEglise(comptes: ComptesEglise, profil: TypeCompte): string[] {
   const dont =
@@ -43,14 +44,14 @@ export function phrasesEglise(comptes: ComptesEglise, profil: TypeCompte): strin
     `${nombre(comptes.actifs)} ${accorder(comptes.actifs, 'indicateur actif', 'indicateurs actifs')} pour ${nombre(comptes.ministeres)} ${accorder(comptes.ministeres, 'ministère', 'ministères')}${dont}.`,
   ]
   if (comptes.enAttente > 0) {
-    phrases.push(
-      `${nombre(comptes.enAttente)} ${accorder(comptes.enAttente, 'ajout attend', 'ajouts attendent')} la validation d'EJP Tech.`,
-    )
-  }
-  if (profil === 'admin_eglise' && comptes.enAttenteLongue > 0) {
-    phrases.push(
-      `${nombre(comptes.enAttenteLongue)} ${accorder(comptes.enAttenteLongue, 'ajout attend', 'ajouts attendent')} EJP Tech depuis plus de ${ATTENTE_LONGUE_JOURS} jours. Prévenez EJP Tech.`,
-    )
+    const debut = `${nombre(comptes.enAttente)} ${accorder(comptes.enAttente, 'ajout attend', 'ajouts attendent')} la validation d'EJP Tech`
+    const prevenir = profil === 'admin_eglise' && comptes.enAttenteLongue > 0
+    // Une seule phrase : l'attente longue la complète, elle ne s'écrit pas à part.
+    const longue =
+      comptes.enAttenteLongue >= comptes.enAttente
+        ? `, depuis plus de ${ATTENTE_LONGUE_JOURS} jours`
+        : `, dont ${nombre(comptes.enAttenteLongue)} depuis plus de ${ATTENTE_LONGUE_JOURS} jours`
+    phrases.push(prevenir ? `${debut}${longue}. Prévenez EJP Tech.` : `${debut}.`)
   }
   return phrases
 }
@@ -69,7 +70,8 @@ export interface ComptesMinistere {
 
 /**
  * Phrase d'un ministère : « Kumi suit 7 indicateurs sur 30 au plus : 6 prévus par la coordination
- * et 1 ajouté par Kumi. ». `null` quand il ne suit aucun indicateur : l'état vide parle à la place.
+ * et 1 ajouté par Kumi. » (un ajout de l'église se dit « ajouté par l'administration de l'église ou
+ * EJP Tech »). `null` quand il ne suit aucun indicateur : l'état vide parle à la place.
  */
 export function phraseMinistere(comptes: ComptesMinistere): string | null {
   if (comptes.suivis === 0) return null
@@ -86,7 +88,7 @@ export function phraseMinistere(comptes: ComptesMinistere): string | null {
   }
   if (comptes.ajoutesParLEglise > 0) {
     parties.push(
-      `${nombre(comptes.ajoutesParLEglise)} ${accorder(comptes.ajoutesParLEglise, 'ajouté', 'ajoutés')} par l'église`,
+      `${nombre(comptes.ajoutesParLEglise)} ${accorder(comptes.ajoutesParLEglise, 'ajouté', 'ajoutés')} par l'administration de l'église ou EJP Tech`,
     )
   }
   const detail = parties.length > 0 ? ` : ${listeNoms(parties)}` : ''

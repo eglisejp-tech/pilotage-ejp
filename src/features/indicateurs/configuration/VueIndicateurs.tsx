@@ -7,7 +7,8 @@ import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import type { ConfigurationIndicateurs } from '@/features/indicateurs/configuration/construire'
 import { ListeIndicateursTelephone } from '@/features/indicateurs/configuration/ListeIndicateursTelephone'
-import { ResultatCreation } from '@/features/indicateurs/configuration/ResultatCreation'
+import { RefusCreation } from '@/features/indicateurs/configuration/RefusCreation'
+import { ReussiteCreation } from '@/features/indicateurs/configuration/ReussiteCreation'
 import { TableauIndicateurs } from '@/features/indicateurs/configuration/TableauIndicateurs'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
@@ -33,7 +34,8 @@ const textes = TEXTES_CONFIGURATION
 /**
  * Écran `/indicateurs` (administration et EJP Tech ; configuration-indicateurs.md, 7.1) : la phrase
  * de l'église, le bloc « À valider », puis le tableau des ministères actifs à partir de 600 px,
- * une liste en dessous. Jamais une valeur d'indicateur. Aucun ministère : l'état vide dit où
+ * une liste en dessous. Le refus de la base à un « Créer » s'affiche sous la ligne du ministère
+ * concerné. Jamais une valeur d'indicateur. Aucun ministère : l'état vide dit où
  * les créer. Problème passager : bandeau et « Réessayer ».
  */
 export function VueIndicateurs({ titre, profil, configuration, creation, blocAValider }: Props) {
@@ -74,7 +76,11 @@ export function VueIndicateurs({ titre, profil, configuration, creation, blocAVa
             </div>
           )}
           {blocAValider}
-          <ResultatCreation creation={creation} />
+          <ReussiteCreation creation={creation} />
+          {/* Le refus s'affiche sur la ligne du ministère ; sans cette ligne, ici. */}
+          {configuration.donnees.lignes.some((ligne) => ligne.id === creation.dernier) ? null : (
+            <RefusCreation refus={creation.refus} />
+          )}
           {configuration.donnees.lignes.length === 0 ? null : (
             <div className="mt-4">
               {tableau ? (

@@ -5,6 +5,7 @@ import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import type { PrevuCatalogue } from '@/features/indicateurs/configuration/catalogue'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
 import { resteAChoisirOuCreer } from '@/features/indicateurs/configuration/prevus'
+import { RefusCreation } from '@/features/indicateurs/configuration/RefusCreation'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import {
   boutonCreerPrevus,
@@ -45,9 +46,10 @@ function ListePrevus({ prevus }: { prevus: readonly PrevuCatalogue[] }) {
 /**
  * Bloc « Prévus par la coordination » de `/indicateurs/:id` (7.2), tant qu'il reste des
  * indicateurs prévus à créer : la liste et le bouton « Créer ces 6 indicateurs ». Si le nom du
- * ministère n'est pas reconnu, le choix « Choisir dans la liste de la coordination », avec « Aucun
- * prévu » en dernier. La base crée tout ou rien, sans doublon ; le bloc disparaît dès que les
- * prévus sont créés ou que « Aucun prévu » est enregistré.
+ * ministère n'est pas reconnu, la phrase qui attend le choix, puis le choix « Choisir dans la liste
+ * de la coordination », avec « Aucun prévu » en dernier. La base crée tout ou rien, sans doublon ;
+ * son refus s'affiche sous le bouton. Le bloc disparaît dès que les prévus sont créés ou que
+ * « Aucun prévu » est enregistré ; le message de réussite reste sous la phrase du ministère.
  */
 export function BlocPrevus({ donnees, creation }: Props) {
   const idTitre = useId()
@@ -73,6 +75,9 @@ export function BlocPrevus({ donnees, creation }: Props) {
         </h2>
         <Aide code="indicateurs.prevus" libelle={textes.titrePrevus} placement="flottante" />
       </div>
+      {prevus.genre === 'a_choisir' && choix === '' ? (
+        <p className="mt-2 max-w-prose text-encre-2">{textes.attenteChoix}</p>
+      ) : null}
       {prevus.genre === 'a_choisir' ? (
         <div className="mt-2 flex max-w-prose flex-col">
           <LibelleAvecAide
@@ -125,6 +130,7 @@ export function BlocPrevus({ donnees, creation }: Props) {
           </button>
         </div>
       ) : null}
+      <RefusCreation refus={creation.dernier === donnees.id ? creation.refus : null} />
     </section>
   )
 }

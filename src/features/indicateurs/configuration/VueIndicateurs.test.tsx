@@ -17,6 +17,7 @@ function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   return {
     creer: vi.fn(() => Promise.resolve()),
     enCours: null,
+    dernier: null,
     reussite: null,
     envoi: 0,
     refus: null,
@@ -52,9 +53,10 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
     afficher('admin_eglise')
     expect(screen.getByRole('heading', { level: 1, name: 'Indicateurs' })).toBeInTheDocument()
     expect(screen.getByText('8 indicateurs actifs pour 5 ministères.')).toBeInTheDocument()
-    expect(screen.getByText("1 ajout attend la validation d'EJP Tech.")).toBeInTheDocument()
     expect(
-      screen.getByText('1 ajout attend EJP Tech depuis plus de 7 jours. Prévenez EJP Tech.'),
+      screen.getByText(
+        "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText('Bloc à valider de L4')).toBeInTheDocument()
   })
@@ -151,15 +153,39 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
     ).toBeInTheDocument()
   })
 
-  it('refus de la base : annoncé, avec son texte', () => {
+  const REFUS =
+    'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
+
+  it('refus de la base : annoncé, avec son texte, dans la ligne du ministère concerné', () => {
+    afficher('admin_eglise', creationDe({ dernier: ID_KUMI, refus: REFUS }))
+    const alerte = screen.getByRole('alert')
+    expect(alerte).toHaveTextContent('La fiche a déjà « Activités réalisées »')
+    // Sous la ligne de Kumi : le bouton « Créer » précède le refus, et le ministère suivant le suit.
+    const bouton = screen.getByRole('button', { name: 'Créer les 6 indicateurs prévus de Kumi' })
+    expect(bouton.compareDocumentPosition(alerte) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const ligneKumi = screen.getByRole('link', { name: 'Kumi' }).closest('tr')!
+    expect(ligneKumi.nextElementSibling).toContainElement(alerte)
+    const protocole = screen.getByRole('link', { name: 'Protocole' })
+    expect(
+      alerte.compareDocumentPosition(protocole) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+  })
+
+  it('refus de la base, sous 600 px : sous le ministère concerné dans la liste', () => {
+    simulerLargeur(390)
+    afficher('admin_eglise', creationDe({ dernier: ID_KUMI, refus: REFUS }))
+    const kumi = screen.getByRole('link', { name: 'Kumi' }).closest('li')!
+    expect(within(kumi).getByRole('alert')).toHaveTextContent(REFUS)
+    expect(screen.getAllByRole('alert')).toHaveLength(1)
+  })
+
+  it('refus pour un ministère absent de la liste : affiché au-dessus, jamais perdu', () => {
     afficher(
       'admin_eglise',
-      creationDe({
-        refus:
-          'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.',
-      }),
+      creationDe({ dernier: '10000000-0000-4000-8000-0000000000ff', refus: REFUS }),
     )
-    expect(screen.getByRole('alert')).toHaveTextContent('La fiche a déjà « Activités réalisées »')
+    expect(screen.getByRole('alert')).toHaveTextContent(REFUS)
+    expect(screen.queryByRole('table')?.contains(screen.getByRole('alert'))).toBe(false)
   })
 })
 
