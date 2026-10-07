@@ -1060,7 +1060,25 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 
 - **Date** : 7 octobre 2026
 - **Sujet** : la personne responsable veut le logo d'EJP Tech comme logo du site dans les aperçus de liens, avec la meilleure qualité possible.
-- **Décision** : balises Open Graph dans `index.html` et image `public/apercu-lien.png` (2400 x 1260). Le fichier fourni ne faisant que 360 px, le logo est redessiné en vectoriel (`docs/sources/logo EJP TECH/logo-ejp-tech.svg`, rendu 4K à côté). Si le fichier vectoriel d'origine du graphiste existe, il prime. L'adresse de l'image est celle de la préproduction : à changer pour l'adresse de production quand elle sera connue. L'icône de l'onglet et l'en-tête ne changent pas.
+- **Décision** : balises Open Graph dans `index.html` et image `public/apercu-lien.png` (2400 x 1260). Le fichier fourni ne faisant que 360 px, le logo est redessiné en vectoriel (`docs/sources/logo EJP TECH/logo-ejp-tech.svg`, rendu 4K à côté). Si le fichier vectoriel d'origine du graphiste existe, il prime. L'adresse de l'image est celle du site, `https://pilotage-ejp.netlify.app` (la production depuis T52) : à changer seulement si le domaine de l'église arrive. L'icône de l'onglet et l'en-tête ne changent pas.
 - **Origine** : demande écrite de la personne responsable (7 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026
 - **BRIEF** : aucun changement
+
+## Décision de la personne responsable du 7 octobre 2026 sur la production
+
+### T52. Le projet de préproduction devient la production, sur l'offre gratuite
+
+- **Date** : 7 octobre 2026
+- **Sujet** : le plan prévoyait une production séparée, sur l'offre Pro de Supabase (environ 25 $ par mois, P12). La personne responsable ne veut pas payer cette offre pour le moment.
+- **Options présentées** : un second projet gratuit comme production, la préproduction restant pour les essais (recommandé) ; ou la préproduction qui devient la production.
+- **Décision** : le projet `ugbitornbspatpcowlvg` (créé comme préproduction, organisation « EJP TECH », Paris, offre gratuite) devient la production. Le site `https://pilotage-ejp.netlify.app` (branche `main`) reste son site. Au moment de la bascule, la base ne contient que les ministères de référence (Coordination, FIJ), trois comptes réels (administration de l'église, EJP Tech, Ministère Coordination), aucune saisie, aucun point, aucun événement : rien d'essai à retirer.
+- **Ce qui change** :
+  - **Plus de préproduction distante.** Les essais passent par la CI (pile locale, pgTAP, parcours Playwright). Une migration est appliquée directement à la production, après une CI verte et l'accord écrit de la personne responsable. Aucun ministère, compte ou chiffre d'essai n'est créé dans la base : on ne peut rien y supprimer. Les aperçus Netlify des branches pointent aussi vers cette base : ils ne servent qu'à regarder, jamais à saisir.
+  - **Claude ne lit plus la base** (ni données, ni journaux techniques) : le serveur MCP Supabase est retiré de `.mcp.json`, et la personne responsable retire l'accès du connecteur Supabase de claude.ai à ce projet. Raison : la base contient les vrais chiffres de l'église, sensibles compris, et Anthropic n'est pas déclaré comme sous-traitant (page Confidentialité). Les contrôles se font au tableau de bord, par la personne responsable.
+  - **Sauvegardes** : l'offre gratuite n'en fait pas. L'export chiffré de `docs/exploitation.md` (section 9.2) devient **hebdomadaire**, et les **4 derniers** sont gardés. La page Confidentialité et le registre le disent.
+- **Risques acceptés** (écarts au BRIEF, section 8, et à P12, jusqu'au passage en Pro) : pas de sauvegarde automatique ni de restauration à un instant donné (une semaine de saisies au plus peut se perdre) ; pas de durée maximale de session ni de délai d'inactivité ; pas de protection contre les mots de passe divulgués ; mise en pause du projet après une semaine sans activité (les saisies du dimanche l'évitent ; sinon, le relancer au tableau de bord).
+- **Passage en Pro plus tard** : changer l'offre de l'organisation « EJP TECH » (ou transférer le projet dans une organisation payante), sans déplacer les données ; puis régler les durées de session et la protection des mots de passe, et revenir aux sauvegardes quotidiennes.
+- **Origine** : choix écrit de la personne responsable (7 octobre 2026), entre les deux options présentées
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026. La phrase des sauvegardes de la page Confidentialité est **Proposée** en attendant sa validation
+- **BRIEF** : section 8 (durées de session, protection des mots de passe) et section 13 (étape 8, environnements) ; `docs/exploitation.md` (sections 3, 5, 7, 9 et 14) ; `docs/conformite/registre-traitements.md` ; `DEMARRAGE.md` (serveur MCP Supabase retiré)

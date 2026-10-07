@@ -146,8 +146,9 @@ export function PageConfidentialite() {
               CNIL pour ces journaux.
             </li>
             <li>
-              <strong className="text-encre">Sauvegardes de la base</strong> : 7 jours. Un texte
-              masqué reste dans les sauvegardes jusqu'à leur expiration.
+              <strong className="text-encre">Sauvegardes de la base</strong> : une copie chiffrée
+              chaque semaine ; les 4 dernières sont gardées. Un texte masqué reste dans ces copies
+              jusqu'à leur suppression, 4 semaines au plus.
             </li>
             <li>
               <strong className="text-encre">Copies des emails envoyés</strong> : dans la boîte
