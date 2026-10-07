@@ -1016,3 +1016,26 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026
 - **BRIEF** : section 7 (matrice, ligne `journal`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; complète P51 ; migration et test de matrice à écrire
+
+## Décisions de la personne responsable du 7 octobre 2026 sur les comptes d'EJP Tech et la page Confidentialité
+
+### T48. EJP Tech a deux comptes : la plateforme et le ministère Tech
+
+- **Date** : 7 octobre 2026
+- **Sujet** : EJP Tech doit aussi avoir un espace de ministère « normal » (sa fiche, ses saisies), en plus de l'administration de la plateforme.
+- **Décision** : deux comptes. Le compte de la plateforme (`admin_plateforme` : lit tout, ne saisit rien, T29) et un compte de ministère pour le ministère Tech (type `ministere` : sa fiche et ses saisies, comme tout ministère). Le second se crée par l'écran 13 comme les autres, avec une adresse distincte (proposé : l'alias Gmail « +ministere » de l'adresse d'EJP Tech, même boîte). Il se connecte par mot de passe et code : Google rend l'adresse sans l'alias et ouvrirait le compte de la plateforme.
+- **Adresse du compte de la plateforme** : saisie exactement comme Google la rend, avec le point. Gmail ignore les points, mais Supabase compare les adresses telles quelles : sans le point, la connexion Google répond « pas encore de compte actif » (constaté en préproduction le 7 octobre 2026).
+- **Autre choix écarté** : un seul compte à deux rôles. Il change le modèle des comptes et toutes les règles d'accès, et casse T29.
+- **Suite demandée** : un bouton « Changer d'espace » pour passer d'un compte à l'autre sans se déconnecter à la main. D'ici là, deux fenêtres du navigateur (dont une privée).
+- **Origine** : choix écrit de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026 pour les deux comptes ; « Changer d'espace » : Proposé, après l'ouverture
+- **BRIEF** : section 2 (tableau des profils, ligne EJP Tech) ; `docs/exploitation.md` (comptes à créer)
+
+### T49. Page Confidentialité : textes du lot I validés, les signalements hors de « l'ensemble »
+
+- **Date** : 7 octobre 2026
+- **Sujet** : le lot I a réécrit la page Confidentialité : chiffres sensibles, « Précision », lecteurs des valeurs exactes (P52), signalements, sous-traitants et transferts, conservation des copies d'emails. La phrase validée le 5 octobre « le berger et le conseil voient l'ensemble » contredisait celle des signalements, que seuls le ministère et EJP Tech lisent (T39).
+- **Décision** : les textes du lot I sont validés tels quels, et la phrase devient « le berger et le conseil voient l'ensemble, sauf les signalements ».
+- **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : aucun changement ; la page fait foi (`src/pages/PageConfidentialite.tsx`, « Dernière mise à jour : 7 octobre 2026 »)
