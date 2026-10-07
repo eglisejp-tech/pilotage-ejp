@@ -473,12 +473,14 @@ describe("adresses de l'étape 4", () => {
   // `src/pages/saisiesSessionFij.test.tsx`. Le filtre est ici, et non dans `AMORCES_PAR_PROFIL`,
   // pour ne pas toucher les mêmes lignes que les autres lots (une page remplacée par lot).
   const PAGES_REMPLACEES_PAR_E4 = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
+  // Pages que le lot E3 a remplacées : testées dans `src/pages/saisiesChiffres.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E3 = ['/saisir/dimanche', '/saisir/mois']
   // Pages que le lot E2 a remplacées : testées dans `src/pages/fiche.test.tsx`.
   const PAGES_REMPLACEES_PAR_E2 = ['/ma-fiche', '/ministeres', '/ministeres/:id']
   it.each(
-    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif)).filter(
-      ([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif),
-    ),
+    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E3.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif)),
   )(
     '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
     async (motif, profil) => {
