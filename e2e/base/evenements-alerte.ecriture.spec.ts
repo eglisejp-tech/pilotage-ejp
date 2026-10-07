@@ -17,6 +17,19 @@ const SANS_SESSION = { cookies: [], origins: [] }
 
 test.describe.configure({ mode: 'serial' })
 
+/**
+ * Connexion d'un ministère (mot de passe, puis code). Le code de ce compte ne peut pas être celui
+ * d'une connexion de la même période de 30 s : on attend la suivante. La connexion doit être
+ * terminée (arrivée sur « / ») avant toute autre navigation, sinon elle est coupée en route.
+ */
+async function connecterMinistere(page: Page, email: string) {
+  test.setTimeout(120_000)
+  const reste = 30_000 - (Date.now() % 30_000)
+  await new Promise((fin) => setTimeout(fin, reste + 500))
+  await seConnecter(page, email)
+  await expect(page).toHaveURL((url) => url.pathname === '/')
+}
+
 /** Lignes de `v_evenement` portant le titre du test, telles que le compte de la page les lit. */
 const lignesDuTest = (page: Page) =>
   lire<{ id: string; jours: number; a_confirmer: boolean; statut: string }>(
@@ -119,7 +132,7 @@ test.describe('Coordination, mentionnée', () => {
   test('lit l’événement qui la mentionne : bandeau et « Mentionné par Communication », sans bouton', async ({
     page,
   }) => {
-    await seConnecter(page, 'coordination@exemple.test')
+    await connecterMinistere(page, 'coordination@exemple.test')
     await page.goto('/ma-fiche')
     const calendrier = page.getByRole('region', { name: 'Calendrier prévisionnel' })
     const ligne = calendrier.getByRole('listitem').filter({ hasText: NOM })
@@ -137,7 +150,7 @@ test.describe('Un autre ministère', () => {
   test.use({ storageState: SANS_SESSION })
 
   test('ne lit pas l’événement : ni la base, ni sa fiche', async ({ page }) => {
-    await seConnecter(page, 'jeunesse@exemple.test')
+    await connecterMinistere(page, 'jeunesse@exemple.test')
     await page.goto('/ma-fiche')
     await expect(page.getByRole('region', { name: 'Calendrier prévisionnel' })).toBeVisible()
     await expect(page.getByText(NOM)).toHaveCount(0)
