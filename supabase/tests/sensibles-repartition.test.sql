@@ -1,22 +1,22 @@
--- Répartition du total d'un indicateur sensible par catégories (lot B8 ; docs/plan-etape-4.md,
--- section 4, « B8 » ; docs/decisions.md, P47 et T41 ; contrat-etape-4.md, sections 5, 6 et 7).
+-- Répartition du total d'un indicateur sensible par catégories (lot B8, revu par le lot I ;
+-- docs/plan-etape-4.md, section 4, « B8 » et « I » ; docs/decisions.md, P47, P52 et T41 ;
+-- contrat-etape-4.md, sections 5, 6 et 7).
 --
 -- Écriture par saisir_chiffres_mois : somme au-dessus du total refusée avec son message,
 -- catégorie hors liste refusée, catégories pour un non-sensible ou pour un sensible sans liste
 -- refusées, catégorie absente écrite à 0. Lecture par v_ventilation_sensible : « Non réparti »
 -- juste, seule la répartition du total le plus récent, une correction sans catégories ne laisse
--- aucune ligne, valeurs exactes pour le ministère, règle de P47 pour le berger (total de 0, 1
--- ou 2 masqué en entier, départage, cas nommé B, A, C), jeu d'exemple seed/44. Catégories :
--- 3 à 6 par indicateur (la base refuse une répartition hors de cette plage, liste ramenée à 2
--- par un retrait ou montée à 7), ordre unique et au moins 1, écrites par migration seulement,
--- figées dès qu'elles servent, une catégorie retirée reste lue dans une ancienne répartition,
--- aucune répartition avec une catégorie absente de la liste.
--- Enfin la simulation du lecteur : pour 4 à 7 cases et un total de 3 à 16, toutes les
--- répartitions, leur affichage par private.repartition_protegee (la fonction de la vue), et
--- aucune case de 1 ou 2 qui n'aurait qu'une valeur possible dans son groupe d'affichage.
+-- aucune ligne, valeurs exactes pour le ministère, et depuis P52 (7 octobre 2026) pour le
+-- berger, le conseil et EJP Tech aussi (plus de « moins de 3 » ni de masquage : moins_de_3,
+-- masquee et tout_masque restent, toujours faux) ; rien pour l'administration ni pour un autre
+-- ministère ; jeu d'exemple seed/44. Catégories : 3 à 6 par indicateur (la base refuse une
+-- répartition hors de cette plage, liste ramenée à 2 par un retrait ou montée à 7), ordre unique
+-- et au moins 1, écrites par migration seulement, figées dès qu'elles servent, une catégorie
+-- retirée reste lue dans une ancienne répartition, aucune répartition avec une catégorie absente
+-- de la liste.
 begin;
 
-select plan(57);
+select plan(49);
 
 create temp table ctx as
 select tests.creer_ministere('B8 répartition A') as a_m,
@@ -96,7 +96,7 @@ select throws_ok($$
     'indicateur_id', (select sens from ctx), 'valeur', 7, 'categories', jsonb_build_array(1, 2))))
 $$, 'P0001', 'La répartition se donne par catégorie.', 'une répartition qui n''est pas un objet est refusée');
 
--- 2. Cas nommé de P47 : ordre B, A, C ; B = 4, A = 5, C = 1, total 10
+-- 2. Ancien cas nommé de P47 : ordre B, A, C ; B = 4, A = 5, C = 1, total 10
 select is(public.saisir_chiffres_mois((select m1 from ctx), jsonb_build_array(jsonb_build_object(
     'indicateur_id', (select sens from ctx), 'valeur', 10, 'categories', jsonb_build_object('b', 4, 'a', 5, 'c', 1)))),
   1, 'le ministère envoie le total de 10 et sa répartition (une ligne de mesure)');
@@ -112,12 +112,26 @@ select tests.se_connecter((select berger from ctx), 'aal2');
 select results_eq($$
   select categorie, valeur, moins_de_3, masquee, tout_masque from public.v_ventilation_sensible
    where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) order by ordre
-$$, $$ values ('b', null::integer, false, false, true), ('a', null, false, false, true),
-              ('c', null, false, false, true), (null, null, false, false, true) $$,
-  'cas nommé (B = 4, A = 5, C = 1) : le berger lit la répartition masquée en entier');
+$$, $$ values ('b', 4, false, false, false), ('a', 5, false, false, false),
+              ('c', 1, false, false, false), (null, 0, false, false, false) $$,
+  'P52 : le berger lit les valeurs exactes (B = 4, A = 5, C = 1, Non réparti 0), sans masquage');
 select tests.deconnecter();
-select is_empty($$ select 1 from private.repartition_protegee(array[4, 5, 1, 0]) where not tout_masque $$,
-  'cas nommé : la fonction de la vue masque tout');
+select is(tests.lire((select tech from ctx), 'aal2', $q$
+  select categorie, valeur, moins_de_3, masquee, tout_masque from public.v_ventilation_sensible
+   where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx)
+$q$), tests.lire((select a from ctx), 'aal2', $q$
+  select categorie, valeur, moins_de_3, masquee, tout_masque from public.v_ventilation_sensible
+   where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx)
+$q$), 'P52 : EJP Tech lit la même répartition exacte que le ministère');
+select is(tests.compter((select admin from ctx), 'aal2',
+    'select 1 from public.v_ventilation_sensible where ministere_id = (select a_m from ctx)'), 0,
+  'l''administration ne lit toujours aucune répartition');
+select is(tests.compter((select b from ctx), 'aal2',
+    'select 1 from public.v_ventilation_sensible where ministere_id = (select a_m from ctx)'), 0,
+  'un autre ministère ne lit toujours aucune répartition');
+select is(tests.compter((select berger from ctx), 'aal1',
+    'select 1 from public.v_ventilation_sensible where ministere_id = (select a_m from ctx)'), 0,
+  'le berger en aal1 ne lit aucune répartition');
 
 -- 3. « Non réparti », correction du total, catégorie absente écrite à 0
 select tests.se_connecter((select a from ctx), 'aal2');
@@ -167,18 +181,24 @@ $$, $$ values ('b', 2), ('a', 0), ('c', 0), (null, 0) $$, 'le ministère lit son
 select tests.deconnecter();
 
 select tests.se_connecter((select berger from ctx), 'aal2');
-select is((select count(*)::integer from public.v_ventilation_sensible
-            where indicateur_id = (select sens from ctx) and periode in ((select m3 from ctx), (select m4 from ctx))
-              and tout_masque and valeur is null and not moins_de_3 and not masquee), 8,
-  'un total de 1 ou de 2 : le berger lit les deux répartitions masquées en entier');
+select results_eq($$
+  select periode, categorie, valeur from public.v_ventilation_sensible
+   where indicateur_id = (select sens from ctx) and periode in ((select m3 from ctx), (select m4 from ctx))
+     and not (moins_de_3 or masquee or tout_masque)
+   order by periode, ordre
+$$, $$ select m4, 'b'::text, 0 from ctx union all select m4, 'a', 1 from ctx union all select m4, 'c', 0 from ctx
+       union all select m4, null, 0 from ctx
+       union all select m3, 'b', 2 from ctx union all select m3, 'a', 0 from ctx union all select m3, 'c', 0 from ctx
+       union all select m3, null, 0 from ctx $$,
+  'P52 : un total de 1 ou de 2, le berger lit ses deux répartitions exactes, sans masquage');
 select results_eq($$
   select categorie, valeur, moins_de_3, masquee, tout_masque from public.v_ventilation_sensible
    where indicateur_id = (select social from ctx)
      and periode = (private.mois_courant() - interval '4 months')::date
    order by ordre
-$$, $$ values ('malaise', null::integer, false, true, false), ('blessure', null, true, false, false),
+$$, $$ values ('malaise', 4, false, false, false), ('blessure', 2, false, false, false),
               ('autre', 0, false, false, false), (null, 0, false, false, false) $$,
-  'jeu d''exemple : Social (6 réparti 4, 2, 0) se lit « masqué », « moins de 3 », 0 et 0 pour le berger');
+  'jeu d''exemple : Social (6 réparti 4, 2, 0) se lit 4, 2, 0 et 0 pour le berger (P52)');
 select results_eq($$
   select categorie, valeur, moins_de_3, masquee, tout_masque from public.v_ventilation_sensible
    where indicateur_id = (select social from ctx) and periode = private.mois_courant()
@@ -187,30 +207,8 @@ $$, $$ values ('malaise', 4, false, false, false), ('blessure', 3, false, false,
               ('autre', 0, false, false, false), (null, 0, false, false, false) $$,
   'jeu d''exemple : le mois en cours de Social (7 réparti 4, 3, 0, aucun petit nombre) s''affiche en entier');
 select tests.deconnecter();
-select results_eq($$
-  select r.valeur, r.moins_de_3, r.masquee, r.tout_masque from private.repartition_protegee(array[0, 0, 0, 0]) r order by r.rang
-$$, $$ values (null::integer, false, false, true), (null, false, false, true), (null, false, false, true),
-              (null, false, false, true) $$, 'un total de 0 : la répartition est masquée en entier');
 
--- 5. Règle de P47, cas choisis
-select results_eq($$
-  select r.valeur, r.moins_de_3, r.masquee from private.repartition_protegee(array[4, 2, 0, 4]) r order by r.rang
-$$, $$ values (null::integer, false, true), (null, true, false), (0, false, false), (4, false, false) $$,
-  'à égalité, la première case dans l''ordre de la liste est masquée, « Non réparti » en dernier');
-select results_eq($$
-  select r.valeur, r.moins_de_3, r.masquee from private.repartition_protegee(array[3, 1, 0, 5]) r order by r.rang
-$$, $$ values (3, false, false), (null::integer, true, false), (0, false, false), (null, false, true) $$,
-  '« Non réparti » se masque quand il est la plus grande case');
-select is_empty($$ select 1 from private.repartition_protegee(array[3, 2, 4, 0]) where tout_masque $$,
-  'une case « moins de 3 » à 2 : la case masquée suffit, rien n''est masqué en entier');
-select is_empty($$ select 1 from private.repartition_protegee(array[3, 4, 1, 0]) where not tout_masque $$,
-  'règle 6 : la case masquée vaut exactement la borne (3 plus 1), tout est masqué');
-select is_empty($$ select 1 from private.repartition_protegee(array[1, 2, 0, 1]) where not tout_masque $$,
-  'aucune case de 3 ou plus : tout est masqué');
-select is_empty($$ select 1 from private.repartition_protegee(array[5, 3, 0, 0]) where valeur is null or moins_de_3 or masquee $$,
-  'aucune case « moins de 3 » : tout s''affiche');
-
--- 6. Catégories : 3 à 6, écrites par migration, figées dès qu'elles servent, retrait
+-- 5. Catégories : 3 à 6, écrites par migration, figées dès qu'elles servent, retrait
 select is_empty($$
   select c.prevu_code from public.categorie_sensible c
    where c.retiree_le is null
@@ -249,10 +247,10 @@ select set_config('pilotage.migration', '', true);
 
 select tests.se_connecter((select berger from ctx), 'aal2');
 select results_eq($$
-  select categorie, libelle, tout_masque from public.v_ventilation_sensible
+  select categorie, libelle, valeur from public.v_ventilation_sensible
    where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) order by ordre
-$$, $$ values ('b', 'Catégorie B', true), ('a', 'Catégorie A', true), ('c', 'Catégorie C', true),
-              (null, 'Non réparti', true) $$,
+$$, $$ values ('b', 'Catégorie B', 4), ('a', 'Catégorie A', 5), ('c', 'Catégorie C', 1),
+              (null, 'Non réparti', 0) $$,
   'une catégorie retirée reste lue, avec son libellé, dans une ancienne répartition');
 select tests.deconnecter();
 select tests.se_connecter((select a from ctx), 'aal2');
@@ -333,41 +331,6 @@ select throws_ok($$
                                                           and x.date_ref = (select m5 from ctx))
 $$, 'P0001', 'Une répartition demande de 3 à 6 catégories en cours dans la liste de l''indicateur.',
   'la base refuse une répartition quand la liste en cours compte 7 catégories');
-
--- 7. Simulation du lecteur (P47, « Contrôle de la règle »)
-create temp table simulation as
-with recursive comp(n, total, vals, reste) as (
-  select g.n, t.t, array[]::integer[], t.t
-    from generate_series(3, 7) as g(n) cross join generate_series(3, 16) as t(t)
-  union all
-  select c.n, c.total, c.vals || a.a, c.reste - a.a
-    from comp c cross join lateral generate_series(0, c.reste) as a(a)
-   where cardinality(c.vals) < c.n - 1
-)
-select c.n, c.total, c.vals || c.reste as vals from comp c where cardinality(c.vals) = c.n - 1;
-
-create temp table affichage as
-select s.n, s.total, s.vals,
-       (select string_agg(case when r.tout_masque then 'T' when r.masquee then 'M' when r.moins_de_3 then 'm'
-                               else r.valeur::text end, ',' order by r.rang)
-          from private.repartition_protegee(s.vals) as r) as cle
-  from simulation s;
-
-create temp view fuites as
-select a.n, a.total, a.cle, g.i, min(a.vals[g.i]) as valeur
-  from affichage a cross join lateral generate_series(1, a.n) as g(i)
- group by a.n, a.total, a.cle, g.i
-having count(distinct a.vals[g.i]) = 1 and min(a.vals[g.i]) in (1, 2);
-
-select is((select count(*)::integer from simulation where n between 4 and 7), 344864,
-  'simulation : toutes les répartitions de 4 à 7 cases pour un total de 3 à 16 (344 864)');
-select is((select count(*)::integer from simulation where n = 7 and total = 12), 18564,
-  'simulation : 18 564 répartitions pour 7 cases et un total de 12');
-select is_empty($$ select * from fuites where n between 4 and 7 $$,
-  'simulation : de 4 à 7 cases, aucune case de 1 ou 2 ne se retrouve à partir de l''affichage et du total');
-select results_eq($$ select n, total, cle, i, valeur from fuites where n = 3 order by i $$,
-  $$ values (3, 6, 'T,T,T', 1, 2), (3, 6, 'T,T,T', 2, 2), (3, 6, 'T,T,T', 3, 2) $$,
-  'simulation : le contrôle voit une fuite, celle que la consigne de 3 catégories au moins écarte (3 cases, 2, 2 et 2)');
 
 select * from finish();
 rollback;

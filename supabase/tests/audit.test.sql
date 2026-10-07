@@ -5,7 +5,7 @@
 -- indicateur propre ni aucune ligne sensible : l'administration lit tous les envois.
 begin;
 
-select plan(19);
+select plan(21);
 
 create temp table ctx as
 select tests.compte('Administration de l''église') as admin,
@@ -41,8 +41,25 @@ select is(tests.compter((select admin from ctx), 'aal2', $$
                     'texte_relu', 'texte_masque')
 $$), (select count(*)::int from public.journal
        where action in ('fij_saisie', 'participation_saisie', 'session_declaree', 'ministere_cree', 'compte_cree',
-                        'texte_relu', 'texte_masque')),
+                        'texte_relu', 'texte_masque')
+         and not (action in ('texte_relu', 'texte_masque')
+                  and coalesce(cible, '') in ('point_attention', 'point_suivi', 'evenement', 'reunion',
+                                              'demande_indicateur', 'precision_sensible', 'signalement',
+                                              'signalement_suivi'))),
   'administration : lit les comptes, les ministères, les sessions, les présences, la carte des FIJ et les actions techniques');
+-- T47 (lot I) : la relecture et le masquage d'un point, d'un suivi, d'un événement ou d'une
+-- réunion ne se lisent plus par l'administration ; le jeu d'exemple en a deux (points de Social
+-- et de Coordination).
+select is((select count(*)::int from public.journal
+            where action in ('texte_relu', 'texte_masque') and cible = 'point_attention'), 2,
+  'le jeu d''exemple a deux lignes de modération de points au journal');
+select is(tests.compter((select admin from ctx), 'aal2', $$
+  select 1 from public.journal
+   where action in ('texte_relu', 'texte_masque') and cible in ('point_attention', 'point_suivi', 'evenement', 'reunion')
+  union all
+  select 1 from public.v_journal
+   where action in ('texte_relu', 'texte_masque') and cible in ('point_attention', 'point_suivi', 'evenement', 'reunion')
+$$), 0, 'T47 : l''administration ne lit aucune relecture ni aucun masquage d''un point, d''un événement ou d''une réunion');
 select is(tests.compter((select berger from ctx), 'aal2', 'select * from public.v_journal'),
   (select count(*)::int from public.journal), 'le berger lit toujours tout le journal');
 select ok((select p.qual from pg_policies p

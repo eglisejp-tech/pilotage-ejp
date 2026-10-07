@@ -6,7 +6,7 @@
 // `indicateurs.ts`, où le lot E1 l'a déclarée.
 //
 // Dates : `date` arrive en chaîne « 2026-09-01 », `timestamptz` en chaîne ISO. Une absence n'est
-// jamais 0 : un « moins de 3 » ou une case masquée a `valeur` à null.
+// jamais 0. Depuis P52, `moins_de_3`, `masquee` et `tout_masque` valent toujours faux.
 
 import type { Aucun, Vue } from './communs'
 
@@ -24,9 +24,8 @@ export type VuesFiche = {
    * ligne par catégorie de la liste en cours (une catégorie non renseignée vaut 0, T42 ; une
    * catégorie retirée depuis garde sa ligne dans une ancienne répartition) et une ligne « Non
    * réparti » (`categorie` null, en dernier). Un mois sans répartition n'a aucune ligne (contrat,
-   * section 6). Valeurs exactes pour le ministère ; « moins de 3 »,
-   * masquage secondaire et masquage complet pour le berger, le conseil et EJP Tech ; rien pour
-   * l'administration ni pour un autre ministère.
+   * section 6). Valeurs exactes pour le ministère, le berger, le conseil et EJP Tech (P52) ; rien
+   * pour l'administration ni pour un autre ministère.
    */
   v_ventilation_sensible: Vue<{
     indicateur_id: string
@@ -38,12 +37,12 @@ export type VuesFiche = {
     /** Libellé de la catégorie, ou « Non réparti ». */
     libelle: string
     ordre: number
-    /** Null si « moins de 3 » ou masquée. */
     valeur: number | null
+    /** Toujours faux depuis P52 (colonne gardée). */
     moins_de_3: boolean
-    /** Case cachée par le masquage secondaire : « masqué ». */
+    /** Toujours faux depuis P52 (colonne gardée). */
     masquee: boolean
-    /** Vrai sur toutes les lignes d'un mois dont la répartition est masquée en entier. */
+    /** Toujours faux depuis P52 (colonne gardée). */
     tout_masque: boolean
   }>
   /**

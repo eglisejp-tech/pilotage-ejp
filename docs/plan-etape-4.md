@@ -1472,6 +1472,9 @@ rien.
 - **Fichiers** : `src/features/signalement/` (`FormulaireSignalement.tsx`, `BlocSignalements.tsx`,
   `schemas.ts`, `textes.ts`), `src/data/signalements.ts`, `src/lib/base/signalements.ts`, page
   `PageSignalement.tsx` ; l'emplacement `BlocSignalements.tsx` de la page `/moderation` (W0).
+  Écart tracé : `PageModeration.tsx` remplace `PageAVenir` par `EcranModeration` (h1 « Modération »
+  puis le bloc), pour que le titre de page précède le h2 du bloc ; à déplacer dans
+  `src/features/moderation/` à l'étape 6.
 - **Textes** : ceux de la section 7 de `docs/conception/aides-contextuelles.md` (« Proposé »),
   qui font foi ; les textes ci-dessous qui n'y sont pas (clôture, « Vos derniers signalements »)
   sont proposés ici et s'y reportent.
