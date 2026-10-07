@@ -2,12 +2,17 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
+import { AvecRequetes } from '@/test/AvecRequetes'
 
+// Les boutons des points (lot P4) relisent les requêtes après une écriture : il leur faut le
+// client de requêtes, que l'application fournit dans main.tsx.
 function afficher(requete: string) {
   return render(
-    <MemoryRouter initialEntries={[`/apercu/points${requete}`]}>
-      <ApercuPoints />
-    </MemoryRouter>,
+    <AvecRequetes>
+      <MemoryRouter initialEntries={[`/apercu/points${requete}`]}>
+        <ApercuPoints />
+      </MemoryRouter>
+    </AvecRequetes>,
   )
 }
 
