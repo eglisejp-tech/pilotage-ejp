@@ -269,55 +269,45 @@ test('le catalogue ne contient pas deux fois le même écran', () => {
 })
 
 for (const ecran of ECRANS) {
-  test.describe(ecran.nom, () => {
-    // Le premier chargement d'un aperçu compile ses modules : 60 s laissent de la marge.
-    test.describe.configure({ timeout: 60_000 })
-    // Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts) marque le contrôle `test.fail()`.
-    test('axe : aucune faute WCAG 2.1 A et AA', async ({ page }, testInfo) => {
-      marquerFauteConnue(`${ecran.nom} | axe`, testInfo.project.name)
-      await ouvrir(page, ecran)
-      expect(decrireFautes(await auditerAxe(page, ecran.exclure))).toEqual([])
-    })
+  // Un seul test par écran et par format : un chargement sert tous les contrôles (la CI a 30
+  // minutes pour tout le job « e2e »). Les contrôles sont mous (`expect.soft`) : une faute n'en
+  // cache pas une autre, et chaque ligne dit quoi corriger. Le clavier passe en dernier, car il
+  // ouvre des bulles et le menu. Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts)
+  // marque tout l'écran `test.fail()`.
+  test(ecran.nom, async ({ page }, testInfo) => {
+    // Le premier chargement d'un aperçu compile ses modules : 90 s laissent de la marge.
+    test.setTimeout(90_000)
+    marquerFauteConnue(ecran.nom, testInfo.project.name)
+    await ouvrir(page, ecran)
+    expect
+      .soft(decrireFautes(await auditerAxe(page, ecran.exclure)), 'axe : WCAG 2.1 A et AA')
+      .toEqual([])
+    expect
+      .soft(await problemesDeStructure(page, ecran.exclure), 'structure : titre, langue, main')
+      .toEqual([])
+    expect.soft(await ciblesTropPetites(page, ecran.exclure), 'cibles de 44 px').toEqual([])
+    expect
+      .soft(
+        [
+          ...decrireRapportClavier(await parcourirAuClavier(page, ecran.exclure)),
+          ...(await problemesPiegeDuFocus(page)),
+          ...(await problemesEchapDesAides(page)),
+          ...(await problemesEchapDuMenu(page)),
+        ],
+        'clavier : Tab atteint tout, focus visible, piège, Échap',
+      )
+      .toEqual([])
 
-    test('structure : un titre de niveau 1, un titre d’onglet, la langue, une zone main', async ({
-      page,
-    }, testInfo) => {
-      marquerFauteConnue(`${ecran.nom} | structure`, testInfo.project.name)
+    // Les largeurs sont fixées ici : un seul projet suffit, pas trois. 720 px de large : un
+    // écran de 1440 px à 200 % de zoom (WCAG 1.4.4).
+    if (testInfo.project.name !== 'ordinateur') return
+    const debords: string[] = []
+    for (const largeur of [LARGEUR_MINIMALE, 720]) {
+      await page.setViewportSize({ width: largeur, height: 800 })
       await ouvrir(page, ecran)
-      expect(await problemesDeStructure(page, ecran.exclure)).toEqual([])
-    })
-
-    test('cibles de 44 px', async ({ page }, testInfo) => {
-      marquerFauteConnue(`${ecran.nom} | cibles`, testInfo.project.name)
-      await ouvrir(page, ecran)
-      expect(await ciblesTropPetites(page, ecran.exclure)).toEqual([])
-    })
-
-    test('clavier : Tab atteint tout, focus visible, piège, Échap', async ({ page }, testInfo) => {
-      marquerFauteConnue(`${ecran.nom} | clavier`, testInfo.project.name)
-      await ouvrir(page, ecran)
-      const problemes = [
-        ...decrireRapportClavier(await parcourirAuClavier(page, ecran.exclure)),
-        ...(await problemesPiegeDuFocus(page)),
-        ...(await problemesEchapDesAides(page)),
-        ...(await problemesEchapDuMenu(page)),
-      ]
-      expect(problemes).toEqual([])
-    })
-
-    test('360 px et zoom à 200 % : aucun défilement horizontal', async ({ page }, testInfo) => {
-      // Les largeurs sont fixées ici : un seul projet suffit, pas trois.
-      test.skip(testInfo.project.name !== 'ordinateur', 'mesuré une fois, à largeurs fixes')
-      marquerFauteConnue(`${ecran.nom} | 360`, testInfo.project.name)
-      const debords: string[] = []
-      // 720 px de large : un écran de 1440 px à 200 % de zoom (WCAG 1.4.4).
-      for (const largeur of [LARGEUR_MINIMALE, 720]) {
-        await page.setViewportSize({ width: largeur, height: 800 })
-        await ouvrir(page, ecran)
-        const debord = await debordementHorizontal(page)
-        if (debord > 0) debords.push(`${largeur} px : ${debord} px en trop à droite`)
-      }
-      expect(debords).toEqual([])
-    })
+      const debord = await debordementHorizontal(page)
+      if (debord > 0) debords.push(`${largeur} px : ${debord} px en trop à droite`)
+    }
+    expect.soft(debords, 'défilement horizontal à 360 px et à 200 % de zoom').toEqual([])
   })
 }

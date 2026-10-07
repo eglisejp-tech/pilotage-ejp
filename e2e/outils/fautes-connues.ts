@@ -7,9 +7,11 @@ import { test } from '@playwright/test'
 // `test.fail()` le fait alors échouer (« attendu en échec, mais réussi »), et la personne qui
 // corrige retire l'entrée ci-dessous : le contrôle reste dans la suite et garde la correction.
 //
-// Clé : « nom de l'écran | contrôle », avec le contrôle parmi `axe`, `structure`, `cibles`,
-// `clavier`, `360` (aperçus), ou « profil | adresse » (audit avec la base). `projets` limite la
-// faute à certains formats (ordinateur, tablette, telephone) ; sans lui, elle vaut pour les trois.
+// Clé : le nom de l'écran dans le catalogue de e2e/accessibilite.spec.ts (aperçus), ou
+// « profil | adresse » (audit avec la base, e2e/base/accessibilite.spec.ts). Un test couvre tous
+// les contrôles d'un écran : la faute marque l'écran entier, la ligne de l'audit dit lequel.
+// `projets` limite la faute à certains formats (ordinateur, tablette, telephone) ; sans lui, elle
+// vaut pour les trois.
 // `tantQue` retire la faute dès qu'une condition sur le code n'est plus vraie, sans intervention.
 
 export type FauteConnue = {

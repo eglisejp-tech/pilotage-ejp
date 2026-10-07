@@ -20,7 +20,11 @@ Un écran est audité par cinq contrôles (`e2e/accessibilite.spec.ts`, aperçus
 | `clavier`   | Tab atteint chaque élément (un seul par groupe de boutons radio) et l'action principale (premier bouton d'envoi) ; le focus se voit ; le piège des fenêtres tient ; Échap ferme les aides et le menu. | `parcourirAuClavier` et voisins |
 | `360`       | Aucun défilement horizontal à 360 px, et à 720 px (un écran de 1440 px à 200 % de zoom, WCAG 1.4.4). Mesuré une fois, dans le projet « ordinateur ».                                                  | `debordementHorizontal`         |
 
-Les quatre premiers tournent aux trois formats de référence (1440, 834 et 390 px).
+Les quatre premiers tournent aux trois formats de référence (1440, 834 et 390 px). Un seul test
+couvre tous les contrôles d'un écran et d'un format (un chargement sert les cinq) : la CI donne
+30 minutes à tout le job « e2e », et trois tests par écran et par contrôle l'auraient dépassé. Les
+contrôles sont mous (`expect.soft`) : une faute n'en cache pas une autre, et chaque ligne d'erreur
+dit quel élément corriger.
 
 Les outils se vérifient eux-mêmes (`e2e/accessibilite-outils.spec.ts`) sur de petites pages qui
 contiennent chacune une faute précise : une image sans texte alternatif, un bloc trop large, un
@@ -66,9 +70,9 @@ double authentification, réseau) sont audités par la passe de la section 4.
 ## 3. Tableau des fautes
 
 La colonne « Ligne » est l'identifiant que porte l'entrée de `e2e/outils/fautes-connues.ts` : le
-contrôle correspondant est marqué `test.fail()` avec cette ligne, pour que la CI ne rougisse pas
-tant que la faute vit. Quand la correction réussit, `test.fail()` fait échouer le contrôle
-(« attendu en échec, mais réussi ») et on retire l'entrée : le contrôle reste dans la suite.
+test de l'écran est marqué `test.fail()` avec cette ligne, pour que la CI ne rougisse pas tant que
+la faute vit. Quand la correction réussit, `test.fail()` fait échouer le test (« attendu en échec,
+mais réussi ») et on retire l'entrée : le test reste dans la suite et garde la correction.
 
 | Ligne | Écran                                                      | Faute                                                                                                                                                                             | Gravité                                                    | Lot propriétaire | Contrôle                       |
 | ----- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ---------------- | ------------------------------ |
