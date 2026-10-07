@@ -99,7 +99,10 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(donnees).toContainElement(signalements)
     expect(donnees).toContainElement(champsLibres)
     expect(signalements.nextElementSibling).toBe(champsLibres)
-    expect(texteDe(partie('Qui voit les données'))).not.toMatch(/signalement/i)
+    // « Qui voit les données » ne cite les signalements que pour les exclure de « l'ensemble » (T49).
+    expect(texteDe(partie('Qui voit les données'))).toMatch(
+      /le berger et le conseil voient l'ensemble, sauf les signalements ;/,
+    )
   })
 
   it("parle d'une seule boîte Gmail, celle d'EJP Tech, et des transferts propres à Google et à Netlify", () => {
@@ -129,7 +132,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(partie('Qui voit les données')).toContainElement(
       elementExact(
         'p',
-        "Les comptes de l'église, chacun selon son profil : un ministère voit sa fiche, la vue de l'église et les points qui le concernent ; le berger et le conseil voient l'ensemble ; EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs libres.",
+        "Les comptes de l'église, chacun selon son profil : un ministère voit sa fiche, la vue de l'église et les points qui le concernent ; le berger et le conseil voient l'ensemble, sauf les signalements ; EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs libres.",
       ),
     )
     elementExact(
