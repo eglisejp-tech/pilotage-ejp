@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import type { ReactNode } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
@@ -14,6 +15,11 @@ interface Props {
   donnees: DonneesFiche
   /** Détail des sensibles (catégories, répartitions, précisions) en échec : « Réessayer ». */
   reessayerDetails?: (() => void) | null
+  /**
+   * Emplacement du lien « Gérer mes indicateurs » (lot L4), sous les chiffres, tout en bas de la
+   * section. Rien tant qu'il est vide ; il ne s'affiche que sur « Ma fiche ».
+   */
+  gererIndicateurs?: ReactNode
 }
 
 /**
@@ -22,7 +28,11 @@ interface Props {
  * rythme, puis les retirés repliés. Premier usage : la phrase du profil, et pour le ministère une
  * seule action, « Saisir les chiffres du mois », quand un indicateur du mois n'a jamais été saisi.
  */
-export function ChiffresDuMinistere({ donnees, reessayerDetails = null }: Props) {
+export function ChiffresDuMinistere({
+  donnees,
+  reessayerDetails = null,
+  gererIndicateurs = null,
+}: Props) {
   const idTitre = useId()
   const estMinistere = donnees.profil === 'ministere'
   return (
@@ -79,6 +89,7 @@ export function ChiffresDuMinistere({ donnees, reessayerDetails = null }: Props)
       {donnees.sansIndicateurPropre && donnees.retires.length === 0 ? null : (
         <RetiresFiche retires={donnees.retires} />
       )}
+      {gererIndicateurs}
     </section>
   )
 }

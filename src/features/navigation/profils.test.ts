@@ -52,7 +52,8 @@ describe('adresses de l’étape 4', () => {
     expect(trouverAdresse('/saisir/evenement')?.titre).toBe('Ajouter un événement')
     expect(trouverAdresse('/saisir/evenement/e1')?.titre).toBe("Mettre à jour l'événement")
     expect(trouverAdresse('/saisir')).toBeNull()
-    expect(trouverAdresse('/saisir/point')).toBeNull()
+    // Lot C0 : « Nouveau point » (étape 5) a maintenant son adresse, au ministère seulement.
+    expect(trouverAdresse('/saisir/point')?.titre).toBe('Nouveau point')
   })
 
   it('EJP Tech lit tout et ne saisit rien : aucune adresse /saisir ni /signaler pour lui (T29)', () => {
@@ -111,10 +112,12 @@ describe('navigation par profil', () => {
       'Cette semaine',
       'Ministères et comptes',
       'Sessions',
+      'Indicateurs',
       'Journal',
     ])
     expect(ONGLETS.admin_plateforme.map((o) => o.libelle)).toEqual([
       'Modération',
+      'Indicateurs',
       'Cette semaine',
       'Journal technique',
     ])
@@ -159,5 +162,74 @@ describe('navigation par profil', () => {
     const points = trouverAdresse('/points')
     expect(points && titrePour(points, 'ministere')).toBe('Mes points')
     expect(points && titrePour(points, 'berger')).toBe("Points d'attention")
+  })
+})
+
+// Adresses des étapes 5 et 6 (plan des étapes 5 à 8, section 3.0, lot C0) : un exemple d'adresse
+// réelle par motif, son étape et les seuls profils qui y ont droit.
+const ADRESSES_ETAPES_5_6: [
+  motif: string,
+  exemple: string,
+  etape: number,
+  profils: TypeCompte[],
+][] = [
+  ['/saisir/point', '/saisir/point', 5, ['ministere']],
+  ['/points', '/points', 5, ['ministere', 'berger', 'conseil', 'admin_plateforme']],
+  ['/journal', '/journal', 6, ['ministere', 'berger', 'conseil', 'admin_eglise']],
+  ['/journal-technique', '/journal-technique', 6, ['admin_plateforme']],
+  ['/comptes', '/comptes', 6, ['admin_eglise']],
+  ['/sessions', '/sessions', 6, ['admin_eglise']],
+  ['/indicateurs', '/indicateurs', 6, ['admin_eglise', 'admin_plateforme']],
+  ['/indicateurs/:id', '/indicateurs/m1', 6, ['admin_eglise', 'admin_plateforme']],
+  ['/ma-fiche/indicateurs', '/ma-fiche/indicateurs', 6, ['ministere']],
+  ['/moderation', '/moderation', 6, ['admin_plateforme']],
+]
+
+describe('adresses des étapes 5 et 6 (lot C0)', () => {
+  it.each(ADRESSES_ETAPES_5_6)(
+    '%s : déclarée une fois, à son étape, avec ses profils',
+    (motif, exemple, etape, profils) => {
+      expect(ADRESSES_APPLICATION.filter((adresse) => adresse.chemin === motif)).toHaveLength(1)
+      const adresse = trouverAdresse(exemple)
+      expect(adresse?.chemin).toBe(motif)
+      expect(adresse?.etape).toBe(etape)
+      for (const profil of PROFILS) {
+        expect(profilAutorise(exemple, profil), `${profil} ${exemple}`).toBe(
+          profils.includes(profil),
+        )
+      }
+    },
+  )
+
+  it('« /ma-fiche/indicateurs » et « /indicateurs/:id » ne se confondent pas avec leurs voisines', () => {
+    expect(trouverAdresse('/ma-fiche')?.chemin).toBe('/ma-fiche')
+    expect(trouverAdresse('/ma-fiche/indicateurs')?.chemin).toBe('/ma-fiche/indicateurs')
+    expect(trouverAdresse('/indicateurs')?.chemin).toBe('/indicateurs')
+    expect(trouverAdresse('/indicateurs/m1')?.chemin).toBe('/indicateurs/:id')
+    expect(trouverAdresse('/indicateurs/m1/autre')).toBeNull()
+  })
+
+  it('seul un ministère crée un point : ni le berger, ni le conseil, ni EJP Tech (BRIEF règle 7, T29)', () => {
+    expect(profilAutorise('/saisir/point', 'ministere')).toBe(true)
+    for (const profil of ['berger', 'conseil', 'admin_eglise', 'admin_plateforme'] as const) {
+      expect(profilAutorise('/saisir/point', profil), profil).toBe(false)
+    }
+  })
+
+  it('« Indicateurs » suit « Sessions » (administration) et « Modération » (EJP Tech)', () => {
+    const chemins = (profil: TypeCompte) => ONGLETS[profil].map((onglet) => onglet.chemin)
+    const eglise = chemins('admin_eglise')
+    expect(eglise.indexOf('/indicateurs')).toBe(eglise.indexOf('/sessions') + 1)
+    const tech = chemins('admin_plateforme')
+    expect(tech.indexOf('/indicateurs')).toBe(tech.indexOf('/moderation') + 1)
+    for (const profil of ['ministere', 'berger', 'conseil'] as const) {
+      expect(chemins(profil), profil).not.toContain('/indicateurs')
+    }
+  })
+
+  it('le ministère n’a pas de cinquième onglet : « Mes indicateurs » s’ouvre depuis « Ma fiche »', () => {
+    expect(ONGLETS.ministere).toHaveLength(4)
+    const mesIndicateurs = trouverAdresse('/ma-fiche/indicateurs')
+    expect(mesIndicateurs && titrePour(mesIndicateurs, 'ministere')).toBe('Mes indicateurs')
   })
 })

@@ -85,7 +85,7 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'administration@exemple.test',
     libelle: "Administration de l'église",
     accueil: { chemin: '/', titre: 'Cette semaine' },
-    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Journal'],
+    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Indicateurs', 'Journal'],
     adresseInterdite: '/points',
   },
   {
@@ -93,7 +93,7 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'ejptech1@exemple.test',
     libelle: 'EJP Tech, compte 1',
     accueil: { chemin: '/moderation', titre: 'Modération' },
-    onglets: ['Modération', 'Cette semaine', 'Journal technique'],
+    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
     adresseInterdite: '/ma-fiche',
   },
 ]

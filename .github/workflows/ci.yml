@@ -65,10 +65,12 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - name: Démarrer Supabase en local (base, Auth, PostgREST, Kong, Mailpit)
+      # L'edge runtime sert les fonctions de comptes au parcours de l'écran 13
+      # (e2e/comptes.ecriture.spec.ts, qui échoue en CI s'il manque).
+      - name: Démarrer Supabase en local (base, Auth, PostgREST, Kong, Mailpit, edge runtime)
         run: >-
           npx supabase start
-          -x realtime,storage-api,imgproxy,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+          -x realtime,storage-api,imgproxy,postgres-meta,studio,logflare,vector,supavisor
       # URL et clé publique pour le navigateur (VITE_) ; clé secrète locale pour le seul
       # script d'installation des comptes (E2E_CLE_SECRETE_LOCALE, jamais VITE_), masquée.
       - name: Exporter l'URL et les clés de la base locale

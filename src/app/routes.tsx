@@ -1,9 +1,12 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
+import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
+import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
+import { ApercuNouveauPoint } from '@/features/nouveau-point/apercu/ApercuNouveauPoint'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
 import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
@@ -16,6 +19,7 @@ import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { Garde } from '@/features/session/Garde'
+import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
@@ -35,6 +39,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
         children: [
           { path: 'cette-semaine', element: <ApercuCetteSemaine /> },
           { path: 'navigation', element: <ApercuNavigation /> },
+          // Lot L1 : écran 13, « Ministères et comptes » (actions simulées, aucune requête).
+          { path: 'comptes', element: <ApercuComptes /> },
           // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.
           { path: 'fiche', element: <ApercuFiche /> },
           { path: 'saisies', element: <ApercuSaisies /> },
@@ -45,6 +51,12 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'signalements', element: <ApercuSignalements /> },
           // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
           { path: 'calendrier', element: <ApercuCalendrier /> },
+          // Lot L3a : configuration des indicateurs (`/indicateurs` et `/indicateurs/:id`).
+          { path: 'indicateurs', element: <ApercuIndicateurs /> },
+          // Étape 5, lot P2 : « Nouveau point d'attention » (maquette 10).
+          { path: 'nouveau-point', element: <ApercuNouveauPoint /> },
+          // Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
+          { path: 'points-actions', element: <ApercuActionsPoint /> },
         ],
       },
     ]

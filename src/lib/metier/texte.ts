@@ -61,3 +61,12 @@ export function majusculeInitiale(texte: string): string {
 export function terminerPhrase(texte: string): string {
   return /[.!?]$/.test(texte) ? texte : `${texte}.`
 }
+
+/**
+ * Longueur en caractères, comme `char_length` de la base : un émoji compte pour un, là où
+ * `String.length` en compte deux (unités UTF-16). Sert aux compteurs et aux schémas des textes
+ * libres (même règle que `longueurEnCaracteres` du signalement).
+ */
+export function longueurEnCaracteres(texte: string): number {
+  return Array.from(texte).length
+}
