@@ -2,11 +2,13 @@ import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { lireCarteFij, lireSemaine, lireSessionsPassees } from '@/data/eglise'
+import { lireEvenementsMinistere } from '@/data/evenements'
 import { lirePointsMinistere } from '@/data/fiche'
 import { CODE_MINISTERE_FIJ, lireCodeMinistere, lireStatistiquesFij } from '@/data/fij'
 import { lireMesuresPeriode } from '@/data/indicateurs'
 import { lireMinisteres } from '@/data/ministeres'
 import { lireMesParticipations, lireSessionsAttendues } from '@/data/participations'
+import { lireProchaineReunion } from '@/data/reunions'
 import { lireIndicateursASaisir } from '@/data/saisies'
 import { lignesChiffres } from '@/features/accueil-ministere/lignesChiffres'
 import { lignesEvenements } from '@/features/accueil-ministere/lignesEvenements'
@@ -87,6 +89,17 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     queryFn: () => lireMesParticipations(id, idsSemaine),
     enabled: actif && semaine.isSuccess && sessions.isSuccess && attendues.isSuccess,
   })
+  // Mêmes clés que le panneau de la réunion (E5) et le calendrier de « Ma fiche » (E6).
+  const reunion = useQuery({
+    queryKey: ['reunions', 'prochaine', id],
+    queryFn: () => lireProchaineReunion(id),
+    enabled: actif,
+  })
+  const evenements = useQuery({
+    queryKey: ['evenements', 'calendrier', id],
+    queryFn: () => lireEvenementsMinistere(id),
+    enabled: actif,
+  })
   const code = useQuery({
     queryKey: ['eglise', 'accueil', 'code', id],
     queryFn: () => lireCodeMinistere(id),
@@ -122,6 +135,8 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     sessions,
     attendues,
     participations,
+    reunion,
+    evenements,
     code,
     ministeres,
   ]
@@ -155,7 +170,14 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
   }
 
   if (enEchec || essaiEnDelai === essai) return { etat: 'erreur', reessayer }
-  if (!pret || !semaine.data || !indicateurs.data || !sessions.data || !ministeres.data) {
+  if (
+    !pret ||
+    !semaine.data ||
+    !indicateurs.data ||
+    !sessions.data ||
+    !ministeres.data ||
+    !evenements.data
+  ) {
     return { etat: 'chargement' }
   }
 
@@ -166,6 +188,7 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     intitule: session.intitule,
     date: session.date,
   }))
+  const noms = new Map(ministeres.data.map((ministere) => [ministere.id, ministere.nom]))
   const vosSaisies = rangerVosSaisies({
     chiffres: lignesChiffres({
       semaine: { aujourdhui: jour.aujourdhui, dimanche: jour.dimanche },
@@ -179,18 +202,14 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
       attendues: attendues.data ?? [],
       mesParticipations: participations.data ?? [],
     }),
-    // Lot E6, à sa fusion : `lignesReunion(reunion)` (lue par `lireProchaineReunion(id)`, clé
-    // « reunions / prochaine / id ») et `lignesEvenements(evenements, id, noms)` (lus par
-    // `lireEvenementsMinistere(id)`, clé « evenements / calendrier / id »). D'ici là, les
-    // amorces de W0 ne rendent aucune ligne.
-    reunion: lignesReunion(),
+    reunion: lignesReunion(reunion.data ?? null),
     fij: lignesFij({
       estFij,
       semaine: { aujourdhui: jour.aujourdhui, dimanche: jour.dimanche },
       carte: carte.data ?? [],
       statistiques: statistiques.data ?? [],
     }),
-    evenements: lignesEvenements(),
+    evenements: lignesEvenements(evenements.data, id, noms),
   })
 
   const vosPoints: EtatBloc<PointFiche[]> = points.isError
