@@ -10,14 +10,16 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
 /**
  * Page « Confidentialité » (BRIEF section 7, « Données personnelles ») : texte statique, lisible
  * sans connexion, depuis l'écran 16, le menu et le pied de page. Texte validé par EJP Tech et la
- * coordination le 5 octobre 2026 (docs/decisions.md, T17).
+ * coordination le 5 octobre 2026 (docs/decisions.md, T17). Mise à jour du 7 octobre 2026 pour
+ * l'étape 4 (lot I) : chiffres sensibles (K56, P42, P45 à P47), signalements (T39) et envoi des
+ * emails par le Gmail gratuit d'EJP Tech (T40), selon docs/conformite/.
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Mise à jour le 5 octobre 2026.
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 7 octobre 2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
         <PartieTexte titre="Responsable du traitement">
@@ -67,20 +69,38 @@ export function PageConfidentialite() {
             EJP Tech voit l'ensemble en lecture, pour administrer l'outil, et relit les champs
             libres.
           </p>
+          <p>
+            Un signalement (« Signaler une difficulté ») n'est lu que par le ministère qui l'écrit
+            et par EJP Tech.
+          </p>
+        </PartieTexte>
+        <PartieTexte titre="Chiffres sensibles">
+          <p>
+            Pour la santé, l'accompagnement, l'écoute et les enfants, seuls des totaux par mois (le
+            mois en cours compris), des répartitions par catégories larges fixées par la
+            coordination et de courtes précisions sans information personnelle sont saisis.
+          </p>
+          <p>
+            Un nombre de 1 ou 2 s'affiche « moins de 3 » : seul le ministère qui les saisit voit ses
+            valeurs exactes. Une précision est lue par le ministère qui l'écrit, le berger, le
+            conseil et EJP Tech.
+          </p>
         </PartieTexte>
         <PartieTexte titre="Sous-traitants">
           <ul role="list" className={liste}>
             <li>Supabase : base de données et connexion, en région Paris (Union européenne).</li>
             <li>Netlify : hébergement du site.</li>
             <li>
-              Google : connexion avec Google, et envoi des emails par la messagerie Gmail de
-              l'église.
+              Google : connexion avec Google, et envoi des emails de l'outil depuis l'adresse Gmail
+              gratuite d'EJP Tech.
             </li>
           </ul>
           <p>
-            Ils agissent sous contrat. Google et Netlify sont établis aux États-Unis : les
-            transferts s'appuient sur le cadre de protection des données entre l'Union européenne et
-            les États-Unis, ou sur les clauses contractuelles types de la Commission européenne.
+            Supabase et Netlify agissent sous contrat. Pour Google, il n'y a pas de contrat de
+            sous-traitance : le Gmail gratuit d'EJP Tech relève des conditions grand public de
+            Google. Google et Netlify sont établis aux États-Unis : les transferts s'appuient sur le
+            cadre de protection des données entre l'Union européenne et les États-Unis, ou sur les
+            clauses contractuelles types de la Commission européenne.
           </p>
         </PartieTexte>
         <PartieTexte titre="Durées de conservation">
