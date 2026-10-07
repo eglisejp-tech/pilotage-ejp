@@ -96,13 +96,15 @@ registre. La société contractante reste À compléter.
 Accès aux tableaux de bord de Supabase et de Netlify : EJP Tech seul. Double authentification sur
 ces deux comptes : À compléter par EJP Tech (confirmation, elle est recommandée).
 
-Deux projets Supabase existent :
+Un seul projet Supabase distant existe (décision T52, 7 octobre 2026) : créé le 5 octobre 2026 comme
+préproduction, il est devenu la **production**. Offre gratuite, organisation « EJP TECH », région
+Paris. Il n'y a plus de préproduction distante : les essais passent par la pile locale de la CI,
+avec des données fictives. Un projet Pro séparé était prévu (P12) : il est abandonné jusqu'à un
+passage à l'offre payante, qui se fera en changeant l'offre de l'organisation, sans déplacer les
+données.
 
-- **préproduction** : offre gratuite, région Paris, créée le 5 octobre 2026. Elle ne contient que
-  des données fictives ;
-- **production** : offre Pro, région Paris (proposition P12, à confirmer par la coordination).
-
-Les données de production ne sont jamais copiées vers la préproduction.
+Les données de production ne sont jamais copiées vers le poste de développement ni la CI. Claude
+Code ne lit pas la base (T52).
 
 ### Transferts hors de l'Union européenne
 
@@ -118,15 +120,15 @@ Les données de production ne sont jamais copiées vers la préproduction.
 
 ### Durées de conservation
 
-| Données                                 | Durée                                                                                               |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Comptes, saisies, historique et journal | Toute la vie de l'outil, puis suppression à son arrêt, après l'export final remis à la coordination |
-| Compte désactivé                        | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                         |
-| Nom et photo du profil Google           | Gardés avec le compte, jamais affichés, supprimés avec lui                                          |
-| Journaux techniques (adresses IP)       | Selon les durées de Supabase et de Netlify, au plus 1 an                                            |
-| Sauvegardes de la base                  | 7 jours. Un texte masqué reste dans les sauvegardes jusqu'à leur expiration                         |
-| Copies des emails envoyés               | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil               |
-| Export final                            | À compléter par la coordination : durée de conservation de l'export et lieu où il est gardé         |
+| Données                                 | Durée                                                                                                                             |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Comptes, saisies, historique et journal | Toute la vie de l'outil, puis suppression à son arrêt, après l'export final remis à la coordination                               |
+| Compte désactivé                        | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                                                       |
+| Nom et photo du profil Google           | Gardés avec le compte, jamais affichés, supprimés avec lui                                                                        |
+| Journaux techniques (adresses IP)       | Selon les durées de Supabase et de Netlify, au plus 1 an                                                                          |
+| Sauvegardes de la base                  | Export chiffré chaque semaine, 4 gardés. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus (T52) |
+| Copies des emails envoyés               | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil                                             |
+| Export final                            | À compléter par la coordination : durée de conservation de l'export et lieu où il est gardé                                       |
 
 L'arrêt de l'outil est décidé par la coordination et annoncé au moins une semaine avant (P13).
 Ensuite : export final remis à la coordination, suppression des projets et des comptes de service,
@@ -219,8 +221,9 @@ archivage du dépôt du code.
   Netlify (site).
 - **Transferts hors UE** : connexion avec Google (États-Unis), voir « Transferts ».
 - **Durées** : compte gardé toute la vie de l'outil, même désactivé ; nom et photo Google supprimés
-  avec le compte ; journaux techniques au plus 1 an ; sauvegardes 7 jours. Sessions : 14 jours
-  d'inactivité, 30 jours au plus (proposition P11, à confirmer par la coordination).
+  avec le compte ; journaux techniques au plus 1 an ; exports chiffrés hebdomadaires, 4 gardés
+  (T52). Sessions : 14 jours d'inactivité, 30 jours au plus (proposition P11) **non appliqués tant
+  que l'offre est gratuite** (risque accepté, T52) ; ils le seront au passage en Pro.
 - **Mesures propres** :
   - inscription désactivée ; comptes créés par l'administration seule, par une fonction du serveur ;
   - lien d'invitation valable 24 heures, qui mène à une page demandant un clic (un antivirus qui
@@ -306,7 +309,7 @@ archivage du dépôt du code.
     l'administration de l'église, ni les autres ministères. Jamais sur la vue de l'église, jamais
     dans un email, jamais dans le journal ;
   - **Durée** : comme les autres textes, toute la vie de l'outil. Un texte masqué reste dans les
-    sauvegardes jusqu'à leur expiration (7 jours) ;
+    exports hebdomadaires jusqu'à leur suppression (4 semaines au plus) ;
   - **Mesures** : ajout seulement (la précision du total le plus récent du mois remplace
     l'affichage de la précédente, qui reste en base, lisible par le ministère et par EJP Tech
     seuls) ; relecture et masquage par EJP Tech (motif « Santé ou situation personnelle », par
@@ -367,8 +370,8 @@ archivage du dépôt du code.
   - seul EJP Tech lit la modération.
 - **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
 - **Transferts hors UE** : aucun pour la base.
-- **Durées** : toute la vie de l'outil. Un texte masqué reste dans les sauvegardes jusqu'à leur
-  expiration (7 jours).
+- **Durées** : toute la vie de l'outil. Un texte masqué reste dans les exports
+  hebdomadaires jusqu'à leur suppression (4 semaines au plus).
 - **Mesures propres** :
   - rappel sous le premier champ libre de chaque formulaire : « N'écrivez aucun nom ni information
     personnelle. Les champs libres sont relus par EJP Tech. » ;
