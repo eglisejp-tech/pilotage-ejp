@@ -17,7 +17,9 @@ import {
 // clôt avec un commentaire ; Communication lit « Clos ». Le journal reçoit une ligne par envoi
 // et par clôture, avec le code de l'écran, jamais le texte ni le commentaire.
 
-const SUFFIXE = `${Date.now()}`
+// Le suffixe s'écrit en lettres : 5 chiffres de suite tombent dans la famille « données
+// personnelles » de `private.verifier_texte`, et la base refuserait le texte.
+const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const TEXTE = `Essai E8 ${SUFFIXE} : le formulaire refuse ma date.`
 const COMMENTAIRE = `Essai E8 ${SUFFIXE} : réglé avec le ministère.`
 const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
