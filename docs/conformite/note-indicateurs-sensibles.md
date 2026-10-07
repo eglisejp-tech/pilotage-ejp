@@ -177,9 +177,9 @@ Appréciation d'EJP Tech, après les mesures de la section 6.
 ## 6. Mesures
 
 Ces mesures sont décidées. Elles sont construites et testées à l'étape 4, avant la mise en service :
-au 7 octobre 2026, aucune n'est encore en service. Le code déjà fusionné applique encore l'ancienne
-règle du seuil « moins de 3 » : il se change par des migrations et des lots neufs (P52), jamais en
-rouvrant une migration fusionnée.
+au 7 octobre 2026, aucune n'est encore en service. L'ancienne règle du seuil « moins de 3 » a été
+remplacée par les valeurs exactes (P52) dans une migration nouvelle (lot I, base), sans rouvrir de
+migration fusionnée.
 
 **Dans la base de données** (elles ne dépendent pas de l'écran) :
 

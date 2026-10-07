@@ -973,7 +973,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 
 ## Décisions de la personne responsable du 7 octobre 2026 sur les chiffres sensibles et le journal
 
-La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger et le conseil voient les valeurs exactes des indicateurs sensibles (P52), et trois points de lecture du journal (T45 à T47). P52 revoit les règles d'affichage de P42, P45 et P47. Le BRIEF les reçoit au commit de documents du lot I (7 octobre 2026) ; le code déjà fusionné (B2, B8, E2) se change par des migrations et des lots neufs, jamais en rouvrant une migration fusionnée.
+La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger et le conseil voient les valeurs exactes des indicateurs sensibles (P52), et trois points de lecture du journal (T45 à T47). P52 revoit les règles d'affichage de P42, P45 et P47. Le BRIEF les reçoit au commit de documents du lot I (7 octobre 2026) ; le code déjà fusionné (B2, B8, E2) se change par des migrations et des lots neufs, jamais en rouvrant une migration fusionnée (le lot I, base, l'a fait par `20261009120000_lot_i_correctifs.sql`).
 
 ### P52. Indicateurs sensibles : valeurs exactes pour le berger, le conseil et EJP Tech
 
