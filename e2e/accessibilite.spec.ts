@@ -253,6 +253,44 @@ const ECRANS: Ecran[] = [
   ...CALENDRIER,
 ]
 
+// Dans la CI, le job « e2e » a 30 minutes pour toute la suite : l'audit des 161 écrans aux trois
+// formats (environ 25 minutes) n'y tient pas. La CI joue donc un écran représentatif par famille,
+// à 1440 et 390 px. La passe complète (tous les écrans, trois formats) se joue à la main, sans
+// `CI`, ou avec `AUDIT_COMPLET=1` : `npx playwright test e2e/accessibilite.spec.ts`.
+const AUDIT_COMPLET = !process.env.CI || process.env.AUDIT_COMPLET === '1'
+
+const ECRANS_CI = new Set([
+  'connexion connexion normal',
+  'connexion code normal',
+  'connexion activation normal',
+  'connexion acces-invitation lien-invalide',
+  'public confidentialité',
+  'cette-semaine ministere semaine',
+  'cette-semaine berger semaine',
+  'cette-semaine berger chargement',
+  'cette-semaine admin_plateforme erreur',
+  'navigation ministere',
+  'navigation berger',
+  'fiche berger',
+  'fiche ministere',
+  'fiche fiche-vide ministere',
+  'ministères berger',
+  'saisies dimanche',
+  'saisies dimanche correction',
+  'saisies mois correction',
+  'saisies-e4 session ministere',
+  'saisies-e4 choix-session ministere',
+  'saisies-e4 carte-fij ministere',
+  'saisies-e4 chiffres-departement ministere',
+  'saisies-e4 bloc-departements berger',
+  'evenements ajout',
+  'evenements reunion',
+  'signalements ministère formulaire',
+  'signalements ejp-tech bloc',
+  'calendrier fiche-alerte ministere',
+  'calendrier a-confirmer berger',
+])
+
 async function ouvrir(page: Page, ecran: Ecran) {
   // Les aperçus n'appellent aucun serveur : leurs écrans sont prêts au chargement, et les écrans
   // de chargement (`aria-busy`) sont audités tels quels.
@@ -268,6 +306,11 @@ test('le catalogue ne contient pas deux fois le même écran', () => {
   expect(new Set(adresses).size).toBe(adresses.length)
 })
 
+test('chaque écran représentatif de la CI existe dans le catalogue', () => {
+  const noms = new Set(ECRANS.map((ecran) => ecran.nom))
+  expect([...ECRANS_CI].filter((nom) => !noms.has(nom))).toEqual([])
+})
+
 for (const ecran of ECRANS) {
   // Un seul test par écran et par format : un chargement sert tous les contrôles (la CI a 30
   // minutes pour tout le job « e2e »). Les contrôles sont mous (`expect.soft`) : une faute n'en
@@ -277,6 +320,10 @@ for (const ecran of ECRANS) {
   test(ecran.nom, async ({ page }, testInfo) => {
     // Le premier chargement d'un aperçu compile ses modules : 90 s laissent de la marge.
     test.setTimeout(90_000)
+    test.skip(
+      !AUDIT_COMPLET && (!ECRANS_CI.has(ecran.nom) || testInfo.project.name === 'tablette'),
+      'dans la CI, un écran représentatif par famille, à 1440 et 390 px (AUDIT_COMPLET=1 pour tout)',
+    )
     marquerFauteConnue(ecran.nom, testInfo.project.name)
     await ouvrir(page, ecran)
     expect

@@ -23,6 +23,12 @@ import { marquerFauteConnue } from '../outils/fautes-connues.ts'
 // le berger : l'écran sans réseau et l'erreur de page. Chaque page qui ouvre un panneau est
 // contrôlée sans lui connaître de nom : dès qu'un `role="dialog"` s'affiche, Échap doit le fermer.
 // Une page ajoutée par un lot ultérieur se déclare dans `PAGES_PAR_PROFIL`.
+//
+// Un seul format de base, le projet « ordinateur » : chaque page y est mesurée à 1440 px puis à
+// 360 px, et le ministère FIJ passe aussi à 390 px. Le job « e2e » de la CI a 30 minutes pour toute
+// la suite : les projets « tablette » et « telephone » doubleraient ce coût pour peu de pages en
+// plus. Les écrans à panneau se jouent à 834 et 390 px dans les aperçus (accessibilite.spec.ts).
+test.skip(({ hasTouch }) => hasTouch, 'un seul format dans la CI (ordinateur, puis 360 px)')
 
 type Profil = CompteTest['profil']
 const SOCIAL = '10000000-0000-4000-8000-000000000005'
@@ -118,24 +124,22 @@ for (const [profil, pages] of Object.entries(PAGES_PAR_PROFIL) as [Profil, strin
 }
 
 // Le ministère FIJ n'a pas de session enregistrée par le projet « connexion » : il se connecte
-// ici, une fois, puis passe ses pages aux quatre largeurs (une seule connexion, donc un seul
+// ici, une fois, puis passe ses pages à trois largeurs (une seule connexion, donc un seul
 // projet, pour ne pas rejouer le même code à usage unique).
 test.describe('ministère FIJ : accessibilité des pages', () => {
-  test('connexion, puis chaque page à 1440, 834, 390 et 360 px', async ({ page }, testInfo) => {
-    test.skip(
-      testInfo.project.name !== 'ordinateur',
-      'une seule connexion pour les quatre largeurs',
-    )
+  test('connexion, puis chaque page à 1440, 390 et 360 px', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== 'ordinateur', 'une seule connexion pour les trois largeurs')
     marquerFauteConnue('ministère FIJ | pages', testInfo.project.name)
     test.setTimeout(180_000)
     await seConnecter(page, EMAIL_FIJ)
     await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
-    for (const largeur of [1440, 834, 390, LARGEUR_MINIMALE]) {
+    for (const largeur of [1440, 390, LARGEUR_MINIMALE]) {
       await page.setViewportSize({ width: largeur, height: 900 })
       for (const adresse of PAGES_FIJ) {
         await ouvrirPage(page, adresse)
         await controlerPage(page, `${adresse} à ${largeur} px`)
-        if (largeur >= 834) await controlerEchapDuPanneau(page, `${adresse} à ${largeur} px`)
+        // Le panneau latéral s'ouvre à partir de 600 px : plus bas, la saisie est une page.
+        if (largeur >= 600) await controlerEchapDuPanneau(page, `${adresse} à ${largeur} px`)
       }
     }
   })

@@ -28,6 +28,10 @@ const PAGE_SAINE = `
   </main></body></html>`
 
 test.describe('outils de l’audit', () => {
+  // Les pages sont écrites dans le test : le format de la fenêtre n'y change rien, un seul projet
+  // suffit (le job « e2e » de la CI a 30 minutes pour toute la suite).
+  test.skip(({ hasTouch }) => hasTouch, 'un seul format suffit pour les pages des outils')
+
   test('page saine : aucun contrôle ne signale rien', async ({ page }) => {
     await page.setContent(PAGE_SAINE)
     expect(decrireFautes(await auditerAxe(page))).toEqual([])

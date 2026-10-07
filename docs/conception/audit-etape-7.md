@@ -20,11 +20,21 @@ Un écran est audité par cinq contrôles (`e2e/accessibilite.spec.ts`, aperçus
 | `clavier`   | Tab atteint chaque élément (un seul par groupe de boutons radio) et l'action principale (premier bouton d'envoi) ; le focus se voit ; le piège des fenêtres tient ; Échap ferme les aides et le menu. | `parcourirAuClavier` et voisins |
 | `360`       | Aucun défilement horizontal à 360 px, et à 720 px (un écran de 1440 px à 200 % de zoom, WCAG 1.4.4). Mesuré une fois, dans le projet « ordinateur ».                                                  | `debordementHorizontal`         |
 
-Les quatre premiers tournent aux trois formats de référence (1440, 834 et 390 px). Un seul test
-couvre tous les contrôles d'un écran et d'un format (un chargement sert les cinq) : la CI donne
-30 minutes à tout le job « e2e », et trois tests par écran et par contrôle l'auraient dépassé. Les
+Les cinq contrôles tournent aux trois formats de référence (1440, 834 et 390 px), sauf `360`.
+Un seul test couvre tous les contrôles d'un écran et d'un format (un chargement sert les cinq). Les
 contrôles sont mous (`expect.soft`) : une faute n'en cache pas une autre, et chaque ligne d'erreur
 dit quel élément corriger.
+
+**Le coût en CI borne la passe.** Le job « e2e » de la CI a 30 minutes pour toute la suite. La
+passe complète (161 écrans, trois formats) dure environ 10 minutes sur ce poste (trois processus en parallèle) et ne tient pas à
+côté du reste : un premier essai à 1632 tests a fait dépasser les 30 minutes au job. La CI joue
+donc **29 écrans représentatifs** (un ou deux par famille) à 1440 et 390 px, et les pages réelles
+de `e2e/base/` au seul format « ordinateur » (suivi de 360 px). La **passe complète** se joue sans
+la variable `CI` (le cas sur un poste), ou avec `AUDIT_COMPLET=1` :
+`npx playwright test e2e/accessibilite.spec.ts`. Elle sert à la passe finale de l'étape 7 et
+chaque fois qu'un lot ajoute des écrans. Une faute trouvée seulement par la passe complète ne
+rougit pas la CI : on la lit dans le rapport et on la consigne ici. Si le job « e2e » gagne du
+temps (parallélisme, découpage en deux jobs), élargir `ECRANS_CI` ou retirer ce filtre.
 
 Les outils se vérifient eux-mêmes (`e2e/accessibilite-outils.spec.ts`) sur de petites pages qui
 contiennent chacune une faute précise : une image sans texte alternatif, un bloc trop large, un
@@ -98,7 +108,7 @@ les vraies pages, avec les données du jeu d'exemple :
 - administration de l'église : `/`, `/comptes`, `/sessions`, `/journal` ;
 - EJP Tech : `/moderation`, `/`, `/ministeres`, une fiche, `/journal-technique` ;
 - ministère FIJ (Coordo FIJ) : `/`, `/ma-fiche`, `/saisir/fij`, `/saisir/fij-statistiques`, aux
-  quatre largeurs (1440, 834, 390 et 360 px) ;
+  trois largeurs (1440, 390 et 360 px) ;
 - Échap ferme chaque panneau ouvert (un `role="dialog"`), sans connaître son nom ;
 - le berger sans réseau (la page ne reste pas en chargement) et le berger devant une erreur de page
   (message annoncé, « Réessayer » au clavier, retour à la liste).
