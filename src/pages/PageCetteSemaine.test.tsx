@@ -55,11 +55,11 @@ const LECTEURS: Record<ProfilVue, Lecteur> = {
 
 function afficher(profil: ProfilVue, adresse = '/') {
   return render(
-    <AvecRequetes>
-      <MemoryRouter initialEntries={[adresse]}>
-        <PageCetteSemaine lecteur={LECTEURS[profil]} />
-      </MemoryRouter>
-    </AvecRequetes>,
+    <MemoryRouter initialEntries={[adresse]}>
+      <PageCetteSemaine lecteur={LECTEURS[profil]} />
+    </MemoryRouter>,
+    // Le cache de requêtes entoure aussi les `rerender` : les boutons des points en ont besoin.
+    { wrapper: AvecRequetes },
   )
 }
 
