@@ -280,7 +280,10 @@ describe('routes', () => {
       expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
       expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
       expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()
-      expect(within(screen.getByRole('main')).queryByRole('button')).toBeNull()
+      // Les boutons « ? » des aides (« Aide : Filtrer par ministère ») informent, ils n'agissent pas.
+      expect(
+        within(screen.getByRole('main')).queryByRole('button', { name: /^(?!Aide : )/ }),
+      ).toBeNull()
     },
   )
 
@@ -628,6 +631,10 @@ const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
   ADRESSES_AMORCES_C0.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse, profil] as const))
 
+// Page que le lot P3 a remplacée (écran 05 et « Mes points ») : testée dans
+// `src/pages/PagePoints.test.tsx` et `src/features/points/`.
+const PAGES_REMPLACEES_PAR_P3 = ['/points']
+
 describe('adresses des étapes 5 et 6 (lot C0)', () => {
   it('déclare chaque adresse amorce dans la table des adresses', () => {
     for (const motif of ADRESSES_AMORCES_C0) {
@@ -638,7 +645,11 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     }
   })
 
-  it.each(AMORCES_C0_PAR_PROFIL.map(([adresse, profil]) => [adresse.chemin, profil, adresse]))(
+  it.each(
+    AMORCES_C0_PAR_PROFIL.filter(
+      ([adresse]) => !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin),
+    ).map(([adresse, profil]) => [adresse.chemin, profil, adresse]),
+  )(
     '%s ouverte au profil %s : la page amorce de son étape, sans aucune requête de données',
     async (motif, profil, adresse) => {
       const faux = connecte(profil)

@@ -15,6 +15,7 @@ import { PageMotDePasseOublie } from '@/features/connexion/PageMotDePasseOublie'
 import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
+import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
 import { Garde } from '@/features/session/Garde'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
@@ -45,6 +46,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'signalements', element: <ApercuSignalements /> },
           // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
           { path: 'calendrier', element: <ApercuCalendrier /> },
+          // Lot P3 : écran 05 « Points d'attention » et « Mes points », lus par e2e/points.spec.ts.
+          { path: 'points', element: <ApercuPoints /> },
         ],
       },
     ]
