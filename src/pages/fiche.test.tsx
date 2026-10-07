@@ -122,6 +122,32 @@ describe('/ma-fiche', () => {
     )
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
   })
+
+  it('les points en échec : leur bloc propose « Réessayer », le reste de la fiche reste lu', async () => {
+    installer('ministere', lignesFiche('ministere'), ['v_point'])
+    afficher('/ma-fiche')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
+    ).toBeInTheDocument()
+    const points = await screen.findByRole('region', { name: "Points d'attention" }, ATTENTE)
+    expect(within(points).getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(within(points).getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    expect(screen.getByText('Octobre en cours : 7')).toBeInTheDocument()
+  })
+
+  it('le détail des sensibles en échec : « Réessayer » sous les chiffres, sans les précisions', async () => {
+    installer('ministere', lignesFiche('ministere'), ['v_precision_sensible'])
+    afficher('/ma-fiche')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
+    ).toBeInTheDocument()
+    const chiffres = await screen.findByRole('region', { name: 'Les chiffres du ministère' })
+    expect(within(chiffres).getByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    expect(within(chiffres).getByText('Octobre en cours : 7')).toBeInTheDocument()
+    expect(within(chiffres).queryByText(/^Précision d/)).toBeNull()
+  })
 })
 
 describe('/ministeres/:id', () => {

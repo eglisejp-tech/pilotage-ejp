@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
+import { z } from 'zod'
 import {
   lireIndicateursCommuns,
   lireSemaine,
@@ -38,11 +39,12 @@ import type {
 /** Sans réponse au bout de ce délai, la fiche affiche son erreur (LISEZMOI, « États »). */
 export const DELAI_MAX_CHARGEMENT = 10_000
 
-const FORMAT_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+/** Comme `schemaIdentifiantSession` : la forme d'un uuid, que la base vérifie ensuite. */
+const schemaIdentifiantMinistere = z.guid()
 
 /** Un identifiant de ministère bien formé ? Sinon la fiche est introuvable, sans requête. */
 export function estIdentifiantMinistere(id: string | undefined): id is string {
-  return id !== undefined && FORMAT_UUID.test(id)
+  return id !== undefined && schemaIdentifiantMinistere.safeParse(id).success
 }
 
 export type ResultatFiche =
@@ -53,16 +55,24 @@ export type ResultatFiche =
   | {
       etat: 'pret'
       donnees: DonneesFiche
-      points: PointFiche[]
+      /** Lu à part : son problème passager garde le titre et propose « Réessayer ». */
+      points: EtatBloc<PointFiche[]>
       dernieresSaisies: EtatBloc<DerniereSaisieFiche[]>
+      /**
+       * Précisions, répartitions ou catégories des sensibles en échec : la fiche s'affiche sans ces
+       * détails et le bloc des chiffres propose « Réessayer ». Null : tout est lu.
+       */
+      reessayerDetailsSensibles: (() => void) | null
     }
 
 /**
  * Lit la fiche d'un ministère (une requête par fonction de `src/data/`) et la construit. Les
  * répartitions, les précisions et les catégories ne se lisent que si le ministère a un indicateur
- * sensible ; les courbes, une fois connus ses indicateurs. « Dernières saisies » est un bloc lu à
- * part : son échec ne cache pas la fiche. Toute autre lecture en échec, ou 10 s sans réponse,
- * donne l'erreur de page avec « Réessayer ».
+ * sensible ; les courbes, une fois connus ses indicateurs. Trois lectures sont à part, et leur
+ * échec ne cache pas la fiche : « Dernières saisies » et les points (chacun son « Réessayer »), et
+ * le détail des sensibles (catégories, répartitions, précisions : un « Réessayer » sous les
+ * chiffres). Toute autre lecture en échec, ou 10 s sans réponse, donne l'erreur de page avec
+ * « Réessayer ».
  */
 export function useFiche(ministereId: string, lecteur: LecteurFiche): ResultatFiche {
   const cle = ['fiche', ministereId] as const
@@ -153,12 +163,17 @@ export function useFiche(ministereId: string, lecteur: LecteurFiche): ResultatFi
     series,
     calculs,
     sensibles,
-    points,
     ministeres,
   ]
-  if (avecSensibles) necessaires.push(categories, repartitions, precisions)
+  // Lectures à part : la fiche attend leur réponse (la phrase compte les points), mais un échec
+  // ne la remplace pas par l'erreur de page.
+  const detailsSensibles: UseQueryResult[] = avecSensibles
+    ? [categories, repartitions, precisions]
+    : []
+  const aPart: UseQueryResult[] = [points, ...detailsSensibles]
+  const repondue = (requete: UseQueryResult) => requete.isSuccess || requete.isError
 
-  const pret = necessaires.every((requete) => requete.isSuccess)
+  const pret = necessaires.every((requete) => requete.isSuccess) && aPart.every(repondue)
   const [depasse, setDepasse] = useState(false)
   useEffect(() => {
     if (pret) return
@@ -168,8 +183,13 @@ export function useFiche(ministereId: string, lecteur: LecteurFiche): ResultatFi
 
   const reessayer = () => {
     setDepasse(false)
-    for (const requete of necessaires) {
+    for (const requete of [...necessaires, ...aPart]) {
       if (requete.isError || !requete.isSuccess) void requete.refetch()
+    }
+  }
+  const reessayerDetails = () => {
+    for (const requete of detailsSensibles) {
+      if (requete.isError) void requete.refetch()
     }
   }
 
@@ -205,10 +225,16 @@ export function useFiche(ministereId: string, lecteur: LecteurFiche): ResultatFi
     : dernieres.isSuccess
       ? { etat: 'donnees', donnees: construireDernieresSaisies(dernieres.data, lectures.communs) }
       : { etat: 'chargement' }
+  const pointsBloc: EtatBloc<PointFiche[]> = points.isError
+    ? { etat: 'erreur', reessayer: () => void points.refetch() }
+    : { etat: 'donnees', donnees: construirePointsFiche(lectures, lecteur) }
   return {
     etat: 'pret',
     donnees: construireFiche(lectures, lecteur),
-    points: construirePointsFiche(lectures, lecteur),
+    points: pointsBloc,
     dernieresSaisies,
+    reessayerDetailsSensibles: detailsSensibles.some((requete) => requete.isError)
+      ? reessayerDetails
+      : null,
   }
 }

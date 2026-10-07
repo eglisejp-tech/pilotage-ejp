@@ -30,6 +30,8 @@ const TOUS: Ecran[] = [
   { ecran: 'fiche-vide', profil: 'berger' },
   { ecran: 'fiche-vide', profil: 'ministere' },
   { ecran: 'fiche-erreur-bloc', profil: 'berger' },
+  { ecran: 'fiche-erreur-points', profil: 'berger' },
+  { ecran: 'fiche-erreur-details', profil: 'berger' },
   { ecran: 'chargement', profil: 'berger' },
   { ecran: 'erreur', profil: 'berger' },
   { ecran: 'introuvable', profil: 'berger' },
@@ -87,6 +89,48 @@ test.describe('fiche 04 lue par le berger (aperçu)', () => {
       await expect(contenu.getByRole('button', { name: ACTIONS })).toHaveCount(0)
     }
   })
+
+  test('au clavier : la ligne repliée s’ouvre, son aide s’ouvre et se ferme sans perdre le focus', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'berger' })
+    await page.getByText('Répartition par catégorie').focus()
+    await page.keyboard.press('Enter')
+    const aide = page.getByRole('button', { name: 'Aide : Malaise : masqué' })
+    await expect(aide).toBeVisible()
+    // Tab depuis la ligne repliée : l'aide du premier « masqué » est le prochain arrêt.
+    await page.keyboard.press('Tab')
+    await expect(aide).toBeFocused()
+    await page.keyboard.press('Enter')
+    await expect(aide).toHaveAttribute('aria-expanded', 'true')
+    await expect(aide).toBeFocused()
+    await page.keyboard.press('Escape')
+    await expect(aide).toHaveAttribute('aria-expanded', 'false')
+    await expect(aide).toBeFocused()
+  })
+
+  test('les cadres des emplacements des autres lots se voient, dans l’ordre de la maquette', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'berger' })
+    for (const emplacement of ['reunion', 'statistiquesFij', 'calendrier']) {
+      await expect(page.locator(`[data-emplacement-apercu="${emplacement}"]`)).toBeVisible()
+    }
+    const bas = async (emplacement: string) =>
+      (await page.locator(`[data-emplacement-apercu="${emplacement}"]`).boundingBox())?.y ?? 0
+    expect(await bas('statistiquesFij')).toBeLessThan(await bas('calendrier'))
+  })
+
+  test('l’écart se lit sur téléphone avec ce à quoi il se compare', async ({ page }) => {
+    await ouvrir(page, { profil: 'berger' })
+    const texte = page.getByText('par rapport à dimanche dernier').first()
+    if ((page.viewportSize()?.width ?? 0) < 768) {
+      await expect(texte).toBeVisible()
+    } else {
+      // Dans la colonne étroite : « +1 » seul, la description reste pour les lecteurs d'écran.
+      await expect(page.getByText('+1', { exact: true }).first()).toBeVisible()
+    }
+  })
 })
 
 test.describe('fiche 12 du ministère (aperçu)', () => {
@@ -133,8 +177,22 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
     await ouvrir(page, { ecran: 'fiche-erreur-bloc' })
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await expect(page.getByRole('heading', { name: 'Dernières saisies' })).toBeVisible()
+    await ouvrir(page, { ecran: 'fiche-erreur-points' })
+    const points = page.getByRole('region', { name: "Points d'attention" })
+    await expect(points.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await expect(points.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+    await ouvrir(page, { ecran: 'fiche-erreur-details' })
+    const chiffres = page.getByRole('region', { name: 'Les chiffres du ministère' })
+    await expect(chiffres.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await ouvrir(page, { ecran: 'erreur' })
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+  })
+
+  test('chargement : les titres de section et leurs filets sont déjà là', async ({ page }) => {
+    await ouvrir(page, { ecran: 'chargement' })
+    for (const titre of ['Les chiffres du ministère', "Points d'attention", 'Dernières saisies']) {
+      await expect(page.getByRole('heading', { level: 2, name: titre })).toBeVisible()
+    }
   })
 
   test('ministère inconnu : la phrase et « Revenir aux ministères »', async ({ page }) => {
@@ -176,13 +234,23 @@ test.describe('accessibilité', () => {
     })
   }
 
-  test('liens et boutons du contenu : 44 px de haut au moins', async ({ page }) => {
-    for (const ecran of [{ profil: 'ministere' }, { ecran: 'ministeres' }]) {
+  test('liens et boutons du contenu : 44 px de haut et de large au moins', async ({ page }) => {
+    for (const ecran of [{ profil: 'ministere' }, { profil: 'berger' }, { ecran: 'ministeres' }]) {
       await ouvrir(page, ecran)
+      // La répartition repliée porte une aide et une ligne repliable : on les mesure ouvertes.
+      if ((await page.getByText('Répartition par catégorie').count()) > 0) {
+        await ouvrirRepartition(page)
+      }
       const cibles = page.getByRole('main').locator('a:visible, button:visible, summary:visible')
       for (let rang = 0; rang < (await cibles.count()); rang++) {
         const boite = await cibles.nth(rang).boundingBox()
-        expect(boite?.height ?? 0, `${nomDe(ecran)}, cible ${rang}`).toBeGreaterThanOrEqual(44)
+        expect(
+          boite?.height ?? 0,
+          `${nomDe(ecran)}, cible ${rang}, hauteur`,
+        ).toBeGreaterThanOrEqual(44)
+        expect(boite?.width ?? 0, `${nomDe(ecran)}, cible ${rang}, largeur`).toBeGreaterThanOrEqual(
+          44,
+        )
       }
     }
   })

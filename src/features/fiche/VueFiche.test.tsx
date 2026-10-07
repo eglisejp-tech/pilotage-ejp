@@ -9,7 +9,12 @@ import {
 } from '@/features/fiche/apercu/exemplesFiche'
 import { construireDernieresSaisies } from '@/features/fiche/construireDernieresSaisies'
 import { construireFiche, construirePointsFiche } from '@/features/fiche/construireFiche'
-import type { DerniereSaisieFiche, EtatBloc, ProfilFiche } from '@/features/fiche/modeleFiche'
+import type {
+  DerniereSaisieFiche,
+  EtatBloc,
+  PointFiche,
+  ProfilFiche,
+} from '@/features/fiche/modeleFiche'
 import { VueFiche } from '@/features/fiche/VueFiche'
 import { simulerLargeur } from '@/test/largeur'
 
@@ -26,21 +31,32 @@ const ACTIONS = /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Mo
 
 function afficher(
   profil: ProfilFiche,
-  options: { vide?: boolean; dernieres?: EtatBloc<DerniereSaisieFiche[]> } = {},
+  options: {
+    vide?: boolean
+    dernieres?: EtatBloc<DerniereSaisieFiche[]>
+    points?: EtatBloc<PointFiche[]>
+    reessayerDetails?: () => void
+  } = {},
 ) {
   const lectures = lecturesExempleFiche(profil, options.vide ?? false)
   return render(
     <MemoryRouter>
       <VueFiche
         donnees={construireFiche(lectures, { profil })}
-        points={construirePointsFiche(lectures, { profil })}
+        points={
+          options.points ?? {
+            etat: 'donnees',
+            donnees: construirePointsFiche(lectures, { profil }),
+          }
+        }
         dernieresSaisies={
           options.dernieres ?? {
             etat: 'donnees',
             donnees: construireDernieresSaisies(DERNIERES_SAISIES_EXEMPLE, COMMUNS_EXEMPLE),
           }
         }
-        avecEmplacements={false}
+        reessayerDetailsSensibles={options.reessayerDetails ?? null}
+        rendreEmplacement={null}
       />
     </MemoryRouter>,
   )
@@ -188,9 +204,9 @@ describe('VueFiche, états vides (T36)', () => {
             { ...lectures, suivi: lectures.suivi.filter((l) => l.etat !== 'retire') },
             { profil: 'berger' },
           )}
-          points={[]}
+          points={{ etat: 'donnees', donnees: [] }}
           dernieresSaisies={{ etat: 'chargement' }}
-          avecEmplacements={false}
+          rendreEmplacement={null}
         />
       </MemoryRouter>,
     )
@@ -205,6 +221,33 @@ describe('VueFiche, états vides (T36)', () => {
     expect(within(bloc).getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     await userEvent.click(within(bloc).getByRole('button', { name: 'Réessayer' }))
     expect(reessayer).toHaveBeenCalledTimes(1)
+  })
+
+  it('problème passager des points : le titre reste, le reste de la fiche aussi', async () => {
+    const reessayer = vi.fn()
+    afficher('berger', { points: { etat: 'erreur', reessayer } })
+    const bloc = screen.getByRole('region', { name: "Points d'attention" })
+    expect(within(bloc).getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Réessayer' }))
+    expect(reessayer).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('heading', { level: 1, name: 'Social' })).toBeInTheDocument()
+    expect(screen.getByText('Octobre en cours : 7')).toBeInTheDocument()
+  })
+
+  it('détail des sensibles en échec : « Réessayer » sous les chiffres, sans toucher les lignes', async () => {
+    const reessayer = vi.fn()
+    afficher('berger', { reessayerDetails: reessayer })
+    const bloc = screen.getByRole('region', { name: 'Les chiffres du ministère' })
+    expect(within(bloc).getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Réessayer' }))
+    expect(reessayer).toHaveBeenCalledTimes(1)
+    expect(within(bloc).getByText('Octobre en cours : 7')).toBeInTheDocument()
+  })
+
+  it('un lecteur autre que le ministère lit « À valider par EJP Tech » sur un ajout à valider', () => {
+    afficher('berger')
+    expect(screen.getByText('À valider par EJP Tech')).toBeInTheDocument()
+    expect(screen.queryByText(/Vous pouvez déjà le saisir/)).toBeNull()
   })
 })
 

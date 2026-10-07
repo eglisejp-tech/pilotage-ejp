@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { DerniereSaisieFiche, EtatBloc } from '@/features/fiche/modeleFiche'
@@ -58,7 +59,15 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
                   className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
                 >
                   <span className="text-sm text-encre-3">{ligne.quand}</span>
-                  <span className="min-w-0 break-words">{ligne.texte}</span>
+                  <span className="min-w-0 break-words">
+                    {ligne.texte}
+                    {ligne.objet !== null ? (
+                      <>
+                        {' '}
+                        <Libre texte={ligne.objet} />
+                      </>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>

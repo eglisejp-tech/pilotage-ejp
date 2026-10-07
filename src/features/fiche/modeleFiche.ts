@@ -132,9 +132,11 @@ export interface AidesLigne {
 export interface LigneIndicateurFiche {
   id: string
   libelle: string
-  /** Ajout à valider : « à valider » (lecteurs), ou la phrase du ministère. */
+  /** Ajout à valider : « À valider par EJP Tech » (lecteurs), ou la phrase du ministère. */
   aValider: string | null
   calcul: boolean
+  /** Jamais saisi, ni pour un mois fini ni pour le mois en cours : « première saisie » attendue. */
+  jamaisSaisi: boolean
   valeur: ValeurFiche
   courbe: CourbeFiche | null
   /** « Septembre 2026 », « Dimanche 27 sept. », « Saisi le 3 sept. », phrase du calcul. */
@@ -206,7 +208,10 @@ export interface PointFiche {
 export interface DerniereSaisieFiche {
   id: number
   quand: string
+  /** L'action en mots ; avec un objet, elle finit par « : » (« Nouveau point : »). */
   texte: string
+  /** Titre d'un point ou d'un événement visé (texte libre) : masqué, il s'affiche en `--encre-3`. */
+  objet: TexteLibre | null
 }
 
 /** État d'un bloc lu à part : chargement, problème passager, ou ses données. */

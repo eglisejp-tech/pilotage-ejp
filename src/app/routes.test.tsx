@@ -244,9 +244,11 @@ describe('routes', () => {
 
   // Garde des étapes 4 et 5 : ces écrans s'ouvrent à EJP Tech pour la lecture (LECTEURS), mais
   // leurs boutons d'action suivent estDecideur ou le lien du ministère au point, jamais ce droit.
+  // La fiche d'un ministère (`/ministeres/:id`) n'est pas ici : son identifiant doit être un uuid
+  // et elle lit une quinzaine de vues. Sa lecture seule pour EJP Tech est testée sur la vraie
+  // fiche dans `src/pages/fiche.test.tsx`.
   it.each([
     ['/ministeres', 'Ministères'],
-    ['/ministeres/m-communication', 'Fiche du ministère'],
     ['/points?vue=ouverts', "Points d'attention"],
   ])(
     'EJP Tech sur %s : écran de lecture du berger, sans « Marquer traité », « Changer le statut » ni saisie (T29)',

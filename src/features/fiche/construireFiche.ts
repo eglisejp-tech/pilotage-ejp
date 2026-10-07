@@ -37,6 +37,8 @@ import type {
   ValeurFiche,
 } from '@/features/fiche/modeleFiche'
 import {
+  partAVerifier,
+  sansPrefixeNonCalcule,
   sommeDesMoisAffiches,
   TEXTE_MASQUE,
   TEXTES_FICHE,
@@ -245,13 +247,18 @@ function derniereACeJour(lectures: LecturesFiche, code: string) {
   return mesuresDuCommun(lectures, code).at(-1)
 }
 
-function plusDe30Jours(periode: DateIso, aujourdhui: DateIso): boolean {
-  return joursEntre(periode, aujourdhui) > 30
-}
-
-function detailSaisiLe(periode: DateIso, aujourdhui: DateIso): { texte: string; signale: boolean } {
+/**
+ * « Saisi le 3 sept. », avec « il y a plus de 30 jours » en orange. Un indicateur propre le lit de
+ * `v_indicateur_suivi.plus_de_30_jours` (`plusDe30`) ; un chiffre commun « à ce jour », qui n'a
+ * pas cette colonne, le calcule de son jour de saisie.
+ */
+function detailSaisiLe(
+  periode: DateIso,
+  aujourdhui: DateIso,
+  plusDe30: boolean = joursEntre(periode, aujourdhui) > 30,
+): { texte: string; signale: boolean } {
   const texte = `Saisi le ${formaterJourCourt(periode)}`
-  return plusDe30Jours(periode, aujourdhui)
+  return plusDe30
     ? { texte: `${texte}, ${TEXTES_FICHE.plusDe30Jours}`, signale: true }
     : { texte, signale: false }
 }
@@ -356,13 +363,15 @@ function lignesCommunes(contexte: Contexte): LigneCommune[] {
 type LigneSuivi = LigneVue<'v_indicateur_suivi'>
 
 function detailPeriode(
-  nature: NatureIndicateur,
+  ligne: LigneSuivi,
   periode: DateIso,
   aujourdhui: DateIso,
 ): { texte: string; signale: boolean } {
-  if (nature === 'dimanche') return { texte: formaterJourSemaineTitre(periode), signale: false }
-  if (nature === 'mois') return { texte: libelleMois(moisDe(periode)), signale: false }
-  return detailSaisiLe(periode, aujourdhui)
+  if (ligne.nature === 'dimanche') {
+    return { texte: formaterJourSemaineTitre(periode), signale: false }
+  }
+  if (ligne.nature === 'mois') return { texte: libelleMois(moisDe(periode)), signale: false }
+  return detailSaisiLe(periode, aujourdhui, ligne.plus_de_30_jours)
 }
 
 function courbeIndicateur(contexte: Contexte, ligne: LigneSuivi): CourbeFiche | null {
@@ -459,7 +468,7 @@ function repartitionDuMois(contexte: Contexte, ligne: LigneSuivi, mois: DateIso)
     return { mois, titre, etat: 'aucune', texte: pasDeRepartition(moisDe(mois)) }
   }
   if (cases.some((rep) => rep.tout_masque)) {
-    return { mois, titre, etat: 'masquee', texte: TEXTES_FICHE.repartitionMasquee }
+    return { mois, titre, etat: 'masquee', texte: TEXTES_VIDES_INDICATEURS.repartitionMasquee }
   }
   return { mois, titre, etat: 'cases', cases: cases.map(caseRepartition) }
 }
@@ -491,9 +500,12 @@ function detailSensible(contexte: Contexte, ligne: LigneSuivi): DetailSensible {
       ? []
       : [{ mois: m, titre: titrePrecision(moisDe(m)), texte: texteLibre(precision.texte) }]
   })
-  const repartitions = aDesCategories(contexte, ligne.indicateur_id)
-    ? mois.map((m) => repartitionDuMois(contexte, ligne, m))
-    : null
+  // Aucun mois à montrer (jamais saisi) : pas de ligne « Répartition par catégorie » sur un bloc
+  // vide (T36). `[]` ne se distingue pas de « rien à afficher » pour un composant, `null` si.
+  const repartitions =
+    mois.length > 0 && aDesCategories(contexte, ligne.indicateur_id)
+      ? mois.map((m) => repartitionDuMois(contexte, ligne, m))
+      : null
   return { precisions, repartitions }
 }
 
@@ -514,15 +526,21 @@ function ligneSaisie(contexte: Contexte, ligne: LigneSuivi): LigneIndicateurFich
   const detail =
     ligne.derniere_periode === null
       ? null
-      : detailPeriode(ligne.nature, ligne.derniere_periode, aujourdhui)
+      : detailPeriode(ligne, ligne.derniere_periode, aujourdhui)
   return {
     id: ligne.indicateur_id,
     libelle: ligne.libelle,
     aValider:
       ligne.etat === 'en_attente'
-        ? texteAjoutAValider(contexte.exact ? 'ministere' : 'autre', ligne.attente_jours)
+        ? contexte.exact
+          ? texteAjoutAValider('ministere', ligne.attente_jours)
+          : TEXTES_FICHE.aValiderParEjpTech
         : null,
     calcul: false,
+    jamaisSaisi:
+      ligne.derniere_periode === null &&
+      ligne.mois_en_cours_valeur === null &&
+      !ligne.mois_en_cours_moins_de_3,
     valeur:
       ligne.derniere_periode === null
         ? VIDE
@@ -594,26 +612,31 @@ function ligneCalcul(
     valeur = { etat: 'non_calcule', texte: NON_CALCULE_A_VERIFIER }
     detail =
       calcul.haut !== null && calcul.bas !== null
-        ? `${quand} : ${nombre(calcul.haut)} sur ${nombre(calcul.bas)}, une part ne dépasse pas 100 %.`
+        ? partAVerifier(quand, nombre(calcul.haut), nombre(calcul.bas))
         : `${quand}.`
   } else {
     valeur = { etat: 'non_calcule', texte: TEXTES_VIDES_INDICATEURS.nonCalcule }
     const source = contexte.lectures.suivi.find(
       (s) => s.indicateur_id === calcul.non_calcule_source_id,
     )
-    detail = texteNonCalcule({
-      raison,
-      nature: ligne.nature,
-      periode: calcul.periode,
-      libelleSource: source?.libelle ?? null,
-      aujourdhui: contexte.lectures.semaine.aujourdhui,
-    })
+    // La valeur dit déjà « Non calculé » : le détail ne le répète pas.
+    detail = sansPrefixeNonCalcule(
+      texteNonCalcule({
+        raison,
+        nature: ligne.nature,
+        periode: calcul.periode,
+        libelleSource: source?.libelle ?? null,
+        aujourdhui: contexte.lectures.semaine.aujourdhui,
+      }),
+      `${quand}.`,
+    )
   }
   return {
     id: ligne.indicateur_id,
     libelle: ligne.libelle,
     aValider: null,
     calcul: true,
+    jamaisSaisi: false,
     valeur,
     courbe: null,
     detail,
@@ -781,6 +804,8 @@ export function construireFiche(lectures: LecturesFiche, lecteur: LecteurFiche):
   const { jours, etat } = fraicheur(lectures.derniereSaisie, lectures.semaine.aujourdhui)
   const ministere = contexte.exact
   const lignesDuMois = lignes.filter((ligne) => !ligne.calcul && ligne.moisEnCours !== null)
+  // Un indicateur du mois jamais saisi, ni pour un mois fini ni pour le mois en cours : sinon la
+  // ligne dirait « Octobre en cours : 6 » et « attend sa première saisie » à la fois.
   return {
     ministere: {
       id: lectures.ministere.id,
@@ -795,7 +820,7 @@ export function construireFiche(lectures: LecturesFiche, lecteur: LecteurFiche):
     sections,
     retires,
     sansIndicateurPropre: sections.length === 0,
-    actionSaisirMois: ministere && lignesDuMois.some((ligne) => ligne.valeur.etat === 'vide'),
+    actionSaisirMois: ministere && lignesDuMois.some((ligne) => ligne.jamaisSaisi),
     aDesIndicateursDuMois: ministere && lignesDuMois.length > 0,
     aideCourbe:
       communs.some((ligne) => ligne.courbe !== null) || lignes.some((l) => l.courbe !== null),

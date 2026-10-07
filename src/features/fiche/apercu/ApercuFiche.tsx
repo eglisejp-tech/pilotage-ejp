@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { construireDernieresSaisies } from '@/features/fiche/construireDernieresSaisies'
 import { construireFiche, construirePointsFiche } from '@/features/fiche/construireFiche'
 import {
@@ -10,8 +9,10 @@ import {
   lireEcranApercuFiche,
   TABLEAU_EXEMPLE,
 } from '@/features/fiche/apercu/exemplesFiche'
+import { rendreCadreEmplacement } from '@/features/fiche/apercu/CadreEmplacement'
 import { FicheIntrouvable } from '@/features/fiche/FicheIntrouvable'
 import type { ProfilFiche } from '@/features/fiche/modeleFiche'
+import { SqueletteFiche } from '@/features/fiche/SqueletteFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import { VueFiche } from '@/features/fiche/VueFiche'
 import { construireListeMinisteres } from '@/features/ministeres/construireListe'
@@ -33,8 +34,11 @@ const reessayer = () => undefined
  * - `fiche` (par défaut) : la fiche de Social, avec un indicateur sensible (mois en cours,
  *   précision, répartition), des calculs, un ajout à valider, des retirés, ses points et ses
  *   dernières saisies ; ses aides sont lues par `e2e/aide.spec.ts` et `routes.test.tsx` ;
+ *   Les emplacements des autres lots (prochaine réunion, chiffres par département, calendrier)
+ *   y sont des cadres en pointillés, pour relire l'ordre et l'alignement de la page ;
  * - `fiche-vide` (premier usage), `fiche-erreur-bloc` (« Dernières saisies » en échec),
- *   `chargement`, `erreur`, `introuvable` ;
+ *   `fiche-erreur-points` (les points en échec), `fiche-erreur-details` (le détail des sensibles
+ *   en échec), `chargement`, `erreur`, `introuvable` ;
  * - `ministeres`, `ministeres-vide`, `ministeres-erreur` : la liste (berger, conseil, EJP Tech).
  * Enregistrée seulement en développement.
  */
@@ -46,7 +50,12 @@ export function ApercuFiche() {
 
   const fiche = useMemo(() => {
     if (profil === null) return null
-    const lectures = lecturesExempleFiche(profil, ecran === 'fiche-vide')
+    const exemple = lecturesExempleFiche(profil, ecran === 'fiche-vide')
+    // Détail des sensibles en échec : la fiche se construit sans catégories, répartitions ni précisions.
+    const lectures =
+      ecran === 'fiche-erreur-details'
+        ? { ...exemple, categories: [], repartitions: [], precisions: [] }
+        : exemple
     return {
       donnees: construireFiche(lectures, { profil }),
       points: construirePointsFiche(lectures, { profil }),
@@ -76,8 +85,7 @@ export function ApercuFiche() {
       return (
         <>
           <title>Aperçu, Fiche du ministère, Pilotage EJP</title>
-          <h1 className="font-lecture text-titre leading-tight font-medium">{TITRE_FICHE}</h1>
-          <ChargementBloc />
+          <SqueletteFiche titre={TITRE_FICHE} />
         </>
       )
     case 'erreur':
@@ -100,7 +108,12 @@ export function ApercuFiche() {
           <title>{`Aperçu, ${fiche.donnees.ministere.nom}, Pilotage EJP`}</title>
           <VueFiche
             donnees={fiche.donnees}
-            points={fiche.points}
+            points={
+              ecran === 'fiche-erreur-points'
+                ? { etat: 'erreur', reessayer }
+                : { etat: 'donnees', donnees: fiche.points }
+            }
+            reessayerDetailsSensibles={ecran === 'fiche-erreur-details' ? reessayer : null}
             dernieresSaisies={
               ecran === 'fiche-erreur-bloc'
                 ? { etat: 'erreur', reessayer }
@@ -112,7 +125,7 @@ export function ApercuFiche() {
                         : construireDernieresSaisies(DERNIERES_SAISIES_EXEMPLE, COMMUNS_EXEMPLE),
                   }
             }
-            avecEmplacements={false}
+            rendreEmplacement={rendreCadreEmplacement}
           />
         </>
       )

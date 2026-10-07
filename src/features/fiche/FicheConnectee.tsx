@@ -1,7 +1,7 @@
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { FicheIntrouvable } from '@/features/fiche/FicheIntrouvable'
 import type { ProfilFiche } from '@/features/fiche/modeleFiche'
+import { SqueletteFiche } from '@/features/fiche/SqueletteFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import { useFiche } from '@/features/fiche/useFiche'
 import { VueFiche } from '@/features/fiche/VueFiche'
@@ -15,8 +15,9 @@ interface Props {
 }
 
 /**
- * Fiche d'un ministère lue dans la base : chargement (titre tout de suite, « Chargement » après
- * 300 ms), erreur de page avec « Réessayer », ministère inconnu ou désactivé, puis la fiche.
+ * Fiche d'un ministère lue dans la base : chargement (titres de section tout de suite,
+ * « Chargement » après 300 ms), erreur de page avec « Réessayer », ministère inconnu ou
+ * désactivé, puis la fiche.
  * L'onglet du navigateur porte l'écran (« Ma fiche, Pilotage EJP »).
  */
 export function FicheConnectee({ ministereId, profil, titre }: Props) {
@@ -29,15 +30,11 @@ export function FicheConnectee({ ministereId, profil, titre }: Props) {
           donnees={resultat.donnees}
           points={resultat.points}
           dernieresSaisies={resultat.dernieresSaisies}
+          reessayerDetailsSensibles={resultat.reessayerDetailsSensibles}
         />
       )
     case 'chargement':
-      return (
-        <>
-          <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
-          <ChargementBloc />
-        </>
-      )
+      return <SqueletteFiche titre={titre} />
     case 'erreur':
       return (
         <>

@@ -180,9 +180,23 @@ describe('construireFiche : indicateurs propres', () => {
     })
   })
 
-  it('ajout à valider : « à valider » pour le berger, la phrase du ministère pour lui ; jamais saisi : « vide »', () => {
+  it('« il y a plus de 30 jours » vient de v_indicateur_suivi.plus_de_30_jours', () => {
+    const lectures = lecturesExempleFiche('berger', false)
+    const recent = berger({
+      ...lectures,
+      suivi: lectures.suivi.map((s) =>
+        s.libelle === 'Partenariats actifs' ? { ...s, plus_de_30_jours: false } : s,
+      ),
+    })
+    expect(ligne(recent, 'Partenariats actifs')).toMatchObject({
+      detail: 'Saisi le 20 août',
+      detailSignale: false,
+    })
+  })
+
+  it('ajout à valider : « À valider par EJP Tech » pour le berger, la phrase du ministère pour lui ; jamais saisi : « vide »', () => {
     expect(ligne(berger(), 'Collectes organisées')).toMatchObject({
-      aValider: 'à valider',
+      aValider: 'À valider par EJP Tech',
       valeur: { etat: 'vide' },
       moisEnCours: { texte: 'Octobre en cours : pas encore de saisie' },
     })
@@ -201,10 +215,12 @@ describe('construireFiche : indicateurs propres', () => {
     })
     expect(ligne(donnees, 'Montant moyen par action')).toMatchObject({
       valeur: { etat: 'non_calcule', texte: 'Non calculé' },
-      detail: 'Non calculé : aucune saisie de « Collectes organisées » pour septembre.',
+      // La valeur dit déjà « Non calculé » : le détail ne le répète pas.
+      detail: 'Aucune saisie de « Collectes organisées » pour septembre.',
     })
     expect(ligne(donnees, 'Part des actions en partenariat')).toMatchObject({
       valeur: { etat: 'non_calcule', texte: 'Non calculé, à vérifier' },
+      detail: 'Septembre 2026 : 5 pour un total de 3. Vérifiez les deux chiffres saisis.',
     })
     expect(RAISON_HAUT_DEPASSE_BAS).toBe('haut_depasse_bas')
   })
@@ -227,6 +243,24 @@ describe('construireFiche : indicateurs propres', () => {
     expect(ministere().actionSaisirMois).toBe(true)
     expect(ministere().aDesIndicateursDuMois).toBe(true)
     expect(berger().actionSaisirMois).toBe(false)
+  })
+
+  it('un indicateur du mois dont seul le mois en cours est saisi n’attend pas sa « première saisie »', () => {
+    const lectures = lecturesExempleFiche('ministere', false)
+    const donnees = ministere({
+      ...lectures,
+      suivi: lectures.suivi.map((s) =>
+        s.libelle === 'Collectes organisées' ? { ...s, mois_en_cours_valeur: 6 } : s,
+      ),
+    })
+    expect(ligne(donnees, 'Collectes organisées')).toMatchObject({
+      jamaisSaisi: false,
+      moisEnCours: { texte: 'Octobre en cours : 6' },
+    })
+    // Ni les deux messages à la fois, ni le bouton de « première saisie » : le bouton de l'en-tête
+    // prend le relais.
+    expect(donnees.actionSaisirMois).toBe(false)
+    expect(donnees.aDesIndicateursDuMois).toBe(true)
   })
 })
 
@@ -331,6 +365,35 @@ describe('construireFiche : indicateur sensible (P45 à P47)', () => {
         texte: { texte: expect.stringContaining('collecte de rentrée'), masque: false },
       },
     ])
+  })
+
+  it('des catégories mais aucune saisie : ni répartition ni ligne vide sous l’indicateur (T36)', () => {
+    const lectures = lecturesExempleFiche('berger', false)
+    const jamaisSaisi = berger({
+      ...lectures,
+      suivi: lectures.suivi.map((s) =>
+        s.libelle === 'Bénéficiaires (passages)'
+          ? {
+              ...s,
+              derniere_periode: null,
+              derniere_valeur: null,
+              derniere_moins_de_3: false,
+              mois_en_cours_valeur: null,
+              mois_en_cours_moins_de_3: false,
+              somme_depuis: null,
+              somme_annee: null,
+              somme_moins_de_3: false,
+            }
+          : s,
+      ),
+      repartitions: [],
+      precisions: [],
+    })
+    expect(lectures.categories.length).toBeGreaterThanOrEqual(3)
+    expect(ligne(jamaisSaisi, 'Bénéficiaires (passages)').sensible).toEqual({
+      precisions: [],
+      repartitions: null,
+    })
   })
 
   it('aides : chacune une fois, « moins de 3 » et « masqué » jamais pour le ministère', () => {

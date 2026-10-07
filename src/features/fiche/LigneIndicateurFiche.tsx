@@ -28,10 +28,14 @@ interface Props {
  */
 export function LigneIndicateurFiche({ ligne }: Props) {
   const { aides } = ligne
+  // Une liste vide ne montre rien : jamais une ligne repliable qui s'ouvre sur un bloc vide (T36).
+  const repartitions =
+    ligne.sensible?.repartitions && ligne.sensible.repartitions.length > 0
+      ? ligne.sensible.repartitions
+      : null
   const sousLignes =
     ligne.moisEnCours !== null ||
-    (ligne.sensible !== null &&
-      (ligne.sensible.precisions.length > 0 || ligne.sensible.repartitions !== null))
+    (ligne.sensible !== null && (ligne.sensible.precisions.length > 0 || repartitions !== null))
   return (
     <li className="border-b border-filet py-3">
       <div className={GRILLE_LIGNE}>
@@ -101,9 +105,9 @@ export function LigneIndicateurFiche({ ligne }: Props) {
           {ligne.sensible?.precisions.map((precision) => (
             <PrecisionSensible key={precision.mois} precision={precision} />
           ))}
-          {ligne.sensible?.repartitions ? (
+          {repartitions !== null ? (
             <RepartitionSensible
-              repartitions={ligne.sensible.repartitions}
+              repartitions={repartitions}
               avecAide={aides.repartition === true}
             />
           ) : null}

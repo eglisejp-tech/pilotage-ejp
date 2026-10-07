@@ -6,14 +6,16 @@
 
 import type { IndicateurCommun } from '@/data/eglise'
 import type { LigneDerniereSaisie } from '@/data/fiche'
-import type { DerniereSaisieFiche } from '@/features/fiche/modeleFiche'
+import type { DerniereSaisieFiche, TexteLibre } from '@/features/fiche/modeleFiche'
+import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import { estDateIso, formaterHorodatage, formaterRendezVous } from '@/lib/metier/dates'
 import { accorder, nombre } from '@/lib/metier/texte'
 
-const LIBELLES_COMMUNS: Readonly<Record<string, string>> = {
-  service: 'STARs au service',
-  actifs: 'STARs actifs',
-  en_fij: 'dont en FIJ',
+/** « STARs au service : 10, STARs actifs : 14, dont 11 en FIJ » (maquettes 04 et 12). */
+const LIBELLES_COMMUNS: Readonly<Record<string, (valeur: string) => string>> = {
+  service: (valeur) => `STARs au service : ${valeur}`,
+  actifs: (valeur) => `STARs actifs : ${valeur}`,
+  en_fij: (valeur) => `dont ${valeur} en FIJ`,
 }
 
 /** Libellés des actions (BRIEF, section 6, colonne « Action » de 06), pour les autres lignes. */
@@ -44,7 +46,7 @@ function texteDe(detail: LigneDerniereSaisie['detail'], cle: string): string | n
   return typeof valeur === 'string' ? valeur : null
 }
 
-/** « STARs au service : 10, STARs actifs : 14, dont en FIJ : 11 », ou null sans chiffre commun. */
+/** « STARs au service : 10, STARs actifs : 14, dont 11 en FIJ », ou null sans chiffre commun. */
 function chiffresCommuns(
   detail: LigneDerniereSaisie['detail'],
   codes: ReadonlyMap<string, string>,
@@ -57,34 +59,54 @@ function chiffresCommuns(
     const code = typeof id === 'string' ? codes.get(id) : undefined
     const libelle = code === undefined ? undefined : LIBELLES_COMMUNS[code]
     if (libelle === undefined || typeof valeur !== 'number') return []
-    return [`${libelle} : ${nombre(valeur)}`]
+    return [libelle(nombre(valeur))]
   })
   return morceaux.length === 0 ? null : morceaux.join(', ')
 }
 
-function avecObjet(libelle: string, objet: string | null): string {
-  return objet === null || objet.trim() === '' ? libelle : `${libelle} : ${objet}`
+/** Ce que dit une ligne : l'action en mots, puis l'objet visé quand il est du texte libre. */
+interface TexteDeLigne {
+  texte: string
+  objet: TexteLibre | null
 }
 
-function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, string>): string {
+const SANS_OBJET = (texte: string): TexteDeLigne => ({ texte, objet: null })
+
+/** Le titre d'un point ou d'un événement : masqué par EJP Tech, il s'affiche en `--encre-3`. */
+function avecObjet(libelle: string, objet: string | null): TexteDeLigne {
+  if (objet === null || objet.trim() === '') return SANS_OBJET(libelle)
+  return { texte: `${libelle} :`, objet: { texte: objet, masque: objet === TEXTE_MASQUE } }
+}
+
+function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, string>): TexteDeLigne {
   const libelle = LIBELLES_ACTIONS[ligne.action] ?? AUTRE_SAISIE
   switch (ligne.action) {
     case 'mesure_saisie':
-      return chiffresCommuns(ligne.detail, codes) ?? libelle
+      return SANS_OBJET(chiffresCommuns(ligne.detail, codes) ?? libelle)
     case 'fij_saisie': {
       const total = nombreDe(ligne.detail, 'total')
-      return total === null ? libelle : `FIJ par département : ${nombre(total)} au total`
+      return SANS_OBJET(
+        total === null ? libelle : `FIJ par département : ${nombre(total)} au total`,
+      )
     }
     case 'participation_saisie': {
       const valeur = nombreDe(ligne.detail, 'valeur')
-      return valeur === null
-        ? libelle
-        : `${libelle} : ${nombre(valeur)} ${accorder(valeur, 'présent', 'présents')}`
+      if (valeur === null) return SANS_OBJET(libelle)
+      const presents = `${nombre(valeur)} ${accorder(valeur, 'présent', 'présents')}`
+      // L'intitulé de la session, écrit par l'administration, vient du journal (« Bâtir l'Église »).
+      const session = ligne.cible_texte?.trim() ?? ''
+      return SANS_OBJET(
+        session === ''
+          ? `Présence saisie pour une session : ${presents}`
+          : `${session} : ${presents}`,
+      )
     }
     case 'reunion_saisie': {
       const date = texteDe(ligne.detail, 'date')
-      if (date === null || !estDateIso(date)) return libelle
-      return `Prochaine réunion : ${formaterRendezVous(date, texteDe(ligne.detail, 'heure'))}`
+      if (date === null || !estDateIso(date)) return SANS_OBJET(libelle)
+      return SANS_OBJET(
+        `Prochaine réunion : ${formaterRendezVous(date, texteDe(ligne.detail, 'heure'))}`,
+      )
     }
     case 'evenement_ajoute':
     case 'evenement_modifie':
@@ -95,7 +117,7 @@ function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, strin
     case 'indicateur_corrige':
       return avecObjet(libelle, ligne.cible_texte)
     default:
-      return libelle
+      return SANS_OBJET(libelle)
   }
 }
 
@@ -108,13 +130,13 @@ export function construireDernieresSaisies(
     communs.flatMap((commun) => (commun.code === null ? [] : [[commun.id, commun.code] as const])),
   )
   return lignes.map((ligne) => {
-    let texte: string
+    let dite: TexteDeLigne
     try {
-      texte = texteLigne(ligne, codes)
+      dite = texteLigne(ligne, codes)
     } catch {
       // Une heure ou une date illisible ne casse pas la fiche : la ligne garde son action.
-      texte = LIBELLES_ACTIONS[ligne.action] ?? AUTRE_SAISIE
+      dite = SANS_OBJET(LIBELLES_ACTIONS[ligne.action] ?? AUTRE_SAISIE)
     }
-    return { id: ligne.id, quand: formaterHorodatage(ligne.le), texte }
+    return { id: ligne.id, quand: formaterHorodatage(ligne.le), ...dite }
   })
 }

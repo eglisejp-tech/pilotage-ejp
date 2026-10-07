@@ -21,8 +21,10 @@ export type TablesFiche = Aucun
 export type VuesFiche = {
   /**
    * Répartition du total le plus récent de chaque mois d'un indicateur sensible (B8, P47). Une
-   * ligne par catégorie renseignée et une ligne « Non réparti » (`categorie` null, en dernier).
-   * Un mois sans répartition n'a aucune ligne. Valeurs exactes pour le ministère ; « moins de 3 »,
+   * ligne par catégorie de la liste en cours (une catégorie non renseignée vaut 0, T42 ; une
+   * catégorie retirée depuis garde sa ligne dans une ancienne répartition) et une ligne « Non
+   * réparti » (`categorie` null, en dernier). Un mois sans répartition n'a aucune ligne (contrat,
+   * section 6). Valeurs exactes pour le ministère ; « moins de 3 »,
    * masquage secondaire et masquage complet pour le berger, le conseil et EJP Tech ; rien pour
    * l'administration ni pour un autre ministère.
    */

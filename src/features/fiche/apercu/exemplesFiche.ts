@@ -21,6 +21,8 @@ export const ECRANS_APERCU_FICHE = [
   'fiche',
   'fiche-vide',
   'fiche-erreur-bloc',
+  'fiche-erreur-points',
+  'fiche-erreur-details',
   'chargement',
   'erreur',
   'introuvable',
@@ -547,7 +549,7 @@ export const DERNIERES_SAISIES_EXEMPLE: LigneDerniereSaisie[] = [
     cible: 'session',
     cible_id: 'd0000000-0000-4000-8000-000000000001',
     detail: { valeur: 6, deja_comptes: 1 },
-    cible_texte: null,
+    cible_texte: "Bâtir l'Église",
   },
   {
     id: 102,

@@ -32,6 +32,11 @@ export const TEXTES_FICHE = {
   saisirSession: 'Saisir une session',
   /** Premier usage d'un indicateur du mois, au-dessus de son action. Proposé (E2). */
   premiereSaisieDuMois: 'Un indicateur du mois attend sa première saisie.',
+  /**
+   * Ajout à valider lu par le berger, le conseil ou EJP Tech : le mot seul ne dit pas qui valide.
+   * Le ministère lit la phrase de `texteAjoutAValider` (E1). Proposé (revue de E2).
+   */
+  aValiderParEjpTech: 'À valider par EJP Tech',
 
   /** Libellés des chiffres communs quand la demande du ministère n'en donne pas (BRIEF, section 4). */
   communs: {
@@ -45,8 +50,6 @@ export const TEXTES_FICHE = {
   plusDe30Jours: 'il y a plus de 30 jours',
 
   repartition: 'Répartition par catégorie',
-  /** Répartition masquée en entier (total de 1 ou 2, ou masquage complet, P47). Proposé (E2). */
-  repartitionMasquee: 'Répartition masquée pour protéger les petits nombres.',
   /** Case cachée par le masquage secondaire. Proposé (BRIEF, section 9). */
   masque: 'masqué',
 
@@ -75,8 +78,13 @@ export const TEXTES_FICHE = {
 
   liste: {
     titre: 'Ministères',
-    /** BRIEF, section 9. */
-    phrase: 'Du moins récent au plus récent. Ouvrez un ministère pour voir sa fiche.',
+    /**
+     * BRIEF, section 9 : « Du moins récent au plus récent. Ouvrez un ministère pour voir sa
+     * fiche. » La phrase du milieu dit où commencent les ministères sans saisie. Proposé (revue
+     * de E2).
+     */
+    phrase:
+      'Du moins récent au plus récent. Les ministères sans saisie récente sont en premier. Ouvrez un ministère pour voir sa fiche.',
     /** Premier usage. Proposé (E2). */
     aucun: "Aucun ministère actif. L'administration de l'église crée les ministères.",
     colonneMinistere: 'Ministère',
@@ -99,7 +107,27 @@ export function duMois(mois: Mois): string {
   return VOYELLE.test(nom) ? `d'${nom}` : `de ${nom}`
 }
 
-/** « Précision de septembre », « Précision d'octobre » (P46). Proposé. */
+/**
+ * Part dont le haut dépasse le bas (P49) : « Septembre 2026 : 5 pour un total de 3. Vérifiez les
+ * deux chiffres saisis. » Le détail ne répète pas « Non calculé », que la valeur de la ligne dit
+ * déjà. Proposé (revue de E2).
+ */
+export function partAVerifier(quand: string, haut: string, bas: string): string {
+  return `${quand} : ${haut} pour un total de ${bas}. Vérifiez les deux chiffres saisis.`
+}
+
+/** Sans le préfixe « Non calculé : » de `texteNonCalcule`, avec une majuscule en tête. */
+export function sansPrefixeNonCalcule(texte: string, secours: string): string {
+  const prefixe = 'Non calculé : '
+  if (!texte.startsWith(prefixe)) return secours
+  const reste = texte.slice(prefixe.length)
+  return reste === '' ? secours : `${reste.charAt(0).toUpperCase()}${reste.slice(1)}`
+}
+
+/**
+ * « Précision de septembre », « Précision d'octobre » (P46). Proposé : le BRIEF écrit
+ * « Précision : ... », mais deux mois peuvent s'afficher sous la même ligne, le mois les distingue.
+ */
 export function titrePrecision(mois: Mois): string {
   return `Précision ${duMois(mois)}`
 }
@@ -107,7 +135,8 @@ export function titrePrecision(mois: Mois): string {
 /**
  * Somme de l'année d'un sensible lue par un autre profil que son ministère : elle ne compte que
  * les mois affichés et le dit (BRIEF, section 4, « Indicateurs sensibles ») : « Depuis juin,
- * somme des mois affichés : 6, plus 2 mois sous 3 ».
+ * somme des mois affichés : 6, plus 2 mois sous 3 ». Proposé : le BRIEF écrit « Somme des mois
+ * affichés : 14, plus 2 mois sous 3 » ; le départ s'ajoute, comme pour toute somme de l'année.
  */
 export function sommeDesMoisAffiches(depuis: string, somme: string, moisSous3: number): string {
   return `${depuis}, somme des mois affichés : ${somme}, plus ${moisSous3} mois sous 3`

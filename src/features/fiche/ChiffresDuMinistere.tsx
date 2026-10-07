@@ -12,6 +12,8 @@ import { TEXTES_VIDES_INDICATEURS } from '@/features/indicateurs/textesVides'
 
 interface Props {
   donnees: DonneesFiche
+  /** Détail des sensibles (catégories, répartitions, précisions) en échec : « Réessayer ». */
+  reessayerDetails?: (() => void) | null
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * rythme, puis les retirés repliés. Premier usage : la phrase du profil, et pour le ministère une
  * seule action, « Saisir les chiffres du mois », quand un indicateur du mois n'a jamais été saisi.
  */
-export function ChiffresDuMinistere({ donnees }: Props) {
+export function ChiffresDuMinistere({ donnees, reessayerDetails = null }: Props) {
   const idTitre = useId()
   const estMinistere = donnees.profil === 'ministere'
   return (
@@ -50,6 +52,14 @@ export function ChiffresDuMinistere({ donnees }: Props) {
       {donnees.sections.map((section) => (
         <SectionRythme key={section.nature} section={section} />
       ))}
+      {reessayerDetails !== null ? (
+        <EtatVide
+          situation="probleme_passager"
+          action={{ libelle: TEXTES_FICHE.reessayer, surClic: reessayerDetails }}
+        >
+          {TEXTES_FICHE.erreur}
+        </EtatVide>
+      ) : null}
       {donnees.sansIndicateurPropre ? (
         <EtatVide situation="premier_usage">
           {estMinistere
