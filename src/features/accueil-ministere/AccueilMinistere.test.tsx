@@ -22,12 +22,17 @@ import { OuvertureMinistere } from '@/features/accueil-ministere/OuvertureMinist
 import { VueCetteSemaine } from '@/features/cette-semaine/VueCetteSemaine'
 import { exempleCetteSemaine } from '@/features/cette-semaine/exemple'
 import type { EtatBloc, PointFiche } from '@/features/fiche/modeleFiche'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { simulerLargeur } from '@/test/largeur'
 
 const semaine = { numero: 39, periode: 'du 21 au 27 sept.' }
 
 function dans(enfant: ReactNode) {
-  return render(<MemoryRouter>{enfant}</MemoryRouter>)
+  return render(
+    <AvecRequetes>
+      <MemoryRouter>{enfant}</MemoryRouter>
+    </AvecRequetes>,
+  )
 }
 
 beforeEach(() => {
