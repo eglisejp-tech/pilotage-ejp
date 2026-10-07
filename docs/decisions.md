@@ -1039,3 +1039,27 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : réponse écrite de la personne responsable (7 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026
 - **BRIEF** : aucun changement ; la page fait foi (`src/pages/PageConfidentialite.tsx`, « Dernière mise à jour : 7 octobre 2026 »)
+
+### T50. Bandeau d'avancement de l'outil
+
+- **Date** : 7 octobre 2026
+- **Sujet** : la personne responsable demande un bandeau qui montre l'évolution de l'avancement du site, avec une animation agréable, en s'inspirant de designs libres trouvés en ligne.
+- **Décision** : l'option A de la recherche du 7 octobre. Une ligne sous l'en-tête de toutes les pages connectées : « N étapes sur 8 en ligne. Prochaine : ..., prévue ... », 8 cases (pleine : en ligne ; bordée : en partie ; en pointillés : à venir), « Voir les étapes » ouvre la frise des 8 étapes (état en mots et date du plan) et « Fermer » retient le choix sur l'appareil. Le bandeau réapparaît une fois à chaque livraison (reprise de l'option D, ruban « Nouveautés »). Il est masqué sur `/saisir/*` et `/signaler`.
+- **Règles** : les cinq profils le voient ; on compte les étapes 1 à 8, base et connexion comprises, en étapes entières, jamais en pourcentage ; les dates à venir sont celles du plan et le panneau le dit (« elles peuvent bouger ») ; le contenu vit dans `src/features/avancement/etapes.ts`, mis à jour dans le commit qui livre ; un test refuse « en ligne » pour une étape dont une adresse sert encore une page à venir.
+- **Animation** : la première de l'outil, acceptée par la personne responsable : remplissage des cases (420 ms, une fois par chargement) et ouverture du panneau (200 ms), coupés par `prefers-reduced-motion`. Écart à noter dans `docs/reference/maquettes/LISEZMOI.md` (« Pas d'animation »).
+- **Confidentialité** : phrase ajoutée à la page : « Ce navigateur retient aussi que vous avez fermé le bandeau d'avancement. »
+- **Références** : le motif du « phase banner » de GOV.UK, HyperUI Steps (MIT), tw-animate-css (MIT, déjà installé). Aucune dépendance ajoutée ; ni dégradé, ni ombre, ni carte (direction C).
+- **Quand** : après l'ouverture, lot `etape-7-avancement` (environ 7 h), compté dans la limite de 4 lots en parallèle.
+- **Maquettes** : toile de design « Pilotage EJP : logo et bandeau » (option A sur ordinateur et téléphone, option D).
+- **Origine** : validation écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : section 9 (en-tête des pages connectées) et section 10 (exception d'animation), à reporter avec le lot
+
+### T51. Logo d'EJP Tech dans l'aperçu des liens partagés
+
+- **Date** : 7 octobre 2026
+- **Sujet** : la personne responsable veut le logo d'EJP Tech comme logo du site dans les aperçus de liens, avec la meilleure qualité possible.
+- **Décision** : balises Open Graph dans `index.html` et image `public/apercu-lien.png` (2400 x 1260). Le fichier fourni ne faisant que 360 px, le logo est redessiné en vectoriel (`docs/sources/logo EJP TECH/logo-ejp-tech.svg`, rendu 4K à côté). Si le fichier vectoriel d'origine du graphiste existe, il prime. L'adresse de l'image est celle de la préproduction : à changer pour l'adresse de production quand elle sera connue. L'icône de l'onglet et l'en-tête ne changent pas.
+- **Origine** : demande écrite de la personne responsable (7 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026
+- **BRIEF** : aucun changement
