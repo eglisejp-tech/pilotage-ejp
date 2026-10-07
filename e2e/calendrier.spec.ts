@@ -154,7 +154,7 @@ test.describe('bloc « Événements à confirmer » (aperçu)', () => {
     const aide = page.getByRole('button', { name: 'Aide : Événements à confirmer' })
     await aide.click()
     await expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await expect(page.getByText(/Ils disparaissent au changement de statut/)).toBeVisible()
+    await expect(page.getByText(/à 3 jours ou moins de leur date, ou déjà passés/)).toBeVisible()
   })
 
   test('rien à confirmer : ni titre ni cadre', async ({ page }) => {
