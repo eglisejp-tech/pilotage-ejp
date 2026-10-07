@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -94,7 +94,11 @@ function afficher(adresse: string) {
   return routeur
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Démonter d'abord, puis annuler les requêtes encore en vol : sinon une réponse du test
+  // précédent (son compte, ses onglets) peut revenir dans le cache après le clear().
+  cleanup()
+  await clientRequetes.cancelQueries()
   clientRequetes.clear()
   effacerMotDePasseAChoisir()
   vi.clearAllMocks()
@@ -179,20 +183,25 @@ describe('routes', () => {
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
-      for (const nav of navigation()) {
-        expect(
-          within(nav)
-            .getAllByRole('link')
-            .map((lien) => lien.textContent),
-        ).toEqual(onglets)
-      }
+      // La session du test précédent peut rester affichée un instant sous charge (même titre
+      // « Cette semaine » pour le berger et le ministère) : on attend les onglets du profil.
+      await waitFor(() => {
+        for (const nav of navigation()) {
+          expect(
+            within(nav)
+              .getAllByRole('link')
+              .map((lien) => lien.textContent),
+          ).toEqual(onglets)
+        }
+      })
       expect(within(navigation()[0]!).getByRole('link', { name: titre })).toHaveAttribute(
         'aria-current',
         'page',
       )
       expect(document.body.textContent).toContain(LIBELLES[type])
       if (type === 'admin_plateforme') {
-        expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+        // Lot E8 : le bloc « Signalements » en tête, la relecture à l'étape 6.
+        expect(screen.getByText(/sera disponible prochainement/)).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
         expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
@@ -473,12 +482,18 @@ describe("adresses de l'étape 4", () => {
   // `src/pages/saisiesSessionFij.test.tsx`. Le filtre est ici, et non dans `AMORCES_PAR_PROFIL`,
   // pour ne pas toucher les mêmes lignes que les autres lots (une page remplacée par lot).
   const PAGES_REMPLACEES_PAR_E4 = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
+  // Pages que le lot E3 a remplacées : testées dans `src/pages/saisiesChiffres.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E3 = ['/saisir/dimanche', '/saisir/mois']
   // Pages que le lot E2 a remplacées : testées dans `src/pages/fiche.test.tsx`.
   const PAGES_REMPLACEES_PAR_E2 = ['/ma-fiche', '/ministeres', '/ministeres/:id']
+  // Page que le lot E8 a remplacée (« Signaler une difficulté ») : testée plus bas et dans
+  // `src/pages/PageSignalement.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E8 = ['/signaler']
   it.each(
-    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif)).filter(
-      ([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif),
-    ),
+    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E3.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E8.includes(motif)),
   )(
     '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
     async (motif, profil) => {
@@ -515,13 +530,67 @@ describe("adresses de l'étape 4", () => {
     expect(faux.tables).toEqual(['compte'])
   })
 
-  it('/moderation : le bloc « Signalements » est un emplacement vide au-dessus du message « à venir »', async () => {
-    connecte('admin_plateforme')
+  it('/moderation : le titre de l’écran, puis le bloc « Signalements » lu dans v_signalement (lot E8)', async () => {
+    const faux = installer({
+      ...scenarioDe('admin_plateforme'),
+      lignes: {
+        v_signalement: [
+          {
+            id: '43000000-0000-4000-8000-000000000001',
+            ministere_id: 'm-communication',
+            ministere_nom: 'Communication',
+            ecran: 'saisie_evenement',
+            texte: 'Le formulaire refuse la date de notre soirée de louange.',
+            saisi_le: '2026-10-02T18:40:00+02:00',
+            suivi_id: null,
+            commentaire: null,
+            clos_le: null,
+            ouvert: true,
+            clos_recent: false,
+          },
+        ],
+      },
+    })
     afficher('/moderation')
-    expect(await screen.findByText("Cet écran arrive à l'étape 6.")).toBeInTheDocument()
+    expect(await screen.findByText('Communication')).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
-    expect(screen.queryByText('Signalements')).toBeNull()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Modération')
+    expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toBeInTheDocument()
+    expect(screen.getByText('1 signalement ouvert')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
+    expect(
+      screen.getByText('La relecture des champs libres sera disponible prochainement.'),
+    ).toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte', 'v_signalement'])
   })
+
+  it('un ministère sur /signaler : le formulaire, l’écran prérempli, ses seuls signalements lus', async () => {
+    const faux = connecte('ministere')
+    afficher('/signaler?ecran=saisie_reunion')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Signaler une difficulté' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Écran concerné : Prochaine réunion')).toBeInTheDocument()
+    expect(screen.getByText(/^EJP Tech lit votre signalement\./)).toBeInTheDocument()
+    await waitFor(() => expect(faux.tables).toEqual(['compte', 'v_signalement']))
+    expect(faux.eq).toHaveBeenCalledWith('ministere_id', 'm-communication')
+  })
+
+  it.each<TypeCompte>(['berger', 'conseil', 'admin_eglise'])(
+    '%s sur /moderation : page non disponible, aucune lecture de signalement',
+    async (profil) => {
+      const faux = connecte(profil)
+      afficher('/moderation')
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: "Cette page n'est pas disponible avec votre compte.",
+        }),
+      ).toBeInTheDocument()
+      expect(screen.queryByText('Signalements')).toBeNull()
+      expect(faux.tables).not.toContain('v_signalement')
+    },
+  )
 
   it.each([
     // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »).

@@ -18,10 +18,18 @@ interface Props {
   aide?: CodeAide
   /** Définition visible sous le libellé, lue avec le champ. */
   definition?: string
+  /** Mention visible sous la définition, avant le champ (« À valider par EJP Tech... »). */
+  mention?: string
   /** Note visible sous le champ (« Saisi le 24 sept. », « 79 % des actifs »). */
   note?: string
+  /** « Déjà saisi : 10, le 27 sept. à 12 h 41... » : sous le champ, lue avec lui. */
+  dejaSaisi?: string
   /** Message de validation sous le champ, lu avec le champ. */
   erreur?: string
+  /** Champ en erreur sans message à lui (le message est ailleurs : groupe, ligne d'état). */
+  invalide?: boolean
+  /** Identifiants d'autres éléments qui décrivent le champ (message d'un groupe, par exemple). */
+  decritAussi?: string
   /** Unité écrite après le nombre (« € », « jours »). */
   suffixe?: string | null
 }
@@ -32,6 +40,8 @@ interface Props {
  * sont acceptés. Le libellé reste un `<label>` ; l'aide, si elle existe, est son voisin. Les
  * boutons « moins » et « plus » portent le libellé du champ dans leur nom accessible (« Ajouter
  * un : STARs actifs ») : un formulaire en a plusieurs paires, qui ne doivent pas se confondre.
+ * Dans un conteneur de grille, le champ se range en bas de sa cellule : deux champs côte à côte
+ * restent alignés même si leurs textes n'ont pas la même longueur.
  */
 export function ChampNombre({
   id,
@@ -42,17 +52,34 @@ export function ChampNombre({
   variante = 'grand',
   aide,
   definition,
+  mention,
   note,
+  dejaSaisi,
   erreur,
+  invalide,
+  decritAussi,
   suffixe,
 }: Props) {
   const idDefinition = `${id}-definition`
+  const idMention = `${id}-mention`
   const idNote = `${id}-note`
+  const idDeja = `${id}-deja`
   const idErreur = `${id}-erreur`
-  const decritPar = [definition ? idDefinition : '', note ? idNote : '', erreur ? idErreur : '']
+  const decritPar = [
+    definition ? idDefinition : '',
+    mention ? idMention : '',
+    note ? idNote : '',
+    dejaSaisi ? idDeja : '',
+    decritAussi ?? '',
+    erreur ? idErreur : '',
+  ]
     .filter(Boolean)
     .join(' ')
   const grand = variante === 'grand'
+  const enErreur = Boolean(erreur) || invalide === true
+  // Le nombre domine la page (maquette 08 : 112 px, graisse 900). Au-delà de 3 chiffres il se
+  // réduit, pour que 4 chiffres tiennent entre les deux boutons à 390 px.
+  const tailleGrand = valeur.length > 3 ? 'text-[84px]' : 'text-[112px]'
 
   const champ = (
     <div className="relative min-w-0">
@@ -63,11 +90,13 @@ export function ChampNombre({
         autoComplete="off"
         value={valeur}
         onChange={(evenement) => onChange(garderChiffres(evenement.target.value))}
-        aria-invalid={erreur ? true : undefined}
+        aria-invalid={enErreur ? true : undefined}
         aria-describedby={decritPar || undefined}
         className={cn(
           'w-full min-w-0 bg-papier text-center font-chiffres font-black text-encre tabular-nums aria-invalid:border-2 aria-invalid:border-alerte',
-          grand ? 'h-cible-saisie border-0 text-[44px]' : 'h-14.5 border border-encre text-[32px]',
+          grand
+            ? cn('h-[100px] border-0 leading-[.9]', tailleGrand)
+            : 'h-14.5 border border-encre text-[32px]',
         )}
       />
       {suffixe ? (
@@ -82,7 +111,7 @@ export function ChampNombre({
   )
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex h-full flex-col gap-1.5">
       {aide ? (
         <LibelleAvecAide
           htmlFor={id}
@@ -100,39 +129,51 @@ export function ChampNombre({
           {definition}
         </p>
       ) : null}
-      {grand ? (
-        <div className="grid grid-cols-[var(--cible-saisie)_minmax(0,1fr)_var(--cible-saisie)] items-center border-y border-encre">
-          <button
-            type="button"
-            aria-label={`Retirer un : ${libelle}`}
-            onClick={() => onChange(ajusterNombre(valeur, -1, max))}
-            className="h-cible-saisie border-r border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre"
-          >
-            <span aria-hidden="true">{MOINS}</span>
-          </button>
-          {champ}
-          <button
-            type="button"
-            aria-label={`Ajouter un : ${libelle}`}
-            onClick={() => onChange(ajusterNombre(valeur, 1, max))}
-            className="h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier"
-          >
-            <span aria-hidden="true">+</span>
-          </button>
-        </div>
-      ) : (
-        champ
-      )}
-      {note ? (
-        <p id={idNote} className="text-center text-note text-encre-3">
-          {note}
+      {mention ? (
+        <p id={idMention} className="text-note text-encre-3">
+          {mention}
         </p>
       ) : null}
-      {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
-          {erreur}
-        </p>
-      ) : null}
+      <div className="mt-auto flex flex-col gap-1.5">
+        {grand ? (
+          <div className="grid grid-cols-[var(--cible-saisie)_minmax(0,1fr)_var(--cible-saisie)] items-center">
+            <button
+              type="button"
+              aria-label={`Retirer un : ${libelle}`}
+              onClick={() => onChange(ajusterNombre(valeur, -1, max))}
+              className="h-cible-saisie border border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre"
+            >
+              <span aria-hidden="true">{MOINS}</span>
+            </button>
+            {champ}
+            <button
+              type="button"
+              aria-label={`Ajouter un : ${libelle}`}
+              onClick={() => onChange(ajusterNombre(valeur, 1, max))}
+              className="h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
+          </div>
+        ) : (
+          champ
+        )}
+        {note ? (
+          <p id={idNote} className="text-center text-note text-encre-3">
+            {note}
+          </p>
+        ) : null}
+        {dejaSaisi ? (
+          <p id={idDeja} className="text-center text-note text-encre-3">
+            {dejaSaisi}
+          </p>
+        ) : null}
+        {erreur ? (
+          <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+            {erreur}
+          </p>
+        ) : null}
+      </div>
     </div>
   )
 }

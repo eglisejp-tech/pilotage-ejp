@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { TEXTES_AIDE, texteAide } from '@/components/aide/textesAide'
+import { CODES_A_RETIRER, TEXTES_AIDE, texteAide } from '@/components/aide/textesAide'
 
 // Règles de rédaction : docs/conception/aides-contextuelles.md, section 2.
 const ENTREES = Object.entries(TEXTES_AIDE)
@@ -22,9 +22,19 @@ function nombreDePhrases(texte: string): number {
 }
 
 describe('catalogue des aides (T38)', () => {
-  it('compte les 33 textes de aides-contextuelles.md, section 6', () => {
-    expect(ENTREES).toHaveLength(33)
+  it('compte 28 textes de référence et 3 codes à retirer (aides-contextuelles.md, section 6)', () => {
+    expect(ENTREES).toHaveLength(31)
+    expect(CODES_A_RETIRER).toHaveLength(3)
+    for (const code of CODES_A_RETIRER) expect(Object.keys(TEXTES_AIDE)).toContain(code)
   })
+
+  // Règle 3 : on dit ce qu'est le chiffre, pas ce que la personne ne doit pas savoir ni faire.
+  it.each(ENTREES.filter(([code]) => !(CODES_A_RETIRER as readonly string[]).includes(code)))(
+    '%s : dit ce que c’est, sans tournure négative',
+    (code, texte) => {
+      expect(texte, code).not.toMatch(/\b(pas|jamais|ne peut|ne comptent)\b/i)
+    },
+  )
 
   it('nomme chaque code « écran.sujet », sans doublon', () => {
     const codes = ENTREES.map(([code]) => code)

@@ -6,10 +6,10 @@
 --   « Malaise », « Blessure », « Autre ». Jeu d'exemple seulement, jamais en production : les
 --   listes de la coordination arriveront chacune par une migration.
 -- - Le mois à 6 de seed/40 (quatre mois avant le mois en cours) est réparti 4, 2 et 0, sans
---   rien de non réparti : le berger lit « Malaise : masqué », « Blessure : moins de 3 »,
---   « Autre : 0 » et « Non réparti : 0 » ; Social lit les valeurs exactes.
+--   rien de non réparti : Social, le berger, le conseil et EJP Tech lisent les valeurs exactes
+--   (P52 : « Malaise : 4 », « Blessure : 2 », « Autre : 0 », « Non réparti : 0 »).
 -- - Le mois en cours (P45, calculé par private.mois_courant(), jamais écrit en dur) reçoit un
---   total de 7, réparti 4, 3 et 0 (aucun petit nombre : tout s'affiche), avec une précision sans
+--   total de 7, réparti 4, 3 et 0, avec une précision sans
 --   donnée personnelle.
 --
 -- Insertion directe sous le rôle du jeu, comme saisir_chiffres_mois l'écrirait (forcer_auteur
