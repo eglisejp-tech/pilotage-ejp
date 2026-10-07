@@ -139,6 +139,45 @@ describe('creerPoint', () => {
     expect(schemaBaseNouveauPoint.safeParse({ ...base, titre: 'x'.repeat(80) }).success).toBe(true)
     expect(schemaBaseNouveauPoint.safeParse({ ...base, titre: 'x'.repeat(81) }).success).toBe(false)
   })
+
+  it('compte les caractères comme la base (char_length) : un émoji vaut un', () => {
+    const base = {
+      titre: 'Clés',
+      description: null,
+      attendu: null,
+      priorite: 'normale',
+      echeance: null,
+      mentions: [],
+    }
+    expect(schemaBaseNouveauPoint.safeParse({ ...base, titre: '🙏'.repeat(80) }).success).toBe(true)
+    expect(schemaBaseNouveauPoint.safeParse({ ...base, titre: '🙏'.repeat(81) }).success).toBe(
+      false,
+    )
+    const description = schemaBaseNouveauPoint.safeParse({ ...base, description: '🙏'.repeat(280) })
+    expect(description.data?.description).toBe('🙏'.repeat(280))
+    expect(
+      schemaBaseNouveauPoint.safeParse({ ...base, description: '🙏'.repeat(281) }).error?.issues[0]
+        ?.message,
+    ).toBe(MESSAGES_POINT.refus.description)
+    expect(schemaBaseNouveauPoint.safeParse({ ...base, attendu: '🙏'.repeat(80) }).success).toBe(
+      true,
+    )
+  })
+
+  it('une date mal formée ou impossible donne le message du format, pas celui de la date passée', () => {
+    const base = {
+      titre: 'Clés',
+      description: null,
+      attendu: null,
+      priorite: 'normale',
+      mentions: [],
+    }
+    for (const echeance of ['12/10/2026', '2026-02-30']) {
+      const resultat = schemaBaseNouveauPoint.safeParse({ ...base, echeance })
+      expect(resultat.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.echeanceFormat)
+    }
+    expect(schemaBaseNouveauPoint.safeParse({ ...base, echeance: '2026-10-12' }).success).toBe(true)
+  })
 })
 
 describe('changerStatutPoint', () => {
@@ -224,6 +263,32 @@ describe('schemaCommentaireTraiteMinistere', () => {
     expect(schemaCommentaireTraiteMinistere.parse(` ${'x'.repeat(10)} `)).toBe('x'.repeat(10))
     expect(schemaCommentaireTraiteMinistere.safeParse('x'.repeat(280)).success).toBe(true)
   })
+
+  it('compte les émojis comme la base : un émoji vaut un caractère', () => {
+    expect(schemaCommentaireTraiteMinistere.parse('🙏'.repeat(10))).toBe('🙏'.repeat(10))
+    expect(schemaCommentaireTraiteMinistere.safeParse('🙏'.repeat(280)).success).toBe(true)
+    expect(
+      schemaCommentaireTraiteMinistere.safeParse('🙏'.repeat(281)).error?.issues[0]?.message,
+    ).toBe(MESSAGES_POINT.refus.commentaireLong)
+    // 8 caractères pour la base, 11 unités UTF-16 : refusé comme trop court.
+    expect(
+      schemaCommentaireTraiteMinistere.safeParse('Fait 🙏🙏🙏').error?.issues[0]?.message,
+    ).toBe(MESSAGES_POINT.refus.commentaireCourt)
+    // 275 caractères avec des émojis (plus de 280 unités UTF-16) : accepté.
+    const texte = `${'x'.repeat(265)}${'🙏'.repeat(10)}`
+    expect(texte.length).toBeGreaterThan(280)
+    expect(schemaCommentaireTraiteMinistere.safeParse(texte).success).toBe(true)
+  })
+})
+
+describe('marquerTraite et les émojis', () => {
+  it('envoie 280 émojis, refuse 281 avant tout appel', async () => {
+    const faux = installer()
+    await marquerTraite(POINT, '🙏'.repeat(280))
+    expect(faux.rpc).toHaveBeenCalledTimes(1)
+    await expect(marquerTraite(POINT, '🙏'.repeat(281))).rejects.toThrow()
+    expect(faux.rpc).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('messageDeRefusPoint', () => {
@@ -246,6 +311,45 @@ describe('messageDeRefusPoint', () => {
     expect(
       messageDeRefusPoint({ code: '42501', message: 'Double authentification requise.' }),
     ).toBe(MESSAGES_POINT.refus.acces)
+  })
+
+  it('en création, un autre refus de droit parle de la création, pas d’un point existant', () => {
+    expect(
+      messageDeRefusPoint(
+        { code: '42501', message: 'Double authentification requise.' },
+        'creation',
+      ),
+    ).toBe("Vous n'avez pas accès à la création de points.")
+    expect(
+      messageDeRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' }, 'creation'),
+    ).toBe(MESSAGES_POINT.refus.creationAcces)
+    expect(
+      messageDeRefusPoint(
+        { code: '42501', message: MESSAGES_POINT.refus.creationReservee },
+        'creation',
+      ),
+    ).toBe(MESSAGES_POINT.refus.creationReservee)
+    expect(
+      messageDeRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' }, 'action'),
+    ).toBe(MESSAGES_POINT.refus.acces)
+  })
+
+  it('montre le premier problème d’une valeur refusée avant l’appel, pas « La connexion a échoué »', async () => {
+    const faux = installer()
+    const erreurLongue = await marquerTraite(POINT, 'x'.repeat(281)).catch((e: unknown) => e)
+    expect(messageDeRefusPoint(erreurLongue)).toBe(MESSAGES_POINT.refus.commentaireLong)
+    const erreurId = await changerStatutPoint('1', 'en_cours').catch((e: unknown) => e)
+    expect(messageDeRefusPoint(erreurId)).toBe(MESSAGES_POINT.refus.acces)
+    const erreurPoint = await creerPoint({
+      titre: 'Clés',
+      description: null,
+      attendu: null,
+      priorite: 'critique' as unknown as 'normale',
+      echeance: null,
+      mentions: [],
+    }).catch((e: unknown) => e)
+    expect(messageDeRefusPoint(erreurPoint, 'creation')).toBe(MESSAGES_POINT.refus.prioriteVide)
+    expect(faux.rpc).not.toHaveBeenCalled()
   })
 
   it('rend null pour une panne de connexion ou une erreur inconnue', () => {

@@ -9,6 +9,7 @@ import { z } from 'zod'
 import type { Priorite, StatutPoint } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
 import { COMMENTAIRE_TRAITE_MAX, COMMENTAIRE_TRAITE_MIN_MINISTERE } from '@/lib/metier/droitsPoint'
+import { longueurEnCaracteres } from '@/lib/metier/texte'
 import { supabase } from '@/lib/supabase'
 
 /** Longueurs fixées par la base (`private.creer_point`). */
@@ -36,8 +37,12 @@ export const MESSAGES_POINT = {
     statutTraite: 'Utilisez le bouton Marquer traité.',
     commentaireLong: 'Le commentaire dépasse 280 caractères.',
     commentaireCourt: 'Expliquez ce qui a été traité et comment (10 caractères au moins).',
+    /** Contrôle de l'interface seulement : la priorité vient d'une liste fermée. */
+    prioriteVide: 'Choisissez une priorité.',
     /** Refus de droit (42501) de `creer_point` : le compte n'est pas un compte de ministère. */
     creationReservee: 'Seul un compte de ministère peut créer un point.',
+    /** Tout autre refus de droit (42501) de `creer_point` (double authentification, compte inactif). */
+    creationAcces: "Vous n'avez pas accès à la création de points.",
     /** Refus de droit (42501) de `changer_statut_point` et `marquer_traite`, et tout autre 42501. */
     acces: "Ce point n'existe pas ou vous n'y avez pas accès.",
   },
@@ -48,19 +53,33 @@ export const MESSAGES_POINT = {
   },
 } as const
 
+/** Écriture qui a échoué : la création d'un point, ou une action sur un point existant. */
+export type ContexteRefusPoint = 'creation' | 'action'
+
 /**
- * Texte à montrer sous le bouton pour un refus de la base, ou null pour un problème de connexion
- * (l'écran garde les valeurs et dit « La connexion a échoué... »). Un refus de droit (42501) dit
- * seulement que le point n'est pas accessible, sans dire pourquoi (double authentification, compte
- * inactif, point hors de portée) ; seule la création réservée aux ministères garde son texte.
+ * Texte à montrer sous le bouton pour un refus, ou null pour un problème de connexion (l'écran
+ * garde les valeurs et dit « La connexion a échoué... »).
+ *
+ * - Valeur refusée avant l'appel (`ZodError`, levée par `creerPoint`, `changerStatutPoint` ou
+ *   `marquerTraite`) : le message de son premier problème. Les formulaires des lots P1 et P2
+ *   valident d'abord avec les schémas de ce fichier ; ce cas reste un filet.
+ * - Erreur de saisie de la base (`P0001`) : son message, tel quel.
+ * - Refus de droit (`42501`) : sans dire pourquoi (double authentification, compte inactif, point
+ *   hors de portée). La création réservée aux ministères garde son texte ; sinon `creationAcces`
+ *   pour la création, `acces` pour une action sur un point.
  */
-export function messageDeRefusPoint(erreur: unknown): string | null {
+export function messageDeRefusPoint(
+  erreur: unknown,
+  contexte: ContexteRefusPoint = 'action',
+): string | null {
+  if (erreur instanceof z.ZodError) return erreur.issues[0]?.message ?? null
   if (typeof erreur !== 'object' || erreur === null) return null
   const { code, message } = erreur as { code?: unknown; message?: unknown }
   if (code === '42501') {
-    return message === MESSAGES_POINT.refus.creationReservee
-      ? MESSAGES_POINT.refus.creationReservee
-      : MESSAGES_POINT.refus.acces
+    if (message === MESSAGES_POINT.refus.creationReservee) {
+      return MESSAGES_POINT.refus.creationReservee
+    }
+    return contexte === 'creation' ? MESSAGES_POINT.refus.creationAcces : MESSAGES_POINT.refus.acces
   }
   if (code !== 'P0001' || typeof message !== 'string') return null
   return message
@@ -78,14 +97,26 @@ export const STATUTS_CHOISIS = [
 export type StatutChoisi = (typeof STATUTS_CHOISIS)[number]
 
 /**
- * Texte facultatif tel que la base le lit : espaces de bord retirés (`btrim`), vide devenu null
- * (`nullif`), puis `max` caractères au plus. Rend null ou un texte de 1 à `max` caractères.
+ * Texte de `min` à `max` caractères, blancs de bord retirés avant l'envoi (la base applique
+ * ensuite `btrim`). Les caractères se comptent comme `char_length` de la base : un émoji vaut un.
+ */
+function texteBorne(min: number, max: number, messageCourt: string, messageLong: string) {
+  return z
+    .string({ error: messageCourt })
+    .trim()
+    .superRefine((texte, contexte) => {
+      const longueur = longueurEnCaracteres(texte)
+      if (longueur < min) contexte.addIssue({ code: 'custom', message: messageCourt })
+      else if (longueur > max) contexte.addIssue({ code: 'custom', message: messageLong })
+    })
+}
+
+/**
+ * Texte facultatif : blancs de bord retirés avant l'envoi (la base applique ensuite `btrim`), vide
+ * devenu null, `max` caractères au plus. Rend null ou un texte de 1 à `max` caractères.
  */
 function texteFacultatif(max: number, message: string) {
-  return z
-    .string()
-    .trim()
-    .max(max, message)
+  return texteBorne(0, max, message, message)
     .transform((texte) => (texte === '' ? null : texte))
     .nullable()
 }
@@ -97,16 +128,20 @@ const schemaMentions = z
 
 /** Ce que `creer_point` reçoit (la base contrôle le titre, l'échéance et les mentions). */
 export const schemaBaseNouveauPoint = z.object({
-  titre: z
-    .string()
-    .trim()
-    .min(1, MESSAGES_POINT.refus.titre)
-    .max(LONGUEUR_TITRE_POINT, MESSAGES_POINT.refus.titre),
+  titre: texteBorne(
+    1,
+    LONGUEUR_TITRE_POINT,
+    MESSAGES_POINT.refus.titre,
+    MESSAGES_POINT.refus.titre,
+  ),
   description: texteFacultatif(LONGUEUR_DESCRIPTION_POINT, MESSAGES_POINT.refus.description),
   attendu: texteFacultatif(LONGUEUR_ATTENDU_POINT, MESSAGES_POINT.refus.attendu),
-  priorite: z.enum(VALEURS_PRIORITE),
+  priorite: z.enum(VALEURS_PRIORITE, { error: MESSAGES_POINT.refus.prioriteVide }),
   /** Jour de Paris au format AAAA-MM-JJ, ou null : sans échéance. */
-  echeance: z.string().refine(estDateIso, MESSAGES_POINT.refus.echeanceFormat).nullable(),
+  echeance: z
+    .string({ error: MESSAGES_POINT.refus.echeanceFormat })
+    .refine(estDateIso, MESSAGES_POINT.refus.echeanceFormat)
+    .nullable(),
   mentions: schemaMentions,
 })
 
@@ -127,15 +162,18 @@ export const schemaBaseCommentaireTraite = texteFacultatif(
 
 /**
  * Commentaire d'un ministère lié au point (créateur ou mentionné), pour le formulaire du lot P1 :
- * 10 à 280 caractères une fois les espaces de bord retirés, comme la base le contrôle.
+ * 10 à 280 caractères (comptés comme `char_length`), blancs de bord retirés avant l'envoi (la base
+ * applique ensuite `btrim`).
  */
-export const schemaCommentaireTraiteMinistere = z
-  .string()
-  .trim()
-  .min(COMMENTAIRE_TRAITE_MIN_MINISTERE, MESSAGES_POINT.refus.commentaireCourt)
-  .max(COMMENTAIRE_TRAITE_MAX, MESSAGES_POINT.refus.commentaireLong)
+export const schemaCommentaireTraiteMinistere = texteBorne(
+  COMMENTAIRE_TRAITE_MIN_MINISTERE,
+  COMMENTAIRE_TRAITE_MAX,
+  MESSAGES_POINT.refus.commentaireCourt,
+  MESSAGES_POINT.refus.commentaireLong,
+)
 
-const schemaIdentifiant = z.uuid()
+/** Identifiant d'un point : un uuid, sinon le point n'est pas accessible. */
+const schemaIdentifiant = z.uuid({ error: MESSAGES_POINT.refus.acces })
 
 export type NouveauPoint = z.output<typeof schemaBaseNouveauPoint>
 
