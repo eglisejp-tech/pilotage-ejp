@@ -50,7 +50,7 @@ export function ApercuFiche() {
 
   const fiche = useMemo(() => {
     if (profil === null) return null
-    const exemple = lecturesExempleFiche(profil, ecran === 'fiche-vide')
+    const exemple = lecturesExempleFiche(ecran === 'fiche-vide')
     // Détail des sensibles en échec : la fiche se construit sans catégories, répartitions ni précisions.
     const lectures =
       ecran === 'fiche-erreur-details'

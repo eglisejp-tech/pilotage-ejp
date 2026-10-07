@@ -6,8 +6,8 @@ import { fichierSession, seConnecter, suivreRequetesDeDonnees } from '../comptes
 // de la CI, E2E_BASE=1), en lecture seulement. Jeux d'exemple : seed/40 (le sensible de Social à
 // 2 au dernier mois fini) et seed/44 (catégories, répartition du mois en cours 4, 3 et 0, et une
 // précision). Par profil : EJP Tech en lecture seule, l'administration refusée, Communication sur
-// sa fiche et sur celle d'un autre, le berger et le conseil sur la fiche de Social, et Social qui
-// lit ses valeurs exactes.
+// sa fiche et sur celle d'un autre, le berger et le conseil sur la fiche de Social, et Social ;
+// tous lisent les valeurs exactes du sensible (P52).
 
 const SOCIAL = '10000000-0000-4000-8000-000000000005'
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
@@ -89,18 +89,19 @@ for (const profil of ['berger', 'conseil'] as const) {
   test.describe(`${profil}, fiche de Social`, () => {
     test.use({ storageState: fichierSession(profil) })
 
-    test('le sensible à 2 s’affiche « moins de 3 » ; mois en cours, précision et répartition', async ({
+    test('le sensible à 2 s’affiche exact (P52) ; mois en cours, précision et répartition', async ({
       page,
     }) => {
       await page.goto(`/ministeres/${SOCIAL}`)
       await attendreLaFiche(page)
       const ligne = ligneSensible(page)
-      await expect(ligne.getByText('moins de 3', { exact: true }).first()).toBeVisible()
+      await expect(ligne.getByText('2', { exact: true })).toBeVisible()
+      await expect(page.getByText('moins de 3', { exact: true })).toHaveCount(0)
       await expect(ligne.getByText(/ en cours : 7$/)).toBeVisible()
       await expect(ligne.getByText(PRECISION)).toBeVisible()
       await ouvrirRepartition(page)
-      // Le dernier mois fini (2) n'a pas de répartition ; le mois en cours (7 : 4, 3, 0) n'a
-      // aucun petit nombre, tout s'affiche.
+      // Le dernier mois fini (2) n'a pas de répartition ; le mois en cours (7 : 4, 3, 0) se lit
+      // exact, comme pour Social.
       await expect(ligne.getByText(/^Pas de répartition pour /)).toBeVisible()
       await expect(ligne.getByRole('listitem').filter({ hasText: 'Malaise' })).toHaveText(
         'Malaise : 4',
