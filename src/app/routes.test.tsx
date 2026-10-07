@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -94,7 +94,11 @@ function afficher(adresse: string) {
   return routeur
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Démonter d'abord, puis annuler les requêtes encore en vol : sinon une réponse du test
+  // précédent (son compte, ses onglets) peut revenir dans le cache après le clear().
+  cleanup()
+  await clientRequetes.cancelQueries()
   clientRequetes.clear()
   effacerMotDePasseAChoisir()
   vi.clearAllMocks()
@@ -179,13 +183,17 @@ describe('routes', () => {
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
-      for (const nav of navigation()) {
-        expect(
-          within(nav)
-            .getAllByRole('link')
-            .map((lien) => lien.textContent),
-        ).toEqual(onglets)
-      }
+      // La session du test précédent peut rester affichée un instant sous charge (même titre
+      // « Cette semaine » pour le berger et le ministère) : on attend les onglets du profil.
+      await waitFor(() => {
+        for (const nav of navigation()) {
+          expect(
+            within(nav)
+              .getAllByRole('link')
+              .map((lien) => lien.textContent),
+          ).toEqual(onglets)
+        }
+      })
       expect(within(navigation()[0]!).getByRole('link', { name: titre })).toHaveAttribute(
         'aria-current',
         'page',
