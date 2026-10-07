@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 80 340 210" width="340" height="210" role="img" aria-labelledby="titre-logo">
+  <!-- Logo d'EJP Tech redessiné en vectoriel le 7 octobre 2026 d'après download.png (360 px).
+       Couleurs relevées sur l'original : bleu #123A8C, flamme #E58A2F à #D2732B, barre #5B607D.
+       Si le fichier vectoriel d'origine du graphiste existe, il prime sur ce redessin. -->
+  <title id="titre-logo">EJP Tech</title>
+  <defs>
+    <linearGradient id="flamme" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E58A2F"/>
+      <stop offset="1" stop-color="#D2732B"/>
+    </linearGradient>
+  </defs>
+  <g fill="#123A8C">
+    <!-- e -->
+    <path d="M35 229.5 C29 212 20 190 16.5 165 C14.5 150 15.5 137 19 128 Q24.2 114.6 33 114.6 L71 114.6 L51.6 178.4 L44.6 165 L55 128 L37 128 Q31 128.5 29.5 136 C27.5 146 28.4 158 30 166 C34 186 42 208 48.4 229.5 Z"/>
+    <!-- j -->
+    <path d="M80.6 127.6 L91.6 127.6 L91.6 200 C91.6 230 89 255 82 268 Q76.6 278 70 282.7 L61 282.7 L61 265 L69.4 265 Q74 258 76.5 245 C79.6 228 80.6 215 80.6 200 Z"/>
+    <!-- p -->
+    <path d="M105.6 142 L117.6 142 L117.6 230 L105.6 230 Z"/>
+    <path d="M106.4 115 L144 115 Q153.6 115 153.6 125 L153.6 158 C153.6 170 140 188 117.6 202 L117.6 185 C133 174 142 162 142 150 L142 130 Q142 128 140 128 L106.4 128 Z"/>
+  </g>
+  <!-- flamme du j -->
+  <path fill="url(#flamme)" d="M84.6 87.5 C87.6 90.6 89.4 94.4 89.7 99 C93.6 101.6 96.6 106.2 96.3 111.6 C96 116.8 92.6 121 87.6 124.2 L86.8 124.6 C83.2 123.6 79.8 121.2 78.4 117.4 C77.4 114.4 77.3 110.8 77.9 108 C79.2 108.4 80.2 109 81 109.6 C80.4 105.6 80.7 100.8 81.6 96.8 C82.3 93.4 83.3 90.2 84.6 87.5 Z"/>
+  <g fill="#F7D29A">
+    <path d="M80.8 109.3 C84.4 110.8 86.5 114.6 87 121.8 C85.9 117 84 113 80.8 109.3 Z"/>
+    <path d="M89.6 99.2 C91.9 103.6 91.5 109.6 88.6 113.6 C87.6 115.5 87.3 118.8 87.4 122 C86.6 118.6 86.9 114.8 88 112.2 C89.6 108.5 90.2 103.5 89.6 99.2 Z"/>
+  </g>
+  <!-- séparation -->
+  <rect x="170.2" y="84" width="1.6" height="199" fill="#5B607D"/>
+  <!-- TECH -->
+  <g fill="none" stroke="#123A8C" stroke-width="4.4">
+    <path d="M190 170.7 H217 M203.5 170.7 V205"/>
+    <path d="M253.8 170.7 H232.4 V202.8 H253.8 M232.4 186.75 H251.3"/>
+    <path d="M296.6 175.75 A17.1 17.1 0 1 0 296.6 197.75"/>
+    <path d="M315 168.5 V205 M337 168.5 V205 M315 186.75 H337"/>
+  </g>
+</svg>
