@@ -57,8 +57,9 @@ update public.ministere set desactive_le = now() - interval '30 days' where id =
 update public.compte set desactive_le = now() - interval '30 days' where user_id = (select n3 from ctx);
 
 -- Indicateur propre de Jeunesse (dimanche), saisi les deux derniers dimanches.
-insert into public.indicateur (libelle, nature, ministere_id, ordre)
-select 'Essai vues, propre à Jeunesse', 'dimanche', c.jeu_m, 90 from ctx c;
+insert into public.indicateur (libelle, definition, nature, ministere_id, ordre)
+select 'Essai vues, propre à Jeunesse', 'Chiffre d''essai des vues de lecture.', 'dimanche', c.jeu_m, 90
+from ctx c;
 update ctx set propre = (select i.id from public.indicateur i where i.libelle = 'Essai vues, propre à Jeunesse');
 insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur, saisi_par)
 select c.propre, c.jeu_m, c.dimanche - 7, 5, c.jeu from ctx c
@@ -151,8 +152,11 @@ select is(tests.compter((select jeu from ctx), 'aal2',
 select is(tests.compter((select admin from ctx), 'aal2',
     'select * from public.v_derniere_mesure where code is null'), 0,
   'v_derniere_mesure : l''administration ne lit aucun indicateur propre');
+-- Les indicateurs propres comptés ici sont celui de ce test et « Visuels livrés ce mois » : le
+-- jeu seed/40-indicateurs.sql (lot B4) en ajoute d'autres, avec leurs chiffres.
 select is(tests.compter((select berger from ctx), 'aal2',
-    'select * from public.v_derniere_mesure where code is null'), 2,
+    'select * from public.v_derniere_mesure where code is null and indicateur_id in ((select propre from ctx),
+       (select i.id from public.indicateur i where i.libelle = ''Visuels livrés ce mois''))'), 2,
   'v_derniere_mesure : le berger lit les indicateurs propres de Communication et de Jeunesse');
 select is(tests.lire((select ejptech from ctx), 'aal2', 'select * from public.v_derniere_mesure where code is null'),
   tests.lire((select berger from ctx), 'aal2', 'select * from public.v_derniere_mesure where code is null'),

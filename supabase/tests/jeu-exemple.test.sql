@@ -3,7 +3,7 @@
 -- Lecture par le berger en aal2, à travers les vues (RLS comprise).
 begin;
 
-select plan(26);
+select plan(27);
 
 select tests.se_connecter(tests.compte('Berger'), 'aal2');
 
@@ -13,7 +13,8 @@ select results_eq($$ select count(*)::int from public.ministere where desactive_
 select results_eq($$ select count(*)::int from public.compte where desactive_le is null $$, $$ values (13) $$,
   '13 comptes : un par ministère, le berger, deux membres du conseil, l''administration, EJP Tech');
 select results_eq($$ select count(*)::int from public.session $$, $$ values (8) $$, '8 sessions');
-select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (11) $$, '11 événements');
+select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (12) $$,
+  '12 événements (11 de seed.sql, la réunion des responsables de seed/42-evenements.sql)');
 select results_eq($$ select count(*)::int from public.reunion $$, $$ values (7) $$, '7 réunions');
 select results_eq($$ select count(*) filter (where statut <> 'traite')::int, count(*) filter (where statut = 'traite')::int
                       from public.v_point $$,
@@ -103,12 +104,20 @@ select results_eq($$
   select count(*)::int from public.journal j
    where j.action = 'mesure_saisie' and j.ministere_id = (select m.id from public.ministere m where m.nom = 'Communication')
 $$, $$ values (11) $$, 'Communication : 11 envois de chiffres (10 dimanches, puis actifs, FIJ et visuels)');
+select results_eq($$
+  select count(*)::int, count(*) filter (where l.ligne ? 'valeur')::int, bool_and(l.ligne ? 'corrige')
+    from public.journal j
+   cross join lateral jsonb_array_elements(j.detail -> 'lignes') as l(ligne)
+    join public.indicateur i on i.id = (l.ligne ->> 'indicateur_id')::uuid
+   where j.action = 'mesure_saisie' and j.ministere_id = (select m.id from public.ministere m where m.nom = 'Communication')
+     and i.libelle = 'Visuels livrés ce mois'
+$$, $$ values (3, 0, true) $$, 'Communication : les 3 envois des visuels citent l''indicateur propre sans sa valeur (lot B2)');
 select results_eq($$ select count(*)::int, max((detail ->> 'total')::int) from public.journal where action = 'fij_saisie' $$,
   $$ values (1, 29) $$, 'la carte des FIJ donne une ligne de journal, 29 au total');
 select results_eq($$
   select count(*) filter (where action = 'evenement_ajoute')::int, count(*) filter (where action = 'evenement_modifie')::int
     from public.journal
-$$, $$ values (11, 4) $$, '11 événements ajoutés, 4 mises à jour');
+$$, $$ values (12, 5) $$, '12 événements ajoutés, 5 mises à jour (dont le report de la réunion des responsables)');
 
 -- Modération : un point de Social masqué, un point de Coordination relu
 select results_eq($$

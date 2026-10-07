@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
-import { accueil } from '@/features/navigation/profils'
+import { accueil, ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -94,7 +94,11 @@ function afficher(adresse: string) {
   return routeur
 }
 
-afterEach(() => {
+afterEach(async () => {
+  // Démonter d'abord, puis annuler les requêtes encore en vol : sinon une réponse du test
+  // précédent (son compte, ses onglets) peut revenir dans le cache après le clear().
+  cleanup()
+  await clientRequetes.cancelQueries()
   clientRequetes.clear()
   effacerMotDePasseAChoisir()
   vi.clearAllMocks()
@@ -179,20 +183,25 @@ describe('routes', () => {
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
-      for (const nav of navigation()) {
-        expect(
-          within(nav)
-            .getAllByRole('link')
-            .map((lien) => lien.textContent),
-        ).toEqual(onglets)
-      }
+      // La session du test précédent peut rester affichée un instant sous charge (même titre
+      // « Cette semaine » pour le berger et le ministère) : on attend les onglets du profil.
+      await waitFor(() => {
+        for (const nav of navigation()) {
+          expect(
+            within(nav)
+              .getAllByRole('link')
+              .map((lien) => lien.textContent),
+          ).toEqual(onglets)
+        }
+      })
       expect(within(navigation()[0]!).getByRole('link', { name: titre })).toHaveAttribute(
         'aria-current',
         'page',
       )
       expect(document.body.textContent).toContain(LIBELLES[type])
       if (type === 'admin_plateforme') {
-        expect(screen.getByText(/Cet écran arrive à l'étape/)).toBeInTheDocument()
+        // Lot E8 : le bloc « Signalements » en tête, la relecture à l'étape 6.
+        expect(screen.getByText(/sera disponible prochainement/)).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
         expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
@@ -244,14 +253,24 @@ describe('routes', () => {
 
   // Garde des étapes 4 et 5 : ces écrans s'ouvrent à EJP Tech pour la lecture (LECTEURS), mais
   // leurs boutons d'action suivent estDecideur ou le lien du ministère au point, jamais ce droit.
+  // La fiche d'un ministère (`/ministeres/:id`) n'est pas ici : son identifiant doit être un uuid
+  // et elle lit une quinzaine de vues. Sa lecture seule pour EJP Tech est testée sur la vraie
+  // fiche dans `src/pages/fiche.test.tsx`.
   it.each([
     ['/ministeres', 'Ministères'],
-    ['/ministeres/m-communication', 'Fiche du ministère'],
     ['/points?vue=ouverts', "Points d'attention"],
   ])(
     'EJP Tech sur %s : écran de lecture du berger, sans « Marquer traité », « Changer le statut » ni saisie (T29)',
     async (adresse, titre) => {
-      connecte('admin_plateforme')
+      // Lot E2 : la liste lit le jour de Paris ; sans lui, elle afficherait « Réessayer ».
+      installer({
+        ...scenarioDe('admin_plateforme'),
+        lignes: {
+          v_semaine: [
+            { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
+          ],
+        },
+      })
       const routeur = afficher(adresse)
       expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
       expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
@@ -393,5 +412,195 @@ describe('routes', () => {
       "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi.",
     )
     expect(screen.queryByRole('heading', { name: 'À décider' })).not.toBeInTheDocument()
+  })
+})
+
+const TOUS_LES_PROFILS = Object.keys(LIBELLES) as TypeCompte[]
+
+/** Adresse réelle d'un motif (« /ministeres/:id » : l'identifiant d'un autre ministère). */
+const exempleDe = (motif: string) => motif.replace(':id', 'm-autre')
+
+/** Chaque adresse de l'application avec chaque profil qui n'y a pas droit. */
+const ADRESSES_REFUSEES = ADRESSES_APPLICATION.flatMap((adresse) =>
+  TOUS_LES_PROFILS.filter((profil) => !adresse.profils.includes(profil)).map(
+    (profil) => [adresse.chemin, profil] as const,
+  ),
+)
+
+// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cet écran arrive à l'étape 4. »).
+// Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie page.
+const ADRESSES_AMORCES = [
+  '/ma-fiche',
+  '/ministeres',
+  '/ministeres/:id',
+  '/saisir/dimanche',
+  '/saisir/mois',
+  '/saisir/session/:id',
+  '/saisir/fij',
+  '/saisir/fij-statistiques',
+  '/saisir/evenement',
+  '/saisir/evenement/:id',
+  '/saisir/reunion',
+  '/signaler',
+]
+// Adresses dont le lot a remplacé l'amorce : leurs vraies pages sont testées à part (lot E5 :
+// `src/pages/PageSaisieEvenement.test.tsx`). Elles restent dans la liste des douze déclarées.
+const ADRESSES_REMPLACEES = ['/saisir/evenement', '/saisir/evenement/:id', '/saisir/reunion']
+const AMORCES_PAR_PROFIL = ADRESSES_APPLICATION.filter(
+  (adresse) =>
+    ADRESSES_AMORCES.includes(adresse.chemin) && !ADRESSES_REMPLACEES.includes(adresse.chemin),
+).flatMap((adresse) => adresse.profils.map((profil) => [adresse.chemin, profil] as const))
+
+describe("adresses de l'étape 4", () => {
+  it('déclare les douze adresses de saisie et de fiche, chacune avec une page amorce', () => {
+    expect(ADRESSES_AMORCES).toHaveLength(12)
+    for (const motif of ADRESSES_AMORCES) {
+      expect(
+        ADRESSES_APPLICATION.some((adresse) => adresse.chemin === motif),
+        motif,
+      ).toBe(true)
+    }
+  })
+
+  it.each(ADRESSES_REFUSEES)(
+    '%s refusée au profil %s : page non disponible, aucune requête au-delà du compte',
+    async (motif, profil) => {
+      const faux = connecte(profil)
+      afficher(exempleDe(motif))
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: "Cette page n'est pas disponible avec votre compte.",
+        }),
+      ).toBeInTheDocument()
+      expect(screen.getByText('Elle est réservée à un autre profil.')).toBeInTheDocument()
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
+
+  // Pages que le lot E4 a remplacées : leurs vraies pages sont testées dans
+  // `src/pages/saisiesSessionFij.test.tsx`. Le filtre est ici, et non dans `AMORCES_PAR_PROFIL`,
+  // pour ne pas toucher les mêmes lignes que les autres lots (une page remplacée par lot).
+  const PAGES_REMPLACEES_PAR_E4 = ['/saisir/session/:id', '/saisir/fij', '/saisir/fij-statistiques']
+  // Pages que le lot E3 a remplacées : testées dans `src/pages/saisiesChiffres.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E3 = ['/saisir/dimanche', '/saisir/mois']
+  // Pages que le lot E2 a remplacées : testées dans `src/pages/fiche.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E2 = ['/ma-fiche', '/ministeres', '/ministeres/:id']
+  // Page que le lot E8 a remplacée (« Signaler une difficulté ») : testée plus bas et dans
+  // `src/pages/PageSignalement.test.tsx`.
+  const PAGES_REMPLACEES_PAR_E8 = ['/signaler']
+  it.each(
+    AMORCES_PAR_PROFIL.filter(([motif]) => !PAGES_REMPLACEES_PAR_E4.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E3.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E2.includes(motif))
+      .filter(([motif]) => !PAGES_REMPLACEES_PAR_E8.includes(motif)),
+  )(
+    '%s ouverte au profil %s : la page amorce, sans aucune requête de données',
+    async (motif, profil) => {
+      const faux = connecte(profil)
+      const routeur = afficher(exempleDe(motif))
+      expect(await screen.findByText("Cet écran arrive à l'étape 4.")).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
+      expect(routeur.state.location.pathname).toBe(exempleDe(motif))
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
+
+  it('EJP Tech sur une saisie : la page non disponible, jamais un bouton de saisie (T29)', async () => {
+    connecte('admin_plateforme')
+    afficher('/saisir/dimanche')
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: "Cette page n'est pas disponible avec votre compte.",
+      }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
+  })
+
+  it('le berger sur /signaler : la page non disponible (seuls le ministère et EJP Tech lisent un signalement)', async () => {
+    const faux = connecte('berger')
+    afficher('/signaler?ecran=saisie_evenement')
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: "Cette page n'est pas disponible avec votre compte.",
+      }),
+    ).toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte'])
+  })
+
+  it('/moderation : le titre de l’écran, puis le bloc « Signalements » lu dans v_signalement (lot E8)', async () => {
+    const faux = installer({
+      ...scenarioDe('admin_plateforme'),
+      lignes: {
+        v_signalement: [
+          {
+            id: '43000000-0000-4000-8000-000000000001',
+            ministere_id: 'm-communication',
+            ministere_nom: 'Communication',
+            ecran: 'saisie_evenement',
+            texte: 'Le formulaire refuse la date de notre soirée de louange.',
+            saisi_le: '2026-10-02T18:40:00+02:00',
+            suivi_id: null,
+            commentaire: null,
+            clos_le: null,
+            ouvert: true,
+            clos_recent: false,
+          },
+        ],
+      },
+    })
+    afficher('/moderation')
+    expect(await screen.findByText('Communication')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Modération')
+    expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toBeInTheDocument()
+    expect(screen.getByText('1 signalement ouvert')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
+    expect(
+      screen.getByText('La relecture des champs libres sera disponible prochainement.'),
+    ).toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte', 'v_signalement'])
+  })
+
+  it('un ministère sur /signaler : le formulaire, l’écran prérempli, ses seuls signalements lus', async () => {
+    const faux = connecte('ministere')
+    afficher('/signaler?ecran=saisie_reunion')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Signaler une difficulté' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Écran concerné : Prochaine réunion')).toBeInTheDocument()
+    expect(screen.getByText(/^EJP Tech lit votre signalement\./)).toBeInTheDocument()
+    await waitFor(() => expect(faux.tables).toEqual(['compte', 'v_signalement']))
+    expect(faux.eq).toHaveBeenCalledWith('ministere_id', 'm-communication')
+  })
+
+  it.each<TypeCompte>(['berger', 'conseil', 'admin_eglise'])(
+    '%s sur /moderation : page non disponible, aucune lecture de signalement',
+    async (profil) => {
+      const faux = connecte(profil)
+      afficher('/moderation')
+      expect(
+        await screen.findByRole('heading', {
+          level: 1,
+          name: "Cette page n'est pas disponible avec votre compte.",
+        }),
+      ).toBeInTheDocument()
+      expect(screen.queryByText('Signalements')).toBeNull()
+      expect(faux.tables).not.toContain('v_signalement')
+    },
+  )
+
+  it.each([
+    // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »).
+    ['/apercu/fiche', 4],
+    ['/apercu/saisies', 4],
+    ['/apercu/evenements', 3],
+  ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
+    const faux = installer({})
+    afficher(`${adresse}?profil=ministere`)
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(nombreDAides)
+    expect(faux.from).not.toHaveBeenCalled()
   })
 })

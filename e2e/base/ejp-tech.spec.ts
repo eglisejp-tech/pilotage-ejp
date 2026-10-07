@@ -52,7 +52,8 @@ async function verifierLectureSeule(page: Page) {
   await expect(aDecider.getByRole('button')).toHaveCount(0)
   await expect(page.getByRole('button', { name: /Marquer traité/ })).toHaveCount(0)
   const contenu = page.getByRole('main')
-  await expect(contenu.getByRole('button')).toHaveCount(0)
+  // Les boutons « ? » des aides (« Aide : Événements à confirmer ») informent, ils n'agissent pas.
+  await expect(contenu.getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(0)
   await expect(
     contenu.getByRole('link', { name: /Saisir|Enregistrer|Ajouter|Déclarer|Changer le statut/ }),
   ).toHaveCount(0)

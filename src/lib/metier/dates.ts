@@ -178,6 +178,13 @@ export function heureDeParis(instant: Instant): string {
   return `${deuxChiffres(heure)}:${deuxChiffres(minute)}`
 }
 
+/** Nom entier d'un mois, en minuscules (1 pour « janvier », 12 pour « décembre »). */
+export function nomDuMois(mois: number): string {
+  const nom = Number.isInteger(mois) ? MOIS_LONGS[mois - 1] : undefined
+  if (nom === undefined) throw new RangeError(`Mois invalide (1 à 12) : ${mois}`)
+  return nom
+}
+
 function moisCourt(mois: number): string {
   return MOIS_COURTS[mois - 1] ?? ''
 }

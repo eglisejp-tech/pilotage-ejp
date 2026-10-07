@@ -127,6 +127,25 @@
   --ring: var(--encre);
 }
 
+/*
+ * Aides contextuelles (T38, docs/conception/aides-contextuelles.md). Variables du composant, pas
+ * des tokens : src/styles/tokens.css reste la copie exacte de docs/reference/tokens.css.
+ * Le bouton d'aide est ROND (décidé le 6 octobre 2026) : c'est le seul élément rond de l'outil,
+ * la bulle garde ses angles droits. La forme tient dans cette seule classe.
+ */
+:root {
+  --aide-disque: 20px;
+  --aide-largeur: 280px;
+}
+
+@layer components {
+  .aide-forme {
+    width: var(--aide-disque);
+    height: var(--aide-disque);
+    border-radius: 50%;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

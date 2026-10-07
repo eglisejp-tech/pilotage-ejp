@@ -1,6 +1,11 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
+import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
+import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
+import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
+import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
 import { PageChoixMotDePasse } from '@/features/connexion/PageChoixMotDePasse'
 import { PageCompteDesactive } from '@/features/connexion/PageCompteDesactive'
@@ -11,6 +16,7 @@ import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { Garde } from '@/features/session/Garde'
+import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
 import { PageApplication } from '@/pages/PageApplication'
@@ -29,6 +35,16 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
         children: [
           { path: 'cette-semaine', element: <ApercuCetteSemaine /> },
           { path: 'navigation', element: <ApercuNavigation /> },
+          // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.
+          { path: 'fiche', element: <ApercuFiche /> },
+          { path: 'saisies', element: <ApercuSaisies /> },
+          // Lot E4 : session, « Choisir la session », carte des FIJ, chiffres par département.
+          { path: 'saisies-e4', element: <ApercuSaisiesE4 /> },
+          { path: 'evenements', element: <ApercuEvenements /> },
+          // Lot E8 : « Signaler une difficulté » (ministère) et bloc « Signalements » (EJP Tech).
+          { path: 'signalements', element: <ApercuSignalements /> },
+          // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
+          { path: 'calendrier', element: <ApercuCalendrier /> },
         ],
       },
     ]

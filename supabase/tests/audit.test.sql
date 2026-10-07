@@ -1,9 +1,11 @@
 -- Correctifs de l'audit RLS (migration correctifs_audit) : journal de l'administration de
 -- l'église, ajout d'événement par l'API seulement, statut « Traité » définitif, droits par
--- défaut des fonctions, index du journal.
+-- défaut des fonctions, index du journal. Depuis le lot B2 de l'étape 4
+-- (20261008101000_journal_mesures.sql), un envoi de chiffres ne porte plus la valeur d'un
+-- indicateur propre ni aucune ligne sensible : l'administration lit tous les envois.
 begin;
 
-select plan(19);
+select plan(21);
 
 create temp table ctx as
 select tests.compte('Administration de l''église') as admin,
@@ -28,19 +30,36 @@ select is(tests.compter((select admin from ctx), 'aal2', $$
    cross join lateral jsonb_array_elements(case when jsonb_typeof(j.detail -> 'lignes') = 'array'
                                                 then j.detail -> 'lignes' else '[]'::jsonb end) as l(ligne)
    join public.indicateur i on i.id = (l.ligne ->> 'indicateur_id')::uuid
-  where i.ministere_id is not null
-$$), 0, 'administration : aucune valeur d''indicateur propre dans le journal lu');
+  where (i.ministere_id is not null and l.ligne ? 'valeur') or i.sensible
+$$), 0, 'administration : aucune valeur d''indicateur propre ni ligne sensible dans le journal lu');
 select is(tests.compter((select admin from ctx), 'aal2', $$
   select * from public.v_journal where action = 'mesure_saisie' and ministere_id = (select com_m from ctx)
-$$), 8, 'administration : 8 envois de chiffres de Communication sur 11 (les 3 envois avec un indicateur propre sont cachés)');
+$$), 11, 'administration : les 11 envois de chiffres de Communication (lot B2 : un indicateur propre n''y porte plus sa valeur)');
 select is(tests.compter((select admin from ctx), 'aal2', $$
   select * from public.v_journal
    where action in ('fij_saisie', 'participation_saisie', 'session_declaree', 'ministere_cree', 'compte_cree',
                     'texte_relu', 'texte_masque')
 $$), (select count(*)::int from public.journal
        where action in ('fij_saisie', 'participation_saisie', 'session_declaree', 'ministere_cree', 'compte_cree',
-                        'texte_relu', 'texte_masque')),
+                        'texte_relu', 'texte_masque')
+         and not (action in ('texte_relu', 'texte_masque')
+                  and coalesce(cible, '') in ('point_attention', 'point_suivi', 'evenement', 'reunion',
+                                              'demande_indicateur', 'precision_sensible', 'signalement',
+                                              'signalement_suivi'))),
   'administration : lit les comptes, les ministères, les sessions, les présences, la carte des FIJ et les actions techniques');
+-- T47 (lot I) : la relecture et le masquage d'un point, d'un suivi, d'un événement ou d'une
+-- réunion ne se lisent plus par l'administration ; le jeu d'exemple en a deux (points de Social
+-- et de Coordination).
+select is((select count(*)::int from public.journal
+            where action in ('texte_relu', 'texte_masque') and cible = 'point_attention'), 2,
+  'le jeu d''exemple a deux lignes de modération de points au journal');
+select is(tests.compter((select admin from ctx), 'aal2', $$
+  select 1 from public.journal
+   where action in ('texte_relu', 'texte_masque') and cible in ('point_attention', 'point_suivi', 'evenement', 'reunion')
+  union all
+  select 1 from public.v_journal
+   where action in ('texte_relu', 'texte_masque') and cible in ('point_attention', 'point_suivi', 'evenement', 'reunion')
+$$), 0, 'T47 : l''administration ne lit aucune relecture ni aucun masquage d''un point, d''un événement ou d''une réunion');
 select is(tests.compter((select berger from ctx), 'aal2', 'select * from public.v_journal'),
   (select count(*)::int from public.journal), 'le berger lit toujours tout le journal');
 select ok((select p.qual from pg_policies p

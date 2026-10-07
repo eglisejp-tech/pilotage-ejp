@@ -2,6 +2,9 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { exempleAccueil } from '@/features/accueil-ministere/exempleAccueil'
+import { useAccueilMinistere } from '@/features/accueil-ministere/useAccueilMinistere'
+import type { ResultatAccueilMinistere } from '@/features/accueil-ministere/useAccueilMinistere'
 import { exempleCetteSemaine, exemplePremierDimanche } from '@/features/cette-semaine/exemple'
 import type { DonneesCetteSemaine, Lecteur, ProfilVue } from '@/features/cette-semaine/types'
 import type { ResultatCetteSemaine } from '@/features/cette-semaine/useCetteSemaine'
@@ -10,8 +13,17 @@ import { simulerLargeur } from '@/test/largeur'
 import { PageCetteSemaine } from './PageCetteSemaine'
 
 vi.mock('@/features/cette-semaine/useCetteSemaine', () => ({ useCetteSemaine: vi.fn() }))
+vi.mock('@/features/accueil-ministere/useAccueilMinistere', () => ({
+  useAccueilMinistere: vi.fn(),
+}))
 const hook = vi.mocked(useCetteSemaine)
+const hookAccueil = vi.mocked(useAccueilMinistere)
 const reessayer = vi.fn()
+const reessayerAccueil = vi.fn()
+
+/** Ce que l'accueil rend au ministère ; les autres profils n'ont rien (`sans_objet`). */
+let accueilDuMinistere: ResultatAccueilMinistere = { etat: 'chargement' }
+const PHRASE_ACCUEIL = 'Vos chiffres sont à jour. Il reste la date de la prochaine réunion.'
 
 const enChargement: ResultatCetteSemaine = {
   enChargement: true,
@@ -53,6 +65,10 @@ const titres = () =>
 
 beforeEach(() => {
   hook.mockReturnValue(enChargement)
+  accueilDuMinistere = { etat: 'pret', donnees: exempleAccueil() }
+  hookAccueil.mockImplementation((ministereId) =>
+    ministereId === null ? { etat: 'sans_objet' } : accueilDuMinistere,
+  )
 })
 
 afterEach(() => {
@@ -116,16 +132,62 @@ describe('PageCetteSemaine', () => {
       ])
     })
 
-    it('ministère : « L’église cette semaine », et sous 600 px ce seul bloc', () => {
+    it('ministère : « Vos saisies », « Vos points », puis les blocs de l’église', () => {
       afficher('ministere')
-      expect(titres()[0]).toBe("L'église cette semaine")
-      expect(titres()).not.toContain('À décider')
+      expect(titres()).toEqual([
+        'Vos saisies',
+        'Vos points',
+        "L'église cette semaine",
+        'Dernière session',
+        'FIJ en Île-de-France',
+        'Les ministères',
+      ])
     })
 
-    it('ministère sous 600 px : seul « L’église cette semaine », comme avant « Tout voir »', () => {
+    it('ministère sous 600 px : « Vos saisies », « Vos points », puis « L’église cette semaine »', () => {
       simulerLargeur(390)
       afficher('ministere')
-      expect(titres()).toEqual(["L'église cette semaine"])
+      expect(titres()).toEqual(['Vos saisies', 'Vos points', "L'église cette semaine"])
+    })
+
+    it('ministère : la vue prête attend encore l’accueil', () => {
+      hook.mockReturnValue(pret(exempleCetteSemaine('ministere')))
+      accueilDuMinistere = { etat: 'chargement' }
+      const { container } = afficher('ministere')
+      expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 1, name: 'Cette semaine' })).toHaveClass(
+        'sr-only',
+      )
+    })
+  })
+
+  describe('accueil du ministère', () => {
+    it('lu pour le seul ministère, avec son identifiant', () => {
+      afficher('ministere')
+      expect(hookAccueil).toHaveBeenCalledWith('com')
+      vi.clearAllMocks()
+      afficher('berger')
+      expect(hookAccueil).toHaveBeenCalledWith(null)
+      expect(hookAccueil).not.toHaveBeenCalledWith('com')
+    })
+
+    it('un échec de l’accueil donne l’erreur de page, et « Réessayer » relance l’accueil', async () => {
+      hook.mockReturnValue(pret(exempleCetteSemaine('ministere')))
+      accueilDuMinistere = { etat: 'erreur', reessayer: reessayerAccueil }
+      afficher('ministere')
+      expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+      await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+      expect(reessayerAccueil).toHaveBeenCalledTimes(1)
+      expect(reessayer).not.toHaveBeenCalled()
+    })
+
+    it('les deux en échec : « Réessayer » relance la vue et l’accueil', async () => {
+      hook.mockReturnValue(enErreur)
+      accueilDuMinistere = { etat: 'erreur', reessayer: reessayerAccueil }
+      afficher('ministere')
+      await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
+      expect(reessayer).toHaveBeenCalledTimes(1)
+      expect(reessayerAccueil).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -222,11 +284,19 @@ describe('PageCetteSemaine', () => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument()
     })
 
-    it('ministère : « L’église cette semaine », trois colonnes, seul son nom ouvre « Ma fiche »', () => {
+    it('ministère : l’ouverture de 07, puis « L’église cette semaine », trois colonnes, seul son nom ouvre « Ma fiche »', () => {
       hook.mockReturnValue(pret(exempleCetteSemaine('ministere')))
       const { container } = afficher('ministere')
-      expect(container.querySelector('mark')).toBeNull()
-      expect(titres()[0]).toBe("L'église cette semaine")
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(PHRASE_ACCUEIL)
+      expect(container.querySelector('h1 mark')).toHaveTextContent(
+        'Il reste la date de la prochaine réunion',
+      )
+      expect(screen.getByText('Semaine 39, du 21 au 27 sept.')).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: 'Renseigner la prochaine réunion' })).toHaveAttribute(
+        'href',
+        '/saisir/reunion',
+      )
+      expect(titres().slice(0, 3)).toEqual(['Vos saisies', 'Vos points', "L'église cette semaine"])
       expect(titres()).not.toContain('À décider')
       const ministeres = screen.getByRole('region', { name: 'Les ministères' })
       expect(within(ministeres).getAllByRole('columnheader')).toHaveLength(3)
@@ -254,8 +324,11 @@ describe('PageCetteSemaine', () => {
       (profil) => {
         hook.mockReturnValue(pret(exemplePremierDimanche(profil)))
         afficher(profil)
+        // Le ministère ouvre sur ce qu'il lui reste à faire (07), les autres sur l'église.
         expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-          "Aucun ministère n'a encore saisi les chiffres du dimanche 27 sept.",
+          profil === 'ministere'
+            ? PHRASE_ACCUEIL
+            : "Aucun ministère n'a encore saisi les chiffres du dimanche 27 sept.",
         )
         const chiffres = screen.getByRole('table', {
           name: profil === 'ministere' ? "L'église cette semaine" : "Les chiffres de l'église",
