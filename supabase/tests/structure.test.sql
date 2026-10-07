@@ -2,21 +2,29 @@
 -- GRANT, fonctions security definer seulement dans private, search_path vide, droits
 -- d'exécution, triggers d'intégrité, données de référence.
 --
--- Pendant l'étape 4 (docs/plan-etape-4.md, section 3, point 8), ce fichier passe des listes
--- exhaustives aux contrôles génériques : chaque lot ajoute des tables, des vues et des
--- fonctions, et une liste fermée casserait dès la deuxième vague. Les contrôles portent donc
--- sur toute table, toute vue et toute fonction, nouvelles comprises, dès leur lot ; les objets
--- des étapes 1 à 3 doivent toujours exister. Le lot I rétablit les listes exhaustives avec
--- tous les objets de l'étape.
--- Seules listes écrites en données : les tables qu'un ministère remplit par un ajout direct
--- (politique d'ajout et GRANT insert), les droits de service_role (Edge Functions) et les
--- fonctions serveur des comptes.
+-- Deux familles de contrôles (docs/plan-etape-4.md, section 3, point 8, et lot I) :
+--  1. des contrôles génériques, qui portent sur toute table, toute vue et toute fonction, y
+--     compris celles qu'une migration ajouterait un jour (RLS, politique aal2 de référence,
+--     aucun droit pour anon, search_path vide, exige_aal2, forcer_auteur, inaltérabilité...) ;
+--  2. des listes exhaustives, rétablies par le lot I avec tous les objets des migrations de
+--     l'étape 4 : les tables de public et de private, les vues, les politiques (table, nom,
+--     opération, nature), les droits d'authenticated sur chaque table, les fonctions de public
+--     et de private (nombre d'arguments, security definer, droit d'exécution d'authenticated et
+--     de service_role) et les triggers. Ces listes sont fermées : une migration qui ajoute,
+--     retire ou change un de ces objets met ce fichier à jour dans le même lot, sinon le job
+--     « base » échoue et nomme la ligne qui manque ou qui dépasse.
+-- Autres listes écrites en données : les tables qu'un ministère remplit par un ajout direct
+-- (GRANT insert), les droits de service_role sur les tables (Edge Functions) et les fonctions
+-- serveur des comptes.
 --
 -- Les droits se lisent par has_any_column_privilege (select, insert, update, references) : un
 -- GRANT sur une seule colonne compte comme un droit. has_table_privilege ne le verrait pas.
+--
+-- Les colonnes du catalogue (types name) sont comparées avec collate "default" (voir
+-- .claude/skills/nouvelle-table/SKILL.md, « Pièges connus des tests pgTAP »).
 begin;
 
-select plan(58);
+select plan(65);
 
 -- Politique restrictive de référence, écrite à l'identique de la migration (BRIEF, section 8),
 -- sur une table temporaire : chaque table de public doit avoir exactement la même. Un contrôle
@@ -26,24 +34,28 @@ alter table reference_aal2 enable row level security;
 create policy double_authentification on reference_aal2 as restrictive for all to authenticated
   using ((select auth.jwt() ->> 'aal') = 'aal2') with check ((select auth.jwt() ->> 'aal') = 'aal2');
 
--- Objets des étapes 1 à 3 : toujours présents (les lots en ajoutent d'autres).
-select is_empty($$
-  select t.nom from unnest(array[
-    'ministere', 'compte', 'indicateur', 'mesure', 'fij_departement', 'session', 'session_attendu',
-    'participation', 'evenement', 'evenement_etat', 'reunion', 'point_attention', 'point_mention',
-    'point_suivi', 'journal', 'moderation']) as t(nom)
-  except
-  select c.relname::text from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
-$$, 'les 16 tables des étapes 1 à 3 existent toujours');
-select is_empty($$
-  select v.nom from unnest(array[
-    'v_semaine', 'v_derniere_mesure', 'v_mesure_dimanche', 'v_total_dimanche', 'v_total_a_ce_jour',
-    'v_pourcentage_fij', 'v_carte_fij', 'v_participation_courante', 'v_session_completude',
-    'v_ecart_dimanche', 'v_ecart_session', 'v_evenement', 'v_prochaine_reunion', 'v_point', 'v_journal',
-    'v_tableau_ministeres', 'v_textes_a_relire', 'v_etat_comptes']) as v(nom)
-  except
-  select c.relname::text from pg_class c where c.relnamespace = 'public'::regnamespace and c.relkind = 'v'
-$$, 'les 18 vues des étapes 1 à 3 existent toujours');
+-- Objets attendus : les listes exhaustives des migrations des étapes 1 à 4.
+select tables_are('public', array[
+  'ministere', 'compte', 'indicateur', 'mesure', 'fij_departement', 'session', 'session_attendu',
+  'participation', 'evenement', 'evenement_etat', 'reunion', 'point_attention', 'point_mention',
+  'point_suivi', 'journal', 'moderation',
+  -- étape 4
+  'indicateur_terme', 'fij_statistique', 'evenement_mention', 'demande_indicateur', 'validation',
+  'categorie_sensible', 'ventilation_sensible', 'precision_sensible', 'signalement', 'signalement_suivi'
+]::name[], 'public contient les 26 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4), rien de plus');
+select tables_are('private', array[
+  'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun'
+]::name[], 'private contient les 5 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs), rien de plus');
+select views_are('public', array[
+  'v_semaine', 'v_derniere_mesure', 'v_mesure_dimanche', 'v_total_dimanche', 'v_total_a_ce_jour',
+  'v_pourcentage_fij', 'v_carte_fij', 'v_participation_courante', 'v_session_completude',
+  'v_ecart_dimanche', 'v_ecart_session', 'v_evenement', 'v_prochaine_reunion', 'v_point', 'v_journal',
+  'v_tableau_ministeres', 'v_textes_a_relire', 'v_etat_comptes',
+  -- étape 4
+  'v_fij_statistique', 'v_mesure_periode', 'v_indicateur_serie', 'v_indicateur_suivi', 'v_calcul',
+  'v_usage_indicateurs', 'v_catalogue', 'v_suggestions', 'v_a_valider', 'v_commun_fiche',
+  'v_ventilation_sensible', 'v_precision_sensible', 'v_signalement'
+]::name[], 'public contient les 31 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4), rien de plus');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind in ('m', 'p', 'f')
@@ -80,11 +92,74 @@ select is_empty($$
   select p.tablename, p.policyname from pg_policies p
    where p.schemaname = 'public' and p.roles <> array['authenticated']::name[]
 $$, 'toutes les politiques visent authenticated seulement (rien pour anon)');
-select is_empty($$
-  select p.tablename from pg_policies p
-   where p.schemaname = 'public' and p.cmd = 'INSERT'
-     and p.tablename not in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion')
-$$, 'politiques d''ajout : seulement sur les tables remplies directement par un ministère (les autres passent par l''API)');
+-- Liste exhaustive des politiques : par table, « lecture » (select), « double_authentification »
+-- (restrictive ; select seulement sur compte) et, sur les cinq tables remplies directement par
+-- un ministère, « ajout » (insert). Aucune politique update ni delete. Les autres tables
+-- s'écrivent par l'API.
+select bag_eq($$
+  select p.tablename::text collate "default", p.policyname::text collate "default",
+         p.cmd::text collate "default", p.permissive::text collate "default"
+    from pg_policies p
+   where p.schemaname = 'public'
+$$, $$ values
+  ('categorie_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('categorie_sensible', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('compte', 'double_authentification', 'SELECT', 'RESTRICTIVE'),
+  ('compte', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('demande_indicateur', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('demande_indicateur', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement_etat', 'ajout', 'INSERT', 'PERMISSIVE'),
+  ('evenement_etat', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement_etat', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement_mention', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement_mention', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('fij_departement', 'ajout', 'INSERT', 'PERMISSIVE'),
+  ('fij_departement', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('fij_departement', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('fij_statistique', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('fij_statistique', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('indicateur', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('indicateur', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('indicateur_terme', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('indicateur_terme', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('journal', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('journal', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('mesure', 'ajout', 'INSERT', 'PERMISSIVE'),
+  ('mesure', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('mesure', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('ministere', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('ministere', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('moderation', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('moderation', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('participation', 'ajout', 'INSERT', 'PERMISSIVE'),
+  ('participation', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('participation', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('point_attention', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('point_attention', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('point_mention', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('point_mention', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('point_suivi', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('point_suivi', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('precision_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('precision_sensible', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('reunion', 'ajout', 'INSERT', 'PERMISSIVE'),
+  ('reunion', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('reunion', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('session', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('session', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('session_attendu', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('session_attendu', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('signalement', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('signalement', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('signalement_suivi', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('signalement_suivi', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('validation', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('validation', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('ventilation_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('ventilation_sensible', 'lecture', 'SELECT', 'PERMISSIVE')
+$$, 'les 57 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère, rien d''autre');
 
 -- GRANT des tables
 select is_empty($$
@@ -93,18 +168,20 @@ select is_empty($$
      and has_any_column_privilege('authenticated', c.oid, 'INSERT')
      and c.relname not in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion')
 $$, 'authenticated : insert seulement sur les tables remplies directement par un ministère (colonnes comprises)');
-select is_empty($$
-  select t.nom from unnest(array['mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion']) as t(nom)
-   where not has_table_privilege('authenticated', ('public.' || t.nom)::regclass, 'INSERT')
-      or not has_table_privilege('authenticated', ('public.' || t.nom)::regclass, 'SELECT')
-$$, 'authenticated : lecture et ajout sur les cinq tables remplies directement par un ministère');
-select is_empty($$
-  select t.nom from unnest(array[
+-- Droits exacts d'authenticated sur chacune des 26 tables : lecture (sous la RLS) partout, ajout
+-- en plus sur les cinq tables remplies directement par un ministère.
+select table_privs_are('public', t.nom::name, 'authenticated',
+         case when t.nom in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion')
+              then array['INSERT', 'SELECT'] else array['SELECT'] end::name[],
+         'authenticated : droits exacts sur ' || t.nom)
+  from unnest(array[
     'ministere', 'compte', 'indicateur', 'mesure', 'fij_departement', 'session', 'session_attendu',
     'participation', 'evenement', 'evenement_etat', 'reunion', 'point_attention', 'point_mention',
-    'point_suivi', 'journal', 'moderation']) as t(nom)
-   where not has_table_privilege('authenticated', ('public.' || t.nom)::regclass, 'SELECT')
-$$, 'authenticated : lecture des 16 tables des étapes 1 à 3 (sous la RLS)');
+    'point_suivi', 'journal', 'moderation',
+    'indicateur_terme', 'fij_statistique', 'evenement_mention', 'demande_indicateur', 'validation',
+    'categorie_sensible', 'ventilation_sensible', 'precision_sensible', 'signalement',
+    'signalement_suivi']) as t(nom)
+ order by t.nom;
 select is_empty($$
   with droits as (
     select c.relname,
@@ -215,14 +292,177 @@ select is_empty($$
                                     'serveur_controler_reactivation', 'serveur_reactiver_compte',
                                     'serveur_revoquer_sessions')))
 $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
-select is_empty($$
-  select f.nom from unnest(array['ajouter_evenement', 'changer_statut_point', 'creer_point', 'declarer_session',
-                                 'marquer_relu', 'marquer_traite', 'masquer_texte', 'modifier_session',
-                                 'supprimer_session']) as f(nom)
-  except
-  select p.proname::text from pg_proc p
-   where p.pronamespace = 'public'::regnamespace and has_function_privilege('authenticated', p.oid, 'EXECUTE')
-$$, 'les 9 fonctions de l''API des étapes 1 à 3 restent exécutables par authenticated');
+-- Listes exhaustives des fonctions : (nom, nombre d'arguments, security definer, exécutable par
+-- authenticated, exécutable par service_role). Le nombre d'arguments distingue les surcharges
+-- (ajouter_evenement à 3 et à 4 arguments). L'API des ministères et du conseil est l'ensemble
+-- des fonctions de public exécutables par authenticated (security invoker) ; chacune a sa partie
+-- private security definer du même nom. Les fonctions serveur des comptes sont les seules à
+-- l'être par service_role.
+select bag_eq($$
+  select p.proname::text collate "default", p.pronargs::int, p.prosecdef,
+         has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+         has_function_privilege('service_role', p.oid, 'EXECUTE')
+    from pg_proc p
+   where p.pronamespace = 'public'::regnamespace
+$$, $$ values
+  ('ajouter_evenement', 3, false, true, false),
+  ('ajouter_evenement', 4, false, true, false),
+  ('ajouter_suggestion', 3, false, true, false),
+  ('changer_statut_point', 2, false, true, false),
+  ('clore_signalement', 2, false, true, false),
+  ('corriger_indicateur', 3, false, true, false),
+  ('creer_calcul', 7, false, true, false),
+  ('creer_indicateur', 9, false, true, false),
+  ('creer_indicateurs_prevus', 2, false, true, false),
+  ('creer_point', 6, false, true, false),
+  ('declarer_session', 4, false, true, false),
+  ('limites_indicateurs', 1, false, true, false),
+  ('marquer_relu', 2, false, true, false),
+  ('marquer_traite', 2, false, true, false),
+  ('masquer_texte', 4, false, true, false),
+  ('modifier_session', 2, false, true, false),
+  ('retirer_indicateur', 2, false, true, false),
+  ('saisir_chiffres_mois', 2, false, true, false),
+  ('saisir_fij_statistiques', 2, false, true, false),
+  ('serveur_controler_cible', 3, false, false, true),
+  ('serveur_controler_creation_compte', 6, false, false, true),
+  ('serveur_controler_reactivation', 3, false, false, true),
+  ('serveur_controler_relance', 3, false, false, true),
+  ('serveur_creer_compte', 7, false, false, true),
+  ('serveur_desactiver_compte', 3, false, false, true),
+  ('serveur_reactiver_compte', 3, false, false, true),
+  ('serveur_reinitialiser_2fa', 3, false, false, true),
+  ('serveur_relancer_invitation', 3, false, false, true),
+  ('serveur_revoquer_sessions', 3, false, false, true),
+  ('signaler_difficulte', 2, false, true, false),
+  ('supprimer_session', 1, false, true, false),
+  ('valider_indicateur', 3, false, true, false),
+  ('verifier_libelle', 3, false, true, false)
+$$, 'les 33 fonctions de public : 23 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
+select bag_eq($$
+  select p.proname::text collate "default", p.pronargs::int, p.prosecdef,
+         has_function_privilege('authenticated', p.oid, 'EXECUTE'),
+         has_function_privilege('service_role', p.oid, 'EXECUTE')
+    from pg_proc p
+   where p.pronamespace = 'private'::regnamespace
+$$, $$ values
+  ('actif_le', 3, false, true, false),
+  ('ajouter_evenement', 3, true, true, false),
+  ('ajouter_evenement', 4, true, true, false),
+  ('ajouter_suggestion', 3, true, true, false),
+  ('ajouts_fiche', 1, false, false, false),
+  ('aujourdhui', 0, false, true, false),
+  ('auteur_texte', 2, false, false, false),
+  ('catalogue', 0, true, true, false),
+  ('changer_statut_point', 2, true, true, false),
+  ('clore_signalement', 2, true, true, false),
+  ('communs_de_fiche', 0, true, true, false),
+  ('controler_appel', 2, false, false, false),
+  ('controler_appelant', 1, false, false, false),
+  ('controler_categorie_sensible', 0, true, false, false),
+  ('controler_cible', 2, false, false, false),
+  ('controler_cible_desactivee', 2, false, false, false),
+  ('controler_creation_compte', 3, false, false, false),
+  ('controler_evenement_etat', 0, true, false, false),
+  ('controler_indicateur', 0, true, false, false),
+  ('controler_invitation_en_attente', 1, false, false, false),
+  ('controler_mesure', 0, true, false, false),
+  ('controler_mesure_le', 4, false, false, false),
+  ('controler_precision', 0, true, false, false),
+  ('controler_prevu_terme', 0, false, false, false),
+  ('controler_session', 2, false, false, false),
+  ('controler_terme', 0, true, false, false),
+  ('corriger_indicateur', 3, true, true, false),
+  ('creer_calcul', 7, true, true, false),
+  ('creer_indicateur', 9, true, true, false),
+  ('creer_indicateurs_prevus', 2, true, true, false),
+  ('creer_point', 6, true, true, false),
+  ('date_en_lettres', 1, false, false, false),
+  ('declarer_session', 4, true, true, false),
+  ('derniere_periode_finie', 1, false, true, false),
+  ('dimanche_reference', 0, false, true, false),
+  ('dimanche_reference_de', 1, false, true, false),
+  ('ecrans_signalement', 0, false, false, false),
+  ('est_decideur', 0, true, true, false),
+  ('etat_comptes', 0, true, true, false),
+  ('evenements_mentionnant_mon_ministere', 0, true, true, false),
+  ('executer_controler_cible', 2, true, false, false),
+  ('executer_controler_creation_compte', 5, true, false, false),
+  ('executer_controler_reactivation', 2, true, false, false),
+  ('executer_controler_relance', 2, true, false, false),
+  ('executer_creer_compte', 6, true, false, false),
+  ('executer_desactiver_compte', 2, true, false, false),
+  ('executer_reactiver_compte', 2, true, false, false),
+  ('executer_reinitialiser_2fa', 2, true, false, false),
+  ('executer_relancer_invitation', 2, true, false, false),
+  ('executer_revoquer_sessions', 2, true, false, false),
+  ('exige_aal2', 0, true, true, false),
+  ('figer_part', 0, false, false, false),
+  ('fij_rubriques', 0, true, true, false),
+  ('fin_periode', 2, false, true, false),
+  ('forcer_auteur', 0, false, false, false),
+  ('journal_lisible_administration', 2, true, true, false),
+  ('journaliser_evenements', 0, true, false, false),
+  ('journaliser_fij', 0, true, false, false),
+  ('journaliser_mesures', 0, true, false, false),
+  ('journaliser_participations', 0, true, false, false),
+  ('journaliser_reunions', 0, true, false, false),
+  ('libelle_pris', 3, false, false, false),
+  ('libelle_session', 2, false, false, false),
+  ('lignes_fiche', 2, false, false, false),
+  ('limites_indicateurs', 1, true, true, false),
+  ('lit_tout', 0, true, true, false),
+  ('marquer_relu', 2, true, true, false),
+  ('marquer_traite', 2, true, true, false),
+  ('masquer_texte', 4, true, true, false),
+  ('mesures_periode', 0, true, true, false),
+  ('ministere_du_signalement', 2, false, false, false),
+  ('ministere_fij', 0, true, true, false),
+  ('ministeres_actifs', 1, false, false, false),
+  ('modifier_session', 2, true, true, false),
+  ('mois_courant', 0, false, true, false),
+  ('mon_ministere', 0, true, true, false),
+  ('mon_type', 0, true, true, false),
+  ('normaliser', 1, false, true, false),
+  ('periode_de', 2, false, true, false),
+  ('peut_configurer', 0, true, true, false),
+  ('points_mentionnant_mon_ministere', 0, true, true, false),
+  ('precisions_sensibles', 0, true, true, false),
+  ('refuser_modification', 0, false, false, false),
+  ('refuser_modification_sauf_masquage', 0, false, false, false),
+  ('retirer_calculs_de', 1, false, false, false),
+  ('retirer_indicateur', 2, true, true, false),
+  ('revoquer_sessions', 1, false, false, false),
+  ('saisir_chiffres_mois', 2, true, true, false),
+  ('saisir_fij_statistiques', 2, true, true, false),
+  ('serveur_controler_cible', 3, true, false, true),
+  ('serveur_controler_creation_compte', 6, true, false, true),
+  ('serveur_controler_reactivation', 3, true, false, true),
+  ('serveur_controler_relance', 3, true, false, true),
+  ('serveur_creer_compte', 7, true, false, true),
+  ('serveur_desactiver_compte', 3, true, false, true),
+  ('serveur_reactiver_compte', 3, true, false, true),
+  ('serveur_reinitialiser_2fa', 3, true, false, true),
+  ('serveur_relancer_invitation', 3, true, false, true),
+  ('serveur_revoquer_sessions', 3, true, false, true),
+  ('signaler_difficulte', 2, true, true, false),
+  ('suggestions', 0, true, true, false),
+  ('supprimer_session', 1, true, true, false),
+  ('tableau_ministeres', 0, true, true, false),
+  ('texte_libre_refuse', 1, false, false, false),
+  ('texte_refuse', 5, false, false, false),
+  ('textes_a_relire', 0, true, true, false),
+  ('usage_indicateurs', 0, true, true, false),
+  ('valider_indicateur', 3, true, true, false),
+  ('ventilations_sensibles', 0, true, true, false),
+  ('verifier_fij_actifs', 0, true, false, false),
+  ('verifier_libelle', 3, true, true, false),
+  ('verifier_remplacement', 0, true, false, false),
+  ('verifier_termes', 0, true, false, false),
+  ('verifier_texte', 2, false, false, false),
+  ('verifier_ventilations', 0, true, false, false),
+  ('verrouiller_ministere', 1, false, false, false)
+$$, 'les 116 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -314,19 +554,78 @@ select is_empty($$
                         and (t.tgtype & 1) = 1 and (t.tgtype & 2) = 2      -- par ligne, avant
                         and (t.tgtype & 8) = 8 and (t.tgtype & 16) = 16)   -- delete et update
 $$, 'toute table nouvelle de l''étape 4 a un trigger d''inaltérabilité (avant update et delete, par ligne)');
-select has_trigger('public', t.nom::name, 'forcer_auteur'::name, 'auteur et heure imposés sur ' || t.nom)
-  from unnest(array['mesure', 'fij_departement', 'session', 'participation', 'evenement', 'evenement_etat',
-                    'reunion', 'point_attention', 'point_suivi']) as t(nom)
- order by t.nom;
-select has_trigger('public', t.nom::name, ('journal_' || t.nom)::name, 'journal par envoi sur ' || t.nom)
-  from unnest(array['mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion']) as t(nom)
- order by t.nom;
-select has_trigger('public', 'mesure', 'controler_mesure', 'date d''une mesure contrôlée');
-select has_trigger('public', 'mesure', 'verifier_fij_actifs', '« dont en FIJ » comparé aux actifs');
-select has_trigger('public', t.nom::name, g.nom::name, g.nom || ' sur ' || t.nom)
-  from unnest(array['journal', 'moderation']) as t(nom)
- cross join unnest(array['ajout_seulement', 'ajout_seulement_vider']) as g(nom)
- order by t.nom, g.nom;
+-- Liste exhaustive des triggers (hors triggers internes des clés étrangères) sur les tables de
+-- public et de private : table, nom. Les contrôles précédents vérifient le fond (fonction,
+-- moment, ligne ou instruction) de forcer_auteur et de l'inaltérabilité ; cette liste fige
+-- l'ensemble : auteur imposé, journal par envoi, contrôles de date, d'indicateur, de précision
+-- et de ventilation, inaltérabilité (avant update et delete, avant truncate) et triggers
+-- différés qui exigent les termes d'un indicateur.
+select bag_eq($$
+  select (c.relnamespace::regnamespace::text || '.' || c.relname::text) collate "default",
+         t.tgname::text collate "default"
+    from pg_trigger t
+    join pg_class c on c.oid = t.tgrelid
+   where c.relnamespace in ('public'::regnamespace, 'private'::regnamespace) and not t.tgisinternal
+$$, $$ values
+  ('private.indicateur_prevu_terme', 'controler_prevu_terme'),
+  ('public.categorie_sensible', 'controler_categorie_sensible'),
+  ('public.categorie_sensible', 'controler_categorie_sensible_vider'),
+  ('public.demande_indicateur', 'ajout_seulement'),
+  ('public.demande_indicateur', 'ajout_seulement_vider'),
+  ('public.demande_indicateur', 'forcer_auteur'),
+  ('public.evenement', 'forcer_auteur'),
+  ('public.evenement_etat', 'controler_evenement_etat'),
+  ('public.evenement_etat', 'forcer_auteur'),
+  ('public.evenement_etat', 'journal_evenement_etat'),
+  ('public.evenement_mention', 'ajout_seulement'),
+  ('public.evenement_mention', 'ajout_seulement_vider'),
+  ('public.fij_departement', 'forcer_auteur'),
+  ('public.fij_departement', 'journal_fij_departement'),
+  ('public.fij_statistique', 'ajout_seulement'),
+  ('public.fij_statistique', 'ajout_seulement_vider'),
+  ('public.fij_statistique', 'forcer_auteur'),
+  ('public.indicateur', 'controler_indicateur'),
+  ('public.indicateur', 'controler_indicateur_vider'),
+  ('public.indicateur', 'figer_part'),
+  ('public.indicateur', 'remplacement_complet'),
+  ('public.indicateur', 'termes_complets'),
+  ('public.indicateur_terme', 'ajout_seulement'),
+  ('public.indicateur_terme', 'ajout_seulement_vider'),
+  ('public.indicateur_terme', 'controler_terme'),
+  ('public.indicateur_terme', 'termes_complets'),
+  ('public.journal', 'ajout_seulement'),
+  ('public.journal', 'ajout_seulement_vider'),
+  ('public.mesure', 'controler_mesure'),
+  ('public.mesure', 'forcer_auteur'),
+  ('public.mesure', 'journal_mesure'),
+  ('public.mesure', 'verifier_fij_actifs'),
+  ('public.moderation', 'ajout_seulement'),
+  ('public.moderation', 'ajout_seulement_vider'),
+  ('public.participation', 'forcer_auteur'),
+  ('public.participation', 'journal_participation'),
+  ('public.point_attention', 'forcer_auteur'),
+  ('public.point_suivi', 'forcer_auteur'),
+  ('public.precision_sensible', 'ajout_seulement'),
+  ('public.precision_sensible', 'ajout_seulement_vider'),
+  ('public.precision_sensible', 'controler_precision'),
+  ('public.precision_sensible', 'forcer_auteur'),
+  ('public.reunion', 'forcer_auteur'),
+  ('public.reunion', 'journal_reunion'),
+  ('public.session', 'forcer_auteur'),
+  ('public.signalement', 'ajout_seulement'),
+  ('public.signalement', 'ajout_seulement_vider'),
+  ('public.signalement', 'forcer_auteur'),
+  ('public.signalement_suivi', 'ajout_seulement'),
+  ('public.signalement_suivi', 'ajout_seulement_vider'),
+  ('public.signalement_suivi', 'forcer_auteur'),
+  ('public.validation', 'ajout_seulement'),
+  ('public.validation', 'ajout_seulement_vider'),
+  ('public.validation', 'forcer_auteur'),
+  ('public.ventilation_sensible', 'ajout_seulement'),
+  ('public.ventilation_sensible', 'ajout_seulement_vider'),
+  ('public.ventilation_sensible', 'forcer_auteur'),
+  ('public.ventilation_sensible', 'verifier_ventilations')
+$$, 'les 58 triggers de public et de private : auteur imposé, journal, contrôles, inaltérabilité, termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$
