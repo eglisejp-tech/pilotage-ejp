@@ -1,16 +1,15 @@
 import { BlocSignalements } from '@/features/signalement/BlocSignalements'
-import { PageAVenir } from '@/pages/PageAVenir'
+import { EcranModeration } from '@/features/signalement/EcranModeration'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
 /**
- * `/moderation`, l'accueil d'EJP Tech. L'écran de modération arrive à l'étape 6 : jusque-là, le
- * bloc « Signalements » (lot E8) se pose au-dessus du message « à venir ».
+ * `/moderation`, l'accueil d'EJP Tech. Le bloc « Signalements » (lot E8, T39) est en tête de
+ * l'écran ; la file de relecture des champs libres arrive à l'étape 6.
  */
 export function PageModeration({ titre }: ProprietesPage) {
   return (
-    <>
+    <EcranModeration titre={titre}>
       <BlocSignalements />
-      <PageAVenir titre={titre} etape={6} />
-    </>
+    </EcranModeration>
   )
 }
