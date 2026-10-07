@@ -4,8 +4,8 @@ import { COMPTES_PROFILS, fichierSession } from '../comptes.ts'
 
 // Saisies des chiffres du lot E3 avec la base locale (job « e2e » de la CI, E2E_BASE=1), en
 // lecture seulement : les profils sans saisie reçoivent la page non disponible, le ministère ouvre
-// ses deux formulaires, et le berger lit « moins de 3 » pour le sensible d'exemple à 2 (seed/40 :
-// « Bénéficiaires (passages) » de Social, le dernier mois fini). Les écritures sont dans
+// ses deux formulaires, et le berger lit la valeur exacte du sensible d'exemple à 2 (décision P52 ;
+// seed/40 : « Bénéficiaires (passages) » de Social, le dernier mois fini). Les écritures sont dans
 // saisies-chiffres.ecriture.spec.ts (projet « ecritures »).
 
 const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
@@ -83,10 +83,10 @@ test.describe('ministère Communication, en lecture', () => {
   })
 })
 
-test.describe('« moins de 3 » : le sensible d’exemple à 2', () => {
+test.describe('valeur exacte : le sensible d’exemple à 2 (P52)', () => {
   test.use({ storageState: fichierSession('berger') })
 
-  test('le berger lit « moins de 3 » (valeur masquée), jamais 2', async ({ page }) => {
+  test('le berger lit la valeur exacte 2, sans « moins de 3 »', async ({ page }) => {
     await page.goto('/')
     const [semaine] = await lire<{ aujourdhui: string }>(page, 'v_semaine?select=aujourdhui')
     expect(semaine).toBeTruthy()
@@ -101,8 +101,9 @@ test.describe('« moins de 3 » : le sensible d’exemple à 2', () => {
       page,
       `v_mesure_periode?select=valeur,moins_de_3&indicateur_id=eq.${indicateur?.id}&periode=eq.${precedent}`,
     )
-    expect(lignes).toEqual([{ valeur: null, moins_de_3: true }])
-    // Les lignes brutes ne se lisent pas : seul le ministère qui saisit les lit.
+    expect(lignes).toEqual([{ valeur: 2, moins_de_3: false }])
+    // Les lignes brutes ne se lisent pas : la vue donne la valeur du mois, seul le ministère qui
+    // saisit lit ses lignes une à une.
     expect(await lire(page, `mesure?select=valeur&indicateur_id=eq.${indicateur?.id}`)).toEqual([])
   })
 })
