@@ -24,7 +24,7 @@ const navigation = (page: Page) => page.getByRole('navigation', { name: 'Navigat
 
 /** Boutons et liens d'action qu'EJP Tech ne voit jamais (T29, lecture seule). */
 const ACTIONS =
-  /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Déclarer|Modifier|Mettre à jour/
+  /Marquer traité|Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Déclarer|Modifier|Mettre à jour/
 
 /** Depuis la modération, l'onglet « Cette semaine » (dans le menu sous 1024 px). */
 async function ouvrirCetteSemaine(page: Page) {
@@ -50,12 +50,17 @@ async function verifierLectureSeule(page: Page) {
   const aDecider = page.getByRole('region', { name: 'À décider' })
   await expect(aDecider.getByRole('heading', { level: 3 })).toHaveCount(3)
   await expect(aDecider.getByRole('button')).toHaveCount(0)
-  await expect(page.getByRole('button', { name: /Marquer traité/ })).toHaveCount(0)
+  // Étape 5 : les boutons des points (P1 et P4) ne se posent jamais pour EJP Tech.
+  await expect(page.getByRole('button', { name: /Marquer traité|Changer le statut/ })).toHaveCount(
+    0,
+  )
   const contenu = page.getByRole('main')
   // Les boutons « ? » des aides (« Aide : Événements à confirmer ») informent, ils n'agissent pas.
   await expect(contenu.getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(0)
   await expect(
-    contenu.getByRole('link', { name: /Saisir|Enregistrer|Ajouter|Déclarer|Changer le statut/ }),
+    contenu.getByRole('link', {
+      name: /Saisir|Enregistrer|Ajouter|Déclarer|Changer le statut|Nouveau point/,
+    }),
   ).toHaveCount(0)
 }
 
@@ -119,6 +124,8 @@ test.describe('EJP Tech : « Cette semaine » à chaque format', () => {
     await page.getByRole('region', { name: 'Les ministères' }).getByRole('link').first().click()
     await expect(page).toHaveURL((url) => url.pathname.startsWith('/ministeres/'))
     await verifierSansAction(page, 'Fiche du ministère, Pilotage EJP')
+    // Les points de la fiche se lisent, sans « Marquer traité » ni « Changer le statut » (étape 5).
+    await expect(page.getByRole('region', { name: "Points d'attention" })).toBeVisible()
 
     await page.goto('/ministeres')
     await verifierSansAction(page, 'Ministères, Pilotage EJP')

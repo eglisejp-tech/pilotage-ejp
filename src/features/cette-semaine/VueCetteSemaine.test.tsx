@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { simulerLargeur } from '@/test/largeur'
 import { exempleCetteSemaine, exemplePremierDimanche } from './exemple'
 import type { DonneesCetteSemaine, ProfilVue } from './types'
@@ -9,9 +10,11 @@ import { VueCetteSemaine } from './VueCetteSemaine'
 
 function afficher(profil: ProfilVue, donnees: DonneesCetteSemaine = exempleCetteSemaine(profil)) {
   const rendu = render(
-    <MemoryRouter>
-      <VueCetteSemaine donnees={donnees} />
-    </MemoryRouter>,
+    <AvecRequetes>
+      <MemoryRouter>
+        <VueCetteSemaine donnees={donnees} />
+      </MemoryRouter>
+    </AvecRequetes>,
   )
   const titres = screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent)
   return { ...rendu, titres }
@@ -23,7 +26,7 @@ afterEach(() => {
 
 describe('VueCetteSemaine', () => {
   it.each<ProfilVue>(['berger', 'conseil', 'admin_plateforme'])(
-    '%s : phrase surlignée, « À décider » sans « Marquer traité » (T19), colonnes du conseil',
+    '%s : phrase surlignée, « À décider » (« Marquer traité » pour le berger et le conseil seulement), colonnes du conseil',
     (profil) => {
       const { container, titres } = afficher(profil)
       expect(container.querySelector('h1 mark')).toHaveTextContent('un point attend votre décision')
@@ -35,7 +38,11 @@ describe('VueCetteSemaine', () => {
         'Les ministères',
       ])
       expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3)
-      expect(screen.queryByRole('button')).not.toBeInTheDocument()
+      // Étape 5 : « Marquer traité » est le seul bouton du berger et du conseil ; EJP Tech n'en a
+      // aucun (T29).
+      const boutons = screen.queryAllByRole('button')
+      for (const bouton of boutons) expect(bouton).toHaveAccessibleName('Marquer traité')
+      if (profil === 'admin_plateforme') expect(boutons).toHaveLength(0)
       expect(screen.getByRole('columnheader', { name: 'Point ouvert' })).toBeInTheDocument()
       const liens = within(screen.getByRole('region', { name: 'Les ministères' })).getAllByRole(
         'link',

@@ -65,7 +65,11 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
         'Planning du trimestre à valider',
         'Salle pour la soirée de louange',
       ])
-      await expect(aDecider.getByRole('button')).toHaveCount(0)
+      // EJP Tech lit sans aucun bouton (T29). Le berger et le conseil n'ont que « Marquer traité »
+      // sous un point (étape 5) : jamais « Changer le statut », qui revient aux ministères.
+      const boutons = aDecider.getByRole('button')
+      if (profil === 'admin_plateforme') await expect(boutons).toHaveCount(0)
+      else await expect(boutons.filter({ hasNotText: 'Marquer traité' })).toHaveCount(0)
       await expect(aDecider.getByRole('link', { name: 'Tous les points' })).toBeVisible()
 
       const batir = page.getByRole('region', { name: /^Bâtir l'Église, / })

@@ -9,6 +9,7 @@ import { exempleCetteSemaine, exemplePremierDimanche } from '@/features/cette-se
 import type { DonneesCetteSemaine, Lecteur, ProfilVue } from '@/features/cette-semaine/types'
 import type { ResultatCetteSemaine } from '@/features/cette-semaine/useCetteSemaine'
 import { useCetteSemaine } from '@/features/cette-semaine/useCetteSemaine'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { simulerLargeur } from '@/test/largeur'
 import { PageCetteSemaine } from './PageCetteSemaine'
 
@@ -57,6 +58,8 @@ function afficher(profil: ProfilVue, adresse = '/') {
     <MemoryRouter initialEntries={[adresse]}>
       <PageCetteSemaine lecteur={LECTEURS[profil]} />
     </MemoryRouter>,
+    // Le cache de requêtes entoure aussi les `rerender` : les boutons des points en ont besoin.
+    { wrapper: AvecRequetes },
   )
 }
 
@@ -264,7 +267,10 @@ describe('PageCetteSemaine', () => {
         const liens = within(ministeres).getAllByRole('link')
         expect(liens).toHaveLength(8)
         for (const lien of liens) expect(lien.getAttribute('href')).toMatch(/^\/ministeres\//)
-        expect(screen.queryByRole('button', { name: 'Marquer traité' })).not.toBeInTheDocument()
+        // Étape 5 : « Marquer traité » est le seul bouton du berger et du conseil, aucun pour EJP Tech.
+        const boutons = screen.queryAllByRole('button')
+        for (const bouton of boutons) expect(bouton).toHaveAccessibleName('Marquer traité')
+        if (profil === 'admin_plateforme') expect(boutons).toHaveLength(0)
       },
     )
 

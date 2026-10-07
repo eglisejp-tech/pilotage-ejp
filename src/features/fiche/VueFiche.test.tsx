@@ -16,6 +16,7 @@ import type {
   ProfilFiche,
 } from '@/features/fiche/modeleFiche'
 import { VueFiche } from '@/features/fiche/VueFiche'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { simulerLargeur } from '@/test/largeur'
 
 beforeEach(() => {
@@ -40,25 +41,27 @@ function afficher(
 ) {
   const lectures = lecturesExempleFiche(options.vide ?? false)
   return render(
-    <MemoryRouter>
-      <VueFiche
-        donnees={construireFiche(lectures, { profil })}
-        points={
-          options.points ?? {
-            etat: 'donnees',
-            donnees: construirePointsFiche(lectures, { profil }),
+    <AvecRequetes>
+      <MemoryRouter>
+        <VueFiche
+          donnees={construireFiche(lectures, { profil })}
+          points={
+            options.points ?? {
+              etat: 'donnees',
+              donnees: construirePointsFiche(lectures, { profil }),
+            }
           }
-        }
-        dernieresSaisies={
-          options.dernieres ?? {
-            etat: 'donnees',
-            donnees: construireDernieresSaisies(DERNIERES_SAISIES_EXEMPLE, COMMUNS_EXEMPLE),
+          dernieresSaisies={
+            options.dernieres ?? {
+              etat: 'donnees',
+              donnees: construireDernieresSaisies(DERNIERES_SAISIES_EXEMPLE, COMMUNS_EXEMPLE),
+            }
           }
-        }
-        reessayerDetailsSensibles={options.reessayerDetails ?? null}
-        rendreEmplacement={null}
-      />
-    </MemoryRouter>,
+          reessayerDetailsSensibles={options.reessayerDetails ?? null}
+          rendreEmplacement={null}
+        />
+      </MemoryRouter>
+    </AvecRequetes>,
   )
 }
 
@@ -117,7 +120,10 @@ describe('VueFiche, berger (04)', () => {
     afficher('berger')
     const points = screen.getByRole('region', { name: "Points d'attention" })
     expect(within(points).getAllByRole('article')).toHaveLength(3)
-    expect(within(points).queryByRole('button')).toBeNull()
+    // Le berger marque un point traité (étape 5, `ActionsPoint`) : c'est son seul bouton ici.
+    for (const bouton of within(points).queryAllByRole('button')) {
+      expect(bouton).toHaveAccessibleName('Marquer traité')
+    }
     expect(within(points).getByText(/dépassée/)).toHaveClass('text-alerte')
     expect(screen.getByRole('link', { name: 'Tout le journal' })).toHaveAttribute(
       'href',
@@ -200,17 +206,19 @@ describe('VueFiche, états vides (T36)', () => {
   it('« Retirés » : aucun résultat', async () => {
     const lectures = lecturesExempleFiche(false)
     render(
-      <MemoryRouter>
-        <VueFiche
-          donnees={construireFiche(
-            { ...lectures, suivi: lectures.suivi.filter((l) => l.etat !== 'retire') },
-            { profil: 'berger' },
-          )}
-          points={{ etat: 'donnees', donnees: [] }}
-          dernieresSaisies={{ etat: 'chargement' }}
-          rendreEmplacement={null}
-        />
-      </MemoryRouter>,
+      <AvecRequetes>
+        <MemoryRouter>
+          <VueFiche
+            donnees={construireFiche(
+              { ...lectures, suivi: lectures.suivi.filter((l) => l.etat !== 'retire') },
+              { profil: 'berger' },
+            )}
+            points={{ etat: 'donnees', donnees: [] }}
+            dernieresSaisies={{ etat: 'chargement' }}
+            rendreEmplacement={null}
+          />
+        </MemoryRouter>
+      </AvecRequetes>,
     )
     await userEvent.click(screen.getByText('Retirés (0)'))
     expect(screen.getByText('Aucun indicateur retiré.')).toBeVisible()

@@ -398,6 +398,51 @@ describe('construirePointsFiche', () => {
     expect(points[2]?.traite?.texte).toBe('Traité le 3 oct.')
   })
 
+  it('les identifiants des boutons viennent de v_point et de point_mention, point par point', () => {
+    const lectures = lecturesExempleFiche(false)
+    const coordination = '10000000-0000-4000-8000-000000000003'
+    const communication = '10000000-0000-4000-8000-000000000001'
+    const points = construirePointsFiche(
+      {
+        ...lectures,
+        points: {
+          ...lectures.points,
+          mentions: [
+            ...lectures.points.mentions,
+            { point_id: 'b0000000-0000-4000-8000-000000000001', ministere_id: communication },
+          ],
+        },
+      },
+      { profil: 'ministere' },
+    )
+    const identifiants = points.map((point) => ({
+      id: point.id,
+      statut: point.statut,
+      ministereId: point.ministereId,
+      mentionIds: [...point.mentionIds].sort(),
+    }))
+    expect(identifiants).toEqual([
+      {
+        id: 'b0000000-0000-4000-8000-000000000001',
+        statut: 'attente_decision',
+        ministereId: SOCIAL,
+        mentionIds: [communication, coordination],
+      },
+      {
+        id: 'b0000000-0000-4000-8000-000000000002',
+        statut: 'en_cours',
+        ministereId: '10000000-0000-4000-8000-000000000002',
+        mentionIds: [SOCIAL],
+      },
+      {
+        id: 'b0000000-0000-4000-8000-000000000003',
+        statut: 'traite',
+        ministereId: SOCIAL,
+        mentionIds: [],
+      },
+    ])
+  })
+
   it('le ministère mentionné lit « Mentionné par Intégration. » ; un traité de plus de 7 jours disparaît', () => {
     const lectures = lecturesExempleFiche(false)
     const points = construirePointsFiche(
