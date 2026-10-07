@@ -58,12 +58,13 @@ export function PageConfidentialite() {
             </li>
             <li>Les adresses IP, dans les journaux techniques de Supabase et de Netlify.</li>
             <li>
-              Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une
-              personne : ce qui y est écrit par erreur est masqué.
+              Les signalements (« Signaler une difficulté ») : un court message qu'un ministère
+              adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech
+              les lisent.
             </li>
             <li>
-              Les signalements (« Signaler une difficulté ») qu'un ministère adresse à EJP Tech.
-              Seuls ce ministère et EJP Tech les lisent.
+              Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une
+              personne : ce qui y est écrit par erreur est masqué.
             </li>
           </ul>
         </PartieTexte>
@@ -77,9 +78,10 @@ export function PageConfidentialite() {
         </PartieTexte>
         <PartieTexte titre="Chiffres sensibles">
           <p>
-            Certains indicateurs de la santé, de l'accompagnement, de l'écoute et de l'accueil des
-            enfants sont sensibles (onze en tout). Pour chacun, le ministère concerné saisit un
-            total par mois, le mois en cours compris : un nombre, jamais un nom.
+            Onze indicateurs sont sensibles : ceux de la santé, de l'accompagnement et de l'écoute,
+            et, pour Prodiges Junior, les nouveaux enfants et les enfants déjà venus. Pour chacun,
+            le ministère concerné saisit un total par mois, le mois en cours compris : un nombre,
+            jamais un nom.
           </p>
           <p>
             Le ministère peut répartir ce total entre quelques catégories larges, quand la
@@ -98,20 +100,26 @@ export function PageConfidentialite() {
             voient pas ces valeurs, et la vue de l'église ne les affiche jamais. Le journal de
             l'outil ne garde jamais ces valeurs.
           </p>
+          <p>
+            Les autres chiffres ne sont pas sensibles. Ils se saisissent chaque dimanche, chaque
+            mois ou à ce jour, selon l'indicateur, et ne contiennent jamais de nom. Par exemple,
+            Prodiges Junior saisit chaque dimanche le nombre d'enfants présents, en un seul total,
+            sans âge ni nom.
+          </p>
         </PartieTexte>
         <PartieTexte titre="Sous-traitants">
           <ul role="list" className={liste}>
             <li>Supabase : base de données et connexion, en région Paris (Union européenne).</li>
             <li>Netlify : hébergement du site.</li>
             <li>
-              Google : connexion avec Google, et envoi des emails de l'outil depuis l'adresse Gmail
+              Google : connexion avec Google, et envoi des emails de l'outil depuis la boîte Gmail
               gratuite d'EJP Tech.
             </li>
           </ul>
           <p>
             Supabase et Netlify agissent sous contrat. Pour Google, il n'y a pas de contrat de
-            sous-traitance : le Gmail gratuit d'EJP Tech relève des conditions grand public de
-            Google. Google et Netlify sont établis aux États-Unis. Les transferts vers Google
+            sous-traitance : la boîte Gmail gratuite d'EJP Tech relève des conditions grand public
+            de Google. Google et Netlify sont établis aux États-Unis. Les transferts vers Google
             s'appuient sur le cadre de protection des données entre l'Union européenne et les
             États-Unis ; ceux vers Netlify, sur les clauses contractuelles types de la Commission
             européenne.
@@ -143,7 +151,8 @@ export function PageConfidentialite() {
             </li>
             <li>
               <strong className="text-encre">Copies des emails envoyés</strong> : dans la boîte
-              d'envoi Gmail d'EJP Tech, supprimées au plus tard à l'arrêt de l'outil.
+              Gmail gratuite d'EJP Tech qui les envoie, supprimées au plus tard à l'arrêt de
+              l'outil.
             </li>
           </ul>
         </PartieTexte>
