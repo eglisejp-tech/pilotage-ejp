@@ -61,21 +61,29 @@ async function enregistrerSession(page: Page) {
   ] as const)
 }
 
+// Le serveur factice est une autre origine que la page : sans ces en-têtes (et sans réponse à la
+// requête de vérification OPTIONS), le navigateur refuse la réponse simulée.
+const ENTETES_CORS = {
+  'access-control-allow-origin': '*',
+  'access-control-allow-headers': '*',
+  'access-control-allow-methods': 'GET, POST, OPTIONS',
+}
+
 const repondreCompte = (route: Route) =>
-  route.fulfill({
-    status: 200,
-    contentType: 'application/json',
-    // Le serveur factice est une autre origine que la page : sans cet en-tête, le navigateur
-    // refuse la réponse simulée.
-    headers: { 'access-control-allow-origin': '*' },
-    json: {
-      user_id: UTILISATEUR,
-      type: 'berger',
-      ministere_id: null,
-      libelle: 'Berger',
-      desactive_le: null,
-    },
-  })
+  route.request().method() === 'OPTIONS'
+    ? route.fulfill({ status: 204, headers: ENTETES_CORS })
+    : route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: ENTETES_CORS,
+        json: {
+          user_id: UTILISATEUR,
+          type: 'berger',
+          ministere_id: null,
+          libelle: 'Berger',
+          desactive_le: null,
+        },
+      })
 
 /** Les lectures de la base : le compte répond, tout le reste échoue ou reste sans réponse. */
 async function simulerBase(page: Page, autres: 'echec' | 'silence') {
