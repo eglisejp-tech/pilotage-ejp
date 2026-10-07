@@ -94,6 +94,57 @@ export const TEXTES_AIDE = {
     "Seuls le jour et le nom s'enregistrent : l'outil ne garde ni l'heure ni le lieu.",
   'evenement.report':
     "L'ancienne date reste dans l'historique : le berger et le conseil voient que l'événement a été reporté.",
+
+  // ÉTAPES 5 ET 6 (lot C0, plan des étapes 5 à 8, section 3.0). Ajoutées à la fin du catalogue
+  // seulement ; statut « Proposé, écrit le 7 octobre 2026 », à valider par la personne
+  // responsable (question Q7 du plan), avec les règles de aides-contextuelles.md, section 2.
+  // Le catalogue de ce document les reprend au lot d'intégration.
+
+  // Ministères et comptes (écran 13, lot L1, BRIEF section 9). Panneaux : `comptes.emailMinistere`
+  // sur « Email partagé du ministère » (remplace le texte du BRIEF, écrit en négatif, règle 3) et
+  // `comptes.emailPersonnel` sur « Email personnel » (berger, conseil, EJP Tech). Tableau : en-tête
+  // « Double authentification » (`comptes.etat`, états de `v_etat_comptes`) et colonne des
+  // indicateurs (`comptes.indicateurs`, un nombre et un lien vers /indicateurs, 7.1).
+  'comptes.emailMinistere':
+    "La boîte mail que partage l'équipe du ministère. Toutes les personnes du ministère se connectent avec elle.",
+  'comptes.emailPersonnel':
+    "L'adresse de la personne qui utilisera ce compte. L'invitation à se connecter part à cette adresse.",
+  'comptes.etat':
+    '« Invitation envoyée » : la personne doit encore ouvrir le lien reçu. « À activer » : elle doit encore activer son code.',
+  'comptes.indicateurs':
+    'Indicateurs que le ministère suit en plus des chiffres communs, calculs compris.',
+
+  // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
+  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 12 »).
+  // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Prévus par la
+  // coordination » de /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la
+  // coordination », quand le nom du ministère n'est pas reconnu. `indicateurs.usage` : première
+  // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
+  'indicateurs.nombre':
+    'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 12 » : 8 suivis, 12 au plus par fiche.',
+  'indicateurs.prevus':
+    'Indicateurs que la coordination a choisis pour ce ministère. Une fois créés, ils entrent dans ses saisies et sa fiche.',
+  'indicateurs.modele':
+    'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
+  'indicateurs.usage':
+    "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
+
+  // Points d'attention (étape 5, plan 3.1, BRIEF sections 3 règle 7 et 9). Nouveau point
+  // (maquette 10, lot P2) : `point.priorite` sur la légende « Priorité », `point.attendu` sur
+  // « Ce qui est attendu », `point.echeance` sur « Échéance » ; les mentions ont déjà leur note
+  // visible, le titre et « Ce qui se passe » se comprennent seuls (3 aides sur 4 au plus).
+  // « Changer le statut » (lot P1) : `point.statut` sur la légende des trois statuts ; il définit
+  // le statut, et son effet (le point passe avant les autres dans « À décider ») reste un texte
+  // visible sous les statuts (règle 6). « Marquer traité » n'a pas d'aide : qui lit le commentaire
+  // est un texte visible (section 8, comme la « Précision »). Écran 05 (lot P3) : `points.filtre`
+  // sur le filtre « Tous les ministères ».
+  'point.priorite':
+    'Les points ouverts se lisent par priorité : Urgente en premier, puis Haute, puis Normale.',
+  'point.attendu':
+    "La décision ou l'aide que vous attendez. Exemple : confirmer la salle avant samedi.",
+  'point.echeance': 'Le dernier jour où une réponse vous est encore utile.',
+  'point.statut': "« En attente de décision » : le point attend l'avis du berger ou du conseil.",
+  'points.filtre': 'Les points créés par le ministère choisi et ceux qui le mentionnent.',
 } as const
 
 /**
