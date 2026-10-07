@@ -949,3 +949,23 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Origine** : audit de sécurité de B8 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
 - **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)
+
+### T43. Signalement et commentaire de clôture : les crochets sont refusés comme les données personnelles
+
+- **Date** : 7 octobre 2026
+- **Sujet** : T39 écrit que le texte d'un signalement « refuse les familles données personnelles de `private.verifier_texte` ». B7 refuse aussi la famille « crochets » (par `private.texte_libre_refuse`, comme B3 pour le « Pourquoi » et le motif d'un refus, et B8 pour la précision) et applique la même règle au commentaire de clôture. T39 ne la citait pas : un ministère qui écrit « le bouton [Envoyer] » est refusé.
+- **Décision** : le texte d'un signalement et le commentaire de clôture refusent les familles « données personnelles » **et** « crochets » (message « Les crochets et « texte masqué » sont réservés à la modération. »). Les crochets protègent le marqueur de masquage « [texte masqué par EJP Tech] » : un texte écrit par un ministère ne doit jamais pouvoir passer pour un texte masqué par EJP Tech. Tous les textes libres de l'outil suivent la même règle.
+- **Raison** : cohérence avec les autres textes libres de l'étape 4 ; coût pour le ministère : reformuler sans crochets (le message de refus le dit).
+- **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
+- **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
+- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (section 1, `texte_relu` et `texte_masque`, et section 7) ; `docs/plan-etape-4.md` (B7)
+
+### T44. Journal : un trou dans la suite des identifiants révèle une ligne que le lecteur ne voit pas
+
+- **Date** : 7 octobre 2026
+- **Sujet** : `journal.id` est une identité (suite sans trou en pratique). Le berger et le conseil lisent toutes les lignes du journal sauf celles des signalements (T39) ; l'administration lit une liste fermée de lignes, sans `precision_sensible` (B8) ni `texte_relu` et `texte_masque` du « Pourquoi » (P51). Un lecteur qui a un accès direct à l'API (`select` sur `journal`) voit des identifiants sautés : un trou entre deux lignes lues montre qu'une ligne existe, avec son heure à quelques secondes près (les lignes voisines). Pour le berger et le conseil, les lignes de signalement sont les seules retirées : le trou est un signal net. T39 dit pourtant que le berger ne doit pas voir qu'un signalement existe. La même fuite existe déjà pour l'administration (lignes de précision, B8), noyée parmi beaucoup d'autres lignes cachées.
+- **Décision proposée** : accepter ce risque résiduel pour la mise en service, sans changer la base. Il faut un accès direct à l'API, aucun droit en plus n'est donné (ni le texte, ni le ministère, ni le contenu : seulement « une ligne manque »), et les écrans n'affichent jamais l'identifiant. Si la personne responsable le refuse : le berger et le conseil ne liraient le journal que par `v_journal`, avec une clé opaque (par exemple `md5(id::text)`) à la place de l'identifiant, sans `select` direct sur `journal` ; cela change la matrice et un lot d'écrans (journal), donc une décision de la personne responsable.
+- **Raison** : le correctif réduit un signal faible au prix d'un changement de modèle d'accès ; la note d'analyse doit citer le risque pour que la personne responsable tranche.
+- **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
+- **Statut** : Proposé, à confirmer par la personne responsable ; appliqué en attendant la réponse (rien ne change dans le code)
+- **BRIEF** : section 7 (matrice, ligne `journal`) et note d'analyse (risques résiduels) ; `docs/conception/contrat-etape-4.md` (section 1, lecture des lignes des signalements)
