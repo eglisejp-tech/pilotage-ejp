@@ -8,7 +8,7 @@
 import { z } from 'zod'
 import type { Priorite, StatutPoint } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
-import { COMMENTAIRE_TRAITE_MAX } from '@/lib/metier/droitsPoint'
+import { COMMENTAIRE_TRAITE_MAX, COMMENTAIRE_TRAITE_MIN_MINISTERE } from '@/lib/metier/droitsPoint'
 import { supabase } from '@/lib/supabase'
 
 /** Longueurs fixées par la base (`private.creer_point`). */
@@ -27,6 +27,8 @@ export const MESSAGES_POINT = {
     description: 'La description dépasse 280 caractères.',
     attendu: "L'action attendue dépasse 80 caractères.",
     echeancePassee: "L'échéance ne peut pas être passée.",
+    /** Contrôle de l'interface seulement : la base reçoit une date, jamais un autre texte. */
+    echeanceFormat: 'Choisissez une date au format jour, mois, année.',
     mentionRefusee: 'Ce ministère ne peut pas être mentionné.',
     pointTraiteStatut: 'Ce point est traité : il ne change plus.',
     pointDejaTraite: 'Ce point est déjà traité.',
@@ -34,7 +36,9 @@ export const MESSAGES_POINT = {
     statutTraite: 'Utilisez le bouton Marquer traité.',
     commentaireLong: 'Le commentaire dépasse 280 caractères.',
     commentaireCourt: 'Expliquez ce qui a été traité et comment (10 caractères au moins).',
-    /** Refus de droit (42501), commun à toutes les fonctions de l'API. */
+    /** Refus de droit (42501) de `creer_point` : le compte n'est pas un compte de ministère. */
+    creationReservee: 'Seul un compte de ministère peut créer un point.',
+    /** Refus de droit (42501) de `changer_statut_point` et `marquer_traite`, et tout autre 42501. */
     acces: "Ce point n'existe pas ou vous n'y avez pas accès.",
   },
   reussite: {
@@ -47,12 +51,17 @@ export const MESSAGES_POINT = {
 /**
  * Texte à montrer sous le bouton pour un refus de la base, ou null pour un problème de connexion
  * (l'écran garde les valeurs et dit « La connexion a échoué... »). Un refus de droit (42501) dit
- * seulement que le point n'est pas accessible, sans dire pourquoi.
+ * seulement que le point n'est pas accessible, sans dire pourquoi (double authentification, compte
+ * inactif, point hors de portée) ; seule la création réservée aux ministères garde son texte.
  */
 export function messageDeRefusPoint(erreur: unknown): string | null {
   if (typeof erreur !== 'object' || erreur === null) return null
   const { code, message } = erreur as { code?: unknown; message?: unknown }
-  if (code === '42501') return MESSAGES_POINT.refus.acces
+  if (code === '42501') {
+    return message === MESSAGES_POINT.refus.creationReservee
+      ? MESSAGES_POINT.refus.creationReservee
+      : MESSAGES_POINT.refus.acces
+  }
   if (code !== 'P0001' || typeof message !== 'string') return null
   return message
 }
@@ -68,9 +77,17 @@ export const STATUTS_CHOISIS = [
 
 export type StatutChoisi = (typeof STATUTS_CHOISIS)[number]
 
-/** Texte facultatif tel que la base le reçoit : null (rien) ou 1 à `max` caractères. */
+/**
+ * Texte facultatif tel que la base le lit : espaces de bord retirés (`btrim`), vide devenu null
+ * (`nullif`), puis `max` caractères au plus. Rend null ou un texte de 1 à `max` caractères.
+ */
 function texteFacultatif(max: number, message: string) {
-  return z.string().min(1, message).max(max, message).nullable()
+  return z
+    .string()
+    .trim()
+    .max(max, message)
+    .transform((texte) => (texte === '' ? null : texte))
+    .nullable()
 }
 
 /** Identifiants de ministères mentionnés : des uuid, sans doublon. */
@@ -89,7 +106,7 @@ export const schemaBaseNouveauPoint = z.object({
   attendu: texteFacultatif(LONGUEUR_ATTENDU_POINT, MESSAGES_POINT.refus.attendu),
   priorite: z.enum(VALEURS_PRIORITE),
   /** Jour de Paris au format AAAA-MM-JJ, ou null : sans échéance. */
-  echeance: z.string().refine(estDateIso, MESSAGES_POINT.refus.echeancePassee).nullable(),
+  echeance: z.string().refine(estDateIso, MESSAGES_POINT.refus.echeanceFormat).nullable(),
   mentions: schemaMentions,
 })
 
@@ -107,6 +124,16 @@ export const schemaBaseCommentaireTraite = texteFacultatif(
   COMMENTAIRE_TRAITE_MAX,
   MESSAGES_POINT.refus.commentaireLong,
 )
+
+/**
+ * Commentaire d'un ministère lié au point (créateur ou mentionné), pour le formulaire du lot P1 :
+ * 10 à 280 caractères une fois les espaces de bord retirés, comme la base le contrôle.
+ */
+export const schemaCommentaireTraiteMinistere = z
+  .string()
+  .trim()
+  .min(COMMENTAIRE_TRAITE_MIN_MINISTERE, MESSAGES_POINT.refus.commentaireCourt)
+  .max(COMMENTAIRE_TRAITE_MAX, MESSAGES_POINT.refus.commentaireLong)
 
 const schemaIdentifiant = z.uuid()
 

@@ -8,6 +8,7 @@ import {
   messageDeRefusPoint,
   MESSAGES_POINT,
   schemaBaseNouveauPoint,
+  schemaCommentaireTraiteMinistere,
 } from './pointsEcriture'
 
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
@@ -72,6 +73,22 @@ describe('creerPoint', () => {
       p_echeance: null,
       p_mentions: [],
     })
+  })
+
+  it('lit les textes facultatifs comme la base : bords retirés, vide devenu null', async () => {
+    const faux = installer({ data: POINT, error: null })
+    await creerPoint({
+      titre: 'Clés',
+      description: '   ',
+      attendu: `  ${'x'.repeat(80)}  `,
+      priorite: 'normale',
+      echeance: null,
+      mentions: [],
+    })
+    expect(faux.rpc).toHaveBeenCalledWith(
+      'creer_point',
+      expect.objectContaining({ p_description: null, p_action_attendue: 'x'.repeat(80) }),
+    )
   })
 
   it('refuse avant tout appel un titre vide ou trop long, une priorité inconnue, une mention fausse', async () => {
@@ -169,9 +186,24 @@ describe('marquerTraite', () => {
     })
   })
 
+  it('envoie null pour un commentaire fait d’espaces, et le commentaire sans ses bords', async () => {
+    const faux = installer()
+    await marquerTraite(POINT, '   ')
+    expect(faux.rpc).toHaveBeenLastCalledWith('marquer_traite', {
+      p_point_id: POINT,
+      p_commentaire: null,
+    })
+    await marquerTraite(POINT, `  ${'x'.repeat(280)}  `)
+    expect(faux.rpc).toHaveBeenLastCalledWith('marquer_traite', {
+      p_point_id: POINT,
+      p_commentaire: 'x'.repeat(280),
+    })
+  })
+
   it('refuse un commentaire de plus de 280 caractères avant tout appel', async () => {
     const faux = installer()
     await expect(marquerTraite(POINT, 'x'.repeat(281))).rejects.toThrow()
+    await expect(marquerTraite('1', null)).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
@@ -179,6 +211,18 @@ describe('marquerTraite', () => {
     const refus = { code: '42501', message: MESSAGES_POINT.refus.acces }
     installer({ data: null, error: refus })
     await expect(marquerTraite(POINT, null)).rejects.toBe(refus)
+  })
+})
+
+describe('schemaCommentaireTraiteMinistere', () => {
+  it('demande 10 à 280 caractères une fois les bords retirés, avec les messages de la base', () => {
+    const court = schemaCommentaireTraiteMinistere.safeParse(`  ${'x'.repeat(9)}  `)
+    expect(court.success).toBe(false)
+    expect(court.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.commentaireCourt)
+    const long = schemaCommentaireTraiteMinistere.safeParse('x'.repeat(281))
+    expect(long.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.commentaireLong)
+    expect(schemaCommentaireTraiteMinistere.parse(` ${'x'.repeat(10)} `)).toBe('x'.repeat(10))
+    expect(schemaCommentaireTraiteMinistere.safeParse('x'.repeat(280)).success).toBe(true)
   })
 })
 
@@ -193,6 +237,15 @@ describe('messageDeRefusPoint', () => {
     expect(messageDeRefusPoint({ code: '42501', message: 'autre texte interne' })).toBe(
       "Ce point n'existe pas ou vous n'y avez pas accès.",
     )
+  })
+
+  it('garde le refus de création réservée aux ministères, et tait la double authentification', () => {
+    expect(
+      messageDeRefusPoint({ code: '42501', message: MESSAGES_POINT.refus.creationReservee }),
+    ).toBe('Seul un compte de ministère peut créer un point.')
+    expect(
+      messageDeRefusPoint({ code: '42501', message: 'Double authentification requise.' }),
+    ).toBe(MESSAGES_POINT.refus.acces)
   })
 
   it('rend null pour une panne de connexion ou une erreur inconnue', () => {

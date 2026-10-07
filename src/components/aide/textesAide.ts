@@ -128,6 +128,23 @@ export const TEXTES_AIDE = {
     'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
   'indicateurs.usage':
     "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
+
+  // Points d'attention (étape 5, plan 3.1, BRIEF sections 3 règle 7 et 9). Nouveau point
+  // (maquette 10, lot P2) : `point.priorite` sur la légende « Priorité », `point.attendu` sur
+  // « Ce qui est attendu », `point.echeance` sur « Échéance » ; les mentions ont déjà leur note
+  // visible, le titre et « Ce qui se passe » se comprennent seuls (3 aides sur 4 au plus).
+  // « Changer le statut » (lot P1) : `point.statut` sur la légende des trois statuts. « Marquer
+  // traité » n'a pas d'aide : qui lit le commentaire est un texte visible (section 8, comme la
+  // « Précision »). Écran 05 (lot P3) : `points.filtre` sur le filtre « Tous les ministères ».
+  'point.priorite':
+    'Les points ouverts se lisent par priorité : Urgente en premier, puis Haute, puis Normale.',
+  'point.attendu':
+    "La décision ou l'aide que vous attendez, en une phrase. Exemple : confirmer la salle avant samedi.",
+  'point.echeance':
+    'Le jour où une réponse vous est utile. Une fois ce jour passé, le point affiche « dépassée » en rouge.',
+  'point.statut':
+    '« En attente de décision » fait passer le point en tête de « À décider », le bloc du berger et du conseil.',
+  'points.filtre': 'Les points créés par le ministère choisi et ceux qui le mentionnent.',
 } as const
 
 /**
