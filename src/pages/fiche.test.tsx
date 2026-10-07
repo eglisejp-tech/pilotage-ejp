@@ -11,7 +11,6 @@ import {
   SOCIAL,
   TABLEAU_EXEMPLE,
 } from '@/features/fiche/apercu/exemplesFiche'
-import type { ProfilFiche } from '@/features/fiche/modeleFiche'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -37,8 +36,9 @@ const SEMAINE = {
   numero: 40,
 }
 
-function lignesFiche(profil: ProfilFiche): Record<string, unknown[]> {
-  const l = lecturesExempleFiche(profil, false)
+/** Les lignes de la fiche, les mêmes pour tous ses lecteurs (P52). */
+function lignesFiche(): Record<string, unknown[]> {
+  const l = lecturesExempleFiche(false)
   return {
     v_semaine: [SEMAINE],
     ministere: [l.ministere, ...l.ministeres.filter((m) => m.id !== SOCIAL)],
@@ -100,7 +100,7 @@ const ACTIONS = /Marquer traité|Changer le statut|Saisir|Enregistrer|Ajouter|Mo
 
 describe('/ma-fiche', () => {
   it('le ministère lit sa fiche, avec ses boutons de saisie et ses valeurs exactes', async () => {
-    const faux = installer('ministere', lignesFiche('ministere'))
+    const faux = installer('ministere', lignesFiche())
     afficher('/ma-fiche')
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
@@ -115,7 +115,7 @@ describe('/ma-fiche', () => {
   })
 
   it('une lecture en échec : le bandeau « Réessayer », jamais une page blanche', async () => {
-    installer('ministere', lignesFiche('ministere'), ['v_indicateur_suivi'])
+    installer('ministere', lignesFiche(), ['v_indicateur_suivi'])
     afficher('/ma-fiche')
     expect(await screen.findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
       'La connexion a échoué. Réessayez.',
@@ -124,7 +124,7 @@ describe('/ma-fiche', () => {
   })
 
   it('les points en échec : leur bloc propose « Réessayer », le reste de la fiche reste lu', async () => {
-    installer('ministere', lignesFiche('ministere'), ['v_point'])
+    installer('ministere', lignesFiche(), ['v_point'])
     afficher('/ma-fiche')
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
@@ -136,7 +136,7 @@ describe('/ma-fiche', () => {
   })
 
   it('le détail des sensibles en échec : « Réessayer » sous les chiffres, sans les précisions', async () => {
-    installer('ministere', lignesFiche('ministere'), ['v_precision_sensible'])
+    installer('ministere', lignesFiche(), ['v_precision_sensible'])
     afficher('/ma-fiche')
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
@@ -152,13 +152,15 @@ describe('/ma-fiche', () => {
 
 describe('/ministeres/:id', () => {
   it('EJP Tech lit la fiche sans aucun bouton d’action (T29)', async () => {
-    installer('admin_plateforme', lignesFiche('admin_plateforme'))
+    installer('admin_plateforme', lignesFiche())
     afficher(`/ministeres/${SOCIAL}`)
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
     ).toBeInTheDocument()
     expect(document.title).toBe('Fiche du ministère, Pilotage EJP')
-    expect(screen.getAllByText('moins de 3')[0]).toBeVisible()
+    // P52 : EJP Tech lit la valeur exacte d'un sensible, jamais « moins de 3 ».
+    expect(screen.queryByText('moins de 3')).toBeNull()
+    expect(screen.getByText(/^Depuis juin : 9 /)).toBeVisible()
     const main = screen.getByRole('main')
     expect(within(main).queryByRole('link', { name: ACTIONS })).toBeNull()
     for (const bouton of within(main).queryAllByRole('button')) {
@@ -167,7 +169,7 @@ describe('/ministeres/:id', () => {
   })
 
   it('un identifiant inconnu : « Ce ministère n’existe pas ou n’est plus actif. »', async () => {
-    installer('berger', { ...lignesFiche('berger'), ministere: [] })
+    installer('berger', { ...lignesFiche(), ministere: [] })
     afficher('/ministeres/10000000-0000-4000-8000-000000000099')
     expect(
       await screen.findByText("Ce ministère n'existe pas ou n'est plus actif.", {}, ATTENTE),
@@ -188,12 +190,12 @@ describe('/ministeres/:id', () => {
   })
 
   it('un ministère désactivé : introuvable', async () => {
-    const lignes = lignesFiche('berger')
+    const lignes = lignesFiche()
     installer('berger', {
       ...lignes,
       ministere: [
         {
-          ...lecturesExempleFiche('berger', false).ministere,
+          ...lecturesExempleFiche(false).ministere,
           desactive_le: '2026-09-01T10:00:00Z',
         },
       ],

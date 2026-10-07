@@ -51,10 +51,7 @@ export function LigneIndicateurFiche({ ligne }: Props) {
           ) : null}
         </span>
         <span className={CASE_VALEUR}>
-          <ValeurLigne
-            valeur={ligne.valeur}
-            aideMoinsDe3={aides.moinsDe3 === 'valeur' ? ligne.libelle : undefined}
-          />
+          <ValeurLigne valeur={ligne.valeur} />
         </span>
         <span className={CASE_ECART} />
         <span className={CASE_COURBE}>
@@ -81,9 +78,6 @@ export function LigneIndicateurFiche({ ligne }: Props) {
                   placement="flottante"
                 />
               ) : null}
-              {aides.moinsDe3 === 'somme' ? (
-                <Aide code="fiche.moinsDe3" libelle={ligne.somme.texte} placement="flottante" />
-              ) : null}
             </span>
           ) : null}
         </span>
@@ -93,24 +87,12 @@ export function LigneIndicateurFiche({ ligne }: Props) {
           {ligne.moisEnCours !== null ? (
             <p className="flex min-h-7 items-center">
               <span>{ligne.moisEnCours.texte}</span>
-              {aides.moinsDe3 === 'moisEnCours' ? (
-                <Aide
-                  code="fiche.moinsDe3"
-                  libelle={ligne.moisEnCours.texte}
-                  placement="flottante"
-                />
-              ) : null}
             </p>
           ) : null}
           {ligne.sensible?.precisions.map((precision) => (
             <PrecisionSensible key={precision.mois} precision={precision} />
           ))}
-          {repartitions !== null ? (
-            <RepartitionSensible
-              repartitions={repartitions}
-              avecAide={aides.repartition === true}
-            />
-          ) : null}
+          {repartitions !== null ? <RepartitionSensible repartitions={repartitions} /> : null}
         </div>
       ) : null}
     </li>

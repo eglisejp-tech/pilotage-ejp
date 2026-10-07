@@ -15,5 +15,11 @@ export type SituationVide = (typeof SITUATIONS_VIDES)[number]
 
 /** Une seule action par état vide, et seulement pour le profil qui peut la faire. */
 export type ActionVide =
-  | { libelle: string; vers: string; surClic?: never }
+  | {
+      libelle: string
+      vers: string
+      /** Remplace l'entrée d'historique au lieu d'en ajouter une (changer de période d'une saisie). */
+      remplace?: boolean
+      surClic?: never
+    }
   | { libelle: string; surClic: () => void; vers?: never }

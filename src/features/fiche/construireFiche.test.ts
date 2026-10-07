@@ -9,9 +9,9 @@ import type { LecturesFiche } from '@/features/fiche/construireFiche'
 import type { LigneIndicateurFiche, ProfilFiche } from '@/features/fiche/modeleFiche'
 import { texteDePhrase } from '@/lib/metier/phrases'
 
-const berger = (lectures: LecturesFiche = lecturesExempleFiche('berger', false)) =>
+const berger = (lectures: LecturesFiche = lecturesExempleFiche(false)) =>
   construireFiche(lectures, { profil: 'berger' })
-const ministere = (lectures: LecturesFiche = lecturesExempleFiche('ministere', false)) =>
+const ministere = (lectures: LecturesFiche = lecturesExempleFiche(false)) =>
   construireFiche(lectures, { profil: 'ministere' })
 
 function ligne(donnees: ReturnType<typeof berger>, libelle: string): LigneIndicateurFiche {
@@ -44,7 +44,7 @@ describe('construireFiche : chiffres communs', () => {
 
   it('le libellé de la demande remplace le nom du commun ; les deux lignes de référence de MDS avec leur complétude', () => {
     const lectures: LecturesFiche = {
-      ...lecturesExempleFiche('berger', false),
+      ...lecturesExempleFiche(false),
       libellesCommuns: [
         {
           ministere_id: SOCIAL,
@@ -110,11 +110,11 @@ describe('construireFiche : chiffres communs', () => {
   })
 
   it('jamais un 0 pour une absence : « vide » sans saisie, et « non saisi » quand le dimanche précédent manque', () => {
-    const vide = berger(lecturesExempleFiche('berger', true))
+    const vide = berger(lecturesExempleFiche(true))
     expect(vide.communs.map((c) => c.valeur.etat)).toEqual(['vide', 'vide', 'vide'])
     expect(vide.communs[0]?.courbe).toBeNull()
 
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     const sansPrecedent = berger({
       ...lectures,
       mesuresCommuns: lectures.mesuresCommuns.filter((m) => m.periode !== '2026-09-27'),
@@ -135,7 +135,7 @@ describe('construireFiche : chiffres communs', () => {
 
   it('fraîcheur : « Mis à jour il y a 3 jours », « Aucune saisie » en premier usage', () => {
     expect(berger().fraicheur).toEqual({ libelle: 'Mis à jour il y a 3 jours', etat: 'bien' })
-    expect(berger(lecturesExempleFiche('berger', true)).fraicheur).toEqual({
+    expect(berger(lecturesExempleFiche(true)).fraicheur).toEqual({
       libelle: 'Aucune saisie',
       etat: 'alerte',
     })
@@ -169,7 +169,6 @@ describe('construireFiche : indicateurs propres', () => {
     expect(ligne(donnees, 'Fonds levés').somme).toEqual({
       texte: 'Depuis août : 2 050 €',
       completude: '2 mois sur 2',
-      moinsDe3: false,
     })
     expect(ligne(donnees, 'Personnes rencontrées en maraude').somme?.completude).toBe(
       '8 dimanches sur 10',
@@ -181,7 +180,7 @@ describe('construireFiche : indicateurs propres', () => {
   })
 
   it('« il y a plus de 30 jours » vient de v_indicateur_suivi.plus_de_30_jours', () => {
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     const recent = berger({
       ...lectures,
       suivi: lectures.suivi.map((s) =>
@@ -226,14 +225,14 @@ describe('construireFiche : indicateurs propres', () => {
   })
 
   it('un calcul étendu absent de v_calcul n’a pas de ligne', () => {
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     const donnees = berger({ ...lectures, calculs: [] })
     const libelles = donnees.sections.flatMap((s) => s.lignes).map((l) => l.libelle)
     expect(libelles).not.toContain('Taux de passages orientés')
   })
 
   it('premier usage : aucun indicateur propre, aucune section ; aucune action pour le berger', () => {
-    const donnees = berger(lecturesExempleFiche('berger', true))
+    const donnees = berger(lecturesExempleFiche(true))
     expect(donnees.sansIndicateurPropre).toBe(true)
     expect(donnees.sections).toEqual([])
     expect(donnees.actionSaisirMois).toBe(false)
@@ -246,7 +245,7 @@ describe('construireFiche : indicateurs propres', () => {
   })
 
   it('un indicateur du mois dont seul le mois en cours est saisi n’attend pas sa « première saisie »', () => {
-    const lectures = lecturesExempleFiche('ministere', false)
+    const lectures = lecturesExempleFiche(false)
     const donnees = ministere({
       ...lectures,
       suivi: lectures.suivi.map((s) =>
@@ -264,77 +263,48 @@ describe('construireFiche : indicateurs propres', () => {
   })
 })
 
-describe('construireFiche : indicateur sensible (P45 à P47)', () => {
+describe('construireFiche : indicateur sensible (P45 à P47, P52)', () => {
   const sensible = (profil: ProfilFiche) =>
-    ligne(
-      construireFiche(lecturesExempleFiche(profil, false), { profil }),
-      'Bénéficiaires (passages)',
-    )
+    ligne(construireFiche(lecturesExempleFiche(false), { profil }), 'Bénéficiaires (passages)')
+  const LECTEURS: ProfilFiche[] = ['ministere', 'berger', 'conseil', 'admin_plateforme']
 
-  it('berger : « moins de 3 », somme des mois affichés, mois en cours « en cours »', () => {
-    const l = sensible('berger')
-    expect(l.valeur).toEqual({ etat: 'moins_de_3' })
-    expect(l.somme?.texte).toBe('Depuis juin, somme des mois affichés : 6, plus 2 mois sous 3')
-    expect(l.moisEnCours).toEqual({ texte: 'Octobre en cours : 7', moinsDe3: false })
-    expect(l.courbe?.description).toContain('moins de 3')
-  })
+  it.each(LECTEURS)(
+    '%s : valeur, somme de l’année, mois en cours et courbe exacts, jamais « moins de 3 »',
+    (profil) => {
+      const l = sensible(profil)
+      expect(l.valeur).toEqual({ etat: 'saisie', texte: '2', unite: null })
+      expect(l.somme?.texte).toBe('Depuis juin : 9')
+      expect(l.moisEnCours).toEqual({ texte: 'Octobre en cours : 7' })
+      expect(l.courbe?.description).toContain('6, 1, 0, 2')
+      expect(l.courbe?.description).not.toContain('moins de 3')
+    },
+  )
 
-  it('ministère : ses valeurs exactes, sans « moins de 3 »', () => {
-    const l = sensible('ministere')
-    expect(l.valeur).toMatchObject({ etat: 'saisie', texte: '2' })
-    expect(l.somme?.texte).toBe('Depuis juin : 9')
-    const octobre = l.sensible?.repartitions?.find((r) => r.mois === '2026-10-01')
-    expect(octobre).toMatchObject({
-      etat: 'cases',
-      cases: [
-        { libelle: 'Malaise', texte: '4' },
-        { libelle: 'Blessure', texte: '2' },
-        { libelle: 'Autre', texte: '1' },
-        { libelle: 'Non réparti', texte: '0' },
-      ],
-    })
-  })
-
-  it('berger : répartition avec « masqué », « moins de 3 » et « Non réparti » ; un mois sans ligne : « Pas de répartition »', () => {
-    const repartitions = sensible('berger').sensible?.repartitions
-    expect(repartitions?.map((r) => r.titre)).toEqual(['Septembre 2026', 'Octobre en cours'])
-    expect(repartitions?.[0]).toMatchObject({
-      etat: 'aucune',
-      texte: 'Pas de répartition pour septembre.',
-    })
-    expect(repartitions?.[1]).toMatchObject({
-      etat: 'cases',
-      cases: [
-        { libelle: 'Malaise', texte: 'masqué', masquee: true },
-        { libelle: 'Blessure', texte: 'moins de 3', moinsDe3: true },
-        { libelle: 'Autre', texte: 'moins de 3' },
-        { libelle: 'Non réparti', texte: '0' },
-      ],
-    })
-  })
-
-  it('répartition masquée en entier : la phrase de P47', () => {
-    const lectures = lecturesExempleFiche('berger', false)
-    const toutMasque = berger({
-      ...lectures,
-      repartitions: lectures.repartitions.map((r) => ({
-        ...r,
-        valeur: null,
-        masquee: false,
-        moins_de_3: false,
-        tout_masque: true,
-      })),
-    })
-    expect(ligne(toutMasque, 'Bénéficiaires (passages)').sensible?.repartitions?.[1]).toMatchObject(
-      {
-        etat: 'masquee',
-        texte: 'Répartition masquée pour protéger les petits nombres.',
-      },
-    )
-  })
+  it.each(LECTEURS)(
+    '%s : répartition exacte avec « Non réparti » ; un mois sans ligne : « Pas de répartition »',
+    (profil) => {
+      const repartitions = sensible(profil).sensible?.repartitions
+      expect(repartitions?.map((r) => r.titre)).toEqual(['Septembre 2026', 'Octobre en cours'])
+      expect(repartitions?.[0]).toMatchObject({
+        etat: 'aucune',
+        texte: 'Pas de répartition pour septembre.',
+      })
+      expect(repartitions?.[1]).toEqual({
+        mois: '2026-10-01',
+        titre: 'Octobre en cours',
+        etat: 'cases',
+        cases: [
+          { libelle: 'Malaise', texte: '4' },
+          { libelle: 'Blessure', texte: '2' },
+          { libelle: 'Autre', texte: '1' },
+          { libelle: 'Non réparti', texte: '0' },
+        ],
+      })
+    },
+  )
 
   it('sans catégorie : aucune répartition ; précisions des deux mois, la masquée signalée', () => {
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     const sansCategorie = ligne(
       berger({ ...lectures, categories: [], repartitions: [] }),
       'Bénéficiaires (passages)',
@@ -368,7 +338,7 @@ describe('construireFiche : indicateur sensible (P45 à P47)', () => {
   })
 
   it('des catégories mais aucune saisie : ni répartition ni ligne vide sous l’indicateur (T36)', () => {
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     const jamaisSaisi = berger({
       ...lectures,
       suivi: lectures.suivi.map((s) =>
@@ -396,25 +366,20 @@ describe('construireFiche : indicateur sensible (P45 à P47)', () => {
     })
   })
 
-  it('aides : chacune une fois, « moins de 3 » et « masqué » jamais pour le ministère', () => {
+  it('aides : chacune une fois, les mêmes pour le berger et le ministère', () => {
     const aides = (donnees: ReturnType<typeof berger>) =>
       donnees.sections.flatMap((s) => s.lignes).map((l) => l.aides)
     const duBerger = aides(berger())
     expect(duBerger.filter((a) => a.calcule)).toHaveLength(1)
     expect(duBerger.filter((a) => a.somme)).toHaveLength(1)
-    expect(duBerger.filter((a) => a.moinsDe3 !== undefined)).toEqual([
-      { moinsDe3: 'valeur', repartition: true },
-    ])
-    expect(duBerger.filter((a) => a.repartition)).toHaveLength(1)
-    const duMinistere = aides(ministere())
-    expect(duMinistere.some((a) => a.moinsDe3 !== undefined || a.repartition)).toBe(false)
+    expect(aides(ministere())).toEqual(duBerger)
     expect(berger().aideCourbe).toBe(true)
   })
 })
 
 describe('construirePointsFiche', () => {
   it('ouverts par priorité puis échéance, puis les traités des 7 derniers jours', () => {
-    const points = construirePointsFiche(lecturesExempleFiche('berger', false), {
+    const points = construirePointsFiche(lecturesExempleFiche(false), {
       profil: 'berger',
     })
     expect(points.map((p) => p.titre.texte)).toEqual([
@@ -434,7 +399,7 @@ describe('construirePointsFiche', () => {
   })
 
   it('le ministère mentionné lit « Mentionné par Intégration. » ; un traité de plus de 7 jours disparaît', () => {
-    const lectures = lecturesExempleFiche('ministere', false)
+    const lectures = lecturesExempleFiche(false)
     const points = construirePointsFiche(
       {
         ...lectures,

@@ -50,8 +50,6 @@ export const TEXTES_FICHE = {
   plusDe30Jours: 'il y a plus de 30 jours',
 
   repartition: 'Répartition par catégorie',
-  /** Case cachée par le masquage secondaire. Proposé (BRIEF, section 9). */
-  masque: 'masqué',
 
   points: {
     /** LISEZMOI, « États » (07, 12). */
@@ -130,19 +128,4 @@ export function sansPrefixeNonCalcule(texte: string, secours: string): string {
  */
 export function titrePrecision(mois: Mois): string {
   return `Précision ${duMois(mois)}`
-}
-
-/**
- * Somme de l'année d'un sensible lue par un autre profil que son ministère : elle ne compte que
- * les mois affichés et le dit (BRIEF, section 4, « Indicateurs sensibles ») : « Depuis juin,
- * somme des mois affichés : 6, plus 2 mois sous 3 ». Proposé : le BRIEF écrit « Somme des mois
- * affichés : 14, plus 2 mois sous 3 » ; le départ s'ajoute, comme pour toute somme de l'année.
- */
-export function sommeDesMoisAffiches(depuis: string, somme: string, moisSous3: number): string {
-  return `${depuis}, somme des mois affichés : ${somme}, plus ${moisSous3} mois sous 3`
-}
-
-/** Sensible dont tous les mois saisis de l'année sont sous 3, lu par un autre profil. Proposé. */
-export function tousLesMoisSous3(depuis: string): string {
-  return `${depuis} : tous les mois saisis sont sous 3`
 }
