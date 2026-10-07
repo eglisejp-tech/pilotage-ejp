@@ -807,7 +807,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : un composant partagé, une « toggletip » accessible : un bouton d'aide placé juste après le libellé qu'il explique, avec un nom accessible qui reprend ce libellé, qui ouvre une courte bulle au clic, à Entrée ou à Espace (jamais au seul survol), se ferme à Échap et au clic en dehors, annonce son texte au lecteur d'écran, a une cible de 44 px et tient dans l'écran à 360 px. Une aide complète un libellé et ne remplace jamais une information nécessaire à la saisie : une phrase qui sert à chaque usage reste visible sous le champ. Règles de rédaction et de placement, et catalogue des aides par écran : `docs/conception/aides-contextuelles.md`. Les textes vivent dans un seul fichier de l'interface (`src/components/aide/textesAide.ts`), écrit une fois par W0 avec les composants `Aide` et `LibelleAvecAide` ; chaque lot d'écran pose ses aides, et le lot I celles de la vue de l'église. Effort : 1 jour en W0, 0,25 jour par écran (E2 à E7), 0,25 jour en I. **Forme décidée le 6 octobre 2026 par la personne responsable : le bouton d'aide est rond.** C'est une exception voulue à la règle « angles droits partout » : c'est le seul élément rond de l'outil (la bulle garde ses angles droits). Les points de forme encore ouverts (fond sombre de la bulle, placement dans le flux des formulaires) sont dans la section 10 de `aides-contextuelles.md`.
 - **Origine** : demande de la personne responsable (6 octobre 2026)
 - **Statut** : Décidé sur le principe et sur la forme ronde du bouton (6 octobre 2026) ; textes « Proposé » jusqu'à leur validation par la personne responsable (plan de l'étape 4, question 15), puis relus en préproduction (K16)
-- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026 ; forme ronde à reporter) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
+- **BRIEF** : section 4, section 9 (chaque écran) (reporté le 6 octobre 2026 ; forme ronde reportée le 7 octobre 2026, sections 9 et 10) ; `docs/plan-etape-4.md`, W0, E2 à E8 et I ; complète T10 et T36
 
 ### T39. Signaler une difficulté
 
@@ -826,7 +826,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : Prodiges Academy est le 23e ministère de l'outil, avec son compte. Il saisit les trois chiffres communs chaque dimanche (STARs au service, STARs actifs, dont en FIJ), comme Protocole, et compte dans les totaux de l'église et dans leur complétude (« sur 23 »). Formation garde son nom et ses six KPI : on ne renomme jamais l'un en l'autre. Prodiges Academy n'a aucune des 185 demandes de la coordination : la couverture reste « 185 demandes ». Ses propres indicateurs viendront quand la coordination les ajoutera à son document, ou par une demande dans l'outil validée par EJP Tech (T30).
 - **Origine** : réponse de la personne responsable (6 octobre 2026) ; décision d'EJP Tech
 - **Statut** : Décidé par EJP Tech le 6 octobre 2026, révisable par la coordination
-- **BRIEF** : section 3 (nombre de ministères, complétude), section 4 (à reporter) ; `docs/conception/vague-1-decisions.md` (K14a, K14c) ; `docs/conformite/libelles-a-valider.md` (section Prodiges Academy)
+- **BRIEF** : section 3 (nombre de ministères, complétude), section 4 (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (K14a, K14c) ; `docs/conformite/libelles-a-valider.md` (section Prodiges Academy)
 
 ### P44. Responsable du traitement
 
@@ -835,7 +835,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : le responsable du traitement est l'Église des Jeunes Prodiges, par son ministère EJP Tech, comme sur la page Confidentialité (`src/pages/PageConfidentialite.tsx`). La coordination décide au nom de l'église : elle valide le registre, les textes, les indicateurs et la fin de vie de l'outil. Le registre et la note d'analyse disent la même chose.
 - **Origine** : réponse de la personne responsable (6 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (données personnelles) (à reporter) ; `docs/conception/vague-1-decisions.md` (K56, mandat) ; `docs/conformite/registre-traitements.md`
+- **BRIEF** : section 7 (données personnelles) (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (K56, mandat) ; `docs/conformite/registre-traitements.md`
 
 ### T40. Envoi des emails par un Gmail gratuit
 
@@ -844,7 +844,7 @@ La personne responsable a répondu le 6 octobre 2026 aux questions de la section
 - **Décision** : un Gmail gratuit relève des conditions grand public de Google : il n'y a pas d'accord de sous-traitance (article 28) à signer. La phrase de la page Confidentialité qui dit que les prestataires « agissent sous contrat » est nuancée pour Google, et la page est corrigée au lot I de l'étape 4. Recommandation, sans l'imposer : Google Workspace pour les associations (gratuit pour une association éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec contrat. Accès aux tableaux de bord Supabase et Netlify : EJP Tech seul ; la double authentification sur ces deux comptes reste à confirmer et elle est recommandée.
 - **Origine** : faits donnés par la personne responsable (6 octobre 2026)
 - **Statut** : Décidé pour les faits ; la recommandation reste à décider par la personne responsable
-- **BRIEF** : section 8 (emails) (à reporter) ; T08 ; `docs/conformite/registre-traitements.md` ; `docs/plan-etape-4.md`, lot I
+- **BRIEF** : section 8 (emails) et section 7 (données personnelles) (reporté le 7 octobre 2026) ; T08 ; `docs/conformite/registre-traitements.md` ; `docs/plan-etape-4.md`, lot I
 
 ## Décisions de la personne responsable du 6 octobre 2026 sur les indicateurs sensibles
 
@@ -908,7 +908,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
     Autre choix écarté : écrire la précision et la répartition par une fonction à part, après l'insertion directe du total. Un envoi aurait alors deux lignes de journal, contre la règle 10, et pourrait s'arrêter à moitié.
 - **Origine** : proposition d'EJP Tech (6 octobre 2026), sur le modèle recommandé avec la décision
 - **Statut** : Décidé le 6 octobre 2026, accord écrit de la personne responsable sur ce changement du modèle de données (trois tables, une fonction, une vue sur fonction ; plan de l'étape 4, question 16). Le code de B8 se construit en vague 4, après B3 et B4
-- **BRIEF** : sections 3, 6 et 7 (reporté le 6 octobre 2026, comme le reste de l'étape 4, en attendant l'accord) ; `docs/conception/contrat-etape-4.md` (sections 1, 2, 3, 5, 6, 7 et 8) ; `docs/plan-etape-4.md` (B8)
+- **BRIEF** : sections 3, 6 et 7 (reporté le 6 octobre 2026, comme le reste de l'étape 4 ; accord écrit de la personne responsable reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (sections 1, 2, 3, 5, 6, 7 et 8) ; `docs/plan-etape-4.md` (B8)
 
 ### P49. Une part ne dépasse jamais 100 %
 
@@ -918,7 +918,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : une part au-dessus de 100 % révèle une erreur de saisie (un haut ou un bas mal compté) ; la plafonner à 100 % la cacherait et ferait croire à un résultat parfait.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après les audits de B2 et B3. La liste des 19 parts réunit les 15 taux que la coordination avait notés « plafond 100 % » et 4 taux de même nature ajoutés par EJP Tech (Coordination, taux de réalisation des événements ; Kumi et Eagles, taux de participation ; Prodiges Junior, taux de présence), confirmés par la personne responsable le 6 octobre 2026
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 6 (calculs, `v_calcul`), section 3 (colonne `part`) (non reporté à ce jour) ; `docs/conception/vague-1-decisions.md` (liste des 19 parts) ; `docs/conception/contrat-etape-4.md` (`indicateur`, `private.indicateur_prevu`, `v_calcul`) ; `docs/plan-etape-4.md` (B4)
+- **BRIEF** : section 6 (calculs, `v_calcul`), section 3 (règle 13), section 4 (calculs), section 6 (colonne `part`) (reporté le 7 octobre 2026) ; `docs/conception/vague-1-decisions.md` (liste des 19 parts) ; `docs/conception/contrat-etape-4.md` (`indicateur`, `private.indicateur_prevu`, `v_calcul`) ; `docs/plan-etape-4.md` (B4)
 
 ### P50. Lignes des indicateurs sensibles : l'administration les garde, sans valeur
 
@@ -928,7 +928,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : l'administration suit la régularité des saisies (qui a saisi, quel mois) ; elle n'a pas besoin du chiffre, qui reste protégé.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après l'audit de B2
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (matrice, ligne `mesure`) (non reporté à ce jour) ; précise P45 ; `docs/plan-etape-4.md` (matrice, question 17)
+- **BRIEF** : section 7 (matrice, vues de lecture de `mesure`) (reporté le 7 octobre 2026) ; précise P45 ; `docs/plan-etape-4.md` (matrice, question 17)
 
 ### P51. Journal du texte « Pourquoi » : le berger et le conseil le lisent, pas l'administration
 
@@ -938,7 +938,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : le berger et le conseil suivent la modération des textes comme celle des points ; l'administration ne voit pas les pages des ministères.
 - **Origine** : réponse écrite de la personne responsable (6 octobre 2026), après l'audit de B3
 - **Statut** : Décidé par la personne responsable le 6 octobre 2026
-- **BRIEF** : section 7 (matrice, ligne `journal`) (non reporté à ce jour) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; `docs/plan-etape-4.md` (B7)
+- **BRIEF** : section 7 (matrice, ligne `journal`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, matrice) ; `docs/plan-etape-4.md` (B7)
 
 ### T42. Répartition d'un indicateur sensible : toute la liste, de 3 à 6 catégories
 
@@ -948,7 +948,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : la règle d'affichage de P47 suppose au moins 4 cases (3 catégories plus « Non réparti ») et n'a été simulée que jusqu'à 7 cases. Une répartition creuse (seulement les catégories renseignées) aurait 2 ou 3 cases : un total de 6 réparti 2, 2 et 2 se lirait case par case. Écrire toute la liste évite cette fuite ; imposer la plage par la base empêche qu'une liste de 2 catégories (migration, retrait) ou de 7 et plus rouvre la fuite.
 - **Origine** : audit de sécurité de B8 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
-- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)
+- **BRIEF** : section 4 (décisions du 7 octobre 2026) et section 6 (`categorie_sensible`) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (sections 5, 6 et 7) ; `docs/plan-etape-4.md` (B8, E2, E3)
 
 ### T43. Signalement et commentaire de clôture : les crochets sont refusés comme les données personnelles
 
@@ -958,7 +958,7 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : cohérence avec les autres textes libres de l'étape 4 ; coût pour le ministère : reformuler sans crochets (le message de refus le dit).
 - **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Proposé, à confirmer par la coordination ; appliqué en attendant la réponse
-- **BRIEF** : aucun changement ; `docs/conception/contrat-etape-4.md` (section 1, `texte_relu` et `texte_masque`, et section 7) ; `docs/plan-etape-4.md` (B7)
+- **BRIEF** : section 4 (décisions du 7 octobre 2026) (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, `texte_relu` et `texte_masque`, et section 7) ; `docs/plan-etape-4.md` (B7)
 
 ### T44. Journal : un trou dans la suite des identifiants révèle une ligne que le lecteur ne voit pas
 
@@ -968,4 +968,4 @@ Après la lecture du document des libellés à valider (`docs/conformite/libelle
 - **Raison** : le correctif réduit un signal faible au prix d'un changement de modèle d'accès ; la note d'analyse doit citer le risque pour que la personne responsable tranche.
 - **Origine** : audit de sécurité de B7 (7 octobre 2026), proposition d'EJP Tech
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026 : risque accepté (un numéro manquant ne dit ni le ministère, ni l'écran, ni le texte ; la base saute déjà des numéros à chaque saisie refusée ; seuls le berger et le conseil, avec un accès technique direct, pourraient le voir). Rien ne change dans le code
-- **BRIEF** : section 7 (matrice, ligne `journal`) et note d'analyse (risques résiduels) ; `docs/conception/contrat-etape-4.md` (section 1, lecture des lignes des signalements)
+- **BRIEF** : section 7 (« Données personnelles », risques résiduels acceptés) et note d'analyse (reporté le 7 octobre 2026) ; `docs/conception/contrat-etape-4.md` (section 1, lecture des lignes des signalements)

@@ -42,17 +42,17 @@ seulement si un champ et un motif sont donnés : contrainte des étapes 1 à 3, 
 
 Les 20 codes des étapes 1 à 3 restent. Codes nouveaux :
 
-| Code                       | Lot | Écrit par                                                | `cible`, `cible_id`                          | `ministere_id`        | `detail` (codes, identifiants, dates et nombres seulement)                                                   |
-| -------------------------- | --- | -------------------------------------------------------- | -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `indicateur_cree`          | B3  | `creer_indicateur`, `ajouter_suggestion`, `creer_calcul` | `indicateur`, l'indicateur créé              | celui de l'indicateur | `{"nature", "unite", "origine", "remplace"}`, et pour un ajout d'un ministère `"attente": true`, `"demande"` |
-| `indicateurs_prevus_crees` | B3  | `creer_indicateurs_prevus`                               | `ministere`, le ministère                    | le ministère          | `{"modele", "nombre"}` (code du catalogue, ou « aucun »)                                                     |
-| `indicateur_corrige`       | B3  | `corriger_indicateur`                                    | `indicateur`                                 | celui de l'indicateur | `{"champs": ["libelle", "definition"]}`                                                                      |
-| `indicateur_valide`        | B3  | `valider_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"demande", "objet": "ajout"}`                                                                              |
-| `indicateur_refuse`        | B3  | `valider_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"demande", "objet": "ajout"}`                                                                              |
-| `indicateur_retire`        | B3  | `retirer_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"motif", "avec_saisies", "calculs"}` (code du motif, section 4)                                            |
-| `fij_statistiques_saisies` | B5  | `saisir_fij_statistiques`                                | aucune (`null`), comme `fij_saisie`          | le ministère `fij`    | `{"dimanche", "nombre"}` (nombre de valeurs envoyées), jamais une valeur (fixé par W0)                       |
-| `difficulte_signalee`      | B7  | `signaler_difficulte`                                    | `signalement`, le signalement                | le ministère auteur   | `{"ecran"}` (code de l'écran), jamais le texte                                                               |
-| `signalement_clos`         | B7  | `clore_signalement`                                      | `signalement`, le signalement (pas le suivi) | le ministère auteur   | `{"ecran", "avec_commentaire"}` (T39 : le code de l'écran ; `true` ou `false`), jamais le commentaire        |
+| Code                       | Lot | Écrit par                                                | `cible`, `cible_id`                          | `ministere_id`        | `detail` (codes, identifiants, dates et nombres seulement)                                                                                                                                                                                                                                 |
+| -------------------------- | --- | -------------------------------------------------------- | -------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `indicateur_cree`          | B3  | `creer_indicateur`, `ajouter_suggestion`, `creer_calcul` | `indicateur`, l'indicateur créé              | celui de l'indicateur | `{"nature", "unite", "origine", "remplace"}`, et pour un ajout d'un ministère `"attente": true`, `"demande"` ; pour un remplacement qui retire des calculs, `"calculs"` (nombre de calculs retirés avec l'indicateur remplacé, absent s'il vaut 0), écrit par `creer_indicateur` seulement |
+| `indicateurs_prevus_crees` | B3  | `creer_indicateurs_prevus`                               | `ministere`, le ministère                    | le ministère          | `{"modele", "nombre"}` (code du catalogue, ou « aucun »)                                                                                                                                                                                                                                   |
+| `indicateur_corrige`       | B3  | `corriger_indicateur`                                    | `indicateur`                                 | celui de l'indicateur | `{"champs": ["libelle", "definition"]}`                                                                                                                                                                                                                                                    |
+| `indicateur_valide`        | B3  | `valider_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"demande", "objet": "ajout"}`                                                                                                                                                                                                                                                            |
+| `indicateur_refuse`        | B3  | `valider_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"demande", "objet": "ajout"}`                                                                                                                                                                                                                                                            |
+| `indicateur_retire`        | B3  | `retirer_indicateur`                                     | `indicateur`                                 | celui de l'indicateur | `{"motif", "avec_saisies", "calculs"}` (code du motif, section 4)                                                                                                                                                                                                                          |
+| `fij_statistiques_saisies` | B5  | `saisir_fij_statistiques`                                | aucune (`null`), comme `fij_saisie`          | le ministère `fij`    | `{"dimanche", "nombre"}` (nombre de valeurs envoyées), jamais une valeur (fixé par W0)                                                                                                                                                                                                     |
+| `difficulte_signalee`      | B7  | `signaler_difficulte`                                    | `signalement`, le signalement                | le ministère auteur   | `{"ecran"}` (code de l'écran), jamais le texte                                                                                                                                                                                                                                             |
+| `signalement_clos`         | B7  | `clore_signalement`                                      | `signalement`, le signalement (pas le suivi) | le ministère auteur   | `{"ecran", "avec_commentaire"}` (T39 : le code de l'écran ; `true` ou `false`), jamais le commentaire                                                                                                                                                                                      |
 
 Codes repris et étendus (déjà dans la liste) :
 
@@ -198,8 +198,10 @@ Règles pour chaque fichier de `seed/` :
 
 - il se suffit à lui-même : il redéfinit les aides `pg_temp` dont il a besoin (`pg_temp.j`,
   `pg_temp.h` de `seed.sql`), sans compter sur la session d'un autre fichier ;
-- il retrouve les ministères et les comptes par leurs identifiants fixes de `seed.sql`
-  (`10000000-...` pour les ministères, `20000000-...` pour les comptes) ;
+- il retrouve les ministères et les comptes de `seed.sql` par leurs identifiants fixes
+  (`10000000-...` pour les ministères, `20000000-...` pour les comptes) ; Coordination et FIJ,
+  créés par migration, n'ont pas d'identifiant fixe : il les retrouve par leur code
+  (`code = 'coordination'`, `code = 'fij'`) ;
 - ses dates suivent le décalage de semaines de `seed.sql` (le dimanche 27 sept. 2026 devient
   `private.dimanche_reference()`) ;
 - adresses en `@exemple.test` seulement, aucun nom de personne ;
@@ -818,3 +820,22 @@ Aperçus sans base ni écriture (captures) : `/apercu/fiche`, `/apercu/saisies`,
 Décidés le 6 octobre 2026, retirés des points ouverts : le journal des signalements (lu par le
 ministère auteur et EJP Tech seulement, section 1 ; B7 recrée la politique de `journal`) et la
 forme du bouton d'aide (rond, section 10).
+
+## 12. Amendements des lots, reportés au lot I
+
+Écarts que les revues des lots ont signalés et que le code applique. Le contrat les reprend ici
+pour que le lot I et `structure.test.sql` partent du même texte.
+
+1. **`indicateur_cree`, détail « calculs »** (B3, section 1). `creer_indicateur` ajoute
+   `"calculs"` (nombre de calculs retirés avec l'indicateur remplacé) au `detail` quand le
+   nombre n'est pas nul. `creer_calcul` et `ajouter_suggestion` n'écrivent jamais cette clé.
+2. **`creer_calcul` et sa part** (B4, section 7). La fonction a un 7e paramètre, `p_part boolean
+default null` : la part du calcul créé ou remplacé. Sans valeur, elle reprend celle du
+   calcul remplacé ; elle ne vaut jamais vrai pour une moyenne (P49). `creer_indicateurs_prevus`
+   recopie `part` depuis `private.indicateur_prevu`.
+3. **`v_calcul.annee_resultat` d'une part** (B4, section 6). Il est null quand la somme des
+   hauts de l'année dépasse la somme des bas (P49 : « Non calculé, à vérifier »). Aucune période
+   n'est écartée, `annee_haut` et `annee_bas` restent lisibles, et la complétude reste celle des
+   périodes saisies. L'année n'a pas de code de raison : l'écran lit « Non calculé, à vérifier »
+   quand `annee_resultat` est null alors que `annee_bas` est positif. `non_calcule_raison`
+   (`haut_depasse_bas`) ne parle que de la dernière période finie.
