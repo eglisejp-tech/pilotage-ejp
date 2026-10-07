@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
@@ -15,6 +16,7 @@ import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { Garde } from '@/features/session/Garde'
+import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
 import { PageApplication } from '@/pages/PageApplication'
@@ -39,6 +41,10 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           // Lot E4 : session, « Choisir la session », carte des FIJ, chiffres par département.
           { path: 'saisies-e4', element: <ApercuSaisiesE4 /> },
           { path: 'evenements', element: <ApercuEvenements /> },
+          // Lot E8 : « Signaler une difficulté » (ministère) et bloc « Signalements » (EJP Tech).
+          { path: 'signalements', element: <ApercuSignalements /> },
+          // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
+          { path: 'calendrier', element: <ApercuCalendrier /> },
         ],
       },
     ]
