@@ -1,6 +1,8 @@
 // Données d'exemple de l'écran 05 et de « Mes points » (aperçu /apercu/points et tests) : les
 // points de la maquette 05 et du jeu d'exemple de l'étape 1, au 1er octobre 2026. Données
-// fictives : aucun nom de personne.
+// fictives : aucun nom de personne. Ce jeu compte 5 points ouverts et 4 traités ; la base
+// d'exemple (supabase/seed.sql) en compte 6 ouverts, avec « Réimpression des supports ». Les
+// parcours sur l'aperçu (e2e/points.spec.ts) comptent donc 5 ouverts, ceux de e2e/base/ 6.
 
 import type { MinistereListe } from '@/data/ministeres'
 import type { AuteurTraitement } from '@/data/pointsListe'

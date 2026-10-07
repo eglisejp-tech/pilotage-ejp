@@ -13,6 +13,7 @@ import {
   libelleEcheance,
   LIBELLE_STATUT,
   trierOuverts,
+  trierTous,
   trierTraites,
 } from '@/lib/metier/points'
 
@@ -116,7 +117,8 @@ export function construirePoints(
       titre,
       description: texteLibreOuNull(point.description),
       attendu: texteLibreOuNull(point.action_attendue),
-      mentions: idsMentions.map(nom),
+      // Ordre alphabétique : la base ne garantit pas l'ordre des mentions d'un point.
+      mentions: idsMentions.map(nom).sort((a, b) => a.localeCompare(b, 'fr')),
       statut: point.statut,
       statutLibelle: LIBELLE_STATUT[point.statut],
       echeance,
@@ -137,6 +139,7 @@ export function construirePoints(
     ministereChoisi: choisi,
     ouverts: trierOuverts(retenus).map(ligne),
     traites,
+    tous: trierTous(retenus).map(ligne),
     recents: traites.slice(0, NOMBRE_TRAITES_RECENTS),
   }
 }

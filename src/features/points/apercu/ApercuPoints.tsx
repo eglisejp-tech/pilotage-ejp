@@ -10,10 +10,9 @@ import {
 } from '@/features/points/apercu/exemplesPoints'
 import { ChargementPoints } from '@/features/points/ChargementPoints'
 import { construirePoints } from '@/features/points/construirePoints'
-import { TEXTES_POINTS } from '@/features/points/textesPoints'
+import { ErreurPoints } from '@/features/points/ErreurPoints'
 import type { ProfilPoints } from '@/features/points/textesPoints'
 import { VuePoints } from '@/features/points/VuePoints'
-import { ErreurDePage } from '@/pages/ErreurDePage'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const ETATS = ['liste', 'vide', 'chargement', 'erreur'] as const
@@ -56,18 +55,7 @@ export function ApercuPoints() {
   const titre = titrePour(adresse, profil)
 
   if (etat === 'chargement') return <ChargementPoints titre={titre} profil={profil} />
-  if (etat === 'erreur') {
-    return (
-      <>
-        <h1 className="sr-only">{titre}</h1>
-        <ErreurDePage
-          message={TEXTES_POINTS.erreur}
-          libelleBouton={TEXTES_POINTS.reessayer}
-          onReessayer={reessayer}
-        />
-      </>
-    )
-  }
+  if (etat === 'erreur') return <ErreurPoints titre={titre} onReessayer={reessayer} />
   return (
     <VuePoints
       titre={titre}

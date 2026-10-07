@@ -21,7 +21,7 @@ export function ListePoints({ lignes, compte }: Props) {
     <div>
       <div
         aria-hidden="true"
-        className={cn('hidden pt-3 pb-2 text-[13px] text-encre-3 lg:grid', COLONNES_POINTS)}
+        className={cn('hidden pt-3 pb-2 text-note text-encre-3 lg:grid', COLONNES_POINTS)}
       >
         <span>{TEXTES_POINTS.entetes.priorite}</span>
         <span>{TEXTES_POINTS.entetes.point}</span>

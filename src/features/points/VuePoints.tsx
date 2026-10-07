@@ -62,7 +62,7 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
   const lignes = {
     ouverts: donnees.ouverts,
     traites: donnees.traites,
-    tous: [...donnees.ouverts, ...donnees.traites],
+    tous: donnees.tous,
   }[vue]
 
   const choisirMinistere = (id: string | null) => {

@@ -33,6 +33,24 @@ describe('construirePoints : les onglets', () => {
     ])
   })
 
+  it('Tous : les ouverts, puis les traités', () => {
+    expect(titres(donnees.tous)).toEqual([...titres(donnees.ouverts), ...titres(donnees.traites)])
+  })
+
+  it('les mentions d’un point sont triées par nom, quel que soit l’ordre de la base', () => {
+    const mentions = [
+      { point_id: 'p-financement', ministere_id: COORDINATION },
+      { point_id: 'p-financement', ministere_id: COMMUNICATION },
+    ]
+    for (const ordre of [mentions, [...mentions].reverse()]) {
+      const lues = construirePoints({ ...LECTURES_EXEMPLE_POINTS, mentions: ordre }, 'berger', null)
+      expect(lues.ouverts.find((ligne) => ligne.id === 'p-financement')?.mentions).toEqual([
+        'Communication',
+        'Coordination',
+      ])
+    }
+  })
+
   it('« Traités récemment » : les 5 derniers traités au plus', () => {
     expect(donnees.recents).toHaveLength(4)
     const beaucoup = {

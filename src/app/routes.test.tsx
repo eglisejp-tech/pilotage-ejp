@@ -84,6 +84,28 @@ function installerVueDeLEglise(type: TypeCompte) {
   })
 }
 
+/** Une rangée de `v_point` (ministère créateur « Communication »), ouverte ou traitée. */
+function pointExemple(id: string, titre: string, statut: 'attente_decision' | 'traite') {
+  const traite = statut === 'traite'
+  return {
+    id,
+    ministere_id: 'min-a',
+    titre,
+    description: null,
+    action_attendue: null,
+    priorite: 'normale',
+    echeance: null,
+    cree_le: '2026-10-01T10:00:00+02:00',
+    cree_par: 'compte-createur',
+    statut,
+    statut_le: '2026-10-01T10:00:00+02:00',
+    traitement_id: traite ? `traitement-${id}` : null,
+    traite_le: traite ? '2026-10-05T10:00:00+02:00' : null,
+    traite_par: null,
+    traite_commentaire: null,
+  }
+}
+
 function afficher(adresse: string) {
   const routeur = createMemoryRouter(routes, { initialEntries: [adresse] })
   render(
@@ -273,10 +295,28 @@ describe('routes', () => {
           v_semaine: [
             { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
           ],
+          // Écran 05 : un point ouvert et un point traité, pour que le test lise de vraies rangées.
+          ministere: [
+            { id: 'min-a', code: null, nom: 'Communication', desactive_le: null },
+            { id: 'min-b', code: null, nom: 'Intégration', desactive_le: null },
+          ],
+          v_point: [
+            pointExemple('point-ouvert', 'Salle pour la soirée', 'attente_decision'),
+            pointExemple('point-traite', 'Micros à remplacer', 'traite'),
+          ],
+          point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
         },
       })
       const routeur = afficher(adresse)
       expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      // Les rangées de l'écran 05 sont chargées avant de chercher des boutons : sans cette
+      // attente, le test ne contrôlerait que l'écran de chargement.
+      if (adresse.startsWith('/points')) {
+        expect(await screen.findAllByRole('article')).toHaveLength(1)
+        expect(screen.getByRole('region', { name: 'Traités récemment' })).toHaveTextContent(
+          'Micros à remplacer',
+        )
+      }
       expect(routeur.state.location.pathname).toBe(adresse.split('?')[0])
       expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
       expect(screen.queryByRole('link', { name: BOUTONS_D_ACTION })).toBeNull()

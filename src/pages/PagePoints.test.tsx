@@ -101,6 +101,9 @@ describe('PagePoints', () => {
     connecter('berger')
     hook.mockReturnValue({ etat: 'erreur', reessayer })
     afficher("Points d'attention")
+    // Le titre reste visible au-dessus du bandeau : la page garde son h1.
+    const titre = screen.getByRole('heading', { level: 1, name: "Points d'attention" })
+    expect(titre).not.toHaveClass('sr-only')
     expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     await userEvent.setup().click(screen.getByRole('button', { name: 'Réessayer' }))
     expect(reessayer).toHaveBeenCalledOnce()

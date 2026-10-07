@@ -51,6 +51,8 @@ export interface DonneesPoints {
   ouverts: LignePoint[]
   /** Onglet « Traités » : du plus récent au plus ancien traitement. */
   traites: LignePoint[]
+  /** Onglet « Tous » : les ouverts, puis les traités (`trierTous`). */
+  tous: LignePoint[]
   /** « Traités récemment » : les 5 derniers traités. */
   recents: LignePoint[]
 }

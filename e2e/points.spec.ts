@@ -215,6 +215,7 @@ test.describe('états vides et problèmes (T36)', () => {
 
   test('problème passager : le bandeau et « Réessayer »', async ({ page }) => {
     await ouvrir(page, { etat: 'erreur' })
+    await expect(page.getByRole('heading', { level: 1, name: "Points d'attention" })).toBeVisible()
     await expect(page.getByRole('alert')).toHaveText(/La connexion a échoué. Réessayez./)
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
   })

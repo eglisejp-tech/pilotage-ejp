@@ -202,6 +202,10 @@ test.describe('ministère Communication : « Mes points »', () => {
   })
 
   test('« Traités récemment » et l’onglet Traités : son point traité', async ({ page }) => {
+    await ouvrirPoints(page, '/points', 'Mes points')
+    const recents = page.getByRole('region', { name: 'Traités récemment' })
+    await expect(recents).toContainText("Micros pour Bâtir l'Église")
+    await expect(recents).toContainText('par Berger')
     await ouvrirPoints(page, '/points?vue=traites', 'Mes points')
     await expect(titres(page)).toHaveText(["Micros pour Bâtir l'Église"])
     await expect(articles(page).first()).toContainText(/Traité le \d{1,2} \S+ par Berger/)

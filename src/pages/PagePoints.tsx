@@ -2,14 +2,13 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { ChargementPoints } from '@/features/points/ChargementPoints'
-import { TEXTES_POINTS } from '@/features/points/textesPoints'
+import { ErreurPoints } from '@/features/points/ErreurPoints'
 import type { ProfilPoints } from '@/features/points/textesPoints'
 import { usePoints } from '@/features/points/usePoints'
 import { VuePoints } from '@/features/points/VuePoints'
 import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { useCompteConnecte } from '@/features/session/contexte'
 import type { TypeCompte } from '@/lib/base'
-import { ErreurDePage } from '@/pages/ErreurDePage'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
@@ -29,18 +28,8 @@ function PagePointsLue({ titre, profil, compte }: ProprietesLue) {
   const [parametres] = useSearchParams()
   const resultat = usePoints(profil, parametres.get('ministere'))
 
-  if (resultat.etat === 'erreur') {
-    return (
-      <>
-        <h1 className="sr-only">{titre}</h1>
-        <ErreurDePage
-          message={TEXTES_POINTS.erreur}
-          libelleBouton={TEXTES_POINTS.reessayer}
-          onReessayer={resultat.reessayer}
-        />
-      </>
-    )
-  }
+  if (resultat.etat === 'erreur')
+    return <ErreurPoints titre={titre} onReessayer={resultat.reessayer} />
   if (resultat.etat === 'pret') {
     return <VuePoints titre={titre} profil={profil} donnees={resultat.donnees} compte={compte} />
   }

@@ -5,6 +5,10 @@
   brief » de `docs/reference/maquettes/LISEZMOI.md`, à côté de la ligne « 01, « À décider » ». Le
   lot P3 ne l'a pas écrite lui-même : le formateur du dépôt réécrit tout ce fichier (il est dans
   `.prettierignore`, mais pas dans le hook), ce qui aurait mêlé une réécriture complète à ce lot.
+- **Essai du 7 octobre (revue)** : écrire ces écarts dans `LISEZMOI.md` avec Edit déclenche le
+  hook de format, qui réécrit tout le fichier (125 lignes de diff, tableaux reformatés) malgré
+  `.prettierignore`. L'essai a été annulé ; la recopie reste à faire à l'intégration, sans lancer
+  le formateur sur ce fichier. Les textes proposés sont aussi dans `docs/decisions.md` (T36).
 - **Statut** : tous les écarts sont **proposés** à la coordination, aucun n'est validé.
 
 ## Ce que lit l'écran
