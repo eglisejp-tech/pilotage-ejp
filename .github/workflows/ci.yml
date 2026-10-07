@@ -48,13 +48,24 @@ jobs:
   # Parcours avec une base Supabase locale (jamais un projet distant) : migrations, seed.sql,
   # Auth, API et Mailpit. Avant les parcours, Playwright lance e2e/installer-comptes.ts
   # (mot de passe et facteur TOTP de chaque compte d'exemple, par l'API).
+  # Un job par format, plus un pour les écritures, en parallèle : la suite entière dépassait les
+  # 30 minutes d'un seul job (8 octobre 2026). Chaque job a sa base locale neuve.
   e2e:
-    name: Parcours Playwright (1440, 834, 390 px)
+    name: Parcours Playwright (${{ matrix.partie.nom }})
     needs: qualite
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        partie:
+          - { nom: '1440 px', projet: ordinateur, ecritures_seules: '0' }
+          - { nom: '834 px', projet: tablette, ecritures_seules: '0' }
+          - { nom: '390 px', projet: telephone, ecritures_seules: '0' }
+          - { nom: 'écritures', projet: ecritures, ecritures_seules: '1' }
     env:
       E2E_BASE: '1'
+      E2E_ECRITURES_SEULES: ${{ matrix.partie.ecritures_seules }}
       # Google reste activé dans config.toml : valeurs factices, aucun parcours Google en CI.
       SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID: ci-sans-google
       SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_SECRET: ci-sans-google
@@ -82,17 +93,18 @@ jobs:
           echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           echo "E2E_CLE_SECRETE_LOCALE=$SECRET_KEY" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps chromium
-      - run: npm run e2e
+      # Le projet choisi entraîne la connexion (dépendance) ; les écritures, seules, n'attendent qu'elle.
+      - run: npm run e2e -- --project=${{ matrix.partie.projet }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: rapport-playwright
+          name: rapport-playwright-${{ matrix.partie.projet }}
           path: playwright-report/
           retention-days: 7
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: captures-playwright
+          name: captures-playwright-${{ matrix.partie.projet }}
           path: test-results/captures/
           retention-days: 7
           if-no-files-found: ignore
