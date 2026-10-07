@@ -61,9 +61,14 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
   const envoi = useEnvoiSaisie()
   const preparation = preparerDimanche(tous, valeurs)
   const signature = `${dimanche}|${JSON.stringify(preparation.lignes)}`
-  const pourcentage = notePourcentageActifs(
-    pourcentageFij(lu(tous, valeurs, 'en_fij'), lu(tous, valeurs, 'actifs')),
-  )
+  // Pas de pourcentage absurde quand « Dont en FIJ » dépasse les actifs : le message d'erreur
+  // suffit, la note reste vide.
+  const enFij = lu(tous, valeurs, 'en_fij')
+  const actifs = lu(tous, valeurs, 'actifs')
+  const pourcentage =
+    enFij !== null && actifs !== null && enFij > actifs
+      ? null
+      : notePourcentageActifs(pourcentageFij(enFij, actifs))
 
   const changer = (id: string) => (valeur: ValeurChamp) => {
     setValeurs((precedentes) => ({ ...precedentes, [id]: valeur }))
@@ -115,14 +120,16 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
         erreurFormulaire={null}
         erreurSousLeBouton
         ecran="saisie_dimanche"
+        correction={tous.some((element) => element.deja !== null)}
         onSubmit={soumettre}
       >
         {service ? (
           <div className="border border-filet bg-papier px-4 pt-1 pb-4">{champ(service)}</div>
         ) : null}
         {autresCommuns.length > 0 ? (
-          // Côte à côte dans le panneau (maquette 08) ; l'un sous l'autre sous 600 px, pour que la
-          // bulle d'aide en flux prenne toute la largeur de la colonne (T38, section 3).
+          // Côte à côte dans le panneau (maquette 08), champs alignés en bas de leur cellule ;
+          // l'un sous l'autre sous 600 px, pour que la bulle d'aide en flux prenne toute la
+          // largeur de la colonne (T38, section 3).
           <div className="grid grid-cols-1 gap-3 min-[600px]:grid-cols-2">
             {autresCommuns.map((element) =>
               champ(element, element.code === 'en_fij' ? pourcentage : undefined),

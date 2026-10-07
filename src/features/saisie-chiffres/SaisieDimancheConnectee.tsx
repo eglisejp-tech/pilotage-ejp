@@ -21,7 +21,7 @@ export function SaisieDimancheConnectee({ ministereId, parametreDate, titre, onF
   return (
     <PanneauSaisie
       titre={etat.etat === 'pret' ? titreDimanche(etat.dimanche) : titre}
-      surtitre={surtitreDimanche(etat.etat === 'pret' && etat.champs.correction)}
+      surtitre={etat.etat === 'pret' ? surtitreDimanche(etat.champs.correction) : undefined}
       onFermer={onFermer}
     >
       <ContenuSaisieDimanche etat={etat} />

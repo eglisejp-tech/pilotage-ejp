@@ -200,4 +200,12 @@ test.describe('« Chiffres du mois », sensible de Social (P45 à P47)', () => {
       { categorie: null, valeur: 0 },
     ])
   })
+
+  // À écrire au lot I, quand la fiche (E2) et l'accueil (E7) sont fusionnés : après l'envoi du
+  // mois, la fiche du ministère (`/ma-fiche`) montre la précision et la répartition, et « Vos
+  // saisies » (`/`) passe à Fait pour « Chiffres de <mois> ». Inscrit aussi dans la liste de
+  // recette du lot I.
+  test.fixme('la fiche montre la précision et la répartition, « Vos saisies » passe à Fait', async () => {
+    // Rien à lancer tant que E2 et E7 ne sont pas là.
+  })
 })

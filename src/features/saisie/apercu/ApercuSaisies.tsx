@@ -7,7 +7,7 @@ import { ContenuSaisieDimanche } from '@/features/saisie-chiffres/ContenuSaisieD
 import { ContenuSaisieMois } from '@/features/saisie-chiffres/ContenuSaisieMois'
 import {
   surtitreDimanche,
-  TEXTES_CHIFFRES,
+  surtitreMois,
   titreDimanche,
   titreMois,
 } from '@/features/saisie-chiffres/textes'
@@ -31,23 +31,31 @@ export function ApercuSaisies() {
   if (lireEcranApercuE3(parametres.get('ecran')) === 'mois') {
     const mois = etatApercuMois(etat)
     return (
-      <PanneauSaisie
-        titre={mois.etat === 'pret' ? titreMois(mois.mois, mois.enCours) : 'Chiffres du mois'}
-        surtitre={TEXTES_CHIFFRES.surtitreMois}
-        onFermer={fermer}
-      >
-        <ContenuSaisieMois etat={mois} />
-      </PanneauSaisie>
+      <>
+        <title>Aperçu, Chiffres du mois, Pilotage EJP</title>
+        <PanneauSaisie
+          titre={mois.etat === 'pret' ? titreMois(mois.mois) : 'Chiffres du mois'}
+          surtitre={mois.etat === 'pret' ? surtitreMois(mois.enCours) : undefined}
+          onFermer={fermer}
+        >
+          <ContenuSaisieMois etat={mois} />
+        </PanneauSaisie>
+      </>
     )
   }
   const dimanche = etatApercuDimanche(etat)
   return (
-    <PanneauSaisie
-      titre={dimanche.etat === 'pret' ? titreDimanche(dimanche.dimanche) : 'Chiffres du dimanche'}
-      surtitre={surtitreDimanche(dimanche.etat === 'pret' && dimanche.champs.correction)}
-      onFermer={fermer}
-    >
-      <ContenuSaisieDimanche etat={dimanche} />
-    </PanneauSaisie>
+    <>
+      <title>Aperçu, Saisie du dimanche, Pilotage EJP</title>
+      <PanneauSaisie
+        titre={dimanche.etat === 'pret' ? titreDimanche(dimanche.dimanche) : 'Chiffres du dimanche'}
+        surtitre={
+          dimanche.etat === 'pret' ? surtitreDimanche(dimanche.champs.correction) : undefined
+        }
+        onFermer={fermer}
+      >
+        <ContenuSaisieDimanche etat={dimanche} />
+      </PanneauSaisie>
+    </>
   )
 }

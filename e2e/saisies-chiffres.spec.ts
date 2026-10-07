@@ -17,6 +17,8 @@ async function ouvrir(page: Page, ecran: Ecran) {
   await page.evaluate(() => document.fonts.ready)
 }
 
+const REFUS_PRECISION = "N'écrivez aucun nom ni information personnelle."
+
 const boutonsAide = (page: Page) => page.getByRole('button', { name: /^Aide : / })
 
 const TOUS: Ecran[] = [
@@ -82,6 +84,13 @@ test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
       ),
     ).toBeVisible()
     await expect(page.getByRole('button', { name: 'Enregistrer la correction' })).toBeVisible()
+    // La ligne du bas ne contredit pas « Votre saisie la remplacera dans les totaux ».
+    await expect(
+      page.getByText(
+        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
+      ),
+    ).toBeVisible()
+    await expect(page.getByText('elle ne remplace rien')).toHaveCount(0)
   })
 })
 
@@ -98,8 +107,20 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     await expect(
       page.getByText('La somme des catégories (11) dépasse le total du mois (7).'),
     ).toBeVisible()
+    // Le message est relié au groupe et à chaque case, qui sont marquées en erreur.
+    const grille = page.getByRole('group', { name: 'Répartition (facultatif)' })
+    await expect(grille).toHaveAccessibleDescription(/dépasse le total du mois/)
+    await expect(page.getByLabel('Malaise', { exact: true })).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
+    await expect(page.getByLabel('Malaise', { exact: true })).toHaveAccessibleDescription(
+      /dépasse le total du mois/,
+    )
     await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
     await expect(page.getByRole('status').getByText(/enregistrés\.$/)).toHaveCount(0)
+    // Seule la somme est fausse : le focus va à la première case de la grille.
+    await expect(grille.getByRole('textbox').first()).toBeFocused()
   })
 
   test('la précision : qui la lit, le rappel une fois, « 0 sur 280 », 9 caractères refusés', async ({
@@ -127,9 +148,8 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, { ecran: 'mois', etat: 'correction' })
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Septembre 2026, en cours' }),
-    ).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Septembre 2026' })).toBeVisible()
+    await expect(page.getByText('Chiffres du mois, en cours')).toBeVisible()
     await expect(page.getByLabel('Bénéficiaires (passages)', { exact: true })).toHaveValue('7')
     await expect(page.getByLabel('Malaise', { exact: true })).toHaveValue('4')
     await expect(page.getByLabel('Précision (facultatif)', { exact: true })).toHaveValue(
@@ -149,9 +169,18 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     const precision = page.getByLabel('Précision (facultatif)', { exact: true })
     await precision.fill('Texte modifié pour ce mois.')
     await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
-    await expect(page.getByText("N'écrivez aucun nom ni information personnelle.")).toBeVisible()
+    // Le rappel sous le champ contient la même phrase : on vise l'erreur elle-même (son id).
+    await expect(page.locator('[id^="precision-"][id$="-erreur"]')).toHaveText(REFUS_PRECISION)
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(precision).toHaveValue('Texte modifié pour ce mois.')
+    // Le focus va au champ, qui référence l'erreur : le lecteur d'écran la lit.
+    await expect(precision).toBeFocused()
+    await expect(precision).toHaveAccessibleDescription(
+      /N'écrivez aucun nom ni information personnelle\.$/,
+    )
+    // Modifier le champ retire l'erreur de la base.
+    await precision.fill('Texte modifié pour ce mois, version 2.')
+    await expect(page.locator('[id^="precision-"][id$="-erreur"]')).toHaveCount(0)
   })
 
   test('sans indicateur du mois : la phrase et « Revenir à ma fiche »', async ({ page }) => {

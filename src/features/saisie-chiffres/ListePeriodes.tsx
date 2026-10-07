@@ -21,7 +21,8 @@ interface Props {
 /**
  * « Choisir un autre dimanche » ou « Choisir un autre mois » : un bouton qui ouvre la liste des
  * périodes, une ligne de 48 px par période (LISEZMOI, « Choisir la session »). Chaque ligne ouvre
- * la saisie de sa période ; la période affichée porte `aria-current`.
+ * la saisie de sa période ; la période affichée porte `aria-current`. Changer de période remplace
+ * l'entrée d'historique : « Retour » ferme la saisie, il ne ramène pas à la période d'avant.
  */
 export function ListePeriodes({ libelle, periodes }: Props) {
   const [ouverte, setOuverte] = useState(false)
@@ -43,6 +44,7 @@ export function ListePeriodes({ libelle, periodes }: Props) {
             <li key={periode.cle} className="border-b border-filet">
               <Link
                 to={periode.vers}
+                replace
                 aria-current={periode.courante ? 'page' : undefined}
                 className={cn(
                   'flex min-h-12 items-center py-2 text-[15px] text-encre underline underline-offset-4 hover:bg-fond',

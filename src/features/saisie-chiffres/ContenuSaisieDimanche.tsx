@@ -1,7 +1,11 @@
 import { EtatVide } from '@/components/etats/EtatVide'
 import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
 import { FormulaireDimanche } from '@/features/saisie-chiffres/FormulaireDimanche'
-import { actionSaisirDimanche, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
+import {
+  actionSaisirDimanche,
+  dimancheRefuse,
+  TEXTES_CHIFFRES,
+} from '@/features/saisie-chiffres/textes'
 import type { EtatSaisieDimanche } from '@/features/saisie-chiffres/useSaisieDimanche'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -28,6 +32,8 @@ export function ContenuSaisieDimanche({ etat }: { etat: EtatSaisieDimanche }) {
       />
     )
   }
+  // Les actions vers un autre dimanche remplacent l'entrée d'historique : « Retour » ferme la
+  // saisie (BRIEF, section 9, Adresses).
   return (
     <>
       {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
@@ -45,9 +51,10 @@ export function ContenuSaisieDimanche({ etat }: { etat: EtatSaisieDimanche }) {
           action={{
             libelle: actionSaisirDimanche(etat.dimancheReference),
             vers: adresseSaisieDimanche(etat.dimancheReference),
+            remplace: true,
           }}
         >
-          {TEXTES_CHIFFRES.dimancheRefuse}
+          {dimancheRefuse(etat.dimancheReference)}
         </EtatVide>
       ) : null}
       {etat.etat === 'pret' ? (
@@ -56,6 +63,7 @@ export function ContenuSaisieDimanche({ etat }: { etat: EtatSaisieDimanche }) {
           action={{
             libelle: actionSaisirDimanche(etat.dimancheReference),
             vers: adresseSaisieDimanche(etat.dimancheReference),
+            remplace: true,
           }}
         >
           {TEXTES_CHIFFRES.matinSansIndicateur}

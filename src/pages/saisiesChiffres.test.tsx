@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -91,19 +92,22 @@ describe('/saisir/dimanche', () => {
 
   it('une date qui n’est pas un dimanche : aucun résultat, retour au dimanche de référence', async () => {
     connecte('ministere', { v_semaine: [SEMAINE], indicateur: INDICATEURS_DIMANCHE })
-    afficher('/saisir/dimanche?date=2026-09-28')
+    const routeur = afficher('/saisir/dimanche?date=2026-09-28')
     expect(
       await screen.findByText(
-        "Ce dimanche ne se saisit pas : choisissez un dimanche passé ou aujourd'hui.",
+        "Cette date n'est pas un dimanche déjà passé. Choisissez le dimanche 27 sept. ou un dimanche précédent.",
         undefined,
         ATTENTE,
       ),
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Saisir le dimanche 27 sept.' })).toHaveAttribute(
-      'href',
-      '/saisir/dimanche?date=2026-09-27',
-    )
+    // Sans date valide, le surtitre ne répète pas le titre.
+    expect(screen.getAllByText('Chiffres du dimanche')).toHaveLength(1)
+    const lien = screen.getByRole('link', { name: 'Saisir le dimanche 27 sept.' })
+    expect(lien).toHaveAttribute('href', '/saisir/dimanche?date=2026-09-27')
     expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toBeInTheDocument()
+    // Rester dans la même saisie ne fait pas grandir l'historique : « Retour » la ferme.
+    await userEvent.setup().click(lien)
+    expect(routeur.state.historyAction).toBe('REPLACE')
   })
 
   it('une lecture en échec : « La connexion a échoué. Réessayez. » et « Réessayer »', async () => {
@@ -143,9 +147,24 @@ describe('/saisir/mois', () => {
     })
     afficher('/saisir/mois?mois=2026-09')
     expect(
-      await screen.findByRole('heading', { level: 1, name: 'Septembre 2026, en cours' }, ATTENTE),
+      await screen.findByRole('heading', { level: 1, name: 'Septembre 2026' }, ATTENTE),
     ).toBeInTheDocument()
+    // « en cours » est dans le surtitre : le titre ne passe pas à la ligne sur un mot seul.
+    expect(screen.getByText('Chiffres du mois, en cours')).toBeInTheDocument()
     expect(screen.getByLabelText('Bénéficiaires (passages)', { exact: true })).toBeInTheDocument()
+  })
+
+  it('changer de mois remplace l’entrée d’historique : « Retour » ferme la saisie', async () => {
+    connecte('ministere', {
+      v_semaine: [SEMAINE],
+      indicateur: indicateursMoisExemple(true),
+      categorie_sensible: CATEGORIES_EXEMPLE,
+    })
+    const routeur = afficher('/saisir/mois?mois=2026-08')
+    const lien = await screen.findByRole('link', { name: 'Septembre 2026 (en cours)' }, ATTENTE)
+    await userEvent.setup().click(lien)
+    expect(routeur.state.historyAction).toBe('REPLACE')
+    expect(routeur.state.location.search).toBe('?mois=2026-09')
   })
 
   it('un mois futur dans l’adresse : son message, et le mois proposé', async () => {

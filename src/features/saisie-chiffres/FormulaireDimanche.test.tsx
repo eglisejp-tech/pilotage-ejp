@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -56,6 +56,50 @@ describe('FormulaireDimanche (maquette 08)', () => {
     await utilisateur.clear(actifs)
     await utilisateur.type(actifs, '22')
     expect(screen.getByText(/^50\s% des actifs$/)).toBeInTheDocument()
+  })
+
+  it('« Dont en FIJ » au-dessus des actifs : le message d’erreur seul, aucun pourcentage absurde', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(null)
+    const enFij = screen.getByLabelText('Dont en FIJ', { exact: true })
+    await utilisateur.clear(enFij)
+    await utilisateur.type(enFij, '31')
+    expect(screen.queryByText(/% des actifs/)).toBeNull()
+    await utilisateur.type(service(), '10')
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(
+      screen.getByText('Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/% des actifs/)).toBeNull()
+  })
+
+  it('la ligne du bas ne contredit pas « Déjà saisi » : première saisie ou correction', () => {
+    afficher(null)
+    expect(
+      screen.getByText("Votre saisie s'ajoute à l'historique, elle ne remplace rien."),
+    ).toBeInTheDocument()
+    cleanup()
+    afficher('correction')
+    expect(
+      screen.getByText(
+        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/elle ne remplace rien/)).toBeNull()
+  })
+
+  it('« Déjà saisi » est lu avec le champ (aria-describedby)', () => {
+    afficher('correction')
+    const phrase = screen.getByText(/^Déjà saisi : 10, le 27 sept\./)
+    expect(service().getAttribute('aria-describedby')).toContain(phrase.id)
+  })
+
+  it('la mention d’un ajout à valider est avant le champ, et lue avec lui', () => {
+    afficher(null)
+    const mention = screen.getByText('À valider par EJP Tech. Vous pouvez déjà le saisir.')
+    const abonnes = screen.getByLabelText('Abonnés à ce jour', { exact: true })
+    expect(abonnes.getAttribute('aria-describedby')).toContain(mention.id)
+    expect(mention.compareDocumentPosition(abonnes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
   it('les STARs au service manquent : le message sous le champ, le focus y va, rien ne part', async () => {
@@ -145,7 +189,9 @@ describe('FormulaireDimanche (maquette 08)', () => {
   it('le dimanche matin : la phrase visible, seul l’indicateur du matin', () => {
     afficher('matin')
     expect(
-      screen.getByText('Avant 12 h, ce dimanche reçoit seulement les chiffres saisis le matin.'),
+      screen.getByText(
+        "Avant 12 h, seuls les chiffres du matin se saisissent. Le reste s'ouvre à midi.",
+      ),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText('STARs au service ce dimanche')).toBeNull()
     expect(screen.getByLabelText('Présents la nuit de prière', { exact: true })).toBeInTheDocument()

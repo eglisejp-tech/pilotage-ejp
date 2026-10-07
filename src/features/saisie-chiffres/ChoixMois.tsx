@@ -35,9 +35,10 @@ export function ChoixMois({ mois, proposes, rattrapage }: Props) {
             <li key={propose.mois}>
               <Link
                 to={adresseSaisieMois(propose.mois)}
+                replace
                 aria-current={propose.mois === mois ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-cible items-center justify-center border px-3 py-2 text-center text-sm font-semibold',
+                  'flex h-full min-h-cible items-center justify-center border px-3 py-2 text-center text-sm font-semibold',
                   propose.mois === mois
                     ? 'border-encre bg-encre text-papier'
                     : 'border-encre bg-papier text-encre hover:bg-fond',

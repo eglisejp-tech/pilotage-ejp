@@ -54,6 +54,7 @@ export function ContenuSaisieMois({ etat }: { etat: EtatSaisieMois }) {
           action={{
             libelle: actionSaisirMois(etat.moisPropose),
             vers: adresseSaisieMois(etat.moisPropose),
+            remplace: true,
           }}
         >
           {etat.message}

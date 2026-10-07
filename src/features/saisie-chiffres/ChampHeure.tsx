@@ -11,6 +11,12 @@ interface Props {
   onChange: (valeur: { heures: string; minutes: string }) => void
   aide?: CodeAide | null
   definition?: string
+  /** Mention visible sous la définition, avant les champs (« À valider par EJP Tech... »). */
+  mention?: string
+  /** Note visible sous le format (« Saisi le 24 sept. »). */
+  note?: string
+  /** « Déjà saisi : 10 h 42, le 27 sept. à 12 h 41... » : sous le format, lue avec les champs. */
+  dejaSaisi?: string
   erreur?: string
 }
 
@@ -23,12 +29,33 @@ const classeChamp =
  * visible (aides-contextuelles.md, section 8). Le groupe porte le libellé de l'indicateur ; son
  * aide, s'il en a une, est à côté du libellé, hors des `<label>`.
  */
-export function ChampHeure({ id, libelle, valeur, onChange, aide, definition, erreur }: Props) {
+export function ChampHeure({
+  id,
+  libelle,
+  valeur,
+  onChange,
+  aide,
+  definition,
+  mention,
+  note,
+  dejaSaisi,
+  erreur,
+}: Props) {
   const idLibelle = useId()
   const idDefinition = `${id}-definition`
+  const idMention = `${id}-mention`
   const idFormat = `${id}-format`
+  const idNote = `${id}-note`
+  const idDeja = `${id}-deja`
   const idErreur = `${id}-erreur`
-  const decritPar = [definition ? idDefinition : '', idFormat, erreur ? idErreur : '']
+  const decritPar = [
+    definition ? idDefinition : '',
+    mention ? idMention : '',
+    idFormat,
+    note ? idNote : '',
+    dejaSaisi ? idDeja : '',
+    erreur ? idErreur : '',
+  ]
     .filter(Boolean)
     .join(' ')
 
@@ -43,6 +70,11 @@ export function ChampHeure({ id, libelle, valeur, onChange, aide, definition, er
       {definition ? (
         <p id={idDefinition} className="text-sm leading-normal text-encre-3">
           {definition}
+        </p>
+      ) : null}
+      {mention ? (
+        <p id={idMention} className="text-note text-encre-3">
+          {mention}
         </p>
       ) : null}
       <div className="grid grid-cols-2 gap-3">
@@ -77,7 +109,7 @@ export function ChampHeure({ id, libelle, valeur, onChange, aide, definition, er
             maxLength={2}
             value={valeur.minutes}
             onChange={(evenement) =>
-              onChange({ ...valeur, minutes: evenement.target.value.replace(/\D/g, '') })
+              onChange({ ...valeur, minutes: garderChiffres(evenement.target.value) })
             }
             aria-invalid={erreur ? true : undefined}
             aria-describedby={decritPar}
@@ -88,6 +120,16 @@ export function ChampHeure({ id, libelle, valeur, onChange, aide, definition, er
       <p id={idFormat} className="text-note text-encre-3">
         {TEXTES_CHIFFRES.formatHeure}
       </p>
+      {note ? (
+        <p id={idNote} className="text-note text-encre-3">
+          {note}
+        </p>
+      ) : null}
+      {dejaSaisi ? (
+        <p id={idDeja} className="text-note text-encre-3">
+          {dejaSaisi}
+        </p>
+      ) : null}
       {erreur ? (
         <p id={idErreur} className="text-[15px] leading-normal text-alerte">
           {erreur}

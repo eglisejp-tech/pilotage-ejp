@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -72,6 +72,46 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     ).toBeInTheDocument()
     await utilisateur.click(bouton())
     expect(enregistrer).not.toHaveBeenCalled()
+  })
+
+  it('une somme trop grande : le message est relié au groupe et aux cases, le focus va à la première case', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(null)
+    const grille = screen.getByRole('group', { name: 'Répartition (facultatif)' })
+    expect(grille).not.toHaveAttribute('aria-describedby')
+    expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
+    await utilisateur.type(total(), '7')
+    await utilisateur.type(categorie('Malaise'), '9')
+    expect(grille).toHaveAccessibleDescription(
+      'La somme des catégories (9) dépasse le total du mois (7).',
+    )
+    for (const libelle of ['Malaise', 'Blessure', 'Autre']) {
+      expect(categorie(libelle)).toHaveAttribute('aria-invalid', 'true')
+      expect(categorie(libelle)).toHaveAccessibleDescription(
+        'La somme des catégories (9) dépasse le total du mois (7).',
+      )
+    }
+    await utilisateur.click(bouton())
+    expect(categorie('Malaise')).toHaveFocus()
+    await utilisateur.clear(categorie('Malaise'))
+    await utilisateur.type(categorie('Malaise'), '4')
+    expect(grille).not.toHaveAttribute('aria-describedby')
+    expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('la ligne du bas dit que la dernière saisie compte quand « Déjà saisi » est affiché', () => {
+    afficher(null)
+    expect(
+      screen.getByText("Votre saisie s'ajoute à l'historique, elle ne remplace rien."),
+    ).toBeInTheDocument()
+    cleanup()
+    afficher('correction')
+    expect(
+      screen.getByText(
+        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/elle ne remplace rien/)).toBeNull()
   })
 
   it('une précision de 9 caractères est refusée sous le champ ; 10 caractères partent', async () => {
@@ -175,10 +215,21 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     await utilisateur.clear(precision())
     await utilisateur.type(precision(), 'Texte modifié pour ce mois.')
     await utilisateur.click(bouton())
-    const message = await screen.findByText("N'écrivez aucun nom ni information personnelle.")
+    // Le rappel sous le champ contient la même phrase : l'erreur se trouve par son identifiant.
+    const message = await waitFor(() => {
+      const erreur = document.querySelector('[id^="precision-"][id$="-erreur"]')
+      expect(erreur).not.toBeNull()
+      return erreur as HTMLElement
+    })
+    expect(message).toHaveTextContent("N'écrivez aucun nom ni information personnelle.")
     expect(precision().getAttribute('aria-describedby')).toContain(message.id)
     expect(screen.queryByRole('alert')).toBeNull()
     expect(precision()).toHaveValue('Texte modifié pour ce mois.')
+    // Le focus va au champ : le lecteur d'écran lit l'erreur avec lui.
+    expect(precision()).toHaveFocus()
+    // Modifier le champ retire l'erreur de la base.
+    await utilisateur.type(precision(), ' Suite.')
+    expect(document.querySelector('[id^="precision-"][id$="-erreur"]')).toBeNull()
   })
 
   it('premier usage sans rien saisir : « Saisissez au moins un chiffre. »', async () => {

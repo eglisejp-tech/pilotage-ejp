@@ -21,6 +21,11 @@ interface Props {
   /** Le refus de la base s'affiche-t-il sous le bouton (et non sous un champ) ? */
   erreurSousLeBouton: boolean
   ecran: EcranSignalement
+  /**
+   * Une saisie fait déjà foi pour un champ (« Déjà saisi : ... » est affiché) : la ligne de
+   * l'historique dit alors que la dernière saisie compte, sans contredire cette phrase.
+   */
+  correction: boolean
   onSubmit: () => void
   /** Les champs. */
   children: ReactNode
@@ -41,6 +46,7 @@ export function FormulaireChiffres({
   erreurFormulaire,
   erreurSousLeBouton,
   ecran,
+  correction,
   onSubmit,
   children,
 }: Props) {
@@ -52,7 +58,9 @@ export function FormulaireChiffres({
   return (
     <form noValidate className="flex flex-col gap-5" onSubmit={soumettre}>
       {children}
-      <p className="text-note text-encre-3">{TEXTES_CHIFFRES.historique}</p>
+      <p className="text-note text-encre-3">
+        {correction ? TEXTES_CHIFFRES.historiqueCorrection : TEXTES_CHIFFRES.historique}
+      </p>
       <EtapeVerifier />
       <BoutonEnregistrer
         libelle={bouton}

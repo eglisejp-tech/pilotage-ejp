@@ -72,7 +72,7 @@ describe('précision (P46)', () => {
     expect(lirePrecision('a'.repeat(280))).toEqual({ etat: 'ok', valeur: 'a'.repeat(280) })
     expect(lirePrecision('a'.repeat(281))).toEqual({
       etat: 'erreur',
-      message: 'La précision fait 280 caractères au plus.',
+      message: 'La précision doit faire entre 10 et 280 caractères.',
     })
     expect(lirePrecision('   ')).toEqual({ etat: 'vide' })
   })

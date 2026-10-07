@@ -45,7 +45,8 @@ export type EtatSaisieMois =
  * Lectures de « Chiffres du mois » : la semaine de Paris (`v_semaine`), les indicateurs, les
  * saisies du mois du ministère et les catégories des sensibles ; puis, pour le mois choisi, le
  * total le plus récent de chaque sensible, avec sa répartition et sa précision (lignes brutes du
- * ministère), pour les reprendre dans le formulaire. Un envoi relit toutes les lectures.
+ * ministère, en une seule lecture), pour les reprendre dans le formulaire. Un envoi relit toutes
+ * les lectures sans démonter le formulaire.
  */
 export function useSaisieMois(ministereId: string, parametreMois: string | null): EtatSaisieMois {
   const apres = useApresEcriture()
@@ -76,21 +77,23 @@ export function useSaisieMois(ministereId: string, parametreMois: string | null)
   const sensibles = duMois
     .filter((indicateur) => indicateur.sensible)
     .map((indicateur) => indicateur.id)
+  // Une seule lecture pour les totaux du mois et leurs détails (répartitions, précisions), dont la
+  // clé ne dépend pas des identifiants des totaux : après un envoi, ceux-ci changent, et des clés
+  // qui en dépendraient repasseraient par le chargement, démontant le formulaire (message de
+  // réussite et focus perdus). Le chargement n'a lieu qu'au premier affichage d'un mois.
   const totaux = useQuery({
     queryKey: [RACINE_SAISIE_CHIFFRES, 'totaux', ministereId, mois, sensibles],
-    queryFn: () => (mois === null ? [] : lireTotauxDuMois(ministereId, mois, sensibles)),
+    queryFn: async () => {
+      if (mois === null) return { totaux: [], repartitions: [], precisions: [] }
+      const lus = await lireTotauxDuMois(ministereId, mois, sensibles)
+      const ids = totauxQuiFontFoi(lus)
+      const [repartitions, precisions] = await Promise.all([
+        lireRepartitions(ids),
+        lirePrecisions(ids),
+      ])
+      return { totaux: lus, repartitions, precisions }
+    },
     enabled: mois !== null,
-  })
-  const ids = totaux.data ? totauxQuiFontFoi(totaux.data) : []
-  const repartitions = useQuery({
-    queryKey: [RACINE_SAISIE_CHIFFRES, 'repartitions', ids],
-    queryFn: () => lireRepartitions(ids),
-    enabled: totaux.isSuccess,
-  })
-  const precisions = useQuery({
-    queryKey: [RACINE_SAISIE_CHIFFRES, 'precisions', ids],
-    queryFn: () => lirePrecisions(ids),
-    enabled: totaux.isSuccess,
   })
 
   const enregistrer = async (lignes: LigneMois[]) => {
@@ -99,7 +102,7 @@ export function useSaisieMois(ministereId: string, parametreMois: string | null)
     apres()
   }
 
-  const lectures = [semaine, indicateurs, mesures, categories, totaux, repartitions, precisions]
+  const lectures = [semaine, indicateurs, mesures, categories, totaux]
   if (enEchec(lectures)) {
     return {
       etat: 'erreur',
@@ -122,8 +125,6 @@ export function useSaisieMois(ministereId: string, parametreMois: string | null)
     !mesures.data ||
     !categories.data ||
     !totaux.data ||
-    !repartitions.data ||
-    !precisions.data ||
     choix === null
   ) {
     return { etat: 'chargement' }
@@ -138,7 +139,11 @@ export function useSaisieMois(ministereId: string, parametreMois: string | null)
       indicateurs: indicateurs.data,
       mesuresMois: mesures.data,
       categories: categories.data,
-      details: detailsDesTotaux(totaux.data, repartitions.data, precisions.data),
+      details: detailsDesTotaux(
+        totaux.data.totaux,
+        totaux.data.repartitions,
+        totaux.data.precisions,
+      ),
     }),
     proposes: moisAProposer(semaine.data.aujourdhui, complets),
     rattrapage: moisARattraper(semaine.data.aujourdhui, complets),

@@ -37,6 +37,7 @@ export function GrilleRepartition({
 }: Props) {
   const idTitre = useId()
   const id = idGrille(indicateurId)
+  const idEtat = `${id}-etat`
   const message =
     erreur ?? (etat.etat === 'depasse' || etat.etat === 'erreur' ? etat.message : null)
   return (
@@ -45,6 +46,7 @@ export function GrilleRepartition({
       role="group"
       tabIndex={-1}
       aria-labelledby={idTitre}
+      aria-describedby={message !== null ? idEtat : undefined}
       className="flex flex-col gap-2 outline-hidden"
     >
       <div className="flex min-h-cible flex-wrap items-center">
@@ -63,10 +65,12 @@ export function GrilleRepartition({
             onChange={(valeur) => onChange(categorie.code, valeur)}
             max={CATEGORIE_MAX}
             variante="compact"
+            invalide={message !== null}
+            decritAussi={message !== null ? idEtat : undefined}
           />
         ))}
       </div>
-      <p aria-live="polite" className="text-[15px] leading-normal">
+      <p id={idEtat} aria-live="polite" className="text-[15px] leading-normal">
         {message !== null ? (
           <span className="text-alerte">{message}</span>
         ) : etat.etat === 'reste' ? (

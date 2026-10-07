@@ -27,8 +27,14 @@ export const TEXTES_CHIFFRES = {
   boutonDimanche: 'Enregistrer les chiffres',
   boutonCorrection: 'Enregistrer la correction',
   boutonMois: 'Enregistrer les chiffres du mois',
-  /** Ligne visible de la maquette 08, au-dessus du bouton. */
+  /** Ligne visible de la maquette 08, au-dessus du bouton, pour une première saisie. */
   historique: "Votre saisie s'ajoute à l'historique, elle ne remplace rien.",
+  /**
+   * Même ligne quand un « Déjà saisi : ... » est affiché : elle ne doit pas contredire « Votre
+   * saisie la remplacera dans les totaux. ». Écart avec la maquette 08. Proposé.
+   */
+  historiqueCorrection:
+    "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
   /** Titre du groupe des indicateurs propres du dimanche (aide `dimanche.propres`). */
   groupePropres: 'Indicateurs du ministère',
 
@@ -36,11 +42,9 @@ export const TEXTES_CHIFFRES = {
   /** Liste des dimanches proposés : « Dimanche 20 sept. (déjà saisi) ». */
   suffixeDejaSaisi: ' (déjà saisi)',
   /** Le dimanche du jour, avant midi, pour un indicateur saisi le matin (X3). Proposé. */
-  matinSeulement: 'Avant 12 h, ce dimanche reçoit seulement les chiffres saisis le matin.',
+  matinSeulement: "Avant 12 h, seuls les chiffres du matin se saisissent. Le reste s'ouvre à midi.",
   /** Le dimanche du jour, avant midi, sans indicateur saisi le matin. Proposé. */
   matinSansIndicateur: 'Ce dimanche se saisit à partir de 12 h.',
-  /** Adresse avec une date qui n'est pas un dimanche passé ou du jour. Proposé. */
-  dimancheRefuse: "Ce dimanche ne se saisit pas : choisissez un dimanche passé ou aujourd'hui.",
 
   autreMois: 'Choisir un autre mois',
 
@@ -48,7 +52,8 @@ export const TEXTES_CHIFFRES = {
   precisionLibelle: 'Précision (facultatif)',
   precisionLecteurs: 'Lue par votre ministère, le berger, le conseil et EJP Tech.',
   precisionTropCourte: `Écrivez au moins ${LONGUEUR_TEXTE_MIN} caractères, ou laissez la précision vide.`,
-  precisionTropLongue: `La précision fait ${LONGUEUR_TEXTE_MAX} caractères au plus.`,
+  /** Le message de la base (`private.verifier_texte`), repris tel quel. */
+  precisionTropLongue: `La précision doit faire entre ${LONGUEUR_TEXTE_MIN} et ${LONGUEUR_TEXTE_MAX} caractères.`,
   /** Sous une précision déjà envoyée, reprise dans le champ (plan, E3 : « la dire »). Proposé. */
   precisionRetrait: 'Videz le champ pour retirer cette précision.',
   /** La précision du total le plus récent a été masquée : elle n'est pas reprise. Proposé. */
@@ -82,9 +87,22 @@ export function surtitreDimanche(correction: boolean): string {
   return correction ? TEXTES_CHIFFRES.surtitreCorrection : TEXTES_CHIFFRES.surtitreDimanche
 }
 
-/** Titre de « Chiffres du mois » : « Septembre 2026 », « Octobre 2026, en cours ». */
-export function titreMois(mois: Mois, enCours: boolean): string {
-  return enCours ? `${libelleMois(mois)}, en cours` : libelleMois(mois)
+/** Titre de « Chiffres du mois » : « Septembre 2026 » (« en cours » va dans le surtitre). */
+export function titreMois(mois: Mois): string {
+  return libelleMois(mois)
+}
+
+/** Surtitre de « Chiffres du mois » : « Chiffres du mois, en cours » pour le mois en cours. */
+export function surtitreMois(enCours: boolean): string {
+  return enCours ? `${TEXTES_CHIFFRES.surtitreMois}, en cours` : TEXTES_CHIFFRES.surtitreMois
+}
+
+/**
+ * Adresse avec une date qui n'est pas un dimanche déjà passé (ou du jour) : la phrase dit
+ * pourquoi et quel dimanche choisir. Proposé.
+ */
+export function dimancheRefuse(dimancheReference: DateIso): string {
+  return `Cette date n'est pas un dimanche déjà passé. Choisissez le dimanche ${formaterJourCourt(dimancheReference)} ou un dimanche précédent.`
 }
 
 /** « Dimanche dernier : 9 », ou « Dimanche dernier : non saisi ». */
