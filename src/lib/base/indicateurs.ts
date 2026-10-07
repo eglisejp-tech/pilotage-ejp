@@ -9,7 +9,19 @@
 // `numeric` arrivent en nombres. Une absence de saisie est toujours `null`, jamais 0 ; un « moins
 // de 3 » (seuil des sensibles) se rend par `valeur` à `null` et `moins_de_3` à vrai.
 
-import type { TableEnLecture, Vue } from './communs'
+import type { Aucun, TableEnLecture, Vue } from './communs'
+
+/**
+ * Table en ajout seulement, écrite directement par le navigateur (lot E3 : la saisie du dimanche,
+ * une seule instruction `insert` par envoi) : `saisi_le` et `saisi_par` sont posés par la base
+ * (`forcer_auteur`), jamais envoyés. Aucune mise à jour.
+ */
+type TableEnAjout<Ligne, Ajout> = {
+  Row: Ligne
+  Insert: Ajout
+  Update: Aucun
+  Relationships: []
+}
 
 /**
  * Unité d'un indicateur (plan de l'étape 4, B1) : plafond de chaque unité dans
@@ -162,6 +174,58 @@ export type TablesIndicateurs = {
     ordre: number
     /** Date de retrait, null : catégorie en vigueur. */
     retiree_le: string | null
+  }>
+  /**
+   * Saisies des chiffres (étape 1, étendue par B1) : la saisie la plus récente d'une période fait
+   * foi (`date_ref`, puis `saisi_le`, puis `id`). Le ministère lit ses lignes brutes, sensibles
+   * comprises ; la saisie du dimanche (E3) y écrit en une instruction. « Chiffres du mois » passe
+   * par `saisir_chiffres_mois`. Pour un « à ce jour », la base pose `date_ref` au jour de Paris.
+   */
+  mesure: TableEnAjout<
+    {
+      id: number
+      indicateur_id: string
+      ministere_id: string
+      /** Le dimanche, le 1er du mois, ou le jour de Paris d'un « à ce jour ». */
+      date_ref: string
+      valeur: number
+      saisi_le: string
+      saisi_par: string
+    },
+    { indicateur_id: string; ministere_id: string; date_ref: string; valeur: number }
+  >
+  /**
+   * Répartition d'un total sensible (B8) : lignes brutes lues par le seul ministère qui saisit,
+   * écrites seulement par `saisir_chiffres_mois`. Une ligne par catégorie en cours de la liste.
+   */
+  ventilation_sensible: TableEnLecture<{
+    id: number
+    mesure_id: number
+    indicateur_id: string
+    ministere_id: string
+    /** 1er du mois. */
+    mois: string
+    /** Code de `categorie_sensible`. */
+    categorie: string
+    valeur: number
+    saisi_le: string
+    saisi_par: string
+  }>
+  /**
+   * Précision d'un total sensible (B8) : table brute lue par le ministère auteur et EJP Tech,
+   * écrite seulement par `saisir_chiffres_mois`. « [texte masqué par EJP Tech] » si masquée.
+   */
+  precision_sensible: TableEnLecture<{
+    id: string
+    mesure_id: number
+    indicateur_id: string
+    ministere_id: string
+    /** 1er du mois. */
+    mois: string
+    /** 10 à 280 caractères. */
+    texte: string
+    saisi_le: string
+    saisi_par: string
   }>
 }
 
