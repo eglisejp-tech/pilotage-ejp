@@ -1,6 +1,6 @@
 # Libellés et définitions des indicateurs à valider
 
-- **Date** : 6 octobre 2026
+- **Date** : 6 octobre 2026, révisé le 7 octobre 2026 (valeurs exactes des indicateurs sensibles pour le berger et le conseil)
 - **Statut** : validé pour EJP Tech par la personne responsable le 6 octobre 2026 ; à valider par la coordination et les ministères avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
@@ -79,10 +79,10 @@ Sur la fiche d'un ministère, un chiffre commun peut porter le nom de la demande
 
 Un indicateur est dit sensible quand il touche à la santé, à l'écoute, à l'accompagnement ou aux enfants. Il est créé et actif dès le premier jour, comme tous les autres : ces chiffres font partie des demandes de la coordination, ils doivent donc être présents. Ce qui change, ce sont les protections :
 
-- **Le mois en cours se saisit** : comme pour tout indicateur du mois, on peut saisir le total du mois en cours. Il s'affiche « en cours » et n'entre dans aucune somme avant la fin du mois. On peut le corriger : seule la dernière saisie du mois est montrée au berger, au conseil et à EJP Tech. Les saisies intermédiaires ne leur sont pas montrées.
+- **Le mois en cours se saisit** : comme pour tout indicateur du mois, on peut saisir le total du mois en cours. Il s'affiche « en cours » et n'entre dans aucune somme avant la fin du mois. On peut le corriger : seule la dernière saisie du mois est montrée au berger, au conseil et à EJP Tech, avec sa valeur exacte. Les saisies intermédiaires ne leur sont pas montrées.
 - **Un total, et deux ajouts facultatifs** : le total du mois, plus au choix une répartition par catégories et un texte « Précision » (voir plus bas). Aucun calcul n'est fait à partir de ces chiffres.
-- **Seuil « moins de 3 »** : pour le berger, le conseil et EJP Tech, une valeur de 1 ou 2 s'affiche « moins de 3 ». 0 reste 0. La somme de l'année ne compte que les mois affichés et le dit, pour qu'aucune différence ne révèle un mois masqué.
-- **Lecture réservée** : le ministère voit ses valeurs exactes. Les lignes saisies ne sont lisibles que par lui. Ces chiffres n'apparaissent jamais sur la vue de l'église, ni dans un courriel.
+- **Valeurs exactes pour le berger, le conseil et EJP Tech** : ils voient la valeur exacte, 1 et 2 compris. Il n'y a ni « moins de 3 » ni masquage. La somme de l'année additionne tous les mois écoulés saisis et dit sa complétude. La personne responsable l'a décidé le 7 octobre 2026 : le berger et le conseil ont besoin de savoir précisément ce qu'il en est. Elle accepte le risque qu'un chiffre exact permette de reconnaître une personne dans un très petit groupe.
+- **Lecture réservée** : le ministère voit ses valeurs exactes. Les lignes saisies ne sont lisibles que par lui. L'administration de l'église ne voit aucune valeur (elle voit seulement qu'une ligne existe, avec sa date) et les autres ministères ne voient rien. Ces chiffres n'apparaissent jamais sur la vue de l'église, ni dans un courriel.
 - **Journal sans valeur** : le journal garde la trace qu'une saisie a eu lieu, jamais le chiffre ni le texte.
 - **Information des personnes** : avant la mise en service, la page Confidentialité de l'outil dira que, pour la santé, l'accompagnement, l'écoute et les enfants, seuls des totaux, des répartitions par catégories larges et de courtes précisions sont saisis, sans nom ni information personnelle.
 - **Dossier de conformité** : EJP Tech rédige l'entrée du registre des traitements et une courte note d'analyse, et les remet à la coordination avant la mise en service. La coordination, qui décide au nom de l'église, dit si une analyse d'impact complète est nécessaire.
@@ -91,8 +91,7 @@ La répartition par catégories :
 
 - **Ce que c'est** : pour chaque indicateur sensible, la coordination fixe une courte liste de catégories (par exemple « malaise », « blessure », « autre »). Le ministère répartit son total du mois entre ces catégories. C'est facultatif.
 - **Ce que l'outil vérifie** : la somme des catégories ne dépasse jamais le total du mois. Ce qui n'est pas réparti s'affiche « non réparti ».
-- **Le seuil s'applique à chaque catégorie** : une catégorie de 1 ou 2 s'affiche « moins de 3 » au berger, au conseil et à EJP Tech.
-- **Pas de fuite par calcul** : dès qu'une catégorie s'affiche « moins de 3 », on la retrouverait parfois en retranchant les autres du total. L'outil masque donc aussi une autre catégorie, et toute la répartition si cela ne suffit pas, pour qu'aucun calcul ne révèle un nombre de 1 ou 2. La même règle vaut pour la part « non réparti ». Le ministère, lui, voit toujours ses valeurs exactes.
+- **Chaque catégorie s'affiche exacte** : le ministère, le berger, le conseil et EJP Tech voient la valeur de chaque catégorie, « non réparti » compris, sans « moins de 3 » ni masquage.
 - **Les catégories ne viennent pas des ministères** : elles s'écrivent dans l'outil à partir des listes de la coordination. Tant qu'une liste n'est pas arrivée, l'indicateur n'a pas de répartition.
 - **Qui lit** : les mêmes personnes que pour le chiffre lui-même.
 
@@ -167,7 +166,7 @@ Pour chaque indicateur, écrivez dans la colonne « Votre réponse » la liste d
 
 Pour bien choisir les catégories :
 
-- **De 3 à 6 catégories larges.** Plus il y a de catégories, plus les nombres sont petits, et plus l'outil doit les cacher (« moins de 3 »).
+- **De 3 à 6 catégories larges.** Plus il y a de catégories, plus les nombres sont petits, et plus une catégorie peut désigner une personne connue de tous.
 - **Jamais une catégorie si précise qu'elle désigne une personne.** Une catégorie doit décrire un type de situation, pas un cas. Si une catégorie ne compte en pratique qu'une personne connue de tous, elle est trop précise.
 - **Toujours une catégorie « autre »**, pour que le total puisse toujours être réparti en entier.
 - **Aucun nom, aucune tranche d'âge fine, aucun lieu, aucune date.**
@@ -198,7 +197,7 @@ La liste de la coordination ne dit pas tout. EJP Tech a dû trancher les points 
 | Étapes du parcours                          | nouveaux, réguliers, membres, au service                                                        | Coordo FIJ               |               |
 | PCNC, « terminé », réponse satisfaite       | sigle gardé ; deux meilleures notes                                                             | Formation                |               |
 | Recrutement abouti                          | intégration dans une équipe, comptée le mois de l'intégration                                   | MDS                      |               |
-| Seuil des petits nombres                    | « moins de 3 » pour 1 et 2                                                                      | Coordination             |               |
+| Valeurs des chiffres sensibles              | exactes pour le ministère, le berger, le conseil et EJP Tech (décidé le 7 octobre 2026)         | Coordination             |               |
 | Mois en cours des chiffres sensibles        | accepté, affiché « en cours », hors des sommes                                                  | Coordination             |               |
 | Précision attachée à un chiffre sensible    | texte facultatif de 10 à 280 caractères, lu par le ministère, le berger, le conseil et EJP Tech | Coordination             |               |
 | Catégories des chiffres sensibles           | listes fixées par la coordination (section dédiée)                                              | Coordination             |               |
@@ -545,7 +544,7 @@ Question de la relecture : MCAD distingue-t-elle les « lives » et les « diffu
 
 ### Ce que le ministère saisit
 
-Quatre de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. Aucun détail médical individuel n'apparaît dans l'outil : seulement des totaux par mois (le mois en cours compris), une répartition facultative par catégories et une précision facultative, avec le seuil « moins de 3 », jamais sur la vue de l'église ni dans un courriel.
+Quatre de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » au début du document. Aucun détail médical individuel n'apparaît dans l'outil : seulement des totaux par mois (le mois en cours compris), une répartition facultative par catégories et une précision facultative, avec des valeurs exactes pour le berger, le conseil et EJP Tech, jamais sur la vue de l'église ni dans un courriel.
 
 | Indicateur tel qu'il apparaîtra                     | Ce qu'on compte exactement                                                                                     | Quand       | Unité  | Sensible | Votre réponse |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
