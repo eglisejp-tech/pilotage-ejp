@@ -16,6 +16,7 @@ import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { Garde } from '@/features/session/Garde'
+import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
@@ -45,6 +46,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'signalements', element: <ApercuSignalements /> },
           // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
           { path: 'calendrier', element: <ApercuCalendrier /> },
+          // Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
+          { path: 'points-actions', element: <ApercuActionsPoint /> },
         ],
       },
     ]
