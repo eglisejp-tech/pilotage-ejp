@@ -1,0 +1,46 @@
+# Hébergement Netlify de Pilotage EJP (plan de l'étape 8, lot D1).
+# Ce fichier ne contient aucun secret : seules des adresses publiques y figurent.
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Application à page unique : toute adresse inconnue renvoie l'application (les gardes de routes
+# décident ensuite). Netlify sert d'abord les vrais fichiers (/assets/*, /favicon.svg).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# En-têtes de sécurité, sur toutes les adresses.
+#
+# Politique de contenu (CSP), en clair :
+# - script-src 'self' : aucun script en ligne, aucun eval.
+# - style-src 'self' 'unsafe-inline' : les styles en ligne ne servent qu'aux positions calculées
+#   (barre de session, bulles d'aide) ; aucun script n'est autorisé en ligne.
+# - img-src 'self' data: : data: pour l'image du QR code de la double authentification.
+# - font-src 'self' : les polices sont servies par @fontsource, jamais par Google.
+# - connect-src : l'application ne parle qu'aux deux projets Supabase (préproduction et production).
+#   Le jeton de /acces est dans l'adresse : d'où Referrer-Policy: no-referrer.
+#
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # Le marqueur du projet de production figure ici, et nulle part ailleurs.
+    # À remplacer par l'identifiant du projet de production avant la mise en service : tant que
+    # le marqueur reste, le navigateur bloque les appels vers la production.
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://ugbitornbspatpcowlvg.supabase.co https://<ref-prod>.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    X-Robots-Tag = "noindex, nofollow"
+
+# Fichiers empreints par Vite : le nom change à chaque build, le cache peut être immuable.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
