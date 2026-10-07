@@ -115,13 +115,15 @@ export const TEXTES_AIDE = {
     'Indicateurs que le ministère suit en plus des chiffres communs, calculs compris.',
 
   // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
-  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 12 »).
+  // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 30 » : la base limite
+  // une fiche à 30 lignes, `limites_indicateurs.lignes_max`, décision X7 ; le « 12 » du texte de
+  // conception est dépassé).
   // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Prévus par la
   // coordination » de /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la
   // coordination », quand le nom du ministère n'est pas reconnu. `indicateurs.usage` : première
   // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
   'indicateurs.nombre':
-    'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 12 » : 8 suivis, 12 au plus par fiche.',
+    'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 30 » : 8 suivis, 30 au plus par fiche.',
   'indicateurs.prevus':
     'Indicateurs que la coordination a choisis pour ce ministère. Une fois créés, ils entrent dans ses saisies et sa fiche.',
   'indicateurs.modele':

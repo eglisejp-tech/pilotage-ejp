@@ -619,8 +619,6 @@ const ADRESSES_AMORCES_C0 = [
   '/journal',
   '/journal-technique',
   '/sessions',
-  '/indicateurs',
-  '/indicateurs/:id',
   '/ma-fiche/indicateurs',
 ]
 const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
@@ -658,7 +656,10 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     async (profil) => {
       connecte(profil)
       afficher('/indicateurs')
-      expect(await screen.findByText("Cet écran arrive à l'étape 6.")).toBeInTheDocument()
+      // Lot L3a : la vraie page (testée à part dans `indicateursConfiguration.test.tsx`).
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Indicateurs' }),
+      ).toBeInTheDocument()
       await waitFor(() =>
         expect(within(navigation()[0]!).getByRole('link', { name: 'Indicateurs' })).toHaveAttribute(
           'aria-current',
