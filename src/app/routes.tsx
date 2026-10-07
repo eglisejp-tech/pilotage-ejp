@@ -4,6 +4,7 @@ import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
+import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
 import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
@@ -45,6 +46,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'signalements', element: <ApercuSignalements /> },
           // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
           { path: 'calendrier', element: <ApercuCalendrier /> },
+          // Lot L3a : configuration des indicateurs (`/indicateurs` et `/indicateurs/:id`).
+          { path: 'indicateurs', element: <ApercuIndicateurs /> },
         ],
       },
     ]
