@@ -179,13 +179,17 @@ describe('routes', () => {
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
-      for (const nav of navigation()) {
-        expect(
-          within(nav)
-            .getAllByRole('link')
-            .map((lien) => lien.textContent),
-        ).toEqual(onglets)
-      }
+      // La session du test précédent peut rester affichée un instant sous charge (même titre
+      // « Cette semaine » pour le berger et le ministère) : on attend les onglets du profil.
+      await waitFor(() => {
+        for (const nav of navigation()) {
+          expect(
+            within(nav)
+              .getAllByRole('link')
+              .map((lien) => lien.textContent),
+          ).toEqual(onglets)
+        }
+      })
       expect(within(navigation()[0]!).getByRole('link', { name: titre })).toHaveAttribute(
         'aria-current',
         'page',
