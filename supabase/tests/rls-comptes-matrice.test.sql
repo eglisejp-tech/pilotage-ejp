@@ -5,7 +5,7 @@
 -- Objets lus ou appelés par l'écran : v_etat_comptes (et private.etat_comptes, qu'elle lit),
 -- compte et ministere (lecture, aucune écriture directe), indicateur (le nombre d'indicateurs
 -- propres d'un ministère) et v_usage_indicateurs ; les écritures passent par les Edge Functions,
--- dont les fonctions serveur restent fermées à authenticated.
+-- dont les fonctions serveur restent fermées à authenticated (comptes-serveur-droits.test.sql).
 -- Profils (sept comptes) : les ministères Communication et FIJ, le berger, le conseil,
 -- l'administration de l'église et EJP Tech du jeu d'exemple, plus un ministère désactivé créé
 -- ici ; en aal2, la dérivation ajoute la ligne aal1 de chacun (zéro ligne lue, toute autre
@@ -68,17 +68,7 @@ create temp view matrice_l1 (profil, objet, action, aal, attendu, requete) as
      ('ministere', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'update public.ministere set desactive_le = null where id = (select des_m from ctx)'),
      ('ministere', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'delete from public.ministere where id = (select des_m from ctx)'),
-     ('serveur_creer_compte', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'select public.serveur_creer_compte((select admin from ctx), gen_random_uuid(), ''conseil'', null, null, null)'),
-     ('serveur_desactiver_compte', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'select public.serveur_desactiver_compte((select admin from ctx), (select inv from ctx))'),
-     ('serveur_reactiver_compte', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'select public.serveur_reactiver_compte((select admin from ctx), (select des from ctx))'),
-     ('serveur_reinitialiser_2fa', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'select public.serveur_reinitialiser_2fa((select admin from ctx), (select ok from ctx))'),
-     ('serveur_relancer_invitation', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
-      'select public.serveur_relancer_invitation((select admin from ctx), (select inv from ctx))')
+      'delete from public.ministere where id = (select des_m from ctx)')
    ) as m(objet, action, attendu, requete)
   -- Le compte désactivé lit sa propre ligne en aal1 aussi (seule exception à la politique aal2).
   union all
