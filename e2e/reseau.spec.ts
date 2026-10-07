@@ -37,7 +37,8 @@ async function enregistrerSession(page: Page) {
       amr: [{ method: 'totp', timestamp: expiration - 60 }],
       exp: expiration,
     }),
-    'signature',
+    // Une signature en base64url de longueur valide : le client refuse un jeton mal formé.
+    'c2lnbmF0dXJl',
   ].join('.')
   const session = {
     access_token: jeton,
@@ -163,8 +164,13 @@ test.describe('lecture interrompue', () => {
 
     compteDisponible = true
     await page.getByRole('button', { name: 'Réessayer' }).click()
-    await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toHaveCount(0)
-    await expect(page.getByRole('navigation').first()).toBeVisible()
+    // L'écran d'erreur de la session cède la place à l'application. Les autres lectures de la
+    // page d'accueil échouent encore (la base factice ne répond qu'au compte) et leur erreur porte
+    // le même texte : on contrôle donc l'écran de session, pas l'alerte.
+    await expect(
+      page.getByText("Vos informations de connexion n'ont pas pu être vérifiées"),
+    ).toHaveCount(0)
+    await expect(page.getByRole('banner')).toBeVisible()
   })
 
   test('hors ligne, une lecture de page échoue au lieu de rester en « Chargement »', async ({
