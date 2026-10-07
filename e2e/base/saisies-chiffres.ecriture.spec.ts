@@ -135,7 +135,9 @@ test.describe('« Chiffres du mois », sensible de Social (P45 à P47)', () => {
     const malaise = page.getByLabel('Malaise', { exact: true })
     const blessure = page.getByLabel('Blessure', { exact: true })
     const autre = page.getByLabel('Autre', { exact: true })
-    const precision = page.getByLabel('Précision (facultatif)', { exact: true })
+    // Social a plusieurs indicateurs sensibles, donc plusieurs champs « Précision » : celui de
+    // l'indicateur du test, par son identifiant (`idPrecision`).
+    const precision = page.locator(`#precision-${id}`)
     const enregistrer = page.getByRole('button', { name: 'Enregistrer les chiffres du mois' })
     const reussite = page.getByRole('status').getByText(/^Chiffres d.+ enregistrés\.$/)
 
