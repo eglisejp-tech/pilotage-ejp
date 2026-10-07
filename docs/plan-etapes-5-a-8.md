@@ -62,6 +62,11 @@ dès le premier jour, les écrans qui les lisent arrivent ensuite.
 6. **L'administration de l'église disponible ce soir, vers 21 h 30** : elle seule crée les comptes
    (`creer-compte` exige `admin_eglise`).
 7. **Les limites d'usage des agents** : jusqu'à sept agents tournent en même temps l'après-midi.
+8. **La CI GitHub qui tourne** : **bloquée depuis 10 h 10 ce matin**. Le push de ce plan
+   (`etape-5-8-plans`) n'a lancé aucun job ; GitHub répond « The job was not started because
+   recent account payments have failed or your spending limit needs to be increased ». Sans CI,
+   aucun test de base ni parcours e2e ne tourne (pas de Docker sur ce poste), donc aucun lot ne
+   peut être déclaré terminé. C'est l'action A0, à faire avant toute autre.
 
 ## 2. Calendrier de la journée et chemin critique
 
@@ -457,6 +462,14 @@ le tableau de bord concerné et dans le coffre de l'église.
 
 ### A. Maintenant (10 h à 11 h)
 
+- **A0. Débloquer la CI GitHub (bloquant, avant tout le reste).** github.com, organisation
+  `eglisejp-tech`, Settings, « Billing and licensing » : vérifier le moyen de paiement (« Payment
+  information »), puis « Budgets and alerts » : relever le budget des Actions (ou retirer l'arrêt
+  à zéro). Repère : chaque push lance 4 jobs, environ 35 min de calcul ; une journée à 30 push
+  consomme environ 1 000 min. Recommandation : un budget d'Actions de 50 $ pour octobre, avec
+  une alerte à 75 %. Contrôle : relancer le dernier run de `etape-5-8-plans` (onglet Actions,
+  « Re-run all jobs ») : les jobs démarrent.
+
 - **A1. Projet Supabase de production.** supabase.com/dashboard, sélecteur d'organisation, « New
   organization » : nom « EJP production », offre **Pro**, moyen de paiement de l'église. Puis « New
   project » : nom `pilotage-ejp-production`, mot de passe de la base généré et rangé dans le
@@ -665,6 +678,9 @@ le tableau de bord concerné et dans le coffre de l'église.
 
 - **Limites d'usage des agents** : jusqu'à sept agents l'après-midi. Parade : l'ordre de Q3, et
   aucun lot reporté (section 4) lancé avant demain.
+- **CI bloquée par la facturation GitHub** (constaté à 10 h 10) : tant que A0 n'est pas fait,
+  rien ne se vérifie et rien ne se fusionne. Chaque heure perdue ici décale toute la journée
+  d'une heure ; au-delà de 13 h, l'ouverture de ce soir n'est plus tenable (repli 1).
 - **CI sans Docker** : chaque échec de pgTAP ou d'e2e coûte 30 à 45 min. Parade : chaque lot
   pousse tôt et souvent ; IO commence par les lots déjà verts.
 - **Réponses de la coordination** : sans adresse de l'administration (D4), pas d'amorçage ; sans
