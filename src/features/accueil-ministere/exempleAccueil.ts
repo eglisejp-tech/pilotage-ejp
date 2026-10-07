@@ -74,9 +74,15 @@ export const LIGNE_EVENEMENT_MENTIONNE: LigneVosSaisies = {
   action: null,
 }
 
+/** Identifiants de l'exemple : Communication est le ministère du compte. */
+export const MINISTERE_EXEMPLE = 'communication'
+
 export const POINTS_EXEMPLE: PointFiche[] = [
   {
     id: 'p1',
+    statut: 'a_traiter',
+    ministereId: MINISTERE_EXEMPLE,
+    mentionIds: ['coordination'],
     priorite: 'haute',
     ministere: 'Communication',
     echeance: { texte: 'avant le 3 oct.', depassee: false },
@@ -89,6 +95,9 @@ export const POINTS_EXEMPLE: PointFiche[] = [
   },
   {
     id: 'p2',
+    statut: 'a_traiter',
+    ministereId: 'integration',
+    mentionIds: [MINISTERE_EXEMPLE],
     priorite: 'normale',
     ministere: 'Intégration',
     echeance: { texte: 'avant le 8 oct.', depassee: false },
@@ -111,6 +120,7 @@ export function exempleAccueil(
   points: PointFiche[] = POINTS_EXEMPLE,
 ): DonneesAccueilMinistere {
   return {
+    ministereId: MINISTERE_EXEMPLE,
     ouverture: construireOuverture(lignes, CONTEXTE_EXEMPLE),
     vosSaisies: [...lignes],
     vosPoints: { etat: 'donnees', donnees: points },

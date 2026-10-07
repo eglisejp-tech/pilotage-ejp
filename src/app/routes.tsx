@@ -18,6 +18,7 @@ import { PageMotDePasseOublie } from '@/features/connexion/PageMotDePasseOublie'
 import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
+import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
 import { Garde } from '@/features/session/Garde'
 import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
@@ -57,6 +58,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'nouveau-point', element: <ApercuNouveauPoint /> },
           // Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
           { path: 'points-actions', element: <ApercuActionsPoint /> },
+          // Lot P3 : écran 05 « Points d'attention » et « Mes points », lus par e2e/points.spec.ts.
+          { path: 'points', element: <ApercuPoints /> },
         ],
       },
     ]

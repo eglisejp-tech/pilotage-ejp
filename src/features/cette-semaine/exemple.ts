@@ -158,6 +158,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     ),
     attendu: texte('Décision du conseil sur le budget'),
     mentions: [],
+    statut: 'attente_decision',
+    ministereId: 'int',
+    mentionIds: [],
   },
   {
     id: 'planning-trimestre',
@@ -168,6 +171,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     description: texte("Les dates d'octobre à décembre doivent être arrêtées avant la réunion."),
     attendu: texte('Valider les dates du trimestre'),
     mentions: [],
+    statut: 'a_traiter',
+    ministereId: 'coo',
+    mentionIds: [],
   },
   {
     id: 'salle-louange',
@@ -178,6 +184,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     description: texte("La salle du 10 octobre n'est pas encore confirmée."),
     attendu: texte('Confirmer la salle'),
     mentions: ['Coordination'],
+    statut: 'a_traiter',
+    ministereId: 'com',
+    mentionIds: ['coo'],
   },
   {
     id: 'visuels-welcome',
@@ -188,6 +197,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     description: texte("Affiche et flyer de l'accueil du 15 octobre."),
     attendu: texte('Livrer les visuels'),
     mentions: ['Communication'],
+    statut: 'a_traiter',
+    ministereId: 'int',
+    mentionIds: ['com'],
   },
   {
     id: 'renfort-sortie',
@@ -198,6 +210,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     description: texte('Il manque 4 accompagnateurs pour la sortie du 17 octobre.'),
     attendu: texte('Trouver des volontaires'),
     mentions: ['Social'],
+    statut: 'a_traiter',
+    ministereId: 'jeu',
+    mentionIds: ['soc'],
   },
   {
     id: 'reimpression-supports',
@@ -208,6 +223,9 @@ export const pointsOuvertsExemple: PointADecider[] = [
     description: texte('Les livrets du trimestre sont épuisés.'),
     attendu: texte('Passer la commande'),
     mentions: [],
+    statut: 'a_traiter',
+    ministereId: 'pju',
+    mentionIds: [],
   },
 ]
 

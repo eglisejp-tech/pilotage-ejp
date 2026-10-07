@@ -17,7 +17,7 @@ Ce kit prépare un dépôt pour que Claude Code construise l'application « Pilo
 | `.claude/agents/qa-parcours.md`     | Sous-agent qui écrit et lance les tests Playwright par type de compte                                                                                                                |
 | `.claude/skills/verifier/`          | Commande `/verifier` : toute la chaîne de tests en une fois                                                                                                                          |
 | `.claude/skills/nouvelle-table/`    | Commande `/nouvelle-table` : procédure migration + RLS + tests                                                                                                                       |
-| `.mcp.json`                         | Serveurs MCP : Supabase (lecture seule, projet de préproduction) et Playwright (navigateur)                                                                                          |
+| `.mcp.json`                         | Serveur MCP : Playwright (navigateur). Le serveur Supabase est retiré (T52)                                                                                                          |
 | `docs/reference/maquettes/`         | Les maquettes validées de tous les écrans, profil par profil (images et HTML)                                                                                                        |
 | `docs/reference/tokens.css`         | Couleurs, polices et tailles de la direction visuelle retenue                                                                                                                        |
 | `docs/reference/`                   | Aussi : le prototype HTML (comportement) et la réponse V2 au cahier des charges                                                                                                      |
@@ -36,7 +36,7 @@ Ce kit prépare un dépôt pour que Claude Code construise l'application « Pilo
 3. La CLI Supabase est une dépendance de développement du projet (2.118) : elle s'appelle par `npx supabase`, sans installation globale.
 4. Docker : **indisponible sur ce poste** (ni WSL ni Hyper-V, il faut l'informatique). En attendant, la base locale ne démarre pas ici : les tests de base (`npx supabase db start` puis `npx supabase test db`) tournent dans GitHub Actions (job « base » de `.github/workflows/ci.yml`).
 5. Claude Code dans VS Code (installé). `gh` est facultatif.
-6. Les comptes de l'église : le dépôt GitHub `eglisejp-tech/pilotage-ejp` (D6) et un projet Supabase de **préproduction**, créé dans une organisation au nom de l'église, région Paris. Note son identifiant de projet (project ref).
+6. Les comptes de l'église : le dépôt GitHub `eglisejp-tech/pilotage-ejp` (D6) et un projet Supabase, créé dans une organisation au nom de l'église, région Paris. Depuis T52 (7 octobre 2026), ce projet (`ugbitornbspatpcowlvg`, offre gratuite) est la **production** : il n'y a plus de préproduction distante.
 
 ## Mise en place
 
@@ -50,19 +50,14 @@ git config user.email "eglisejptech@gmail.com"
 npm ci
 ```
 
-Le serveur MCP Supabase pointe par défaut sur le projet de préproduction (`ugbitornbspatpcowlvg`, en lecture seule) : rien à régler. Cet identifiant n'est pas un secret, il figure déjà dans l'adresse publique du projet. Pour viser un autre projet, enregistre la variable `SUPABASE_DEV_PROJECT_REF` pour ton utilisateur, puis ferme et rouvre VS Code (un `export` dans Git Bash ne suffit pas : Claude Code hérite de l'environnement de VS Code) :
-
-```powershell
-[Environment]::SetEnvironmentVariable('SUPABASE_DEV_PROJECT_REF', 'identifiant_du_projet_de_preproduction', 'User')
-```
+Le serveur MCP Supabase est retiré (T52) : **Claude ne lit plus la base**, ni les données ni les journaux techniques, parce qu'elle contient les vrais chiffres de l'église. Il n'y a donc plus de variable `SUPABASE_DEV_PROJECT_REF` à régler (si tu l'avais enregistrée, tu peux la supprimer). Les contrôles de la base (tables, journaux, conseillers de sécurité) se font par toi, au tableau de bord Supabase. Dans la connexion du connecteur Supabase de claude.ai, retire aussi l'accès à ce projet.
 
 Dans VS Code, ajoute aussi `"claudeCode.initialPermissionMode": "plan"` aux réglages utilisateur (JSON) : l'extension ne lit pas le mode de départ dans le `settings.json` du projet, et le mode Auto laisserait un classifieur approuver à ta place ce que le kit te fait valider (dépendances, commits).
 
 Dans Claude Code :
 
-1. Tape `/mcp`, sélectionne `supabase` et connecte-toi avec ton compte Supabase. Quand Supabase demande quelle organisation autoriser, choisis seulement celle de la préproduction, jamais celle de la production. Le serveur est en lecture seule.
-2. Accepte les serveurs du projet quand Claude Code le demande.
-3. Vérifie que la conversation est en **mode plan** (Maj+Tab) avant le premier message. Après ton accord sur le plan, passe en « Manual » ou « Edit automatically ».
+1. Accepte le serveur du projet (Playwright) quand Claude Code le demande. Ne connecte aucun serveur Supabase.
+2. Vérifie que la conversation est en **mode plan** (Maj+Tab) avant le premier message. Après ton accord sur le plan, passe en « Manual » ou « Edit automatically ».
 
 ## Premier message d'une nouvelle étape
 
@@ -98,7 +93,7 @@ sous-agent qa-parcours pour les tests, puis ui-reviewer sur les captures
 
 - **Une étape par session.** Utilise `/clear` entre deux étapes pour repartir avec un contexte propre ; `CLAUDE.md` et `BRIEF.md` restent la mémoire.
 - **Relis chaque plan.** C'est le moment le moins cher pour corriger une erreur.
-- **Ne donne jamais de clé de production.** Le MCP Supabase est en lecture seule sur la préproduction. Les commandes qui touchent un projet distant (`npx supabase link`, `db push`, `functions deploy`, `secrets`, `--linked`, `--db-url`) et `git push` sont interdites à Claude Code dans les permissions : tu les lances toi-même, dans ton terminal.
+- **Ne donne jamais de clé de production.** Claude ne lit pas la base (le MCP Supabase est retiré, T52). Les commandes qui touchent un projet distant (`npx supabase link`, `db push`, `functions deploy`, `secrets`, `--linked`, `--db-url`) et `git push` sont interdites à Claude Code dans les permissions : tu les lances toi-même, dans ton terminal.
 - **Garde les réponses de la coordination à jour** dans `docs/decisions.md` et dans `BRIEF.md`, section 4, dès qu'elle répond.
 - **Commits** : un par étape, sur une branche d'étape (`etape-1-base`), après `/verifier` au vert et ta relecture du diff.
 
@@ -116,5 +111,5 @@ Claude ne pousse jamais. Tu pousses toi-même, dans ton terminal (pas dans Claud
 - Un hook refuse « par précaution » : il n'a pas pu lire son entrée ou lancer node ou git. Vérifie que node et Git Bash répondent, puis recommence.
 - `git`, `npm` ou `bash` échouent sans raison claire : vérifie que tu travailles bien dans `C:\Users\GraceManassePASSIDEM\dev\pilotage-ejp`, pas dans Documents ni OneDrive (accès contrôlé aux dossiers).
 - `npx supabase start` ou `npx supabase test db` échouent en local : c'est attendu tant que Docker manque. Envoie la branche et lis le job « base » de la CI.
-- Le MCP Supabase ne répond pas : relance `/mcp` et reconnecte-toi avec le compte de l'organisation EJP TECH. Le message « Resource must be a valid MCP endpoint » veut dire que l'adresse du serveur est invalide : vérifie l'identifiant du projet dans `.mcp.json` (et `SUPABASE_DEV_PROJECT_REF` si tu l'as enregistrée).
+- Une vérification de la base est nécessaire (une table, un journal, un conseiller de sécurité) : fais-la toi-même au tableau de bord Supabase, puis décris le résultat à Claude sans coller de donnée réelle. Claude n'a plus d'accès à la base (T52).
 - Les tests RLS échouent : ne pas désactiver la RLS pour « faire passer ». Demander à `rls-auditor` d'analyser l'échec.

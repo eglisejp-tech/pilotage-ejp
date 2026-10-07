@@ -6,7 +6,7 @@
 // États vides (T36) : chaque bloc dit qu'il n'a rien à montrer par une union discriminée (`etat`),
 // une liste vide ou `null`, jamais par un 0.
 
-import type { NatureIndicateur, Priorite, TypeCompte } from '@/lib/base'
+import type { NatureIndicateur, Priorite, StatutPoint, TypeCompte } from '@/lib/base'
 import type { EtatFraicheur } from '@/lib/metier/fraicheur'
 import type { Segment } from '@/lib/metier/phrases'
 
@@ -178,6 +178,12 @@ export interface DonneesFiche {
 /** Un point de la fiche, en lecture (les boutons arrivent à l'étape 5). */
 export interface PointFiche {
   id: string
+  /** Statut du point (`v_point.statut`) : les boutons d'action en lisent les droits (étape 5). */
+  statut: StatutPoint
+  /** Ministère créateur (`v_point.ministere_id`), pour les droits des boutons, jamais son nom. */
+  ministereId: string
+  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`), pour les droits. */
+  mentionIds: string[]
   priorite: Priorite
   /** Ministère créateur : « Communication », « Social (désactivé) ». */
   ministere: string
