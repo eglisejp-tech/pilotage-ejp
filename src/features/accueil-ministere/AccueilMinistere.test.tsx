@@ -118,7 +118,7 @@ describe('BlocVosPoints', () => {
     await userEvent.click(aide)
     expect(aide).toHaveAttribute('aria-expanded', 'true')
     expect(bloc).toHaveTextContent(
-      'Les points que vous avez créés et ceux qui vous mentionnent. Un point traité reste visible 7 jours.',
+      'Les points créés par votre ministère ou qui le mentionnent. Un point traité reste affiché 7 jours.',
     )
     // Les boutons « Changer le statut » et « Marquer traité » arrivent à l'étape 5.
     expect(within(bloc).queryByRole('button', { name: /Marquer traité/ })).not.toBeInTheDocument()

@@ -80,7 +80,7 @@ test.describe('ministère Communication : accueil 07', () => {
     const aide = points.getByRole('button', { name: 'Aide : Vos points' })
     await aide.click()
     await expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await expect(points).toContainText('Un point traité reste visible 7 jours.')
+    await expect(points).toContainText('Un point traité reste affiché 7 jours.')
     await page.keyboard.press('Escape')
     await expect(aide).toHaveAttribute('aria-expanded', 'false')
   })
