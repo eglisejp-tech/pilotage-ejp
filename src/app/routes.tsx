@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
@@ -42,6 +43,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'evenements', element: <ApercuEvenements /> },
           // Lot E8 : « Signaler une difficulté » (ministère) et bloc « Signalements » (EJP Tech).
           { path: 'signalements', element: <ApercuSignalements /> },
+          // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
+          { path: 'calendrier', element: <ApercuCalendrier /> },
         ],
       },
     ]
