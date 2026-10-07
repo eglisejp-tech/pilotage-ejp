@@ -49,9 +49,10 @@ update auth.users set email_confirmed_at = now()
 -- Exception voulue à la règle de la BRIEF, section 8 (le script d'installation e2e n'écrit
 -- jamais dans auth.mfa_factors, table interne de GoTrue) : pgTAP ne peut pas appeler l'API Auth.
 -- L'écriture reste dans cette transaction annulée, avec les seules colonnes requises.
+-- Deux insertions (une union rendrait les littéraux en text, refusés par les types d'Auth).
 insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at)
-select gen_random_uuid(), ok, 'Matrice L1', 'totp', 'verified', now(), now() from ctx
-union all
+select gen_random_uuid(), ok, 'Matrice L1', 'totp', 'verified', now(), now() from ctx;
+insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at)
 select gen_random_uuid(), inter, 'Matrice L1', 'totp', 'unverified', now(), now() from ctx;
 update public.ministere set desactive_le = now() where id = (select des_m from ctx);
 update public.compte set desactive_le = now()
