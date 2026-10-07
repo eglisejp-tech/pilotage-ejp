@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import type { PanneauOuvert } from '@/features/comptes/PanneauCompte'
 import { lireRefusCompte } from '@/features/comptes/refus'
+import type { ResultatAction } from '@/features/comptes/ResultatLigne'
 import {
   confirmationDesactiverCompte,
   confirmationDesactiverMinistere,
@@ -19,7 +20,8 @@ export interface ConfirmationOuverte {
 
 /**
  * État de l'écran 13 : panneau ouvert, fenêtre de confirmation, action directe en cours
- * (relance, réactivation), message de réussite (6 secondes) et refus d'une action directe.
+ * (relance, réactivation), message de réussite d'une création (en haut de la page, 6 secondes)
+ * et résultat de la dernière action d'une ligne (sous les boutons de cette ligne).
  * Les actions viennent de la page (Edge Functions) ou de l'aperçu (simulées).
  */
 export function useEcranComptes(actions: ActionsComptes) {
@@ -28,12 +30,17 @@ export function useEcranComptes(actions: ActionsComptes) {
   const [enCours, setEnCours] = useState<{ cle: string; action: ActionLigne } | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
-  const [refus, setRefus] = useState<string | null>(null)
+  const [resultat, setResultat] = useState<ResultatAction | null>(null)
 
-  const annoncer = (message: string) => {
-    setRefus(null)
-    setReussite(message)
-    setEnvoi((precedent) => precedent + 1)
+  /** Résultat d'une action de ligne : un nouveau numéro, pour réafficher le même message. */
+  const noterResultat = (cle: string, reussiteAction: boolean, message: string) => {
+    setReussite(null)
+    setResultat((precedent) => ({
+      cle,
+      reussite: reussiteAction,
+      message,
+      envoi: (precedent?.envoi ?? 0) + 1,
+    }))
   }
 
   /** Relance ou réactivation : sans fenêtre, le bouton dit « Envoi en cours ». */
@@ -45,29 +52,41 @@ export function useEcranComptes(actions: ActionsComptes) {
   ) => {
     if (ligne.userId === null || enCours !== null) return
     setEnCours({ cle: ligne.cle, action })
-    setRefus(null)
+    setResultat(null)
     try {
       await appel(ligne.userId)
-      annoncer(message)
+      noterResultat(ligne.cle, true, message)
     } catch (erreur) {
-      setReussite(null)
-      setRefus(lireRefusCompte(erreur).message)
+      noterResultat(ligne.cle, false, lireRefusCompte(erreur).message)
     } finally {
       setEnCours(null)
     }
   }
 
-  /** Désactivation et « Refaire l'activation » : la fenêtre de confirmation d'abord. */
-  const confirmerPuis = (texte: TexteConfirmation, appel: () => Promise<void>, message: string) => {
-    setRefus(null)
+  /**
+   * Désactivation et « Refaire l'activation » : la fenêtre de confirmation d'abord. Un refus
+   * s'affiche dans la fenêtre ; la réussite, sous les boutons de la ligne.
+   */
+  const confirmerPuis = (
+    ligne: LigneCompte,
+    texte: TexteConfirmation,
+    appel: () => Promise<void>,
+    message: string,
+  ) => {
+    setResultat(null)
     setConfirmation({
       texte,
       confirmer: async () => {
         await appel()
         setConfirmation(null)
-        annoncer(message)
+        noterResultat(ligne.cle, true, message)
       },
     })
+  }
+
+  const ouvrirPanneau = (ouvert: PanneauOuvert) => {
+    setResultat(null)
+    setPanneau(ouvert)
   }
 
   const surAction = (ligne: LigneCompte, action: ActionLigne) => {
@@ -76,7 +95,11 @@ export function useEcranComptes(actions: ActionsComptes) {
     const userId = ligne.userId
     if (action === 'creer') {
       if (ligne.ministereId !== null) {
-        setPanneau({ genre: 'ministere_existant', ministereId: ligne.ministereId, nom: ligne.nom })
+        ouvrirPanneau({
+          genre: 'ministere_existant',
+          ministereId: ligne.ministereId,
+          nom: ligne.nom,
+        })
       }
       return
     }
@@ -95,6 +118,7 @@ export function useEcranComptes(actions: ActionsComptes) {
         return
       case 'desactiver':
         confirmerPuis(
+          ligne,
           ministere
             ? confirmationDesactiverMinistere(ligne.nom, ligne.email)
             : confirmationDesactiverCompte(ligne.nom, ligne.email),
@@ -104,6 +128,7 @@ export function useEcranComptes(actions: ActionsComptes) {
         return
       case 'refaire':
         confirmerPuis(
+          ligne,
           confirmationRefaireActivation(ligne.nom, ministere),
           () => actions.refaireActivation(userId),
           REUSSITES_COMPTES.activationARefaire(libelle),
@@ -114,22 +139,21 @@ export function useEcranComptes(actions: ActionsComptes) {
 
   return {
     panneau,
-    ouvrirPanneau: (ouvert: PanneauOuvert) => {
-      setRefus(null)
-      setPanneau(ouvert)
-    },
+    ouvrirPanneau,
     fermerPanneau: () => setPanneau(null),
-    /** Création réussie : le panneau se ferme et le message s'affiche sur la page. */
+    /** Création réussie : le panneau se ferme et le message s'affiche en haut de la page. */
     apresCreation: (message: string) => {
       setPanneau(null)
-      annoncer(message)
+      setResultat(null)
+      setReussite(message)
+      setEnvoi((precedent) => precedent + 1)
     },
     confirmation,
     annulerConfirmation: () => setConfirmation(null),
     enCours,
     reussite,
     envoi,
-    refus,
+    resultat,
     surAction,
   }
 }

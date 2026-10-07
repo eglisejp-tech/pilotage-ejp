@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { EtatVide } from '@/components/etats/EtatVide'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import { ListeComptesTelephone } from '@/features/comptes/ListeComptesTelephone'
+import type { ResultatAction } from '@/features/comptes/ResultatLigne'
 import { TableauComptes } from '@/features/comptes/TableauComptes'
 import type { LigneCompte } from '@/features/comptes/types'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
@@ -20,6 +21,8 @@ interface Props {
   note?: ReactNode
   onAction: (ligne: LigneCompte, action: ActionLigne) => void
   enCours: { cle: string; action: ActionLigne } | null
+  /** Résultat de la dernière action de ligne (sous les boutons de la ligne concernée). */
+  resultat: ResultatAction | null
 }
 
 /**
@@ -35,6 +38,7 @@ export function SectionComptes({
   note,
   onAction,
   enCours,
+  resultat,
 }: Props) {
   const idTitre = useId()
   const tableau = useLargeurMin(600)
@@ -52,6 +56,7 @@ export function SectionComptes({
           idTitre={idTitre}
           onAction={onAction}
           enCours={enCours}
+          resultat={resultat}
         />
       ) : (
         <ListeComptesTelephone
@@ -59,6 +64,7 @@ export function SectionComptes({
           idTitre={idTitre}
           onAction={onAction}
           enCours={enCours}
+          resultat={resultat}
         />
       )}
       {note && lignes.length > 0 ? <p className="mt-3 text-sm text-encre-3">{note}</p> : null}

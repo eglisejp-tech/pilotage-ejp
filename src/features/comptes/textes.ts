@@ -2,8 +2,8 @@
 // textes en dur. Sources : maquette 13 ; BRIEF, section 9 (« Ministères et comptes (13) ») ;
 // LISEZMOI des maquettes (« États », écarts de 13) ; configuration-indicateurs.md, 7.1.
 // « Proposé » : texte que ni le BRIEF ni la maquette ne donnent (états vides, messages de
-// réussite, confirmation d'un compte personnel), à reporter dans LISEZMOI.md au lot
-// d'intégration (le hook de format reformaterait tout le fichier depuis une copie de travail).
+// réussite, confirmation d'un compte personnel), reporté dans LISEZMOI.md (écarts de 13 et
+// section « États »).
 
 import type { EtatCompte } from '@/lib/base'
 import { formaterJourCourt } from '@/lib/metier/dates'
@@ -112,7 +112,7 @@ export function libelleIndicateurs(nombreIndicateurs: number): string {
   return `${nombre(nombreIndicateurs)} ${accorder(nombreIndicateurs, 'indicateur', 'indicateurs')}`
 }
 
-/** États vides des trois sections (T36 ; Proposé, à reporter dans LISEZMOI.md). */
+/** États vides des trois sections (T36 ; Proposé, notés dans LISEZMOI.md). */
 export const VIDES_COMPTES = {
   ministeres: 'Aucun ministère pour le moment.',
   ministeresSuite: 'Ajoutez le premier : son email partagé reçoit une invitation.',

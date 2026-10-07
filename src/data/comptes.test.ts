@@ -178,13 +178,24 @@ describe('codes d’erreur traduits en français', () => {
     await expect(relancerInvitation(COMPTE)).rejects.toMatchObject({ code: 'erreur_interne' })
   })
 
-  it('réponse absente (réseau, délai) : « La connexion a échoué. Réessayez. »', async () => {
+  it.each(['toString', 'constructor', '__proto__', 'connexion'])(
+    'un code hérité ou réservé (%s) : erreur_interne',
+    async (code) => {
+      installer(refus(500, { erreur: code }))
+      await expect(relancerInvitation(COMPTE)).rejects.toMatchObject({
+        code: 'erreur_interne',
+        message: MESSAGES_ERREURS_COMPTES.erreur_interne,
+      })
+    },
+  )
+
+  it('réponse absente (réseau, délai) : vérifier la liste avant de réessayer', async () => {
     installer(() =>
       Promise.resolve({ data: null, error: new FunctionsFetchError(new Error('réseau')) }),
     )
     await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({
       code: 'connexion',
-      message: 'La connexion a échoué. Réessayez.',
+      message: "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
     })
     installer(() => Promise.reject(new Error('délai')))
     await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({ code: 'connexion' })

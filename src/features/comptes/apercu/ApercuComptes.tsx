@@ -29,7 +29,7 @@ const reessayer = () => undefined
  * - `vue=donnees` (défaut), `premier-usage` (aucun ministère, aucun compte), `chargement`,
  *   `probleme` (erreur de page) ;
  * - `refus=<code>` : chaque action est refusée avec ce code (`invitation_trop_recente`...) ;
- *   `envoi=echec` : la réponse n'arrive pas (« La connexion a échoué. ») ;
+ *   `envoi=echec` : la réponse n'arrive pas (« La réponse n'est pas arrivée. ») ;
  * - tout autre profil reçoit la page non disponible, comme dans l'application.
  * Enregistrée seulement en développement.
  */

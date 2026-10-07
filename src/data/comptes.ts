@@ -33,9 +33,12 @@ export type CodeErreurCompte = CodeErreur | 'connexion'
 /**
  * Chaque code de réponse des fonctions, en français simple (contrat commun : « traduit en
  * français par le front »). Le type impose une phrase pour chaque code de `_shared/http.ts`.
+ * `connexion` : la réponse n'est pas arrivée (réseau, délai de 10 s), mais la fonction a pu
+ * aboutir (compte créé, invitation partie). L'écran relit la liste ; la phrase (Proposé) demande
+ * de la vérifier avant de réessayer.
  */
 export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>> = {
-  connexion: 'La connexion a échoué. Réessayez.',
+  connexion: "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
   requete_invalide: 'La demande est incomplète. Vérifiez les champs, puis réessayez.',
   methode_non_autorisee: "La demande n'a pas pu être envoyée. Réessayez.",
   non_authentifie: 'Votre session a expiré. Reconnectez-vous.',
@@ -74,7 +77,12 @@ export class ErreurCompte extends Error {
 }
 
 function estCodeConnu(code: unknown): code is CodeErreur {
-  return typeof code === 'string' && code !== 'connexion' && code in MESSAGES_ERREURS_COMPTES
+  // Object.hasOwn : « toString » ou « constructor » (hérités) ne sont pas des codes.
+  return (
+    typeof code === 'string' &&
+    code !== 'connexion' &&
+    Object.hasOwn(MESSAGES_ERREURS_COMPTES, code)
+  )
 }
 
 /** Code de la réponse `{ erreur: '<code>' }` d'une fonction ; `erreur_interne` s'il est illisible. */

@@ -51,7 +51,9 @@ export function useComptes(): EtatBloc<DonneesComptes> {
 /**
  * Actions de l'écran 13, branchées sur les Edge Functions. Après chaque réussite, l'écran relit
  * les comptes et les ministères (un ministère créé, désactivé ou réactivé change aussi les
- * autres écrans).
+ * autres écrans), avant d'annoncer la réussite. Après un échec aussi, sans l'attendre : une
+ * réponse perdue (délai, réseau) n'empêche pas la fonction d'avoir abouti, et la liste relue le
+ * montre avant un nouvel essai.
  */
 export function useActionsComptes(): ActionsComptes {
   const client = useQueryClient()
@@ -61,20 +63,24 @@ export function useActionsComptes(): ActionsComptes {
       client.invalidateQueries({ queryKey: ['ministeres'] }),
     ])
   }
-  const puisRelire =
-    (action: (userId: string) => Promise<void>) =>
-    async (userId: string): Promise<void> => {
-      await action(userId)
-      await relire()
+  const puisRelire = async (appel: () => Promise<void>): Promise<void> => {
+    try {
+      await appel()
+    } catch (erreur) {
+      void relire()
+      throw erreur
     }
+    await relire()
+  }
+  const surCompte =
+    (action: (userId: string) => Promise<void>) =>
+    (userId: string): Promise<void> =>
+      puisRelire(() => action(userId))
   return {
-    creer: async (creation) => {
-      await creerCompte(demandeDeCreation(creation))
-      await relire()
-    },
-    relancer: puisRelire(relancerInvitation),
-    desactiver: puisRelire(desactiverCompte),
-    reactiver: puisRelire(reactiverCompte),
-    refaireActivation: puisRelire(reinitialiserDoubleAuthentification),
+    creer: (creation) => puisRelire(() => creerCompte(demandeDeCreation(creation))),
+    relancer: surCompte(relancerInvitation),
+    desactiver: surCompte(desactiverCompte),
+    reactiver: surCompte(reactiverCompte),
+    refaireActivation: surCompte(reinitialiserDoubleAuthentification),
   }
 }

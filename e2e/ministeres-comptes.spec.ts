@@ -83,6 +83,12 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await expect(reussite(page)).toHaveText(
       'Ministère Tech créé. Invitation envoyée à ejptech1+ministere@exemple.test.',
     )
+    // Retour du panneau : au bouton d'origine ; sous 600 px (page entière), au titre de la page.
+    if ((page.viewportSize()?.width ?? 0) < 600) {
+      await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+    } else {
+      await expect(bouton(page, 'Ajouter un ministère')).toBeFocused()
+    }
     await expect(
       section(page, 'Ministères').getByText('9 actifs, un email partagé chacun'),
     ).toBeVisible()
@@ -132,15 +138,28 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await expect(bouton(page, "Relancer l'invitation Conseil, compte 5")).toBeVisible()
   })
 
-  test('« Relancer l’invitation » : réussite, puis refus traduit', async ({ page }) => {
+  test('« Relancer l’invitation » : réussite, puis refus traduit, sous les boutons de la ligne', async ({
+    page,
+  }) => {
     await ouvrir(page)
-    await bouton(page, "Relancer l'invitation Conseil, compte 3").click()
+    const relancer = bouton(page, "Relancer l'invitation Conseil, compte 3")
+    await relancer.click()
     await expect(reussite(page)).toHaveText('Invitation renvoyée à conseil3@exemple.test.')
+    await expect(reussite(page)).toBeInViewport()
     await ouvrir(page, 'refus=invitation_trop_recente')
-    await bouton(page, "Relancer l'invitation Conseil, compte 3").click()
-    await expect(page.getByRole('alert')).toHaveText(
+    await relancer.click()
+    const refus = page.getByRole('alert')
+    await expect(refus).toHaveText(
       'Une invitation vient de partir vers cette adresse. Attendez une minute, puis réessayez.',
     )
+    // Le message est sous le bouton cliqué, même en bas de la liste sur téléphone.
+    await expect(refus).toBeInViewport()
+    const [boiteBouton, boiteRefus] = await Promise.all([
+      relancer.boundingBox(),
+      refus.boundingBox(),
+    ])
+    expect(boiteRefus?.y ?? 0).toBeGreaterThan(boiteBouton?.y ?? 0)
+    await expect(relancer).toBeFocused()
   })
 
   test('désactiver un ministère : fenêtre, « Annuler » ne change rien, puis réactiver', async ({
@@ -163,10 +182,13 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await expect(
       section(page, 'Ministères').getByText('7 actifs, un email partagé chacun'),
     ).toBeVisible()
+    // « Désactiver » a disparu : le focus va au premier bouton de la même ligne (WCAG 2.4.3).
+    await expect(bouton(page, 'Réactiver Communication')).toBeFocused()
 
     await bouton(page, 'Réactiver Communication').click()
     await expect(reussite(page)).toHaveText('Ministère Communication réactivé.')
     await expect(bouton(page, 'Désactiver Communication')).toBeVisible()
+    await expect(page.locator(':focus')).toHaveAccessibleName(/ Communication$/)
   })
 
   test('refaire l’activation : texte du ministère, puis « À activer »', async ({ page }) => {
@@ -195,12 +217,15 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await ouvrir(page, 'envoi=echec')
     await bouton(page, 'Désactiver Conseil, compte 1').click()
     await fenetre(page).getByRole('button', { name: 'Désactiver le compte' }).click()
-    await expect(fenetre(page).getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await expect(fenetre(page).getByRole('alert')).toHaveText(
+      "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
+    )
   })
 
   test('états : premier usage, chargement, problème passager', async ({ page }) => {
     await ouvrir(page, 'vue=premier-usage')
     await expect(section(page, 'Ministères')).toContainText('Aucun ministère pour le moment.')
+    await expect(section(page, 'Ministères')).not.toContainText('un email partagé chacun')
     await expect(section(page, 'Berger et conseil')).toContainText(
       "Aucun compte pour le berger ni pour le conseil pour l'instant.",
     )

@@ -3,6 +3,8 @@ import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import { BoutonsLigne } from '@/features/comptes/BoutonsLigne'
 import { CelluleIndicateurs } from '@/features/comptes/CelluleIndicateurs'
 import { EtatDoubleAuthentification } from '@/features/comptes/EtatDoubleAuthentification'
+import { ResultatLigne } from '@/features/comptes/ResultatLigne'
+import type { ResultatAction } from '@/features/comptes/ResultatLigne'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import type { LigneCompte } from '@/features/comptes/types'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
@@ -15,6 +17,8 @@ interface Props {
   idTitre: string
   onAction: (ligne: LigneCompte, action: ActionLigne) => void
   enCours: { cle: string; action: ActionLigne } | null
+  /** Résultat de la dernière action de ligne, affiché sous les boutons de sa ligne. */
+  resultat: ResultatAction | null
 }
 
 const entete = 'pt-1 pr-5 pb-1 text-left align-middle font-normal'
@@ -25,7 +29,7 @@ const cellule = 'py-2.5 pr-5 align-middle'
  * l'adresse a sa colonne ; de 600 à 1023 px, elle passe sous le nom pour que les boutons tiennent.
  * La colonne « Indicateurs » n'existe que pour les ministères.
  */
-export function TableauComptes({ lignes, variante, idTitre, onAction, enCours }: Props) {
+export function TableauComptes({ lignes, variante, idTitre, onAction, enCours, resultat }: Props) {
   const ordinateur = useLargeurMin(1024)
   const ministeres = variante === 'ministeres'
   return (
@@ -73,7 +77,7 @@ export function TableauComptes({ lignes, variante, idTitre, onAction, enCours }:
       </thead>
       <tbody>
         {lignes.map((ligne) => (
-          <tr key={ligne.cle} className="border-t border-filet text-[15px]">
+          <tr key={ligne.cle} data-cle={ligne.cle} className="border-t border-filet text-[15px]">
             <th scope="row" className={cn(cellule, 'text-left font-semibold')}>
               {ligne.nom}
               {ordinateur ? null : (
@@ -103,6 +107,7 @@ export function TableauComptes({ lignes, variante, idTitre, onAction, enCours }:
                 onAction={onAction}
                 enCours={enCours?.cle === ligne.cle ? enCours.action : null}
               />
+              <ResultatLigne resultat={resultat?.cle === ligne.cle ? resultat : null} />
             </td>
           </tr>
         ))}

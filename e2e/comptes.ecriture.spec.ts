@@ -9,7 +9,7 @@ import {
   suivreRequetesDeDonnees,
 } from './comptes.ts'
 import type { CompteTest } from './comptes.ts'
-import { lire } from './base/outils-evenements.ts'
+import { jetonAcces, lire } from './base/outils-evenements.ts'
 import { verifierAdresseLocale } from './installer-comptes.ts'
 
 // Écran 13, « Ministères et comptes » (lot L1), avec la base locale, Auth, Mailpit et les Edge
@@ -17,12 +17,14 @@ import { verifierAdresseLocale } from './installer-comptes.ts'
 // lecture). L'administration crée un ministère « Tech » (T48 : l'alias « +ministere » d'une
 // adresse d'EJP Tech), lit l'invitation dans la boîte locale, la relance, désactive puis réactive
 // le ministère, le compte active son code (par l'API, comme e2e/installer-comptes.ts), puis
-// l'administration refait l'activation. À la fin, le ministère d'essai est désactivé : il ne
-// compte plus dans les totaux des parcours suivants. Les quatre autres profils reçoivent la page
-// non disponible, sans requête de données ni appel de fonction.
+// l'administration refait l'activation. À la fin (test.afterAll, même après un échec), le
+// ministère d'essai est désactivé : il ne compte plus dans les totaux des parcours suivants. Les
+// quatre autres profils reçoivent la page non disponible, sans requête de données ni appel de
+// fonction.
 //
-// Sans base (E2E_BASE absent), tout est ignoré. Sans edge runtime ou sans Mailpit (le job « e2e »
-// de la CI arrête l'edge runtime), le parcours de l'administration est ignoré avec sa raison.
+// Sans base (E2E_BASE absent), tout est ignoré. En local, sans edge runtime ou sans Mailpit, le
+// parcours de l'administration est ignoré avec sa raison ; en CI (le job « e2e » démarre l'edge
+// runtime), il échoue.
 
 // Le suffixe s'écrit en lettres : 5 chiffres de suite ressemblent à une donnée personnelle.
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
@@ -89,11 +91,46 @@ test.describe("l'administration gère le compte d'un nouveau ministère", () => 
     const fonctionsPretes = fonction !== null && fonction.status() === 204
     const boitePrete = boite !== null && boite.ok()
     await request.dispose()
-    test.skip(
-      !fonctionsPretes,
-      "Edge runtime arrêté : ce parcours demande npx supabase start avec l'edge runtime.",
-    )
-    test.skip(!boitePrete, 'Boîte locale (Mailpit) injoignable.')
+    const raison = !fonctionsPretes
+      ? "Edge runtime arrêté : ce parcours demande npx supabase start avec l'edge runtime."
+      : !boitePrete
+        ? 'Boîte locale (Mailpit) injoignable.'
+        : null
+    if (raison === null) return
+    // En CI, ce parcours doit tourner : un service absent fait échouer, jamais ignorer en silence.
+    if (process.env.CI) throw new Error(`${raison} Le job « e2e » doit démarrer ce service.`)
+    test.skip(true, raison)
+  })
+
+  // Nettoyage, même si un test du parcours a échoué (les suivants sont alors sautés) : le
+  // ministère d'essai encore actif est désactivé par desactiver-compte, avec la session de
+  // l'administration, pour qu'il ne compte pas dans les totaux et la complétude des parcours
+  // suivants.
+  test.afterAll(async ({ browser }, infos) => {
+    const contexte = await browser.newContext({
+      storageState: fichierSession('admin_eglise'),
+      baseURL: infos.project.use.baseURL,
+    })
+    try {
+      const page = await contexte.newPage()
+      await ouvrirComptes(page)
+      const [ligne] = await lire<{ user_id: string; etat: string }>(
+        page,
+        `v_etat_comptes?select=user_id,etat&email=eq.${encodeURIComponent(EMAIL)}`,
+      )
+      if (!ligne || ligne.etat === 'desactive') return
+      const reponse = await page.request.post(`${adresseBase()}/functions/v1/desactiver-compte`, {
+        headers: {
+          apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
+          Authorization: `Bearer ${await jetonAcces(page)}`,
+          'Content-Type': 'application/json',
+        },
+        data: { user_id: ligne.user_id },
+      })
+      expect(reponse.status(), 'désactivation du ministère d’essai').toBe(200)
+    } finally {
+      await contexte.close()
+    }
   })
 
   test('crée le ministère et lit l’invitation dans la boîte locale', async ({ page }) => {
@@ -218,13 +255,6 @@ test.describe("l'administration gère le compte d'un nouveau ministère", () => 
       password: MOT_DE_PASSE,
     })
     expect(ancien).not.toBeNull()
-  })
-
-  test('nettoyage : le ministère d’essai est désactivé', async ({ page }) => {
-    await ouvrirComptes(page)
-    await bouton(page, `Désactiver ${NOM}`).click()
-    await page.getByRole('button', { name: 'Désactiver le ministère' }).click()
-    await expect(reussite(page)).toHaveText(`Ministère ${NOM} désactivé.`)
   })
 })
 

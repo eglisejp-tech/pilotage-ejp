@@ -1,8 +1,9 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { ErreurCompte } from '@/data/comptes'
+import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { donneesExemple } from '@/features/comptes/apercu/exemples'
 import { construireComptes } from '@/features/comptes/construireComptes'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
@@ -44,6 +45,13 @@ function afficher(etat: EtatBloc<DonneesComptes>, actions: ActionsComptes = acti
 
 const bouton = (nom: string) => screen.getByRole('button', { name: nom })
 
+/** La ligne (tableau) ou le bloc (téléphone) qui contient un élément. */
+function ligneDe(element: HTMLElement): HTMLElement {
+  const ligne = element.closest<HTMLElement>('[data-cle]')
+  if (!ligne) throw new Error('Élément hors de toute ligne.')
+  return ligne
+}
+
 describe('VueComptes (écran 13)', () => {
   it('chargement : le titre, puis « Chargement » sans bouton d’ajout', async () => {
     afficher({ etat: 'chargement' })
@@ -78,18 +86,38 @@ describe('VueComptes (écran 13)', () => {
     const actions = afficher(donnees())
     await userEvent.click(bouton("Relancer l'invitation Conseil, compte 3"))
     expect(actions.relancer).toHaveBeenCalledWith('20000000-0000-4000-8000-000000000014')
-    expect(
-      await screen.findByText('Invitation renvoyée à conseil3@exemple.test.'),
-    ).toBeInTheDocument()
+    const message = await screen.findByText('Invitation renvoyée à conseil3@exemple.test.')
+    // Dans la ligne du compte, sous ses boutons : visible là où la personne a cliqué.
+    expect(ligneDe(message)).toContainElement(bouton("Relancer l'invitation Conseil, compte 3"))
   })
 
-  it('un refus d’une action directe se dit en français, sous l’introduction', async () => {
+  it('un refus d’une action directe se dit en français, sous les boutons de sa ligne', async () => {
     const actions = actionsFausses()
     actions.reactiver.mockRejectedValue(new ErreurCompte('ministere_a_deja_un_compte'))
     afficher(donnees(), actions)
     await userEvent.click(bouton('Réactiver Merch'))
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ce ministère a déjà un compte actif.',
+    const refus = await screen.findByRole('alert')
+    expect(refus).toHaveTextContent('Ce ministère a déjà un compte actif.')
+    expect(ligneDe(refus)).toContainElement(bouton('Réactiver Merch'))
+    expect(bouton('Réactiver Merch')).toHaveFocus()
+  })
+
+  it('le bouton cliqué disparaît : le focus va au premier bouton de la même ligne', async () => {
+    render(
+      <MemoryRouter initialEntries={['/apercu/comptes?profil=admin_eglise']}>
+        <ApercuComptes />
+      </MemoryRouter>,
+    )
+    await userEvent.click(bouton('Réactiver Merch'))
+    expect(await screen.findByText('Ministère Merch réactivé.')).toBeInTheDocument()
+    await waitFor(() => expect(document.activeElement).toHaveAccessibleName(/ Merch$/))
+    expect(document.activeElement).not.toHaveAccessibleName('Réactiver Merch')
+  })
+
+  it('sans ministère, l’en-tête de la section ne compte pas « 0 actif »', () => {
+    afficher({ etat: 'donnees', donnees: construireComptes([], [], []) })
+    expect(screen.getByRole('region', { name: 'Ministères' })).not.toHaveTextContent(
+      'un email partagé chacun',
     )
   })
 
