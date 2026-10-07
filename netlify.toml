@@ -8,6 +8,14 @@
 [build.environment]
   NODE_VERSION = "24"
 
+# Un fichier de /assets/ absent (par exemple un morceau chargé à la demande par un onglet resté
+# ouvert après un nouveau déploiement) répond 404 net, et non index.html : avec nosniff, le
+# navigateur refuserait ce faux script avec une erreur de type MIME peu lisible.
+[[redirects]]
+  from = "/assets/*"
+  to = "/404.html"
+  status = 404
+
 # Application à page unique : toute adresse inconnue renvoie l'application (les gardes de routes
 # décident ensuite). Netlify sert d'abord les vrais fichiers (/assets/*, /favicon.svg).
 [[redirects]]
@@ -19,8 +27,10 @@
 #
 # Politique de contenu (CSP), en clair :
 # - script-src 'self' : aucun script en ligne, aucun eval.
-# - style-src 'self' 'unsafe-inline' : les styles en ligne ne servent qu'aux positions calculées
-#   (barre de session, bulles d'aide) ; aucun script n'est autorisé en ligne.
+# - style-src 'self' 'unsafe-inline' : 'unsafe-inline' est gardé par prudence, comme prévu au plan.
+#   Le build ne contient aucun style en ligne : il sera retiré si la recette en préproduction
+#   montre une console sans erreur de CSP (point noté dans docs/exploitation.md, lot D3).
+#   Aucun script n'est autorisé en ligne.
 # - img-src 'self' data: : data: pour l'image du QR code de la double authentification.
 # - font-src 'self' : les polices sont servies par @fontsource, jamais par Google.
 # - connect-src : l'application ne parle qu'aux deux projets Supabase (préproduction et production).
@@ -36,7 +46,7 @@
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
-    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
     X-Robots-Tag = "noindex, nofollow"
 
 # Fichiers empreints par Vite : le nom change à chaque build, le cache peut être immuable.
