@@ -1,7 +1,14 @@
-import { PageAVenir } from '@/pages/PageAVenir'
-import type { ProprietesPage } from '@/pages/proprietesPage'
+import { SaisieNouveauPoint } from '@/features/nouveau-point/SaisieNouveauPoint'
+import { useCompteConnecte } from '@/features/session/contexte'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
-/** Amorce de C0 pour `/saisir/point` (maquette 10, « Nouveau point ») : le lot P2 la remplace. */
-export function PageSaisiePoint({ titre }: ProprietesPage) {
-  return <PageAVenir titre={titre} etape={5} />
+/**
+ * `/saisir/point` (maquette 10, « Nouveau point d'attention »), pour un compte de ministère
+ * seulement : `PageApplication` a déjà refusé les autres profils, sans requête. Le titre vient du
+ * panneau, pas de `ProprietesPage`.
+ */
+export function PageSaisiePoint() {
+  const compte = useCompteConnecte()
+  if (compte.ministereId === null) return <PageNonDisponible />
+  return <SaisieNouveauPoint ministereId={compte.ministereId} libelleCompte={compte.libelle} />
 }
