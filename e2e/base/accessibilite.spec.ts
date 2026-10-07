@@ -11,8 +11,10 @@ import {
   parcourirAuClavier,
   problemesEchapDesAides,
   problemesEchapDuMenu,
+  problemesDeStructure,
   problemesPiegeDuFocus,
 } from '../outils/controles.ts'
+import { marquerFauteConnue } from '../outils/fautes-connues.ts'
 
 // Audit transversal de l'étape 7 (plan, section 3.3, lot F2) avec la base locale (job « e2e » de
 // la CI, E2E_BASE=1) : les vraies pages de chaque profil, avec les vraies données du jeu
@@ -70,6 +72,7 @@ async function controlerPage(page: Page, adresse: string) {
     .soft(await debordementHorizontal(page), `${adresse} : défilement horizontal`)
     .toBeLessThanOrEqual(0)
   expect.soft(await ciblesTropPetites(page), `${adresse} : cibles de 44 px`).toEqual([])
+  expect.soft(await problemesDeStructure(page), `${adresse} : structure`).toEqual([])
   const clavier = [
     ...decrireRapportClavier(await parcourirAuClavier(page)),
     ...(await problemesPiegeDuFocus(page)),
@@ -102,6 +105,8 @@ for (const [profil, pages] of Object.entries(PAGES_PAR_PROFIL) as [Profil, strin
 
     for (const adresse of pages) {
       test(adresse, async ({ page }, testInfo) => {
+        // Faute décrite dans l'audit (e2e/outils/fautes-connues.ts) : le test est attendu en échec.
+        marquerFauteConnue(`${profil} | ${adresse}`, testInfo.project.name)
         await ouvrirPage(page, adresse)
         await controlerPage(page, adresse)
         await controlerEchapDuPanneau(page, adresse)
@@ -121,6 +126,7 @@ test.describe('ministère FIJ : accessibilité des pages', () => {
       testInfo.project.name !== 'ordinateur',
       'une seule connexion pour les quatre largeurs',
     )
+    marquerFauteConnue('ministère FIJ | pages', testInfo.project.name)
     test.setTimeout(180_000)
     await seConnecter(page, EMAIL_FIJ)
     await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
@@ -171,7 +177,9 @@ test.describe('berger : sans réseau et erreur de page', () => {
   test('sans réseau : la page ne reste pas en chargement et reste accessible', async ({
     page,
     context,
-  }) => {
+  }, testInfo) => {
+    // Faute connue tant que le lot F1 n'est pas fusionné (audit, ligne A-01).
+    marquerFauteConnue('berger | sans réseau', testInfo.project.name)
     // Même parcours que ci-dessus, mais la connexion est coupée avant de changer de page.
     await ouvrirPage(page, '/')
     await context.setOffline(true)

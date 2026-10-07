@@ -9,8 +9,10 @@ import {
   parcourirAuClavier,
   problemesEchapDesAides,
   problemesEchapDuMenu,
+  problemesDeStructure,
   problemesPiegeDuFocus,
 } from './outils/controles.ts'
+import { marquerFauteConnue } from './outils/fautes-connues.ts'
 
 // Audit transversal de l'étape 7 (plan, section 3.3, lot F2) sur TOUS les aperçus de
 // développement et sur les pages publiques : aucune faute axe (WCAG 2.1 A et AA), aucun
@@ -123,10 +125,73 @@ const FICHE: Ecran[] = [
   { nom: 'ministères erreur', adresse: '/apercu/fiche?ecran=ministeres-erreur&profil=berger' },
 ]
 
+// Lot E3 : saisie du dimanche (maquette 08) et « Chiffres du mois », chacune dans ses états
+// (src/features/saisie-chiffres/apercu/etatsApercu.ts).
 const SAISIES: Ecran[] = [
-  { nom: 'saisie du dimanche', adresse: '/apercu/saisies?profil=ministere' },
-  { nom: 'saisie du dimanche (berger)', adresse: '/apercu/saisies?profil=berger' },
+  ...['correction', 'matin', 'matin-vide', 'refuse', 'chargement', 'erreur', 'coupure'].map(
+    (etat) => ({
+      nom: `saisies dimanche ${etat}`,
+      adresse: `/apercu/saisies?profil=ministere&ecran=dimanche&etat=${etat}`,
+    }),
+  ),
+  { nom: 'saisies dimanche', adresse: '/apercu/saisies?profil=ministere' },
+  ...[
+    'correction',
+    'masquee',
+    'sans-categories',
+    'sans-indicateur',
+    'refuse',
+    'chargement',
+    'erreur',
+    'coupure',
+    'refus-precision',
+  ].map((etat) => ({
+    nom: `saisies mois ${etat}`,
+    adresse: `/apercu/saisies?profil=ministere&ecran=mois&etat=${etat}`,
+  })),
+  { nom: 'saisies mois', adresse: '/apercu/saisies?profil=ministere&ecran=mois' },
+  { nom: 'saisies page non disponible (berger)', adresse: '/apercu/saisies?profil=berger' },
 ]
+
+// Lot E8 : « Signaler une difficulté » (ministère) et bloc « Signalements » (EJP Tech).
+const SIGNALEMENTS: Ecran[] = [
+  ...['formulaire', 'premier-usage', 'liste-probleme', 'lien-long'].map((vue) => ({
+    nom: `signalements ministère ${vue}`,
+    adresse: `/apercu/signalements?profil=ministere&ecran=saisie_evenement&vue=${vue}`,
+  })),
+  ...[
+    'bloc',
+    'bloc-lien-long',
+    'bloc-sans-ouvert',
+    'bloc-vide',
+    'bloc-chargement',
+    'bloc-probleme',
+  ].map((vue) => ({
+    nom: `signalements ejp-tech ${vue}`,
+    adresse: `/apercu/signalements?profil=admin_plateforme&vue=${vue}`,
+  })),
+  { nom: 'signalements berger', adresse: '/apercu/signalements?profil=berger' },
+]
+
+// Lot E6 : calendrier de la fiche, prochaine réunion, événements à confirmer.
+const CALENDRIER: Ecran[] = [
+  ['fiche', 'berger'],
+  ['fiche', 'ministere'],
+  ['fiche-alerte', 'berger'],
+  ['fiche-alerte', 'ministere'],
+  ['fiche-alerte', 'admin_plateforme'],
+  ['fiche-vide', 'berger'],
+  ['fiche-vide', 'ministere'],
+  ['fiche-erreur', 'berger'],
+  ['fiche-chargement', 'berger'],
+  ['a-confirmer', 'berger'],
+  ['a-confirmer-un', 'conseil'],
+  ['a-confirmer-vide', 'berger'],
+  ['a-confirmer-erreur', 'berger'],
+].map(([ecran, profil]) => ({
+  nom: `calendrier ${ecran} ${profil}`,
+  adresse: `/apercu/calendrier?ecran=${ecran}&profil=${profil}`,
+}))
 
 const SAISIES_E4: Ecran[] = [
   ['session', 'ministere', null],
@@ -184,6 +249,8 @@ const ECRANS: Ecran[] = [
   ...SAISIES,
   ...SAISIES_E4,
   ...EVENEMENTS,
+  ...SIGNALEMENTS,
+  ...CALENDRIER,
 ]
 
 async function ouvrir(page: Page, ecran: Ecran) {
@@ -205,17 +272,29 @@ for (const ecran of ECRANS) {
   test.describe(ecran.nom, () => {
     // Le premier chargement d'un aperçu compile ses modules : 60 s laissent de la marge.
     test.describe.configure({ timeout: 60_000 })
-    test('axe : aucune faute WCAG 2.1 A et AA', async ({ page }) => {
+    // Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts) marque le contrôle `test.fail()`.
+    test('axe : aucune faute WCAG 2.1 A et AA', async ({ page }, testInfo) => {
+      marquerFauteConnue(`${ecran.nom} | axe`, testInfo.project.name)
       await ouvrir(page, ecran)
       expect(decrireFautes(await auditerAxe(page, ecran.exclure))).toEqual([])
     })
 
-    test('cibles de 44 px', async ({ page }) => {
+    test('structure : un titre de niveau 1, un titre d’onglet, la langue, une zone main', async ({
+      page,
+    }, testInfo) => {
+      marquerFauteConnue(`${ecran.nom} | structure`, testInfo.project.name)
+      await ouvrir(page, ecran)
+      expect(await problemesDeStructure(page, ecran.exclure)).toEqual([])
+    })
+
+    test('cibles de 44 px', async ({ page }, testInfo) => {
+      marquerFauteConnue(`${ecran.nom} | cibles`, testInfo.project.name)
       await ouvrir(page, ecran)
       expect(await ciblesTropPetites(page, ecran.exclure)).toEqual([])
     })
 
-    test('clavier : Tab atteint tout, focus visible, piège, Échap', async ({ page }) => {
+    test('clavier : Tab atteint tout, focus visible, piège, Échap', async ({ page }, testInfo) => {
+      marquerFauteConnue(`${ecran.nom} | clavier`, testInfo.project.name)
       await ouvrir(page, ecran)
       const problemes = [
         ...decrireRapportClavier(await parcourirAuClavier(page, ecran.exclure)),
@@ -229,6 +308,7 @@ for (const ecran of ECRANS) {
     test('360 px et zoom à 200 % : aucun défilement horizontal', async ({ page }, testInfo) => {
       // Les largeurs sont fixées ici : un seul projet suffit, pas trois.
       test.skip(testInfo.project.name !== 'ordinateur', 'mesuré une fois, à largeurs fixes')
+      marquerFauteConnue(`${ecran.nom} | 360`, testInfo.project.name)
       const debords: string[] = []
       // 720 px de large : un écran de 1440 px à 200 % de zoom (WCAG 1.4.4).
       for (const largeur of [LARGEUR_MINIMALE, 720]) {

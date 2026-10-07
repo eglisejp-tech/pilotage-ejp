@@ -42,6 +42,14 @@ export async function ciblesTropPetites(
         if ('disabled' in element && element.disabled === true) continue
         if (element.tagName === 'A' && getComputedStyle(element).display === 'inline') continue
         let boite = element.getBoundingClientRect()
+        // Élément masqué à la manière de `sr-only` (rogné par `clip-path` ou `clip`, ou réduit à
+        // 1 px) : il n'a pas de cible tant qu'il ne reçoit pas le focus. Le lien « Aller au
+        // contenu » garde son rembourrage, donc sa boîte mesurée fait plus d'un pixel.
+        const style = getComputedStyle(element)
+        const rogne =
+          (style.clipPath !== 'none' && style.clipPath !== '') ||
+          (style.clip !== 'auto' && style.clip !== '')
+        if (rogne || (parseFloat(style.width) <= 1 && parseFloat(style.height) <= 1)) continue
         if (boite.width <= 1 && boite.height <= 1) continue
         if (element instanceof HTMLInputElement && element.labels?.[0]) {
           const etiquette = element.labels[0].getBoundingClientRect()
@@ -82,7 +90,8 @@ export type RapportClavier = {
   actionPrincipale: { nom: string; atteinte: boolean } | null
 }
 
-type Marque = { rang: number; nom: string; envoi: boolean }
+/** `groupe` : nom du groupe de boutons radio. Tab n'en atteint qu'un, les flèches font le reste. */
+type Marque = { rang: number; nom: string; envoi: boolean; groupe: string | null }
 
 /**
  * Parcourt l'écran avec Tab, comme au clavier. Les éléments suivis sont ceux de la fenêtre
@@ -92,22 +101,27 @@ type Marque = { rang: number; nom: string; envoi: boolean }
 export async function parcourirAuClavier(
   page: Page,
   exclure: string[] = [],
-  maximum = 150,
+  maximum = 400,
 ): Promise<RapportClavier> {
   const marques: Marque[] = await page.evaluate((zones) => {
     const racine = document.querySelector('[role="dialog"][aria-modal="true"]') ?? document.body
     const selecteur =
       'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])'
-    const resultat: { rang: number; nom: string; envoi: boolean }[] = []
+    const resultat: { rang: number; nom: string; envoi: boolean; groupe: string | null }[] = []
     for (const ancien of document.querySelectorAll('[data-audit]'))
       ancien.removeAttribute('data-audit')
     for (const element of racine.querySelectorAll<HTMLElement>(selecteur)) {
       if (!element.checkVisibility()) continue
       if (element.closest('[inert]')) continue
       if (zones.some((zone) => element.closest(zone))) continue
-      const boite = element.getBoundingClientRect()
+      // `tabindex="-1"` : élément qui ne reçoit le focus que par programme (titre, panneau).
+      if (element.getAttribute('tabindex') === '-1') continue
       // Le lien « Aller au contenu » est masqué (1 px) jusqu'à son focus : il se parcourt aussi.
-      const masque = boite.width <= 1 && boite.height <= 1
+      const style = getComputedStyle(element)
+      const masque =
+        (style.clipPath !== 'none' && style.clipPath !== '') ||
+        (style.clip !== 'auto' && style.clip !== '') ||
+        (parseFloat(style.width) <= 1 && parseFloat(style.height) <= 1)
       const rang = resultat.length
       element.setAttribute('data-audit', String(rang))
       const nom = (
@@ -124,6 +138,10 @@ export async function parcourirAuClavier(
         rang,
         nom: `${element.tagName.toLowerCase()} « ${nom} »${masque ? ' (masqué jusqu au focus)' : ''}`,
         envoi: element instanceof HTMLButtonElement && element.type === 'submit',
+        groupe:
+          element instanceof HTMLInputElement && element.type === 'radio' && element.name
+            ? `${element.form?.id ?? ''}/${element.name}`
+            : null,
       })
     }
     return resultat
@@ -134,44 +152,71 @@ export async function parcourirAuClavier(
   await page.evaluate(() => {
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
   })
-  let sansProgres = 0
-  for (let appui = 0; appui < maximum && vus.size < marques.length; appui++) {
+  const groupesVus = new Set<string>()
+  const estVu = (marque: Marque) =>
+    vus.has(marque.rang) || (marque.groupe !== null && groupesVus.has(marque.groupe))
+  let retoursAuDebut = 0
+  let repetitions = 0
+  for (let appui = 0; appui < maximum && !marques.every(estVu); appui++) {
     await page.keyboard.press('Tab')
     const actif = await page.evaluate(() => {
       const element = document.activeElement
-      if (!(element instanceof HTMLElement) || element.dataset.audit === undefined) return null
-      const style = getComputedStyle(element)
-      const contourVisible =
-        style.outlineStyle !== 'none' &&
-        parseFloat(style.outlineWidth) >= 2 &&
-        style.outlineColor !== 'rgba(0, 0, 0, 0)' &&
-        style.outlineColor !== 'transparent'
-      return {
-        rang: Number(element.dataset.audit),
-        anneau: contourVisible || style.boxShadow !== 'none',
+      if (!(element instanceof HTMLElement) || element === document.body) return { sorti: true }
+      // Éléments hors de l'écran audité (barres de réglage d'un aperçu) : Tab y passe, sans compter.
+      if (element.dataset.audit === undefined) return { sorti: false, suivi: false }
+      const aUnContour = (cible: Element) => {
+        const style = getComputedStyle(cible)
+        return (
+          style.outlineStyle !== 'none' &&
+          parseFloat(style.outlineWidth) >= 2 &&
+          style.outlineColor !== 'rgba(0, 0, 0, 0)' &&
+          style.outlineColor !== 'transparent'
+        )
       }
+      // Anneau sur l'élément (contour ou ombre), ou sur son étiquette ou un élément voisin quand
+      // le champ est masqué ou transparent (motif `peer-focus-visible` : l'anneau est sur le frère).
+      const etiquettes: Element[] =
+        element instanceof HTMLInputElement ||
+        element instanceof HTMLSelectElement ||
+        element instanceof HTMLTextAreaElement
+          ? Array.from(element.labels ?? [])
+          : []
+      const freres: Element[] = Array.from(element.parentElement?.children ?? []).filter(
+        (frere) => frere !== element,
+      )
+      const voisins: Element[] = [...etiquettes, ...freres]
+      const style = getComputedStyle(element)
+      const anneau =
+        aUnContour(element) ||
+        style.boxShadow !== 'none' ||
+        voisins.some((voisin) => aUnContour(voisin))
+      return { sorti: false, suivi: true, rang: Number(element.dataset.audit), anneau }
     })
-    if (actif === null) {
-      // Le focus est sorti du document (barre du navigateur) ou sur un élément non suivi.
-      if (++sansProgres > 3) break
+    if (actif.sorti) {
+      // Le focus est revenu au début du document (ou sorti vers le navigateur) : un tour complet.
+      if (++retoursAuDebut >= 2) break
       continue
     }
+    if (!actif.suivi || actif.rang === undefined) continue
     if (vus.has(actif.rang)) {
-      if (++sansProgres > 3) break
+      // Piège du focus d'une fenêtre : Tab tourne dans les mêmes éléments.
+      if (++repetitions > 3) break
       continue
     }
-    sansProgres = 0
+    repetitions = 0
     vus.add(actif.rang)
-    if (!actif.anneau) sansAnneau.push(marques[actif.rang]?.nom ?? `élément ${actif.rang}`)
+    const marque = marques[actif.rang]
+    if (marque?.groupe) groupesVus.add(marque.groupe)
+    if (!actif.anneau) sansAnneau.push(marque?.nom ?? `élément ${actif.rang}`)
   }
 
   const principal = marques.find((marque) => marque.envoi)
   return {
     attendus: marques.length,
-    atteints: vus.size,
-    inatteignables: marques.filter((marque) => !vus.has(marque.rang)).map((marque) => marque.nom),
+    atteints: marques.filter(estVu).length,
+    inatteignables: marques.filter((marque) => !estVu(marque)).map((marque) => marque.nom),
     sansAnneau,
-    actionPrincipale: principal ? { nom: principal.nom, atteinte: vus.has(principal.rang) } : null,
+    actionPrincipale: principal ? { nom: principal.nom, atteinte: estVu(principal) } : null,
   }
 }
 
@@ -256,8 +301,10 @@ export async function problemesEchapDesAides(page: Page): Promise<string[]> {
 export async function problemesEchapDuMenu(page: Page): Promise<string[]> {
   const bouton = page.getByRole('button', { name: 'Ouvrir le menu' })
   if (!(await bouton.isVisible())) return []
+  // Derrière une fenêtre modale, le menu n'est pas à portée : le fond de la fenêtre reçoit le clic.
+  if ((await page.locator('[role="dialog"][aria-modal="true"]').count()) > 0) return []
   const problemes: string[] = []
-  await bouton.click()
+  await bouton.click({ timeout: 5_000 })
   const ferme = page.getByRole('button', { name: 'Fermer le menu' })
   if (!(await ferme.isVisible())) return ["le menu ne s'ouvre pas"]
   await page.keyboard.press('Escape')
@@ -266,4 +313,28 @@ export async function problemesEchapDuMenu(page: Page): Promise<string[]> {
     problemes.push('le focus ne revient pas sur le bouton du menu')
   }
   return problemes
+}
+
+/**
+ * Repères de structure que axe (étiquettes WCAG) ne tranche pas : un seul titre de niveau 1 par
+ * écran (2.4.6), un titre d'onglet (2.4.2), la langue de la page (3.1.1) et une zone `main` pour
+ * le lien « Aller au contenu » (2.4.1). `exclure` retire les zones qui ne sont pas l'écran audité.
+ */
+export async function problemesDeStructure(page: Page, exclure: string[] = []): Promise<string[]> {
+  return page.evaluate((zones) => {
+    const problemes: string[] = []
+    const titres = Array.from(document.querySelectorAll('h1')).filter(
+      (titre) => titre.checkVisibility() && !zones.some((zone) => titre.closest(zone)),
+    )
+    if (titres.length !== 1) problemes.push(`${titres.length} titre(s) de niveau 1 (un attendu)`)
+    if (document.title.trim() === '') problemes.push("le titre de l'onglet est vide")
+    if (document.documentElement.lang !== 'fr') {
+      problemes.push(`langue de la page : « ${document.documentElement.lang} » (fr attendu)`)
+    }
+    const zonesMain = Array.from(document.querySelectorAll('main, [role="main"]')).filter(
+      (zone) => !zones.some((exclue) => zone.closest(exclue)),
+    )
+    if (zonesMain.length !== 1) problemes.push(`${zonesMain.length} zone(s) main (une attendue)`)
+    return problemes
+  }, exclure)
 }
