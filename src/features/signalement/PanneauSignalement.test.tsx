@@ -153,6 +153,18 @@ describe('« Signaler une difficulté »', () => {
     expect(champ()).toHaveValue('Je ne peux pas choisir la date.')
   })
 
+  it('après l’envoi le bouton dit « Fermer », puis « Annuler » dès qu’on écrit de nouveau', async () => {
+    const { onFermer } = afficher()
+    await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
+    await envoyerLeFormulaire()
+    await screen.findByText('Signalement envoyé. EJP Tech le lira.')
+    expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull()
+    await userEvent.type(champ(), 'Autre')
+    expect(screen.queryByRole('button', { name: 'Fermer' })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(onFermer).toHaveBeenCalled()
+  })
+
   it('« Annuler » ferme sans rien envoyer', async () => {
     const { envoyer, onFermer } = afficher()
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))

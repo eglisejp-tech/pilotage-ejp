@@ -5,7 +5,7 @@ import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { estDejaClos, lireRefusSignalement } from '@/features/signalement/refus'
 import type { RefusSignalement } from '@/features/signalement/refus'
-import { schemaFormulaireCloture } from '@/features/signalement/schemas'
+import { longueurEnCaracteres, schemaFormulaireCloture } from '@/features/signalement/schemas'
 import type {
   Cloture,
   FormulaireCloture as ValeursValidees,
@@ -88,7 +88,7 @@ export function FormulaireCloture({
         id={id}
         libelle={TEXTES_BLOC_SIGNALEMENTS.libelleCommentaire}
         note={TEXTES_BLOC_SIGNALEMENTS.noteCommentaire}
-        longueur={commentaire.length}
+        longueur={longueurEnCaracteres(commentaire)}
         avecRappel
         autoComplete="off"
         erreur={errors.commentaire?.message}

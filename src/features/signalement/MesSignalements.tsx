@@ -55,13 +55,13 @@ export function MesSignalements({ contenu }: Props) {
                     : TEXTES_MES_SIGNALEMENTS.clos(signalement.clos_le)}
                 </span>
               </p>
-              <p className="font-lecture text-[17px] leading-snug">
+              <p className="min-w-0 font-lecture text-[17px] leading-snug wrap-anywhere">
                 «&nbsp;
                 <TexteSignale texte={signalement.texte} />
                 &nbsp;»
               </p>
               {signalement.commentaire ? (
-                <p className="text-sm leading-normal text-encre-2">
+                <p className="min-w-0 text-sm leading-normal wrap-anywhere text-encre-2">
                   {TEXTES_MES_SIGNALEMENTS.commentaire}{' '}
                   <TexteSignale texte={signalement.commentaire} />
                 </p>

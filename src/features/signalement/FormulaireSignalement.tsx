@@ -7,7 +7,7 @@ import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { lireRefusSignalement } from '@/features/signalement/refus'
 import type { RefusSignalement } from '@/features/signalement/refus'
-import { schemaSignalement } from '@/features/signalement/schemas'
+import { longueurEnCaracteres, schemaSignalement } from '@/features/signalement/schemas'
 import type { Signalement, ValeursSignalement } from '@/features/signalement/schemas'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import type { EcranSignalement } from '@/lib/base'
@@ -63,6 +63,10 @@ export function FormulaireSignalement({
     }
   })
 
+  // Après l'envoi (champ vidé), il n'y a plus rien à annuler : le bouton dit « Fermer ». Il
+  // redevient « Annuler » dès qu'on écrit de nouveau.
+  const envoye = envoi > 0 && texte === ''
+
   // Une erreur d'écran (adresse modifiée à la main) se dit sous le bouton : il n'y a pas de champ.
   const erreurEcran = errors.ecran?.message
 
@@ -84,7 +88,7 @@ export function FormulaireSignalement({
       <ChampTexteLibre
         id="signalement-texte"
         libelle={TEXTES_SIGNALEMENT.libelleChamp}
-        longueur={texte.length}
+        longueur={longueurEnCaracteres(texte)}
         avecRappel
         autoComplete="off"
         erreur={errors.texte?.message}
@@ -100,7 +104,7 @@ export function FormulaireSignalement({
         onClick={onAnnuler}
         className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
       >
-        {TEXTES_SIGNALEMENT.boutonAnnuler}
+        {envoye ? TEXTES_SIGNALEMENT.boutonFermer : TEXTES_SIGNALEMENT.boutonAnnuler}
       </button>
       {erreurEcran ? <ErreurFormulaire message={erreurEcran} /> : null}
       {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}

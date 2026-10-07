@@ -35,13 +35,21 @@ export function contientMarqueurModeration(texte: string): boolean {
   return texte.includes('[') || /texte masqu/i.test(texte)
 }
 
+/**
+ * Longueur en caractères, comme `char_length` de la base : un émoji compte pour un, là où
+ * `String.length` en compte deux (unités UTF-16). Sert au compteur et aux schémas.
+ */
+export function longueurEnCaracteres(texte: string): number {
+  return Array.from(texte).length
+}
+
 /** Un texte libre de 10 à 280 caractères après `trim`, sans marqueur de la modération. */
 function texteLibre(messageCourt: string, messageLong: string) {
   return z
     .string()
     .trim()
-    .min(LONGUEUR_MIN_SIGNALEMENT, messageCourt)
-    .max(LONGUEUR_MAX_SIGNALEMENT, messageLong)
+    .refine((texte) => longueurEnCaracteres(texte) >= LONGUEUR_MIN_SIGNALEMENT, messageCourt)
+    .refine((texte) => longueurEnCaracteres(texte) <= LONGUEUR_MAX_SIGNALEMENT, messageLong)
     .refine((texte) => !contientMarqueurModeration(texte), MESSAGES_BASE_SIGNALEMENT.crochets)
 }
 

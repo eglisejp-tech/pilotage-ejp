@@ -15,8 +15,11 @@ export const VUES_APERCU = [
   'formulaire',
   'premier-usage',
   'liste-probleme',
+  /** Un lien de 90 caractères sans espace, collé dans un signalement et son commentaire. */
+  'lien-long',
   // EJP Tech : bloc « Signalements » sur /moderation.
   'bloc',
+  'bloc-lien-long',
   'bloc-sans-ouvert',
   'bloc-vide',
   'bloc-chargement',
@@ -76,15 +79,28 @@ const CLOS_COMMUNICATION: LigneSignalement = {
   clos_recent: true,
 }
 
+/** Un lien long, sans espace : la page ne doit pas défiler en largeur. */
+const LIEN_LONG = `https://exemple.test/${'a'.repeat(69)}`
+
+/** Un ouvert et un clos dont le texte et le commentaire sont un lien collé de 90 caractères. */
+const AVEC_LIEN_LONG: LigneSignalement[] = [
+  { ...OUVERT_COMMUNICATION, texte: LIEN_LONG },
+  { ...CLOS_COMMUNICATION, texte: LIEN_LONG, commentaire: LIEN_LONG },
+]
+
 /** « Vos derniers signalements » de Communication, du plus récent au plus ancien. */
 export const MES_SIGNALEMENTS_EXEMPLE: LigneSignalement[] = [
   OUVERT_COMMUNICATION,
   CLOS_COMMUNICATION,
 ]
 
+/** « Vos derniers signalements » avec un lien long (vue `lien-long`). */
+export const MES_SIGNALEMENTS_LIEN_LONG: LigneSignalement[] = AVEC_LIEN_LONG
+
 /** Bloc d'EJP Tech : ouverts et clos récents, du plus ancien au plus récent (ordre de la base). */
 export function signalementsDuBloc(vue: VueApercu): LigneSignalement[] {
   if (vue === 'bloc-vide') return []
+  if (vue === 'bloc-lien-long') return AVEC_LIEN_LONG
   if (vue === 'bloc-sans-ouvert') return [CLOS_COMMUNICATION]
   return [CLOS_COMMUNICATION, OUVERT_COMMUNICATION, OUVERT_INTEGRATION]
 }

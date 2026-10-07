@@ -30,7 +30,8 @@ interface Props {
  * Bloc « Signalements » de l'accueil d'EJP Tech (T39 ; BRIEF, « Modération »), au-dessus du reste
  * de l'écran : titre avec « N signalements ouverts », sous-titre ; les ouverts, du plus ancien au
  * plus récent, chacun avec « Clore le signalement » ; puis les clos des 30 derniers jours (jour de
- * Paris, calculé par la base). Sans ouvert : « Aucun signalement. ... » (tout est fait), le titre
+ * Paris, calculé par la base), les derniers clos en premier. Sans ouvert : « Aucun signalement.
+ * ... » (tout est fait), ou « Aucun signalement ouvert. ... » quand des clos suivent ; le titre
  * et les clos gardés. Après une clôture, « Signalement clos. » est annoncé et le focus revient au
  * titre du bloc (la ligne a quitté les ouverts).
  */
@@ -46,13 +47,18 @@ export function ContenuBlocSignalements({ contenu }: Props) {
     contenu.etat === 'liste' ? contenu.signalements.filter((ligne) => ligne.ouvert) : []
   const clos =
     contenu.etat === 'liste'
-      ? contenu.signalements.filter((ligne) => !ligne.ouvert && ligne.clos_recent)
+      ? contenu.signalements
+          .filter((ligne) => !ligne.ouvert && ligne.clos_recent)
+          // Les derniers clos en premier (horodatage ISO de la base, comparé tel quel).
+          .sort((a, b) => (b.clos_le ?? '').localeCompare(a.clos_le ?? ''))
       : []
 
   const cloture =
     contenu.etat === 'liste'
       ? {
           cloturer: contenu.cloturer,
+          // Un autre panneau s'ouvre : l'ancien refus (« déjà clos ») n'a plus lieu d'être.
+          surOuverture: () => setRefus(null),
           surClos: () => {
             setRefus(null)
             setReussite(TEXTES_BLOC_SIGNALEMENTS.reussite)
@@ -113,7 +119,11 @@ export function ContenuBlocSignalements({ contenu }: Props) {
       {contenu.etat === 'liste' ? (
         <>
           {ouverts.length === 0 ? (
-            <EtatVide situation="tout_est_fait">{TEXTES_SIGNALEMENT.bloc.vide}</EtatVide>
+            <EtatVide situation="tout_est_fait">
+              {clos.length > 0
+                ? TEXTES_BLOC_SIGNALEMENTS.videAvecClos
+                : TEXTES_SIGNALEMENT.bloc.vide}
+            </EtatVide>
           ) : (
             <ol>
               {ouverts.map((signalement) => (

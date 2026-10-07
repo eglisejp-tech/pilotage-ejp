@@ -71,15 +71,49 @@ describe('bloc « Signalements »', () => {
     liste([CLOS, PLUS_ANCIEN])
     const clos = screen.getByRole('region', { name: 'Clos ces 30 derniers jours' })
     expect(clos).toHaveTextContent('Chiffres du dimanche, 27 sept.')
-    expect(clos).toHaveTextContent('Clos le 29 sept. : Réglé avec le ministère.')
+    // La date sur une ligne, le commentaire sur la suivante.
+    expect(within(clos).getByText('Clos le 29 sept.')).toBeInTheDocument()
+    expect(clos).toHaveTextContent('Commentaire : Réglé avec le ministère.')
     expect(within(clos).queryByRole('button')).toBeNull()
   })
 
-  it('sans ouvert : « Aucun signalement. ... », titre et clos gardés', () => {
+  it('les clos : le dernier clos en premier, pas le plus anciennement envoyé', () => {
+    const CLOS_HIER = ligne(5, {
+      ...CLOS,
+      id: '43000000-0000-4000-8000-000000000005',
+      texte: 'Envoyé tôt, clos hier.',
+      saisi_le: '2026-09-01T10:00:00+02:00',
+      clos_le: '2026-10-06T09:00:00+02:00',
+    })
+    liste([CLOS_HIER, CLOS])
+    const clos = screen.getByRole('region', { name: 'Clos ces 30 derniers jours' })
+    const lignes = within(clos).getAllByRole('article')
+    expect(lignes[0]).toHaveTextContent('Clos le 6 oct.')
+    expect(lignes[1]).toHaveTextContent('Clos le 29 sept.')
+  })
+
+  it('sans ouvert mais avec des clos : « Aucun signalement ouvert. ... », titre et clos gardés', () => {
     liste([CLOS])
-    expect(screen.getByText(VIDE)).toBeInTheDocument()
+    expect(
+      screen.getByText('Aucun signalement ouvert. Les prochains arriveront ici.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(VIDE)).toBeNull()
     expect(screen.getByText('Aucun signalement ouvert')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toBeInTheDocument()
+  })
+
+  it('chaque « Clore le signalement » se décrit par le ministère de sa ligne', () => {
+    liste([PLUS_ANCIEN, PLUS_RECENT])
+    const boutons = screen.getAllByRole('button', { name: 'Clore le signalement' })
+    expect(boutons[0]).toHaveAccessibleDescription('Intégration')
+    expect(boutons[1]).toHaveAccessibleDescription('Communication')
+  })
+
+  it('un texte sans espace (lien collé) se coupe au lieu de déborder', () => {
+    const lien = `https://exemple.test/${'a'.repeat(90)}`
+    liste([ligne(6, { texte: lien })])
+    const texte = screen.getByText(lien, { exact: false })
+    expect(texte.closest('p')).toHaveClass('wrap-anywhere', 'min-w-0')
   })
 
   it('rien du tout : la phrase de l’état vide, sans section des clos', () => {
@@ -166,6 +200,26 @@ describe('« Clore le signalement »', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce signalement est déjà clos.')
     expect(relire).toHaveBeenCalled()
+  })
+
+  it('le refus « déjà clos » s’efface quand on ouvre un autre panneau de clôture', async () => {
+    liste([PLUS_ANCIEN, PLUS_RECENT], {
+      cloturer: vi.fn(() =>
+        Promise.reject({ code: 'P0001', message: 'Ce signalement est déjà clos.' }),
+      ),
+    } as Partial<ContenuBloc>)
+    const boutons = screen.getAllByRole('button', { name: 'Clore le signalement' })
+    await userEvent.click(boutons[0]!)
+    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ce signalement est déjà clos.')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Clore le signalement' })[1]!)
+    expect(screen.queryByText('Ce signalement est déjà clos.')).toBeNull()
+  })
+
+  it('le panneau dit que le ministère lira le commentaire', async () => {
+    liste([PLUS_ANCIEN])
+    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
+    expect(screen.getByText(/Le ministère lira ce commentaire\./)).toBeInTheDocument()
   })
 
   it('connexion perdue : l’erreur sous le bouton, commentaire gardé', async () => {

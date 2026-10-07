@@ -441,28 +441,44 @@ connecter écrit à l'administration.
 
 ### Les textes
 
-| Élément                                                                         | Texte                                                                                                                           |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Lien                                                                            | Signaler une difficulté                                                                                                         |
-| Titre du panneau                                                                | Signaler une difficulté                                                                                                         |
-| Phrase sous le titre                                                            | EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.                                             |
-| Ligne de contexte (remplie par l'outil)                                         | Écran concerné : Ajouter un événement                                                                                           |
-| Libellé du champ                                                                | Quelle difficulté rencontrez-vous ?                                                                                             |
-| Rappel sous le champ (le rappel du formulaire, une seule fois)                  | N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.                                      |
-| Compteur                                                                        | 0 sur 280                                                                                                                       |
-| Erreur du champ (visible, sous le champ)                                        | Décrivez la difficulté (10 caractères au moins).                                                                                |
-| Bouton principal                                                                | Envoyer le signalement                                                                                                          |
-| Bouton secondaire                                                               | Annuler                                                                                                                         |
-| Bouton pendant l'envoi                                                          | Envoi en cours                                                                                                                  |
-| Erreur de formulaire (sous le bouton)                                           | La connexion a échoué. Votre message est encore dans le formulaire : réessayez.                                                 |
-| Confirmation (6 s, `role="status"`)                                             | Signalement envoyé. EJP Tech le lira.                                                                                           |
-| Date refusée, ajout (sous le champ date)                                        | Cette date est passée. Choisissez aujourd'hui ou une date à venir. Vous ne pouvez pas choisir de date ? Signaler une difficulté |
-| Date refusée, mise à jour (sous le champ date)                                  | La nouvelle date doit être aujourd'hui ou plus tard. Vous ne pouvez pas choisir de date ? Signaler une difficulté               |
-| Ligne identique, mise à jour (sans lien)                                        | Rien n'a changé : ce statut et cette date sont déjà enregistrés.                                                                |
-| Bloc EJP Tech : titre                                                           | Signalements                                                                                                                    |
-| Bloc EJP Tech : sous-titre                                                      | Difficultés signalées par les ministères                                                                                        |
-| Bloc EJP Tech : état vide (situation « tout est fait », le bloc garde sa place) | Aucun signalement. Les difficultés signalées par les ministères arriveront ici.                                                 |
-| Bloc EJP Tech : ligne                                                           | Communication, Ajouter un événement, 6 oct., puis le texte du signalement (champ libre, masquable par EJP Tech)                 |
+| Élément                                                                         | Texte                                                                                                                            |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Lien                                                                            | Signaler une difficulté                                                                                                          |
+| Titre du panneau                                                                | Signaler une difficulté                                                                                                          |
+| Phrase sous le titre                                                            | EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.                                              |
+| Ligne de contexte (remplie par l'outil)                                         | Écran concerné : Ajouter un événement                                                                                            |
+| Libellé du champ                                                                | Quelle difficulté rencontrez-vous ?                                                                                              |
+| Rappel sous le champ (le rappel du formulaire, une seule fois)                  | N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.                                       |
+| Compteur                                                                        | 0 sur 280                                                                                                                        |
+| Erreur du champ (visible, sous le champ)                                        | Décrivez la difficulté (10 caractères au moins).                                                                                 |
+| Bouton principal                                                                | Envoyer le signalement                                                                                                           |
+| Bouton secondaire                                                               | Annuler                                                                                                                          |
+| Bouton pendant l'envoi                                                          | Envoi en cours                                                                                                                   |
+| Erreur de formulaire (sous le bouton)                                           | La connexion a échoué. Votre message est encore dans le formulaire : réessayez.                                                  |
+| Confirmation (6 s, `role="status"`)                                             | Signalement envoyé. EJP Tech le lira.                                                                                            |
+| Date refusée, ajout (sous le champ date)                                        | Cette date est passée. Choisissez aujourd'hui ou une date à venir. Vous ne pouvez pas choisir de date ? Signaler une difficulté  |
+| Date refusée, mise à jour (sous le champ date)                                  | La nouvelle date doit être aujourd'hui ou plus tard. Vous ne pouvez pas choisir de date ? Signaler une difficulté                |
+| Ligne identique, mise à jour (sans lien)                                        | Rien n'a changé : ce statut et cette date sont déjà enregistrés.                                                                 |
+| Bloc EJP Tech : titre                                                           | Signalements                                                                                                                     |
+| Bloc EJP Tech : sous-titre                                                      | Difficultés signalées par les ministères                                                                                         |
+| Bloc EJP Tech : état vide (situation « tout est fait », le bloc garde sa place) | Aucun signalement. Les difficultés signalées par les ministères arriveront ici.                                                  |
+| Bloc EJP Tech : ligne                                                           | Communication, Ajouter un événement, 6 oct., puis le texte du signalement (champ libre, masquable par EJP Tech)                  |
+| Bouton secondaire, une fois le signalement envoyé (proposé, E8)                 | Fermer                                                                                                                           |
+| Bloc EJP Tech : compteur (proposé, E8)                                          | 2 signalements ouverts (Aucun signalement ouvert)                                                                                |
+| Bloc EJP Tech : état sans ouvert, quand des clos suivent (proposé, E8)          | Aucun signalement ouvert. Les prochains arriveront ici.                                                                          |
+| Bloc EJP Tech : sous-titre des clos (proposé, E8)                               | Clos ces 30 derniers jours                                                                                                       |
+| Bloc EJP Tech : bouton d'une ligne ouverte (proposé, E8)                        | Clore le signalement                                                                                                             |
+| Bloc EJP Tech : ligne close (proposé, E8)                                       | Clos le 8 oct., puis « Commentaire : » et le commentaire de clôture (champ libre, masquable)                                     |
+| Clôture : libellé du champ (proposé, E8)                                        | Commentaire (facultatif)                                                                                                         |
+| Clôture : note sous le libellé (proposé, E8)                                    | Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». Le ministère lira ce commentaire. |
+| Clôture : avertissement (proposé, E8)                                           | Une clôture est définitive.                                                                                                      |
+| Clôture : boutons (proposé, E8)                                                 | Clore définitivement (Clôture en cours) ; Annuler                                                                                |
+| Clôture : confirmation (proposé, E8)                                            | Signalement clos.                                                                                                                |
+| Clôture : refus, déjà clos (message de la base)                                 | Ce signalement est déjà clos.                                                                                                    |
+| Ministère : titre sous le formulaire (proposé, E8)                              | Vos derniers signalements                                                                                                        |
+| Ministère : état d'une ligne (proposé, E8)                                      | Ouvert ; Clos le 8 oct.                                                                                                          |
+| Ministère : réponse (proposé, E8)                                               | Réponse d'EJP Tech : puis le commentaire de clôture (champ libre, masquable)                                                     |
+| Écran Modération, en attendant l'étape 6 (proposé, E8)                          | La relecture des champs libres sera disponible prochainement.                                                                    |
 
 Dans les deux messages de date refusée, « Signaler une difficulté » est le lien ; le reste est du
 texte. Le message d'erreur garde `aria-describedby` et reste visible à côté du champ (section 1).

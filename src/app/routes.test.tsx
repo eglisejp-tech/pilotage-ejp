@@ -193,7 +193,7 @@ describe('routes', () => {
       expect(document.body.textContent).toContain(LIBELLES[type])
       if (type === 'admin_plateforme') {
         // Lot E8 : le bloc « Signalements » en tête, la relecture à l'étape 6.
-        expect(screen.getByText(/arrive à l'étape 6/)).toBeInTheDocument()
+        expect(screen.getByText(/sera disponible prochainement/)).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
         expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
@@ -548,7 +548,7 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getByText('1 signalement ouvert')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
     expect(
-      screen.getByText("La relecture des champs libres arrive à l'étape 6."),
+      screen.getByText('La relecture des champs libres sera disponible prochainement.'),
     ).toBeInTheDocument()
     expect(faux.tables).toEqual(['compte', 'v_signalement'])
   })

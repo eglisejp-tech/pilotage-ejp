@@ -89,7 +89,9 @@ describe('/signaler', () => {
     const faux = connecte('ministere')
     afficher('/signaler?ecran=saisie_evenement')
     const champ = await screen.findByLabelText('Quelle difficulté rencontrez-vous ?')
-    await userEvent.type(champ, 'Je ne peux pas choisir la date de la soirée.')
+    // Coller plutôt que taper touche par touche : un poste chargé dépasse sinon les 5 secondes.
+    await userEvent.click(champ)
+    await userEvent.paste('Je ne peux pas choisir la date de la soirée.')
     await userEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }))
     expect(await screen.findByText('Signalement envoyé. EJP Tech le lira.')).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('signaler_difficulte', {
@@ -149,10 +151,8 @@ describe('/moderation, bloc « Signalements »', () => {
     })
     afficher('/moderation')
     await userEvent.click(await screen.findByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.type(
-      screen.getByLabelText('Commentaire (facultatif)'),
-      'transmis à l’administration',
-    )
+    await userEvent.click(screen.getByLabelText('Commentaire (facultatif)'))
+    await userEvent.paste('transmis à l’administration')
     await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
     expect(await screen.findByText('Signalement clos.')).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('clore_signalement', {

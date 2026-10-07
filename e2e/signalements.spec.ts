@@ -8,9 +8,10 @@ import type { Page } from '@playwright/test'
 
 const RAPPEL =
   "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
-const VUES_MINISTERE = ['formulaire', 'premier-usage', 'liste-probleme'] as const
+const VUES_MINISTERE = ['formulaire', 'premier-usage', 'liste-probleme', 'lien-long'] as const
 const VUES_EJP_TECH = [
   'bloc',
+  'bloc-lien-long',
   'bloc-sans-ouvert',
   'bloc-vide',
   'bloc-chargement',
@@ -67,6 +68,8 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
       'Signalement envoyé. EJP Tech le lira.',
     )
     await expect(champ(page)).toHaveValue('')
+    // Il n'y a plus rien à annuler : le bouton dit « Fermer ».
+    await expect(page.getByRole('button', { name: 'Fermer', exact: true })).toBeVisible()
   })
 
   test('refus de la base (donnée personnelle) : son message sous le champ, texte gardé', async ({
@@ -139,7 +142,8 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     await expect(ouverts.first()).toContainText('Ajouter un événement, 2 oct.')
     await expect(ouverts.nth(1)).toContainText('Intégration')
     const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
-    await expect(clos).toContainText('Clos le 29 sept. : Réglé avec le ministère')
+    await expect(clos).toContainText('Clos le 29 sept.')
+    await expect(clos).toContainText('Commentaire : Réglé avec le ministère')
     await expect(clos.getByRole('button')).toHaveCount(0)
   })
 
@@ -151,7 +155,7 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     const commentaire = page.getByLabel('Commentaire (facultatif)')
     await expect(commentaire).toBeFocused()
     await expect(commentaire).toHaveAccessibleDescription(
-      `Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». ${RAPPEL} 0 sur 280`,
+      `Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». Le ministère lira ce commentaire. ${RAPPEL} 0 sur 280`,
     )
     await commentaire.fill('Court')
     await page.getByRole('button', { name: 'Clore définitivement' }).click()
@@ -164,9 +168,9 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
       'Signalement clos.',
     )
     await expect(page.getByText('1 signalement ouvert')).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toContainText(
-      "Clos le 6 oct. : transmis à l'administration",
-    )
+    const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
+    await expect(clos).toContainText('Clos le 6 oct.')
+    await expect(clos).toContainText("Commentaire : transmis à l'administration")
   })
 
   test('états : sans ouvert (titre et clos gardés), rien, chargement, problème passager', async ({
@@ -174,8 +178,11 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
   }) => {
     const vide = 'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.'
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-sans-ouvert')
-    await expect(page.getByText(vide)).toBeVisible()
-    await expect(page.getByText('Aucun signalement ouvert')).toBeVisible()
+    await expect(
+      page.getByText('Aucun signalement ouvert. Les prochains arriveront ici.'),
+    ).toBeVisible()
+    await expect(page.getByText(vide)).toHaveCount(0)
+    await expect(page.getByText('Aucun signalement ouvert', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toBeVisible()
 
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-vide')
@@ -223,6 +230,9 @@ test.describe('accessibilité et largeurs', () => {
       'profil=ministere',
       'profil=admin_plateforme',
       'profil=admin_plateforme&vue=bloc-sans-ouvert',
+      // Un lien collé de 90 caractères, sans espace, dans le texte et la réponse.
+      'profil=ministere&vue=lien-long',
+      'profil=admin_plateforme&vue=bloc-lien-long',
     ]) {
       await ouvrir(page, requete)
       const debord = await page.evaluate(
@@ -248,6 +258,8 @@ test.describe('accessibilité et largeurs', () => {
 })
 
 test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+  // Une dizaine de pages pleines : le délai par défaut est trop juste sur un poste chargé.
+  test.setTimeout(90_000)
   const largeur = page.viewportSize()?.width ?? 0
   const capturer = (nom: string) =>
     page.screenshot({
@@ -262,6 +274,8 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await capturer('premier-usage')
   for (const vue of VUES_EJP_TECH) {
     await ouvrir(page, `profil=admin_plateforme&vue=${vue}`)
+    // « Chargement » n'apparaît qu'après 300 ms : la capture l'attend.
+    if (vue === 'bloc-chargement') await expect(page.getByText('Chargement')).toBeVisible()
     await capturer(vue)
   }
   await ouvrir(page, 'profil=admin_plateforme')

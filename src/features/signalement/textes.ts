@@ -24,6 +24,8 @@ export const TEXTES_SIGNALEMENT = {
   boutonEnvoyer: 'Envoyer le signalement',
   boutonEnCours: 'Envoi en cours',
   boutonAnnuler: 'Annuler',
+  /** Même bouton une fois le signalement envoyé : il n'y a plus rien à annuler (proposé, E8). */
+  boutonFermer: 'Fermer',
   confirmation: 'Signalement envoyé. EJP Tech le lira.',
   /** Sous le champ date de l'ajout d'un événement, avant le lien « Signaler une difficulté ». */
   dateRefuseeAjout: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
@@ -104,13 +106,17 @@ export const TEXTES_BLOC_SIGNALEMENTS = {
   /** « Ajouter un événement, 6 oct. », sous le nom du ministère. */
   ligne: (ecran: EcranSignalement, saisiLe: string) =>
     `${LIBELLES_ECRAN[ecran]}, ${jourDuSignalement(saisiLe)}`,
-  /** « Clos le 8 oct. » ; avec le commentaire : « Clos le 8 oct. : ... ». */
+  /** Un signalement clos : « Clos le 8 oct. », puis le commentaire sur la ligne suivante. */
   clos: (closLe: string) => `Clos le ${jourDuSignalement(closLe)}`,
+  /** Devant le commentaire de clôture d'une ligne close. */
+  commentaireClos: 'Commentaire :',
+  /** Sans ouvert, quand des clos suivent : le titre dit déjà « aucun ouvert ». */
+  videAvecClos: 'Aucun signalement ouvert. Les prochains arriveront ici.',
   boutonClore: 'Clore le signalement',
   libelleCommentaire: 'Commentaire (facultatif)',
-  /** Sous le libellé : ce que dit le commentaire quand EJP Tech a transmis (T39). */
+  /** Sous le libellé : ce que dit le commentaire quand EJP Tech a transmis, et qui le lit (T39). */
   noteCommentaire:
-    "Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ».",
+    "Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». Le ministère lira ce commentaire.",
   noteDefinitive: 'Une clôture est définitive.',
   boutonConfirmer: 'Clore définitivement',
   boutonEnCours: 'Clôture en cours',

@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 
 /** Le reste de l'écran Modération (file de relecture, maquette 15) arrive à l'étape 6. */
-export const RELECTURE_A_VENIR = "La relecture des champs libres arrive à l'étape 6."
+export const RELECTURE_A_VENIR = 'La relecture des champs libres sera disponible prochainement.'
 
 interface Props {
   /** « Modération », titre de l'écran et de l'onglet. */
@@ -15,6 +15,10 @@ interface Props {
  * Écran `/moderation` d'EJP Tech à l'étape 4 : le titre de l'écran, le bloc « Signalements » au-
  * dessus du reste (BRIEF, « Modération »), puis la phrase qui dit que la relecture arrive à
  * l'étape 6. Le titre de page (h1) précède le titre du bloc (h2).
+ *
+ * Écart tracé (plan de l'étape 4, E8) : cet écran remplace `PageAVenir` dans `PageModeration.tsx`,
+ * pour que le h1 précède le h2 du bloc. À déplacer dans `src/features/moderation/` à l'étape 6,
+ * avec la file « À relire » de la maquette 15.
  */
 export function EcranModeration({ titre, children }: Props) {
   useTitrePage(titre)

@@ -5,6 +5,7 @@ import {
   ECHEC_CONNEXION,
   lireVueApercu,
   MES_SIGNALEMENTS_EXEMPLE,
+  MES_SIGNALEMENTS_LIEN_LONG,
   refusDeLaBase,
   refuseParLaBase,
 } from '@/features/signalement/apercu/exemples'
@@ -24,9 +25,10 @@ const COMPTE_EXEMPLE = 'Ministère Communication'
  * données d'exemple et des envois simulés. Adresse : /apercu/signalements.
  * - `?profil=ministere` (ou sans profil) : « Signaler une difficulté » ; `ecran=<code>` remplit
  *   la ligne « Écran concerné » (un code inconnu devient « autre ») ; `vue=formulaire` (avec
- *   « Vos derniers signalements »), `premier-usage` (rien sous le formulaire), `liste-probleme` ;
+ *   « Vos derniers signalements »), `premier-usage` (rien sous le formulaire), `liste-probleme`,
+ *   `lien-long` (un lien de 90 caractères collé dans le texte et la réponse) ;
  * - `?profil=admin_plateforme` : l'écran Modération avec le bloc « Signalements » ; `vue=bloc`,
- *   `bloc-sans-ouvert` (titre et clos gardés), `bloc-vide`, `bloc-chargement`, `bloc-probleme` ;
+ *   `bloc-sans-ouvert` (titre et clos gardés), `bloc-lien-long`, `bloc-vide`, `bloc-chargement`, `bloc-probleme` ;
  * - `?profil=berger`, `conseil` ou `admin_eglise` : « Page non disponible » (ils ne lisent aucun
  *   signalement).
  * `&envoi=echec` simule une connexion perdue à l'envoi. Enregistrée seulement en développement.
@@ -52,6 +54,8 @@ export function ApercuSignalements() {
   let mesSignalements: ContenuMesSignalements
   if (vue === 'liste-probleme') mesSignalements = { etat: 'probleme', reessayer }
   else if (vue === 'premier-usage') mesSignalements = { etat: 'liste', signalements: [] }
+  else if (vue === 'lien-long')
+    mesSignalements = { etat: 'liste', signalements: MES_SIGNALEMENTS_LIEN_LONG }
   else mesSignalements = { etat: 'liste', signalements: MES_SIGNALEMENTS_EXEMPLE }
 
   return (

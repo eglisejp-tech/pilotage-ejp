@@ -3,6 +3,7 @@ import {
   contientMarqueurModeration,
   ECRANS_SIGNALEMENT,
   lireEcran,
+  longueurEnCaracteres,
   schemaCloture,
   schemaFormulaireCloture,
   schemaSignalement,
@@ -40,6 +41,17 @@ describe('schemaSignalement', () => {
     expect(schemaSignalement.safeParse({ ecran: 'autre', texte: 'a'.repeat(280) }).success).toBe(
       true,
     )
+  })
+
+  it('compte en caractères comme la base : 280 émojis passent, 281 non', () => {
+    // Un émoji pèse deux unités UTF-16 mais un seul caractère pour `char_length`.
+    expect(schemaSignalement.safeParse({ ecran: 'autre', texte: '😀'.repeat(280) }).success).toBe(
+      true,
+    )
+    expect(
+      erreurs(schemaSignalement.safeParse({ ecran: 'autre', texte: '😀'.repeat(281) })),
+    ).toEqual(['Le signalement dépasse 280 caractères.'])
+    expect(longueurEnCaracteres('a😀b')).toBe(3)
   })
 
   it('texte de 9 caractères (après trim) : « Décrivez la difficulté (10 caractères au moins). »', () => {
