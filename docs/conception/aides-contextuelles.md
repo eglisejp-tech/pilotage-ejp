@@ -1,15 +1,20 @@
 # Aides contextuelles : règles et catalogue
 
 - **Statut** : principe décidé le 6 octobre 2026 (T38 de `docs/decisions.md`), avec la forme ronde
-  du bouton d'aide (décidée le même jour) ; les textes restent « Proposé », à valider par la
-  personne responsable (question 15 du plan de l'étape 4). Rien n'est codé.
-- **Date** : 6 octobre 2026
+  du bouton d'aide (décidée le même jour) ; les textes sont « Proposé, réécrit le 7 octobre 2026
+  après les remarques de la personne responsable » (section 6), à valider par elle (question 15 du
+  plan de l'étape 4). Le catalogue est dans `src/components/aide/textesAide.ts`.
+- **Date** : 6 octobre 2026, textes et règles de rédaction réécrits le 7 octobre 2026
 - **Origine** : demande du 6 octobre 2026 (réponse à la question 7 du plan de l'étape 4) : de petites
   aides contextuelles, bien placées, simplement rédigées, pour aider à la prise en main.
 - **Changement du 6 octobre 2026** : le mois en cours d'un indicateur sensible se saisit (P45), une
   « Précision » et une répartition par catégories s'y ajoutent (P46, P47). `mois.sensible` est revue,
   `mois.repartition` et `fiche.repartition` sont proposées (section 6), et le texte « Se saisit une
-  fois le mois fini. » est retiré (section 8).
+  fois le mois fini. » est retiré (section 8). `fiche.repartition` est supprimée le 7 octobre.
+- **Changement du 7 octobre 2026** : les règles de rédaction (section 2) et tous les textes
+  (section 6) sont réécrits : cinq aides sont supprimées, vingt-huit restent. Trois de ces cinq sont
+  encore appelées par un écran (`CODES_A_RETIRER`), les deux de la fiche sont déjà retirées avec le
+  lot I (valeurs exactes, P52). Sources de la recherche à la fin de la section 2.
 - **Sources** : `docs/plan-etape-4.md` (lots E2 à E7), `BRIEF.md` (sections 3, 4 et 9),
   `docs/reference/maquettes/LISEZMOI.md`, maquettes 04, 07, 08, 09, 11 et 12,
   `src/styles/tokens.css`, composants de `src/features/cette-semaine/`.
@@ -53,39 +58,87 @@ dans le code. L'ouverture d'une aide n'est ni comptée ni écrite au journal.
 
 ## 2. Règles de rédaction
 
+Réécrites le 7 octobre 2026, après une recherche sur la rédaction des aides courtes (sources en fin
+de section) et les remarques de la personne responsable : une aide dit **ce que la personne doit
+comprendre**, jamais ce qu'elle ne doit pas savoir ni ce que l'outil ne fait pas.
+
 1. **Une idée par aide.** Si le texte en demande deux, c'est deux aides, ou un meilleur libellé.
-2. **120 caractères au plus**, espaces compris. Une ou deux phrases courtes.
-3. **Dit ce qui est compté ou ce qui se passe**, pas comment remplir. « Ce nombre alimente le total de
-   l'église. » et non « Entrez un nombre. »
-4. **Ne répète pas le libellé.** L'aide de « STARs actifs » ne commence pas par « Les STARs actifs
-   sont ».
-5. **Mots de l'outil** : STARs, ministère, saisie, chiffres, total de l'église, fiche, rappel.
-   Pas de jargon : ni « complétude », ni « agrégat », ni « nature », ni « sensible », ni « seuil ».
-   On écrit « 6 sur 8 », pas « complétude ». Les sigles (FIJ, STAR) ne se développent pas : l'outil
-   ne les développe nulle part.
-6. **Voix active, présent, « vous »** quand l'aide parle de la personne. Pas de « on » vague, pas de
-   « il convient de ».
-7. **Un exemple chiffré quand il aide**, avec des nombres ronds et plausibles (« 13 présents dont 2
-   déjà comptés »). Les nombres de l'exemple ne viennent jamais d'un jeu de données réel.
-8. **Ton respectueux et professionnel** : ni excuse, ni familiarité, ni point d'exclamation, ni
-   reproche. On informe.
-9. **Interdits** : tiret cadratin ou demi-cadratin (aussi comme séparateur), emoji, majuscules
-   d'insistance, « cliquez » (l'outil se lit aussi au doigt : « ouvrez », « choisissez »), « ici »,
-   « simplement », « juste », « n'oubliez pas ».
-10. **Ponctuation française** : « deux-points » précédé d'une espace, guillemets « ainsi ». Un
+2. **Commence par ce que c'est.** La première phrase définit le chiffre ou dit ce que la personne
+   fait, dans les mots de l'outil. « Part des STARs actifs qui sont en FIJ. » Pas de « L'outil
+   calcule », pas de mécanique interne (« reste valable jusqu'à votre prochaine saisie »).
+3. **Dit en positif.** On écrit ce qui est, ce qui se passe, ce qu'il faut faire. Pas de « vous
+   n'avez pas à », « ne compte pas pour 0 », « ne peut pas », « jamais ». Un trou dans une courbe se
+   décrit (« période non saisie »), il ne se nie pas. Le test du catalogue refuse « pas », « jamais »,
+   « ne peut » et « ne comptent ».
+4. **Un exemple chiffré quand le texte est abstrait**, avec des nombres ronds et plausibles (« 9 sur
+   12 actifs, l'outil affiche 75 % »). Il vient après la définition, jamais avant : l'exemple
+   « +3 » ne doit pas être pris pour le chiffre affiché. Les nombres ne viennent jamais d'un jeu de
+   données réel, et aucun nom de personne ni de ministère réel n'y figure.
+5. **Ne répète pas l'écran.** Pas le libellé, pas un texte visible, pas une erreur. Si le libellé se
+   comprend seul, il n'y a pas d'aide (test de décision, section 1).
+6. **Pas de consigne cachée.** Format, limite, règle de saisie et conséquence d'un choix restent
+   visibles sous le champ. Une aide est facultative : l'écran marche sans elle.
+7. **120 caractères au plus**, espaces compris, une ou deux phrases. Un texte plus long cache
+   plusieurs idées.
+8. **Voix active, présent, « vous »** quand l'aide parle de la personne. Pas de « on » vague, pas de
+   « il convient de ». Les verbes d'action se disent à l'impératif (« Saisissez », « Indiquez »).
+9. **Mots de l'outil** : STARs, ministère, saisie, chiffres, total de l'église, fiche, rappel. Pas de
+   jargon : ni « complétude », ni « agrégat », ni « nature », ni « sensible », ni « seuil », ni
+   « départ ». On écrit « 6 sur 8 ». Les sigles (FIJ, STAR) ne se développent pas.
+10. **Ton neutre et respectueux** : ni excuse, ni familiarité, ni point d'exclamation, ni reproche,
+    jamais un mot qui accuse (« invalide », « incorrect »). On informe.
+11. **Interdits** : tiret cadratin ou demi-cadratin (aussi comme séparateur), emoji, majuscules
+    d'insistance, « cliquez » (l'outil se lit aussi au doigt : « ouvrez », « choisissez »), « ici »,
+    « simplement », « juste », « n'oubliez pas ».
+12. **Ponctuation française** : « deux-points » précédé d'une espace, guillemets « ainsi ». Un
     nombre d'écart s'écrit « +2 » ou avec le signe moins, jamais un tiret (BRIEF section 9,
-    « Formats »).
-11. **Aucune donnée personnelle**, aucun nom d'exemple : pas de « Jean », pas de nom de ministère
+    « Formats »). Phrases complètes, avec un point final.
+13. **Aucune donnée personnelle**, aucun nom d'exemple : pas de « Jean », pas de nom de ministère
     réel dans un exemple.
+14. **Un texte vrai tant que l'outil ne change pas.** Chaque texte est vérifié contre le BRIEF avant
+    d'entrer au catalogue ; quand une règle change, le texte change dans le même lot.
 
-Exemples.
+Exemples (réécriture du 7 octobre 2026).
 
-| À éviter                                                      | À écrire                                                                      | Pourquoi                                     |
-| ------------------------------------------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------- |
-| « Saisissez le nombre de STARs actifs dans votre ministère. » | « Ce nombre reste valable jusqu'à votre prochaine saisie. »                   | Le libellé et le texte visible le disent     |
-| « La complétude du total est de 6 sur 8. »                    | « 6 ministères sur 8 ont saisi. Le total n'inclut que ceux-là. »              | Sans jargon, dit ce qui est compté           |
-| « Les valeurs sensibles sont masquées par un seuil. »         | « « Moins de 3 » remplace 1 ou 2 pour la santé, l'écoute... Cela protège... » | Dit pour qui et pourquoi, sans mot technique |
-| « Cliquez ici pour comprendre le pourcentage. »               | « L'outil calcule ce pourcentage à partir des deux chiffres saisis. »         | Dit ce qui se passe                          |
+| À éviter                                                                                              | À écrire                                                                                                     | Règle    |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | -------- |
+| « L'outil calcule le pourcentage de STARs en FIJ. Vous n'avez pas à le saisir. »                      | « Vos STARs actifs qui participent à une FIJ. Exemple : 9 sur 12 actifs, l'outil affiche 75 %. »             | 2, 3, 4  |
+| « 6 dép. sur 8 : il manque deux départements. Ils ne comptent pas pour 0. »                           | « Nombre de départements qui ont un chiffre cette semaine. « 6 dép. sur 8 » : le total n'inclut que ces 6. » | 2, 3     |
+| « Les catégories viennent de la coordination. Ce que vous ne répartissez pas s'affiche non réparti. » | « Indiquez combien du total va dans chaque catégorie. Exemple : sur 10, 6 « Malaise » et 4 « Autre ». »      | 2, 4     |
+| « Cliquez ici pour comprendre le pourcentage. »                                                       | « Part des STARs actifs qui sont en FIJ. Exemple : 64 en FIJ sur 83 actifs donnent 77 %. »                   | 2, 4, 11 |
+
+Sources de la recherche (consultées le 7 octobre 2026) :
+
+- Nielsen Norman Group, « Tooltip Guidelines » (nngroup.com/articles/tooltip-guidelines) : une
+  aide courte est un contenu autonome ; elle explique un champ que la personne ne peut pas deviner,
+  jamais une information nécessaire pour finir la tâche ni une consigne de saisie ; pas de texte qui
+  répète le libellé.
+- Carbon Design System (IBM), « Tooltip usage » (carbondesignsystem.com/components/tooltip/usage) :
+  contenu pertinent et précis, phrases complètes pour une définition ; rien d'essentiel dans une
+  infobulle, car elle n'est pas persistante ; pas de lien ni de bouton dedans.
+- Inclusive Components, « Tooltips & Toggletips » (inclusive-components.design/tooltips-toggletips) :
+  pour un terme ou un chiffre à comprendre, un bouton qui s'ouvre au clic ou à Entrée (le
+  « toggletip », notre modèle) marche à la souris, au clavier et au doigt ; le contenu est annoncé
+  par une région `status`.
+- GOV.UK Design System, « Text input » et « Dates » (design-system.service.gov.uk/components/text-input
+  et /patterns/dates) : une aide de champ tient en une phrase courte centrée sur l'usage ; un exemple
+  chiffré lève l'ambiguïté (« For example, 27 3 2024 »).
+- Atlassian Design, « Tooltip usage » (atlassian.design/components/tooltip/usage) : pas de lien ni
+  de bouton dans la bulle, pas d'icône, pas d'aide sur un élément désactivé.
+- Microsoft Writing Style Guide, « tooltip » (learn.microsoft.com/en-us/style-guide) : bref, avec
+  parcimonie, sans répéter le libellé.
+- W3C, « Tooltip Pattern » (w3.org/WAI/ARIA/apg/patterns/tooltip) et WCAG 1.4.13 (w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus) :
+  une infobulle ne reçoit pas le focus ; son contenu se ferme sans bouger le pointeur ni le focus.
+- Nielsen Norman Group, « Placeholders in Form Fields » (nngroup.com/articles/form-design-placeholders) :
+  aucune consigne dans un texte qui disparaît à la saisie.
+- Sources internes : remarques de la personne responsable du 7 octobre 2026 ; BRIEF sections 3 et 4.
+
+Limites de la recherche : les pages Material Design 3 et Apple HIG n'ont pas pu être lues et ne sont
+pas citées. Les règles 5 et 6 (ne pas répéter l'écran, pas de consigne cachée) et l'exemple chiffré
+de la règle 4 viennent des sources ci-dessus. Les autres (définition d'abord, ton positif, limite de
+120 caractères, voix active, mots de l'outil) sont des choix du projet, appuyés sur la règle de
+CLAUDE.md « français simple, voix active » et sur la pratique courante de rédaction claire, sans
+qu'une des pages citées les formule mot pour mot.
 
 ## 3. Placement et interaction
 
@@ -275,46 +328,62 @@ référence et ne reçoit aucun token nouveau.
 
 ## 6. Catalogue
 
-Statut de tous les textes : **Proposé**, à valider par la personne responsable. La colonne « Car. »
-donne le nombre de caractères (120 au plus). Placement : **Flux** ou **Flottante** (section 3).
-Profils : ceux qui voient l'écran ; EJP Tech lit les écrans de lecture, mais n'a aucun écran de
-saisie (T29).
+Statut de tous les textes : **Proposé, réécrit le 7 octobre 2026 après les remarques de la personne
+responsable**, à valider par elle. La colonne « Car. » donne le nombre de caractères (120 au plus).
+Placement : **Flux** ou **Flottante** (section 3). Profils : ceux qui voient l'écran ; EJP Tech lit
+les écrans de lecture, mais n'a aucun écran de saisie (T29).
+
+### Ce qui change le 7 octobre 2026
+
+Remarques de la personne responsable : une aide dit ce que la personne doit comprendre, pas ce
+qu'elle ne doit pas savoir ; « Répartition par catégories » n'était pas claire ; le berger et le
+conseil ont besoin des valeurs exactes ; un STAR ne sert jamais dans deux ministères un dimanche.
+Chaque texte est réécrit selon les règles de la section 2 et vérifié contre le BRIEF.
+
+- **Textes de la personne responsable, repris** : `dimanche.service` (avec « qui ont servi dans votre
+  ministère », pour ne pas la confondre avec « actifs ») et `dimanche.propres`.
+- **`mois.sensible`** : le berger, le conseil et EJP Tech voient les valeurs exactes. Le texte
+  d'aide l'écrit déjà. La base et la fiche livrent les valeurs exactes depuis le lot I (P52,
+  migration `20261009120000_lot_i_correctifs.sql`). Le texte du BRIEF (section 4, « seuil moins de
+  3 »), P35, P45 et P47 reste à mettre à jour par le lot qui tient ces documents.
+- **`mois.repartition`** : le texte dit quoi faire, avec un exemple. Le titre visible devient
+  « Détail du total par catégorie (facultatif) » (un libellé clair vaut mieux qu'une aide qui le
+  compense, test de décision 2).
+- **STAR compté deux fois** : le champ « déjà comptés par leur ministère principal » n'existe que
+  pour les sessions (Bâtir l'Église, Anti-Dispersion), jamais le dimanche (D2, règle 5).
+  `session.dejaComptes` reste donc. Retirer aussi ce champ des sessions changerait D2 et la règle 5 :
+  il faut la confirmation de la personne responsable.
 
 ### Saisie du dimanche (maquette 08, lot E3)
 
-Quatre aides, le plafond d'un formulaire. Les textes visibles de la maquette (« Les STARs qui ont
-servi dans votre ministère ce dimanche. Si personne n'a servi, enregistrez 0. », « Comptez chaque
-STAR dans un seul ministère : son ministère principal. », « Parmi ces STARs actifs, ceux qui
-participent à une FIJ. ») restent affichés.
+Quatre aides, le plafond d'un formulaire. Les textes visibles de la maquette restent affichés.
 
-| Code               | Champ ou bloc                                | Texte                                                                                                         | Car. | Placement | Profils   |
-| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
-| `dimanche.service` | « STARs au service ce dimanche »             | Ce nombre alimente le total de l'église et l'écart avec dimanche dernier.                                     | 73   | Flux      | ministère |
-| `dimanche.actifs`  | « STARs actifs »                             | Ce nombre reste valable jusqu'à votre prochaine saisie. L'église additionne ceux de tous les ministères.      | 104  | Flux      | ministère |
-| `dimanche.enFij`   | « Dont en FIJ »                              | L'outil calcule le pourcentage de STARs en FIJ à partir de ce nombre. Vous n'avez pas à le saisir.            | 98   | Flux      | ministère |
-| `dimanche.propres` | Titre du groupe des indicateurs du ministère | Ces chiffres s'affichent sur votre fiche, avec leur courbe. Ils n'apparaissent jamais sur la vue de l'église. | 109  | Flux      | ministère |
+| Code               | Champ ou bloc                                | Texte                                                                                                        | Car. | Placement | Profils   |
+| ------------------ | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ---- | --------- | --------- |
+| `dimanche.service` | STARs au service ce dimanche                 | C'est l'ensemble des STARs qui ont servi dans votre ministère ce dimanche, et l'écart avec dimanche dernier. | 108  | Flux      | ministère |
+| `dimanche.actifs`  | STARs actifs                                 | Les STARs dont votre ministère est le ministère principal, qu'ils aient servi ou non ce dimanche.            | 97   | Flux      | ministère |
+| `dimanche.enFij`   | Dont en FIJ                                  | Vos STARs actifs qui participent à une FIJ. Exemple : 9 sur 12 actifs, l'outil affiche 75 %.                 | 92   | Flux      | ministère |
+| `dimanche.propres` | Titre du groupe des indicateurs du ministère | Ces chiffres s'affichent sur votre fiche, avec leur courbe.                                                  | 59   | Flux      | ministère |
 
 `dimanche.propres` ne paraît que si le ministère a au moins un indicateur propre du dimanche ; une
 seule aide pour le groupe, jamais une par indicateur.
 
 ### Chiffres du mois (lot E3)
 
-| Code               | Champ ou bloc                                                                                 | Texte                                                                                                 | Car. | Placement | Profils   |
-| ------------------ | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
-| `mois.periode`     | Titre « Chiffres de septembre » (choix du mois)                                               | Saisissez le total du mois entier. Un mois oublié se rattrape jusqu'en janvier de l'an dernier.       | 95   | Flux      | ministère |
-| `mois.sensible`    | Champ d'un indicateur de santé, d'écoute, d'accompagnement ou d'enfants                       | Le berger et le conseil voient « moins de 3 » à la place de 1 ou 2, mois en cours compris.            | 90   | Flux      | ministère |
-| `mois.repartition` | Titre de la grille « Répartition (facultatif) » d'un indicateur sensible qui a des catégories | Les catégories viennent de la coordination. Ce que vous ne répartissez pas s'affiche « non réparti ». | 101  | Flux      | ministère |
-| `mois.aValider`    | Champ d'un indicateur marqué « à valider »                                                    | EJP Tech doit encore valider cet indicateur. Vous pouvez le saisir, mais il n'entre dans aucun total. | 101  | Flux      | ministère |
+| Code               | Champ ou bloc                                                                                                   | Texte                                                                                                               | Car. | Placement | Profils   |
+| ------------------ | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
+| `mois.periode`     | Titre « Chiffres de septembre » (choix du mois)                                                                 | Le total du mois choisi. Pour le mois en cours, saisissez le total à ce jour, puis le total complet en fin de mois. | 115  | Flux      | ministère |
+| `mois.sensible`    | Champ d'un indicateur de santé, d'écoute, d'accompagnement ou d'enfants                                         | Saisissez la valeur exacte. Seuls votre ministère, le berger, le conseil et EJP Tech la voient.                     | 95   | Flux      | ministère |
+| `mois.repartition` | Titre de la grille « Détail du total par catégorie (facultatif) » d'un indicateur sensible qui a des catégories | Indiquez combien du total va dans chaque catégorie. Exemple : sur 10, 6 « Malaise » et 4 « Autre ».                 | 99   | Flux      | ministère |
+| `mois.aValider`    | Champ d'un indicateur marqué « à valider »                                                                      | Indicateur en attente de validation par EJP Tech. Saisissez-le déjà : vos chiffres compteront s'il est validé.      | 110  | Flux      | ministère |
 
 `mois.sensible`, `mois.aValider` et `mois.repartition` sont conditionnelles : elles ne s'affichent
 que sur les champs concernés, une fois par formulaire. Avec elles, le formulaire atteint le plafond
 de quatre aides : le champ « Précision » n'a pas d'aide, parce que ce qu'il faut savoir avant
 d'écrire (qui la lit, le rappel sur les données personnelles) est un texte visible (section 8).
 
-**Changement du 6 octobre 2026 (P45 à P47), statut Proposé.** `mois.sensible` disait « Seul un mois
-fini se saisit. » : ce n'est plus vrai, le mois en cours d'un indicateur sensible se saisit (P45),
-et le texte est revu. `mois.repartition` est nouvelle (P47). Textes visibles proposés pour la
-précision et la répartition (« Proposé », plan de l'étape 4, E3) :
+Textes visibles du champ « Précision » et de la grille (P46, P47, statut Proposé). Le titre de la
+grille change.
 
 | Élément                                                  | Texte                                                                                      |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -324,101 +393,105 @@ précision et la répartition (« Proposé », plan de l'étape 4, E3) :
 | Compteur                                                 | 0 sur 280                                                                                  |
 | Précision déjà envoyée pour ce mois                      | « Précision actuelle : », suivi du texte (un champ vide la laisse en place)                |
 | Erreur du champ                                          | Écrivez au moins 10 caractères, ou laissez la précision vide.                              |
-| Titre de la grille                                       | Répartition (facultatif)                                                                   |
+| Titre de la grille                                       | Détail du total par catégorie (facultatif)                                                 |
 | Ligne calculée sous la grille                            | Non réparti : 3                                                                            |
 | Erreur sous la grille                                    | La somme des catégories (9) dépasse le total du mois (7).                                  |
 
 ### Saisie d'une session (maquette 09, lot E4)
 
-| Code                  | Champ ou bloc                                      | Texte                                                                                      | Car. | Placement | Profils   |
-| --------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------------ | ---- | --------- | --------- |
-| `session.presents`    | « STARs de votre ministère présents »              | Le total de l'église ne compte pas deux fois un STAR présent dans deux ministères.         | 82   | Flux      | ministère |
-| `session.dejaComptes` | « Dont déjà comptés par leur ministère principal » | Exemple : 13 présents dont 2 déjà comptés. Votre ministère ajoute 11 au total de l'église. | 90   | Flux      | ministère |
-| `session.completude`  | Ligne « 6 ministères sur 8 ont déjà saisi »        | Le total de la session est complet quand tous les ministères attendus ont saisi.           | 80   | Flux      | ministère |
+Deux aides. `session.completude` est supprimée (voir « Aides supprimées » ci-dessous).
+
+| Code                  | Champ ou bloc                                      | Texte                                                                                                                   | Car. | Placement | Profils   |
+| --------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
+| `session.presents`    | « STARs de votre ministère présents »              | Tous les STARs qui servent dans votre ministère et sont venus à la session, même si leur ministère principal est autre. | 119  | Flux      | ministère |
+| `session.dejaComptes` | « Dont déjà comptés par leur ministère principal » | Parmi vos présents, ceux dont le ministère principal est un autre ministère : ce ministère les compte déjà.             | 107  | Flux      | ministère |
 
 ### Carte des FIJ et Chiffres par département (lot E4)
 
-| Code                | Champ ou bloc                                                          | Texte                                                                                             | Car. | Placement | Profils                                  |
-| ------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ---- | --------- | ---------------------------------------- |
-| `fij.carte`         | Panneau « Carte des FIJ » (titre de la saisie)                         | Saisissez le nombre de FIJ de chaque département. La carte de l'église se met à jour dès l'envoi. | 97   | Flux      | ministère FIJ                            |
-| `fij.departements`  | Panneau « Chiffres par département » (titre de la saisie)              | Chaque rubrique se saisit par département. Le total dit combien de départements ont une valeur.   | 95   | Flux      | ministère FIJ                            |
-| `fij.completudeDep` | Total d'une rubrique dans le bloc « Chiffres par département » (fiche) | « 6 dép. sur 8 » : il manque deux départements. Ils ne comptent pas pour 0.                       | 75   | Flottante | ministère FIJ, berger, conseil, EJP Tech |
+| Code                | Champ ou bloc                                                          | Texte                                                                                                                   | Car. | Placement | Profils                                  |
+| ------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ---------------------------------------- |
+| `fij.carte`         | Panneau « Carte des FIJ » (titre de la saisie)                         | Le nombre actuel de FIJ dans chaque département. La carte de l'église, vue par tous les comptes, l'affiche dès l'envoi. | 119  | Flux      | ministère FIJ                            |
+| `fij.departements`  | Panneau « Chiffres par département » (titre de la saisie)              | Le berger et le conseil les lisent sur votre fiche : un total par rubrique, avec sa courbe.                             | 91   | Flux      | ministère FIJ                            |
+| `fij.completudeDep` | Total d'une rubrique dans le bloc « Chiffres par département » (fiche) | Nombre de départements qui ont un chiffre cette semaine. « 6 dép. sur 8 » : le total n'inclut que ces 6.                | 104  | Flottante | ministère FIJ, berger, conseil, EJP Tech |
 
 ### Ajouter et mettre à jour un événement (maquette 11, lot E5)
 
-Trois aides à l'ajout, deux à la mise à jour. Le texte visible « La validation se fait en dehors de
-l'outil. Ici, on reporte seulement le statut. » et la note sur les mentions restent affichés.
+Deux aides à l'ajout (« Statut », « Ministères mentionnés »), une à la mise à jour (« Statut »).
+`evenement.date` et `evenement.report` sont supprimées. Les textes visibles (« La validation se fait
+en dehors de l'outil. Ici, on reporte seulement le statut. » et la note sur les mentions) restent.
 
-| Code                 | Champ ou bloc                                                    | Texte                                                                                                   | Car. | Placement | Profils   |
-| -------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
-| `evenement.date`     | « Date » (ajout)                                                 | Seuls le jour et le nom s'enregistrent : l'outil ne garde ni l'heure ni le lieu.                        | 80   | Flux      | ministère |
-| `evenement.statut`   | « Statut » (ajout et mise à jour)                                | Un événement « En attente de validation » déclenche un rappel dans l'outil, 3 jours avant sa date.      | 98   | Flux      | ministère |
-| `evenement.mentions` | « Ministères mentionnés » (ajout)                                | Le ministère mentionné voit l'événement sur sa fiche et reçoit le rappel, mais ne peut pas le modifier. | 103  | Flux      | ministère |
-| `evenement.report`   | Ligne « Report : du sam. 10 oct. au sam. 17 oct. » (mise à jour) | L'ancienne date reste dans l'historique : le berger et le conseil voient que l'événement a été reporté. | 103  | Flux      | ministère |
+| Code                 | Champ ou bloc                     | Texte                                                                                                           | Car. | Placement | Profils   |
+| -------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------- | ---- | --------- | --------- |
+| `evenement.statut`   | « Statut » (ajout et mise à jour) | Mettez-le à jour dès que la validation est connue. Encore en attente 3 jours avant la date, il passe en alerte. | 111  | Flux      | ministère |
+| `evenement.mentions` | « Ministères mentionnés » (ajout) | Ils reçoivent aussi son alerte s'il reste en attente. Seul votre ministère change son statut.                   | 93   | Flux      | ministère |
 
 ### Prochaine réunion (lot E5)
 
-| Code               | Champ ou bloc         | Texte                                                                                | Car. | Placement | Profils   |
-| ------------------ | --------------------- | ------------------------------------------------------------------------------------ | ---- | --------- | --------- |
-| `reunion.date`     | « Date »              | Seule la prochaine réunion compte. Une réunion passée disparaît d'elle-même.         | 76   | Flux      | ministère |
-| `reunion.decision` | « Décision attendue » | Ce que la réunion doit trancher, en quelques mots. Le berger la lit sur votre fiche. | 84   | Flux      | ministère |
+| Code               | Champ ou bloc         | Texte                                                                                            | Car. | Placement | Profils   |
+| ------------------ | --------------------- | ------------------------------------------------------------------------------------------------ | ---- | --------- | --------- |
+| `reunion.date`     | « Date »              | Le berger et le conseil la voient jusqu'au jour de la réunion. Ensuite, déclarez la suivante.    | 93   | Flux      | ministère |
+| `reunion.decision` | « Décision attendue » | Ce que la réunion doit trancher, en une phrase. Exemple : choisir la date de la sortie d'équipe. | 96   | Flux      | ministère |
 
 ### Fiche d'un ministère (maquettes 04 et 12, lot E2)
 
-Cinq aides au plus à l'écran, sur les lignes concernées, chacune une seule fois. Avec le bloc
-« Chiffres par département » de la fiche de Coordo FIJ, six. Avec `fiche.repartition` (changement
-du 6 octobre 2026, P47), six aussi sur la fiche d'un ministère qui a un indicateur sensible réparti
-(Social, Santé, Kumi, Eagles, Prodiges Junior) ; Coordo FIJ n'a aucun indicateur sensible, donc
-aucune fiche ne dépasse le plafond de six.
+Quatre aides au plus à l'écran, sur les lignes concernées, chacune une seule fois. Avec le bloc
+« Chiffres par département » de la fiche de Coordo FIJ, cinq.
 
-| Code               | Champ ou bloc                                          | Texte                                                                                                                | Car. | Placement | Profils                              |
-| ------------------ | ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------------------ |
-| `fiche.sommeAnnee` | Somme de l'année, à côté de « 9 mois sur 9 »           | « 9 mois sur 9 » : mois saisis sur mois attendus depuis le départ. Un mois absent ne compte pas pour 0.              | 103  | Flottante | ministère, berger, conseil, EJP Tech |
-| `fiche.moinsDe3`   | Première valeur « moins de 3 » de la fiche             | « Moins de 3 » remplace 1 ou 2 pour la santé, l'écoute, l'accompagnement et les enfants. Cela protège les personnes. | 116  | Flottante | berger, conseil, EJP Tech            |
-| `fiche.calcule`    | Première ligne d'un indicateur calculé                 | L'outil calcule ce chiffre à partir de vos saisies. Vous n'avez rien à saisir.                                       | 78   | Flottante | ministère, berger, conseil, EJP Tech |
-| `fiche.courbe`     | En-tête de la colonne des petites courbes (ordinateur) | Dix derniers dimanches ou douze derniers mois. Un trou signale une période sans saisie, jamais un zéro.              | 103  | Flottante | ministère, berger, conseil, EJP Tech |
-| `fiche.fraicheur`  | « Mis à jour il y a 3 jours »                          | Date de la dernière action de ce ministère : vert jusqu'à 7 jours, orange jusqu'à 30, rouge au-delà.                 | 100  | Flottante | ministère, berger, conseil, EJP Tech |
+| Code               | Champ ou bloc                                          | Texte                                                                                                               | Car. | Placement | Profils                              |
+| ------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------------------ |
+| `fiche.sommeAnnee` | Somme de l'année, à côté de « 9 mois sur 9 »           | Total des mois ou dimanches saisis depuis la date indiquée. « 8 mois sur 9 » : un mois non saisi manque au total.   | 113  | Flottante | ministère, berger, conseil, EJP Tech |
+| `fiche.calcule`    | Première ligne d'un indicateur calculé                 | Calculé à partir de deux chiffres du ministère. Exemple : 30 présences pour 10 séances donnent 3 par séance.        | 108  | Flottante | ministère, berger, conseil, EJP Tech |
+| `fiche.courbe`     | En-tête de la colonne des petites courbes (ordinateur) | Évolution sur les 10 derniers dimanches ou les 12 derniers mois. Un trou marque une période non saisie.             | 103  | Flottante | ministère, berger, conseil, EJP Tech |
+| `fiche.fraicheur`  | « Mis à jour il y a 3 jours »                          | Dernière action du ministère dans l'outil, saisie ou point. Vert jusqu'à 7 jours, orange jusqu'à 30, rouge au-delà. | 115  | Flottante | ministère, berger, conseil, EJP Tech |
 
-`fiche.moinsDe3` ne s'affiche pas pour le ministère : il lit ses propres valeurs exactes, sans seuil
-(BRIEF, matrice des droits ; plan de l'étape 4, B2).
-
-Aide proposée le 6 octobre 2026 (P47, statut **Proposé**) :
-
-| Code                | Champ ou bloc                                                  | Texte                                                                                                    | Car. | Placement | Profils                   |
-| ------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------- |
-| `fiche.repartition` | Premier « masqué » d'une répartition par catégories (fiche 04) | « Masqué » : une catégorie de plus est cachée, pour qu'aucune soustraction ne redonne un « moins de 3 ». | 104  | Flottante | berger, conseil, EJP Tech |
-
-`fiche.repartition` ne s'affiche pas pour le ministère, qui lit ses valeurs exactes, ni quand
-aucune catégorie n'est masquée. La précision n'a pas d'aide : c'est un texte écrit par le ministère,
-lu tel quel. « Répartition masquée pour protéger les petits nombres. » est un état visible, pas une
-aide (plan de l'étape 4, E2).
+`fiche.fraicheur` : les seuils de 7 et 30 jours (règle 6) restent à confirmer.
 
 ### Vue de l'église (écrans 01 à 03, déjà construits)
 
 Cinq aides au plus par écran. Sur la vue du ministère, « L'église cette semaine » porte les mêmes
 aides.
 
-| Code                    | Champ ou bloc                                         | Texte                                                                                                                 | Car. | Placement | Profils                   |
-| ----------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------- |
-| `eglise.completude`     | Premier « 6 sur 8 » du tableau des chiffres           | « 6 sur 8 » : 6 ministères sur 8 ont saisi. Le total n'inclut que ceux-là, les autres ne comptent pas pour 0.         | 109  | Flottante | tous                      |
-| `eglise.pourcentageFij` | Ligne « STARs présents en FIJ » (pourcentage calculé) | L'outil calcule ce pourcentage : STARs en FIJ divisés par STARs actifs, sur les ministères qui ont les deux chiffres. | 117  | Flottante | tous                      |
-| `eglise.ecart`          | Premier écart « +3 » du tableau                       | Écart avec dimanche dernier, calculé sur les seuls ministères qui ont saisi les deux fois.                            | 90   | Flottante | tous                      |
-| `eglise.courbe`         | En-tête de la colonne des courbes (ordinateur)        | Un cercle vide marque un dimanche incomplet. Un trou marque un dimanche sans aucune saisie.                           | 91   | Flottante | berger, conseil, EJP Tech |
-| `eglise.carte`          | Titre « Carte des FIJ »                               | Plus la teinte est foncée, plus le département compte de FIJ par rapport aux autres.                                  | 84   | Flottante | tous                      |
+| Code                    | Champ ou bloc                                         | Texte                                                                                                                    | Car. | Placement | Profils                   |
+| ----------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | ---- | --------- | ------------------------- |
+| `eglise.completude`     | Premier « 6 sur 8 » du tableau des chiffres           | Ministères qui ont saisi ce chiffre. « 6 sur 8 » : le total additionne ces 6 ministères, 2 manquent encore.              | 107  | Flottante | tous                      |
+| `eglise.pourcentageFij` | Ligne « STARs présents en FIJ » (pourcentage calculé) | Part des STARs actifs qui sont en FIJ. Exemple : 64 en FIJ sur 83 actifs donnent 77 %.                                   | 86   | Flottante | tous                      |
+| `eglise.ecart`          | Premier écart du tableau (« +3 »)                     | Différence avec dimanche dernier, sur les seuls ministères qui ont saisi les deux fois. « +3 » : 3 de plus.              | 107  | Flottante | tous                      |
+| `eglise.courbe`         | En-tête de la colonne des courbes (ordinateur)        | Évolution du total sur les derniers dimanches ou sessions. Cercle vide : des ministères manquent ; trou : aucune saisie. | 120  | Flottante | berger, conseil, EJP Tech |
+| `eglise.carte`          | Titre « Carte des FIJ »                               | Nombre de FIJ par département. Plus la case est foncée, plus le département a de FIJ par rapport aux autres.             | 108  | Flottante | tous                      |
+
+`eglise.carte` : l'échelle des teintes est relative aux autres départements (de la plus petite à la
+plus grande valeur de la carte, `carte.ts`), le texte le dit. `eglise.courbe` vaut pour les lignes
+des dimanches (10 derniers) comme pour celles des sessions (4 dernières).
 
 ### Accueil du ministère et blocs d'alerte (lots E6 et E7)
 
-| Code                 | Champ ou bloc                                         | Texte                                                                                                                | Car. | Placement | Profils                   |
-| -------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------- |
-| `accueil.points`     | Titre « Vos points » (accueil, maquette 07)           | Les points que vous avez créés et ceux qui vous mentionnent. Un point traité reste visible 7 jours.                  | 99   | Flottante | ministère                 |
-| `accueil.aConfirmer` | Titre « Événements à confirmer » (sous « À décider ») | Événements « En attente de validation » à 3 jours de leur date ou passés. Ils disparaissent au changement de statut. | 116  | Flottante | berger, conseil, EJP Tech |
+| Code                 | Champ ou bloc                                         | Texte                                                                                              | Car. | Placement | Profils                   |
+| -------------------- | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ---- | --------- | ------------------------- |
+| `accueil.points`     | Titre « Vos points » (accueil, maquette 07)           | Les points créés par votre ministère ou qui le mentionnent. Un point traité reste affiché 7 jours. | 98   | Flottante | ministère                 |
+| `accueil.aConfirmer` | Titre « Événements à confirmer » (sous « À décider ») | Événements encore « En attente de validation » à 3 jours ou moins de leur date, ou déjà passés.    | 95   | Flottante | berger, conseil, EJP Tech |
+
+### Aides supprimées le 7 octobre 2026
+
+| Code                 | Aide                                               | Raison                                                                               | Écran qui doit retirer son appel                         |
+| -------------------- | -------------------------------------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| `session.completude` | « Ministères qui ont déjà saisi »                  | La ligne affiche déjà « 6 sur 8 » et les ministères qui manquent                     | `FormulaireSession.tsx` (`LigneAvecAide`)                |
+| `evenement.date`     | « Date »                                           | Le libellé se comprend seul ; l'ancien texte disait ce que l'outil ne garde pas      | `FormulaireAjoutEvenement.tsx` (`aide="evenement.date"`) |
+| `evenement.report`   | Ligne « Report : du sam. 10 oct. au sam. 17 oct. » | La ligne se comprend seule ; ce que voient le berger et le conseil n'est pas vérifié | `FormulaireMiseAJourEvenement.tsx`                       |
+| `fiche.moinsDe3`     | Valeur « moins de 3 »                              | Devenue fausse : valeurs exactes pour le berger, le conseil et EJP Tech (P52)        | Déjà retiré par le lot I                                 |
+| `fiche.repartition`  | Case « masqué » d'une répartition                  | Devenue fausse : plus de case masquée (P52)                                          | Déjà retiré par le lot I                                 |
+
+Tant qu'un écran appelle un de ces codes, le code reste dans `textesAide.ts` (liste
+`CODES_A_RETIRER`) avec son ancien texte, pour que le build passe. Au 7 octobre 2026, trois codes y
+restent : `session.completude`, `evenement.date` et `evenement.report`. Les deux codes de la fiche
+sont déjà sortis du catalogue, car le lot I (migration `20261009120000_lot_i_correctifs.sql`, P52)
+n'affiche plus que des valeurs exactes. Reste à mettre à jour, hors de ce document : le BRIEF
+(section 4), P35, P45 et P47, qui parlent encore du seuil « moins de 3 ».
 
 ### Total du catalogue
 
-33 aides (31, plus `mois.repartition` et `fiche.repartition` le 6 octobre 2026). Par écran : saisie
-du dimanche 4, Chiffres du mois 4, session 3, carte 1, départements 2 (saisie et lecture),
-événement 3 à l'ajout et 2 à la mise à jour, réunion 2, fiche 5 (6 pour Coordo FIJ et pour une
-fiche avec une répartition), vue de l'église 5, accueil 6 au plus.
+28 aides (33 avant le 7 octobre 2026, moins cinq). Par écran : saisie du dimanche 4, Chiffres du
+mois 4, session 2, carte 1, départements 2 (saisie et lecture), événement 2 à l'ajout et 1 à la
+mise à jour, réunion 2, fiche 4 (5 pour Coordo FIJ), vue de l'église 5, accueil 2 au plus.
 
 ## 7. Signaler une difficulté
 
@@ -509,21 +582,23 @@ et écrit « transmis à l'administration » en clôturant. Ce changement de mod
 Textes envisagés puis écartés, avec la raison. Les écrans les disent déjà, ou ils sont nécessaires
 pour remplir.
 
-| Candidat                                                               | Décision                     | Raison                                                                                              |
-| ---------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
-| « Un STAR saisi par deux ministères n'est compté qu'une fois »         | Texte visible (déjà prévu)   | Note sous le tableau et ligne de la session, BRIEF section 9                                        |
-| « Non calculé : demandes reçues de septembre non saisies. »            | Texte visible (déjà prévu)   | État vide du calcul, plan E2 : la raison est dite dans la ligne                                     |
-| « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir. » | Texte visible (déjà prévu)   | Plan E2 : aucune aide en plus sur la fiche                                                          |
-| « Se saisit une fois le mois fini. » (mois en cours d'un sensible)     | **Retiré le 6 octobre 2026** | Le mois en cours d'un sensible se saisit (P45) : le champ ne manque plus                            |
-| Qui lit la « Précision » (« Lue par votre ministère, le berger, ... ») | Texte visible                | Nécessaire avant d'écrire, comme pour le signalement (P46)                                          |
-| « Non réparti : 3 » sous la grille de répartition                      | Texte visible                | Calculé en direct, sert à chaque saisie (P47)                                                       |
-| « La somme des catégories (9) dépasse le total du mois (7). »          | Texte visible (erreur)       | Une erreur reste visible à côté du champ (section 1)                                                |
-| Format de l'heure (« 10 h 42 »), unité, plafond d'un chiffre           | Texte visible                | Nécessaire pour remplir ; la définition est déjà sous chaque champ (plan E3)                        |
-| « Les mentions se choisissent à la création et ne changent plus. »     | **Texte visible à ajouter**  | Nécessaire : on ne peut pas ajouter une mention après (T32). À proposer au lot E5 sous les mentions |
-| Le bouton principal change le dimanche à midi                          | Rien                         | Note de conception de la maquette 07 que `LISEZMOI.md` interdit d'afficher                          |
-| Ce qu'est un « ministère principal »                                   | Rien                         | Convention entre les personnes, que l'outil ne stocke pas et ne définit pas (BRIEF règle 4)         |
-| Développer « FIJ » ou « STAR »                                         | Rien                         | L'outil ne développe ces sigles nulle part : la personne responsable les connaît                    |
-| Aide sur les boutons « Corriger », « Saisir », « Mettre à jour »       | Rien                         | Un bouton dit ce qu'il fait (CLAUDE.md, « Textes de l'interface »)                                  |
+| Candidat                                                                      | Décision                     | Raison                                                                                              |
+| ----------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------- |
+| « Un STAR saisi par deux ministères n'est compté qu'une fois »                | Texte visible (déjà prévu)   | Note sous le tableau et ligne de la session, BRIEF section 9                                        |
+| « Non calculé : demandes reçues de septembre non saisies. »                   | Texte visible (déjà prévu)   | État vide du calcul, plan E2 : la raison est dite dans la ligne                                     |
+| « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir. »        | Texte visible (déjà prévu)   | Plan E2 : aucune aide en plus sur la fiche                                                          |
+| « Se saisit une fois le mois fini. » (mois en cours d'un sensible)            | **Retiré le 6 octobre 2026** | Le mois en cours d'un sensible se saisit (P45) : le champ ne manque plus                            |
+| Qui lit la « Précision » (« Lue par votre ministère, le berger, ... »)        | Texte visible                | Nécessaire avant d'écrire, comme pour le signalement (P46)                                          |
+| « Non réparti : 3 » sous la grille de répartition                             | Texte visible                | Calculé en direct, sert à chaque saisie (P47)                                                       |
+| « La somme des catégories (9) dépasse le total du mois (7). »                 | Texte visible (erreur)       | Une erreur reste visible à côté du champ (section 1)                                                |
+| Format de l'heure (« 10 h 42 »), unité, plafond d'un chiffre                  | Texte visible                | Nécessaire pour remplir ; la définition est déjà sous chaque champ (plan E3)                        |
+| « Les mentions se choisissent à la création et ne changent plus. »            | **Texte visible à ajouter**  | Nécessaire : on ne peut pas ajouter une mention après (T32). À proposer au lot E5 sous les mentions |
+| Le bouton principal change le dimanche à midi                                 | Rien                         | Note de conception de la maquette 07 que `LISEZMOI.md` interdit d'afficher                          |
+| Ce qu'est un « ministère principal »                                          | Rien                         | Convention entre les personnes, que l'outil ne stocke pas et ne définit pas (BRIEF règle 4)         |
+| Développer « FIJ » ou « STAR »                                                | Rien                         | L'outil ne développe ces sigles nulle part : la personne responsable les connaît                    |
+| Aide sur les boutons « Corriger », « Saisir », « Mettre à jour »              | Rien                         | Un bouton dit ce qu'il fait (CLAUDE.md, « Textes de l'interface »)                                  |
+| Ministères qui ont déjà saisi (session), date d'un événement, ligne de report | **Retiré le 7 octobre 2026** | Le libellé ou la ligne se comprend seul (test de décision 2 et 3), voir « Aides supprimées »        |
+| « Moins de 3 » et case « masqué » pour le berger et le conseil                | **Retiré le 7 octobre 2026** | Le berger, le conseil et EJP Tech voient les valeurs exactes ; le code part avec la migration       |
 
 ## 9. Où cela entre dans le plan de l'étape 4
 
@@ -532,7 +607,7 @@ Le plan de l'étape 4 reprend cette répartition (W0, E2 à E8 et I, T38) :
 | Lot | Ce qu'il fait des aides                                                                                                                                                  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | W0  | Écrit `Aide`, `LibelleAvecAide`, `textesAide.ts` (tous les textes du catalogue), leurs tests et `e2e/aide.spec.ts` : c'est une brique partagée, avec `EtatVide`          |
-| E2  | Branche les aides de la fiche (`fiche.*`, dont `fiche.repartition` depuis le 6 octobre 2026)                                                                             |
+| E2  | Branche les aides de la fiche (`fiche.*`, sauf `fiche.moinsDe3` et `fiche.repartition`, supprimées le 7 octobre 2026)                                                    |
 | E3  | Branche `dimanche.*` et `mois.*` (dont `mois.repartition` depuis le 6 octobre 2026), et le lien « Signaler une difficulté » de ses formulaires                           |
 | E4  | Branche `session.*`, `fij.carte`, `fij.departements` et `fij.completudeDep` (bloc « Chiffres par département », écrit par E4), et le lien de ses formulaires             |
 | E5  | Branche `evenement.*`, `reunion.*`, le lien et les messages de « Signaler une difficulté »                                                                               |
@@ -555,10 +630,9 @@ et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté »
 3. **Les deux placements** (Flux dans les formulaires, Flottante en lecture) : la bulle d'un
    formulaire pousse le champ au lieu de le recouvrir. À confirmer, car le champ descend de 2 à
    4 lignes quand la bulle est ouverte.
-4. **Les 31 textes** du catalogue, un par un. Trois dépendent d'un fait à vérifier avec le lot
-   concerné : `evenement.report` (le berger et le conseil voient bien le report sur la fiche, lot
-   E6), `eglise.carte` (l'échelle des teintes est relative aux autres départements, comme dans
-   `carte.ts`) et `fiche.fraicheur` (les seuils de 7 et 30 jours de la règle 6).
+4. **Les 28 textes** du catalogue, un par un. Deux dépendent d'un fait à vérifier avec le lot
+   concerné : `eglise.carte` (l'échelle des teintes est relative aux autres départements, comme dans
+   `carte.ts`, vérifié le 7 octobre 2026) et `fiche.fraicheur` (les seuils de 7 et 30 jours de la règle 6).
 5. **Signaler une difficulté** (question 14 du plan, T39) : le modèle (deux tables, journal,
    modération), la lecture (le ministère et EJP Tech seulement), la portée (tous les formulaires de
    saisie ; un ministère seulement peut signaler) sont décidés le 6 octobre 2026. Reste ouverte la
@@ -576,12 +650,20 @@ et 0,25 jour en I pour la vue de l'église (T38). « Signaler une difficulté »
    section 7 de T39 (signalement) dans `docs/decisions.md` ; les textes validés se reportent dans
    `LISEZMOI.md` au lot I. La liste des codes de journal et des couples de modération de W0 ne
    change pas, le point 5 étant décidé.
-9. **Relecture par la coordination** : les textes d'aide parlent de « moins de 3 », de « complétude »
-   (sans le mot) et de ce que voient le berger et le conseil. Ils font partie des libellés remis à
+9. **Relecture par la coordination** : les textes d'aide parlent de « 6 sur 8 » et de ce que voient le
+   berger et le conseil. Ils font partie des libellés remis à
    la coordination avant la mise en service.
 10. **Indicateurs sensibles, changement du 6 octobre 2026** (P45 à P47) : textes « Proposé » de
     `mois.sensible` (revu : le mois en cours se saisit), `mois.repartition` et `fiche.repartition`
-    (nouvelles), et textes visibles du champ « Précision » et de la grille (section 6, « Chiffres du
+    (nouvelles ; la seconde est supprimée le 7 octobre), et textes visibles du champ « Précision » et de la grille (section 6, « Chiffres du
     mois »). Si W0 est déjà fusionné, les deux codes nouveaux entrent dans `textesAide.ts` par un
     commit de documents et de textes sur `etape-4` avant la vague 4 (plan de l'étape 4, section 3).
     À confirmer avec les autres textes (question 15 du plan).
+11. **Valeurs exactes pour le berger, le conseil et EJP Tech** (décision du 7 octobre 2026 de la
+    personne responsable). `mois.sensible` et `mois.repartition` en tiennent déjà compte, et le lot I
+    a livré la migration, ses tests pgTAP et le retrait de `fiche.moinsDe3` et `fiche.repartition`
+    (P52). Reste à mettre à jour le BRIEF (section 4), P35, P45 et P47.
+12. **Champ « déjà comptés » des sessions** : la personne responsable pense qu'un STAR ne sert
+    jamais dans deux ministères. C'est vrai le dimanche, pas pour Bâtir l'Église et Anti-Dispersion
+    (D2, règle 5), donc `session.dejaComptes` reste. Retirer le champ des sessions change D2 et la
+    règle 5 : confirmation à demander.
