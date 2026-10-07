@@ -7,6 +7,11 @@ import { MessageReussite } from '@/features/saisie/MessageReussite'
 // entière, disparaît : un message porté par le bouton disparaîtrait avec lui. Le message vit donc
 // dans sa propre zone, posée en bas de la page, hors de l'arbre de l'écran. Il reprend la brique
 // `MessageReussite` (annoncé par `role="status"`, 6 secondes, LISEZMOI « Réussite »).
+//
+// La zone est un singleton du module, hors de l'arbre React : `cleanup()` de Testing Library ne la
+// retire pas. Tout fichier de test qui pose `ActionsPoint` appelle `retirerAnnonce()` dans un
+// `afterEach`, sinon le message d'un test reste visible dans le suivant (faux verts avec
+// `findByText`).
 
 let zone: HTMLElement | null = null
 let racine: Root | null = null

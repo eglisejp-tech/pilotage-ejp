@@ -4,20 +4,25 @@ import { AVEC_BASE, fichierSession, seConnecter } from './comptes.ts'
 import { appeler, lire, MINISTERE_COMMUNICATION } from './base/outils-evenements.ts'
 
 // Points d'attention (étape 5, lot P1) qui écrivent dans la base locale : projet « ecritures » (en
-// série, à 1440 px, après les projets de lecture). Communication crée deux points par l'API (le
+// série, à 1440 px, après les projets de lecture). Communication crée des points par l'API (le
 // formulaire « Nouveau point » est celui du lot P2), un mentionnant Intégration. Un ministère
 // mentionné marque le point traité avec un commentaire, un autre ministère ne le voit pas et la
 // base lui refuse toute action, le créateur lit « Traité le ... par Intégration ». Le berger
-// marque l'autre point traité sans commentaire. Une ligne de journal par écriture, sans le texte.
+// marque un point traité avec un commentaire, un autre sans. Une ligne de journal par écriture,
+// sans le texte.
 //
 // Ce fichier est à la racine de `e2e/` (plan des étapes 5 à 8, P1) : sans base (E2E_BASE absent), il
 // ne fait rien. Le lot P2 y ajoute le parcours de création à sa fusion.
 //
-// Les contrôles de l'interface passent par les boutons posés sur « Mes points » et « Points
-// d'attention » (lots P3 et P4). Tant que ces écrans ne sont pas fusionnés, `ECRANS_POSES` reste
-// faux : seuls les contrôles de la base (droits, journal) tournent. Le lot qui fusionne P3 et P4
-// le passe à vrai, et adapte au besoin `ouvrirTraites` à la forme des onglets de l'écran 05.
+// Deux familles de tests :
+// - les parcours de la base (droits, journal, refus) tournent toujours, par l'API ;
+// - les parcours de l'interface (boutons posés sur « Points d'attention » et « Mes points », lots
+//   P3 et P4) sont marqués `test.fixme` tant que `ECRANS_POSES` est faux : ils apparaissent comme
+//   ignorés dans le rapport Playwright au lieu de passer pour verts. Le lot qui fusionne P3 et P4
+//   passe `ECRANS_POSES` à vrai, adapte au besoin `ouvrirTraites` à la forme des onglets de
+//   l'écran 05, et vérifie que ces tests passent.
 const ECRANS_POSES = false
+const RAISON_ECRANS = 'Écran 05 et pose des boutons (lots P3 et P4) non fusionnés'
 
 test.skip(!AVEC_BASE, 'Parcours avec la base locale (E2E_BASE=1)')
 test.describe.configure({ mode: 'serial' })
@@ -27,7 +32,11 @@ test.describe.configure({ mode: 'serial' })
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const TITRE_A = `Essai P1 ${SUFFIXE} salle`
 const TITRE_B = `Essai P1 ${SUFFIXE} micros`
+const TITRE_E = `Essai P1 ${SUFFIXE} sonorisation`
+const TITRE_C = `Essai P1 ${SUFFIXE} projecteur`
+const TITRE_D = `Essai P1 ${SUFFIXE} chaises`
 const COMMENTAIRE = `Essai P1 ${SUFFIXE} : salle confirmée avec le propriétaire.`
+const COMMENTAIRE_UI = `Essai P1 ${SUFFIXE} : projecteur prêté par Intégration.`
 const COURT = 'Trop vite'
 const COMMENTAIRE_BERGER = `Essai P1 ${SUFFIXE} : vu en réunion.`
 const REFUS_ACCES = "Ce point n'existe pas ou vous n'y avez pas accès."
@@ -37,6 +46,9 @@ type LigneJournal = { id: number; detail: Record<string, unknown> | null }
 
 let pointA = ''
 let pointB = ''
+let pointE = ''
+let pointC = ''
+let pointD = ''
 
 const pointDe = (page: Page, id: string) =>
   lire<LignePoint>(page, `v_point?select=id,statut,traite_commentaire&id=eq.${id}`)
@@ -77,37 +89,29 @@ async function creerPoint(page: Page, titre: string, mentions: string[]): Promis
 test.describe('Communication crée ses points et change le statut', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('deux points créés : « À traiter », une ligne de journal chacun', async ({ page }) => {
+  test('trois points créés : « À traiter », une ligne de journal chacun', async ({ page }) => {
     await page.goto('/')
     const [integration] = await lire<{ id: string }>(page, 'ministere?select=id&nom=eq.Intégration')
     expect(integration).toBeDefined()
     pointA = await creerPoint(page, TITRE_A, [integration?.id ?? ''])
     pointB = await creerPoint(page, TITRE_B, [])
+    pointE = await creerPoint(page, TITRE_E, [])
     expect((await pointDe(page, pointA))[0]?.statut).toBe('a_traiter')
     expect((await pointDe(page, pointB))[0]?.statut).toBe('a_traiter')
+    expect((await pointDe(page, pointE))[0]?.statut).toBe('a_traiter')
     expect(await journalDe(page, 'point_cree', pointA)).toHaveLength(1)
   })
 
-  test('« Changer le statut » : En cours, message, une ligne de journal avec les deux statuts', async ({
+  test('« Changer le statut » (API) : En cours, une ligne de journal avec les deux statuts', async ({
     page,
   }) => {
     expect(pointA).not.toBe('')
-    if (ECRANS_POSES) {
-      await page.goto('/points')
-      await boutonDuPoint(page, 'Changer le statut', TITRE_A).click()
-      await page.getByRole('radio', { name: 'En cours' }).check()
-      await page.getByRole('button', { name: 'Enregistrer le statut' }).click()
-      await expect(page.getByRole('status').filter({ hasText: 'Statut' })).toHaveText(
-        'Statut enregistré : En cours.',
-      )
-    } else {
-      await page.goto('/')
-      const reponse = await appeler(page, 'changer_statut_point', {
-        p_point_id: pointA,
-        p_statut: 'en_cours',
-      })
-      expect(reponse.status()).toBe(204)
-    }
+    await page.goto('/')
+    const reponse = await appeler(page, 'changer_statut_point', {
+      p_point_id: pointA,
+      p_statut: 'en_cours',
+    })
+    expect(reponse.status()).toBe(204)
     expect((await pointDe(page, pointA))[0]?.statut).toBe('en_cours')
     const journal = await journalDe(page, 'point_statut', pointA)
     expect(journal).toHaveLength(1)
@@ -138,30 +142,11 @@ test.describe('Intégration, mentionné', () => {
     })
     expect((await pointDe(page, pointA))[0]?.statut).toBe('en_cours')
 
-    if (ECRANS_POSES) {
-      await page.goto('/points')
-      await expect(page.getByText(TITRE_A)).toBeVisible()
-      await expect(page.getByText(TITRE_B)).toHaveCount(0)
-      await boutonDuPoint(page, 'Marquer traité', TITRE_A).click()
-      const fenetre = page.getByRole('dialog', { name: 'Marquer traité' })
-      await fenetre.getByLabel('Ce qui a été traité, et comment').fill(COURT)
-      await fenetre.getByRole('button', { name: 'Marquer traité' }).click()
-      await expect(
-        fenetre.getByText('Expliquez ce qui a été traité et comment (10 caractères au moins).'),
-      ).toBeVisible()
-      await fenetre.getByLabel('Ce qui a été traité, et comment').fill(COMMENTAIRE)
-      await fenetre.getByRole('button', { name: 'Marquer traité' }).click()
-      await expect(page.getByRole('status').filter({ hasText: 'Point' })).toHaveText(
-        'Point marqué traité.',
-      )
-      await expect(boutonDuPoint(page, 'Marquer traité', TITRE_A)).toHaveCount(0)
-    } else {
-      const reponse = await appeler(page, 'marquer_traite', {
-        p_point_id: pointA,
-        p_commentaire: COMMENTAIRE,
-      })
-      expect(reponse.status()).toBe(204)
-    }
+    const reponse = await appeler(page, 'marquer_traite', {
+      p_point_id: pointA,
+      p_commentaire: COMMENTAIRE,
+    })
+    expect(reponse.status()).toBe(204)
 
     const [traite] = await pointDe(page, pointA)
     expect(traite).toMatchObject({ statut: 'traite', traite_commentaire: COMMENTAIRE })
@@ -211,21 +196,15 @@ test.describe('un autre ministère (Jeunesse)', () => {
       p_statut: 'en_cours',
     })
     expect(statut.status()).toBe(403)
-
-    if (ECRANS_POSES) {
-      await page.goto('/points')
-      await expect(page.getByText(TITRE_A)).toHaveCount(0)
-      await expect(page.getByText(TITRE_B)).toHaveCount(0)
-    }
   })
 })
 
 test.describe('Communication relit le traitement', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('« Traité le ... par Intégration » avec le commentaire', async ({ page }) => {
+  test('le traitement est attribué à un compte du ministère Intégration', async ({ page }) => {
     expect(pointA).not.toBe('')
-    await page.goto(ECRANS_POSES ? '/points' : '/')
+    await page.goto('/')
     const [point] = await lire<{ traite_par: string; ministere_id: string }>(
       page,
       `v_point?select=traite_par,ministere_id&id=eq.${pointA}`,
@@ -238,52 +217,28 @@ test.describe('Communication relit le traitement', () => {
     )
     const [integration] = await lire<{ id: string }>(page, 'ministere?select=id&nom=eq.Intégration')
     expect(auteur?.ministere_id).toBe(integration?.id)
-
-    if (ECRANS_POSES) {
-      await ouvrirTraites(page)
-      await expect(page.getByText(TITRE_A)).toBeVisible()
-      await expect(page.getByText(/Traité le .+ par Intégration/)).toBeVisible()
-      await expect(page.getByText(COMMENTAIRE)).toBeVisible()
-    }
   })
 })
 
 test.describe('le berger', () => {
   test.use({ storageState: fichierSession('berger') })
 
-  test('marque un point traité sans commentaire : « Marquer traité » seulement, une ligne de journal', async ({
+  test('marque un point traité avec un commentaire facultatif : « Marquer traité » seulement, une ligne de journal', async ({
     page,
   }) => {
     expect(pointB).not.toBe('')
-    if (ECRANS_POSES) {
-      await page.goto('/points')
-      await expect(boutonDuPoint(page, 'Changer le statut', TITRE_B)).toHaveCount(0)
-      await boutonDuPoint(page, 'Marquer traité', TITRE_B).click()
-      await page
-        .getByRole('dialog', { name: 'Marquer traité' })
-        .getByLabel('Commentaire (facultatif)')
-        .fill(COMMENTAIRE_BERGER)
-      await page
-        .getByRole('dialog', { name: 'Marquer traité' })
-        .getByRole('button', { name: 'Marquer traité' })
-        .click()
-      await expect(page.getByRole('status').filter({ hasText: 'Point' })).toHaveText(
-        'Point marqué traité.',
-      )
-    } else {
-      await page.goto('/')
-      // Le berger ne change jamais le statut d'un point : la base le refuse.
-      const statut = await appeler(page, 'changer_statut_point', {
-        p_point_id: pointB,
-        p_statut: 'en_cours',
-      })
-      expect(statut.status()).toBe(403)
-      const traite = await appeler(page, 'marquer_traite', {
-        p_point_id: pointB,
-        p_commentaire: COMMENTAIRE_BERGER,
-      })
-      expect(traite.status()).toBe(204)
-    }
+    await page.goto('/')
+    // Le berger ne change jamais le statut d'un point : la base le refuse.
+    const statut = await appeler(page, 'changer_statut_point', {
+      p_point_id: pointB,
+      p_statut: 'en_cours',
+    })
+    expect(statut.status()).toBe(403)
+    const traite = await appeler(page, 'marquer_traite', {
+      p_point_id: pointB,
+      p_commentaire: COMMENTAIRE_BERGER,
+    })
+    expect(traite.status()).toBe(204)
     expect((await pointDe(page, pointB))[0]).toMatchObject({
       statut: 'traite',
       traite_commentaire: COMMENTAIRE_BERGER,
@@ -291,5 +246,137 @@ test.describe('le berger', () => {
     const journal = await journalDe(page, 'point_traite', pointB)
     expect(journal).toHaveLength(1)
     expect(journal[0]?.detail).toEqual({ avec_commentaire: true })
+  })
+
+  test('marque un point traité sans commentaire : aucun commentaire, journal « avec_commentaire » faux', async ({
+    page,
+  }) => {
+    expect(pointE).not.toBe('')
+    await page.goto('/')
+    const traite = await appeler(page, 'marquer_traite', {
+      p_point_id: pointE,
+      p_commentaire: null,
+    })
+    expect(traite.status()).toBe(204)
+    expect((await pointDe(page, pointE))[0]).toMatchObject({
+      statut: 'traite',
+      traite_commentaire: null,
+    })
+    const journal = await journalDe(page, 'point_traite', pointE)
+    expect(journal).toHaveLength(1)
+    expect(journal[0]?.detail).toEqual({ avec_commentaire: false })
+  })
+})
+
+// Parcours de l'interface : ignorés (test.fixme) tant que l'écran 05 et les boutons ne sont pas
+// posés. Deux nouveaux points, pour ne pas dépendre de ceux des parcours de la base.
+test.describe('interface : écran 05 et boutons posés (P3 et P4)', () => {
+  test.describe('Communication change le statut', () => {
+    test.use({ storageState: fichierSession('ministere') })
+
+    test('« Changer le statut » : En cours, message, une ligne de journal avec les deux statuts', async ({
+      page,
+    }) => {
+      test.fixme(!ECRANS_POSES, RAISON_ECRANS)
+      await page.goto('/')
+      const [integration] = await lire<{ id: string }>(
+        page,
+        'ministere?select=id&nom=eq.Intégration',
+      )
+      pointC = await creerPoint(page, TITRE_C, [integration?.id ?? ''])
+      pointD = await creerPoint(page, TITRE_D, [])
+
+      await page.goto('/points')
+      await boutonDuPoint(page, 'Changer le statut', TITRE_C).click()
+      await page.getByRole('radio', { name: 'En cours' }).check()
+      await page.getByRole('button', { name: 'Enregistrer le statut' }).click()
+      await expect(page.getByRole('status').filter({ hasText: 'Statut' })).toHaveText(
+        'Statut enregistré : En cours.',
+      )
+      expect((await pointDe(page, pointC))[0]?.statut).toBe('en_cours')
+      const journal = await journalDe(page, 'point_statut', pointC)
+      expect(journal).toHaveLength(1)
+      expect(journal[0]?.detail).toEqual({ statut: ['a_traiter', 'en_cours'] })
+    })
+  })
+
+  test('Intégration, mentionné : voit le point, le marque traité depuis la fenêtre, le focus ne tombe pas sur le corps', async ({
+    page,
+  }) => {
+    test.fixme(!ECRANS_POSES, RAISON_ECRANS)
+    test.setTimeout(120_000)
+    await seConnecter(page, 'integration@exemple.test')
+    await expect(page).toHaveURL((url) => url.pathname === '/')
+    await page.goto('/points')
+    await expect(page.getByText(TITRE_C)).toBeVisible()
+    await expect(page.getByText(TITRE_D)).toHaveCount(0)
+    await boutonDuPoint(page, 'Marquer traité', TITRE_C).click()
+    const fenetre = page.getByRole('dialog', { name: 'Marquer traité' })
+    await fenetre.getByLabel('Ce qui a été traité, et comment').fill(COURT)
+    await fenetre.getByRole('button', { name: 'Marquer traité' }).click()
+    await expect(
+      fenetre.getByText('Expliquez ce qui a été traité et comment (10 caractères au moins).'),
+    ).toBeVisible()
+    await fenetre.getByLabel('Ce qui a été traité, et comment').fill(COMMENTAIRE_UI)
+    await fenetre.getByRole('button', { name: 'Marquer traité' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Point' })).toHaveText(
+      'Point marqué traité.',
+    )
+    await expect(boutonDuPoint(page, 'Marquer traité', TITRE_C)).toHaveCount(0)
+    // Le bouton a disparu : le focus ne tombe pas sur le corps de la page.
+    await expect
+      .poll(() => page.evaluate(() => document.activeElement?.tagName ?? 'BODY'))
+      .not.toBe('BODY')
+    expect((await pointDe(page, pointC))[0]).toMatchObject({
+      statut: 'traite',
+      traite_commentaire: COMMENTAIRE_UI,
+    })
+  })
+
+  test('Jeunesse : ne voit aucun des deux points', async ({ page }) => {
+    test.fixme(!ECRANS_POSES, RAISON_ECRANS)
+    test.setTimeout(120_000)
+    await seConnecter(page, 'jeunesse@exemple.test')
+    await expect(page).toHaveURL((url) => url.pathname === '/')
+    await page.goto('/points')
+    await expect(page.getByText(TITRE_C)).toHaveCount(0)
+    await expect(page.getByText(TITRE_D)).toHaveCount(0)
+  })
+
+  test.describe('Communication relit le traitement', () => {
+    test.use({ storageState: fichierSession('ministere') })
+
+    test('« Traité le ... par Intégration » avec le commentaire', async ({ page }) => {
+      test.fixme(!ECRANS_POSES, RAISON_ECRANS)
+      await page.goto('/points')
+      await ouvrirTraites(page)
+      await expect(page.getByText(TITRE_C)).toBeVisible()
+      await expect(page.getByText(/Traité le .+ par Intégration/)).toBeVisible()
+      await expect(page.getByText(COMMENTAIRE_UI)).toBeVisible()
+    })
+  })
+
+  test.describe('le berger', () => {
+    test.use({ storageState: fichierSession('berger') })
+
+    test('marque un point traité sans écrire de commentaire : aucun « Changer le statut »', async ({
+      page,
+    }) => {
+      test.fixme(!ECRANS_POSES, RAISON_ECRANS)
+      await page.goto('/points')
+      await expect(boutonDuPoint(page, 'Changer le statut', TITRE_D)).toHaveCount(0)
+      await boutonDuPoint(page, 'Marquer traité', TITRE_D).click()
+      await page
+        .getByRole('dialog', { name: 'Marquer traité' })
+        .getByRole('button', { name: 'Marquer traité' })
+        .click()
+      await expect(page.getByRole('status').filter({ hasText: 'Point' })).toHaveText(
+        'Point marqué traité.',
+      )
+      expect((await pointDe(page, pointD))[0]).toMatchObject({
+        statut: 'traite',
+        traite_commentaire: null,
+      })
+    })
   })
 })

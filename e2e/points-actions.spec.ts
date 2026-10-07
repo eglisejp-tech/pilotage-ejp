@@ -106,6 +106,8 @@ test.describe('Marquer traité', () => {
     await expect(page.getByRole('button', { name: 'Marquer traité' })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Changer le statut' })).toHaveCount(0)
     await expect(messageDe(page, 'Point marqué traité.')).toBeVisible()
+    // Le bouton a disparu : le focus passe au bloc de la page, il ne tombe pas sur le corps.
+    await expect(page.locator('[data-repli-focus]')).toBeFocused()
     await auditer(page)
   })
 
@@ -161,7 +163,14 @@ test.describe('Marquer traité', () => {
     const boite = fenetre(page)
     await boite.getByLabel('Ce qui a été traité, et comment').fill('Salle confirmée le 10.')
     await boite.getByRole('button', { name: 'Marquer traité' }).click()
-    await expect(boite.getByRole('alert')).toHaveText('Ce point est déjà traité.')
+    const alerte = boite.getByRole('alert')
+    await expect(alerte).toHaveText('Ce point est déjà traité.')
+    // L'erreur est sous le bouton d'enregistrement, avant « Annuler » : elle reste à l'écran.
+    const boiteAlerte = await alerte.boundingBox()
+    const boiteAnnuler = await boite.getByRole('button', { name: 'Annuler' }).boundingBox()
+    expect(boiteAlerte).not.toBeNull()
+    expect(boiteAnnuler).not.toBeNull()
+    expect(boiteAlerte?.y ?? 0).toBeLessThan(boiteAnnuler?.y ?? 0)
   })
 
   test('titre masqué par EJP Tech : rappelé tel quel, sans guillemets', async ({ page }) => {
@@ -196,6 +205,17 @@ test.describe('Changer le statut', () => {
     await expect(page.getByText('En cours', { exact: true })).toBeVisible()
     // Le point reste ouvert : ses boutons restent.
     await expect(boutonDuPoint(page, 'Changer le statut')).toBeVisible()
+  })
+
+  test('enregistrer le statut déjà en place ferme la fenêtre sans message', async ({ page }) => {
+    await ouvrir(page, 'profil=ministere&statut=en_cours')
+    await boutonDuPoint(page, 'Changer le statut').click()
+    const boite = fenetre(page)
+    await expect(boite.getByRole('radio', { name: 'En cours' })).toBeChecked()
+    await boite.getByRole('button', { name: 'Enregistrer le statut' }).click()
+    await expect(boite).toHaveCount(0)
+    await expect(boutonDuPoint(page, 'Changer le statut')).toBeFocused()
+    await expect(page.locator('[data-annonce-point]')).toHaveCount(0)
   })
 
   test('les flèches du clavier changent de statut', async ({ page }) => {

@@ -32,7 +32,8 @@ interface Props {
  * (facultatif) » (berger, conseil), rappel sur les données personnelles sous le champ, compteur
  * « 0 sur 280 », « Un point traité ne se rouvre pas. », puis « Marquer traité » (principal) et
  * « Annuler ». Le bouton n'est jamais grisé : un commentaire trop court se dit sous le champ. Un
- * refus de la base se dit sous le bouton, tel quel ; une connexion perdue garde le texte.
+ * refus de la base se dit sous le bouton d'enregistrement, avant « Annuler », tel quel ; une
+ * connexion perdue garde le texte.
  */
 export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, onFermer }: Props) {
   const [texte, setTexte] = useState('')
@@ -95,6 +96,7 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
           enCours={enCours}
           libelleEnCours={TEXTES_ACTIONS_POINT.traite.boutonEnCours}
         />
+        {refus ? <ErreurFormulaire message={refus} /> : null}
         <button
           type="button"
           onClick={onFermer}
@@ -102,7 +104,6 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
         >
           {TEXTES_ACTIONS_POINT.traite.annuler}
         </button>
-        {refus ? <ErreurFormulaire message={refus} /> : null}
       </form>
     </FenetreAction>
   )

@@ -113,6 +113,8 @@ describe('les boutons se montrent selon le profil', () => {
     expect(screen.getByRole('button', { name: 'Marquer traité' })).toHaveAccessibleDescription(
       'Salle pour la soirée de louange',
     )
+    // Le titre de description est caché : la lecture continue ne le dit pas une seconde fois.
+    expect(screen.getByText('Salle pour la soirée de louange')).not.toBeVisible()
   })
 })
 
@@ -171,7 +173,56 @@ describe('« Marquer traité » pour un ministère', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(await screen.findByText('Point marqué traité.')).toBeInTheDocument()
     expect(screen.getByRole('status')).toHaveTextContent('Point marqué traité.')
-    expect(invalider).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))
+  })
+
+  it('après la réussite, le focus passe au repère de la page quand le bouton disparaît', async () => {
+    const utilisateur = userEvent.setup()
+    const clientRequetes = new QueryClient()
+    const arbre = (point: PointDesActions) => (
+      <QueryClientProvider client={clientRequetes}>
+        <main id="contenu">
+          <section data-repli-focus aria-label="Points d’attention">
+            <ActionsPoint point={point} compte={ministere(MENTIONNE)} />
+          </section>
+        </main>
+      </QueryClientProvider>
+    )
+    const { rerender } = render(arbre(unPoint()))
+    await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
+    await utilisateur.type(
+      screen.getByLabelText('Ce qui a été traité, et comment'),
+      'Salle confirmée pour le 10 octobre.',
+    )
+    await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
+    await screen.findByText('Point marqué traité.')
+    // La page relit le point : il est traité, les boutons disparaissent.
+    rerender(arbre(unPoint('traite')))
+    expect(screen.queryByRole('button', { name: 'Marquer traité' })).toBeNull()
+    expect(document.activeElement).toBe(screen.getByRole('region', { name: 'Points d’attention' }))
+    expect(document.activeElement).not.toBe(document.body)
+  })
+
+  it('sans repère marqué, le focus passe au contenu de la page', async () => {
+    const utilisateur = userEvent.setup()
+    const clientRequetes = new QueryClient()
+    const arbre = (point: PointDesActions) => (
+      <QueryClientProvider client={clientRequetes}>
+        <main id="contenu">
+          <ActionsPoint point={point} compte={ministere(MENTIONNE)} />
+        </main>
+      </QueryClientProvider>
+    )
+    const { rerender } = render(arbre(unPoint()))
+    await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
+    await utilisateur.type(
+      screen.getByLabelText('Ce qui a été traité, et comment'),
+      'Salle confirmée pour le 10 octobre.',
+    )
+    await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
+    await screen.findByText('Point marqué traité.')
+    rerender(arbre(unPoint('traite')))
+    expect(document.activeElement).toBe(screen.getByRole('main'))
   })
 
   it('le message de réussite reste affiché même quand le bouton disparaît avec la ligne du point', async () => {
@@ -223,29 +274,78 @@ describe('« Marquer traité » pour un ministère', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
     expect(champ).toHaveValue('Réglé avec le propriétaire.')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    // La page est périmée : elle est relue.
-    expect(invalider).toHaveBeenCalledTimes(1)
-  })
-
-  it('une connexion perdue garde le texte et dit de réessayer', async () => {
-    const utilisateur = userEvent.setup()
-    marquer.mockRejectedValue(new TypeError('Failed to fetch'))
-    const { invalider } = afficher(ministere(CREATEUR))
-    await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
-    const champ = screen.getByLabelText('Ce qui a été traité, et comment')
-    await utilisateur.type(champ, 'Réglé avec le propriétaire.')
-    await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre commentaire est encore dans le formulaire : réessayez.',
-    )
-    expect(champ).toHaveValue('Réglé avec le propriétaire.')
+    // L'erreur est sous le bouton d'enregistrement, avant « Annuler ».
+    const alerte = screen.getByRole('alert')
+    const annuler = screen.getByRole('button', { name: 'Annuler' })
+    expect(alerte.compareDocumentPosition(annuler) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // La page est périmée : elle est relue quand la fenêtre se ferme, pas avant.
     expect(invalider).not.toHaveBeenCalled()
-    // Le bouton redevient actif : un second essai part.
-    marquer.mockResolvedValue(undefined)
-    await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
-    await waitFor(() => expect(marquer).toHaveBeenCalledTimes(2))
+    await utilisateur.click(annuler)
+    await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))
   })
+
+  it('un refus « déjà traité » : la page relue ne ferme pas la fenêtre, le message de refus reste', async () => {
+    const utilisateur = userEvent.setup()
+    marquer.mockRejectedValue({ code: 'P0001', message: 'Ce point est déjà traité.' })
+    const clientRequetes = new QueryClient()
+    const arbre = (point: PointDesActions) => (
+      <QueryClientProvider client={clientRequetes}>
+        <ActionsPoint point={point} compte={ministere(CREATEUR)} />
+      </QueryClientProvider>
+    )
+    const { rerender } = render(arbre(unPoint()))
+    await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
+    await utilisateur.type(
+      screen.getByLabelText('Ce qui a été traité, et comment'),
+      'Réglé avec le propriétaire.',
+    )
+    await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
+
+    // Le point revient traité (l'autre profil l'a traité) : les boutons disparaissent, mais pas la
+    // fenêtre ni le message de refus.
+    rerender(arbre(unPoint('traite')))
+    expect(screen.getByRole('dialog', { name: 'Marquer traité' })).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it.each([
+    ['un TypeError du navigateur', () => new TypeError('Failed to fetch')],
+    [
+      'la forme que supabase-js rend quand le réseau échoue',
+      () => ({ message: 'FetchError: Failed to fetch', details: '', hint: '', code: '' }),
+    ],
+  ])(
+    'une connexion perdue (%s) garde le texte, dit de réessayer et ne relit rien',
+    async (_nom, erreur) => {
+      const utilisateur = userEvent.setup()
+      marquer.mockRejectedValue(erreur())
+      const { invalider } = afficher(ministere(CREATEUR))
+      await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
+      const champ = screen.getByLabelText('Ce qui a été traité, et comment')
+      await utilisateur.type(champ, 'Réglé avec le propriétaire.')
+      await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'La connexion a échoué. Votre commentaire est encore dans le formulaire : réessayez.',
+      )
+      expect(champ).toHaveValue('Réglé avec le propriétaire.')
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+      // Rien n'est relu, ni maintenant ni à la fermeture : la page ne passe pas en erreur.
+      expect(invalider).not.toHaveBeenCalled()
+      await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+      await new Promise((fini) => window.setTimeout(fini, 20))
+      expect(invalider).not.toHaveBeenCalled()
+      await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
+      await utilisateur.type(screen.getByLabelText('Ce qui a été traité, et comment'), 'Réglé.....')
+      // Le bouton redevient actif : un second essai part.
+      marquer.mockResolvedValue(undefined)
+      await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
+      await waitFor(() => expect(marquer).toHaveBeenCalledTimes(2))
+    },
+  )
 
   it('« Annuler », « Retour » et Échap ferment sans rien écrire', async () => {
     const utilisateur = userEvent.setup()
@@ -276,6 +376,19 @@ describe('« Marquer traité » pour un ministère', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
     expect(screen.getByRole('dialog')).toHaveTextContent('[texte masqué par EJP Tech]')
     expect(screen.queryByText(/«/)).toBeNull()
+  })
+
+  it('un titre masqué décrit tout de même chaque bouton', () => {
+    afficher(ministere(CREATEUR), {
+      ...unPoint(),
+      titre: { texte: '[texte masqué par EJP Tech]', masque: true },
+    })
+    expect(screen.getByRole('button', { name: 'Marquer traité' })).toHaveAccessibleDescription(
+      '[texte masqué par EJP Tech]',
+    )
+    expect(screen.getByRole('button', { name: 'Changer le statut' })).toHaveAccessibleDescription(
+      '[texte masqué par EJP Tech]',
+    )
   })
 
   it('le compteur passe de 0 sur 280 à la longueur écrite, et un texte de 281 caractères est refusé', async () => {
@@ -359,7 +472,7 @@ describe('« Changer le statut »', () => {
     await waitFor(() => expect(changerStatut).toHaveBeenCalledWith(POINT_ID, 'en_cours'))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(await screen.findByText('Statut enregistré : En cours.')).toBeInTheDocument()
-    expect(invalider).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))
   })
 
   it('« En attente de décision » : le message porte le libellé complet', async () => {
@@ -388,25 +501,82 @@ describe('« Changer le statut »', () => {
     })
     const { invalider } = afficher(ministere(CREATEUR))
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
+    await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Ce point est traité : il ne change plus.',
     )
     expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(invalider).toHaveBeenCalledTimes(1)
+    // La page est relue à la fermeture de la fenêtre, pas pendant.
+    expect(invalider).not.toHaveBeenCalled()
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))
   })
 
-  it('une connexion perdue garde le choix et dit de réessayer', async () => {
+  it('un refus de droit (42501) relit la page et laisse la fenêtre ouverte avec son message', async () => {
     const utilisateur = userEvent.setup()
-    changerStatut.mockRejectedValue(new TypeError('Failed to fetch'))
-    afficher(ministere(CREATEUR))
+    changerStatut.mockRejectedValue({
+      code: '42501',
+      message: "Ce point n'existe pas ou vous n'y avez pas accès.",
+    })
+    const { invalider } = afficher(ministere(CREATEUR))
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
     await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+      "Ce point n'existe pas ou vous n'y avez pas accès.",
     )
+    await utilisateur.keyboard('{Escape}')
+    await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))
+  })
+
+  it.each([
+    ['un TypeError du navigateur', () => new TypeError('Failed to fetch')],
+    [
+      'la forme que supabase-js rend quand le réseau échoue',
+      () => ({ message: 'FetchError: Failed to fetch', details: '', hint: '', code: '' }),
+    ],
+  ])(
+    'une connexion perdue (%s) garde le choix, dit de réessayer et ne relit rien',
+    async (_nom, erreur) => {
+      const utilisateur = userEvent.setup()
+      changerStatut.mockRejectedValue(erreur())
+      const { invalider } = afficher(ministere(CREATEUR))
+      await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
+      await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
+      await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(
+        'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+      )
+      expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
+      await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+      await new Promise((fini) => window.setTimeout(fini, 20))
+      expect(invalider).not.toHaveBeenCalled()
+    },
+  )
+
+  it('enregistrer le statut déjà en place ferme la fenêtre sans rien écrire ni dire', async () => {
+    const utilisateur = userEvent.setup()
+    const { invalider } = afficher(ministere(CREATEUR), unPoint('en_cours'))
+    await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
     expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    await new Promise((fini) => window.setTimeout(fini, 80))
+    expect(changerStatut).not.toHaveBeenCalled()
+    expect(invalider).not.toHaveBeenCalled()
+    expect(screen.queryByText(/Statut enregistré/)).toBeNull()
+  })
+
+  it('le bouton « Changer le statut » garde le focus après un enregistrement', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(ministere(CREATEUR))
+    const ouvrir = screen.getByRole('button', { name: 'Changer le statut' })
+    await utilisateur.click(ouvrir)
+    await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
+    await screen.findByText('Statut enregistré : En cours.')
+    expect(ouvrir).toHaveFocus()
   })
 })
 

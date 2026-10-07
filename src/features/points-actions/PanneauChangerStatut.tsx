@@ -30,7 +30,8 @@ function statutInitial(statut: StatutPoint): StatutChoisi {
  * du point, trois vrais boutons radio segmentés (« À traiter », « En cours », « En attente de
  * décision », le statut actuel choisi), le texte visible sur l'effet de « En attente de décision »,
  * puis « Enregistrer le statut » et « Annuler ». Le bouton n'est jamais grisé. Un refus de la base
- * (« Ce point est traité : il ne change plus. ») se dit sous le bouton, tel quel.
+ * (« Ce point est traité : il ne change plus. ») se dit sous le bouton d'enregistrement, avant
+ * « Annuler », tel quel. Enregistrer le statut déjà en place ferme la fenêtre sans rien écrire.
  */
 export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props) {
   const id = useId()
@@ -43,6 +44,11 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
   const soumettre = async (evenement: FormEvent<HTMLFormElement>) => {
     evenement.preventDefault()
     if (enCours) return
+    // Le statut n'a pas changé : la base n'écrirait rien, la fenêtre se ferme sans message.
+    if (choisi === statut) {
+      onFermer()
+      return
+    }
     setRefus(null)
     setEnCours(true)
     try {
@@ -95,6 +101,7 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           enCours={enCours}
           libelleEnCours={TEXTES_ACTIONS_POINT.statut.boutonEnCours}
         />
+        {refus ? <ErreurFormulaire message={refus} /> : null}
         <button
           type="button"
           onClick={onFermer}
@@ -102,7 +109,6 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
         >
           {TEXTES_ACTIONS_POINT.statut.annuler}
         </button>
-        {refus ? <ErreurFormulaire message={refus} /> : null}
       </form>
     </FenetreAction>
   )

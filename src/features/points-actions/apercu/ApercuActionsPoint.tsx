@@ -55,7 +55,8 @@ export function ApercuActionsPoint() {
   const ecritures = useMemo<EcrituresPoint>(() => {
     const simuler = async () => {
       await attendre()
-      if (echec) throw new TypeError('Failed to fetch')
+      // La forme réelle d'une connexion perdue avec supabase-js : une erreur à `code` vide.
+      if (echec) throw { message: 'FetchError: Failed to fetch', details: '', hint: '', code: '' }
       if (refus) throw { code: 'P0001', message: 'Ce point est déjà traité.' }
     }
     return {
@@ -84,7 +85,7 @@ export function ApercuActionsPoint() {
   return (
     <QueryClientProvider client={clientRequetes}>
       <ContexteEcrituresPoint value={ecritures}>
-        <section aria-labelledby="apercu-titre" className="flex flex-col gap-5">
+        <section aria-labelledby="apercu-titre" data-repli-focus className="flex flex-col gap-5">
           <h1 id="apercu-titre" className="font-lecture text-[32px] leading-[1.1] font-medium">
             Points d'attention
           </h1>
