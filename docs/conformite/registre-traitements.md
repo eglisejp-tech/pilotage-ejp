@@ -1,7 +1,7 @@
 # Registre des traitements : Pilotage EJP
 
-- **Version** : 1 (projet)
-- **Date** : 6 octobre 2026
+- **Version** : 1.2 (projet)
+- **Date** : 7 octobre 2026
 - **Auteur** : EJP Tech
 - **Statut** : Projet à valider par la coordination
 - **Pour** : la coordination de l'Église des Jeunes Prodiges
@@ -62,7 +62,8 @@ emails par une adresse Gmail gratuite, celle d'EJP Tech, qui figure sur la page 
 Cela a des conséquences :
 
 - un Gmail gratuit relève des conditions grand public de Google. Il n'y a pas d'accord de
-  sous-traitance (article 28) à signer avec Google pour ce compte ;
+  sous-traitance (article 28) à signer avec Google pour ce compte. L'église n'a aucun contrat de
+  sous-traitance avec Google, ni pour l'envoi des emails ni pour la connexion avec Google ;
 - la phrase de la page « Confidentialité » qui dit que les prestataires « agissent sous contrat »
   est donc inexacte pour Google : elle est nuancée, et la page est corrigée au lot I de l'étape 4 ;
 - recommandation d'EJP Tech, sans l'imposer : Google Workspace pour les associations (gratuit pour
@@ -70,7 +71,8 @@ Cela a des conséquences :
   européen avec contrat.
 
 L'adresse d'envoi des emails de l'outil est celle d'EJP Tech de la page « Confidentialité »
-(décision T08, 6 octobre 2026).
+(décision T08, 6 octobre 2026). L'envoi passe par le SMTP du Gmail gratuit d'EJP Tech
+(`smtp.gmail.com`, port 587, mot de passe d'application ; décidé le 7 octobre 2026).
 
 **Note sur Supabase (fait donné le 6 octobre 2026).** L'accord de protection des données (DPA)
 « complète et fait partie des conditions d'utilisation » de Supabase. Son article 12.2 dit que
@@ -156,7 +158,9 @@ archivage du dépôt du code.
   recopie jamais un texte libre ni un email.
 - **Aucune donnée personnelle dans les champs libres** : rappel sous le premier champ libre de
   chaque formulaire, 280 caractères au plus, relecture par EJP Tech, masquage si besoin.
-- **Petits nombres protégés** pour les indicateurs sensibles (voir la fiche 2 et la note d'analyse).
+- **Indicateurs sensibles protégés** (voir la fiche 2 et la note d'analyse) : valeurs exactes pour le
+  seul ministère qui saisit, le berger, le conseil et EJP Tech (P52, 7 octobre 2026) ; aucune valeur
+  pour l'administration ni les autres ministères.
 - **Inscription fermée** : seuls les comptes créés par l'administration de l'église se connectent.
 - **Aucun traceur** ni cookie publicitaire, aucun appel à un autre service au chargement des pages.
 - **Secrets hors du navigateur** : le navigateur n'utilise que la clé publique. La clé secrète, le
@@ -192,12 +196,12 @@ archivage du dépôt du code.
 - **Données sensibles** : un compte dans l'outil d'une église peut révéler une appartenance
   religieuse (article 9). L'article 9.2.d permet ce traitement à quatre conditions :
 
-  | Condition de l'article 9.2.d                                            | Situation de Pilotage EJP                                                                                            |
-  | ----------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-  | Activités légitimes d'une association à but religieux                   | L'outil sert à organiser les ministères de l'église                                                                  |
-  | Garanties appropriées                                                   | Double authentification, accès par profil, hébergement de la base dans l'Union européenne, prestataires sous contrat |
-  | Seulement les membres, anciens membres ou personnes en contact régulier | Les comptes sont créés par l'administration pour les ministères, le berger, le conseil et EJP Tech                   |
-  | Pas de communication à l'extérieur sans consentement                    | Aucune donnée n'est communiquée hors de l'église. Les prestataires agissent pour le compte de l'église               |
+  | Condition de l'article 9.2.d                                            | Situation de Pilotage EJP                                                                                                                                    |
+  | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+  | Activités légitimes d'une association à but religieux                   | L'outil sert à organiser les ministères de l'église                                                                                                          |
+  | Garanties appropriées                                                   | Double authentification, accès par profil, hébergement de la base dans l'Union européenne, prestataires sous contrat (sauf Google : conditions grand public) |
+  | Seulement les membres, anciens membres ou personnes en contact régulier | Les comptes sont créés par l'administration pour les ministères, le berger, le conseil et EJP Tech                                                           |
+  | Pas de communication à l'extérieur sans consentement                    | Aucune donnée n'est communiquée hors de l'église. Les prestataires agissent pour le compte de l'église                                                       |
 
   À confirmer par la coordination : chaque titulaire de compte est membre de l'église ou en contact
   régulier avec elle.
@@ -272,16 +276,19 @@ archivage du dépôt du code.
   - **répartition par catégories** : le ministère répartit son total du mois entre les catégories de
     l'indicateur. Les catégories sont fixées par la coordination (listes courtes et larges, avec un
     « autre ») et écrites dans la base par une mise à jour d'EJP Tech ; sans liste, pas de répartition.
-    La somme des catégories ne dépasse jamais le total ; le reste s'affiche « non réparti ». Une
-    catégorie de 1 ou 2 s'affiche « moins de 3 » ; dès qu'une catégorie s'affiche « moins de 3 »,
-    l'outil masque aussi une autre catégorie, et toute la répartition si cela ne suffit pas, pour
-    qu'une différence avec le total ne révèle pas un nombre sous 3 ;
+    La somme des catégories ne dépasse jamais le total ; le reste s'affiche « non réparti ». Chaque
+    catégorie s'affiche exacte, sans seuil ni masquage (P52) ;
   - **texte « Précision »** : voir la rubrique suivante ;
   - aucun calcul tiré d'eux, aucun graphique de l'église ;
-  - 1 et 2 s'affichent « moins de 3 » au berger, au conseil et à EJP Tech ; 0 reste 0 ; la somme de
-    l'année ne compte que les mois affichés, pour qu'aucune différence ne révèle un mois masqué ;
-  - les lignes brutes ne sont lisibles que par le ministère qui saisit ; les autres lisent une vue
-    qui applique le seuil dans la base ;
+  - **valeurs exactes pour le berger, le conseil et EJP Tech** (P52, décidé par la personne
+    responsable le 7 octobre 2026) : 1 et 2 ne sont plus remplacés par « moins de 3 », ni dans le
+    total, ni dans le mois en cours, ni dans la somme de l'année, ni dans les catégories. La
+    personne responsable a accepté le risque qu'un chiffre exact permette de reconnaître une personne
+    dans un très petit groupe (voir la note d'analyse, version 1.2) ;
+  - les lignes brutes ne sont lisibles que par le ministère qui saisit ; le berger, le conseil et
+    EJP Tech lisent une vue de la base qui réapplique leurs droits et ne montre que la dernière
+    saisie d'un mois ; l'administration de l'église et les autres ministères ne reçoivent aucune
+    valeur ;
   - jamais sur la vue de l'église, jamais dans un email, jamais de valeur dans le journal.
 
   L'analyse complète est dans la note d'analyse des indicateurs sensibles.
@@ -310,9 +317,9 @@ archivage du dépôt du code.
 
 - **Destinataires** :
   - le ministère concerné voit ses propres chiffres ;
-  - le berger, le conseil et EJP Tech voient tous les chiffres, en lecture (avec le seuil pour les
-    indicateurs sensibles, leurs catégories et leur mois en cours) ; ils lisent aussi les précisions
-    attachées aux chiffres sensibles ;
+  - le berger, le conseil et EJP Tech voient tous les chiffres, en lecture, valeurs exactes pour les
+    indicateurs sensibles, leurs catégories et leur mois en cours (P52) ; ils lisent aussi les
+    précisions attachées aux chiffres sensibles ;
   - l'administration de l'église voit les définitions et l'usage (« saisi 4 mois sur 5 »), jamais
     une valeur d'indicateur propre ; elle voit les chiffres communs de la vue de l'église ;
   - les autres ministères voient seulement les chiffres communs de la vue de l'église.
@@ -392,7 +399,12 @@ archivage du dépôt du code.
   - EJP Tech lit tout le journal ; le berger et le conseil le lisent aussi, sauf les lignes d'un
     signalement (`difficulte_signalee`, `signalement_clos`), que seuls le ministère concerné et EJP
     Tech lisent ;
-  - l'administration de l'église lit une liste limitée d'actions, fixée dans la base ;
+  - l'administration de l'église lit une liste limitée d'actions, fixée dans la base. Elle ne lit pas
+    les lignes de relecture et de masquage d'un texte quand il s'agit d'une demande d'indicateur,
+    d'une précision, d'un point, d'un événement ou d'une réunion (P51, T47) ;
+  - le berger et le conseil lisent les lignes de relecture et de masquage d'une précision (T45) ;
+    l'heure exacte d'une saisie de chiffres, sensibles compris, reste lisible, sans dire ce que la
+    saisie contient (T46) ;
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
     Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et
     double authentification activée sur ces accès.
@@ -419,8 +431,9 @@ archivage du dépôt du code.
 - **Données sensibles** : aucune, au-delà de l'appartenance possible à l'église (fiche 1).
 - **Destinataires** : la personne titulaire du compte ; Supabase (qui prépare l'email) et Google
   (qui l'envoie par la messagerie Gmail de l'église).
-- **Expéditeur** : « Pilotage EJP », par la messagerie de l'église (proposition : le compte Google
-  de l'église, à confirmer, T08). À compléter par EJP Tech : adresse d'envoi retenue.
+- **Expéditeur** : « Pilotage EJP », par le Gmail gratuit d'EJP Tech, l'adresse de la page
+  « Confidentialité » (T08, décidé les 6 et 7 octobre 2026 ; SMTP `smtp.gmail.com`, port 587, mot
+  de passe d'application).
 - **Prestataires et lieu** : Supabase (région Paris), Google (États-Unis).
 - **Transferts hors UE** : envoi par Google, voir « Transferts ».
 - **Durées** : lien valable 24 heures ; copies dans la boîte d'envoi Gmail de l'église, supprimées
@@ -434,18 +447,19 @@ archivage du dépôt du code.
 - **À venir, non décidé** : des rappels de saisie par email sont proposés (P31). Ils ne sont pas
   construits. S'ils sont décidés, cette fiche sera mise à jour avant leur mise en service.
 
-## Fiche 6. Signalement d'une difficulté (décidé, non construit)
+## Fiche 6. Signalement d'une difficulté (décidé et construit)
 
 - **Statut** : décidé le 6 octobre 2026 par la personne responsable (T39, question 14 du plan de
-  l'étape 4), conçu par EJP Tech. Il n'est pas encore construit. Cette fiche est remise à la
-  coordination avec le reste du registre.
-- **Finalité prévue** : permettre à un ministère de signaler une difficulté avec l'outil, par
+  l'étape 4), conçu par EJP Tech. La base est construite et fusionnée (lot B7, 7 octobre 2026) ;
+  les écrans suivent à l'étape 4. Cette fiche est remise à la coordination avec le reste du
+  registre.
+- **Finalité** : permettre à un ministère de signaler une difficulté avec l'outil, par
   exemple quand il ne peut pas enregistrer une date (la base refuse une nouvelle date déjà passée
   pour un événement), pour qu'EJP Tech l'aide en dehors de l'outil.
-- **Base légale prévue** : intérêt légitime de l'association (article 6.1.f).
+- **Base légale** : intérêt légitime de l'association (article 6.1.f).
 - **Personnes concernées** : les titulaires des comptes de ministère ; les personnes citées par
   erreur dans le texte.
-- **Catégories de données prévues** : ministère et compte qui signalent, date, écran concerné
+- **Catégories de données** : ministère et compte qui signalent, date, écran concerné
   (choisi dans une liste fermée), court texte libre (10 à 280 caractères) ; clôture par EJP Tech
   (compte, date, commentaire facultatif de 10 à 280 caractères).
 - **Destinataires** (décidé) : le ministère lit ses signalements et leur clôture ; EJP Tech les lit
@@ -456,12 +470,14 @@ archivage du dépôt du code.
   et EJP Tech : la base les retire au berger et au conseil, qui lisent le reste du journal. EJP
   Tech transmet à l'administration, hors de l'outil, ce qui la concerne. Un problème de compte ou
   de connexion ne passe pas par ce signalement.
-- **Mesures prévues** : rappel sous le champ, 280 caractères au plus, refus par la base d'un texte
-  qui ressemble à un email, à un numéro de téléphone ou à une civilité suivie d'un nom ; relecture
-  et masquage par EJP Tech ; ajout seulement ; journal avec le code de l'écran, sans le texte ;
-  aucun email.
+- **Mesures** : rappel sous le champ, 280 caractères au plus, refus par la base d'un texte qui
+  ressemble à un email, à un numéro de téléphone (une suite d'au moins 5 chiffres, même séparés) ou
+  à une civilité suivie d'un nom ; refus des crochets, pour qu'un texte écrit par un ministère ne
+  passe jamais pour un texte masqué par EJP Tech (T43, 7 octobre 2026) ; les mêmes règles
+  s'appliquent au commentaire de clôture ; relecture et masquage par EJP Tech ; ajout seulement ;
+  journal avec le code de l'écran, sans le texte ; aucun email.
 - **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
-- **Durées prévues** : toute la vie de l'outil, comme les autres écritures.
+- **Durées** : toute la vie de l'outil, comme les autres écritures.
 
 ## Ce qui reste à compléter
 
@@ -478,7 +494,8 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 5. (Réglé le 6 octobre 2026.) Hébergement de Netlify : réseau mondial, sans région au choix,
    journaux d'accès seulement.
 6. Emails par un Gmail gratuit (fait donné le 6 octobre 2026) : pas d'accord de sous-traitance
-   avec Google, conditions grand public. Corriger la phrase « agissent sous contrat » de la page
+   avec Google, ni pour les emails ni pour la connexion avec Google, conditions grand public.
+   Corriger la phrase « agissent sous contrat » de la page
    « Confidentialité » pour Google : la page est corrigée au lot I de l'étape 4. Recommandation,
    sans l'imposer : Google Workspace pour les associations (gratuit pour une association
    éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec
@@ -486,23 +503,31 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 7. Présence de Google et de Netlify sur la liste du cadre de protection des données, avec la date
    de la vérification.
 8. Adresse d'envoi des emails : décidée le 6 octobre 2026 (T08), c'est l'adresse d'EJP Tech de la
-   page « Confidentialité ». Rien à compléter.
+   page « Confidentialité » ; SMTP décidé le 7 octobre 2026 (Gmail gratuit d'EJP Tech). Rien à
+   compléter.
 9. Double authentification sur les comptes de tableau de bord de Supabase et de Netlify, dont
    seul EJP Tech a l'accès : à confirmer, elle est recommandée.
 10. Durée de conservation de l'export final et lieu où la coordination le garde (à la coordination).
 11. Confirmation que chaque titulaire de compte est membre de l'église ou en contact régulier avec
     elle (à la coordination).
 12. Confirmation par la coordination de la fiche 6 (signalement d'une difficulté), décidée le 6
-    octobre 2026 : lue par le ministère qui l'écrit et par EJP Tech seulement.
+    octobre 2026 et construite dans la base : lue par le ministère qui l'écrit et par EJP Tech
+    seulement.
 13. Confirmation par la coordination, pour la fiche 2, du mois en cours, du texte « Précision » et de
     la répartition par catégories des indicateurs sensibles, décidés le 6 octobre 2026. Listes de
     catégories par indicateur sensible (à la coordination).
+14. Prise de connaissance par la coordination, pour la fiche 2, de la décision du 7 octobre 2026 (P52) :
+    le berger, le conseil et EJP Tech voient les valeurs exactes des indicateurs sensibles. Le risque
+    de reconnaître une personne dans un très petit groupe est accepté par la personne responsable ; il
+    est écrit dans la note d'analyse (version 1.2), avec le risque du numéro manquant du journal
+    (T44). La coordination dit si une analyse d'impact complète est nécessaire.
 
 ## Historique
 
-| Version      | Date           | Auteur   | Changement                                                                                                                                                 |
-| ------------ | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 (projet)   | 6 octobre 2026 | EJP Tech | Première rédaction, à valider par la coordination                                                                                                          |
-| 1.1 (projet) | 6 octobre 2026 | EJP Tech | Fiche 2 : mois en cours accepté, texte « Précision » et répartition par catégories des indicateurs sensibles, après la décision de la personne responsable |
+| Version      | Date           | Auteur   | Changement                                                                                                                                                                                                                                                                            |
+| ------------ | -------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 (projet)   | 6 octobre 2026 | EJP Tech | Première rédaction, à valider par la coordination                                                                                                                                                                                                                                     |
+| 1.1 (projet) | 6 octobre 2026 | EJP Tech | Fiche 2 : mois en cours accepté, texte « Précision » et répartition par catégories des indicateurs sensibles, après la décision de la personne responsable                                                                                                                            |
+| 1.2 (projet) | 7 octobre 2026 | EJP Tech | Fiche 2 : valeurs exactes des sensibles pour le berger, le conseil et EJP Tech (P52). Fiche 4 : lecture du journal (T45, T46, T47). Fiche 5 : SMTP décidé (T08). Fiche 6 : décidée et construite, crochets et longs numéros refusés (T43). Google : aucun contrat, connexion comprise |
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

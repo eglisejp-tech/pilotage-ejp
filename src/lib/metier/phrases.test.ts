@@ -370,6 +370,55 @@ describe('phraseDAccueil et libelleBoutonPrincipal (accueil du ministère)', () 
     expect(libelleBoutonPrincipal(saisies)).toBeNull()
     expect(phraseDAccueil([], 39)).toEqual([normal('Tout est à jour pour la semaine 39.')])
   })
+
+  const mois = (numero: number, fait: boolean): SaisieDeLaSemaine => ({
+    type: 'mois',
+    mois: numero,
+    fait,
+  })
+  const evenement = (fait: boolean): SaisieDeLaSemaine => ({ type: 'evenement', fait })
+
+  it('compte les chiffres du mois écoulé parmi les chiffres (« de septembre », « d’août »)', () => {
+    expect(texteDePhrase(phraseDAccueil([dimanche(true), mois(9, false)], 40))).toBe(
+      'Il reste les chiffres de septembre.',
+    )
+    expect(libelleBoutonPrincipal([mois(8, false)])).toBe("Saisir les chiffres d'août")
+    expect(libelleBoutonPrincipal([mois(10, false)])).toBe("Saisir les chiffres d'octobre")
+    expect(texteDePhrase(phraseDAccueil([dimanche(true), mois(9, true), reunion(false)], 40))).toBe(
+      'Vos chiffres sont à jour. Il reste la date de la prochaine réunion.',
+    )
+  })
+
+  it('nomme les chiffres par département du ministère FIJ', () => {
+    const saisies: SaisieDeLaSemaine[] = [dimanche(true), { type: 'fij_statistiques', fait: false }]
+    expect(texteDePhrase(phraseDAccueil(saisies, 39))).toBe(
+      'Vos chiffres sont à jour. Il reste les chiffres par département.',
+    )
+    expect(libelleBoutonPrincipal(saisies)).toBe('Saisir les chiffres par département')
+  })
+
+  it("dit « Il reste le statut d'un événement. », sans le titre (T31)", () => {
+    const saisies = [dimanche(true), reunion(true), evenement(false)]
+    expect(texteDePhrase(phraseDAccueil(saisies, 39))).toBe(
+      "Vos chiffres sont à jour. Il reste le statut d'un événement.",
+    )
+    expect(libelleBoutonPrincipal(saisies)).toBe("Mettre à jour l'événement")
+  })
+
+  it('compte les événements à confirmer après le reste', () => {
+    const saisies = [evenement(false), dimanche(false), evenement(false), reunion(true)]
+    expect(texteDePhrase(phraseDAccueil(saisies, 40))).toBe(
+      'Il reste les chiffres du dimanche 4 oct. et le statut de 2 événements.',
+    )
+  })
+
+  it('masque « Tout est à jour » tant qu’un événement est à confirmer', () => {
+    const saisies = [dimanche(true), batir(true), reunion(true), evenement(false)]
+    expect(texteDePhrase(phraseDAccueil(saisies, 39))).not.toContain('Tout est à jour')
+    expect(texteDePhrase(phraseDAccueil([...saisies.slice(0, 3), evenement(true)], 39))).toBe(
+      'Tout est à jour pour la semaine 39.',
+    )
+  })
 })
 
 describe('sessions', () => {

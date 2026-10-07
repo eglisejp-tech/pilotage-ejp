@@ -58,26 +58,29 @@ test.describe('fiche 04 lue par le berger (aperçu)', () => {
     await expect(page.getByText('11 sur 14, calculé')).toBeVisible()
   })
 
-  test('un sensible à 2 s’affiche « moins de 3 », le mois en cours « en cours »', async ({
-    page,
-  }) => {
-    await ouvrir(page, { profil: 'berger' })
-    await expect(page.getByText('moins de 3', { exact: true }).first()).toBeVisible()
-    await expect(page.getByText('Octobre en cours : 7')).toBeVisible()
-    await expect(
-      page.getByRole('button', { name: 'Aide : Bénéficiaires (passages)' }),
-    ).toBeVisible()
+  test('un sensible à 2 s’affiche exact (P52), le mois en cours « en cours »', async ({ page }) => {
+    for (const profil of ['berger', 'conseil', 'admin_plateforme']) {
+      await ouvrir(page, { profil })
+      await expect(page.getByText('moins de 3', { exact: true })).toHaveCount(0)
+      await expect(page.getByText(/^Depuis juin : 9 /)).toBeVisible()
+      await expect(page.getByText('Octobre en cours : 7')).toBeVisible()
+      await expect(
+        page.getByRole('button', { name: 'Aide : Bénéficiaires (passages)' }),
+      ).toHaveCount(0)
+    }
   })
 
-  test('répartition : « masqué » avec son aide, « moins de 3 », « Non réparti » ; précisions', async ({
+  test('répartition exacte (P52) : « Non réparti », « Pas de répartition » ; précisions', async ({
     page,
   }) => {
     await ouvrir(page, { profil: 'berger' })
     await ouvrirRepartition(page)
     await expect(page.getByText('Pas de répartition pour septembre.')).toBeVisible()
-    await expect(page.getByText('masqué', { exact: true })).toBeVisible()
+    await expect(page.getByText('Malaise : 4')).toBeVisible()
+    await expect(page.getByText('Blessure : 2')).toBeVisible()
     await expect(page.getByText(/Non réparti/)).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Aide : Malaise : masqué' })).toBeVisible()
+    await expect(page.getByText('masqué', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('moins de 3', { exact: true })).toHaveCount(0)
     await expect(page.getByText(/^Précision d'octobre/)).toBeVisible()
   })
 
@@ -90,23 +93,18 @@ test.describe('fiche 04 lue par le berger (aperçu)', () => {
     }
   })
 
-  test('au clavier : la ligne repliée s’ouvre, son aide s’ouvre et se ferme sans perdre le focus', async ({
+  test('au clavier : la ligne repliée s’ouvre et se referme sans perdre le focus', async ({
     page,
   }) => {
     await ouvrir(page, { profil: 'berger' })
-    await page.getByText('Répartition par catégorie').focus()
+    const resume = page.getByText('Répartition par catégorie')
+    await resume.focus()
     await page.keyboard.press('Enter')
-    const aide = page.getByRole('button', { name: 'Aide : Malaise : masqué' })
-    await expect(aide).toBeVisible()
-    // Tab depuis la ligne repliée : l'aide du premier « masqué » est le prochain arrêt.
-    await page.keyboard.press('Tab')
-    await expect(aide).toBeFocused()
+    await expect(page.getByText('Malaise : 4')).toBeVisible()
+    await expect(resume).toBeFocused()
     await page.keyboard.press('Enter')
-    await expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await expect(aide).toBeFocused()
-    await page.keyboard.press('Escape')
-    await expect(aide).toHaveAttribute('aria-expanded', 'false')
-    await expect(aide).toBeFocused()
+    await expect(page.getByText('Malaise : 4')).toBeHidden()
+    await expect(resume).toBeFocused()
   })
 
   test('les cadres des emplacements des autres lots se voient, dans l’ordre de la maquette', async ({

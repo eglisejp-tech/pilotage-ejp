@@ -7,7 +7,13 @@
 // ministères et des rassemblements (écrits par l'administration) entrent dans une phrase : jamais
 // un titre de point, une description ou un commentaire.
 
-import { formaterJourCourt, formaterJourLong, formaterJourSemaine, type DateIso } from './dates'
+import {
+  formaterJourCourt,
+  formaterJourLong,
+  formaterJourSemaine,
+  nomDuMois,
+  type DateIso,
+} from './dates'
 import { joursDepuis, SEUIL_ATTENTION_JOURS, type MinistereDate } from './fraicheur'
 import {
   accorder,
@@ -313,30 +319,57 @@ export function phraseDeLaFiche(d: DonneesPhraseFiche): Phrase {
 
 // Accueil du ministère (07)
 
-/** Une ligne de « Vos saisies », dans l'ordre de l'écran. */
+/**
+ * Une ligne de « Vos saisies », dans l'ordre de l'écran. `mois` : numéro du mois écoulé (1 à 12).
+ * `evenement` : un événement du ministère à confirmer (T31), `fait` faux tant qu'il attend sa
+ * validation. Un événement qui mentionne seulement le ministère n'en est pas un : le ministère n'a
+ * rien à y faire.
+ */
 export type SaisieDeLaSemaine =
   | { type: 'dimanche'; dimanche: DateIso; fait: boolean }
+  | { type: 'mois'; mois: number; fait: boolean }
   | { type: 'session'; session: TypeSession; intitule: string | null; date: DateIso; fait: boolean }
   | { type: 'reunion'; fait: boolean }
   | { type: 'carte_fij'; fait: boolean }
+  | { type: 'fij_statistiques'; fait: boolean }
+  | { type: 'evenement'; fait: boolean }
 
-function ceQuiReste(saisie: SaisieDeLaSemaine): string {
+/** « de septembre », « d'août », « d'octobre ». */
+function duMois(mois: number): string {
+  const nom = nomDuMois(mois)
+  return /^[aeiouéè]/i.test(nom) ? `d'${nom}` : `de ${nom}`
+}
+
+function ceQuiReste(saisie: Exclude<SaisieDeLaSemaine, { type: 'evenement' }>): string {
   switch (saisie.type) {
     case 'dimanche':
       return `les chiffres du ${formaterJourSemaine(saisie.dimanche)}`
+    case 'mois':
+      return `les chiffres ${duMois(saisie.mois)}`
     case 'session':
       return `la présence à ${sessionDu(saisie.session, saisie.intitule, saisie.date)}`
     case 'reunion':
       return 'la date de la prochaine réunion'
     case 'carte_fij':
       return 'la carte des FIJ'
+    case 'fij_statistiques':
+      return 'les chiffres par département'
   }
 }
 
+/** « le statut d'un événement », « le statut de 2 événements » : jamais le titre (T31). */
+function statutDesEvenements(nombreEvenements: number): string {
+  return nombreEvenements === 1
+    ? "le statut d'un événement"
+    : `le statut de ${nombre(nombreEvenements)} événements`
+}
+
 /**
- * « Vos chiffres sont à jour. » si les chiffres et les sessions sont faits, puis, surligné, ce qui
- * reste (« Il reste la date de la prochaine réunion. »). Tout est fait : « Tout est à jour pour la
- * semaine 39. »
+ * « Vos chiffres sont à jour. » si les chiffres (dimanche et mois) et les sessions sont faits,
+ * puis, surligné, ce qui reste (« Il reste la date de la prochaine réunion. »). Les événements à
+ * confirmer viennent en dernier, comptés et sans leur titre (« Il reste les chiffres du dimanche
+ * 4 oct. et le statut de 2 événements. »). Tout est fait et aucun événement n'attend : « Tout est
+ * à jour pour la semaine 39. »
  */
 export function phraseDAccueil(
   saisies: readonly SaisieDeLaSemaine[],
@@ -345,11 +378,18 @@ export function phraseDAccueil(
   const aFaire = saisies.filter((saisie) => !saisie.fait)
   if (aFaire.length === 0) return [normal(`Tout est à jour pour la semaine ${numeroSemaine}.`)]
   const chiffresFaits = saisies.every(
-    (saisie) => (saisie.type !== 'dimanche' && saisie.type !== 'session') || saisie.fait,
+    (saisie) =>
+      (saisie.type !== 'dimanche' && saisie.type !== 'mois' && saisie.type !== 'session') ||
+      saisie.fait,
   )
+  const restes = aFaire.flatMap((saisie) =>
+    saisie.type === 'evenement' ? [] : [ceQuiReste(saisie)],
+  )
+  const evenements = aFaire.filter((saisie) => saisie.type === 'evenement').length
+  if (evenements > 0) restes.push(statutDesEvenements(evenements))
   return assembler([
     chiffresFaits ? normal('Vos chiffres sont à jour. ') : null,
-    ...surligneFinDePhrase(`Il reste ${listeNoms(aFaire.map(ceQuiReste))}`),
+    ...surligneFinDePhrase(`Il reste ${listeNoms(restes)}`),
   ])
 }
 
@@ -360,11 +400,17 @@ export function libelleBoutonPrincipal(saisies: readonly SaisieDeLaSemaine[]): s
   switch (premiere.type) {
     case 'dimanche':
       return 'Saisir les chiffres du dimanche'
+    case 'mois':
+      return `Saisir les chiffres ${duMois(premiere.mois)}`
     case 'session':
       return `Saisir la présence à ${nomSession(premiere.session, premiere.intitule)}`
     case 'reunion':
       return 'Renseigner la prochaine réunion'
     case 'carte_fij':
       return 'Mettre à jour la carte des FIJ'
+    case 'fij_statistiques':
+      return 'Saisir les chiffres par département'
+    case 'evenement':
+      return "Mettre à jour l'événement"
   }
 }

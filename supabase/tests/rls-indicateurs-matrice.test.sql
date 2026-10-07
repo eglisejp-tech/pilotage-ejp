@@ -9,8 +9,8 @@
 -- Tech, en aal2 ; la dérivation ajoute la ligne aal1 de chacun (zéro ligne lue) et la ligne de
 -- l'anonyme (refusé partout).
 -- Attendu : le ministère lit les valeurs exactes des siens, sensibles compris ; le berger, le
--- conseil et EJP Tech lisent tout, avec le seuil « moins de 3 » sur les sensibles et sans leurs
--- lignes brutes ; l'administration lit des lignes sans valeur (sauf communs) et l'usage ; un
+-- conseil et EJP Tech lisent tout, valeurs exactes des sensibles comprises (P52, plus de
+-- « moins de 3 »), sans leurs lignes brutes ; l'administration lit des lignes sans valeur (sauf communs) et l'usage ; un
 -- autre ministère ne lit rien des indicateurs propres ; l'usage est à l'administration et à EJP
 -- Tech seulement.
 begin;
@@ -84,10 +84,10 @@ insert into objet values
    '4', '0', '4', '4', '4'),
   (4, 'v_mesure_periode (valeur sensible)',
    'select 1 from public.v_mesure_periode where indicateur_id = (select sensible from ind) and valeur is not null',
-   '2', '0', '0', '0', '0'),
-  (5, 'v_mesure_periode (moins de 3)',
+   '2', '0', '2', '0', '2'),
+  (5, 'v_mesure_periode (moins de 3, plus jamais)',
    'select 1 from public.v_mesure_periode where indicateur_id = (select sensible from ind) and moins_de_3',
-   '0', '0', '2', '0', '2'),
+   '0', '0', '0', '0', '0'),
   (6, 'v_mesure_periode (valeurs propres)',
    'select 1 from public.v_mesure_periode where indicateur_id in (select propre from ind union all select propre2 from ind) and valeur is not null',
    '2', '0', '2', '0', '2'),
@@ -95,15 +95,15 @@ insert into objet values
    '36', '0', '36', '36', '36'),
   (8, 'v_indicateur_serie (valeurs)',
    'select 1 from public.v_indicateur_serie where ministere_id = (select m from ctx) and valeur is not null',
-   '3', '0', '2', '0', '2'),
+   '3', '0', '3', '0', '3'),
   (9, 'v_indicateur_suivi', 'select 1 from public.v_indicateur_suivi where ministere_id = (select m from ctx)',
    '4', '0', '4', '4', '4'),
   (10, 'v_indicateur_suivi (valeur sensible)',
    'select 1 from public.v_indicateur_suivi where indicateur_id = (select sensible from ind) and (derniere_valeur is not null or mois_en_cours_valeur is not null)',
-   '1', '0', '0', '0', '0'),
-  (11, 'v_indicateur_suivi (moins de 3)',
-   'select 1 from public.v_indicateur_suivi where indicateur_id = (select sensible from ind) and derniere_moins_de_3 and mois_en_cours_moins_de_3',
-   '0', '0', '1', '0', '1'),
+   '1', '0', '1', '0', '1'),
+  (11, 'v_indicateur_suivi (moins de 3, plus jamais)',
+   'select 1 from public.v_indicateur_suivi where indicateur_id = (select sensible from ind) and (derniere_moins_de_3 or mois_en_cours_moins_de_3 or somme_moins_de_3)',
+   '0', '0', '0', '0', '0'),
   (12, 'v_calcul', 'select 1 from public.v_calcul where ministere_id = (select m from ctx)', '1', '0', '1', '1', '1'),
   (13, 'v_calcul (résultat)',
    'select 1 from public.v_calcul where ministere_id = (select m from ctx) and resultat = 70',

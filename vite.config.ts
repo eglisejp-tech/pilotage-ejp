@@ -17,5 +17,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     // Les tests d'intégration des Edge Functions (tests/fonctions) ont leur propre configuration.
     include: ['src/**/*.test.{ts,tsx}', 'supabase/functions/**/*.test.ts'],
+    // Les formulaires complets (saisie du dimanche, réunion) dépassent 5 s quand le poste ou le
+    // runner de CI est chargé : 15 s évite des échecs de délai qui ne disent rien du code.
+    testTimeout: 15000,
   },
 })

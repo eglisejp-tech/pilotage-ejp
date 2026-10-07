@@ -1,13 +1,12 @@
 // Lignes d'exemple de l'aperçu de la fiche (/apercu/fiche, lot E2) : ce que la base rendrait pour
-// la fiche de Social, sans base ni requête. Les valeurs suivent le profil demandé, comme les vues :
-// exactes pour le ministère, « moins de 3 » et répartition protégée (P47) pour le berger, le
-// conseil et EJP Tech. Le jour de Paris est fixé au mercredi 7 octobre 2026 (dimanche de référence
-// le 4 octobre). Données fictives, sans aucune donnée personnelle.
+// la fiche de Social, sans base ni requête. Les valeurs sont les mêmes pour tous les lecteurs de
+// la fiche, comme dans les vues : exactes pour le ministère, le berger, le conseil et EJP Tech,
+// sensibles et répartitions compris (P52). Le jour de Paris est fixé au mercredi 7 octobre 2026
+// (dimanche de référence le 4 octobre). Données fictives, sans aucune donnée personnelle.
 
 import type { IndicateurCommun } from '@/data/eglise'
 import type { LigneDerniereSaisie } from '@/data/fiche'
 import type { LecturesFiche } from '@/features/fiche/construireFiche'
-import type { ProfilFiche } from '@/features/fiche/modeleFiche'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import type { LigneVue } from '@/lib/base'
 
@@ -118,7 +117,7 @@ function suivi(ligne: Partial<Suivi> & Pick<Suivi, 'indicateur_id' | 'libelle' |
   }
 }
 
-function suiviSocial(exact: boolean): Suivi[] {
+function suiviSocial(): Suivi[] {
   return [
     suivi({
       indicateur_id: PASSAGES,
@@ -126,11 +125,10 @@ function suiviSocial(exact: boolean): Suivi[] {
       nature: 'mois',
       sensible: true,
       derniere_periode: '2026-09-01',
-      derniere_valeur: exact ? 2 : null,
-      derniere_moins_de_3: !exact,
+      derniere_valeur: 2,
       derniere_saisie_le: '2026-10-03T20:00:00+02:00',
       mois_en_cours_valeur: 7,
-      somme_annee: exact ? 9 : 6,
+      somme_annee: 9,
       somme_depuis: '2026-06-01',
       somme_nb_saisies: 4,
       somme_nb_attendues: 4,
@@ -291,22 +289,16 @@ function serieMois(
   indicateur: string,
   valeurs: Readonly<Record<string, number>>,
   creeLe: string,
-  exact: boolean,
-  sensible: boolean,
 ): Serie[] {
-  return MOIS_SERIE.map((periode, rang) => {
-    const valeur = valeurs[periode] ?? null
-    const masquee = sensible && !exact && valeur !== null && (valeur === 1 || valeur === 2)
-    return {
-      indicateur_id: indicateur,
-      ministere_id: SOCIAL,
-      periode,
-      rang: rang + 1,
-      valeur: masquee ? null : valeur,
-      moins_de_3: masquee,
-      complete: periode >= creeLe,
-    }
-  })
+  return MOIS_SERIE.map((periode, rang) => ({
+    indicateur_id: indicateur,
+    ministere_id: SOCIAL,
+    periode,
+    rang: rang + 1,
+    valeur: valeurs[periode] ?? null,
+    moins_de_3: false,
+    complete: periode >= creeLe,
+  }))
 }
 
 const DIMANCHES_SERIE = [
@@ -323,17 +315,15 @@ const DIMANCHES_SERIE = [
 ]
 const MARAUDES_VALEURS = [14, 11, null, 13, 15, 12, null, 14, 13, 12]
 
-function series(exact: boolean): Serie[] {
+function series(): Serie[] {
   return [
     ...serieMois(
       PASSAGES,
       { '2026-06-01': 6, '2026-07-01': 1, '2026-08-01': 0, '2026-09-01': 2 },
       '2026-06-01',
-      exact,
-      true,
     ),
-    ...serieMois(FONDS, { '2026-08-01': 800, '2026-09-01': 1250 }, '2026-08-01', exact, false),
-    ...serieMois(ACTIONS, { '2026-09-01': 3 }, '2026-09-01', exact, false),
+    ...serieMois(FONDS, { '2026-08-01': 800, '2026-09-01': 1250 }, '2026-08-01'),
+    ...serieMois(ACTIONS, { '2026-09-01': 3 }, '2026-09-01'),
     ...DIMANCHES_SERIE.map((periode, rang) => ({
       indicateur_id: MARAUDES,
       ministere_id: SOCIAL,
@@ -348,21 +338,14 @@ function series(exact: boolean): Serie[] {
 
 type Repartition = LigneVue<'v_ventilation_sensible'>
 
-function repartitions(exact: boolean): Repartition[] {
-  const cases: [string | null, string, number, number | null, boolean, boolean][] = exact
-    ? [
-        ['malaise', 'Malaise', 1, 4, false, false],
-        ['blessure', 'Blessure', 2, 2, false, false],
-        ['autre', 'Autre', 3, 1, false, false],
-        [null, 'Non réparti', 32767, 0, false, false],
-      ]
-    : [
-        ['malaise', 'Malaise', 1, null, false, true],
-        ['blessure', 'Blessure', 2, null, true, false],
-        ['autre', 'Autre', 3, null, true, false],
-        [null, 'Non réparti', 32767, 0, false, false],
-      ]
-  return cases.map(([categorie, libelle, ordre, valeur, moinsDe3, masquee]) => ({
+function repartitions(): Repartition[] {
+  const cases: [string | null, string, number, number][] = [
+    ['malaise', 'Malaise', 1, 4],
+    ['blessure', 'Blessure', 2, 2],
+    ['autre', 'Autre', 3, 1],
+    [null, 'Non réparti', 32767, 0],
+  ]
+  return cases.map(([categorie, libelle, ordre, valeur]) => ({
     indicateur_id: PASSAGES,
     ministere_id: SOCIAL,
     periode: '2026-10-01',
@@ -370,8 +353,8 @@ function repartitions(exact: boolean): Repartition[] {
     libelle,
     ordre,
     valeur,
-    moins_de_3: moinsDe3,
-    masquee,
+    moins_de_3: false,
+    masquee: false,
     tout_masque: false,
   }))
 }
@@ -447,9 +430,11 @@ const MENTIONS = [
   { point_id: 'b0000000-0000-4000-8000-000000000002', ministere_id: SOCIAL },
 ]
 
-/** Lignes de la fiche de Social pour ce profil (`fiche-vide` : premier usage). */
-export function lecturesExempleFiche(profil: ProfilFiche, vide: boolean): LecturesFiche {
-  const exact = profil === 'ministere'
+/**
+ * Lignes de la fiche de Social (`fiche-vide` : premier usage), les mêmes pour tous les lecteurs
+ * de la fiche (P52).
+ */
+export function lecturesExempleFiche(vide: boolean): LecturesFiche {
   const base: LecturesFiche = {
     semaine: { aujourdhui: '2026-10-07', dimanche: '2026-10-04' },
     ministere: {
@@ -465,9 +450,9 @@ export function lecturesExempleFiche(profil: ProfilFiche, vide: boolean): Lectur
     mesuresCommuns: mesuresCommuns(),
     totauxDimanche: [],
     totauxACeJour: [],
-    suivi: suiviSocial(exact),
+    suivi: suiviSocial(),
     calculs: CALCULS,
-    series: series(exact),
+    series: series(),
     sensibles: [{ id: PASSAGES, modele_code: 'social_beneficiaires_passages' }],
     categories: [
       {
@@ -492,7 +477,7 @@ export function lecturesExempleFiche(profil: ProfilFiche, vide: boolean): Lectur
         retiree_le: null,
       },
     ],
-    repartitions: repartitions(exact),
+    repartitions: repartitions(),
     precisions: [
       {
         indicateur_id: PASSAGES,
