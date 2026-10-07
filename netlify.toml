@@ -39,10 +39,11 @@
 [[headers]]
   for = "/*"
   [headers.values]
-    # Le marqueur du projet de production figure ici, et nulle part ailleurs.
-    # À remplacer par l'identifiant du projet de production avant la mise en service : tant que
-    # le marqueur reste, le navigateur bloque les appels vers la production.
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://ugbitornbspatpcowlvg.supabase.co https://<ref-prod>.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+    # Le projet de production n'existe pas encore : connect-src ne nomme que la préproduction.
+    # Quand il existera, ajouter https://<identifiant>.supabase.co après la préproduction, avant
+    # la mise en service (docs/exploitation.md). Un marqueur à sa place ferait une erreur de
+    # console à chaque page (source invalide), ce que la recette de l'étape 8 refuse.
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://ugbitornbspatpcowlvg.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"

@@ -8,7 +8,7 @@ import fichier from '../../netlify.toml?raw'
  */
 
 const PREPRODUCTION = 'ugbitornbspatpcowlvg'
-/** Marqueur du projet de production, à remplacer par son identifiant avant la mise en service. */
+/** Ancien marqueur du projet de production : il ne doit jamais revenir dans la politique. */
 const MARQUEUR_PRODUCTION = '<ref-prod>'
 const SANS_COMMENTAIRES = fichier
   .split('\n')
@@ -100,18 +100,16 @@ describe('netlify.toml : politique de contenu', () => {
     expect(directives.get('font-src')).toEqual(["'self'"])
   })
 
-  it('limite connect-src au site et aux deux projets Supabase', () => {
+  it('limite connect-src au site et aux projets Supabase', () => {
     const sources = directives.get('connect-src') ?? []
-    expect(sources).toHaveLength(3)
     expect(sources.slice(0, 2)).toEqual(["'self'", `https://${PREPRODUCTION}.supabase.co`])
-    // Troisième source : le projet de production, marqueur ou identifiant de 20 lettres.
-    const production = new RegExp(`^https://(${MARQUEUR_PRODUCTION}|[a-z]{20})\\.supabase\\.co$`)
-    expect(sources[2]).toMatch(production)
+    // Le projet de production s'ajoute quand il existe, par son identifiant de 20 lettres.
+    expect(sources.length).toBeLessThanOrEqual(3)
+    if (sources[2] !== undefined) expect(sources[2]).toMatch(/^https:\/\/[a-z]{20}\.supabase\.co$/)
   })
 
-  it('garde le marqueur du projet de production à un seul endroit au plus', () => {
-    const occurrences = fichier.split(MARQUEUR_PRODUCTION).length - 1
-    expect(occurrences).toBeLessThanOrEqual(1)
+  it("n'écrit jamais de marqueur dans la politique : le navigateur le rejetterait en erreur", () => {
+    expect(directives.get('connect-src')?.join(' ')).not.toContain(MARQUEUR_PRODUCTION)
   })
 
   it("interdit l'intégration dans un cadre, les objets et les bases extérieures", () => {
