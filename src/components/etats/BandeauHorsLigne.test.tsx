@@ -14,29 +14,33 @@ describe('BandeauHorsLigne', () => {
     vi.restoreAllMocks()
   })
 
-  it('n’affiche rien quand la connexion est là', () => {
-    const { container } = render(<BandeauHorsLigne />)
-    expect(container).toBeEmptyDOMElement()
-    expect(screen.queryByRole('status')).toBeNull()
+  it('garde une région « status » vide quand la connexion est là', () => {
+    render(<BandeauHorsLigne />)
+    const region = screen.getByRole('status')
+    expect(region).toBeEmptyDOMElement()
+    expect(region).not.toHaveClass('bg-alerte-fond')
   })
 
-  it('affiche la phrase annoncée (role="status", fond d’alerte) hors ligne', () => {
+  it('remplit la même région avec la phrase annoncée (fond d’alerte) hors ligne', () => {
     render(<BandeauHorsLigne />)
+    const regionAvant = screen.getByRole('status')
     changerReseau(false)
-    const bandeau = screen.getByRole('status')
-    expect(bandeau).toHaveTextContent(
+    const region = screen.getByRole('status')
+    // La région existait déjà : un lecteur d'écran annonce le changement de son contenu.
+    expect(region).toBe(regionAvant)
+    expect(region).toHaveTextContent(
       'Pas de connexion internet. Les chiffres affichés peuvent dater.',
     )
-    expect(bandeau).toHaveTextContent(TEXTE_HORS_LIGNE)
-    expect(bandeau).toHaveClass('bg-alerte-fond')
+    expect(region).toHaveTextContent(TEXTE_HORS_LIGNE)
+    expect(screen.getByText(TEXTE_HORS_LIGNE)).toHaveClass('bg-alerte-fond')
   })
 
-  it('disparaît au retour de la connexion', () => {
+  it('vide la région au retour de la connexion, sans la retirer', () => {
     render(<BandeauHorsLigne />)
     changerReseau(false)
-    expect(screen.getByRole('status')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(TEXTE_HORS_LIGNE)
     changerReseau(true)
-    expect(screen.queryByRole('status')).toBeNull()
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
   })
 
   it('s’affiche d’emblée si la page s’ouvre hors ligne', () => {

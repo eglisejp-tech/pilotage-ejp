@@ -18,6 +18,8 @@ const routeur = createBrowserRouter(routes)
 createRoot(racine).render(
   <StrictMode>
     <QueryClientProvider client={clientRequetes}>
+      {/* Hors de tout repère (header, main), avant « Aller au contenu » : à vérifier par l'audit F2
+          avec la règle axe « region ». Aucun élément focalisable, l'ordre de tabulation reste. */}
       <BandeauHorsLigne />
       <RouterProvider router={routeur} />
     </QueryClientProvider>

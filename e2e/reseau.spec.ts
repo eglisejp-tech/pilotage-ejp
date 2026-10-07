@@ -10,13 +10,16 @@ import type { Page, Route } from '@playwright/test'
 
 const TEXTE_HORS_LIGNE = 'Pas de connexion internet. Les chiffres affichés peuvent dater.'
 const ECHEC = 'La connexion a échoué. Réessayez.'
-// Adresse et clé par défaut de playwright.config.ts : le client Supabase y lit sa session.
-const SERVEUR = 'http://127.0.0.1:54321'
-const CLE_STOCKAGE = 'sb-127-auth-token'
+// Adresse du client Supabase : celle de playwright.config.ts (variable VITE_SUPABASE_URL, sinon la
+// base locale par défaut). Le client range sa session sous « sb-<premier mot du nom d'hôte>-auth-token ».
+const SERVEUR = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
+const CLE_STOCKAGE = `sb-${new URL(SERVEUR).hostname.split('.')[0]}-auth-token`
 const UTILISATEUR = '00000000-0000-4000-8000-000000000001'
 
 const bandeau = (page: Page) =>
   page.getByRole('status').filter({ hasText: 'Pas de connexion internet' })
+/** La région « status » du bandeau : toujours là, vide tant que la connexion est là. */
+const regionBandeau = (page: Page) => page.locator('#root > [role="status"]')
 
 function base64Url(objet: object): string {
   return Buffer.from(JSON.stringify(objet)).toString('base64url')
@@ -101,15 +104,18 @@ test.describe('bandeau hors ligne', () => {
   }) => {
     await page.goto('/connexion')
     await expect(page.getByRole('heading', { level: 1, name: 'Pilotage EJP' })).toBeVisible()
-    await expect(bandeau(page)).toHaveCount(0)
+    // La région existe déjà, vide : un lecteur d'écran annonce le texte quand il y entre.
+    await expect(regionBandeau(page)).toHaveCount(1)
+    await expect(regionBandeau(page)).toHaveText('')
 
     await context.setOffline(true)
-    await expect(bandeau(page)).toHaveText(TEXTE_HORS_LIGNE)
+    await expect(regionBandeau(page)).toHaveText(TEXTE_HORS_LIGNE)
     // Il informe seulement : le formulaire reste là.
     await expect(page.getByRole('button', { name: 'Se connecter' })).toBeVisible()
 
     await context.setOffline(false)
-    await expect(bandeau(page)).toHaveCount(0)
+    await expect(regionBandeau(page)).toHaveText('')
+    await expect(regionBandeau(page)).toHaveCount(1)
   })
 
   test('paraît aussi sur un aperçu et sur une page publique', async ({ page, context }) => {
@@ -119,7 +125,7 @@ test.describe('bandeau hors ligne', () => {
       await context.setOffline(true)
       await expect(bandeau(page)).toBeVisible()
       await context.setOffline(false)
-      await expect(bandeau(page)).toHaveCount(0)
+      await expect(regionBandeau(page)).toHaveText('')
     }
   })
 
@@ -151,16 +157,20 @@ test.describe('lecture interrompue', () => {
   }) => {
     await enregistrerSession(page)
     let compteDisponible = false
+    let lecturesDuCompte = 0
     await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
       if (!new URL(route.request().url()).pathname.endsWith('/compte')) {
         return route.abort('failed')
       }
+      if (route.request().method() !== 'OPTIONS') lecturesDuCompte += 1
       return compteDisponible ? repondreCompte(route) : route.abort('failed')
     })
 
     await page.goto('/')
     await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toBeVisible()
     await expect(page.getByText('Chargement')).toHaveCount(0)
+    const avantLeClic = lecturesDuCompte
+    expect(avantLeClic).toBeGreaterThanOrEqual(1)
 
     compteDisponible = true
     await page.getByRole('button', { name: 'Réessayer' }).click()
@@ -171,6 +181,49 @@ test.describe('lecture interrompue', () => {
       page.getByText("Vos informations de connexion n'ont pas pu être vérifiées"),
     ).toHaveCount(0)
     await expect(page.getByRole('banner')).toBeVisible()
+    // Une seconde lecture du compte est bien partie après le clic.
+    expect(lecturesDuCompte).toBeGreaterThan(avantLeClic)
+  })
+
+  test('au retour du réseau, une page en erreur se relit seule, sans clic sur « Réessayer »', async ({
+    page,
+    context,
+  }, infos) => {
+    test.skip(infos.project.name !== 'ordinateur', 'Navigation par les onglets : ordinateur.')
+    await enregistrerSession(page)
+    let reseauRetabli = false
+    await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
+      if (new URL(route.request().url()).pathname.endsWith('/compte')) return repondreCompte(route)
+      if (!reseauRetabli) return route.abort('failed')
+      if (route.request().method() === 'OPTIONS') {
+        return route.fulfill({ status: 204, headers: ENTETES_CORS })
+      }
+      // Le jour de Paris se lit en un seul objet ; les autres lectures rendent une liste vide.
+      const semaine = new URL(route.request().url()).pathname.endsWith('/v_semaine')
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: ENTETES_CORS,
+        json: semaine
+          ? { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-10-05', numero: 41 }
+          : [],
+      })
+    })
+    await page.goto('/')
+    const onglets = page.getByRole('navigation').first()
+    await expect(onglets).toBeVisible()
+
+    await context.setOffline(true)
+    await expect(bandeau(page)).toBeVisible()
+    await onglets.getByRole('link', { name: 'Ministères' }).click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Ministères' })).toBeVisible()
+    await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toBeVisible()
+
+    reseauRetabli = true
+    await context.setOffline(false)
+    await expect(regionBandeau(page)).toHaveText('')
+    await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toHaveCount(0)
+    await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0)
   })
 
   test('hors ligne, une lecture de page échoue au lieu de rester en « Chargement »', async ({
@@ -262,16 +315,20 @@ test.describe('route sans réponse', () => {
   test('une page dont la lecture ne répond pas finit par son erreur et son bouton', async ({
     page,
   }, infos) => {
-    test.skip(infos.project.name !== 'ordinateur', 'Attente de 20 s : un seul format.')
-    test.setTimeout(70_000)
+    test.skip(infos.project.name !== 'ordinateur', 'Attente de 10 s : un seul format.')
+    test.setTimeout(40_000)
     await enregistrerSession(page)
     await simulerBase(page, 'silence')
+    const debut = Date.now()
     await page.goto('/ministeres')
     await expect(page.getByRole('heading', { level: 1, name: 'Ministères' })).toBeVisible()
-    // Dix secondes par essai, et un nouvel essai (retry: 1) avant l'erreur.
+    // Comme la lecture de la session : 10 s, sans nouvel essai après un délai dépassé.
     await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toBeVisible({
-      timeout: 40_000,
+      timeout: 20_000,
     })
+    const duree = Date.now() - debut
+    expect(duree).toBeGreaterThanOrEqual(9_000)
+    expect(duree).toBeLessThan(15_000)
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
   })
 })
