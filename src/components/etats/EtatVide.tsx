@@ -44,7 +44,7 @@ export function EtatVide({ situation, children, suite, action, peutAgir = true }
       </div>
       {action && peutAgir ? (
         action.vers !== undefined ? (
-          <Link to={action.vers} className={classeAction}>
+          <Link to={action.vers} replace={action.remplace} className={classeAction}>
             {action.libelle}
           </Link>
         ) : (

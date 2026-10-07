@@ -1,4 +1,5 @@
 import { useEffect, useId, useState } from 'react'
+import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { GrilleCetteSemaine } from './GrilleCetteSemaine'
 import { voitADecider } from './lecteur'
 import { TEXTES_VIDES } from './textesVides'
@@ -48,11 +49,21 @@ export function ChargementCetteSemaine({ profil }: Props) {
     </header>
   )
 
-  // Ministère sous 600 px : seul « L'église cette semaine » s'affiche avant « Tout voir ».
-  if (profil === 'ministere' && telephone) {
+  // Ministère (07) : « Vos saisies » et « Vos points » avant les blocs de l'église ; sous 600 px,
+  // seul « L'église cette semaine » s'affiche ensuite, avant « Tout voir ».
+  const accueil =
+    profil === 'ministere'
+      ? {
+          vosSaisies: <SectionEnAttente titre={TEXTES_ACCUEIL.titreSaisies} />,
+          vosPoints: <SectionEnAttente titre={TEXTES_ACCUEIL.titrePoints} />,
+        }
+      : undefined
+  if (accueil && telephone) {
     return (
       <div aria-busy="true" className="flex flex-col gap-9">
         {ouverture}
+        {accueil.vosSaisies}
+        {accueil.vosPoints}
         <SectionEnAttente titre="L'église cette semaine" />
       </div>
     )
@@ -72,6 +83,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
         session={<SectionEnAttente titre={TEXTES_VIDES.session.titre} />}
         carte={<SectionEnAttente titre="FIJ en Île-de-France" />}
         ministeres={<SectionEnAttente titre="Les ministères" />}
+        accueil={accueil}
       />
     </div>
   )

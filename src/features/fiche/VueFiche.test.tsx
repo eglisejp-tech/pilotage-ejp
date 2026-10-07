@@ -38,7 +38,7 @@ function afficher(
     reessayerDetails?: () => void
   } = {},
 ) {
-  const lectures = lecturesExempleFiche(profil, options.vide ?? false)
+  const lectures = lecturesExempleFiche(options.vide ?? false)
   return render(
     <MemoryRouter>
       <VueFiche
@@ -73,23 +73,24 @@ describe('VueFiche, berger (04)', () => {
     expect(screen.getByRole('button', { name: 'Aide : Mis à jour il y a 3 jours' })).toBeVisible()
   })
 
-  it('« moins de 3 » avec son aide, le mois en cours « en cours », jamais un 0 pour une absence', () => {
+  it('sensible en valeur exacte (P52), le mois en cours « en cours », jamais un 0 pour une absence', () => {
     afficher('berger')
-    // La valeur de la ligne (les autres « moins de 3 » sont dans la répartition repliée).
-    expect(screen.getAllByText('moins de 3')[0]).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Aide : Bénéficiaires (passages)' })).toBeVisible()
+    expect(screen.queryByText('moins de 3')).toBeNull()
+    expect(screen.getByText(/^Depuis juin : 9 /)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Aide : Bénéficiaires (passages)' })).toBeNull()
     expect(screen.getByText('Octobre en cours : 7')).toBeInTheDocument()
     expect(screen.getAllByText('Pas encore de saisie').length).toBeGreaterThan(0)
   })
 
-  it('répartition repliée : « masqué » avec son aide, « moins de 3 », « Non réparti » et « Pas de répartition »', async () => {
+  it('répartition repliée, exacte (P52) : « Non réparti » et « Pas de répartition », ni « masqué » ni « moins de 3 »', async () => {
     afficher('berger')
     await userEvent.click(screen.getByText('Répartition par catégorie'))
     expect(screen.getByText('Pas de répartition pour septembre.')).toBeVisible()
-    expect(screen.getByText('masqué')).toBeVisible()
-    expect(screen.getAllByText('moins de 3').length).toBeGreaterThanOrEqual(3)
+    expect(screen.getByText('Malaise :', { exact: false })).toHaveTextContent('Malaise : 4')
+    expect(screen.getByText('Blessure :', { exact: false })).toHaveTextContent('Blessure : 2')
     expect(screen.getByText(/Non réparti/)).toBeVisible()
-    expect(screen.getByRole('button', { name: 'Aide : Malaise : masqué' })).toBeVisible()
+    expect(screen.queryByText('masqué')).toBeNull()
+    expect(screen.queryByText('moins de 3')).toBeNull()
   })
 
   it('précision masquée en --encre-3, précision lisible telle quelle', () => {
@@ -102,12 +103,13 @@ describe('VueFiche, berger (04)', () => {
     expect(screen.getByText(/collecte de rentrée, tous orientés/)).toBeInTheDocument()
   })
 
-  it('six aides au plus, chacune une fois ; aucun bouton de saisie', async () => {
+  it('quatre aides, chacune une fois, ni « moins de 3 » ni « masqué » ; aucun bouton de saisie', async () => {
     afficher('berger')
     await userEvent.click(screen.getByText('Répartition par catégorie'))
     const noms = aides().map((bouton) => bouton.getAttribute('aria-label'))
-    expect(noms).toHaveLength(6)
-    expect(new Set(noms).size).toBe(6)
+    expect(noms).toHaveLength(4)
+    expect(new Set(noms).size).toBe(4)
+    expect(noms).not.toEqual(expect.arrayContaining([expect.stringMatching(/masqué|moins de 3/)]))
     expect(screen.queryByRole('link', { name: ACTIONS })).toBeNull()
   })
 
@@ -154,7 +156,7 @@ describe('VueFiche, ministère sur sa fiche (12)', () => {
     expect(screen.getAllByRole('link', { name: 'Saisir les chiffres du mois' })).toHaveLength(1)
   })
 
-  it('ses valeurs exactes : ni « moins de 3 » ni « masqué », ni leurs aides', async () => {
+  it('ses valeurs exactes : ni « moins de 3 » ni « masqué »', async () => {
     afficher('ministere')
     await userEvent.click(screen.getByText('Répartition par catégorie'))
     expect(screen.queryByText('moins de 3')).toBeNull()
@@ -196,7 +198,7 @@ describe('VueFiche, états vides (T36)', () => {
   })
 
   it('« Retirés » : aucun résultat', async () => {
-    const lectures = lecturesExempleFiche('berger', false)
+    const lectures = lecturesExempleFiche(false)
     render(
       <MemoryRouter>
         <VueFiche

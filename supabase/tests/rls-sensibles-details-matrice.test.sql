@@ -12,8 +12,9 @@
 -- aal1 de chacun (zéro ligne lue, toute autre action refusée) et la ligne de l'anonyme (refusé
 -- partout). L'administration et un autre ministère ne lisent aucune précision ni aucune
 -- répartition.
+-- Le berger, le conseil et EJP Tech lisent les répartitions exactes (P52).
 -- Puis l'inaltérabilité, même au propriétaire, sauf le masquage d'une précision, et le retrait
--- pour confidentialité, qui vide les quatre lectures, EJP Tech compris.
+-- pour confidentialité, qui vide les cinq lectures (catégories comprises), EJP Tech compris.
 begin;
 
 create temp table ctx as
@@ -125,13 +126,14 @@ insert into lecture_b8 values
   (1, 'ventilation_sensible', 'select 1 from public.ventilation_sensible where indicateur_id = (select sens from ctx)'),
   (2, 'v_ventilation_sensible', 'select 1 from public.v_ventilation_sensible where indicateur_id = (select sens from ctx)'),
   (3, 'precision_sensible', 'select 1 from public.precision_sensible where indicateur_id = (select sens from ctx)'),
-  (4, 'v_precision_sensible', 'select 1 from public.v_precision_sensible where indicateur_id = (select sens from ctx)');
+  (4, 'v_precision_sensible', 'select 1 from public.v_precision_sensible where indicateur_id = (select sens from ctx)'),
+  (5, 'categorie_sensible (Q11, lot I)', 'select 1 from public.categorie_sensible where prevu_code = ''essai_b8_mat''');
 grant select on matrice_b8, profil_b8, lecture_b8 to authenticated, anon;
 
--- Le plan compte les 27 tests fixes (contexte, valeurs lues, inaltérabilité, masquage, retrait
--- pour confidentialité) et, par tests.nombre_essais, les essais de la matrice (lignes dérivées
--- comprises).
-select plan(27
+-- Le plan compte les 30 tests fixes (contexte, valeurs lues, inaltérabilité, masquage, retrait
+-- pour confidentialité : 3 profils et 5 lectures) et, par tests.nombre_essais, les essais de la
+-- matrice (lignes dérivées comprises).
+select plan(30
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_b8',
                         'select profil, compte from profil_b8', true));
 
@@ -146,8 +148,8 @@ select * from tests.verifier_matrice(
   true);
 
 -- Les valeurs lues, pas seulement le nombre de lignes : le mois m1 est réparti 4, 2, 0 et 0
--- (P, Q, R, « Non réparti »). Le ministère porteur lit les valeurs exactes ; le conseil et EJP
--- Tech lisent la règle de P47 (la plus grande case masquée, la case de 2 « moins de 3 », les 0).
+-- (P, Q, R, « Non réparti »). Le ministère porteur, le conseil et EJP Tech lisent les valeurs
+-- exactes (P52, 7 octobre 2026 : plus de « moins de 3 » ni de case masquée).
 select results_eq($x$
   select e ->> 'categorie', (e ->> 'valeur')::integer, (e ->> 'moins_de_3')::boolean, (e ->> 'masquee')::boolean
     from jsonb_array_elements(tests.lire((select a from ctx), 'aal2',
@@ -163,18 +165,18 @@ select results_eq($x$
       $q$ select categorie, valeur, moins_de_3, masquee from public.v_ventilation_sensible
            where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) $q$)) as e
    order by e ->> 'categorie' nulls last
-$x$, $x$ values ('p', null::integer, false, true), ('q', null, true, false), ('r', 0, false, false),
+$x$, $x$ values ('p', 4, false, false), ('q', 2, false, false), ('r', 0, false, false),
                (null, 0, false, false) $x$,
-  'le conseil lit la règle de P47 : case masquée, case « moins de 3 », 0 et 0, aucune valeur exacte');
+  'P52 : le conseil lit les valeurs exactes (4, 2, 0, 0), sans « moins de 3 » ni case masquée');
 select results_eq($x$
   select e ->> 'categorie', (e ->> 'valeur')::integer, (e ->> 'moins_de_3')::boolean, (e ->> 'masquee')::boolean
     from jsonb_array_elements(tests.lire((select tech from ctx), 'aal2',
       $q$ select categorie, valeur, moins_de_3, masquee from public.v_ventilation_sensible
            where indicateur_id = (select sens from ctx) and periode = (select m1 from ctx) $q$)) as e
    order by e ->> 'categorie' nulls last
-$x$, $x$ values ('p', null::integer, false, true), ('q', null, true, false), ('r', 0, false, false),
+$x$, $x$ values ('p', 4, false, false), ('q', 2, false, false), ('r', 0, false, false),
                (null, 0, false, false) $x$,
-  'EJP Tech lit la règle de P47 : case masquée, case « moins de 3 », 0 et 0, aucune valeur exacte');
+  'P52 : EJP Tech lit les valeurs exactes (4, 2, 0, 0), sans « moins de 3 » ni case masquée');
 
 -- Inaltérabilité, même pour le propriétaire des tables (rôle du test).
 select throws_ok($$ update public.ventilation_sensible set valeur = valeur where indicateur_id = (select sens from ctx) $$,
@@ -212,7 +214,8 @@ select throws_ok($$ truncate public.categorie_sensible $$,
   '42501', 'Les catégories d''un indicateur sensible s''écrivent seulement par migration.',
   'categorie_sensible : le propriétaire ne la vide pas');
 
--- Retrait pour confidentialité (Q11) : les quatre lectures se vident pour tous, EJP Tech compris.
+-- Retrait pour confidentialité (Q11) : les cinq lectures se vident pour tous, EJP Tech compris
+-- (les catégories depuis le lot I).
 select set_config('pilotage.masquage', 'oui', true);
 update public.indicateur
    set etat = 'retire', retrait_motif = 'confidentialite',

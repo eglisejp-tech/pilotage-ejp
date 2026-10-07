@@ -2,9 +2,10 @@
 // dans la base (ou des lignes d'exemple de l'aperçu). Fonctions pures : aucune lecture, aucune
 // date du navigateur. Le jour de Paris et le dimanche de référence viennent de `v_semaine`.
 //
-// Rien n'est recompté : les vues donnent les sommes de l'année, leur complétude, le seuil « moins
-// de 3 », les calculs et le masquage des répartitions. Seul le pourcentage FIJ d'un ministère se
-// calcule ici, de ses deux dernières valeurs (BRIEF, règle 4 ; `pourcentageFij`).
+// Rien n'est recompté : les vues donnent les sommes de l'année, leur complétude et les calculs.
+// Un sensible se lit exact par son ministère, le berger, le conseil et EJP Tech (P52) : ni
+// « moins de 3 » ni répartition masquée. Seul le pourcentage FIJ d'un ministère se calcule ici,
+// de ses deux dernières valeurs (BRIEF, règle 4 ; `pourcentageFij`).
 
 import type { IndicateurCommun } from '@/data/eglise'
 import type { MinistereFiche, PointsFiche, SensibleFiche } from '@/data/fiche'
@@ -39,11 +40,9 @@ import type {
 import {
   partAVerifier,
   sansPrefixeNonCalcule,
-  sommeDesMoisAffiches,
   TEXTE_MASQUE,
   TEXTES_FICHE,
   titrePrecision,
-  tousLesMoisSous3,
 } from '@/features/fiche/textesFiche'
 import {
   moisEnCoursSansSaisie,
@@ -74,7 +73,7 @@ import { phraseDeLaFiche } from '@/lib/metier/phrases'
 import { estOuvert, libelleEcheance, trierOuverts, trierTraites } from '@/lib/metier/points'
 import { formaterPourcentage, pourcentageFij } from '@/lib/metier/pourcentage'
 import { nombre, nombreEnDebutDePhrase } from '@/lib/metier/texte'
-import { formaterValeur, MOINS_DE_3 } from '@/lib/metier/unites'
+import { formaterValeur } from '@/lib/metier/unites'
 
 /** Toutes les lignes que la fiche lit (une par requête de `src/data/`). */
 export interface LecturesFiche {
@@ -120,18 +119,9 @@ function texteLibreOuNull(texte: string | null): TexteLibre | null {
 
 // Courbes
 
-function descriptionCourbe(
-  debut: string,
-  points: readonly (PointCourbeFiche & { moinsDe3?: boolean })[],
-): string {
+function descriptionCourbe(debut: string, points: readonly PointCourbeFiche[]): string {
   const valeurs = points
-    .map((point) =>
-      point.moinsDe3 === true
-        ? MOINS_DE_3
-        : point.valeur === null
-          ? SANS_SAISIE_COURBE
-          : nombre(point.valeur),
-    )
+    .map((point) => (point.valeur === null ? SANS_SAISIE_COURBE : nombre(point.valeur)))
     .join(', ')
   const incomplets = points.filter((point) => point.incomplet === true).length
   const suite =
@@ -143,12 +133,9 @@ function descriptionCourbe(
   return `${debut} : ${valeurs}.${suite}`
 }
 
-/** Null : aucun point saisi (ni masqué) sur toute la période. */
-function courbeDe(
-  debut: string,
-  points: (PointCourbeFiche & { moinsDe3?: boolean })[],
-): CourbeFiche | null {
-  if (points.every((point) => point.valeur === null && point.moinsDe3 !== true)) return null
+/** Null : aucun point saisi sur toute la période. */
+function courbeDe(debut: string, points: PointCourbeFiche[]): CourbeFiche | null {
+  if (points.every((point) => point.valeur === null)) return null
   return {
     points: points.map(({ valeur, incomplet }) =>
       incomplet === true ? { valeur, incomplet } : { valeur },
@@ -161,8 +148,7 @@ function courbeDe(
 
 const VIDE: ValeurFiche = { etat: 'vide' }
 
-function valeurDe(valeur: number | null, moinsDe3: boolean, unite: UniteIndicateur): ValeurFiche {
-  if (moinsDe3) return { etat: 'moins_de_3' }
+function valeurDe(valeur: number | null, unite: UniteIndicateur): ValeurFiche {
   if (valeur === null) return VIDE
   return { etat: 'saisie', texte: formaterValeur(valeur, unite), unite: null }
 }
@@ -382,11 +368,7 @@ function courbeIndicateur(contexte: Contexte, ligne: LigneSuivi): CourbeFiche | 
   const debut = ligne.nature === 'mois' ? 'Douze derniers mois' : 'Dix derniers dimanches'
   return courbeDe(
     debut,
-    serie.map((point) => ({
-      valeur: point.valeur,
-      moinsDe3: point.moins_de_3,
-      incomplet: !point.complete,
-    })),
+    serie.map((point) => ({ valeur: point.valeur, incomplet: !point.complete })),
   )
 }
 
@@ -396,43 +378,25 @@ function libelleDepart(nature: NatureIndicateur, depuis: DateIso): string {
     : `Depuis le ${formaterJourCourt(depuis)}`
 }
 
-function sommeIndicateur(contexte: Contexte, ligne: LigneSuivi): SommeFiche | null {
+/** Somme de l'année, exacte pour tous les lecteurs de la fiche, sensible compris (P52). */
+function sommeIndicateur(ligne: LigneSuivi): SommeFiche | null {
   if (ligne.somme_depuis === null) return null
   const depuis = libelleDepart(ligne.nature, ligne.somme_depuis)
   const completudeTexte =
     ligne.somme_nb_saisies === null || ligne.somme_nb_attendues === null
       ? null
       : libelleCompletudePeriodes(ligne.somme_nb_saisies, ligne.somme_nb_attendues, ligne.nature)
-  const avec = (texte: string, moinsDe3 = false): SommeFiche => ({
-    texte,
-    completude: completudeTexte,
-    moinsDe3,
-  })
-  if (ligne.sensible && !contexte.exact) {
-    const depart = ligne.somme_depuis
-    const moisSous3 = contexte.lectures.series.filter(
-      (point) =>
-        point.indicateur_id === ligne.indicateur_id && point.moins_de_3 && point.periode >= depart,
-    ).length
-    if (moisSous3 > 0) {
-      return ligne.somme_annee === null
-        ? avec(tousLesMoisSous3(depuis))
-        : avec(
-            sommeDesMoisAffiches(depuis, formaterValeur(ligne.somme_annee, ligne.unite), moisSous3),
-          )
-    }
-  }
-  if (ligne.somme_annee !== null) {
-    return avec(`${depuis} : ${formaterValeur(ligne.somme_annee, ligne.unite)}`)
-  }
-  if (ligne.somme_moins_de_3) return avec(`${depuis} : ${MOINS_DE_3}`, true)
-  return avec(`${depuis} : ${TEXTES_VIDES_INDICATEURS.sommeSansSaisie.toLowerCase()}`)
+  const texte =
+    ligne.somme_annee === null
+      ? `${depuis} : ${TEXTES_VIDES_INDICATEURS.sommeSansSaisie.toLowerCase()}`
+      : `${depuis} : ${formaterValeur(ligne.somme_annee, ligne.unite)}`
+  return { texte, completude: completudeTexte }
 }
 
 function moisSensibles(contexte: Contexte, ligne: LigneSuivi): DateIso[] {
   const mois: DateIso[] = []
   if (ligne.derniere_periode !== null) mois.push(ligne.derniere_periode)
-  const moisEnCoursSaisi = ligne.mois_en_cours_valeur !== null || ligne.mois_en_cours_moins_de_3
+  const moisEnCoursSaisi = ligne.mois_en_cours_valeur !== null
   if (moisEnCoursSaisi && !mois.includes(contexte.moisCourant)) mois.push(contexte.moisCourant)
   return mois
 }
@@ -443,20 +407,9 @@ function titreMois(contexte: Contexte, mois: DateIso): string {
     : libelleMois(moisDe(mois))
 }
 
-function caseRepartition(ligne: LigneVue<'v_ventilation_sensible'>): CaseRepartition {
-  const texte = ligne.masquee
-    ? TEXTES_FICHE.masque
-    : ligne.moins_de_3
-      ? MOINS_DE_3
-      : ligne.valeur === null
-        ? TEXTES_FICHE.masque
-        : nombre(ligne.valeur)
-  return {
-    libelle: ligne.libelle,
-    texte,
-    masquee: ligne.masquee || (!ligne.moins_de_3 && ligne.valeur === null),
-    moinsDe3: ligne.moins_de_3,
-  }
+/** « Malaise : 4 » : valeur exacte (P52). */
+function caseRepartition(ligne: LigneVue<'v_ventilation_sensible'>): CaseRepartition[] {
+  return ligne.valeur === null ? [] : [{ libelle: ligne.libelle, texte: nombre(ligne.valeur) }]
 }
 
 function repartitionDuMois(contexte: Contexte, ligne: LigneSuivi, mois: DateIso): RepartitionMois {
@@ -464,13 +417,11 @@ function repartitionDuMois(contexte: Contexte, ligne: LigneSuivi, mois: DateIso)
   const cases = contexte.lectures.repartitions
     .filter((rep) => rep.indicateur_id === ligne.indicateur_id && rep.periode === mois)
     .sort((a, b) => a.ordre - b.ordre)
-  if (cases.length === 0) {
+  const lisibles = cases.flatMap(caseRepartition)
+  if (lisibles.length === 0) {
     return { mois, titre, etat: 'aucune', texte: pasDeRepartition(moisDe(mois)) }
   }
-  if (cases.some((rep) => rep.tout_masque)) {
-    return { mois, titre, etat: 'masquee', texte: TEXTES_VIDES_INDICATEURS.repartitionMasquee }
-  }
-  return { mois, titre, etat: 'cases', cases: cases.map(caseRepartition) }
+  return { mois, titre, etat: 'cases', cases: lisibles }
 }
 
 function aDesCategories(contexte: Contexte, indicateurId: string): boolean {
@@ -509,14 +460,8 @@ function detailSensible(contexte: Contexte, ligne: LigneSuivi): DetailSensible {
   return { precisions, repartitions }
 }
 
-/** « Octobre en cours : 6 », « Octobre en cours : moins de 3 », « Octobre en cours : pas encore de saisie ». */
-function texteMoisEnCours(
-  mois: string,
-  valeur: number | null,
-  moinsDe3: boolean,
-  unite: UniteIndicateur,
-): string {
-  if (moinsDe3) return `${libelleMoisEnCours(mois)} : ${MOINS_DE_3}`
+/** « Octobre en cours : 6 », « Octobre en cours : pas encore de saisie ». */
+function texteMoisEnCours(mois: string, valeur: number | null, unite: UniteIndicateur): string {
   if (valeur === null) return moisEnCoursSansSaisie(mois)
   return `${libelleMoisEnCours(mois)} : ${formaterValeur(valeur, unite)}`
 }
@@ -537,28 +482,20 @@ function ligneSaisie(contexte: Contexte, ligne: LigneSuivi): LigneIndicateurFich
           : TEXTES_FICHE.aValiderParEjpTech
         : null,
     calcul: false,
-    jamaisSaisi:
-      ligne.derniere_periode === null &&
-      ligne.mois_en_cours_valeur === null &&
-      !ligne.mois_en_cours_moins_de_3,
-    valeur:
-      ligne.derniere_periode === null
-        ? VIDE
-        : valeurDe(ligne.derniere_valeur, ligne.derniere_moins_de_3, ligne.unite),
+    jamaisSaisi: ligne.derniere_periode === null && ligne.mois_en_cours_valeur === null,
+    valeur: ligne.derniere_periode === null ? VIDE : valeurDe(ligne.derniere_valeur, ligne.unite),
     courbe: courbeIndicateur(contexte, ligne),
     detail: detail?.texte ?? null,
     detailSignale: detail?.signale ?? false,
-    somme: sommeIndicateur(contexte, ligne),
+    somme: sommeIndicateur(ligne),
     moisEnCours:
       ligne.nature === 'mois'
         ? {
             texte: texteMoisEnCours(
               moisDe(contexte.moisCourant),
               ligne.mois_en_cours_valeur,
-              ligne.mois_en_cours_moins_de_3,
               ligne.unite,
             ),
-            moinsDe3: ligne.mois_en_cours_moins_de_3,
           }
         : null,
     sensible: ligne.sensible ? detailSensible(contexte, ligne) : null,
@@ -664,7 +601,7 @@ function sommeCalcul(
       calcul.calcul === 'taux'
         ? formaterPourcentage(Math.round(calcul.annee_resultat))
         : formaterResultatCalcul(calcul.calcul, calcul.annee_resultat, unite)
-    return { texte: `Sur l'année : ${valeur}`, completude: completudeTexte, moinsDe3: false }
+    return { texte: `Sur l'année : ${valeur}`, completude: completudeTexte }
   }
   if (
     calcul.annee_haut !== null &&
@@ -675,7 +612,6 @@ function sommeCalcul(
     return {
       texte: `Sur l'année : ${NON_CALCULE_A_VERIFIER.toLowerCase()}`,
       completude: completudeTexte,
-      moinsDe3: false,
     }
   }
   return null
@@ -695,43 +631,18 @@ function lignesDeSection(
 }
 
 /** Place chaque aide sur la première ligne qui la concerne (aides-contextuelles.md). */
-function placerAides(lignes: LigneIndicateurFiche[], exact: boolean): void {
+function placerAides(lignes: LigneIndicateurFiche[]): void {
   let calcule = false
-  let moinsDe3 = false
   let somme = false
-  let repartition = false
   for (const ligne of lignes) {
     const aides: AidesLigne = {}
     if (!calcule && ligne.calcul) {
       aides.calcule = true
       calcule = true
     }
-    if (!exact && !moinsDe3) {
-      const ou =
-        ligne.valeur.etat === 'moins_de_3'
-          ? 'valeur'
-          : ligne.moisEnCours?.moinsDe3
-            ? 'moisEnCours'
-            : ligne.somme?.moinsDe3
-              ? 'somme'
-              : null
-      if (ou !== null) {
-        aides.moinsDe3 = ou
-        moinsDe3 = true
-      }
-    }
     if (!somme && ligne.somme?.completude) {
       aides.somme = true
       somme = true
-    }
-    if (!exact && !repartition) {
-      const masquee = ligne.sensible?.repartitions?.some(
-        (rep) => rep.etat === 'cases' && rep.cases.some((c) => c.masquee),
-      )
-      if (masquee === true) {
-        aides.repartition = true
-        repartition = true
-      }
     }
     ligne.aides = aides
   }
@@ -751,10 +662,7 @@ function sectionsDeLaFiche(contexte: Contexte): {
       lignes: lignesDeSection(contexte, section.indicateurs),
     }))
     .filter((section) => section.lignes.length > 0)
-  placerAides(
-    sections.flatMap((section) => section.lignes),
-    contexte.exact,
-  )
+  placerAides(sections.flatMap((section) => section.lignes))
   const retires = retiresRanges(propres).map((ligne) => ({
     id: ligne.indicateur_id,
     libelle: ligne.libelle,
