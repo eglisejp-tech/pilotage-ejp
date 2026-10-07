@@ -601,6 +601,7 @@ describe("adresses de l'étape 4", () => {
     ['/apercu/fiche', 4],
     ['/apercu/saisies', 4],
     ['/apercu/evenements', 3],
+    ['/apercu/nouveau-point', 3],
   ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
     const faux = installer({})
     afficher(`${adresse}?profil=ministere`)
@@ -614,7 +615,6 @@ describe("adresses de l'étape 4", () => {
 // page à part. Leurs refus (page non disponible, aucune requête) sont déjà couverts par
 // `ADRESSES_REFUSEES`, qui parcourt toute la table des adresses.
 const ADRESSES_AMORCES_C0 = [
-  '/saisir/point',
   '/points',
   '/journal',
   '/journal-technique',
