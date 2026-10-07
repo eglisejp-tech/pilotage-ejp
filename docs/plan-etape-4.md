@@ -237,6 +237,22 @@ B4 ajoute la colonne `part` à `indicateur` et à `private.indicateur_prevu`, re
 raison `haut_depasse_bas` et teste la règle. B7 ajoute une condition à la lecture du journal et un
 test de matrice. B2 et B3 ne sont pas rouverts.
 
+### Réponses du 7 octobre : chiffres exacts pour le berger et le conseil (P52, T45 à T47)
+
+La personne responsable a décidé le 7 octobre 2026, par écrit, que le berger et le conseil voient
+les valeurs exactes des indicateurs sensibles (« ils ont besoin de savoir précisément ce qu'il en
+est, pas d'éléments approximatifs »). **Ce changement remplace, dans ce plan, toute règle « moins
+de 3 » et tout masquage secondaire** pour le berger, le conseil et EJP Tech (sections 2 et 4, lots
+B2, B8, E2, E3 et I, questions 4 et 16) : ces lignes décrivent le plan tel qu'il a été approuvé, et
+`docs/decisions.md` (P52) fait foi. Les protections qui restent : l'administration ne voit jamais
+une valeur, les autres ministères non plus, jamais sur la vue de l'église, jamais source d'un calcul,
+jamais de valeur au journal, seule la saisie la plus récente d'un mois est montrée. T45 et T46
+confirment que le berger et le conseil gardent les lignes `texte_relu` et `texte_masque` d'une
+précision et l'heure exacte d'une saisie sensible ; T47 retire à l'administration les lignes
+`texte_relu` et `texte_masque` de cible `point_attention`, `point_suivi`, `evenement` ou `reunion`.
+La base et les écrans déjà fusionnés se changent par des migrations et des lots neufs, jamais en
+rouvrant une migration fusionnée : le découpage en lots est à fixer par EJP Tech.
+
 ### Dépendances
 
 ```mermaid
@@ -1900,8 +1916,9 @@ section 4, « Questions ouvertes ». Elles ne sont pas répétées ici.
 2. **Taux qui ne sont pas des parts (P49).** _Proposé_ : le taux de retour des NA, le taux de
    conversion NA vers FIJ et le taux de perte ne sont pas des parts, car leur haut et leur bas
    portent sur des mois décalés. Ils peuvent donc dépasser 100 %. _Réponse attendue_ : la
-   coordination confirme ou en fait des parts (la colonne `part` se pose à la création : après la
-   première saisie, on remplace le calcul).
+   coordination confirme ou en fait des parts. La colonne `part` se pose à la création du calcul
+   et ne change jamais (P49) : pour qu'un de ces taux devienne une part, ou l'inverse, on remplace
+   le calcul (un nouveau, l'ancien retiré), avant comme après la première saisie.
 3. **Répartition d'un indicateur sensible (T42).** _Proposé, appliqué_ : (a) une catégorie que le
    ministère ne renseigne pas est écrite 0, jamais absente ; (b) une répartition reprend toute la
    liste en cours ; (c) la base impose de 3 à 6 catégories en cours (hors retirées), sinon
@@ -1935,12 +1952,14 @@ section 4, « Questions ouvertes ». Elles ne sont pas répétées ici.
    capitales qui répètent un titre (section 10) ; ici ils nomment le rythme et ne répètent rien.
    _Question_ : la coordination les garde-t-elle en capitales ? _Recommandation_ : les garder ; un
    passage en minuscules ne change qu'une classe de style, sans effet sur les données.
-9. **Textes d'écran au statut « Proposé ».** Quatre ensembles restent à valider : les 31 aides
-   contextuelles (`docs/conception/aides-contextuelles.md`, question 15 ci-dessus, d'abord par la
-   personne responsable) ; les textes du signalement (même document, section 7) ; les états vides
-   et les phrases marqués « proposé » dans les lots d'écran ; les textes de la fiche pour les
-   sensibles (« Pas de répartition pour septembre. », « Répartition masquée pour protéger les petits
-   nombres. »). _Chemin_ : la personne responsable valide, puis la coordination et les ministères
+9. **Textes d'écran au statut « Proposé ».** Quatre ensembles restent à valider : les 33 aides
+   contextuelles (nombre au 7 octobre 2026, d'après `docs/conception/aides-contextuelles.md` ; la
+   réécriture des aides demandée le 7 octobre peut le changer ; question 15 ci-dessus, d'abord par
+   la personne responsable) ; les textes du signalement (même document, section 7) ; les états
+   vides et les phrases marqués « proposé » dans les lots d'écran ; les textes de la fiche pour les
+   sensibles (« Pas de répartition pour septembre. » ; la phrase « Répartition masquée pour
+   protéger les petits nombres. » disparaît avec P52, puisque le berger et le conseil voient les
+   valeurs exactes). _Chemin_ : la personne responsable valide, puis la coordination et les ministères
    les relisent en préproduction avec les libellés (K16). Les textes vivent dans le code de
    l'interface : un ajustement ne demande aucune migration.
 10. **Signalements et crochets (T43).** _Proposé, appliqué_ : le texte d'un signalement et le
@@ -1952,8 +1971,25 @@ section 4, « Questions ouvertes ». Elles ne sont pas répétées ici.
     n'est pas dans le document de la coordination (« KPI - Dashboard EJP »). _Question_ : la
     coordination l'ajoute-t-elle à son document, avec ses propres indicateurs ? Tant que non,
     Prodiges Academy saisit les trois chiffres communs et compte dans les totaux « sur 23 ».
+12. **Phrases de la page Confidentialité (P52, T40, T39).** _À valider par la personne
+    responsable, puis à remettre à la coordination avec le registre._ La page
+    (`src/pages/PageConfidentialite.tsx`) dit encore que tous les sous-traitants « agissent sous
+    contrat » et ne parle ni des indicateurs sensibles ni des signalements. Trois phrases sont
+    proposées, au lot I : (a) _Sous-traitants_ : « Supabase et Netlify agissent sous contrat.
+    Google (connexion avec Google, envoi des emails par un Gmail gratuit) agit selon ses
+    conditions grand public : l'église n'a pas de contrat de sous-traitance avec lui. » (b) _Qui
+    voit les données_ : « Pour la santé, l'écoute, l'accompagnement et les enfants, l'outil ne garde
+    que des totaux par mois, des répartitions par grandes catégories et de courtes précisions sans
+    information personnelle. Le ministère qui les saisit, le berger, le conseil et EJP Tech voient
+    les chiffres exacts ; l'administration de l'église et les autres ministères ne les voient
+    pas. » (c) _Signalements_ : « Un signalement est lu seulement par le ministère qui l'écrit et
+    par EJP Tech. » _Réponse attendue_ : la personne responsable valide ou corrige les trois
+    phrases. _Sans réponse_ : elles s'affichent telles quelles, car elles disent ce que fait
+    l'outil. La page doit être en place avant la mise en service.
 
 Décidées par la personne responsable et donc absentes de cette liste : T44 (numéros du journal,
 risque accepté le 7 octobre 2026) ; T40 (envoi des emails par un Gmail gratuit : la recommandation
 Google Workspace pour les associations reste à décider par elle, avec la double authentification
-des comptes Supabase et Netlify).
+des comptes Supabase et Netlify) ; P52 et T45 à T47 (chiffres sensibles exacts pour le berger, le
+conseil et EJP Tech, 7 octobre 2026 : le risque d'identifier une personne dans un très petit
+groupe est accepté, il figure dans la note d'analyse).

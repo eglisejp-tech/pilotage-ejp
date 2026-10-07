@@ -20,6 +20,16 @@ seule fois, aux endroits marqués « changement du 6 octobre » : `controler_mes
 le couple de modération de la précision). Les noms de B8 sont fixés ici ; son code attend l'accord
 de la personne responsable sur le modèle (plan, question 16).
 
+**Changement du 7 octobre 2026 (chiffres exacts, P52, et lecture du journal, T45 à T47).** La
+personne responsable a décidé que le berger, le conseil et EJP Tech voient les valeurs exactes des
+indicateurs sensibles : plus de « moins de 3 », plus de masquage secondaire. Dans ce contrat,
+`moins_de_3` et `masquee` (et `tout_masque`) valent donc **toujours faux** pour le berger, le
+conseil et EJP Tech, et `valeur` n'est jamais null à cause d'un seuil (sections 6 et 7). Les colonnes
+restent, parce que le code fusionné de B2, B8 et E2 les lit ; une migration nouvelle change les
+fonctions qui les remplissent (les migrations fusionnées ne se rouvrent pas). L'administration et
+les autres ministères ne voient toujours aucune valeur. T45 à T47 précisent la section 1 (lecture
+des lignes `texte_relu` et `texte_masque`).
+
 Statut des noms : ceux que les documents de conception donnent sont repris tels quels ; ceux
 qu'ils laissaient ouverts sont **fixés ici** (marqués « fixé par W0 ») pour que les lots codent en
 parallèle. Aucun ne change une règle métier.
@@ -117,6 +127,30 @@ Les branches `private.lit_tout()` (berger, conseil, EJP Tech) et `ministere_id` 
 auteur) ne changent pas. Le test de matrice de B7 vérifie qu'une ligne `texte_masque` et une ligne
 `texte_relu` de cible `demande_indicateur` sont lisibles par le ministère auteur, EJP Tech, le
 berger et le conseil, et invisibles pour l'administration et un autre ministère.
+
+**Lecture des lignes de relecture et de masquage (T45, T46, T47, décidés le 7 octobre 2026).**
+
+- T45 : le berger et le conseil gardent les lignes `texte_relu` et `texte_masque` de cible
+  `precision_sensible` (la ligne dit qu'une précision a été relue ou masquée, jamais son texte). Rien
+  ne change ; l'administration ne les lit pas (B8).
+- T46 : l'heure exacte d'une ligne `mesure_saisie` d'un envoi qui ne contient que des sensibles
+  reste lisible par les profils qui lisent cette ligne. Rien ne change.
+- T47 : l'administration ne lit plus les lignes `texte_relu` et `texte_masque` de cible
+  `point_attention`, `point_suivi`, `evenement` ou `reunion` (même raison que P51 : elle ne lit ni
+  les pages ni les points). Une migration nouvelle recrée `private.journal_lisible_administration`
+  (ou la branche de l'administration de la politique de `journal` et de `v_journal`) avec la
+  condition, qui reprend la liste de P51 :
+
+```sql
+not (action in ('texte_relu', 'texte_masque')
+     and coalesce(cible, '') in ('demande_indicateur', 'point_attention', 'point_suivi',
+                                 'evenement', 'reunion'))
+```
+
+Le ministère concerné, EJP Tech, le berger et le conseil lisent ces lignes comme avant. Le test
+de matrice vérifie qu'une ligne `texte_masque` de chacune de ces quatre cibles est lisible par le
+ministère concerné, EJP Tech, le berger et le conseil, et invisible pour l'administration et un
+autre ministère.
 
 Absents, réservés au lot 2 des indicateurs (refusés par la contrainte) :
 `indicateur_correction_demandee`, `indicateur_officiel`.
@@ -388,23 +422,25 @@ Toutes `with (security_invoker = true)`, lecture seule pour `authenticated`. Une
 une fonction `private` en `security definer` contrôle `aal2` dans son jeton et réapplique le filtre
 du lecteur (`private.lit_tout()`, `private.mon_ministere()`), comme `tableau_ministeres`.
 
-Un « moins de 3 » (seuil des sensibles, X4) se rend par `valeur` à null et `moins_de_3` à vrai ;
-un 0 reste 0. Une absence de saisie est toujours null, jamais 0.
+Le seuil « moins de 3 » des sensibles (X4) se rendait par `valeur` à null et `moins_de_3` à vrai.
+**Depuis P52 (7 octobre 2026), il ne s'applique plus** au berger, au conseil ni à EJP Tech : leur
+`valeur` est exacte (1 et 2 compris) et `moins_de_3` vaut toujours faux. L'administration ne reçoit
+jamais une valeur sensible (P50). Une absence de saisie est toujours null, jamais 0.
 
 ### `v_mesure_periode` (B2)
 
-| Colonne         | Type          | Sens                                                          |
-| --------------- | ------------- | ------------------------------------------------------------- |
-| `indicateur_id` | `uuid`        |                                                               |
-| `ministere_id`  | `uuid`        |                                                               |
-| `nature`        | `text`        |                                                               |
-| `periode`       | `date`        | le dimanche, le 1er du mois, ou la date d'un « à ce jour »    |
-| `valeur`        | `integer`     | saisie la plus récente (départage par `id`) ; null si masquée |
-| `moins_de_3`    | `boolean`     | vrai pour 1 et 2 d'un sensible lu par un autre profil         |
-| `saisi_le`      | `timestamptz` | heure de la saisie qui fait foi                               |
+| Colonne         | Type          | Sens                                                       |
+| --------------- | ------------- | ---------------------------------------------------------- |
+| `indicateur_id` | `uuid`        |                                                            |
+| `ministere_id`  | `uuid`        |                                                            |
+| `nature`        | `text`        |                                                            |
+| `periode`       | `date`        | le dimanche, le 1er du mois, ou la date d'un « à ce jour » |
+| `valeur`        | `integer`     | saisie la plus récente (départage par `id`) ; exacte (P52) |
+| `moins_de_3`    | `boolean`     | toujours faux depuis P52 (colonne gardée)                  |
+| `saisi_le`      | `timestamptz` | heure de la saisie qui fait foi                            |
 
 Changement du 6 octobre (P45) : le mois en cours d'un sensible y figure comme les autres mois, avec
-le seuil ; une seule ligne par période, celle de la saisie qui fait foi, jamais une saisie
+sa valeur exacte (le seuil a été retiré par P52) ; une seule ligne par période, celle de la saisie qui fait foi, jamais une saisie
 intermédiaire (pour le berger, le conseil et EJP Tech).
 
 ### `v_indicateur_serie` (B2)
@@ -415,36 +451,36 @@ intermédiaire (pour le berger, le conseil et EJP Tech).
 | `ministere_id`  | `uuid`     |                                                        |
 | `periode`       | `date`     | 10 dimanches ou 12 mois, du plus ancien au plus récent |
 | `rang`          | `smallint` | 1 pour la plus ancienne période                        |
-| `valeur`        | `integer`  | null : trou (ou masquée, avec `moins_de_3`)            |
-| `moins_de_3`    | `boolean`  |                                                        |
+| `valeur`        | `integer`  | null : trou (jamais à cause d'un seuil, P52)           |
+| `moins_de_3`    | `boolean`  | toujours faux depuis P52 (colonne gardée)              |
 | `complete`      | `boolean`  | faux : cercle vide (période incomplète)                |
 
 ### `v_indicateur_suivi` (B2)
 
-| Colonne                    | Type          | Sens                                                                                                                    |
-| -------------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `indicateur_id`            | `uuid`        |                                                                                                                         |
-| `ministere_id`             | `uuid`        | null pour un commun                                                                                                     |
-| `libelle`, `definition`    | `text`        | textes actuels                                                                                                          |
-| `nature`, `unite`          | `text`        |                                                                                                                         |
-| `sensible`                 | `boolean`     |                                                                                                                         |
-| `etat`, `origine`          | `text`        |                                                                                                                         |
-| `calcul`                   | `text`        | null pour un indicateur saisi                                                                                           |
-| `derniere_periode`         | `date`        | null : pas encore de saisie                                                                                             |
-| `derniere_valeur`          | `integer`     |                                                                                                                         |
-| `derniere_moins_de_3`      | `boolean`     |                                                                                                                         |
-| `derniere_saisie_le`       | `timestamptz` |                                                                                                                         |
-| `mois_en_cours_valeur`     | `integer`     | à part ; pour un sensible aussi depuis le 6 octobre (P45), null si masquée                                              |
-| `mois_en_cours_moins_de_3` | `boolean`     | changement du 6 octobre (P45) : vrai pour 1 et 2 du mois en cours d'un sensible lu par un autre profil que le ministère |
-| `somme_annee`              | `bigint`      | null si `sans_somme`, « à ce jour », ajout à valider, ou rien de saisi                                                  |
-| `somme_moins_de_3`         | `boolean`     | somme de l'année égale à 1 ou 2 d'un sensible (K5c)                                                                     |
-| `somme_depuis`             | `date`        | départ de la somme (« Depuis juillet »)                                                                                 |
-| `somme_nb_saisies`         | `integer`     | complétude : « 9 mois sur 9 »                                                                                           |
-| `somme_nb_attendues`       | `integer`     |                                                                                                                         |
-| `plus_de_30_jours`         | `boolean`     | « à ce jour » saisi il y a plus de 30 jours                                                                             |
-| `etat_valeur`              | `text`        | `saisi`, `non_saisi` (rien pour la dernière période attendue), `jamais_saisi` (fixé par W0)                             |
-| `attente_jours`            | `integer`     | ajout à valider : jours depuis `cree_le`, heure de Paris ; sinon null                                                   |
-| `retire_le`                | `timestamptz` | pour le bloc « Retirés »                                                                                                |
+| Colonne                    | Type          | Sens                                                                                        |
+| -------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| `indicateur_id`            | `uuid`        |                                                                                             |
+| `ministere_id`             | `uuid`        | null pour un commun                                                                         |
+| `libelle`, `definition`    | `text`        | textes actuels                                                                              |
+| `nature`, `unite`          | `text`        |                                                                                             |
+| `sensible`                 | `boolean`     |                                                                                             |
+| `etat`, `origine`          | `text`        |                                                                                             |
+| `calcul`                   | `text`        | null pour un indicateur saisi                                                               |
+| `derniere_periode`         | `date`        | null : pas encore de saisie                                                                 |
+| `derniere_valeur`          | `integer`     |                                                                                             |
+| `derniere_moins_de_3`      | `boolean`     |                                                                                             |
+| `derniere_saisie_le`       | `timestamptz` |                                                                                             |
+| `mois_en_cours_valeur`     | `integer`     | à part ; pour un sensible aussi depuis le 6 octobre (P45), exacte (P52)                     |
+| `mois_en_cours_moins_de_3` | `boolean`     | changement du 6 octobre (P45) ; toujours faux depuis P52 (colonne gardée)                   |
+| `somme_annee`              | `bigint`      | null si `sans_somme`, « à ce jour », ajout à valider, ou rien de saisi                      |
+| `somme_moins_de_3`         | `boolean`     | toujours faux depuis P52 (K5c retiré) : la somme est exacte                                 |
+| `somme_depuis`             | `date`        | départ de la somme (« Depuis juillet »)                                                     |
+| `somme_nb_saisies`         | `integer`     | complétude : « 9 mois sur 9 »                                                               |
+| `somme_nb_attendues`       | `integer`     |                                                                                             |
+| `plus_de_30_jours`         | `boolean`     | « à ce jour » saisi il y a plus de 30 jours                                                 |
+| `etat_valeur`              | `text`        | `saisi`, `non_saisi` (rien pour la dernière période attendue), `jamais_saisi` (fixé par W0) |
+| `attente_jours`            | `integer`     | ajout à valider : jours depuis `cree_le`, heure de Paris ; sinon null                       |
+| `retire_le`                | `timestamptz` | pour le bloc « Retirés »                                                                    |
 
 Un refusé et un retiré pour confidentialité n'y figurent pas (Q11).
 
@@ -528,18 +564,18 @@ cours de la répartition du total le plus récent de chaque mois (une catégorie
 0, T42 proposé ; une catégorie retirée depuis garde sa ligne dans une ancienne répartition), plus
 une ligne « Non réparti » :
 
-| Colonne         | Type       | Sens                                                                                                   |
-| --------------- | ---------- | ------------------------------------------------------------------------------------------------------ |
-| `indicateur_id` | `uuid`     |                                                                                                        |
-| `ministere_id`  | `uuid`     |                                                                                                        |
-| `periode`       | `date`     | 1er du mois                                                                                            |
-| `categorie`     | `text`     | code de `categorie_sensible` ; null pour la ligne « Non réparti »                                      |
-| `libelle`       | `text`     | libellé de la catégorie, ou « Non réparti »                                                            |
-| `ordre`         | `smallint` | ordre de la liste ; « Non réparti » en dernier                                                         |
-| `valeur`        | `integer`  | exacte pour le ministère ; null si « moins de 3 » ou masquée                                           |
-| `moins_de_3`    | `boolean`  | vrai pour une case de 1 ou 2 lue par un autre profil que le ministère                                  |
-| `masquee`       | `boolean`  | vrai pour une case masquée par le masquage secondaire (« masqué »)                                     |
-| `tout_masque`   | `boolean`  | vrai sur toutes les lignes d'un mois dont la répartition est masquée en entier (P47, règles 2, 5 et 6) |
+| Colonne         | Type       | Sens                                                                              |
+| --------------- | ---------- | --------------------------------------------------------------------------------- |
+| `indicateur_id` | `uuid`     |                                                                                   |
+| `ministere_id`  | `uuid`     |                                                                                   |
+| `periode`       | `date`     | 1er du mois                                                                       |
+| `categorie`     | `text`     | code de `categorie_sensible` ; null pour la ligne « Non réparti »                 |
+| `libelle`       | `text`     | libellé de la catégorie, ou « Non réparti »                                       |
+| `ordre`         | `smallint` | ordre de la liste ; « Non réparti » en dernier                                    |
+| `valeur`        | `integer`  | exacte pour le ministère, le berger, le conseil et EJP Tech (P52)                 |
+| `moins_de_3`    | `boolean`  | toujours faux depuis P52 (colonne gardée)                                         |
+| `masquee`       | `boolean`  | toujours faux depuis P52 : plus de masquage secondaire (colonne gardée)           |
+| `tout_masque`   | `boolean`  | toujours faux depuis P52 : plus de répartition masquée en entier (colonne gardée) |
 
 Règle d'affichage : celle de P47 (`docs/decisions.md`, règles 1 à 6, dont le départage « la
 première dans l'ordre de la liste, Non réparti en dernier » et la borne de la règle 6) ; une seule
@@ -829,10 +865,10 @@ pour que le lot I et `structure.test.sql` partent du même texte.
 1. **`indicateur_cree`, détail « calculs »** (B3, section 1). `creer_indicateur` ajoute
    `"calculs"` (nombre de calculs retirés avec l'indicateur remplacé) au `detail` quand le
    nombre n'est pas nul. `creer_calcul` et `ajouter_suggestion` n'écrivent jamais cette clé.
-2. **`creer_calcul` et sa part** (B4, section 7). La fonction a un 7e paramètre, `p_part boolean
-default null` : la part du calcul créé ou remplacé. Sans valeur, elle reprend celle du
-   calcul remplacé ; elle ne vaut jamais vrai pour une moyenne (P49). `creer_indicateurs_prevus`
-   recopie `part` depuis `private.indicateur_prevu`.
+2. **`creer_calcul` et sa part** (B4, section 7). La fonction a un 7e paramètre,
+   `p_part boolean default null` : la part du calcul créé ou remplacé. Sans valeur, elle
+   reprend celle du calcul remplacé ; elle ne vaut jamais vrai pour une moyenne (P49).
+   `creer_indicateurs_prevus` recopie `part` depuis `private.indicateur_prevu`.
 3. **`v_calcul.annee_resultat` d'une part** (B4, section 6). Il est null quand la somme des
    hauts de l'année dépasse la somme des bas (P49 : « Non calculé, à vérifier »). Aucune période
    n'est écartée, `annee_haut` et `annee_bas` restent lisibles, et la complétude reste celle des
