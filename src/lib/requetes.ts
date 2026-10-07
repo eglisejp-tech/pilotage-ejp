@@ -6,6 +6,13 @@ export const clientRequetes = new QueryClient({
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
+      // Par défaut, TanStack Query met une requête en pause hors ligne : elle n'échoue jamais,
+      // « Chargement » ne finit pas et le délai de 10 s de fetchAvecDelai ne court pas. En mode
+      // « always », la requête part, échoue et l'écran affiche « La connexion a échoué ».
+      networkMode: 'always',
+    },
+    mutations: {
+      networkMode: 'always',
     },
   },
 })
