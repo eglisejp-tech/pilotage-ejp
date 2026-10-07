@@ -18,6 +18,12 @@ interface Props {
 /**
  * Compte qui lit la fiche, pour les boutons de ses points. EJP Tech lit sans aucun bouton (T29) :
  * pas de compte. Le berger et le conseil n'ont pas de ministère ; le ministère lit sa fiche.
+ *
+ * Le ministère du compte est celui de la fiche (`ministereId`). Cela tient parce que le profil
+ * « ministere » n'arrive que par `PageMaFiche`, qui passe `compte.ministereId` ; `PageFicheMinistere`
+ * (la fiche d'un autre ministère) l'exclut par son type (`Exclude<ProfilFiche, 'ministere'>`). Si un
+ * écran ouvrait un jour la fiche d'un autre ministère avec ce profil, il faudrait passer le compte
+ * de la session jusqu'ici. La base refuse de toute façon une écriture qui n'est pas permise.
  */
 function compteDeLaFiche(profil: ProfilFiche, ministereId: string): CompteDesActions | null {
   if (profil === 'admin_plateforme') return null

@@ -596,6 +596,29 @@ describe('points à décider', () => {
     expect(donnees.aDecider.points[1]?.titre.masque).toBe(false)
   })
 
+  it('les identifiants des boutons viennent de v_point et de point_mention, point par point', () => {
+    const lectures = lecturesExemple()
+    lectures.points?.mentions.push({ point_id: 'financement-welcome', ministere_id: 'pju' })
+    lectures.points?.mentions.push({ point_id: 'financement-welcome', ministere_id: 'soc' })
+    const { aDecider } = bergerConseil(construireCetteSemaine(lectures, berger, null))
+    const identifiants = aDecider.points.map((point) => ({
+      id: point.id,
+      statut: point.statut,
+      ministereId: point.ministereId,
+      mentionIds: [...point.mentionIds].sort(),
+    }))
+    expect(identifiants).toEqual([
+      {
+        id: 'financement-welcome',
+        statut: 'attente_decision',
+        ministereId: 'int',
+        mentionIds: ['pju', 'soc'],
+      },
+      { id: 'planning-trimestre', statut: 'a_traiter', ministereId: 'coo', mentionIds: [] },
+      { id: 'salle-louange', statut: 'a_traiter', ministereId: 'com', mentionIds: ['coo'] },
+    ])
+  })
+
   it("le nom d'un événement masqué porte masque : true", () => {
     const lectures = lecturesExemple()
     const ligne = lectures.tableauMinisteres[0]

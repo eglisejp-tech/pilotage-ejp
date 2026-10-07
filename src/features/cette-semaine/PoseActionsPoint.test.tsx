@@ -8,7 +8,12 @@ import {
   POINTS_EXEMPLE,
 } from '@/features/accueil-ministere/exempleAccueil'
 import { BlocVosPoints } from '@/features/accueil-ministere/BlocVosPoints'
+import { lecturesExempleFiche, SOCIAL } from '@/features/fiche/apercu/exemplesFiche'
 import { BlocPointsFiche } from '@/features/fiche/BlocPointsFiche'
+import { construireFiche, construirePointsFiche } from '@/features/fiche/construireFiche'
+import type { ProfilFiche } from '@/features/fiche/modeleFiche'
+import { VueFiche } from '@/features/fiche/VueFiche'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
 import { EmplacementNouveauPoint } from '@/features/fiche/EmplacementNouveauPoint'
 import type { CompteDesActions, PointDesActions } from '@/features/points-actions/ActionsPoint'
@@ -249,6 +254,59 @@ describe('les points de la fiche (04 et 12)', () => {
     expect(screen.getAllByRole('article')).toHaveLength(POINTS_EXEMPLE.length)
     expect(posees()).toHaveLength(0)
   })
+})
+
+describe('la vue de la fiche pose un bouton par point, pour chaque profil qui peut agir', () => {
+  function lireFiche(profil: ProfilFiche) {
+    const lectures = lecturesExempleFiche(false)
+    return render(
+      <AvecRequetes>
+        <MemoryRouter>
+          <VueFiche
+            donnees={construireFiche(lectures, { profil })}
+            points={{ etat: 'donnees', donnees: construirePointsFiche(lectures, { profil }) }}
+            dernieresSaisies={{ etat: 'donnees', donnees: [] }}
+            reessayerDetailsSensibles={null}
+            rendreEmplacement={null}
+          />
+        </MemoryRouter>
+      </AvecRequetes>,
+    )
+  }
+
+  it.each(['berger', 'conseil', 'ministere'] as const)(
+    '%s : un bouton par point de la fiche, avec le bon compte',
+    (profil) => {
+      lireFiche(profil)
+      const region = screen.getByRole('region', { name: "Points d'attention" })
+      const recues = posees(region)
+      expect(recues).toHaveLength(within(region).getAllByRole('article').length)
+      expect(recues).toHaveLength(3)
+      expect(recues.every((recue) => recue.compte?.type === profil)).toBe(true)
+      expect(
+        recues.every(
+          (recue) => recue.compte?.ministereId === (profil === 'ministere' ? SOCIAL : null),
+        ),
+      ).toBe(true)
+    },
+  )
+
+  it('EJP Tech : aucun bouton (T29)', () => {
+    lireFiche('admin_plateforme')
+    expect(posees()).toHaveLength(0)
+  })
+})
+
+describe('après la fusion de P1 (boutons réels), à ajouter au point de contrôle de la fusion', () => {
+  it.todo(
+    'berger et conseil : autant de « Marquer traité » que de points ouverts, sous « À décider » et sur la fiche 04',
+  )
+  it.todo(
+    'ministère : « Changer le statut » et « Marquer traité » sur un point créé et sur un point mentionné, dans « Vos points » (07) et sur « Ma fiche » (12)',
+  )
+  it.todo(
+    'aperçus (Cette semaine, fiche, accueil du ministère) : entourés de ContexteEcrituresPoint avec des écritures simulées, aucun appel à supabase().rpc',
+  )
 })
 
 describe('« Nouveau point » sur « Ma fiche » (12)', () => {

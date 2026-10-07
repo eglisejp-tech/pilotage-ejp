@@ -1,10 +1,8 @@
 import type { FunctionComponent } from 'react'
 import { Link } from 'react-router'
+import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import type { ProprietesEmplacementFiche } from '@/features/fiche/types'
-
-const classeBouton =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-5 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
 
 /**
  * Bouton « Nouveau point » de « Ma fiche » (maquette 12), à la suite de « Saisir les chiffres du
@@ -16,7 +14,7 @@ export const EmplacementNouveauPoint: FunctionComponent<ProprietesEmplacementFic
   profil,
 }) =>
   profil === 'ministere' ? (
-    <Link to="/saisir/point" className={classeBouton}>
+    <Link to="/saisir/point" className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
       {TEXTES_FICHE.nouveauPoint}
     </Link>
   ) : null

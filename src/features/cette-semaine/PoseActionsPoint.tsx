@@ -27,7 +27,13 @@ interface Props {
  * Pose `ActionsPoint` sous un point (étape 5, lot P4). Un seul endroit relie les points de
  * « À décider », de la fiche (04 et 12) et de « Vos points » (07) aux propriétés d'`ActionsPoint` :
  * les identifiants viennent de `v_point` et de `point_mention`, jamais des noms affichés. Quand
- * aucun bouton ne se montre, le conteneur reste vide et disparaît : pas d'espace en trop.
+ * aucun bouton ne se montre, le conteneur reste vide et disparaît (`empty:hidden`) : pas d'espace
+ * en trop. Cela suppose qu'`ActionsPoint` ne rende rien, pas même un fragment vide ou un espace,
+ * quand il n'y a ni bouton ni fenêtre ouverte.
+ *
+ * Le fichier vit dans `cette-semaine/` bien qu'il serve aussi à la fiche et à « Vos points » : le
+ * plan des étapes 5 à 8 (« Propriété des fichiers ») donne ce dossier au lot P4 et laisse celui de
+ * l'accueil du ministère aux lots de l'étape 4. Il pourra rejoindre `points-actions/` plus tard.
  */
 export function PoseActionsPoint({ point, compte }: Props) {
   if (compte === null) return null

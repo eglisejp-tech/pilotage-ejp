@@ -114,7 +114,8 @@ function sessionsASaisir(lignes: readonly LigneVosSaisies[]): string[] {
 /**
  * Ouverture de l'accueil : la phrase (`phraseDAccueil`), le bouton principal (la première ligne
  * « À faire » qui a un bouton, libellé par `libelleBoutonPrincipal`, adresse de sa ligne), puis
- * les boutons secondaires « Saisir une session » et, pour `fij`, « Mettre à jour la carte des
+ * les boutons secondaires, dans l'ordre de la maquette 07 : « Saisir une session », « Nouveau
+ * point » (toujours là, jamais le bouton principal) et, pour `fij`, « Mettre à jour la carte des
  * FIJ », sans celui qui est devenu le bouton principal. Le dimanche de référence bascule le
  * dimanche à 12 h (heure de Paris) : la ligne des chiffres redevient « À faire » et le bouton
  * principal redevient « Saisir les chiffres du dimanche ».

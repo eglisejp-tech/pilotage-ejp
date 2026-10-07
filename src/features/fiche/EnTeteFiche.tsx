@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import { Aide } from '@/components/aide/Aide'
+import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { MarqueFraicheur } from '@/features/fiche/MarqueFraicheur'
 import type { DonneesFiche } from '@/features/fiche/modeleFiche'
 import { PhraseFiche } from '@/features/fiche/PhraseFiche'
@@ -14,9 +15,6 @@ interface Props {
   /** Emplacement du bouton « Nouveau point » (lot P4), à la suite des boutons de saisie. */
   nouveauPoint?: ReactNode
 }
-
-const classeBouton =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-5 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
 
 /**
  * Ouverture de la fiche (maquettes 04 et 12) : surtitre (« Votre ministère », ou le chemin
@@ -67,11 +65,11 @@ export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
           </Link>
           {/* Une seule fois sur la page : au premier usage, l'action est dans le bloc des chiffres. */}
           {donnees.aDesIndicateursDuMois && !donnees.actionSaisirMois ? (
-            <Link to="/saisir/mois" className={classeBouton}>
+            <Link to="/saisir/mois" className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
               {TEXTES_FICHE.saisirMois}
             </Link>
           ) : null}
-          <Link to={adresseSaisieSession()} className={classeBouton}>
+          <Link to={adresseSaisieSession()} className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
             {TEXTES_FICHE.saisirSession}
           </Link>
           {nouveauPoint}
