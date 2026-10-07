@@ -64,6 +64,9 @@ test.describe('écrans de connexion (aperçu)', () => {
 
   test('aucun défilement horizontal à 360 et 390 px', async ({ page }, infos) => {
     test.skip(infos.project.name !== 'telephone', 'Largeurs de téléphone : projet telephone.')
+    // Deux largeurs, dix-neuf écrans : une quarantaine de chargements dans un seul test. Sur la
+    // machine de la CI, qui lance aussi les parcours avec la base, 30 s ne suffisent pas toujours.
+    test.slow()
     for (const largeur of [360, 390]) {
       await page.setViewportSize({ width: largeur, height: 800 })
       for (const { adresse, titre } of [

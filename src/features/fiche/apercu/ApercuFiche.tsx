@@ -1,73 +1,133 @@
-import { EtatVide } from '@/components/etats/EtatVide'
-import { SITUATIONS_VIDES } from '@/components/etats/situations'
-import type { SituationVide } from '@/components/etats/situations'
-import { LigneApercuFiche as Ligne } from '@/features/fiche/apercu/LigneApercuFiche'
+import { useMemo } from 'react'
+import { useSearchParams } from 'react-router'
+import { construireDernieresSaisies } from '@/features/fiche/construireDernieresSaisies'
+import { construireFiche, construirePointsFiche } from '@/features/fiche/construireFiche'
+import {
+  COMMUNS_EXEMPLE,
+  DERNIERES_SAISIES_EXEMPLE,
+  lecturesExempleFiche,
+  lireEcranApercuFiche,
+  TABLEAU_EXEMPLE,
+} from '@/features/fiche/apercu/exemplesFiche'
+import { rendreCadreEmplacement } from '@/features/fiche/apercu/CadreEmplacement'
+import { FicheIntrouvable } from '@/features/fiche/FicheIntrouvable'
+import type { ProfilFiche } from '@/features/fiche/modeleFiche'
+import { SqueletteFiche } from '@/features/fiche/SqueletteFiche'
+import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
+import { VueFiche } from '@/features/fiche/VueFiche'
+import { construireListeMinisteres } from '@/features/ministeres/construireListe'
+import { VueMinisteres } from '@/features/ministeres/VueMinisteres'
+import { lireProfilApercu } from '@/features/navigation/apercu/exemples'
+import { ErreurDePage } from '@/pages/ErreurDePage'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
-const EXEMPLES_VIDES: Record<SituationVide, { message: string; suite?: string; action?: string }> =
-  {
-    premier_usage: {
-      message: 'Aucun événement prévu.',
-      suite: "Ajoutez le premier pour qu'il apparaisse ici.",
-      action: 'Ajouter un événement',
-    },
-    en_attente_des_autres: { message: "La carte s'affichera quand FIJ aura saisi ses chiffres." },
-    tout_est_fait: { message: 'Aucun point ouvert pour votre ministère.' },
-    aucun_resultat: { message: 'Aucun indicateur retiré.' },
-    pas_pour_ce_profil: { message: 'Cette page est réservée à un autre profil.' },
-    probleme_passager: { message: 'La connexion a échoué. Réessayez.', action: 'Réessayer' },
-  }
+const TITRE_FICHE = 'Fiche du ministère'
+const reessayer = () => undefined
 
 /**
- * Aperçu de développement de la fiche d'un ministère (maquettes 04 et 12) : cinq aides en bulle
- * « flottante » sur des lignes d'exemple, puis les six situations d'un état vide (T36). Sans base,
- * données d'exemple. Adresse : /apercu/fiche. Le lot E2 le remplace par la vraie fiche, en gardant
- * les aides, car `e2e/aide.spec.ts` s'appuie sur cette adresse. Enregistrée seulement en
- * développement.
+ * Aperçu de développement de la fiche d'un ministère (maquettes 04 et 12) et de la liste des
+ * ministères, sans base ni requête : les vrais composants, nourris des lignes d'exemple de
+ * `exemplesFiche.ts` construites par `construireFiche`, comme dans la page. Adresse :
+ * /apercu/fiche, `?profil=` choisit le lecteur (berger par défaut ; `ministere` voit sa fiche
+ * avec ses boutons et ses valeurs exactes ; EJP Tech lit sans bouton ; l'administration reçoit la
+ * page non disponible), `?ecran=` l'écran :
+ * - `fiche` (par défaut) : la fiche de Social, avec un indicateur sensible (mois en cours,
+ *   précision, répartition), des calculs, un ajout à valider, des retirés, ses points et ses
+ *   dernières saisies ; ses aides sont lues par `e2e/aide.spec.ts` et `routes.test.tsx` ;
+ *   Les emplacements des autres lots (prochaine réunion, chiffres par département, calendrier)
+ *   y sont des cadres en pointillés, pour relire l'ordre et l'alignement de la page ;
+ * - `fiche-vide` (premier usage), `fiche-erreur-bloc` (« Dernières saisies » en échec),
+ *   `fiche-erreur-points` (les points en échec), `fiche-erreur-details` (le détail des sensibles
+ *   en échec), `chargement`, `erreur`, `introuvable` ;
+ * - `ministeres`, `ministeres-vide`, `ministeres-erreur` : la liste (berger, conseil, EJP Tech).
+ * Enregistrée seulement en développement.
  */
 export function ApercuFiche() {
-  return (
-    <>
-      <title>Aperçu, Fiche d'un ministère, Pilotage EJP</title>
-      <h1 className="font-lecture text-titre leading-tight font-medium">Fiche d'un ministère</h1>
-      <div className="mt-2 border-t-2 border-encre" />
-      <section aria-labelledby="apercu-lecture" className="mt-8">
-        <h2 id="apercu-lecture" className="font-lecture text-section font-medium">
-          Lignes de lecture
-        </h2>
-        <ul className="mt-4 max-w-2xl">
-          <Ligne libelle="Mis à jour il y a 3 jours" valeur="3 j" aide="fiche.fraicheur" />
-          <Ligne
-            libelle="Somme depuis janvier : 9 mois sur 9"
-            valeur="112"
-            aide="fiche.sommeAnnee"
+  const [parametres] = useSearchParams()
+  const ecran = lireEcranApercuFiche(parametres.get('ecran'))
+  const profilDemande = lireProfilApercu(parametres.get('profil'))
+  const profil: ProfilFiche | null = profilDemande === 'admin_eglise' ? null : profilDemande
+
+  const fiche = useMemo(() => {
+    if (profil === null) return null
+    const exemple = lecturesExempleFiche(profil, ecran === 'fiche-vide')
+    // Détail des sensibles en échec : la fiche se construit sans catégories, répartitions ni précisions.
+    const lectures =
+      ecran === 'fiche-erreur-details'
+        ? { ...exemple, categories: [], repartitions: [], precisions: [] }
+        : exemple
+    return {
+      donnees: construireFiche(lectures, { profil }),
+      points: construirePointsFiche(lectures, { profil }),
+    }
+  }, [profil, ecran])
+
+  // L'administration n'a ni fiche ni liste (plan, E2) ; un ministère n'a pas la liste.
+  if (profil === null || fiche === null) return <PageNonDisponible />
+  const liste = ecran.startsWith('ministeres')
+  if (liste && profil === 'ministere') return <PageNonDisponible />
+
+  switch (ecran) {
+    case 'ministeres':
+      return (
+        <VueMinisteres
+          liste={{
+            etat: 'donnees',
+            donnees: construireListeMinisteres(TABLEAU_EXEMPLE, '2026-10-07'),
+          }}
+        />
+      )
+    case 'ministeres-vide':
+      return <VueMinisteres liste={{ etat: 'donnees', donnees: [] }} />
+    case 'ministeres-erreur':
+      return <VueMinisteres liste={{ etat: 'erreur', reessayer }} />
+    case 'chargement':
+      return (
+        <>
+          <title>Aperçu, Fiche du ministère, Pilotage EJP</title>
+          <SqueletteFiche titre={TITRE_FICHE} />
+        </>
+      )
+    case 'erreur':
+      return (
+        <>
+          <title>Aperçu, Fiche du ministère, Pilotage EJP</title>
+          <h1 className="sr-only">{TITRE_FICHE}</h1>
+          <ErreurDePage
+            message={TEXTES_FICHE.erreur}
+            libelleBouton={TEXTES_FICHE.reessayer}
+            onReessayer={reessayer}
           />
-          <Ligne libelle="Courbe des douze derniers mois" valeur="12" aide="fiche.courbe" />
-          <Ligne libelle="Indicateur de santé" valeur="moins de 3" aide="fiche.moinsDe3" />
-          <Ligne libelle="Taux de résolution" valeur="80 %" aide="fiche.calcule" />
-        </ul>
-      </section>
-      <section aria-labelledby="apercu-vides" className="mt-12">
-        <h2 id="apercu-vides" className="font-lecture text-section font-medium">
-          États vides
-        </h2>
-        <div className="mt-4 flex max-w-2xl flex-col divide-y divide-filet">
-          {SITUATIONS_VIDES.map((situation) => {
-            const exemple = EXEMPLES_VIDES[situation]
-            return (
-              <EtatVide
-                key={situation}
-                situation={situation}
-                suite={exemple.suite}
-                action={
-                  exemple.action ? { libelle: exemple.action, surClic: () => undefined } : undefined
-                }
-              >
-                {exemple.message}
-              </EtatVide>
-            )
-          })}
-        </div>
-      </section>
-    </>
-  )
+        </>
+      )
+    case 'introuvable':
+      return <FicheIntrouvable titre={TITRE_FICHE} profil={profil} />
+    default:
+      return (
+        <>
+          <title>{`Aperçu, ${fiche.donnees.ministere.nom}, Pilotage EJP`}</title>
+          <VueFiche
+            donnees={fiche.donnees}
+            points={
+              ecran === 'fiche-erreur-points'
+                ? { etat: 'erreur', reessayer }
+                : { etat: 'donnees', donnees: fiche.points }
+            }
+            reessayerDetailsSensibles={ecran === 'fiche-erreur-details' ? reessayer : null}
+            dernieresSaisies={
+              ecran === 'fiche-erreur-bloc'
+                ? { etat: 'erreur', reessayer }
+                : {
+                    etat: 'donnees',
+                    donnees:
+                      ecran === 'fiche-vide'
+                        ? []
+                        : construireDernieresSaisies(DERNIERES_SAISIES_EXEMPLE, COMMUNS_EXEMPLE),
+                  }
+            }
+            rendreEmplacement={rendreCadreEmplacement}
+          />
+        </>
+      )
+  }
 }
