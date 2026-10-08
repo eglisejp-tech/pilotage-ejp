@@ -89,11 +89,29 @@ describe('état des prévus (7.1)', () => {
   it('un prévu retiré ne renaît pas : il compte comme créé', () => {
     const etat = etatPrevus(
       'Eagles',
-      [{ modele_code: 'eagles_rencontres' }, { modele_code: 'eagles_presents' }],
+      [
+        { modele_code: 'eagles_rencontres', etat: 'retire' },
+        { modele_code: 'eagles_presents', etat: 'actif' },
+      ],
       modeles,
       false,
     )
     expect(etat.genre).toBe('crees')
+  })
+
+  it('des prévus tous retirés ne décident pas du modèle (correctif du 8 octobre 2026)', () => {
+    // Prévus d'Eagles créés par erreur sur une autre fiche, puis retirés : le modèle reste à
+    // choisir, au lieu de « Eagles, déjà créés ».
+    const etat = etatPrevus(
+      'Aigles',
+      [
+        { modele_code: 'eagles_rencontres', etat: 'retire' },
+        { modele_code: 'eagles_presents', etat: 'retire' },
+      ],
+      modeles,
+      false,
+    )
+    expect(etat.genre).toBe('a_choisir')
   })
 
   it('« Aucun prévu » enregistré, mais un modèle porte le nom du ministère : « Aucun prévu » gagne', () => {
