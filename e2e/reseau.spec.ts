@@ -89,10 +89,25 @@ const repondreCompte = (route: Route) =>
         },
       })
 
+/** Lectures de la session : la ligne de compte, puis (en aal2) l'acceptation des conditions (T53). */
+const estLectureDeSession = (route: Route) =>
+  /\/(compte|acceptation_conditions)$/.test(new URL(route.request().url()).pathname)
+
+const repondreSession = (route: Route) =>
+  new URL(route.request().url()).pathname.endsWith('/acceptation_conditions') &&
+  route.request().method() !== 'OPTIONS'
+    ? route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: ENTETES_CORS,
+        json: [{ id: 'acceptation-1' }],
+      })
+    : repondreCompte(route)
+
 /** Les lectures de la base : le compte répond, tout le reste échoue ou reste sans réponse. */
 async function simulerBase(page: Page, autres: 'echec' | 'silence') {
   await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
-    if (new URL(route.request().url()).pathname.endsWith('/compte')) return repondreCompte(route)
+    if (estLectureDeSession(route)) return repondreSession(route)
     return autres === 'echec' ? route.abort('failed') : new Promise<void>(() => {})
   })
 }
@@ -159,11 +174,16 @@ test.describe('lecture interrompue', () => {
     let compteDisponible = false
     let lecturesDuCompte = 0
     await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
-      if (!new URL(route.request().url()).pathname.endsWith('/compte')) {
+      if (!estLectureDeSession(route)) {
         return route.abort('failed')
       }
-      if (route.request().method() !== 'OPTIONS') lecturesDuCompte += 1
-      return compteDisponible ? repondreCompte(route) : route.abort('failed')
+      if (
+        route.request().method() !== 'OPTIONS' &&
+        new URL(route.request().url()).pathname.endsWith('/compte')
+      ) {
+        lecturesDuCompte += 1
+      }
+      return compteDisponible ? repondreSession(route) : route.abort('failed')
     })
 
     await page.goto('/')
@@ -193,7 +213,7 @@ test.describe('lecture interrompue', () => {
     await enregistrerSession(page)
     let reseauRetabli = false
     await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
-      if (new URL(route.request().url()).pathname.endsWith('/compte')) return repondreCompte(route)
+      if (estLectureDeSession(route)) return repondreSession(route)
       if (!reseauRetabli) return route.abort('failed')
       if (route.request().method() === 'OPTIONS') {
         return route.fulfill({ status: 204, headers: ENTETES_CORS })

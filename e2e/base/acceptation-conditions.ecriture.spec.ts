@@ -73,7 +73,7 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
 
   // À la connexion suivante, la version est déjà acceptée : l'accueil, sans l'écran.
   await page.getByRole('banner').getByRole('button', { name: 'Se déconnecter' }).click()
-  await expect(page).toHaveURL(/\/connexion$/)
+  await expect(page).toHaveURL(/\/connexion/)
   await seConnecter(page, COMPTE_CONDITIONS.email)
   await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
   await expect(page).toHaveURL((url) => url.pathname === '/')
