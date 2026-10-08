@@ -29,7 +29,7 @@ interface Props {
   /** Le dimanche du jour avant midi : seuls les indicateurs saisis le matin (X3). */
   matin: boolean
   champs: ChampsDimanche
-  /** « Choisir un autre dimanche » : les 4 derniers dimanches (et celui du jour, le matin). */
+  /** « Choisir un autre dimanche » : les 8 derniers dimanches (et celui du jour, le matin). */
   proposes: readonly DimanchePropose[]
   /** Enregistre l'envoi en une instruction ; rejette en cas d'échec (les valeurs restent). */
   enregistrer: (lignes: SaisieDimanche['lignes']) => Promise<void>
