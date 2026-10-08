@@ -9,10 +9,11 @@ fusionnent ensuite (P3 et P4) doivent reprendre. Les textes viennent de
 Règle de rédaction des aides : dire quoi saisir ou ce que le chiffre veut dire, jamais la
 mécanique interne.
 
-| Où                                    | Texte proposé                                                                                                     |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| « Changer le statut », sous les choix | Un point « En attente de décision » passe avant les autres dans « À décider ».                                    |
-| « Marquer traité », sous le champ     | Le commentaire s'affiche sur le point. Les ministères liés au point, le berger, le conseil et EJP Tech le lisent. |
+| Où                                              | Texte proposé                                                                                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| « Changer le statut », sous les choix           | Un point « En attente de décision » passe avant les autres dans « À décider ».                                                                    |
+| « Marquer traité », sous le champ               | Le commentaire s'affiche sur le point. Les ministères liés au point, le berger, le conseil et EJP Tech le lisent.                                 |
+| « Modifier les mentions » (T54), sous les cases | Un ministère mentionné voit ce point, et seulement ce point. Un ministère retiré ne le voit plus. Le berger et le conseil voient tous les points. |
 
 Le rappel sur les données personnelles et la phrase « Un point traité ne se rouvre pas. » viennent
 du BRIEF (section 9) et ne sont pas à relire ici. Option à trancher : réunir le rappel et la note

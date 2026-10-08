@@ -7,6 +7,7 @@ import {
   marquerTraite,
   messageDeRefusPoint,
   MESSAGES_POINT,
+  modifierMentionsPoint,
   schemaBaseNouveauPoint,
   schemaCommentaireTraiteMinistere,
 } from './pointsEcriture'
@@ -363,5 +364,55 @@ describe('messageDeRefusPoint', () => {
     expect(MESSAGES_POINT.reussite.creation).toBe('Point créé.')
     expect(MESSAGES_POINT.reussite.traite).toBe('Point marqué traité.')
     expect(MESSAGES_POINT.reussite.statut('En cours')).toBe('Statut enregistré : En cours.')
+    expect(MESSAGES_POINT.reussite.mentions).toBe('Mentions enregistrées.')
+  })
+
+  it('un refus de mentions de la base se dit tel quel', () => {
+    for (const message of [
+      MESSAGES_POINT.refus.pointTraiteMentions,
+      MESSAGES_POINT.refus.mentionRefusee,
+      'Ce ministère est déjà mentionné sur ce point.',
+      "Ce ministère n'est pas mentionné sur ce point.",
+    ]) {
+      expect(messageDeRefusPoint({ code: 'P0001', message })).toBe(message)
+    }
+  })
+})
+
+describe('modifierMentionsPoint', () => {
+  const AUTRE = '10000000-0000-4000-8000-000000000003'
+
+  it('appelle modifier_mentions_point avec la liste voulue, sans doublon, sans écriture directe', async () => {
+    const faux = installer()
+    await modifierMentionsPoint(POINT, [MINISTERE, AUTRE, MINISTERE])
+    expect(faux.rpc).toHaveBeenCalledWith('modifier_mentions_point', {
+      p_point_id: POINT,
+      p_mentions: [MINISTERE, AUTRE],
+    })
+    expect(faux.from).not.toHaveBeenCalled()
+  })
+
+  it('envoie une liste vide pour retirer toutes les mentions', async () => {
+    const faux = installer()
+    await modifierMentionsPoint(POINT, [])
+    expect(faux.rpc).toHaveBeenCalledWith('modifier_mentions_point', {
+      p_point_id: POINT,
+      p_mentions: [],
+    })
+  })
+
+  it('refuse avant tout appel un point ou un ministère qui n’est pas un identifiant', async () => {
+    const faux = installer()
+    const erreurPoint = await modifierMentionsPoint('1', []).catch((e: unknown) => e)
+    expect(messageDeRefusPoint(erreurPoint)).toBe(MESSAGES_POINT.refus.acces)
+    const erreurMention = await modifierMentionsPoint(POINT, ['Social']).catch((e: unknown) => e)
+    expect(messageDeRefusPoint(erreurMention)).toBe(MESSAGES_POINT.refus.mentionRefusee)
+    expect(faux.rpc).not.toHaveBeenCalled()
+  })
+
+  it('relance l’erreur de la base', async () => {
+    const erreur = { code: 'P0001', message: MESSAGES_POINT.refus.pointTraiteMentions }
+    installer({ data: null, error: erreur })
+    await expect(modifierMentionsPoint(POINT, [MINISTERE])).rejects.toBe(erreur)
   })
 })

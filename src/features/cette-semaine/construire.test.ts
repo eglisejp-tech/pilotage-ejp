@@ -596,7 +596,7 @@ describe('points à décider', () => {
     expect(donnees.aDecider.points[1]?.titre.masque).toBe(false)
   })
 
-  it('les identifiants des boutons viennent de v_point et de point_mention, point par point', () => {
+  it('les identifiants des boutons viennent de v_point et de v_point_mention, point par point', () => {
     const lectures = lecturesExemple()
     lectures.points?.mentions.push({ point_id: 'financement-welcome', ministere_id: 'pju' })
     lectures.points?.mentions.push({ point_id: 'financement-welcome', ministere_id: 'soc' })

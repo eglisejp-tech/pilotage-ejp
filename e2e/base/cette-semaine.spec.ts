@@ -69,7 +69,11 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
       // sous un point (étape 5) : jamais « Changer le statut », qui revient aux ministères.
       const boutons = aDecider.getByRole('button')
       if (profil === 'admin_plateforme') await expect(boutons).toHaveCount(0)
-      else await expect(boutons.filter({ hasNotText: 'Marquer traité' })).toHaveCount(0)
+      else {
+        await expect(
+          boutons.filter({ hasNotText: /^(Marquer traité|Modifier les mentions)$/ }),
+        ).toHaveCount(0)
+      }
       await expect(aDecider.getByRole('link', { name: 'Tous les points' })).toBeVisible()
 
       const batir = page.getByRole('region', { name: /^Bâtir l'Église, / })

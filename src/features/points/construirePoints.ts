@@ -5,7 +5,7 @@ import type { TexteLibre } from '@/features/cette-semaine/types'
 import type { DonneesPoints, LignePoint, OptionMinistere } from '@/features/points/modelePoints'
 import { TEXTES_POINTS } from '@/features/points/textesPoints'
 import type { ProfilPoints } from '@/features/points/textesPoints'
-import type { LigneTable, LigneVue } from '@/lib/base'
+import type { LigneVue } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import {
@@ -25,7 +25,7 @@ export interface LecturesPoints {
   /** Jour de Paris (`v_semaine.aujourdhui`) : jamais la date du navigateur. */
   aujourdhui: DateIso
   points: LigneVue<'v_point'>[]
-  mentions: LigneTable<'point_mention'>[]
+  mentions: LigneVue<'v_point_mention'>[]
   auteurs: AuteurTraitement[]
   ministeres: MinistereListe[]
 }
