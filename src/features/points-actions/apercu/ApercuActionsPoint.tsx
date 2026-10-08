@@ -1,11 +1,14 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import type { MinistereListe } from '@/data/ministeres'
+import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { ActionsPoint } from '@/features/points-actions/ActionsPoint'
 import type { CompteDesActions, PointDesActions } from '@/features/points-actions/ActionsPoint'
 import { ContexteEcrituresPoint } from '@/features/points-actions/ecritures'
 import type { EcrituresPoint } from '@/features/points-actions/ecritures'
+import { MINISTERES_EXEMPLE } from '@/features/evenements/apercu/exemples'
 import { lireProfilApercu } from '@/features/navigation/apercu/exemples'
 import type { StatutPoint } from '@/lib/base'
 import { LIBELLE_STATUT } from '@/lib/metier/points'
@@ -19,12 +22,28 @@ import { LIBELLE_STATUT } from '@/lib/metier/points'
 // - `lien=createur` (par défaut), `mentionne` ou `aucun` : le lien d'un ministère avec le point ;
 // - `statut=a_traiter` (par défaut), `en_cours`, `attente_decision` ou `traite` ;
 // - `titre=masque` : le titre du point est masqué par EJP Tech ;
-// - `envoi=echec` : connexion perdue à l'envoi ; `envoi=refus` : la base refuse (point déjà traité).
+// - `envoi=echec` : connexion perdue à l'envoi ; `envoi=refus` : la base refuse (point déjà traité) ;
+// - `mentions=desactive` : un ministère désactivé reste mentionné (il se retire, il ne s'ajoute plus) ;
+//   `mentions=aucune` : le point ne mentionne personne ; `ministeres=probleme` : la lecture des
+//   ministères échoue, `ministeres=lent` : elle est lente (état de chargement).
 
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
 const INTEGRATION = '10000000-0000-4000-8000-000000000005'
 const JEUNESSE = '10000000-0000-4000-8000-000000000004'
 const POINT_EXEMPLE = '30000000-0000-4000-8000-000000000001'
+const ACCUEIL_DESACTIVE = '10000000-0000-4000-8000-000000000009'
+
+/** Les ministères de l'aperçu : Communication, ceux de l'aperçu des événements, et un désactivé. */
+const MINISTERES: MinistereListe[] = [
+  { id: COMMUNICATION, code: null, nom: 'Communication', desactive_le: null },
+  ...MINISTERES_EXEMPLE.map(({ id, nom }) => ({ id, code: null, nom, desactive_le: null })),
+  {
+    id: ACCUEIL_DESACTIVE,
+    code: null,
+    nom: 'Accueil',
+    desactive_le: '2026-09-01T10:00:00+00:00',
+  },
+]
 
 const STATUTS: readonly StatutPoint[] = ['a_traiter', 'en_cours', 'attente_decision', 'traite']
 
@@ -50,7 +69,18 @@ export function ApercuActionsPoint() {
   const refus = parametres.get('envoi') === 'refus'
   const masque = parametres.get('titre') === 'masque'
   const [statut, setStatut] = useState<StatutPoint>(lireStatut(parametres.get('statut')))
-  const [clientRequetes] = useState(() => new QueryClient())
+  const reglageMentions = parametres.get('mentions')
+  const reglageMinisteres = parametres.get('ministeres')
+  const [mentions, setMentions] = useState<string[]>(
+    reglageMentions === 'aucune'
+      ? []
+      : reglageMentions === 'desactive'
+        ? [INTEGRATION, ACCUEIL_DESACTIVE]
+        : [INTEGRATION],
+  )
+  const [clientRequetes] = useState(
+    () => new QueryClient({ defaultOptions: { queries: { retry: false } } }),
+  )
 
   const ecritures = useMemo<EcrituresPoint>(() => {
     const simuler = async () => {
@@ -68,8 +98,21 @@ export function ApercuActionsPoint() {
         await simuler()
         setStatut('traite')
       },
+      modifierMentions: async (_pointId: string, voulues: string[]) => {
+        await attendre()
+        if (echec) throw { message: 'FetchError: Failed to fetch', details: '', hint: '', code: '' }
+        if (refus) throw { code: 'P0001', message: MESSAGES_POINT.refus.pointTraiteMentions }
+        setMentions(voulues)
+      },
+      lireMinisteres: async () => {
+        await new Promise<void>((fini) =>
+          window.setTimeout(fini, reglageMinisteres === 'lent' ? 4000 : 50),
+        )
+        if (reglageMinisteres === 'probleme') throw new Error('Failed to fetch')
+        return MINISTERES
+      },
     }
-  }, [echec, refus])
+  }, [echec, refus, reglageMinisteres])
 
   const point: PointDesActions = {
     id: POINT_EXEMPLE,
@@ -79,7 +122,7 @@ export function ApercuActionsPoint() {
     },
     statut,
     ministereId: COMMUNICATION,
-    mentions: [INTEGRATION],
+    mentions,
   }
 
   return (
@@ -94,7 +137,15 @@ export function ApercuActionsPoint() {
               {point.titre.texte}
             </h2>
             <p className="text-encre-2">{LIBELLE_STATUT[statut]}</p>
-            <p className="text-sm text-encre-3">Communication, mentions : Intégration</p>
+            <p className="text-sm text-encre-3">
+              Communication, mentions :{' '}
+              {mentions.length === 0
+                ? 'aucune'
+                : mentions
+                    .map((id) => MINISTERES.find((m) => m.id === id)?.nom ?? id)
+                    .sort((x, y) => x.localeCompare(y, 'fr'))
+                    .join(', ')}
+            </p>
             <ActionsPoint point={point} compte={compte} />
           </article>
         </section>

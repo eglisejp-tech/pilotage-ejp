@@ -171,7 +171,7 @@ describe('FormulaireDimanche (maquette 08)', () => {
     ).toBeInTheDocument()
   })
 
-  it('« Choisir un autre dimanche » ouvre les 4 derniers dimanches', async () => {
+  it('« Choisir un autre dimanche » ouvre les 8 derniers dimanches', async () => {
     const utilisateur = userEvent.setup()
     afficher('correction')
     await utilisateur.click(screen.getByRole('button', { name: 'Choisir un autre dimanche' }))
@@ -181,6 +181,10 @@ describe('FormulaireDimanche (maquette 08)', () => {
       'Dimanche 20 sept. (déjà saisi)',
       'Dimanche 13 sept.',
       'Dimanche 6 sept.',
+      'Dimanche 30 août',
+      'Dimanche 23 août',
+      'Dimanche 16 août',
+      'Dimanche 9 août',
     ])
     expect(liens[0]).toHaveAttribute('aria-current', 'page')
     expect(liens[1]).toHaveAttribute('href', '/saisir/dimanche?date=2026-09-20')

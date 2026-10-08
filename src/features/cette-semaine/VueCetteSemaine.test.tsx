@@ -38,10 +38,12 @@ describe('VueCetteSemaine', () => {
         'Les ministères',
       ])
       expect(screen.getAllByRole('heading', { level: 3 })).toHaveLength(3)
-      // Étape 5 : « Marquer traité » est le seul bouton du berger et du conseil ; EJP Tech n'en a
-      // aucun (T29).
+      // Étape 5 : « Marquer traité » et « Modifier les mentions » (T54) sont les seuls boutons du
+      // berger et du conseil ; EJP Tech n'en a aucun (T29).
       const boutons = screen.queryAllByRole('button')
-      for (const bouton of boutons) expect(bouton).toHaveAccessibleName('Marquer traité')
+      for (const bouton of boutons) {
+        expect(bouton.textContent).toMatch(/^(Marquer traité|Modifier les mentions)$/)
+      }
       if (profil === 'admin_plateforme') expect(boutons).toHaveLength(0)
       expect(screen.getByRole('columnheader', { name: 'Point ouvert' })).toBeInTheDocument()
       const liens = within(screen.getByRole('region', { name: 'Les ministères' })).getAllByRole(

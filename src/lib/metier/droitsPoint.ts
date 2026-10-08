@@ -8,7 +8,10 @@
 // - Marquer traité : le ministère créateur ou mentionné (commentaire de 10 à 280 caractères) ;
 //   le berger et le conseil (commentaire facultatif, 280 au plus, `estDecideur`). Jamais EJP Tech
 //   ni l'administration de l'église (T29).
-// - Un point traité ne se rouvre pas : plus aucun des deux boutons.
+// - Modifier les mentions (T54) : le ministère créateur, le berger et le conseil, sur un point qui
+//   n'est pas traité. Jamais un ministère mentionné, jamais EJP Tech ni l'administration de
+//   l'église.
+// - Un point traité ne se rouvre pas : plus aucun bouton.
 
 import type { StatutPoint, TypeCompte } from '@/lib/base'
 import { estDecideur } from '@/lib/metier/droits'
@@ -25,7 +28,7 @@ export interface PointDeDroits {
   statut: StatutPoint
   /** Ministère créateur (`point_attention.ministere_id`). */
   ministereId: string
-  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`). */
+  /** Identifiants des ministères mentionnés (`v_point_mention.ministere_id`). */
   mentions: readonly string[]
 }
 
@@ -76,4 +79,14 @@ export function commentaireTraiteObligatoire(
   point: PointDeDroits,
 ): boolean {
   return lienAuPoint(compte, point) !== null
+}
+
+/**
+ * « Modifier les mentions » (T54) : le ministère créateur, le berger ou le conseil, tant que le
+ * point n'est pas traité. Un ministère seulement mentionné ne change pas les mentions. Jamais EJP
+ * Tech ni l'administration de l'église.
+ */
+export function peutModifierMentions(compte: CompteDeDroits, point: PointDeDroits): boolean {
+  if (estTraite(point)) return false
+  return estDecideur(compte.type) || lienAuPoint(compte, point) === 'createur'
 }

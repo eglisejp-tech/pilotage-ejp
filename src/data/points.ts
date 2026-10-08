@@ -1,12 +1,12 @@
 // Lecture des points ouverts, pour « À décider » (berger et conseil seulement : les autres profils
 // ne les lisent pas ici).
 
-import type { LigneTable, LigneVue } from '@/lib/base'
+import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
 export interface PointsOuverts {
   points: LigneVue<'v_point'>[]
-  mentions: LigneTable<'point_mention'>[]
+  mentions: LigneVue<'v_point_mention'>[]
 }
 
 /** Points qui ne sont pas traités (un point traité ne se rouvre pas), avec leurs mentions. */
@@ -22,7 +22,7 @@ export async function lirePointsOuverts(): Promise<PointsOuverts> {
   if (points.length === 0) return { points, mentions: [] }
 
   const lectureMentions = await supabase()
-    .from('point_mention')
+    .from('v_point_mention')
     .select('point_id, ministere_id')
     .in(
       'point_id',

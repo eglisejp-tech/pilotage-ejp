@@ -79,7 +79,7 @@ function installerVueDeLEglise(type: TypeCompte) {
       v_tableau_ministeres: lectures.tableauMinisteres,
       ministere: lectures.ministeres,
       v_point: lectures.points?.points ?? [],
-      point_mention: lectures.points?.mentions ?? [],
+      v_point_mention: lectures.points?.mentions ?? [],
     },
   })
 }
@@ -250,8 +250,10 @@ describe('routes', () => {
       )
       expect(document.body.textContent).toContain(LIBELLES[type])
       if (type === 'admin_plateforme') {
-        // Lot E8 : le bloc « Signalements » en tête, la relecture à l'étape 6.
-        expect(screen.getByText(/sera disponible prochainement/)).toBeInTheDocument()
+        // Lots E8 et L6 : le bloc « Signalements » puis la file « Champs libres à relire ».
+        expect(
+          await screen.findByRole('heading', { level: 2, name: 'Champs libres à relire' }),
+        ).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
         expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
@@ -292,7 +294,7 @@ describe('routes', () => {
       'page',
     )
     // Les points sont lus, comme pour le berger.
-    expect(faux.tables).toEqual(expect.arrayContaining(['v_point', 'point_mention']))
+    expect(faux.tables).toEqual(expect.arrayContaining(['v_point', 'v_point_mention']))
     const aDecider = screen.getByRole('region', { name: 'À décider' })
     expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)
     // Étape 5 : « Marquer traité » ne doit jamais apparaître pour EJP Tech.
@@ -328,7 +330,7 @@ describe('routes', () => {
             pointExemple('point-ouvert', 'Salle pour la soirée', 'attente_decision'),
             pointExemple('point-traite', 'Micros à remplacer', 'traite'),
           ],
-          point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
+          v_point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
         },
       })
       const routeur = afficher(adresse)
@@ -629,10 +631,70 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toBeInTheDocument()
     expect(screen.getByText('1 signalement ouvert')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
+    // Lot L6 : la file « Champs libres à relire », vide ici, sous le bloc.
     expect(
-      screen.getByText('La relecture des champs libres sera disponible prochainement.'),
+      await screen.findByRole('heading', { level: 2, name: 'Champs libres à relire' }),
     ).toBeInTheDocument()
-    expect(faux.tables).toEqual(['compte', 'v_signalement'])
+    expect(await screen.findByText('Aucun texte à relire.')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(faux.tables).toEqual(
+        expect.arrayContaining([
+          'compte',
+          'ministere',
+          'v_a_valider',
+          'v_signalement',
+          'v_textes_a_relire',
+        ]),
+      ),
+    )
+    // Jamais de lecture directe de la table de modération ni du journal.
+    expect(faux.tables).not.toContain('moderation')
+    expect(faux.tables).not.toContain('journal')
+    // Aucune demande en attente : pas d'en-tête sur les indicateurs.
+    expect(screen.queryByText(/votre validation/)).not.toBeInTheDocument()
+  })
+
+  it('/moderation : « N indicateurs attendent votre validation » et son lien, la file lue dans v_textes_a_relire (lot L6)', async () => {
+    installer({
+      ...scenarioDe('admin_plateforme'),
+      lignes: {
+        v_a_valider: [
+          { indicateur_id: 'i1', attente_jours: 4 },
+          { indicateur_id: 'i1', attente_jours: 2 },
+          { indicateur_id: 'i2', attente_jours: 1 },
+        ],
+        ministere: [{ id: 'm-social', code: null, nom: 'Social', desactive_le: null }],
+        v_textes_a_relire: [
+          {
+            cible: 'point_attention',
+            cible_id: '44000000-0000-4000-8000-000000000001',
+            ministere_id: 'm-social',
+            auteur_libelle: 'Ministère Social',
+            ecrit_le: '2026-09-29T18:03:00+02:00',
+            champs: { titre: 'Affiche et flyer de l’accueil du 15 octobre.' },
+            etat: 'a_relire',
+            decision_le: null,
+            motif: null,
+            indicateur_libelle: null,
+            mois: null,
+          },
+        ],
+      },
+    })
+    afficher('/moderation')
+    expect(
+      await screen.findByText(
+        '2 indicateurs attendent votre validation, le plus ancien depuis 4 jours.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ouvrir les indicateurs à valider' })).toHaveAttribute(
+      'href',
+      '/indicateurs#a-valider',
+    )
+    const ligne = await screen.findByRole('article', { name: "Point d'attention, Social" })
+    expect(within(ligne).getByRole('button', { name: 'Rien à signaler' })).toBeInTheDocument()
+    expect(within(ligne).getByRole('button', { name: 'Masquer le texte' })).toBeInTheDocument()
+    expect(screen.getByText('1 texte en attente')).toBeInTheDocument()
   })
 
   it('un ministère sur /signaler : le formulaire, l’écran prérempli, ses seuls signalements lus', async () => {
@@ -690,6 +752,10 @@ const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
 // `src/pages/PagePoints.test.tsx` et `src/features/points/`.
 const PAGES_REMPLACEES_PAR_P3 = ['/points']
 
+// Page que le lot L5 a remplacée (écran 06, « Mon journal » et « Journal technique ») : testée dans
+// `src/pages/PageJournal.test.tsx` et `src/features/journal/`.
+const PAGES_REMPLACEES_PAR_L5 = ['/journal', '/journal-technique']
+
 describe('adresses des étapes 5 et 6 (lot C0)', () => {
   it('déclare chaque adresse amorce dans la table des adresses', () => {
     for (const motif of ADRESSES_AMORCES_C0) {
@@ -702,7 +768,9 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
 
   it.each(
     AMORCES_C0_PAR_PROFIL.filter(
-      ([adresse]) => !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin),
+      ([adresse]) =>
+        !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin) &&
+        !PAGES_REMPLACEES_PAR_L5.includes(adresse.chemin),
     ).map(([adresse, profil]) => [adresse.chemin, profil, adresse]),
   )(
     '%s ouverte au profil %s : la page amorce de son étape, sans aucune requête de données',

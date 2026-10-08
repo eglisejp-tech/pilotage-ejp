@@ -5,6 +5,7 @@ import {
   lienAuPoint,
   peutChangerStatut,
   peutMarquerTraite,
+  peutModifierMentions,
 } from './droitsPoint'
 import type { CompteDeDroits, PointDeDroits } from './droitsPoint'
 
@@ -113,5 +114,37 @@ describe('commentaireTraiteObligatoire', () => {
     expect(commentaireTraiteObligatoire(mentionne, POINT)).toBe(true)
     expect(commentaireTraiteObligatoire(berger, POINT)).toBe(false)
     expect(commentaireTraiteObligatoire(conseil, POINT)).toBe(false)
+  })
+})
+
+describe('peutModifierMentions', () => {
+  it('le créateur, le berger et le conseil modifient les mentions d’un point ouvert', () => {
+    for (const autorise of [createur, berger, conseil]) {
+      expect(peutModifierMentions(autorise, POINT), autorise.type).toBe(true)
+    }
+  })
+
+  it('un ministère mentionné, un autre ministère, l’administration et EJP Tech ne le peuvent pas', () => {
+    for (const refuse of [mentionne, etranger, administration, ejpTech]) {
+      expect(peutModifierMentions(refuse, POINT), refuse.type).toBe(false)
+    }
+  })
+
+  it('un point traité ne change plus de mentions, pour personne', () => {
+    for (const compteTest of [
+      createur,
+      mentionne,
+      etranger,
+      berger,
+      conseil,
+      administration,
+      ejpTech,
+    ]) {
+      expect(peutModifierMentions(compteTest, TRAITE), compteTest.type).toBe(false)
+    }
+  })
+
+  it('un compte de ministère sans ministère ne le peut pas', () => {
+    expect(peutModifierMentions({ type: 'ministere', ministereId: null }, POINT)).toBe(false)
   })
 })

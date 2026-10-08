@@ -10,7 +10,7 @@ export type AuteurTraitement = Pick<LigneTable<'compte'>, 'user_id' | 'ministere
 
 export interface PointsListe {
   points: LigneVue<'v_point'>[]
-  mentions: LigneTable<'point_mention'>[]
+  mentions: LigneVue<'v_point_mention'>[]
   /** Un compte par auteur distinct de traitement (`traite_par`). */
   auteurs: AuteurTraitement[]
 }
@@ -35,7 +35,7 @@ export async function lirePointsListe(): Promise<PointsListe> {
     ...new Set(points.flatMap((point) => (point.traite_par === null ? [] : [point.traite_par]))),
   ]
   const [lectureMentions, lectureAuteurs] = await Promise.all([
-    supabase().from('point_mention').select('point_id, ministere_id'),
+    supabase().from('v_point_mention').select('point_id, ministere_id'),
     idsAuteurs.length === 0
       ? Promise.resolve({ data: [] as AuteurTraitement[], error: null })
       : supabase()

@@ -1,14 +1,29 @@
-// Types des fonctions d'écriture des points d'attention (étape 5), dans le format de `communs.ts`.
-// La table `point_attention`, la vue `v_point` et `point_mention` sont déjà lues (communs.ts) ;
-// seules les trois fonctions de l'API s'ajoutent. Sources : supabase/migrations/
-// 20260930163204_fonctions_api.sql (signatures) et 20260930194240_correctifs_audit.sql (statut
-// courant). Écrit par le lot C0 ; les lots P1 à P4 ne le changent pas.
+// Types des points d'attention (étape 5), dans le format de `communs.ts`. La table `point_attention`
+// et la vue `v_point` sont déjà lues (communs.ts) ; s'ajoutent les trois fonctions de l'API
+// (`creer_point`, `changer_statut_point`, `marquer_traite`; sources : supabase/migrations/
+// 20260930163204_fonctions_api.sql et 20260930194240_correctifs_audit.sql) et, pour les mentions
+// modifiables (T54, 20261010122000_mentions_modifiables.sql), la table des retraits, la vue des
+// mentions en vigueur et trois fonctions.
 
-import type { Aucun, Priorite, StatutPoint } from './communs'
+import type { Priorite, StatutPoint, TableEnLecture, Vue } from './communs'
 
-export type TablesPoints = Aucun
+export type TablesPoints = {
+  /** Un retrait de mention (T54) : la ligne d'ajout qu'il annule, la date et le compte. */
+  point_mention_retrait: TableEnLecture<{
+    id: string
+    mention_id: string
+    saisi_le: string
+    saisi_par: string
+  }>
+}
 
-export type VuesPoints = Aucun
+export type VuesPoints = {
+  /**
+   * Mentions en vigueur (T54) : les lignes d'ajout de `point_mention` qui n'ont pas de retrait,
+   * pour les points que le compte lit. Un ministère retiré n'y figure plus.
+   */
+  v_point_mention: Vue<{ point_id: string; ministere_id: string }>
+}
 
 export type FonctionsPoints = {
   /**
@@ -43,6 +58,32 @@ export type FonctionsPoints = {
    */
   marquer_traite: {
     Args: { p_point_id: string; p_commentaire?: string | null }
+    Returns: undefined
+  }
+  /**
+   * Ajoute un ministère mentionné sur un point non traité (ministère créateur, berger ou conseil).
+   * Refus repris tels quels : « Ce ministère ne peut pas être mentionné. » (créateur, désactivé ou
+   * inconnu), « Ce ministère est déjà mentionné sur ce point. », « Ce point est traité : ses
+   * mentions ne changent plus. ».
+   */
+  ajouter_mention_point: {
+    Args: { p_point_id: string; p_ministere_id: string }
+    Returns: undefined
+  }
+  /**
+   * Retire un ministère mentionné. Refus : « Ce ministère n'est pas mentionné sur ce point. », « Ce
+   * point est traité : ses mentions ne changent plus. ».
+   */
+  retirer_mention_point: {
+    Args: { p_point_id: string; p_ministere_id: string }
+    Returns: undefined
+  }
+  /**
+   * Remplace les mentions par la liste envoyée : la base retire ceux qui n'y sont plus et ajoute les
+   * nouveaux, dans une seule transaction. Seuls les ajouts sont revérifiés.
+   */
+  modifier_mentions_point: {
+    Args: { p_point_id: string; p_mentions: string[] }
     Returns: undefined
   }
 }

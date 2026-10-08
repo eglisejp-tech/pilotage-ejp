@@ -7,6 +7,7 @@ import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
+import { ApercuJournal } from '@/features/journal/apercu/ApercuJournal'
 import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
 import { ApercuNouveauPoint } from '@/features/nouveau-point/apercu/ApercuNouveauPoint'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
@@ -24,6 +25,7 @@ import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
 import { Garde } from '@/features/session/Garde'
 import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
+import { ApercuModeration } from '@/features/moderation/apercu/ApercuModeration'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
@@ -64,8 +66,12 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'points-actions', element: <ApercuActionsPoint /> },
           // Lot P3 : écran 05 « Points d'attention » et « Mes points », lus par e2e/points.spec.ts.
           { path: 'points', element: <ApercuPoints /> },
+          // Lot L5 : écran 06 « Journal », « Mon journal » et « Journal technique ».
+          { path: 'journal', element: <ApercuJournal /> },
           // Lot L2 : écran 14 « Sessions » (actions simulées, aucune requête).
           { path: 'sessions', element: <ApercuSessions /> },
+          // Lot L6 : écran 15 « Modération » (décisions simulées, aucune requête).
+          { path: 'moderation', element: <ApercuModeration /> },
         ],
       },
     ]

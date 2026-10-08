@@ -21,7 +21,7 @@ describe('lirePointsListe', () => {
         ],
         error: null,
       },
-      point_mention: { data: [{ point_id: 'p1', ministere_id: 'com' }], error: null },
+      v_point_mention: { data: [{ point_id: 'p1', ministere_id: 'com' }], error: null },
       compte: {
         data: [
           { user_id: 'c1', ministere_id: null, libelle: 'Berger' },
@@ -50,7 +50,7 @@ describe('lirePointsListe', () => {
     const faux = fauxRequete({ v_point: { data: [], error: null } })
     courant.client = faux.client
     expect(await lirePointsListe()).toEqual({ points: [], mentions: [], auteurs: [] })
-    expect(faux.de('point_mention')).toHaveLength(0)
+    expect(faux.de('v_point_mention')).toHaveLength(0)
     expect(faux.de('compte')).toHaveLength(0)
   })
 
@@ -71,7 +71,7 @@ describe('lirePointsListe', () => {
     const points = { data: [{ id: 'p1', traite_par: 'c1' }], error: null }
     courant.client = fauxRequete({
       v_point: points,
-      point_mention: { data: null, error: new Error('mentions refusées') },
+      v_point_mention: { data: null, error: new Error('mentions refusées') },
     }).client
     await expect(lirePointsListe()).rejects.toThrow('mentions refusées')
 

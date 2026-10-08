@@ -24,8 +24,8 @@ export interface SemaineDeSaisie {
   dimanche: DateIso
 }
 
-/** « Choisir un autre dimanche » propose les 4 derniers dimanches (BRIEF, section 9). */
-export const DIMANCHES_PROPOSES = 4
+/** « Choisir un autre dimanche » propose les 8 derniers dimanches (BRIEF, section 9 ; T55). */
+export const DIMANCHES_PROPOSES = 8
 
 /**
  * Un dimanche avant midi : le dimanche du jour n'est pas encore le dimanche de référence. Seuls

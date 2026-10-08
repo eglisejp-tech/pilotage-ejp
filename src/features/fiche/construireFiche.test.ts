@@ -398,7 +398,7 @@ describe('construirePointsFiche', () => {
     expect(points[2]?.traite?.texte).toBe('Traité le 3 oct.')
   })
 
-  it('les identifiants des boutons viennent de v_point et de point_mention, point par point', () => {
+  it('les identifiants des boutons viennent de v_point et de v_point_mention, point par point', () => {
     const lectures = lecturesExempleFiche(false)
     const coordination = '10000000-0000-4000-8000-000000000003'
     const communication = '10000000-0000-4000-8000-000000000001'

@@ -1,5 +1,5 @@
-// Écritures des points d'attention (étape 5) : les trois fonctions de l'API, `creer_point`,
-// `changer_statut_point` et `marquer_traite`. Aucune écriture directe dans `point_attention`,
+// Écritures des points d'attention (étape 5) : les fonctions de l'API `creer_point`,
+// `changer_statut_point`, `marquer_traite` et `modifier_mentions_point` (T54). Aucune écriture directe dans `point_attention`,
 // `point_mention` ni `point_suivi` (CLAUDE.md : les points passent par des fonctions). Chaque
 // écriture valide ses valeurs par les schémas de base de ce fichier, les mêmes que ceux des
 // formulaires des lots P1 et P2 : une valeur invalide lève une erreur avant tout appel à la base.
@@ -33,6 +33,10 @@ export const MESSAGES_POINT = {
     mentionRefusee: 'Ce ministère ne peut pas être mentionné.',
     pointTraiteStatut: 'Ce point est traité : il ne change plus.',
     pointDejaTraite: 'Ce point est déjà traité.',
+    /** `modifier_mentions_point` : le point est traité, ses mentions ne changent plus. */
+    pointTraiteMentions: 'Ce point est traité : ses mentions ne changent plus.',
+    /** `modifier_mentions_point` : la liste n'a pas été envoyée. */
+    mentionsVides: 'Choisissez les ministères à mentionner.',
     statutVide: 'Choisissez un statut.',
     statutTraite: 'Utilisez le bouton Marquer traité.',
     commentaireLong: 'Le commentaire dépasse 280 caractères.',
@@ -50,6 +54,7 @@ export const MESSAGES_POINT = {
     creation: 'Point créé.',
     traite: 'Point marqué traité.',
     statut: (libelle: string) => `Statut enregistré : ${libelle}.`,
+    mentions: 'Mentions enregistrées.',
   },
 } as const
 
@@ -125,6 +130,9 @@ function texteFacultatif(max: number, message: string) {
 const schemaMentions = z
   .array(z.uuid(MESSAGES_POINT.refus.mentionRefusee))
   .transform((ids) => [...new Set(ids)])
+
+/** Ce que `modifier_mentions_point` reçoit : la liste voulue des ministères mentionnés (vide : aucun). */
+export const schemaBaseMentionsPoint = schemaMentions
 
 /** Ce que `creer_point` reçoit (la base contrôle le titre, l'échéance et les mentions). */
 export const schemaBaseNouveauPoint = z.object({
@@ -216,6 +224,21 @@ export async function marquerTraite(pointId: string, commentaire: string | null)
   const { error } = await supabase().rpc('marquer_traite', {
     p_point_id: schemaIdentifiant.parse(pointId),
     p_commentaire: schemaBaseCommentaireTraite.parse(commentaire),
+  })
+  if (error) throw error
+}
+
+/**
+ * Remplace les mentions d'un point non traité par la liste voulue (ministère créateur, berger ou
+ * conseil) : la base retire ceux qui n'y sont plus et ajoute les nouveaux, en une transaction, avec
+ * une ligne de journal par ajout et par retrait. Une liste vide retire toutes les mentions. La base
+ * refuse un point traité, un ministère qu'on ne peut pas mentionner (créateur, désactivé, inconnu)
+ * et un compte qui n'a pas ce droit (messages de `MESSAGES_POINT`).
+ */
+export async function modifierMentionsPoint(pointId: string, mentions: string[]): Promise<void> {
+  const { error } = await supabase().rpc('modifier_mentions_point', {
+    p_point_id: schemaIdentifiant.parse(pointId),
+    p_mentions: schemaBaseMentionsPoint.parse(mentions),
   })
   if (error) throw error
 }

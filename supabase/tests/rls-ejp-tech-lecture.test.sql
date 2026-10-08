@@ -7,12 +7,13 @@
 -- conseil, d'un ministère ou de l'administration, et ne lit rien en aal1.
 begin;
 
-select plan(174);
+select plan(182);
 
 -- Jeu d'essai : comptes du jeu d'exemple, plus un ministère A qui crée un point (il mentionne
 -- Communication), un événement et sa prochaine réunion.
 create temp table ctx as
 select tests.creer_ministere('EJP Tech lecture A') as a_m,
+       tests.creer_ministere('EJP Tech lecture B') as b_m,
        tests.compte('Berger') as berger,
        tests.compte('Conseil, compte 1') as conseil,
        tests.compte('Administration de l''église') as admin,
@@ -49,6 +50,14 @@ select ok((select count(*) from ctx
               and p1 is not null and ev is not null and reu is not null) = 1,
   'le jeu d''exemple et le jeu d''essai fournissent les comptes, le point, l''événement et la réunion');
 
+-- T54 : un retrait de mention existe, pour que point_mention_retrait ait une ligne à lire.
+select tests.se_connecter((select a from ctx), 'aal2');
+select lives_ok($$ select public.ajouter_mention_point((select p1 from ctx), (select b_m from ctx)) $$,
+  'jeu d''essai : A ajoute une mention au point');
+select lives_ok($$ select public.retirer_mention_point((select p1 from ctx), (select b_m from ctx)) $$,
+  'jeu d''essai : A retire cette mention (un retrait existe)');
+select tests.deconnecter();
+
 -- Lectures : chaque table et chaque vue que lit le berger, en aal2 puis en aal1.
 create temp table relation (ordre integer primary key, nom text not null);
 insert into relation (ordre, nom) values
@@ -63,9 +72,11 @@ insert into relation (ordre, nom) values
   (32, 'indicateur_terme'), (33, 'evenement_mention'), (34, 'fij_statistique'), (35, 'validation'),
   (36, 'categorie_sensible'), (37, 'v_mesure_periode'), (38, 'v_indicateur_serie'), (39, 'v_indicateur_suivi'),
   (40, 'v_calcul'), (41, 'v_commun_fiche'), (42, 'v_fij_statistique'), (43, 'v_ventilation_sensible'),
-  (44, 'v_precision_sensible');
+  (44, 'v_precision_sensible'),
+  -- Étape 5 : mentions modifiables d'un point (T54).
+  (45, 'point_mention_retrait'), (46, 'v_point_mention');
 
--- 44 relations x 3 essais = 132 assertions.
+-- 46 relations x 3 essais = 138 assertions.
 create function pg_temp.lectures() returns setof text
 language plpgsql as $$
 declare

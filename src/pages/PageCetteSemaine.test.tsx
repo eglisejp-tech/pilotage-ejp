@@ -267,9 +267,12 @@ describe('PageCetteSemaine', () => {
         const liens = within(ministeres).getAllByRole('link')
         expect(liens).toHaveLength(8)
         for (const lien of liens) expect(lien.getAttribute('href')).toMatch(/^\/ministeres\//)
-        // Étape 5 : « Marquer traité » est le seul bouton du berger et du conseil, aucun pour EJP Tech.
+        // Étape 5 : « Marquer traité » et « Modifier les mentions » (T54) sont les seuls boutons du
+        // berger et du conseil, aucun pour EJP Tech.
         const boutons = screen.queryAllByRole('button')
-        for (const bouton of boutons) expect(bouton).toHaveAccessibleName('Marquer traité')
+        for (const bouton of boutons) {
+          expect(bouton.textContent).toMatch(/^(Marquer traité|Modifier les mentions)$/)
+        }
         if (profil === 'admin_plateforme') expect(boutons).toHaveLength(0)
       },
     )

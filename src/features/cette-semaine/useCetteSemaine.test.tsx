@@ -30,7 +30,7 @@ function reponsesExemple(): Record<string, ReponseFausse> {
     v_tableau_ministeres: ok(lectures.tableauMinisteres),
     ministere: ok(lectures.ministeres),
     v_point: ok(lectures.points?.points ?? []),
-    point_mention: ok(lectures.points?.mentions ?? []),
+    v_point_mention: ok(lectures.points?.mentions ?? []),
   }
 }
 
@@ -86,7 +86,7 @@ describe('useCetteSemaine', () => {
       })
       await waitFor(() => expect(autre.current.donnees).not.toBeNull())
       expect(fauxAutre.de('v_point')).toHaveLength(0)
-      expect(fauxAutre.de('point_mention')).toHaveLength(0)
+      expect(fauxAutre.de('v_point_mention')).toHaveLength(0)
     }
   })
 

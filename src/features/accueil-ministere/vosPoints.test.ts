@@ -66,7 +66,7 @@ function lectures(): LecturesVosPoints {
 }
 
 describe('construireVosPoints : identifiants des boutons', () => {
-  it('statut, ministère créateur et mentions viennent de v_point et de point_mention, point par point', () => {
+  it('statut, ministère créateur et mentions viennent de v_point et de v_point_mention, point par point', () => {
     const points = construireVosPoints(lectures())
     const identifiants = points.map((p) => ({
       id: p.id,
