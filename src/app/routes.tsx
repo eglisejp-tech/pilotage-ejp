@@ -24,6 +24,7 @@ import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
 import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
 import { Garde } from '@/features/session/Garde'
 import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
+import { ApercuModeration } from '@/features/moderation/apercu/ApercuModeration'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
@@ -66,6 +67,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'points', element: <ApercuPoints /> },
           // Lot L2 : écran 14 « Sessions » (actions simulées, aucune requête).
           { path: 'sessions', element: <ApercuSessions /> },
+          // Lot L6 : écran 15 « Modération » (décisions simulées, aucune requête).
+          { path: 'moderation', element: <ApercuModeration /> },
         ],
       },
     ]
