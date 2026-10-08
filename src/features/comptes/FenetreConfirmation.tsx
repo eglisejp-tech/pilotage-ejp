@@ -10,6 +10,8 @@ interface Props {
   /** L'action confirmée ; la fenêtre se ferme par le parent quand elle réussit. */
   onConfirmer: () => Promise<void>
   onAnnuler: () => void
+  /** Phrase d'un refus (défaut : refus des fonctions de comptes). L'écran 14 donne la sienne. */
+  lireMessage?: (refus: unknown) => string
 }
 
 /**
@@ -18,7 +20,12 @@ interface Props {
  * revient au bouton d'origine à la fermeture. Un refus de la fonction s'affiche sous les boutons,
  * la fenêtre reste ouverte pour réessayer ou annuler.
  */
-export function FenetreConfirmation({ confirmation, onConfirmer, onAnnuler }: Props) {
+export function FenetreConfirmation({
+  confirmation,
+  onConfirmer,
+  onAnnuler,
+  lireMessage = (refus) => lireRefusCompte(refus).message,
+}: Props) {
   const idTitre = useId()
   const idTexte = useId()
   const fenetre = useRef<HTMLDivElement>(null)
@@ -35,7 +42,7 @@ export function FenetreConfirmation({ confirmation, onConfirmer, onAnnuler }: Pr
     try {
       await onConfirmer()
     } catch (refus) {
-      setErreur(lireRefusCompte(refus).message)
+      setErreur(lireMessage(refus))
       setEnCours(false)
     }
   }

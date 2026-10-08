@@ -7,9 +7,22 @@
 // Déjà typées ailleurs, à ne pas redéclarer ici : `v_session_completude` (communs.ts) et
 // `v_usage_indicateurs` (indicateurs.ts).
 
-import type { Aucun, TypeCompte, Vue } from './communs'
+import type { TableEnLecture, TypeCompte, TypeSession, Vue } from './communs'
 
-export type TablesComptes = Aucun
+export type TablesComptes = {
+  /** Sessions déclarées (L2) : lues par tous les profils de l'application, écrites par fonction. */
+  session: TableEnLecture<{
+    id: string
+    type: TypeSession
+    date: string
+    /** Nom du rassemblement, seulement pour le type « autre ». */
+    intitule: string | null
+    saisi_le: string
+    saisi_par: string
+  }>
+  /** Ministères attendus d'une session (L2). */
+  session_attendu: TableEnLecture<{ session_id: string; ministere_id: string }>
+}
 
 /**
  * État de la double authentification d'un compte, calculé par `private.etat_comptes()` : compte
@@ -34,4 +47,18 @@ export type VuesComptes = {
   }>
 }
 
-export type FonctionsComptes = Aucun
+export type FonctionsComptes = {
+  /**
+   * Déclare une session et ses ministères attendus (administration de l'église) : rend son
+   * identifiant. Refus repris tels quels : « Une session ... est déjà déclarée le ... », « Cochez
+   * au moins un ministère. », « Donnez un nom au rassemblement (80 caractères au plus). ».
+   */
+  declarer_session: {
+    Args: { p_type: TypeSession; p_date: string; p_intitule: string | null; p_ministeres: string[] }
+    Returns: string
+  }
+  /** Remplace les ministères attendus d'une session. */
+  modifier_session: { Args: { p_session_id: string; p_ministeres: string[] }; Returns: undefined }
+  /** Supprime une session sans aucune saisie. */
+  supprimer_session: { Args: { p_session_id: string }; Returns: undefined }
+}
