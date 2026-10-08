@@ -14,7 +14,7 @@ const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
 const TAILLE_PAGE = 50
 
 /** Actions qu'une ligne de signalement porte (T39) : le berger et le conseil n'en lisent aucune. */
-const SIGNALEMENTS = 'action.in.(difficulte_signalee,signalement_clos)'
+const SIGNALEMENTS = 'action=in.(difficulte_signalee,signalement_clos)'
 
 /** Libellés des actions que la liste fermée de l'administration ne laisse pas lire (T47, P50, P51). */
 const ACTIONS_HORS_ADMINISTRATION = [
