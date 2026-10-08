@@ -1099,3 +1099,12 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : réponses écrites de la personne responsable (8 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 8 octobre 2026, sauf la phrase de la page Confidentialité (Proposée)
 - **BRIEF** : section 7 (matrice : `acceptation_conditions`) et section 8 (routage : écran des conditions entre le code et l'application) ; `docs/conformite/registre-traitements.md` (fiche 1) ; `docs/reference/maquettes/LISEZMOI.md` (écran sans maquette)
+
+### T55. Saisie rétroactive : les 8 derniers dimanches
+
+- **Date** : 8 octobre 2026
+- **Sujet** : un ministère qui commence à utiliser l'outil veut rattraper des dimanches passés. « Choisir un autre dimanche » n'en proposait que 4.
+- **Décision** : « Choisir un autre dimanche » propose les **8 derniers dimanches** (`DIMANCHES_PROPOSES`, `src/features/saisie-chiffres/choixPeriode.ts`). La base acceptait déjà tout dimanche passé : aucune migration. « Chiffres du mois » ne change pas (le mois en cours et les deux précédents).
+- **Origine** : réponse écrite de la personne responsable (8 octobre 2026), « plutôt 8 derniers dimanches »
+- **Statut** : Décidé par la personne responsable le 8 octobre 2026
+- **BRIEF** : section 9 (saisie du dimanche, 08)
