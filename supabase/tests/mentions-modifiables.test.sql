@@ -100,7 +100,7 @@ create temp view matrice_mentions (profil, objet, action, aal, attendu, requete)
       'select 1 from public.v_point_mention where point_id = (select p2 from ctx)'),
      ('v_point', 'lire', array['1', '1', '0', '0', '1', '1', '0', '1'],
       'select 1 from public.v_point where id = (select p2 from ctx)'),
-     ('point_suivi', 'lire', array['1', '1', '0', '0', '1', '1', '0', '1'],
+     ('point_suivi', 'lire', array['2', '2', '0', '0', '2', '2', '0', '2'],
       'select 1 from public.point_suivi where point_id = (select p2 from ctx)'),
      ('point_mention', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'insert into public.point_mention (point_id, ministere_id) select p2, d_m from ctx'),
