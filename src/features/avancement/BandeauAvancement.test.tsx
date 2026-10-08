@@ -28,7 +28,7 @@ describe('BandeauAvancement', () => {
     const region = screen.getByRole('region', { name: "Avancement de l'outil" })
     expect(region.querySelector('[role="status"]')).toBeNull()
     expect(region).toHaveTextContent('6 étapes sur 8 en ligne.')
-    expect(region).toHaveTextContent('Prochaine : Sessions, prévue vendredi 9 oct.')
+    expect(region).toHaveTextContent('Prochaine : Journal et modération, prévue mercredi 14 oct.')
     const cases = container.querySelectorAll('[data-statut]')
     expect(cases).toHaveLength(8)
     expect(cases[0]?.parentElement).toHaveAttribute('aria-hidden', 'true')
@@ -61,7 +61,7 @@ describe('BandeauAvancement', () => {
     expect(etapes).toHaveLength(8)
     expect(etapes[5]).toHaveAttribute('aria-current', 'step')
     expect(etapes[0]).toHaveTextContent('■ En ligne')
-    expect(etapes[5]).toHaveTextContent('En partie : 2 parties sur 5 en ligne.')
+    expect(etapes[5]).toHaveTextContent('En partie : 3 parties sur 5 en ligne.')
     expect(screen.getAllByText('■ En ligne')).toHaveLength(6)
   })
 

@@ -24,12 +24,12 @@ describe('statutDe', () => {
 })
 
 describe('resumer', () => {
-  it('compte 6 étapes sur 8, prochaine : Sessions', () => {
+  it('compte 6 étapes sur 8, prochaine : Journal et modération', () => {
     const resume = resumer(ETAPES)
     expect(resume.enLigne).toBe(6)
     expect(resume.total).toBe(8)
     expect(resume.prochaine?.numero).toBe(6)
-    expect(resume.prochaine?.partie).toEqual({ quoi: 'Sessions', date: '2026-10-09' })
+    expect(resume.prochaine?.partie).toEqual({ quoi: 'Journal et modération', date: '2026-10-14' })
   })
 
   it("choisit la date la plus proche, pas l'ordre des étapes", () => {
@@ -56,7 +56,7 @@ describe('textes', () => {
     expect(notePanneau(MISE_A_JOUR)).toBe(
       'Point du 8 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
     )
-    expect(enPartie(ETAPES[5] as Etape)).toBe('En partie : 2 parties sur 5 en ligne.')
+    expect(enPartie(ETAPES[5] as Etape)).toBe('En partie : 3 parties sur 5 en ligne.')
     for (const e of ETAPES) {
       expect(JSON.stringify(e)).not.toMatch(new RegExp('[\u2013\u2014]'))
     }
