@@ -144,6 +144,30 @@ describe('routes', () => {
     expect(faux.from).not.toHaveBeenCalled()
   })
 
+  it("aal2 sans acceptation de la version courante : l'écran des conditions, ni onglets ni données, puis l'acceptation", async () => {
+    const faux = installer({ ...scenarioDe('ministere'), conditionsAcceptees: false })
+    const routeur = afficher('/points?vue=traites')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
+    ).toBeInTheDocument()
+    expect(routeur.state.location.pathname).toBe('/conditions-a-accepter')
+    expect(routeur.state.location.search).toBe('?retour=%2Fpoints%3Fvue%3Dtraites')
+    expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte'])
+
+    // Case décochée : message, aucune écriture.
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    expect(await screen.findByText('Cochez la case pour continuer.')).toBeInTheDocument()
+    expect(faux.rpc).not.toHaveBeenCalled()
+
+    // Case cochée : la fonction de la base est appelée avec la version courante.
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-08' }),
+    )
+  })
+
   it('aal1 sans facteur : activation, ni onglets ni données', async () => {
     const faux = connecte('ministere', 'aal1', [])
     const routeur = afficher('/')

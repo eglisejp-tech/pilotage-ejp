@@ -8,6 +8,7 @@
 
 import type { Aucun, EnumsCommuns, TablesCommunes, VuesCommunes } from './base/communs'
 import type { FonctionsComptes, TablesComptes, VuesComptes } from './base/comptes'
+import type { FonctionsConditions, TablesConditions } from './base/conditions'
 import type { FonctionsEvenements, TablesEvenements, VuesEvenements } from './base/evenements'
 import type { FonctionsFiche, TablesFiche, VuesFiche } from './base/fiche'
 import type { FonctionsFij, TablesFij, VuesFij } from './base/fij'
@@ -23,6 +24,7 @@ import type {
 
 export type * from './base/communs'
 export type * from './base/comptes'
+export type * from './base/conditions'
 export type * from './base/evenements'
 export type * from './base/fiche'
 export type * from './base/fij'
@@ -40,6 +42,7 @@ export type Database = {
       TablesFij &
       TablesEvenements &
       TablesSignalements &
+      TablesConditions &
       TablesPoints &
       TablesComptes &
       TablesJournal &
@@ -59,6 +62,7 @@ export type Database = {
       FonctionsFij &
       FonctionsEvenements &
       FonctionsSignalements &
+      FonctionsConditions &
       FonctionsPoints &
       FonctionsComptes &
       FonctionsJournal &

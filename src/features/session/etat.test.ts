@@ -17,6 +17,7 @@ function elements(partiel: Partial<ElementsSession> = {}): ElementsSession {
     niveau: { actuel: 'aal1', suivant: 'aal1' },
     compte,
     facteurVerifie: null,
+    conditionsAcceptees: true,
     ...partiel,
   }
 }
@@ -47,6 +48,34 @@ describe('deduireEtat', () => {
     expect(
       deduireEtat(elements({ niveau: { actuel: 'aal1', suivant: 'aal2' }, facteurVerifie: 'f1' })),
     ).toEqual({ statut: 'code', compte, email: 'communication@exemple.test', facteurId: 'f1' })
+  })
+
+  it("aal2 sans acceptation de la version courante (jamais acceptée, ou ancienne version) : conditions, avant l'application", () => {
+    const aal2 = { niveau: { actuel: 'aal2', suivant: 'aal2' } }
+    expect(deduireEtat(elements({ ...aal2, conditionsAcceptees: false }))).toEqual({
+      statut: 'conditions',
+      compte,
+      email: 'communication@exemple.test',
+    })
+  })
+
+  it("l'acceptation ne compte qu'en aal2 : en aal1, le code ou l'activation passent avant", () => {
+    expect(
+      deduireEtat(
+        elements({
+          niveau: { actuel: 'aal1', suivant: 'aal2' },
+          facteurVerifie: 'f1',
+          conditionsAcceptees: false,
+        }),
+      ).statut,
+    ).toBe('code')
+    expect(deduireEtat(elements({ conditionsAcceptees: false })).statut).toBe('activation')
+  })
+
+  it('aal2 et version courante acceptée : connecté', () => {
+    expect(deduireEtat(elements({ niveau: { actuel: 'aal2', suivant: 'aal2' } })).statut).toBe(
+      'connecte',
+    )
   })
 
   it('aal2 : connecté', () => {

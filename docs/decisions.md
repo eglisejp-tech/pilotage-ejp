@@ -1082,3 +1082,20 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : choix écrit de la personne responsable (7 octobre 2026), entre les deux options présentées
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026. La phrase des sauvegardes de la page Confidentialité est validée par sa réponse écrite du 8 octobre 2026 (« Ok »)
 - **BRIEF** : section 8 (durées de session, protection des mots de passe) et section 13 (étape 8, environnements) ; `docs/exploitation.md` (sections 3, 5, 7, 9 et 14) ; `docs/conformite/registre-traitements.md` ; `DEMARRAGE.md` (serveur MCP Supabase retiré)
+
+## Décision de la personne responsable du 8 octobre 2026 sur l'acceptation des conditions
+
+### T53. Acceptation des conditions d'utilisation à la connexion
+
+- **Date** : 8 octobre 2026
+- **Sujet** : la personne responsable veut que chaque compte accepte les conditions d'utilisation, et prenne connaissance de la politique de confidentialité, avant d'utiliser l'outil.
+- **Décision** (réponses écrites de la personne responsable) :
+  - Après l'activation (mot de passe choisi, double authentification active) ou à une connexion ultérieure, un compte qui n'a pas accepté la **version courante** voit un écran avant l'application : une case décochée « J'accepte les conditions d'utilisation et j'ai pris connaissance de la politique de confidentialité », deux liens (`/conditions`, `/confidentialite`) qui s'ouvrent dans un nouvel onglet et le disent, et un bouton « Accepter et continuer ». Les conditions sont **acceptées** ; la politique n'est que **portée à la connaissance** (jamais un consentement).
+  - Pas de bouton « Refuser » (choix de la personne responsable) ; « Se déconnecter » reste. Sans case cochée : « Cochez la case pour continuer. » (le bouton n'est jamais grisé).
+  - L'acceptation est **par compte** (un compte de ministère est partagé).
+  - Elle est redemandée **seulement quand la version change** : une constante `VERSION_CONDITIONS` (`src/lib/metier/conditions.ts`, `2026-10-08` au départ), changée à la main quand les conditions ou la page Confidentialité changent sur le fond. Une faute de frappe corrigée ne la change pas. L'écran affiche la date de la version (« Conditions du 8 octobre 2026 »).
+  - **Modèle de données** (changement approuvé par la personne responsable) : table `acceptation_conditions` (compte, version, `saisi_le`, `saisi_par`), en ajout seulement, une ligne par compte et par version, lue **par le compte lui-même et par EJP Tech seul** (ni l'administration, ni le berger, ni le conseil, ni un autre ministère). Écrite par `accepter_conditions(p_version)`, idempotente, **sans ligne de journal** (l'administration lit le journal). Migration `20261010121000_acceptation_conditions.sql`.
+- **Proposé, à valider par la personne responsable** : la phrase ajoutée à « Données traitées » de la page Confidentialité (« La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech seul la lit. ») et la date « Dernière mise à jour » portée au 8 octobre 2026. Les textes de l'écran sont aussi proposés (titre « Conditions d'utilisation », phrase d'introduction, libellés des deux liens).
+- **Origine** : réponses écrites de la personne responsable (8 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 8 octobre 2026, sauf la phrase de la page Confidentialité (Proposée)
+- **BRIEF** : section 7 (matrice : `acceptation_conditions`) et section 8 (routage : écran des conditions entre le code et l'application) ; `docs/conformite/registre-traitements.md` (fiche 1) ; `docs/reference/maquettes/LISEZMOI.md` (écran sans maquette)

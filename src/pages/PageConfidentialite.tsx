@@ -13,14 +13,15 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * coordination le 5 octobre 2026 (docs/decisions.md, T17). Mise à jour du 7 octobre 2026 pour
  * l'étape 4 (lot I) : chiffres sensibles (K56, P42, P45 à P47, P50, et P52 : valeurs exactes pour
  * le berger, le conseil et EJP Tech), signalements (T39) et envoi des emails par le Gmail gratuit
- * d'EJP Tech (T40), selon docs/conformite/.
+ * d'EJP Tech (T40), selon docs/conformite/. Mise à jour du 8 octobre 2026 : acceptation des
+ * conditions par compte (T53), phrase proposée dans « Données traitées », à valider.
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 7 octobre 2026.
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 8 octobre 2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
         <PartieTexte titre="Responsable du traitement">
@@ -57,6 +58,10 @@ export function PageConfidentialite() {
               connecte avec Google. L'outil ne les affiche pas et ne les copie pas.
             </li>
             <li>Les adresses IP, dans les journaux techniques de Supabase et de Netlify.</li>
+            <li>
+              La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech
+              seul la lit.
+            </li>
             <li>
               Les signalements (« Signaler une difficulté ») : un court message qu'un ministère
               adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech

@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { PageAcceptation } from '@/features/acceptation/PageAcceptation'
 import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
@@ -95,6 +96,10 @@ export const routes: RouteObject[] = [
       {
         element: <Garde zone="double-authentification" />,
         children: [{ path: '/double-authentification', element: <PageDoubleAuthentification /> }],
+      },
+      {
+        element: <Garde zone="conditions" />,
+        children: [{ path: '/conditions-a-accepter', element: <PageAcceptation /> }],
       },
       {
         element: (

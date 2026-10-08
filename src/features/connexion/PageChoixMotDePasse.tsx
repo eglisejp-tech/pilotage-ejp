@@ -26,7 +26,10 @@ export function PageChoixMotDePasse() {
     }
   }
 
-  const compte = etat.statut === 'activation' || etat.statut === 'connecte' ? etat : null
+  const compte =
+    etat.statut === 'activation' || etat.statut === 'conditions' || etat.statut === 'connecte'
+      ? etat
+      : null
 
   return (
     <EcranMotDePasse
