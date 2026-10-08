@@ -60,11 +60,12 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await expect(page.getByText('Cochez la case pour continuer.')).toBeVisible()
   expect(await lireMesAcceptations(page)).toEqual([])
 
-  // Avec la case : l'accueil du profil, et une ligne d'acceptation pour ce compte.
+  // Avec la case : retour à l'adresse demandée avant l'écran (« Mes points »), et une ligne
+  // d'acceptation pour ce compte.
   await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
   await bouton.click()
-  await expect(page).toHaveURL((url) => url.pathname === '/')
-  await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
+  await expect(page).toHaveURL((url) => url.pathname === '/points')
+  await expect(page).toHaveTitle('Mes points, Pilotage EJP')
   const lignes = await lireMesAcceptations(page)
   expect(lignes).toHaveLength(1)
   expect(lignes[0]?.version).toBe(VERSION_CONDITIONS)

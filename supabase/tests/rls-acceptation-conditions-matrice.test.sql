@@ -135,9 +135,10 @@ select throws_ok($$ truncate public.acceptation_conditions $$,
   'acceptation_conditions : le propriétaire ne peut pas la vider');
 
 -- Contraintes : version mal formée et doublon refusés même en direct.
-select throws_ok($$ insert into public.acceptation_conditions (compte, version) select a, 'v1' from ctx $$,
+-- Le propriétaire n'a pas de compte de l'application : il donne saisi_par lui-même.
+select throws_ok($$ insert into public.acceptation_conditions (compte, version, saisi_par) select a, 'v1', a from ctx $$,
   '23514', null::text, 'acceptation_conditions : une version mal formée est refusée par la table');
-select throws_ok($$ insert into public.acceptation_conditions (compte, version) select a, '2026-01-01' from ctx $$,
+select throws_ok($$ insert into public.acceptation_conditions (compte, version, saisi_par) select a, '2026-01-01', a from ctx $$,
   '23505', null::text, 'acceptation_conditions : une version déjà acceptée par le compte est refusée par la table');
 
 select * from finish();

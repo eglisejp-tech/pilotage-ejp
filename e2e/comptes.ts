@@ -179,6 +179,8 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   const chemins: string[] = []
   page.on('request', (requete) => {
     const url = new URL(requete.url())
+    // L'acceptation des conditions est lue par la session en aal2 (T53), comme la ligne de compte.
+    if (url.pathname === '/rest/v1/acceptation_conditions') return
     if (url.pathname.startsWith('/rest/v1/')) chemins.push(url.pathname)
   })
   return chemins
