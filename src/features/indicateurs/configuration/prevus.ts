@@ -70,22 +70,33 @@ function modeleDuMinistere(
   return modeles.find((modele) => modele.code === nomNormalise) ?? null
 }
 
-/**
- * État des prévus d'un ministère : `indicateurs` sont les siens, tous états.
- * `aucunEnregistre` : la réponse « Aucun prévu » est dans le journal.
- */
-export function etatPrevus(
-  nom: string,
+/** Codes de modèle des indicateurs donnés. */
+function codesDe(
   indicateurs: readonly Pick<IndicateurConfiguration, 'modele_code'>[],
-  modeles: readonly ModeleCatalogue[],
-  aucunEnregistre: boolean,
-): EtatPrevus {
-  const codesCrees = new Set(
+): Set<string> {
+  return new Set(
     indicateurs.flatMap((indicateur) =>
       indicateur.modele_code === null ? [] : [indicateur.modele_code],
     ),
   )
-  const modele = modeleDuMinistere(nom, codesCrees, aucunEnregistre, modeles)
+}
+
+/**
+ * État des prévus d'un ministère : `indicateurs` sont les siens, tous états.
+ * `aucunEnregistre` : la réponse « Aucun prévu » est dans le journal.
+ * Le modèle se déduit des seuls indicateurs non retirés (correctif du 8 octobre 2026 : des prévus
+ * d'un autre modèle, créés par erreur puis retirés, faisaient croire à ce modèle). Un prévu retiré
+ * ne manque pas pour autant : la base ne le recrée jamais (creer_indicateurs_prevus).
+ */
+export function etatPrevus(
+  nom: string,
+  indicateurs: readonly Pick<IndicateurConfiguration, 'modele_code' | 'etat'>[],
+  modeles: readonly ModeleCatalogue[],
+  aucunEnregistre: boolean,
+): EtatPrevus {
+  const codesSuivis = codesDe(indicateurs.filter((indicateur) => indicateur.etat !== 'retire'))
+  const codesCrees = codesDe(indicateurs)
+  const modele = modeleDuMinistere(nom, codesSuivis, aucunEnregistre, modeles)
   if (modele === null) return aucunEnregistre ? { genre: 'aucun' } : { genre: 'a_choisir' }
   const manquants = modele.prevus.filter((prevu) => !codesCrees.has(prevu.code))
   return manquants.length > 0 ? { genre: 'a_creer', modele, manquants } : { genre: 'crees', modele }
