@@ -54,7 +54,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 7 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 8 octobre 2026.",
     )
   })
 
@@ -103,6 +103,15 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(texteDe(partie('Qui voit les données'))).toMatch(
       /le berger et le conseil voient l'ensemble, sauf les signalements ;/,
     )
+  })
+
+  it("annonce l'acceptation des conditions dans « Données traitées » : date et version, lues par EJP Tech seul (T53)", () => {
+    afficher()
+    const acceptation = elementExact(
+      'li',
+      'La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech seul la lit.',
+    )
+    expect(partie('Données traitées')).toContainElement(acceptation)
   })
 
   it("parle d'une seule boîte Gmail, celle d'EJP Tech, et des transferts propres à Google et à Netlify", () => {

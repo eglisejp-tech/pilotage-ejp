@@ -101,6 +101,16 @@ export const COMPTES_PROFILS: CompteTest[] = [
 /** Compte pour le parcours « Se déconnecter » (sa propre session, pas celle des autres tests). */
 export const COMPTE_DECONNEXION = { email: 'conseil3@exemple.test', libelle: 'Conseil, compte 3' }
 
+/**
+ * Compte qui n'a pas accepté les conditions (T53) : le script d'installation accepte la version
+ * courante pour tous les autres comptes à facteur, pour que les parcours existants ne voient pas
+ * l'écran d'acceptation. Seul e2e/base/acceptation-conditions.ecriture.spec.ts utilise ce compte.
+ */
+export const COMPTE_CONDITIONS = {
+  email: 'junior@exemple.test',
+  libelle: 'Ministère Prodiges Junior',
+}
+
 /** Compte laissé sans facteur par le script : il doit passer par l'activation. */
 export const COMPTE_SANS_FACTEUR = {
   email: 'formation@exemple.test',

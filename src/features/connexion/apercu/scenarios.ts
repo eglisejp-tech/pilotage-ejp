@@ -50,6 +50,7 @@ export const clesEcransSimules = [
   'nouveau-mot-de-passe',
   'mot-de-passe-oublie',
   'compte-desactive',
+  'acceptation',
 ] as const
 
 export type CleEcranSimule = (typeof clesEcransSimules)[number]
@@ -117,6 +118,14 @@ export const ecransSimules: Record<
     },
   },
   'compte-desactive': { libelle: 'Compte désactivé', etats: { normal: etatNormal } },
+  acceptation: {
+    libelle: 'Acceptation des conditions (T53, sans maquette)',
+    etats: {
+      normal: etatNormal,
+      'en-cours': { libelle: 'Enregistrement en cours', enCours: true },
+      'erreur-reseau': erreurReseau,
+    },
+  },
 }
 
 export function estCleEcranSimule(valeur: string | null): valeur is CleEcranSimule {

@@ -194,7 +194,13 @@ archivage du dépôt du code.
   - adresses IP et historique des connexions, dans les journaux techniques de Supabase et de
     Netlify ;
   - jeton de connexion gardé dans le navigateur jusqu'à la déconnexion (nécessaire au
-    fonctionnement, sans consentement à donner).
+    fonctionnement, sans consentement à donner) ;
+  - date à laquelle chaque compte accepte les conditions d'utilisation, et version acceptée
+    (T53, décidé le 8 octobre 2026). La politique de confidentialité est portée à la connaissance
+    du compte, jamais soumise à consentement. La ligne est ajoutée une seule fois par version,
+    sans journal ; seuls le compte lui-même (pour savoir s'il doit accepter) et EJP Tech la lisent.
+    La phrase correspondante de la page Confidentialité est proposée, à valider par la personne
+    responsable.
 - **Données sensibles** : un compte dans l'outil d'une église peut révéler une appartenance
   religieuse (article 9). L'article 9.2.d permet ce traitement à quatre conditions :
 
@@ -216,6 +222,8 @@ archivage du dépôt du code.
     Supabase ;
   - tous les comptes voient les libellés des comptes (jamais l'email : il n'est copié dans aucune
     table lisible par l'application) ;
+  - EJP Tech lit les acceptations des conditions de tous les comptes ; ni l'administration, ni le
+    berger, ni le conseil, ni un autre ministère ne les lisent ;
   - Supabase et Google, comme prestataires.
 - **Prestataires et lieu** : Supabase (connexion, région Paris), Google (connexion avec Google),
   Netlify (site).
@@ -532,5 +540,8 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 | 1 (projet)   | 6 octobre 2026 | EJP Tech | Première rédaction, à valider par la coordination                                                                                                                                                                                                                                     |
 | 1.1 (projet) | 6 octobre 2026 | EJP Tech | Fiche 2 : mois en cours accepté, texte « Précision » et répartition par catégories des indicateurs sensibles, après la décision de la personne responsable                                                                                                                            |
 | 1.2 (projet) | 7 octobre 2026 | EJP Tech | Fiche 2 : valeurs exactes des sensibles pour le berger, le conseil et EJP Tech (P52). Fiche 4 : lecture du journal (T45, T46, T47). Fiche 5 : SMTP décidé (T08). Fiche 6 : décidée et construite, crochets et longs numéros refusés (T43). Google : aucun contrat, connexion comprise |
+
+Ajout du 8 octobre 2026 (sans changer la version du document) : fiche 1, acceptation des conditions
+par compte (T53).
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

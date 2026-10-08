@@ -16,6 +16,7 @@ const ECRANS = [
   { ecran: 'nouveau-mot-de-passe', titre: 'Nouveau mot de passe' },
   { ecran: 'mot-de-passe-oublie', titre: 'Mot de passe oublié' },
   { ecran: 'compte-desactive', titre: 'Compte désactivé' },
+  { ecran: 'acceptation', titre: "Conditions d'utilisation" },
 ] as const
 
 // États non dessinés ou d'erreur, audités eux aussi.
@@ -33,6 +34,8 @@ const ETATS = [
     titre: 'Choisissez votre mot de passe',
   },
   { adresse: 'ecran=mot-de-passe-oublie&etat=envoye', titre: 'Mot de passe oublié' },
+  { adresse: 'ecran=acceptation&etat=erreur-reseau', titre: "Conditions d'utilisation" },
+  { adresse: 'ecran=acceptation&etat=en-cours', titre: "Conditions d'utilisation" },
 ] as const
 
 async function ouvrir(page: Page, adresse: string, titre: string) {
@@ -56,6 +59,8 @@ test.describe('écrans de connexion (aperçu)', () => {
   }
 
   test("les états d'erreur, de chargement et de réussite sont accessibles", async ({ page }) => {
+    // Une douzaine de chargements et d'audits dans un seul test : 30 s ne suffisent pas toujours.
+    test.slow()
     for (const { adresse, titre } of ETATS) {
       await ouvrir(page, adresse, titre)
       await auditer(page)
@@ -122,6 +127,24 @@ test.describe('écrans de connexion (aperçu)', () => {
     )
   })
 
+  test("acceptation : sans case cochée le message s'affiche, puis l'acceptation part", async ({
+    page,
+  }) => {
+    await ouvrir(page, 'ecran=acceptation', "Conditions d'utilisation")
+    await expect(page.getByText('Conditions du 8 octobre 2026')).toBeVisible()
+    const bouton = page.getByRole('button', { name: 'Accepter et continuer' })
+    await expect(bouton).toBeEnabled()
+    await bouton.click()
+    await expect(page.getByText('Cochez la case pour continuer.')).toBeVisible()
+    await expect(page.getByText('Dernière action simulée')).toContainText('aucune.')
+
+    await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
+    await bouton.click()
+    await expect(page.getByText('Dernière action simulée')).toContainText(
+      'onAccept, acceptation des conditions.',
+    )
+  })
+
   test('code : un code collé avec une espace remplit le champ, puis la vérification part', async ({
     page,
   }) => {
@@ -156,6 +179,7 @@ test.describe('écrans de connexion (aperçu)', () => {
 
   test('captures en 1440 et 390 px', { tag: '@captures' }, async ({ page }, infos) => {
     test.skip(infos.project.name !== 'ordinateur', 'Une seule série de captures.')
+    test.slow()
     const captures: {
       nom: string
       adresse: string
