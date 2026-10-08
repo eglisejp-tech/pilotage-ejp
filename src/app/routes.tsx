@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
@@ -41,6 +42,7 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
         children: [
           { path: 'cette-semaine', element: <ApercuCetteSemaine /> },
           { path: 'navigation', element: <ApercuNavigation /> },
+          { path: 'avancement', element: <ApercuAvancement /> },
           // Lot L1 : écran 13, « Ministères et comptes » (actions simulées, aucune requête).
           { path: 'comptes', element: <ApercuComptes /> },
           // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.

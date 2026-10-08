@@ -22,6 +22,7 @@ export function MiseEnPageConnectee() {
       accueil={accueil(compte.type)}
       onSignOut={() => void deconnecter()}
       deconnexionEnCours={deconnexionEnCours}
+      avecBandeau
     >
       <Outlet />
     </MiseEnPage>

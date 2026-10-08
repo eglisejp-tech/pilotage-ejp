@@ -22,6 +22,7 @@ export function MiseEnPageApercu() {
       onglets={onglets}
       accueil={ici}
       onSignOut={() => undefined}
+      avecBandeau={pathname === '/apercu/avancement'}
     >
       <Outlet />
     </MiseEnPage>
