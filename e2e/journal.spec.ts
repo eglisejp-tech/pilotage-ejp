@@ -5,7 +5,8 @@ import type { Page } from '@playwright/test'
 // Écran 06 « Journal », « Mon journal » et « Journal technique » (lot L5) sur l'aperçu
 // /apercu/journal, sans base ni écriture : les lignes d'exemple lues par chaque profil, les
 // filtres dans l'adresse, les 50 lignes puis « Afficher 50 lignes de plus » et les états. Trois
-// formats par les projets Playwright. L'exemple compte 79 lignes ; le berger en lit 73 sur les 30
+// formats par les projets Playwright. Ce que la base laisse lire à chaque profil (RLS et `v_journal`)
+// est vérifié dans `e2e/base/journal.spec.ts`, avec la base de la CI : l'aperçu n'en rejoue que la copie. L'exemple compte 79 lignes ; le berger en lit 73 sur les 30
 // derniers jours (BRIEF, section 9), 75 sur 3 mois et 77 depuis le début.
 
 type Ecran = {
@@ -47,6 +48,7 @@ const TOUS: Ecran[] = [
   { profil: 'berger', action: 'session_supprimee' },
   { profil: 'berger', etat: 'chargement' },
   { profil: 'berger', etat: 'erreur' },
+  { profil: 'berger', etat: 'relecture' },
 ]
 
 const lignes = (page: Page) =>
@@ -242,6 +244,20 @@ test.describe('états (T36)', () => {
     await expect(page.getByRole('alert')).toHaveText(/La connexion a échoué. Réessayez./)
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
   })
+
+  test('une page qui échoue garde les lignes et les filtres : le bandeau est sous la liste', async ({
+    page,
+  }) => {
+    await ouvrir(page, { etat: 'relecture', action: 'mesure_saisie' })
+    await expect(page.getByRole('combobox', { name: 'Action' })).toHaveValue('mesure_saisie')
+    expect(await lignes(page).count()).toBeGreaterThan(0)
+    const bandeau = page.getByRole('alert')
+    await expect(bandeau).toHaveText(/La connexion a échoué. Réessayez./)
+    await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+    const liste = await page.getByRole('list', { name: 'Lignes du journal' }).boundingBox()
+    const alerte = await bandeau.boundingBox()
+    expect(alerte?.y ?? 0).toBeGreaterThan((liste?.y ?? 0) + (liste?.height ?? 0) - 1)
+  })
 })
 
 test.describe('accessibilité', () => {
@@ -260,6 +276,7 @@ test.describe('accessibilité', () => {
       { profil: 'berger', ministere: 'min-jeunesse' },
       { profil: 'ministere' },
       { etat: 'erreur' },
+      { etat: 'relecture' },
     ]) {
       await ouvrir(page, ecran)
       const cibles = page.getByRole('main').locator('a:visible, button:visible, select:visible')

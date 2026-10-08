@@ -8,6 +8,7 @@ import { ListeJournal } from '@/features/journal/ListeJournal'
 import type { DonneesJournal } from '@/features/journal/modeleJournal'
 import { TEXTES_JOURNAL } from '@/features/journal/textesJournal'
 import type { TypeCompte } from '@/lib/base'
+import { ErreurDePage } from '@/pages/ErreurDePage'
 
 interface Props {
   /** « Journal », « Mon journal » ou « Journal technique ». */
@@ -18,6 +19,11 @@ interface Props {
   surFiltres: (suivants: FiltresJournal) => void
   /** « Afficher 50 lignes de plus ». */
   surPlus: () => void
+  /**
+   * Relance la lecture qui a échoué alors que des lignes sont déjà à l'écran ; null : rien n'a
+   * échoué. Les lignes et les filtres restent, le bandeau d'erreur s'ajoute sous la liste.
+   */
+  surReessayer?: (() => void) | null
 }
 
 const classeBouton =
@@ -30,8 +36,16 @@ const classeBouton =
  * 50 lignes de plus ». Les filtres sont dans l'adresse. Sans ligne : « Aucune ligne pour ces
  * filtres. » et « Retirer les filtres ».
  */
-export function VueJournal({ titre, profil, donnees, surFiltres, surPlus }: Props) {
+export function VueJournal({
+  titre,
+  profil,
+  donnees,
+  surFiltres,
+  surPlus,
+  surReessayer = null,
+}: Props) {
   const { filtres, lignes, aPlus, enMiseAJour } = donnees
+  const enEchec = surReessayer !== null && !enMiseAJour
   const compteur = useRef<HTMLParagraphElement>(null)
   const aDemandePlus = useRef(false)
 
@@ -67,7 +81,7 @@ export function VueJournal({ titre, profil, donnees, surFiltres, surPlus }: Prop
           <>
             <ListeJournal lignes={lignes} />
             <div className="flex flex-col items-start gap-3 pt-5">
-              {aPlus ? (
+              {aPlus && !enEchec ? (
                 <button
                   type="button"
                   className={classeBouton}
@@ -90,6 +104,15 @@ export function VueJournal({ titre, profil, donnees, surFiltres, surPlus }: Prop
             </div>
           </>
         )}
+        {enEchec && surReessayer ? (
+          <div className="pt-5">
+            <ErreurDePage
+              message={TEXTES_JOURNAL.erreur}
+              libelleBouton={TEXTES_JOURNAL.reessayer}
+              onReessayer={surReessayer}
+            />
+          </div>
+        ) : null}
       </div>
     </div>
   )

@@ -1,4 +1,5 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { TAILLE_PAGE_JOURNAL } from '@/data/journal'
 import {
   AUJOURDHUI_EXEMPLE,
   COMMUNS_EXEMPLE,
@@ -18,8 +19,23 @@ import { construireJournal, contexteJournal } from '@/features/journal/construir
 import type { FiltresJournal } from '@/features/journal/filtres'
 import type { DonneesJournal } from '@/features/journal/modeleJournal'
 import { debutDePeriode } from '@/features/journal/periodes'
-import { useLimiteJournal } from '@/features/journal/useLimiteJournal'
 import type { TypeCompte } from '@/lib/base'
+
+/**
+ * Nombre de lignes montrées : 50 d'abord, puis 50 de plus à chaque « Afficher 50 lignes de plus ».
+ * Changer un filtre revient à 50. L'aperçu lit un tableau en mémoire : il peut relire depuis le
+ * début avec une limite plus grande, ce que la vraie lecture ne fait pas (elle reprend après la
+ * dernière ligne lue, `useJournal`).
+ */
+function useLimiteDApercu(filtres: FiltresJournal): { limite: number; afficherPlus: () => void } {
+  const cle = JSON.stringify(filtres)
+  const [demande, setDemande] = useState({ cle, limite: TAILLE_PAGE_JOURNAL })
+  const limite = demande.cle === cle ? demande.limite : TAILLE_PAGE_JOURNAL
+  return {
+    limite,
+    afficherPlus: () => setDemande({ cle, limite: limite + TAILLE_PAGE_JOURNAL }),
+  }
+}
 
 /**
  * Ce que `useJournal` rend à la page, lu dans le journal d'exemple au lieu de la base : mêmes
@@ -45,7 +61,7 @@ export function useJournalDExemple(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [brut.compte, brut.action, brut.periode, brut.ministere, choix],
   )
-  const { limite, afficherPlus } = useLimiteJournal(filtres)
+  const { limite, afficherPlus } = useLimiteDApercu(filtres)
 
   const donnees = useMemo<DonneesJournal>(() => {
     const lecture = vide
@@ -56,6 +72,7 @@ export function useJournalDExemple(
             action: filtres.action,
             ministere: filtres.ministere,
             depuis: debutDePeriode(filtres.periode, AUJOURDHUI_EXEMPLE),
+            apres: null,
             limite,
           },
           profil,

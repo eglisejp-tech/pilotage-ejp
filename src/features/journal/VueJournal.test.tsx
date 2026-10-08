@@ -55,6 +55,7 @@ describe('écran 06 lu par le berger', () => {
         action: null,
         ministere: null,
         depuis: debutDePeriode('30j', '2026-10-01'),
+        apres: null,
         limite: 500,
       },
       'berger',
@@ -63,6 +64,16 @@ describe('écran 06 lu par le berger', () => {
     expect(lignes()).toHaveLength(total)
     expect(screen.queryByRole('button', { name: /Afficher 50 lignes de plus/ })).toBeNull()
     expect(screen.getByText(`Toutes les lignes sont affichées (${total}).`)).toHaveFocus()
+  })
+
+  it('une relecture en échec garde les lignes et les filtres : bandeau et « Réessayer » sous la liste', () => {
+    afficher('/apercu/journal?etat=relecture&action=mesure_saisie')
+    expect(lignes().length).toBeGreaterThan(0)
+    expect(screen.getByRole('combobox', { name: 'Action' })).toHaveValue('mesure_saisie')
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    // Le bandeau remplace « Afficher 50 lignes de plus » : un seul geste pour continuer.
+    expect(screen.queryByRole('button', { name: /Afficher 50 lignes de plus/ })).toBeNull()
   })
 
   it('un filtre se lit dans l’adresse et revient à 50 lignes', async () => {

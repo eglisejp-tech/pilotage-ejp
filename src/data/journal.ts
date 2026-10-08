@@ -36,7 +36,16 @@ export type SessionJournal = Pick<LigneTable<'session'>, 'id' | 'type' | 'date' 
 /** Compte du filtre « Compte » : son libellé (« Berger », « Conseil, compte 3 », un ministère). */
 export type CompteJournal = Pick<LigneTable<'compte'>, 'user_id' | 'libelle' | 'desactive_le'>
 
-/** Ce que demande l'écran : les filtres choisis, le début de la période et le nombre de lignes. */
+/**
+ * Place dans le journal : la date et le numéro de la dernière ligne lue. La page suivante est celle
+ * des lignes plus anciennes que celle-ci, quel que soit ce qui s'est ajouté entre-temps.
+ */
+export interface CurseurJournal {
+  le: string
+  id: number
+}
+
+/** Ce que demande l'écran : les filtres choisis, le début de la période et une page de lignes. */
 export interface DemandeJournal {
   /** Compte auteur des lignes (`compte` de la ligne), ou null pour tous. */
   compte: string | null
@@ -49,7 +58,9 @@ export interface DemandeJournal {
   ministere: string | null
   /** Début de la période : instant ISO du premier jour de Paris. Null : depuis le début. */
   depuis: string | null
-  /** Nombre de lignes à rendre, au plus. */
+  /** Dernière ligne déjà lue : la page rendue commence juste après elle. Null : la première page. */
+  apres: CurseurJournal | null
+  /** Nombre de lignes à rendre, au plus (bien en dessous du plafond de 1000 lignes de la base). */
   limite: number
 }
 
@@ -58,6 +69,8 @@ export interface PageJournal {
   lignes: LigneJournal[]
   /** Vrai s'il reste des lignes après celles-ci : « Afficher 50 lignes de plus ». */
   aPlus: boolean
+  /** Où reprendre pour la page suivante ; null quand il ne reste rien. */
+  suivant: CurseurJournal | null
   /** Les sessions citées par les lignes rendues. */
   sessions: SessionJournal[]
 }
@@ -70,10 +83,24 @@ function identifiantSur(valeur: string, nom: string): string {
   return valeur
 }
 
+/** Instant ISO tel que la base le rend : chiffres, `T`, `:`, `.`, `+`, `-` et `Z`, rien d'autre. */
+const INSTANT = /^\d{4}-\d{2}-\d{2}[T ][0-9:.]{5,20}(?:Z|[+-]\d{2}(?::?\d{2})?)?$/
+
+/** Condition « plus ancienne que ce curseur » (date décroissante, puis numéro décroissant). */
+function conditionApres(curseur: CurseurJournal): string {
+  if (!INSTANT.test(curseur.le) || !Number.isSafeInteger(curseur.id)) {
+    throw new RangeError('Curseur de journal invalide')
+  }
+  return `le.lt.${curseur.le},and(le.eq.${curseur.le},id.lt.${curseur.id})`
+}
+
 /**
- * Les lignes de journal du plus récent au plus ancien, avec les filtres demandés. Elle lit une
- * ligne de plus que `limite` pour savoir s'il en reste, puis, en même temps, les sessions que les
- * lignes citent (leur nom n'est pas dans le journal). Un échec de l'une ou l'autre lecture remonte.
+ * Une page de lignes de journal, du plus récent au plus ancien, avec les filtres demandés. Elle lit
+ * une ligne de plus que `limite` pour savoir s'il en reste, puis, en même temps, les sessions que
+ * les lignes citent (leur nom n'est pas dans le journal). La page suivante reprend après le
+ * curseur `suivant` : elle ne relit jamais les lignes déjà montrées, et la base ne rend jamais plus
+ * de `limite + 1` lignes (son plafond de 1000 lignes par réponse ne coupe rien). Un échec de l'une
+ * ou l'autre lecture remonte.
  */
 export async function lireJournal(demande: DemandeJournal): Promise<PageJournal> {
   let requete = supabase().from('v_journal').select(COLONNES_JOURNAL)
@@ -83,20 +110,30 @@ export async function lireJournal(demande: DemandeJournal): Promise<PageJournal>
   if (demande.action !== null) {
     requete = requete.eq('action', identifiantSur(demande.action, 'action'))
   }
+  if (demande.depuis !== null) requete = requete.gte('le', demande.depuis)
+  // Chaque « ou » est une liste de conditions ; deux « ou » se combinent par un « et » explicite,
+  // écrit dans un seul paramètre : `or=(and(or(...),or(...)))`.
+  const listesOu: string[] = []
   if (demande.ministere !== null) {
     const id = identifiantSur(demande.ministere, 'ministere')
-    requete = requete.or(`ministere_id.eq.${id},auteur_ministere_id.eq.${id}`)
+    listesOu.push(`ministere_id.eq.${id},auteur_ministere_id.eq.${id}`)
   }
-  if (demande.depuis !== null) requete = requete.gte('le', demande.depuis)
+  if (demande.apres !== null) listesOu.push(conditionApres(demande.apres))
+  if (listesOu.length === 1) requete = requete.or(listesOu[0] ?? '')
+  if (listesOu.length === 2) {
+    requete = requete.or(`and(${listesOu.map((liste) => `or(${liste})`).join(',')})`)
+  }
 
   const lecture = await requete
     .order('le', { ascending: false })
     .order('id', { ascending: false })
-    .range(0, demande.limite)
+    .limit(demande.limite + 1)
   if (lecture.error) throw lecture.error
 
   const aPlus = lecture.data.length > demande.limite
   const lignes = lecture.data.slice(0, demande.limite)
+  const derniere = lignes.at(-1)
+  const suivant = aPlus && derniere ? { le: derniere.le, id: derniere.id } : null
   const idsSessions = [
     ...new Set(
       lignes.flatMap((ligne) =>
@@ -104,14 +141,14 @@ export async function lireJournal(demande: DemandeJournal): Promise<PageJournal>
       ),
     ),
   ]
-  if (idsSessions.length === 0) return { lignes, aPlus, sessions: [] }
+  if (idsSessions.length === 0) return { lignes, aPlus, suivant, sessions: [] }
 
   const sessions = await supabase()
     .from('session')
     .select('id, type, date, intitule')
     .in('id', idsSessions)
   if (sessions.error) throw sessions.error
-  return { lignes, aPlus, sessions: sessions.data }
+  return { lignes, aPlus, suivant, sessions: sessions.data }
 }
 
 /**

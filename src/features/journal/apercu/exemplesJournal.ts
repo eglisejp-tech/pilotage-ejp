@@ -7,7 +7,7 @@
 // rejoue les règles de lecture de la base (BRIEF, section 7) pour l'aperçu seulement.
 
 import type { IndicateurCommun } from '@/data/eglise'
-import type { DemandeJournal, LigneJournal, SessionJournal } from '@/data/journal'
+import type { CurseurJournal, DemandeJournal, LigneJournal, SessionJournal } from '@/data/journal'
 import type { MinistereListe } from '@/data/ministeres'
 import { ACTIONS_HORS_ADMINISTRATION } from '@/features/journal/libellesActions'
 import type { TypeCompte } from '@/lib/base'
@@ -416,8 +416,9 @@ export function lignesLisibles(
 export function lireExemple(
   demande: DemandeJournal,
   profil: TypeCompte,
-): { lignes: LigneJournal[]; aPlus: boolean } {
+): { lignes: LigneJournal[]; aPlus: boolean; suivant: CurseurJournal | null } {
   const depuis = demande.depuis === null ? null : Date.parse(demande.depuis)
+  const apres = demande.apres
   const retenues = lignesLisibles(LIGNES_EXEMPLE, profil).filter(
     (l) =>
       (demande.compte === null || l.compte === demande.compte) &&
@@ -425,7 +426,17 @@ export function lireExemple(
       (demande.ministere === null ||
         l.ministere_id === demande.ministere ||
         l.auteur_ministere_id === demande.ministere) &&
-      (depuis === null || Date.parse(l.le) >= depuis),
+      (depuis === null || Date.parse(l.le) >= depuis) &&
+      (apres === null ||
+        Date.parse(l.le) < Date.parse(apres.le) ||
+        (Date.parse(l.le) === Date.parse(apres.le) && l.id < apres.id)),
   )
-  return { lignes: retenues.slice(0, demande.limite), aPlus: retenues.length > demande.limite }
+  const lignes = retenues.slice(0, demande.limite)
+  const aPlus = retenues.length > demande.limite
+  const derniere = lignes.at(-1)
+  return {
+    lignes,
+    aPlus,
+    suivant: aPlus && derniere ? { le: derniere.le, id: derniere.id } : null,
+  }
 }

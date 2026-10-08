@@ -57,14 +57,28 @@ type Detail = LigneJournal['detail']
 
 const simple = (texte: string): SegmentDetail => ({ texte, masque: false })
 
-/** Un texte écrit par un ministère : masqué s'il porte le marqueur de la modération. */
-const libre = (texte: string): SegmentDetail => ({
-  texte,
-  masque: texte === TEXTE_MASQUE || texte === TEXTE_RETIRE,
-})
-
 /** Marqueur d'un indicateur retiré pour confidentialité (`private.retirer_indicateur`). */
 const TEXTE_RETIRE = '[retiré pour confidentialité]'
+
+const MARQUEURS_MASQUES = [TEXTE_MASQUE, TEXTE_RETIRE]
+
+/**
+ * Un texte de la base : le marqueur de la modération ou du retrait, seul (« [texte masqué par EJP
+ * Tech] ») ou dans une phrase de la vue (« Précision : [retiré pour confidentialité], octobre
+ * 2026 »), se coupe en son propre segment, grisé ; le reste garde la couleur normale.
+ */
+function libre(texte: string): SegmentDetail[] {
+  const marqueur = MARQUEURS_MASQUES.find((candidat) => texte.includes(candidat))
+  if (marqueur === undefined) return [simple(texte)]
+  const debut = texte.indexOf(marqueur)
+  const avant = texte.slice(0, debut)
+  const apres = texte.slice(debut + marqueur.length)
+  return [
+    ...(avant === '' ? [] : [simple(avant)]),
+    { texte: marqueur, masque: true },
+    ...(apres === '' ? [] : libre(apres)),
+  ]
+}
 
 function nombreDe(detail: Detail, cle: string): number | null {
   const valeur = detail?.[cle]
@@ -221,7 +235,7 @@ function nomDeLaSession(ligne: LigneJournal, contexte: ContexteJournal): string 
 /** L'objet visé : son texte actuel, sinon « un point de Communication » (illisible pour le lecteur). */
 function objet(ligne: LigneJournal): SegmentDetail[] {
   const texte = ligne.cible_texte?.trim() ?? ''
-  if (texte !== '') return [libre(texte)]
+  if (texte !== '') return libre(texte)
   const sans = OBJET_SANS_TEXTE[ligne.cible ?? ''] ?? 'un élément'
   return [
     simple(ligne.ministere_nom === null ? sans : `${sans} ${deMinistere(ligne.ministere_nom)}`),

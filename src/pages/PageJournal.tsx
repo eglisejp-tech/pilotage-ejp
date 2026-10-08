@@ -32,6 +32,7 @@ export function PageJournal({ titre }: ProprietesPage) {
         donnees={resultat.donnees}
         surFiltres={changerFiltres}
         surPlus={resultat.afficherPlus}
+        surReessayer={resultat.reessayerPlus}
       />
     )
   }

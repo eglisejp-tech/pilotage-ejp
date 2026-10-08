@@ -82,14 +82,17 @@ describe('useJournal', () => {
       action: null,
       ministere: null,
       depuis: '2026-08-31T22:00:00.000Z',
+      apres: null,
       limite: 50,
     })
   })
 
-  it('« Afficher 50 lignes de plus » relit avec 100 lignes', async () => {
+  it('« Afficher 50 lignes de plus » lit les 50 suivantes après la dernière ligne, sans doublon', async () => {
     const { result } = lire('berger')
     await waitFor(() => expect(result.current.etat).toBe('pret'))
     if (result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    const premiere = (await journal.mock.results[0]?.value) as { suivant: unknown }
+    expect(premiere.suivant).not.toBeNull()
     const { afficherPlus } = result.current
     act(() => afficherPlus())
     await waitFor(() => {
@@ -97,24 +100,68 @@ describe('useJournal', () => {
         result.current.etat === 'pret' && result.current.donnees.lignes.length,
       ).toBeGreaterThan(50)
     })
-    expect(journal).toHaveBeenLastCalledWith(expect.objectContaining({ limite: 100 }))
+    // La deuxième lecture ne relit pas le début : elle reprend après le curseur de la première.
+    expect(journal).toHaveBeenCalledTimes(2)
+    expect(journal).toHaveBeenLastCalledWith(
+      expect.objectContaining({ limite: 50, apres: premiere.suivant }),
+    )
+    if (result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    const ids = result.current.donnees.lignes.map((ligne) => ligne.id)
+    expect(new Set(ids).size).toBe(ids.length)
   })
 
-  it('changer de filtre revient à 50 lignes', async () => {
+  it('changer de filtre revient à la première page de 50 lignes', async () => {
     const { result, rerender } = lire('berger')
     await waitFor(() => expect(result.current.etat).toBe('pret'))
     if (result.current.etat !== 'pret') throw new Error('attendu : prêt')
     const { afficherPlus } = result.current
     act(() => afficherPlus())
-    await waitFor(() =>
-      expect(journal).toHaveBeenLastCalledWith(expect.objectContaining({ limite: 100 })),
-    )
+    await waitFor(() => expect(journal).toHaveBeenCalledTimes(2))
     rerender({ filtresCourants: { ...SANS_FILTRE, action: 'mesure_saisie' } })
     await waitFor(() =>
       expect(journal).toHaveBeenLastCalledWith(
-        expect.objectContaining({ action: 'mesure_saisie', limite: 50 }),
+        expect.objectContaining({ action: 'mesure_saisie', apres: null, limite: 50 }),
       ),
     )
+  })
+
+  it('une page suivante en échec garde les lignes lues, puis « Réessayer » relit cette page', async () => {
+    const { result } = lire('berger')
+    await waitFor(() => expect(result.current.etat).toBe('pret'))
+    if (result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    expect(result.current.reessayerPlus).toBeNull()
+    journal.mockRejectedValueOnce(new Error('coupé'))
+    const { afficherPlus } = result.current
+    act(() => afficherPlus())
+    await waitFor(() =>
+      expect(result.current.etat === 'pret' && result.current.reessayerPlus).toBeTruthy(),
+    )
+    if (result.current.etat !== 'pret') throw new Error('page gardée attendue, pas l’erreur')
+    expect(result.current.donnees.lignes).toHaveLength(50)
+    expect(result.current.donnees.filtres).toEqual(SANS_FILTRE)
+    const { reessayerPlus } = result.current
+    act(() => reessayerPlus?.())
+    await waitFor(() => {
+      expect(
+        result.current.etat === 'pret' && result.current.donnees.lignes.length,
+      ).toBeGreaterThan(50)
+    })
+    if (result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    expect(result.current.reessayerPlus).toBeNull()
+  })
+
+  it('une relecture en échec alors que des lignes sont là garde la page', async () => {
+    const { result } = lire('berger')
+    await waitFor(() => expect(result.current.etat).toBe('pret'))
+    journal.mockRejectedValueOnce(new Error('coupé'))
+    await act(async () => {
+      await client.refetchQueries({ queryKey: ['journal', 'lignes'] })
+    })
+    await waitFor(() =>
+      expect(result.current.etat === 'pret' && result.current.reessayerPlus).toBeTruthy(),
+    )
+    if (result.current.etat !== 'pret') throw new Error('page gardée attendue, pas l’erreur')
+    expect(result.current.donnees.lignes).toHaveLength(50)
   })
 
   it('un ministère ne lit ni les comptes ni un ministère d’adresse', async () => {

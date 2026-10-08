@@ -43,7 +43,7 @@ function connecter(type: TypeCompte) {
 
 function pret(profil: TypeCompte): ResultatJournal {
   const { lignes, aPlus } = lireExemple(
-    { compte: null, action: null, ministere: null, depuis: null, limite: 3 },
+    { compte: null, action: null, ministere: null, depuis: null, apres: null, limite: 3 },
     profil,
   )
   const donnees: DonneesJournal = {
@@ -58,7 +58,7 @@ function pret(profil: TypeCompte): ResultatJournal {
     aPlus,
     enMiseAJour: false,
   }
-  return { etat: 'pret', donnees, afficherPlus: vi.fn() }
+  return { etat: 'pret', donnees, afficherPlus: vi.fn(), reessayerPlus: null }
 }
 
 function Adresse() {

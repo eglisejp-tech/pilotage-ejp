@@ -341,6 +341,38 @@ describe('une ligne du journal, en mots', () => {
     expect(construite.detail[0]?.masque).toBe(true)
   })
 
+  it('le marqueur au milieu d’une phrase de la vue est seul grisé : « Précision : [retiré…], octobre 2026 »', () => {
+    const construite = construireLigne(
+      ligne({
+        action: 'indicateur_valide',
+        cible: 'indicateur',
+        cible_texte: 'Précision : [retiré pour confidentialité], octobre 2026',
+      }),
+      CONTEXTE,
+    )
+    expect(construite.detail).toEqual([
+      { texte: 'Précision : ', masque: false },
+      { texte: '[retiré pour confidentialité]', masque: true },
+      { texte: ', octobre 2026', masque: false },
+    ])
+  })
+
+  it('un texte masqué par EJP Tech et suivi d’une suite : le marqueur seul est grisé', () => {
+    const construite = construireLigne(
+      ligne({
+        action: 'point_cree',
+        cible: 'point_attention',
+        cible_texte: '[texte masqué par EJP Tech]',
+        detail: { mentions: ['min-jeunesse'] },
+      }),
+      CONTEXTE,
+    )
+    expect(construite.detail).toEqual([
+      { texte: '[texte masqué par EJP Tech]', masque: true },
+      { texte: ', mentionne Jeunesse', masque: false },
+    ])
+  })
+
   it('signalements : l’écran, jamais le texte', () => {
     expect(
       texteDe({

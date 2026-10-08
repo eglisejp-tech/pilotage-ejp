@@ -9,7 +9,7 @@ import { titrePour, trouverAdresse } from '@/features/navigation/profils'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import { useSearchParams } from 'react-router'
 
-const ETATS = ['liste', 'vide', 'chargement', 'erreur'] as const
+const ETATS = ['liste', 'vide', 'chargement', 'erreur', 'relecture'] as const
 type EtatApercu = (typeof ETATS)[number]
 
 const reessayer = () => undefined
@@ -26,7 +26,8 @@ function lireEtat(valeur: string | null): EtatApercu {
  * filtre « Compte » ; `admin_eglise` lit sa liste fermée ; `admin_plateforme` lit « Journal
  * technique », sur /journal-technique en vrai), `?compte=`, `?action=`, `?periode=` et
  * `?ministere=` comme l'adresse réelle, `?etat=` : `liste` (par défaut), `vide`, `chargement`,
- * `erreur`. Enregistrée seulement en développement (src/app/routes.tsx).
+ * `erreur`, `relecture` (une page suivante a échoué : les lignes restent, le bandeau s'ajoute
+ * sous la liste). Enregistrée seulement en développement (src/app/routes.tsx).
  */
 export function ApercuJournal() {
   const [parametres] = useSearchParams()
@@ -51,6 +52,7 @@ export function ApercuJournal() {
       donnees={donnees}
       surFiltres={changerFiltres}
       surPlus={afficherPlus}
+      surReessayer={etat === 'relecture' ? reessayer : null}
     />
   )
 }

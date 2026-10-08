@@ -1,7 +1,8 @@
-import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { keepPreviousData, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMemo, useState } from 'react'
 import { lireIndicateursCommuns, lireSemaine } from '@/data/eglise'
-import { lireComptesJournal, lireJournal } from '@/data/journal'
+import { lireComptesJournal, lireJournal, TAILLE_PAGE_JOURNAL } from '@/data/journal'
+import type { CurseurJournal, SessionJournal } from '@/data/journal'
 import { lireMinisteres } from '@/data/ministeres'
 import {
   filtresRetenus,
@@ -14,7 +15,6 @@ import { construireJournal, contexteJournal } from '@/features/journal/construir
 import type { FiltresJournal } from '@/features/journal/filtres'
 import type { DonneesJournal } from '@/features/journal/modeleJournal'
 import { debutDePeriode } from '@/features/journal/periodes'
-import { useLimiteJournal } from '@/features/journal/useLimiteJournal'
 import type { TypeCompte } from '@/lib/base'
 
 /** Clés des lectures de l'écran : « Réessayer » ne relance que celles-ci. */
@@ -24,14 +24,32 @@ export type ResultatJournal =
   | { etat: 'chargement' }
   /** Une lecture a échoué : bandeau « La connexion a échoué. Réessayez. » (10 s sans réponse aussi). */
   | { etat: 'erreur'; reessayer: () => void }
-  | { etat: 'pret'; donnees: DonneesJournal; afficherPlus: () => void }
+  | {
+      etat: 'pret'
+      donnees: DonneesJournal
+      afficherPlus: () => void
+      /**
+       * Relance la lecture qui a échoué alors que des lignes sont déjà à l'écran (page suivante,
+       * ou relecture des lignes) ; null quand tout va bien. La vue garde alors ses lignes.
+       */
+      reessayerPlus: (() => void) | null
+    }
+
+/** Les sessions de toutes les pages lues, une fois chacune. */
+function sessionsDesPages(pages: readonly { sessions: SessionJournal[] }[]): SessionJournal[] {
+  return [...new Map(pages.flatMap((p) => p.sessions).map((s) => [s.id, s] as const)).values()]
+}
 
 /**
  * Lit l'écran 06 : le jour de Paris (`v_semaine`), les comptes du filtre (pas pour un ministère),
  * les ministères et les chiffres communs qui nomment les lignes, puis les lignes de `v_journal`
  * avec les filtres retenus. Le début de la période se calcule sur le jour de Paris de la base,
- * jamais sur la date du navigateur. Pendant qu'un filtre relit, les lignes d'avant restent à
- * l'écran (`enMiseAJour`) : la page ne se vide pas à chaque choix.
+ * jamais sur la date du navigateur. Les lignes se lisent page par page (50 lignes, puis les 50
+ * plus anciennes que la dernière lue) : une réponse de la base ne dépasse jamais 51 lignes, même
+ * pour « Depuis le début » sur un journal de plusieurs milliers de lignes. Pendant qu'un filtre
+ * relit, les lignes d'avant restent à l'écran (`enMiseAJour`) : la page ne se vide pas à chaque
+ * choix. Si une page ou une relecture échoue alors que des lignes sont affichées, elles restent
+ * avec leurs filtres et `reessayerPlus` relance la lecture qui a échoué.
  */
 export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJournal {
   const queryClient = useQueryClient()
@@ -60,7 +78,6 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [brut.compte, brut.action, brut.periode, brut.ministere, choix],
   )
-  const { limite, afficherPlus } = useLimiteJournal(filtres)
 
   const aujourdhui = semaine.data?.aujourdhui ?? null
   const listesPretes =
@@ -68,44 +85,65 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
     communs.isSuccess &&
     ministeres.isSuccess &&
     (!avecComptes || comptes.isSuccess)
-  const page = useQuery({
-    queryKey: ['journal', 'lignes', filtres, limite, aujourdhui],
-    queryFn: () => {
+  const page = useInfiniteQuery({
+    queryKey: ['journal', 'lignes', filtres, aujourdhui],
+    queryFn: ({ pageParam }) => {
       if (aujourdhui === null) throw new Error('Le jour de Paris est inconnu.')
       return lireJournal({
         compte: filtres.compte,
         action: filtres.action,
         ministere: filtres.ministere,
         depuis: debutDePeriode(filtres.periode, aujourdhui),
-        limite,
+        apres: pageParam,
+        limite: TAILLE_PAGE_JOURNAL,
       })
     },
+    initialPageParam: null as CurseurJournal | null,
+    getNextPageParam: (derniere) => derniere.suivant ?? undefined,
     enabled: listesPretes,
     placeholderData: keepPreviousData,
   })
 
-  const lectures = [semaine, communs, ministeres, page, ...(avecComptes ? [comptes] : [])]
+  // Une page suivante qui échoue garde les lignes déjà lues : on retient laquelle a échoué.
+  const [suiteEnEchec, setSuiteEnEchec] = useState(false)
+  const afficherPlus = () => {
+    setSuiteEnEchec(false)
+    void page.fetchNextPage().then((suite) => setSuiteEnEchec(suite.isError))
+  }
+
+  // Une lecture des lignes en échec alors que des lignes sont déjà là n'efface pas la page.
+  const echecAvecLignes = page.isError && page.data !== undefined
+  const lectures = [semaine, communs, ministeres, ...(avecComptes ? [comptes] : [])]
   const enEchec =
-    lectures.some((requete) => requete.isError) || (semaine.isSuccess && semaine.data === null)
+    lectures.some((requete) => requete.isError) ||
+    (semaine.isSuccess && semaine.data === null) ||
+    (page.isError && !echecAvecLignes)
 
   const donnees = useMemo<DonneesJournal | null>(() => {
     if (!listesPretes || !communs.data || !ministeres.data || !page.data) return null
-    const contexte = contexteJournal(communs.data, ministeres.data, page.data.sessions)
+    const pages = page.data.pages
+    const contexte = contexteJournal(communs.data, ministeres.data, sessionsDesPages(pages))
+    // Une ligne n'est montrée qu'une fois, même si deux pages la portaient.
+    const lignes = [
+      ...new Map(pages.flatMap((p) => p.lignes).map((l) => [l.id, l] as const)).values(),
+    ]
     return {
       filtres,
       comptes: choix.comptes,
       actions: choix.actions,
       ministereChoisi: choix.ministeres.find((option) => option.id === filtres.ministere) ?? null,
-      lignes: construireJournal(page.data.lignes, contexte),
-      aPlus: page.data.aPlus,
-      enMiseAJour: page.isPlaceholderData,
+      lignes: construireJournal(lignes, contexte),
+      aPlus: page.hasNextPage,
+      enMiseAJour: page.isPlaceholderData || page.isFetchingNextPage,
     }
   }, [
     listesPretes,
     communs.data,
     ministeres.data,
     page.data,
+    page.hasNextPage,
     page.isPlaceholderData,
+    page.isFetchingNextPage,
     filtres,
     choix,
   ])
@@ -121,6 +159,13 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
   }
 
   if (enEchec) return { etat: 'erreur', reessayer }
-  if (donnees !== null) return { etat: 'pret', donnees, afficherPlus }
+  if (donnees !== null) {
+    const reessayerPlus = echecAvecLignes
+      ? suiteEnEchec
+        ? afficherPlus
+        : () => void page.refetch()
+      : null
+    return { etat: 'pret', donnees, afficherPlus, reessayerPlus }
+  }
   return { etat: 'chargement' }
 }

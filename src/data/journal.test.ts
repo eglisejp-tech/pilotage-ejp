@@ -15,11 +15,19 @@ function client(reponses: Parameters<typeof fauxRequete>[0]) {
   return faux
 }
 
-const SANS_FILTRE = { compte: null, action: null, ministere: null, depuis: null, limite: 50 }
+const SANS_FILTRE = {
+  compte: null,
+  action: null,
+  ministere: null,
+  depuis: null,
+  apres: null,
+  limite: 50,
+}
 
 function lignes(nombre: number, ajout: Record<string, unknown> = {}) {
   return Array.from({ length: nombre }, (_, rang) => ({
     id: nombre - rang,
+    le: `2026-10-01T10:${String(59 - (rang % 60)).padStart(2, '0')}:00.123456+00:00`,
     cible: null,
     cible_id: null,
     ...ajout,
@@ -36,7 +44,7 @@ describe('lireJournal', () => {
     expect(appels.slice(1)).toEqual([
       'order("le", {"ascending":false})',
       'order("id", {"ascending":false})',
-      'range(0, 50)',
+      'limit(51)',
     ])
   })
 
@@ -46,19 +54,62 @@ describe('lireJournal', () => {
     expect(page.lignes).toHaveLength(50)
     expect(page.aPlus).toBe(true)
     expect(page.lignes[0]?.id).toBe(51)
+    // La page suivante reprend après la 50e ligne.
+    expect(page.suivant).toEqual({ le: page.lignes[49]?.le, id: page.lignes[49]?.id })
   })
 
-  it('50 lignes exactement : il n’en reste pas', async () => {
+  it('50 lignes exactement : il n’en reste pas, et pas de curseur', async () => {
     client({ v_journal: { data: lignes(50), error: null } })
     const page = await lireJournal(SANS_FILTRE)
     expect(page.lignes).toHaveLength(50)
     expect(page.aPlus).toBe(false)
+    expect(page.suivant).toBeNull()
   })
 
-  it('« Afficher 50 lignes de plus » relit avec une limite de 100 : range(0, 100)', async () => {
+  it('« Afficher 50 lignes de plus » lit les 50 suivantes après le curseur, sans relire les autres', async () => {
     const faux = client({})
-    await lireJournal({ ...SANS_FILTRE, limite: 100 })
-    expect(appelsDe(faux.de('v_journal')[0])).toContain('range(0, 100)')
+    await lireJournal({
+      ...SANS_FILTRE,
+      apres: { le: '2026-10-01T10:10:00.123456+00:00', id: 42 },
+    })
+    const appels = appelsDe(faux.de('v_journal')[0])
+    expect(appels).toContain(
+      'or("le.lt.2026-10-01T10:10:00.123456+00:00,and(le.eq.2026-10-01T10:10:00.123456+00:00,id.lt.42)")',
+    )
+    expect(appels).toContain('limit(51)')
+    expect(appels.some((appel) => appel.startsWith('range('))).toBe(false)
+  })
+
+  it('un ministère et un curseur ensemble : deux « ou » réunis par un « et »', async () => {
+    const faux = client({})
+    await lireJournal({
+      ...SANS_FILTRE,
+      ministere: 'm-1',
+      apres: { le: '2026-10-01T10:10:00Z', id: 7 },
+    })
+    expect(appelsDe(faux.de('v_journal')[0])).toContain(
+      'or("and(or(ministere_id.eq.m-1,auteur_ministere_id.eq.m-1),or(le.lt.2026-10-01T10:10:00Z,and(le.eq.2026-10-01T10:10:00Z,id.lt.7)))")',
+    )
+  })
+
+  it('un journal de plus de 1000 lignes se lit par pages de 51 lignes au plus, jamais par 1000', async () => {
+    const faux = client({ v_journal: { data: lignes(51), error: null } })
+    const page = await lireJournal({
+      ...SANS_FILTRE,
+      apres: { le: '2026-10-01T09:00:00Z', id: 1200 },
+    })
+    expect(page.aPlus).toBe(true)
+    expect(appelsDe(faux.de('v_journal')[0])).toContain('limit(51)')
+  })
+
+  it('refuse un curseur qui ressemblerait à un filtre PostgREST', async () => {
+    client({})
+    await expect(
+      lireJournal({ ...SANS_FILTRE, apres: { le: '2026-10-01),or(id.gt.0', id: 1 } }),
+    ).rejects.toThrow(RangeError)
+    await expect(
+      lireJournal({ ...SANS_FILTRE, apres: { le: '2026-10-01T10:10:00Z', id: Number.NaN } }),
+    ).rejects.toThrow(RangeError)
   })
 
   it('applique les filtres compte, action, ministère et période', async () => {
@@ -68,6 +119,7 @@ describe('lireJournal', () => {
       action: 'point_cree',
       ministere: 'm-1',
       depuis: '2026-08-31T22:00:00.000Z',
+      apres: null,
       limite: 50,
     })
     const appels = appelsDe(faux.de('v_journal')[0])
