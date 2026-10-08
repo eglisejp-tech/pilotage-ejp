@@ -45,6 +45,8 @@ export function useFileModeration(): ContenuFile {
           // Une réponse perdue n'empêche pas la fonction d'avoir abouti : la file est relue.
           apresEcriture()
         }
+        // L'annonce « Texte marqué comme relu. » attend que la ligne ait changé.
+        await textes.refetch()
       },
       masquer: async (texte, choix) => {
         try {
@@ -52,6 +54,7 @@ export function useFileModeration(): ContenuFile {
         } finally {
           apresEcriture()
         }
+        await textes.refetch()
       },
     }
   }

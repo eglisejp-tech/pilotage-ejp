@@ -637,10 +637,19 @@ describe("adresses de l'étape 4", () => {
     ).toBeInTheDocument()
     expect(await screen.findByText('Aucun texte à relire.')).toBeInTheDocument()
     await waitFor(() =>
-      expect([...new Set(faux.tables)].sort()).toEqual(
-        ['compte', 'ministere', 'v_a_valider', 'v_signalement', 'v_textes_a_relire'].sort(),
+      expect(faux.tables).toEqual(
+        expect.arrayContaining([
+          'compte',
+          'ministere',
+          'v_a_valider',
+          'v_signalement',
+          'v_textes_a_relire',
+        ]),
       ),
     )
+    // Jamais de lecture directe de la table de modération ni du journal.
+    expect(faux.tables).not.toContain('moderation')
+    expect(faux.tables).not.toContain('journal')
     // Aucune demande en attente : pas d'en-tête sur les indicateurs.
     expect(screen.queryByText(/votre validation/)).not.toBeInTheDocument()
   })
@@ -680,7 +689,7 @@ describe("adresses de l'étape 4", () => {
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ouvrir les indicateurs à valider' })).toHaveAttribute(
       'href',
-      '/indicateurs',
+      '/indicateurs#a-valider',
     )
     const ligne = await screen.findByRole('article', { name: "Point d'attention, Social" })
     expect(within(ligne).getByRole('button', { name: 'Rien à signaler' })).toBeInTheDocument()

@@ -44,7 +44,7 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     ).toBeVisible()
     await expect(
       page.getByRole('link', { name: 'Ouvrir les indicateurs à valider' }),
-    ).toHaveAttribute('href', '/indicateurs')
+    ).toHaveAttribute('href', '/indicateurs#a-valider')
     await expect(signalements(page).getByText('2 signalements ouverts')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Signalements',
@@ -54,16 +54,16 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await expect(file(page).getByText(/^EJP Tech relit les textes libres/)).toBeVisible()
   })
 
-  test("les textes à relire d'abord, du plus récent au plus ancien, puis les décisions", async ({
+  test("les textes à relire d'abord (précisions en tête, puis du plus ancien au plus récent), puis les décisions", async ({
     page,
   }) => {
     await ouvrir(page)
     const entetes = file(page).getByRole('article').getByRole('heading', { level: 3 })
     await expect(entetes).toHaveText([
-      "Point d'attention, Communication",
       "Précision d'un chiffre, Social",
-      'Événement, Jeunesse',
       "Point d'attention, Intégration",
+      'Événement, Jeunesse',
+      "Point d'attention, Communication",
       "Point d'attention, Social",
       'Réunion, Berger',
       "Point d'attention, Coordination",
@@ -79,7 +79,10 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await expect(ligne(page, "Point d'attention, Coordination")).toContainText(
       'Relu le 29 sept. : rien à signaler',
     )
-    await expect(ligne(page, "Point d'attention, Coordination").getByRole('button')).toHaveCount(0)
+    // Un texte relu garde « Masquer le texte », jamais « Rien à signaler ».
+    const coordination = ligne(page, "Point d'attention, Coordination")
+    await expect(coordination.getByRole('button')).toHaveCount(1)
+    await expect(coordination.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
   })
 
   test('un point montre tous ses champs libres, avec leur nom', async ({ page }) => {
@@ -111,7 +114,8 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
       'Texte marqué comme relu.',
     )
     await expect(jeunesse).toContainText('Relu le 6 oct. : rien à signaler')
-    await expect(jeunesse.getByRole('button')).toHaveCount(0)
+    await expect(jeunesse.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
+    await expect(jeunesse.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
     await expect(file(page).getByText('3 textes en attente')).toBeVisible()
     await expect(file(page).getByRole('heading', { level: 2 })).toBeFocused()
   })

@@ -27,8 +27,8 @@ const boutonPrincipal =
  * la date et l'heure de Paris ; tous les champs libres non vides entre guillemets (avec leur nom
  * quand il y en a plusieurs) ; à droite, « Rien à signaler » et « Masquer le texte » pour un texte
  * à relire, ou la décision (« Relu le 29 sept. : rien à signaler », « Masqué le 29 sept. : nom
- * d'une personne »). Un texte masqué qui garde d'autres champs non masqués garde « Masquer le
- * texte ». Un champ déjà masqué s'affiche en `--encre-3`. Une précision dit aussi l'indicateur et
+ * d'une personne »). Un texte relu ou masqué qui garde des champs non masqués garde « Masquer le
+ * texte » (une donnée personnelle peut être signalée après la relecture). Un champ déjà masqué s'affiche en `--encre-3`. Une précision dit aussi l'indicateur et
  * le mois, jamais la valeur. Un refus de la base se dit sous les boutons.
  */
 export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
@@ -51,7 +51,7 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
   }
 
   const aRelire = texte.etat === 'a_relire'
-  const peutMasquer = texte.masquables.length > 0 && texte.etat !== 'relu'
+  const peutMasquer = texte.masquables.length > 0
   const plusieursChamps = texte.champs.length > 1
 
   return (

@@ -115,18 +115,29 @@ describe('construireTextesARelire', () => {
     expect(texte?.champs.map((champ) => champ.libelle)).toEqual(['Précision'])
   })
 
-  it('à relire d’abord, puis les décisions, chaque groupe du plus récent au plus ancien', () => {
+  it('à relire d’abord (précisions en tête, puis du plus ancien au plus récent), puis les décisions du plus récent au plus ancien', () => {
     const textes = construireTextesARelire(
       [
         ligne({ cible_id: 'relu', etat: 'relu', ecrit_le: '2026-10-01T10:00:00+02:00' }),
         ligne({ cible_id: 'ancien', ecrit_le: '2026-09-28T10:00:00+02:00' }),
         ligne({ cible_id: 'masque', etat: 'masque', ecrit_le: '2026-10-02T10:00:00+02:00' }),
         ligne({ cible_id: 'recent', ecrit_le: '2026-09-30T10:00:00+02:00' }),
+        ligne({
+          cible_id: 'precision',
+          cible: 'precision_sensible',
+          ecrit_le: '2026-10-03T10:00:00+02:00',
+        }),
       ],
       MINISTERES,
     )
-    expect(textes.map((texte) => texte.cibleId)).toEqual(['recent', 'ancien', 'masque', 'relu'])
-    expect(compterEnAttente(textes)).toBe(2)
+    expect(textes.map((texte) => texte.cibleId)).toEqual([
+      'precision',
+      'ancien',
+      'recent',
+      'masque',
+      'relu',
+    ])
+    expect(compterEnAttente(textes)).toBe(3)
   })
 
   it('une file vide ne donne aucune ligne', () => {

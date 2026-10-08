@@ -132,6 +132,9 @@ test.describe('EJP Tech relit et masque', () => {
     const journal = await journalDe(page, 'texte_relu', 'point_attention', pointRelu)
     expect(journal).toHaveLength(1)
     expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
+    // Un texte relu garde « Masquer le texte » (une donnée personnelle peut être signalée après).
+    await expect(ligne.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
+    await expect(ligne.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
 
     const encore = await appeler(page, 'marquer_relu', {
       p_cible: 'point_attention',
@@ -215,10 +218,20 @@ test.describe('Communication relit ses textes', () => {
   test('le titre masqué et le signalement masqué s’affichent « [texte masqué par EJP Tech] »', async ({
     page,
   }) => {
+    // Sur /points : l'article du point d'essai (trouvé par sa description) porte le texte masqué.
     await page.goto('/points')
-    await expect(page.getByText(TEXTE_MASQUE).first()).toBeVisible()
+    const surPoints = page.getByRole('article').filter({ hasText: DESCRIPTION })
+    await expect(surPoints).toContainText(TEXTE_MASQUE)
+    await expect(surPoints).not.toContainText(TITRE_MASQUE)
     await expect(page.getByText(TITRE_MASQUE)).toHaveCount(0)
     await expect(page.getByText(TITRE_RELU).first()).toBeVisible()
+
+    // Sur la fiche : même article, le texte masqué en `--encre-3` (classe `text-encre-3`).
+    await page.goto('/ma-fiche')
+    const surFiche = page.getByRole('article').filter({ hasText: DESCRIPTION })
+    await expect(surFiche).toContainText(TEXTE_MASQUE)
+    await expect(surFiche).not.toContainText(TITRE_MASQUE)
+    await expect(surFiche.locator('.text-encre-3', { hasText: TEXTE_MASQUE })).toBeVisible()
 
     await page.goto('/signaler')
     const liste = page.getByRole('region', { name: 'Vos derniers signalements' })
@@ -229,6 +242,20 @@ test.describe('Communication relit ses textes', () => {
       `v_signalement?select=ministere_id,texte&id=eq.${signalementId}`,
     )
     expect(lu).toEqual({ ministere_id: MINISTERE_COMMUNICATION, texte: TEXTE_MASQUE })
+  })
+})
+
+test.describe('Le berger lit la fiche de Communication', () => {
+  test.use({ storageState: fichierSession('berger') })
+
+  test('le titre masqué s’affiche « [texte masqué par EJP Tech] » sur la fiche du ministère', async ({
+    page,
+  }) => {
+    await page.goto(`/ministeres/${MINISTERE_COMMUNICATION}`)
+    const article = page.getByRole('article').filter({ hasText: DESCRIPTION })
+    await expect(article).toContainText(TEXTE_MASQUE)
+    await expect(article).not.toContainText(TITRE_MASQUE)
+    await expect(article.locator('.text-encre-3', { hasText: TEXTE_MASQUE })).toBeVisible()
   })
 })
 

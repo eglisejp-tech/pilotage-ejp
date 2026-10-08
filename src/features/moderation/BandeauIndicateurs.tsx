@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { ANCRE_A_VALIDER } from '@/features/indicateurs/validation/BlocAValider'
 import type { IndicateursAValider } from '@/features/moderation/indicateurs'
 import { TEXTES_INDICATEURS_A_VALIDER } from '@/features/moderation/textes'
 
@@ -19,7 +20,7 @@ export function BandeauIndicateurs({ indicateurs }: Props) {
         {TEXTES_INDICATEURS_A_VALIDER.phrase(indicateurs.nombre, indicateurs.plusAncienJours)}
       </p>
       <Link
-        to="/indicateurs"
+        to={`/indicateurs#${ANCRE_A_VALIDER}`}
         className="inline-flex min-h-cible items-center text-[15px] font-semibold text-nuit underline underline-offset-4"
       >
         {TEXTES_INDICATEURS_A_VALIDER.lien}

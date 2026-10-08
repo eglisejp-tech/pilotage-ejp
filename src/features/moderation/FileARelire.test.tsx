@@ -172,7 +172,7 @@ describe('file « Champs libres à relire »', () => {
     expect(bouton).toHaveFocus()
   })
 
-  it('un texte relu n’a plus de bouton ; un texte masqué n’en garde un que s’il lui reste un champ', () => {
+  it('un texte relu ou masqué ne garde « Masquer le texte » que s’il lui reste un champ, jamais « Rien à signaler »', () => {
     afficher([
       ligne({ cible_id: 'r', etat: 'relu', decision_le: '2026-09-29T08:50:00+02:00' }),
       ligne({
@@ -193,9 +193,11 @@ describe('file « Champs libres à relire »', () => {
     const articles = screen.getAllByRole('article')
     expect(articles).toHaveLength(3)
     const avecBoutons = articles.filter((article) => within(article).queryByRole('button'))
-    expect(avecBoutons).toHaveLength(1)
-    expect(within(avecBoutons[0]!).queryByRole('button', { name: 'Rien à signaler' })).toBeNull()
-    expect(within(avecBoutons[0]!).getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
+    expect(avecBoutons).toHaveLength(2)
+    for (const article of avecBoutons) {
+      expect(within(article).queryByRole('button', { name: 'Rien à signaler' })).toBeNull()
+      expect(within(article).getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
+    }
     expect(screen.getAllByText(MASQUE, { exact: false })).not.toHaveLength(0)
   })
 })

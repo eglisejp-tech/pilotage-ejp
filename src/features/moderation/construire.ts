@@ -84,8 +84,9 @@ function lireDecision(ligne: LigneTexteARelire): string | null {
 }
 
 /**
- * Les lignes de la file, pour l'écran : d'abord les textes à relire, puis ceux des 30 derniers
- * jours que la base garde, chaque groupe du plus récent au plus ancien (comme la maquette 15).
+ * Les lignes de la file, pour l'écran : d'abord les textes à relire (précisions des chiffres
+ * sensibles en tête, puis du plus ancien au plus récent), puis les décisions des 30 derniers
+ * jours que la base garde, du plus récent au plus ancien (Proposé : la maquette 15 les mêle).
  * L'en-tête d'une ligne dit le type puis le ministère de l'auteur, ou son libellé quand il n'a
  * pas de ministère (« Berger », « Conseil, compte 3 »).
  */
@@ -94,12 +95,18 @@ export function construireTextesARelire(
   ministeres: readonly MinistereNom[],
 ): TexteARelire[] {
   const noms = new Map(ministeres.map((ministere) => [ministere.id, ministere.nom]))
-  const rang = (etat: EtatTexteARelire) => (etat === 'a_relire' ? 0 : 1)
+  const rang = (ligne: LigneTexteARelire) =>
+    ligne.etat !== 'a_relire' ? 2 : ligne.cible === 'precision_sensible' ? 0 : 1
+  // À relire : les précisions des chiffres sensibles d'abord, puis du plus ancien au plus récent
+  // (un texte ancien non relu ne tombe pas en bas, comme le bloc « Signalements »). Décisions :
+  // du plus récent au plus ancien.
   return [...lignes]
     .sort(
       (a, b) =>
-        rang(a.etat) - rang(b.etat) ||
-        b.ecrit_le.localeCompare(a.ecrit_le) ||
+        rang(a) - rang(b) ||
+        (a.etat === 'a_relire'
+          ? a.ecrit_le.localeCompare(b.ecrit_le)
+          : b.ecrit_le.localeCompare(a.ecrit_le)) ||
         a.cible_id.localeCompare(b.cible_id),
     )
     .map((ligne) => {

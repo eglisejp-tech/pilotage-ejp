@@ -29,8 +29,10 @@ interface Props {
   onAnnuler: () => void
 }
 
-const classeRadio =
-  'mt-0.5 size-5 shrink-0 accent-encre focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre'
+const classeRadioBase =
+  'size-5 shrink-0 accent-encre focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre'
+const classeRadioChamp = `mt-0.5 ${classeRadioBase}`
+const classeRadioMotif = classeRadioBase
 
 /**
  * Fenêtre « Masquer le texte » (BRIEF, « Modération » ; écran 15) : le choix du champ (seulement
@@ -148,7 +150,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
                     checked={champ === possible.code}
                     onChange={() => setChamp(possible.code)}
                     aria-invalid={erreurs.champ ? true : undefined}
-                    className={classeRadio}
+                    className={classeRadioChamp}
                   />
                   <span className="flex min-w-0 flex-col">
                     <span className="text-[15px] font-semibold">{possible.libelle}</span>
@@ -185,7 +187,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
                   checked={motif === possible.code}
                   onChange={() => setMotif(possible.code)}
                   aria-invalid={erreurs.motif ? true : undefined}
-                  className={classeRadio.replace('mt-0.5', '')}
+                  className={classeRadioMotif}
                 />
                 <span className="text-[15px] leading-snug">{possible.libelle}</span>
               </label>

@@ -7,7 +7,8 @@
 -- 1. Structure : la file n'a que onze colonnes, sans aucune valeur chiffrée ; une précision y
 --    porte son texte seul, avec le libellé de l'indicateur et le mois ; un signalement n'y est pas.
 -- 2. Matrice (tests.verifier_matrice) : seul EJP Tech, en aal2, lit la file et appelle
---    marquer_relu et masquer_texte ; ni le ministère auteur, ni un autre ministère, ni le berger,
+--    marquer_relu et masquer_texte ; ni le ministère auteur, ni le ministère mentionné (qui lit
+--    pourtant le point), ni un autre ministère, ni le berger,
 --    ni le conseil, ni l'administration, ni l'anonyme ; en aal1, tout est vide ou refusé ; aucun
 --    ajout direct dans moderation.
 -- 3. Parcours d'EJP Tech : relire un point (une seule fois), masquer le titre puis la description
@@ -15,19 +16,22 @@
 --    motif, jamais le texte) et ce que lit l'auteur suivent.
 begin;
 
--- Contexte : deux ministères d'essai avec leur compte, les comptes du jeu d'exemple, deux points
--- et un signalement du ministère A, et une précision du jeu d'exemple (seed/44).
+-- Contexte : trois ministères d'essai avec leur compte (A auteur, B mentionné sur le premier
+-- point, C ni auteur ni mentionné), les comptes du jeu d'exemple, deux points et un signalement
+-- du ministère A, et une précision du jeu d'exemple (seed/44).
 create temp table ctx as
 select tests.creer_ministere('Modération L6 A') as a_m,
        tests.creer_ministere('Modération L6 B') as b_m,
+       tests.creer_ministere('Modération L6 C') as c_m,
        tests.compte('Berger') as berger,
        tests.compte('Conseil, compte 1') as conseil,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech;
-alter table ctx add column a uuid, add column b uuid, add column p1 uuid, add column p2 uuid,
-  add column s uuid, add column prec uuid;
+alter table ctx add column a uuid, add column b uuid, add column c uuid, add column p1 uuid,
+  add column p2 uuid, add column s uuid, add column prec uuid;
 update ctx set a = tests.creer_compte('moderation-l6-a@exemple.test', 'ministere', a_m),
                b = tests.creer_compte('moderation-l6-b@exemple.test', 'ministere', b_m),
+               c = tests.creer_compte('moderation-l6-c@exemple.test', 'ministere', c_m),
                prec = (select p.id from public.precision_sensible p order by p.saisi_le, p.id limit 1);
 grant select on ctx to authenticated, anon;
 
@@ -40,33 +44,35 @@ declare
 begin
   select * into v_ctx from ctx;
   perform tests.se_connecter(v_ctx.a, 'aal2');
-  v_p1 := public.creer_point('Titre relu du lot L6', 'Description relue du lot L6.', null, 'normale', null, array[]::uuid[]);
+  v_p1 := public.creer_point('Titre relu du lot L6', 'Description relue du lot L6.', null, 'normale', null, array[v_ctx.b_m]);
   v_p2 := public.creer_point('Titre masque du lot L6', 'Description masquee du lot L6.', null, 'normale', null, array[]::uuid[]);
   v_s := public.signaler_difficulte('autre', 'Signalement du lot L6 a masquer.');
   perform tests.deconnecter();
   update ctx set p1 = v_p1, p2 = v_p2, s = v_s;
 end $$;
 
--- Matrice en aal2. Attendus dans l'ordre des profils : ministère A (auteur), ministère B, berger,
--- conseil, administration, EJP Tech.
+-- Matrice en aal2. Attendus dans l'ordre des profils : ministère auteur (A), ministère mentionné
+-- (B), ministère ni auteur ni mentionné (C), berger, conseil, administration, EJP Tech. Le
+-- ministère mentionné lit le point (v_point) mais n'ouvre ni la file, ni marquer_relu, ni
+-- masquer_texte.
 create temp view matrice_l6_aal2 (profil, objet, action, aal, attendu, requete) as
   select p.profil, m.objet, m.action, 'aal2', m.attendu[p.rang], m.requete
-    from (values (1, 'ministère a'), (2, 'ministère b'), (3, 'berger'), (4, 'conseil'),
-                 (5, 'administration'), (6, 'EJP Tech')) as p(rang, profil)
+    from (values (1, 'ministère auteur'), (2, 'ministère mentionné'), (3, 'ministère c'),
+                 (4, 'berger'), (5, 'conseil'), (6, 'administration'), (7, 'EJP Tech')) as p(rang, profil)
    cross join (values
-     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '1'],
+     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '0', '1'],
       'select 1 from public.v_textes_a_relire where cible_id = (select p1 from ctx)'),
-     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '1'],
+     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '0', '1'],
       'select 1 from public.v_textes_a_relire where cible_id = (select prec from ctx)'),
-     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '0'],
+     ('v_textes_a_relire', 'lire', array['0', '0', '0', '0', '0', '0', '0'],
       'select 1 from public.v_textes_a_relire where cible_id = (select s from ctx)'),
-     ('moderation', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501'],
+     ('moderation', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'insert into public.moderation (cible, cible_id, champ, decision, motif, par) select ''point_attention'', p1, null, ''rien_a_signaler'', null, tech from ctx'),
-     ('marquer_relu', 'appeler', array['42501', '42501', '42501', '42501', '42501', 'ok'],
+     ('marquer_relu', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
       'select public.marquer_relu(''point_attention'', (select p1 from ctx))'),
-     ('masquer_texte', 'appeler', array['42501', '42501', '42501', '42501', '42501', 'ok'],
+     ('masquer_texte', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
       'select public.masquer_texte(''point_attention'', (select p2 from ctx), ''titre'', ''autre'')'),
-     ('masquer_texte', 'appeler', array['42501', '42501', '42501', '42501', '42501', 'ok'],
+     ('masquer_texte', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
       'select public.masquer_texte(''signalement'', (select s from ctx), ''texte'', ''autre'')')
    ) as m(objet, action, attendu, requete);
 create temp view matrice_l6 (profil, objet, action, aal, attendu, requete) as
@@ -77,23 +83,24 @@ create temp view matrice_l6 (profil, objet, action, aal, attendu, requete) as
     from matrice_l6_aal2 m
    where m.action = 'ajouter';
 create temp view profil_l6 (profil, compte) as
-  select 'ministère a', c.a from ctx c union all select 'ministère b', c.b from ctx c
+  select 'ministère auteur', c.a from ctx c union all select 'ministère mentionné', c.b from ctx c
+  union all select 'ministère c', c.c from ctx c
   union all select 'berger', c.berger from ctx c union all select 'conseil', c.conseil from ctx c
   union all select 'administration', c.admin from ctx c union all select 'EJP Tech', c.tech from ctx c;
 grant select on matrice_l6_aal2, matrice_l6, profil_l6 to authenticated, anon;
 
-select plan(22
+select plan(23
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_l6',
                         'select profil, compte from profil_l6', true));
 
-select ok((select count(*) from ctx where a is not null and b is not null and berger is not null
+select ok((select count(*) from ctx where a is not null and b is not null and c is not null and berger is not null
              and conseil is not null and admin is not null and tech is not null and p1 is not null
              and p2 is not null and s is not null and prec is not null) = 1,
   'le jeu d''exemple et le contexte fournissent les comptes, les deux points, le signalement et une précision');
 
 -- 1. Structure : onze colonnes, aucune valeur chiffrée
 select set_eq($$
-  select a.attname::text from pg_catalog.pg_attribute a
+  select a.attname::text collate "default" from pg_catalog.pg_attribute a
    where a.attrelid = 'public.v_textes_a_relire'::regclass and a.attnum > 0 and not a.attisdropped
 $$, $$ values ('cible'), ('cible_id'), ('ministere_id'), ('auteur_libelle'), ('ecrit_le'), ('champs'),
               ('etat'), ('decision_le'), ('motif'), ('indicateur_libelle'), ('mois') $$,
@@ -109,9 +116,13 @@ select is(tests.compter((select tech from ctx), 'aal2', $$
      and x.indicateur_libelle is not null and x.mois is not null
 $$), 1, 'une précision dit le libellé de l''indicateur et le mois');
 select is(tests.compter((select tech from ctx), 'aal2', $$
-  select 1 from public.v_textes_a_relire x
-   where to_jsonb(x) ?| array['valeur', 'total', 'categories', 'repartition', 'nb_saisis', 'priorite', 'statut']
-$$), 0, 'aucune ligne de la file ne porte une clé de valeur, de priorité ou de statut');
+  select 1 from public.v_textes_a_relire x, jsonb_object_keys(x.champs) as cle
+   where cle not in ('titre', 'description', 'action_attendue', 'commentaire', 'objet',
+                     'decision_attendue', 'texte')
+$$), 0, 'aucune ligne de la file ne porte, dans ses champs, une clé de valeur, de priorité ou de statut');
+select is(tests.compter((select b from ctx), 'aal2',
+  'select 1 from public.v_point where id = (select p1 from ctx)'),
+  1, 'le ministère mentionné lit le point : cette lecture n''ouvre ni la file, ni marquer_relu, ni masquer_texte');
 select is(tests.lire((select tech from ctx), 'aal2', $$
   select cible, ministere_id, champs, etat from public.v_textes_a_relire where cible_id = (select p1 from ctx)
 $$), (select jsonb_build_array(jsonb_build_object(
