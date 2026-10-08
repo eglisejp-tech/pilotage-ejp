@@ -124,9 +124,11 @@ select is(tests.lire((select a from ctx), 'aal2',
           (select jsonb_build_array(jsonb_build_object('session_id', s2)) from ctx),
           'le ministère attendu voit la session passée dans « Choisir la session », pas la session à venir');
 select is(tests.lire((select a from ctx), 'aal2',
-            'select session_id from public.session_attendu where ministere_id = (select a_m from ctx) and session_id in (select s1 from ctx union all select s2 from ctx)'),
-          (select jsonb_build_array(jsonb_build_object('session_id', s1), jsonb_build_object('session_id', s2))
-             from ctx),
+            'select session_id from public.session_attendu where ministere_id = (select a_m from ctx) and session_id in (select s1 from ctx union all select s2 from ctx) order by session_id'),
+          -- Même ordre des deux côtés : sans « order by », la comparaison du tableau JSON échouait
+          -- au hasard (constaté en CI le 8 octobre 2026).
+          (select jsonb_agg(jsonb_build_object('session_id', x.id) order by x.id)
+             from (select s1 as id from ctx union all select s2 from ctx) as x),
           'le ministère attendu lit ses deux sessions attendues');
 
 -- Une saisie du ministère A : la complétude passe à 1 sur 2 et seul B manque.
