@@ -141,6 +141,13 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     )
   })
 
+  it("dit que le navigateur retient la fermeture du bandeau d'avancement", () => {
+    afficher()
+    expect(partie('Cookies et traceurs')).toHaveTextContent(
+      "Ce navigateur retient aussi que vous avez fermé le bandeau d'avancement.",
+    )
+  })
+
   it('garde le responsable du traitement et le contact', () => {
     afficher()
     elementExact(

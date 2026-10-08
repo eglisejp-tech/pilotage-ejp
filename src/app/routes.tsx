@@ -1,5 +1,6 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
@@ -8,6 +9,7 @@ import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
 import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
 import { ApercuNouveauPoint } from '@/features/nouveau-point/apercu/ApercuNouveauPoint'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
+import { ApercuSessions } from '@/features/sessions/apercu/ApercuSessions'
 import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
 import { PageChoixMotDePasse } from '@/features/connexion/PageChoixMotDePasse'
@@ -40,6 +42,7 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
         children: [
           { path: 'cette-semaine', element: <ApercuCetteSemaine /> },
           { path: 'navigation', element: <ApercuNavigation /> },
+          { path: 'avancement', element: <ApercuAvancement /> },
           // Lot L1 : écran 13, « Ministères et comptes » (actions simulées, aucune requête).
           { path: 'comptes', element: <ApercuComptes /> },
           // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.
@@ -60,6 +63,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'points-actions', element: <ApercuActionsPoint /> },
           // Lot P3 : écran 05 « Points d'attention » et « Mes points », lus par e2e/points.spec.ts.
           { path: 'points', element: <ApercuPoints /> },
+          // Lot L2 : écran 14 « Sessions » (actions simulées, aucune requête).
+          { path: 'sessions', element: <ApercuSessions /> },
         ],
       },
     ]

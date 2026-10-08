@@ -161,7 +161,8 @@ export function PageConfidentialite() {
           <p>
             Aucun traceur ni cookie publicitaire, aucun appel à un autre service au chargement des
             pages. Votre connexion est gardée dans ce navigateur jusqu'à ce que vous vous
-            déconnectiez : c'est nécessaire au fonctionnement, sans consentement à donner.
+            déconnectiez : c'est nécessaire au fonctionnement, sans consentement à donner. Ce
+            navigateur retient aussi que vous avez fermé le bandeau d'avancement.
           </p>
         </PartieTexte>
         <PartieTexte titre="Sécurité">
