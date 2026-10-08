@@ -147,6 +147,13 @@ export const TEXTES_AIDE = {
   'point.echeance': 'Le dernier jour où une réponse vous est encore utile.',
   'point.statut': "« En attente de décision » : le point attend l'avis du berger ou du conseil.",
   'points.filtre': 'Les points créés par le ministère choisi et ceux qui le mentionnent.',
+
+  // Sessions (écran 14, lot L2, statut Proposé) : sessions.attendus sur « Ministères attendus » du
+  // formulaire, sessions.saisies sur la colonne « Saisies » de la liste.
+  'sessions.attendus':
+    'Les ministères qui saisissent leurs STARs présents à cette session. Gardez cochés ceux qui y participent.',
+  'sessions.saisies':
+    'Les ministères attendus qui ont saisi leurs présents. « 6 sur 8 » : 2 ministères restent à saisir.',
 } as const
 
 /**

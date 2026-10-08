@@ -657,13 +657,7 @@ describe("adresses de l'étape 4", () => {
 // à l'étape 5. »). Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie
 // page à part. Leurs refus (page non disponible, aucune requête) sont déjà couverts par
 // `ADRESSES_REFUSEES`, qui parcourt toute la table des adresses.
-const ADRESSES_AMORCES_C0 = [
-  '/points',
-  '/journal',
-  '/journal-technique',
-  '/sessions',
-  '/ma-fiche/indicateurs',
-]
+const ADRESSES_AMORCES_C0 = ['/points', '/journal', '/journal-technique', '/ma-fiche/indicateurs']
 const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
   ADRESSES_AMORCES_C0.includes(adresse.chemin),
 ).flatMap((adresse) => adresse.profils.map((profil) => [adresse, profil] as const))
@@ -776,5 +770,48 @@ describe('/comptes, écran 13 (lot L1)', () => {
       'v_etat_comptes',
     ])
     expect(invoke).not.toHaveBeenCalled()
+  })
+})
+
+// Lot L2 : la vraie page /sessions (retirée des amorces de C0), branchée sur ses lectures.
+describe('/sessions, écran 14 (lot L2)', () => {
+  it('admin_eglise en aal2 : titre, onglet courant, ses trois lectures et aucune écriture', async () => {
+    const faux = installer({
+      ...scenarioDe('admin_eglise'),
+      lignes: {
+        v_session_completude: [
+          {
+            session_id: 's-1',
+            type: 'batir',
+            date: '2026-10-03',
+            intitule: null,
+            a_eu_lieu: true,
+            nb_attendus: 8,
+            nb_saisis: 6,
+            manquants: ['Social', 'Intégration'],
+          },
+        ],
+        ministere: [
+          { id: 'm-communication', code: null, nom: 'Communication', desactive_le: null },
+        ],
+        v_semaine: [
+          { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
+        ],
+      },
+    })
+    afficher('/sessions')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sessions' })).toBeInTheDocument()
+    const liste = await screen.findByRole('region', { name: 'Sessions déclarées' })
+    await waitFor(() => expect(liste).toHaveTextContent('Manquent : Intégration et Social'))
+    expect(within(navigation()[0]!).getByRole('link', { name: 'Sessions' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect([...new Set(faux.tables)].sort()).toEqual([
+      'compte',
+      'ministere',
+      'v_semaine',
+      'v_session_completude',
+    ])
   })
 })
