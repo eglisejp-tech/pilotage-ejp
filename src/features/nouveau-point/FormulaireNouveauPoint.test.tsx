@@ -102,7 +102,7 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     ).toEqual(['Coordination', 'Intégration'])
     const groupe = screen.getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
     expect(groupe).toHaveAccessibleDescription(
-      'Le ministère mentionné verra ce point, et seulement ce point. Il pourra le marquer traité en expliquant ce qui a été fait. Le berger et le conseil voient tous les points. Les mentions se choisissent à la création et ne changent plus.',
+      "Le ministère mentionné verra ce point, et seulement ce point. Il pourra le marquer traité en expliquant ce qui a été fait. Le berger et le conseil voient tous les points. Le ministère créateur, le berger et le conseil peuvent modifier les mentions tant que le point n'est pas traité.",
     )
   })
 

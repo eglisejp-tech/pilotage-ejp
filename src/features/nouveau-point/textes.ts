@@ -25,8 +25,9 @@ export const TEXTES_POINT = {
   /** Note sous les mentions : BRIEF section 9 et LISEZMOI (écart de la maquette 10). */
   noteMentions:
     'Le ministère mentionné verra ce point, et seulement ce point. Il pourra le marquer traité en expliquant ce qui a été fait. Le berger et le conseil voient tous les points.',
-  /** Texte visible sous la note (BRIEF règle 7 : les mentions sont fixées à la création). */
-  mentionsFigees: 'Les mentions se choisissent à la création et ne changent plus.',
+  /** Texte visible sous la note (T54, proposé : les mentions se modifient tant que le point n'est pas traité). */
+  mentionsModifiables:
+    "Le ministère créateur, le berger et le conseil peuvent modifier les mentions tant que le point n'est pas traité.",
   /** Aucun ministère à cocher. */
   aucuneMention: 'Aucun autre ministère actif à mentionner.',
   bouton: 'Créer le point',

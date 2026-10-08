@@ -169,7 +169,7 @@ $$, $$ values
   ('validation', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('ventilation_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('ventilation_sensible', 'lecture', 'SELECT', 'PERMISSIVE')
-$$, 'les 61 politiques de public :lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère, rien d''autre');
+$$, 'les 61 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère, rien d''autre');
 
 -- GRANT des tables
 select is_empty($$
@@ -449,6 +449,7 @@ $$, $$ values
   ('points_mentionnant_mon_ministere', 0, true, true, false),
   ('poser_mention', 3, true, false, false),
   ('precisions_sensibles', 0, true, true, false),
+  ('refuser_mention_double', 0, false, false, false),
   ('refuser_modification', 0, false, false, false),
   ('refuser_modification_sauf_masquage', 0, false, false, false),
   ('retirer_calculs_de', 1, false, false, false),
@@ -484,7 +485,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 124 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 125 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -632,6 +633,7 @@ $$, $$ values
   ('public.point_mention', 'ajout_seulement'),
   ('public.point_mention', 'ajout_seulement_vider'),
   ('public.point_mention', 'forcer_auteur'),
+  ('public.point_mention', 'mention_unique'),
   ('public.point_mention_retrait', 'ajout_seulement'),
   ('public.point_mention_retrait', 'ajout_seulement_vider'),
   ('public.point_mention_retrait', 'forcer_auteur'),
@@ -656,7 +658,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 67 triggers de public et de private : auteur imposé, journal, contrôles, inaltérabilité, termes complets, et eux seuls');
+$$, 'les 68 triggers de public et de private : auteur imposé, journal, contrôles, mention unique, inaltérabilité, termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

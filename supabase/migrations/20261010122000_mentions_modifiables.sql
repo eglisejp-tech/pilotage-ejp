@@ -71,6 +71,25 @@ create trigger ajout_seulement before update or delete on public.point_mention_r
 create trigger ajout_seulement_vider before truncate on public.point_mention_retrait
   for each statement execute function private.refuser_modification();
 
+-- Un ministère n'a qu'une mention en vigueur par point : la clé (point, ministère) n'existe plus,
+-- donc la base refuse elle-même un second ajout sans retrait entre les deux (retirer_mention_point
+-- ne retire qu'une ligne ; deux ajouts en vigueur laisseraient le ministère lire le point).
+create function private.refuser_mention_double() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if exists (select 1 from public.point_mention m
+              where m.point_id = new.point_id and m.ministere_id = new.ministere_id
+                and not exists (select 1 from public.point_mention_retrait r where r.mention_id = m.id)) then
+    raise exception 'Ce ministère est déjà mentionné sur ce point.';
+  end if;
+  return new;
+end $$;
+
+revoke all on function private.refuser_mention_double() from public, anon, authenticated, service_role;
+
+create trigger mention_unique before insert on public.point_mention
+  for each row execute function private.refuser_mention_double();
+
 -- Lecture : les retraits des mentions que le compte lit (donc des points qu'il lit). Aucune
 -- politique d'ajout : seules les fonctions écrivent.
 create policy lecture on public.point_mention_retrait for select to authenticated
@@ -125,11 +144,14 @@ declare
 begin
   perform private.exige_aal2();
   v_mon_ministere := private.mon_ministere();
-  select p.* into v_point from public.point_attention p
-   where p.id = p_point_id
-     and (p.ministere_id = v_mon_ministere
-          or private.mention_effective(p.id, v_mon_ministere) is not null)
-     for update of p;
+  -- Verrou d'abord (un retrait concurrent est alors terminé), droit ensuite, dans une instruction
+  -- séparée : comme marquer_traite.
+  select p.* into v_point from public.point_attention p where p.id = p_point_id for update;
+  if v_point.id is not null
+     and not coalesce(v_point.ministere_id = v_mon_ministere
+                      or private.mention_effective(v_point.id, v_mon_ministere) is not null, false) then
+    v_point := null;
+  end if;
   if v_point.id is null then
     raise exception 'Ce point n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
   end if;
@@ -202,11 +224,13 @@ language plpgsql security definer set search_path = '' as $$
 declare
   v_createur uuid;
 begin
-  select p.ministere_id into v_createur from public.point_attention p where p.id = p_point_id for update;
+  -- Le droit se contrôle avant le verrou : un compte sans droit ne bloque pas le point.
+  select p.ministere_id into v_createur from public.point_attention p where p.id = p_point_id;
   if v_createur is null
      or not (private.est_decideur() or coalesce(v_createur = private.mon_ministere(), false)) then
     raise exception 'Ce point n''existe pas ou vous n''y avez pas accès.' using errcode = '42501';
   end if;
+  perform 1 from public.point_attention p where p.id = p_point_id for update;
   if exists (select 1 from public.point_suivi s where s.point_id = p_point_id and s.statut = 'traite') then
     raise exception 'Ce point est traité : ses mentions ne changent plus.';
   end if;

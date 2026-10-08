@@ -72,6 +72,7 @@ do $$
 begin
   perform tests.se_connecter((select a from ctx), 'aal2');
   perform public.retirer_mention_point((select p2 from ctx), (select c_m from ctx));
+  perform public.changer_statut_point((select p2 from ctx), 'en_cours');
   perform public.marquer_traite((select p3 from ctx), 'Le point a été créé par erreur, rien à faire.');
   perform tests.deconnecter();
 end $$;
@@ -99,6 +100,8 @@ create temp view matrice_mentions (profil, objet, action, aal, attendu, requete)
       'select 1 from public.v_point_mention where point_id = (select p2 from ctx)'),
      ('v_point', 'lire', array['1', '1', '0', '0', '1', '1', '0', '1'],
       'select 1 from public.v_point where id = (select p2 from ctx)'),
+     ('point_suivi', 'lire', array['1', '1', '0', '0', '1', '1', '0', '1'],
+      'select 1 from public.point_suivi where point_id = (select p2 from ctx)'),
      ('point_mention', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'insert into public.point_mention (point_id, ministere_id) select p2, d_m from ctx'),
      ('point_mention', 'modifier', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
@@ -120,9 +123,9 @@ create temp view matrice_mentions (profil, objet, action, aal, attendu, requete)
    ) as m(objet, action, attendu, requete);
 grant select on matrice_mentions, profil_mentions to authenticated, anon;
 
--- Le plan compte les 62 tests fixes et, par tests.nombre_essais, les essais de la matrice
+-- Le plan compte les 65 tests fixes et, par tests.nombre_essais, les essais de la matrice
 -- (lignes dérivées comprises).
-select plan(62
+select plan(65
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_mentions',
                         'select profil, compte from profil_mentions', true));
 
@@ -296,6 +299,11 @@ select is((select count(*)::integer from public.point_mention_retrait r
              and r.saisi_par = (select berger from ctx)), 1,
   'le retrait posé par le berger porte le compte du berger (auteur imposé par la base)');
 
+select is((select count(*)::integer from public.point_mention m
+            where m.point_id = (select p1 from ctx) and m.ministere_id = (select c_m from ctx)
+              and m.saisi_par = (select conseil from ctx)), 1,
+  'la mention posée par le conseil porte le compte du conseil (auteur imposé par la base)');
+
 -- Journal : une ligne par ajout et par retrait, sans texte, au ministère créateur.
 select is((select count(*)::integer from public.journal
             where cible_id = (select p1 from ctx) and action = 'point_mention_ajoutee'), 4,
@@ -314,14 +322,23 @@ select is((select j.compte from public.journal j
             order by j.id limit 1), (select berger from ctx),
   'journal : le compte du premier retrait de C est celui du berger');
 select is(tests.compter((select b from ctx), 'aal2',
-  'select 1 from public.v_journal j where j.cible_id = (select p1 from ctx)'), 0,
+  'select 1 from public.v_journal j where j.cible_id = (select p1 from ctx) and j.action like ''point_mention%'''), 0,
   'journal : un ministère mentionné ne lit pas les lignes de mentions du ministère créateur');
+select is(tests.compter((select b from ctx), 'aal2',
+  'select 1 from public.v_journal j where j.cible_id = (select p1 from ctx) and j.action = ''point_statut'''), 1,
+  'journal : un ministère mentionné lit sa propre ligne de changement de statut (celles de son compte)');
 select is(tests.compter((select a from ctx), 'aal2',
   'select 1 from public.v_journal j where j.cible_id = (select p1 from ctx) and j.action like ''point_mention%'''), 9,
   'journal : le ministère créateur lit les neuf lignes de mentions de son point');
 select is(tests.compter((select admin from ctx), 'aal2',
   'select 1 from public.v_journal j where j.action like ''point_mention%'''), 0,
   'journal : l''administration de l''église ne lit aucune ligne de mentions');
+
+-- Une seule mention en vigueur par ministère et par point, même pour le propriétaire des tables
+-- (B est mentionné sur le point 2).
+select throws_ok($$ insert into public.point_mention (point_id, ministere_id) select p2, b_m from ctx $$,
+  'P0001', 'Ce ministère est déjà mentionné sur ce point.',
+  'point_mention : un second ajout sans retrait est refusé par la base, même pour le propriétaire');
 
 -- Inaltérabilité, même pour le propriétaire des tables.
 select throws_ok($$ update public.point_mention set ministere_id = ministere_id $$,
