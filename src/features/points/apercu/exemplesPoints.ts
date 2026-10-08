@@ -7,7 +7,7 @@
 import type { MinistereListe } from '@/data/ministeres'
 import type { AuteurTraitement } from '@/data/pointsListe'
 import type { LecturesPoints } from '@/features/points/construirePoints'
-import type { LigneTable, LigneVue, StatutPoint } from '@/lib/base'
+import type { LigneVue, StatutPoint } from '@/lib/base'
 
 export const COMMUNICATION = 'min-communication'
 export const INTEGRATION = 'min-integration'
@@ -179,7 +179,7 @@ export const POINTS_EXEMPLE: LigneVue<'v_point'>[] = [
   }),
 ]
 
-export const MENTIONS_EXEMPLE: LigneTable<'point_mention'>[] = [
+export const MENTIONS_EXEMPLE: LigneVue<'v_point_mention'>[] = [
   { point_id: 'p-salle', ministere_id: COORDINATION },
   { point_id: 'p-renfort', ministere_id: SOCIAL },
   { point_id: 'p-visuels', ministere_id: COMMUNICATION },

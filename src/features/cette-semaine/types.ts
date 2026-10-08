@@ -142,7 +142,7 @@ export interface PointADecider {
   statut: StatutPoint
   /** Ministère créateur (`v_point.ministere_id`), pour les droits des boutons, jamais son nom. */
   ministereId: string
-  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`), pour les droits. */
+  /** Identifiants des ministères mentionnés (`v_point_mention.ministere_id`), pour les droits. */
   mentionIds: string[]
 }
 

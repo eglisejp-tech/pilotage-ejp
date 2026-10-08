@@ -79,7 +79,7 @@ function installerVueDeLEglise(type: TypeCompte) {
       v_tableau_ministeres: lectures.tableauMinisteres,
       ministere: lectures.ministeres,
       v_point: lectures.points?.points ?? [],
-      point_mention: lectures.points?.mentions ?? [],
+      v_point_mention: lectures.points?.mentions ?? [],
     },
   })
 }
@@ -292,7 +292,7 @@ describe('routes', () => {
       'page',
     )
     // Les points sont lus, comme pour le berger.
-    expect(faux.tables).toEqual(expect.arrayContaining(['v_point', 'point_mention']))
+    expect(faux.tables).toEqual(expect.arrayContaining(['v_point', 'v_point_mention']))
     const aDecider = screen.getByRole('region', { name: 'À décider' })
     expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)
     // Étape 5 : « Marquer traité » ne doit jamais apparaître pour EJP Tech.
@@ -328,7 +328,7 @@ describe('routes', () => {
             pointExemple('point-ouvert', 'Salle pour la soirée', 'attente_decision'),
             pointExemple('point-traite', 'Micros à remplacer', 'traite'),
           ],
-          point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
+          v_point_mention: [{ point_id: 'point-ouvert', ministere_id: 'min-b' }],
         },
       })
       const routeur = afficher(adresse)

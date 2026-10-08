@@ -12,15 +12,20 @@ interface Props {
   onBlur?: () => void
   refPremier?: Ref<HTMLInputElement>
   erreur?: string
+  /** Titre du groupe : « Mentionner un ministère (facultatif) » à la création. */
+  titre?: string
+  /** Notes sous les boutons : celles de la création par défaut. */
+  notes?: readonly string[]
 }
 
 /**
  * Mentions facultatives d'un nouveau point (maquette 10) : un bouton à cocher par ministère actif
  * autre que celui du compte. Un ministère coché prend le fond `--encre`, le gras et un « ✓ »
  * (jamais la couleur seule). Sous les boutons, la note du BRIEF (le ministère mentionné verra ce
- * point, et seulement ce point) et la ligne « Les mentions se choisissent à la création et ne
- * changent plus. ». Sans autre ministère actif, une phrase à la place des boutons, sans note. Pas
+ * point, et seulement ce point) et la ligne « Le ministère créateur, le berger et le conseil
+ * peuvent modifier les mentions tant que le point n'est pas traité. » (T54). Sans autre ministère actif, une phrase à la place des boutons, sans note. Pas
  * d'aide en bulle : la note visible dit déjà ce qu'il faut (le formulaire garde trois aides).
+ * « Modifier les mentions » (T54) réutilise ces boutons avec son titre et ses notes.
  */
 export function ChoixMentionsPoint({
   id,
@@ -30,6 +35,8 @@ export function ChoixMentionsPoint({
   onBlur,
   refPremier,
   erreur,
+  titre = TEXTES_POINT.titreMentions,
+  notes = [TEXTES_POINT.noteMentions, TEXTES_POINT.mentionsModifiables],
 }: Props) {
   const idTitre = `${id}-titre`
   const idNote = `${id}-note`
@@ -48,7 +55,7 @@ export function ChoixMentionsPoint({
       className="flex min-w-0 flex-col gap-2"
     >
       <p id={idTitre} className="text-[15px] font-semibold">
-        {TEXTES_POINT.titreMentions}
+        {titre}
       </p>
       {vide ? (
         <p className="text-encre-2">{TEXTES_POINT.aucuneMention}</p>
@@ -83,8 +90,9 @@ export function ChoixMentionsPoint({
       )}
       {vide ? null : (
         <div id={idNote} className="flex flex-col gap-1 text-sm leading-normal text-encre-3">
-          <p>{TEXTES_POINT.noteMentions}</p>
-          <p>{TEXTES_POINT.mentionsFigees}</p>
+          {notes.map((note) => (
+            <p key={note}>{note}</p>
+          ))}
         </div>
       )}
       {erreur ? (

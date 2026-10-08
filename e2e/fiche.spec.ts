@@ -21,9 +21,12 @@ const boutonsAide = (page: Page) => page.getByRole('button', { name: /^Aide : / 
 /** Boutons et liens d'action qu'EJP Tech ne voit jamais (T29). */
 const ACTIONS =
   /Marquer traité|Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Modifier|Mettre à jour/
-/** Ce que le berger et le conseil n'ont pas : « Marquer traité » leur revient (étape 5). */
+/**
+ * Ce que le berger et le conseil n'ont pas : « Marquer traité » (étape 5) et « Modifier les
+ * mentions » (T54) leur reviennent.
+ */
 const ACTIONS_SANS_TRAITE =
-  /Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Modifier|Mettre à jour/
+  /Changer le statut|Nouveau point|Saisir|Enregistrer|Ajouter|Modifier(?! les mentions)|Mettre à jour/
 
 const TOUS: Ecran[] = [
   { profil: 'berger' },

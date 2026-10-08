@@ -47,6 +47,27 @@ describe('construireDernieresSaisies', () => {
     })
   })
 
+  it('une mention ajoutée ou retirée est écrite en mots, avec le titre actuel du point (T54)', () => {
+    const ligne = (id: number, action: string) => ({
+      id,
+      le: '2026-10-05T18:00:00Z',
+      action,
+      cible: 'point_attention',
+      cible_id: 'b0000000-0000-4000-8000-000000000001',
+      detail: { ministere: 'a0000000-0000-4000-8000-000000000002' },
+      cible_texte: 'Local de stockage des dons',
+    })
+    expect(
+      construireDernieresSaisies(
+        [ligne(2, 'point_mention_retiree'), ligne(1, 'point_mention_ajoutee')],
+        COMMUNS_EXEMPLE,
+      ),
+    ).toMatchObject([
+      { texte: 'Mention retirée :', objet: { texte: 'Local de stockage des dons', masque: false } },
+      { texte: 'Mention ajoutée :', objet: { texte: 'Local de stockage des dons', masque: false } },
+    ])
+  })
+
   it('une présence dont la session n’est pas lisible : « pour une session »', () => {
     const [ligne] = construireDernieresSaisies(
       [

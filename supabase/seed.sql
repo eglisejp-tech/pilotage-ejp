@@ -362,9 +362,11 @@ select p.id, g.ministere, p.titre, p.description, p.action, p.priorite, pg_temp.
 from graine_point p
 join graine_ministere g on g.code = p.code;
 
-insert into public.point_mention (point_id, ministere_id)
-select p.id, g.ministere
+-- Les mentions sont posées à la création du point, par son compte (T54 : date et auteur du point).
+insert into public.point_mention (point_id, ministere_id, saisi_le, saisi_par)
+select p.id, g.ministere, a.saisi_le, a.saisi_par
 from graine_point p
+join public.point_attention a on a.id = p.id
 cross join lateral unnest(p.mentions) as m(code)
 join graine_ministere g on g.code = m.code;
 

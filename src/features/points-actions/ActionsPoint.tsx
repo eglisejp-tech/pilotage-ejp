@@ -6,6 +6,7 @@ import { useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { annoncerReussite } from '@/features/points-actions/annonce'
 import { useEcrituresPoint } from '@/features/points-actions/ecritures'
 import { PanneauChangerStatut } from '@/features/points-actions/PanneauChangerStatut'
+import { PanneauModifierMentions } from '@/features/points-actions/PanneauModifierMentions'
 import { PanneauMarquerTraite } from '@/features/points-actions/PanneauMarquerTraite'
 import { TEXTES_ACTIONS_POINT } from '@/features/points-actions/textes'
 import type { StatutPoint, TypeCompte } from '@/lib/base'
@@ -13,12 +14,13 @@ import {
   commentaireTraiteObligatoire,
   peutChangerStatut,
   peutMarquerTraite,
+  peutModifierMentions,
 } from '@/lib/metier/droitsPoint'
 import { LIBELLE_STATUT } from '@/lib/metier/points'
 
 /**
  * Ce que les boutons d'un point lisent du point. Les identifiants viennent de `v_point` et de
- * `point_mention`, jamais des noms affichés : deux ministères peuvent changer de nom, pas d'id.
+ * `v_point_mention`, jamais des noms affichés : deux ministères peuvent changer de nom, pas d'id.
  */
 export interface PointDesActions {
   id: string
@@ -27,7 +29,7 @@ export interface PointDesActions {
   statut: StatutPoint
   /** Ministère créateur (`point_attention.ministere_id`). */
   ministereId: string
-  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`). */
+  /** Identifiants des ministères mentionnés (`v_point_mention.ministere_id`). */
   mentions: readonly string[]
 }
 
@@ -43,7 +45,7 @@ export interface ProprietesActionsPoint {
   compte: CompteDesActions
 }
 
-type Fenetre = 'statut' | 'traite'
+type Fenetre = 'statut' | 'traite' | 'mentions'
 
 const CLASSE_BOUTON =
   'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond'
@@ -61,7 +63,8 @@ function refusDePagePerimee(erreur: unknown): boolean {
   return (
     code === 'P0001' &&
     (message === MESSAGES_POINT.refus.pointDejaTraite ||
-      message === MESSAGES_POINT.refus.pointTraiteStatut)
+      message === MESSAGES_POINT.refus.pointTraiteStatut ||
+      message === MESSAGES_POINT.refus.pointTraiteMentions)
   )
 }
 
@@ -89,15 +92,16 @@ function rendreLeFocusSiPerdu(repli: HTMLElement | null): void {
 }
 
 /**
- * Boutons « Changer le statut » et « Marquer traité » d'un point (étape 5, BRIEF section 9 ;
- * plan des étapes 5 à 8, P1). Propriétés figées par le lot C0 : le lot P4 pose ce composant sur
+ * Boutons « Changer le statut », « Marquer traité » et « Modifier les mentions » d'un point (étape 5,
+ * BRIEF section 9 ; plan des étapes 5 à 8, P1 ; T54 pour les mentions). Propriétés figées par le lot C0 : le lot P4 pose ce composant sur
  * « À décider » (`PointADecider.tsx`), sur la fiche (`CartePointFiche.tsx`) et sur « Vos points »
  * de l'accueil du ministère, sans changer ces propriétés.
  *
  * Règle des boutons (`droitsPoint.ts`) : ils se montrent au ministère créateur et aux ministères
  * mentionnés (les deux boutons), au berger et au conseil (« Marquer traité » seulement) ; jamais à
- * EJP Tech ni à l'administration de l'église (T29) ; plus aucun sur un point traité. Quand aucun
- * bouton ne se montre, le composant ne rend rien.
+ * EJP Tech ni à l'administration de l'église (T29) ; plus aucun sur un point traité. « Modifier les
+ * mentions » (T54) se montre au ministère créateur, au berger et au conseil, jamais à un ministère
+ * seulement mentionné. Quand aucun bouton ne se montre, le composant ne rend rien.
  *
  * Chaque bouton ouvre sa fenêtre (plein écran sous 600 px, panneau de 460 px au-delà). Après une
  * écriture, toutes les lectures de la page sont relues (`useApresEcriture` : « Cette semaine »,
@@ -121,7 +125,8 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
   const droits = { statut: point.statut, ministereId: point.ministereId, mentions: point.mentions }
   const peutStatut = peutChangerStatut(compte, droits)
   const peutTraiter = peutMarquerTraite(compte, droits)
-  const avecBoutons = peutStatut || peutTraiter
+  const peutMentions = peutModifierMentions(compte, droits)
+  const avecBoutons = peutStatut || peutTraiter || peutMentions
 
   // Les deux boutons disparaissent après la relecture d'un point traité, et avec eux le focus :
   // il passe au repli de la page (le bloc marqué `data-repli-focus`, sinon le contenu).
@@ -182,6 +187,19 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
     }
   }
 
+  const envoyerMentions = async (mentions: string[]) => {
+    try {
+      await ecritures.modifierMentions(point.id, mentions)
+    } catch (erreur) {
+      gererRefus(erreur)
+      throw erreur
+    }
+    suite.current = () => {
+      annoncerReussite(MESSAGES_POINT.reussite.mentions)
+      apresEcriture()
+    }
+  }
+
   // Fermer, c'est aussi lancer la suite. Elle part après la fermeture de la fenêtre modale : un
   // lecteur d'écran n'annonce pas un message arrivé pendant qu'elle est encore ouverte.
   const fermer = () => {
@@ -216,6 +234,16 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
           {TEXTES_ACTIONS_POINT.boutonTraite}
         </button>
       ) : null}
+      {peutMentions ? (
+        <button
+          type="button"
+          aria-describedby={idTitre}
+          onClick={(evenement) => ouvrir('mentions', evenement)}
+          className={CLASSE_BOUTON}
+        >
+          {TEXTES_ACTIONS_POINT.boutonMentions}
+        </button>
+      ) : null}
       {fenetre === 'statut' ? (
         <PanneauChangerStatut
           titre={point.titre}
@@ -229,6 +257,15 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
           titre={point.titre}
           commentaireObligatoire={commentaireTraiteObligatoire(compte, droits)}
           envoyer={envoyerTraite}
+          onFermer={fermer}
+        />
+      ) : null}
+      {fenetre === 'mentions' ? (
+        <PanneauModifierMentions
+          titre={point.titre}
+          createurId={point.ministereId}
+          mentions={point.mentions}
+          envoyer={envoyerMentions}
           onFermer={fermer}
         />
       ) : null}

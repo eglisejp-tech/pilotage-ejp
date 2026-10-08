@@ -11,6 +11,7 @@ export const TEXTES_ACTIONS_POINT = {
   /** Boutons posés sur un point (À décider, fiches 04 et 12, Vos points, écran 05). */
   boutonStatut: 'Changer le statut',
   boutonTraite: 'Marquer traité',
+  boutonMentions: 'Modifier les mentions',
 
   statut: {
     titre: 'Changer le statut',
@@ -24,6 +25,27 @@ export const TEXTES_ACTIONS_POINT = {
     /** Connexion perdue : le statut choisi reste dans le formulaire. */
     erreurConnexion:
       'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+  },
+
+  /**
+   * Fenêtre « Modifier les mentions » (T54, ministère créateur, berger et conseil, point non
+   * traité). Textes proposés, à valider avec ceux de la liste de `docs/conception/textes-points-actions.md`.
+   */
+  mentions: {
+    titre: 'Modifier les mentions',
+    /** Titre du groupe de cases. */
+    libelle: 'Ministères mentionnés',
+    /** Texte visible sous les cases : ce que voit un ministère ajouté, et un ministère retiré. */
+    notes: [
+      'Un ministère mentionné voit ce point, et seulement ce point. Un ministère retiré ne le voit plus.',
+      'Le berger et le conseil voient tous les points.',
+    ],
+    bouton: 'Enregistrer les mentions',
+    boutonEnCours: 'Envoi en cours',
+    annuler: 'Annuler',
+    /** Suffixe d'un ministère désactivé qui reste mentionné : on peut le retirer, plus l'ajouter. */
+    desactive: '(désactivé)',
+    erreurConnexion: 'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
   },
 
   traite: {

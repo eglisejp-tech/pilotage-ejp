@@ -46,7 +46,18 @@ export type TablesCommunes = {
     /** Null : actif. */
     desactive_le: string | null
   }>
-  point_mention: TableEnLecture<{ point_id: string; ministere_id: string }>
+  /**
+   * Une ligne par ajout de mention (T54) : à la création du point, puis chaque ajout ultérieur. Un
+   * ministère retiré puis ajouté de nouveau a deux lignes. La mention en vigueur se lit dans
+   * `v_point_mention`, jamais dans cette table.
+   */
+  point_mention: TableEnLecture<{
+    id: string
+    point_id: string
+    ministere_id: string
+    saisi_le: string
+    saisi_par: string
+  }>
 }
 
 export type VuesCommunes = {

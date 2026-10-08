@@ -9,7 +9,7 @@ interface PointAvecDroits {
   statut: StatutPoint
   /** Ministère créateur (`v_point.ministere_id`). */
   ministereId: string
-  /** Identifiants des ministères mentionnés (`point_mention.ministere_id`). */
+  /** Identifiants des ministères mentionnés (`v_point_mention.ministere_id`). */
   mentionIds: readonly string[]
 }
 
@@ -26,7 +26,7 @@ interface Props {
 /**
  * Pose `ActionsPoint` sous un point (étape 5, lot P4). Un seul endroit relie les points de
  * « À décider », de la fiche (04 et 12) et de « Vos points » (07) aux propriétés d'`ActionsPoint` :
- * les identifiants viennent de `v_point` et de `point_mention`, jamais des noms affichés. Quand
+ * les identifiants viennent de `v_point` et de `v_point_mention`, jamais des noms affichés. Quand
  * aucun bouton ne se montre, le conteneur reste vide et disparaît (`empty:hidden`) : pas d'espace
  * en trop. Cela suppose qu'`ActionsPoint` ne rende rien, pas même un fragment vide ou un espace,
  * quand il n'y a ni bouton ni fenêtre ouverte.

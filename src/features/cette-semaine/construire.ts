@@ -96,7 +96,7 @@ export interface LecturesCetteSemaine {
   /** ['ministeres','liste'] : tous, désactivés compris (créateurs et mentions « (désactivé) »). */
   ministeres: Pick<LigneTable<'ministere'>, 'id' | 'code' | 'nom' | 'desactive_le'>[]
   /** ['points','ouverts'] : berger, conseil et EJP Tech seulement, null pour les autres profils. */
-  points: { points: LigneVue<'v_point'>[]; mentions: LigneTable<'point_mention'>[] } | null
+  points: { points: LigneVue<'v_point'>[]; mentions: LigneVue<'v_point_mention'>[] } | null
 }
 
 type LigneSession = LigneVue<'v_session_completude'>

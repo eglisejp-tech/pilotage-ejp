@@ -120,9 +120,10 @@ describe('VueFiche, berger (04)', () => {
     afficher('berger')
     const points = screen.getByRole('region', { name: "Points d'attention" })
     expect(within(points).getAllByRole('article')).toHaveLength(3)
-    // Le berger marque un point traité (étape 5, `ActionsPoint`) : c'est son seul bouton ici.
+    // Le berger marque un point traité ou modifie ses mentions (étape 5, T54, `ActionsPoint`) :
+    // ce sont ses seuls boutons ici.
     for (const bouton of within(points).queryAllByRole('button')) {
-      expect(bouton).toHaveAccessibleName('Marquer traité')
+      expect(bouton.textContent).toMatch(/^(Marquer traité|Modifier les mentions)$/)
     }
     expect(within(points).getByText(/dépassée/)).toHaveClass('text-alerte')
     expect(screen.getByRole('link', { name: 'Tout le journal' })).toHaveAttribute(
