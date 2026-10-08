@@ -63,11 +63,9 @@ export const ETAPES: readonly Etape[] = [
       { quoi: 'Ministères et comptes', date: '2026-10-07' },
       { quoi: 'Indicateurs prévus', date: '2026-10-07' },
       { quoi: 'Sessions', date: '2026-10-08' },
+      { quoi: 'Journal et modération', date: '2026-10-08' },
     ],
-    prevu: [
-      { quoi: 'Journal et modération', date: '2026-10-14' },
-      { quoi: 'Mes indicateurs et validation', date: '2026-10-16' },
-    ],
+    prevu: [{ quoi: 'Mes indicateurs et validation', date: '2026-10-16' }],
   },
   {
     numero: 7,
