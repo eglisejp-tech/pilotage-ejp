@@ -752,6 +752,10 @@ const AMORCES_C0_PAR_PROFIL = ADRESSES_APPLICATION.filter((adresse) =>
 // `src/pages/PagePoints.test.tsx` et `src/features/points/`.
 const PAGES_REMPLACEES_PAR_P3 = ['/points']
 
+// Page que le lot L5 a remplacée (écran 06, « Mon journal » et « Journal technique ») : testée dans
+// `src/pages/PageJournal.test.tsx` et `src/features/journal/`.
+const PAGES_REMPLACEES_PAR_L5 = ['/journal', '/journal-technique']
+
 describe('adresses des étapes 5 et 6 (lot C0)', () => {
   it('déclare chaque adresse amorce dans la table des adresses', () => {
     for (const motif of ADRESSES_AMORCES_C0) {
@@ -764,7 +768,9 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
 
   it.each(
     AMORCES_C0_PAR_PROFIL.filter(
-      ([adresse]) => !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin),
+      ([adresse]) =>
+        !PAGES_REMPLACEES_PAR_P3.includes(adresse.chemin) &&
+        !PAGES_REMPLACEES_PAR_L5.includes(adresse.chemin),
     ).map(([adresse, profil]) => [adresse.chemin, profil, adresse]),
   )(
     '%s ouverte au profil %s : la page amorce de son étape, sans aucune requête de données',
