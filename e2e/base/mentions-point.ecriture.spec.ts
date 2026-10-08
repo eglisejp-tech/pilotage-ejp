@@ -152,7 +152,7 @@ test.describe('Social, mentionné', () => {
     await expect(page).toHaveURL((url) => url.pathname === '/')
     expect(await pointsVisibles(page)).toHaveLength(1)
     await page.goto('/points')
-    await expect(page.getByText(TITRE)).toBeVisible()
+    await expect(page.getByRole('heading', { name: TITRE })).toBeVisible()
     await expect(boutonDuPoint(page, 'Marquer traité')).toBeVisible()
     await expect(boutonDuPoint(page, BOUTON)).toHaveCount(0)
 
@@ -175,7 +175,7 @@ test.describe('Intégration, retiré', () => {
     expect(await mentionsDe(page)).toEqual([])
     await page.goto('/points')
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
-    await expect(page.getByText(TITRE)).toHaveCount(0)
+    await expect(page.getByRole('heading', { name: TITRE })).toHaveCount(0)
 
     for (const [nom, args] of [
       ['changer_statut_point', { p_point_id: point, p_statut: 'en_cours' }],
@@ -223,7 +223,7 @@ test.describe('Intégration, ajouté de nouveau', () => {
     await expect(page).toHaveURL((url) => url.pathname === '/')
     expect(await pointsVisibles(page)).toHaveLength(1)
     await page.goto('/points')
-    await expect(page.getByText(TITRE)).toBeVisible()
+    await expect(page.getByRole('heading', { name: TITRE })).toBeVisible()
   })
 })
 
@@ -234,7 +234,7 @@ test.describe('EJP Tech', () => {
     page,
   }) => {
     await page.goto('/points')
-    await expect(page.getByText(TITRE)).toBeVisible()
+    await expect(page.getByRole('heading', { name: TITRE })).toBeVisible()
     await expect(page.getByRole('button', { name: BOUTON })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Marquer traité' })).toHaveCount(0)
     const reponse = await appeler(page, 'modifier_mentions_point', {
