@@ -5,7 +5,9 @@
   désormais **246 aperçus**, aux trois formats. La passe avec la base locale
   (`e2e/base/accessibilite.spec.ts`) est écrite mais **pas encore jouée** : elle ne tourne qu'en CI
   (pas de Docker sur ce poste). Revue appliquée le 12 octobre : les fautes connues ne masquent plus
-  que leurs propres lignes (section 3), et la faute A-04 s'ajoute.
+  que leurs propres lignes (section 3), et la faute A-04 s'ajoute. **Lot F3 (12 octobre)** : A-03,
+  A-04 et la surveillance de « Ministères et comptes » sont corrigées (une classe chacune) ; A-02
+  reste ouverte, sur un écran du lot L3b (section 3, « À corriger plus tard »).
 - **Sources** : `docs/plan-etapes-5-a-8.md` (branche `etape-5-8-plans`, section 3.3, lots F2 et F3),
   `BRIEF.md` (section 10, accessibilité), `docs/reference/maquettes/LISEZMOI.md`.
 - **Portée** : ce document liste les fautes, leur écran, leur gravité et le lot qui possède l'écran.
@@ -118,12 +120,12 @@ double authentification, les écrans du ministère ou « Cette semaine ». Une c
 n'est pas bloquante : elle se corrige à J+7, ou le soir même quand la correction tient en une
 classe, ce qui est le cas des trois fautes ci-dessous.
 
-| Ligne | Statut                     | Écran                                                                                                                                                    | Faute                                                                                                                                                                                                                             | Gravité                                                                                                                                                      | Lot propriétaire           | Contrôle                                                                                                                                |
-| ----- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| A-01  | Corrigée par F1            | Toute lecture : `/ministeres`, choix de session, carte FIJ                                                                                               | Hors ligne, `src/lib/requetes.ts` laissait TanStack Query en mode réseau `online` : la lecture restait en pause, `fetchAvecDelai` ne s'exécutait jamais et « Chargement » ne finissait pas.                                       | Bloquant (un ministère sans réseau le dimanche était bloqué)                                                                                                 | F1                         | `berger \| sans réseau` (base), sans entrée dans `FAUTES_CONNUES`                                                                       |
-| A-02  | Ouverte, à corriger par F3 | Configuration des indicateurs, liste : `/indicateurs` (administration de l'église et EJP Tech) et les aperçus `indicateurs liste*`                       | Le lien du nom d'un ministère court (« Kumi » dans les aperçus, « FIJ » dans la base) mesure moins de 44 px de large : `min-h-cible` fixe la hauteur, aucune largeur minimale. Correction : ajouter `min-w-cible` aux deux liens. | Non bloquant : cible, écran de réglage, deux profils, usage rare. Correction d'une classe.                                                                   | L3a                        | `indicateurs liste`, `indicateurs liste ejp-tech` (aperçus) ; `admin_eglise \| /indicateurs`, `admin_plateforme \| /indicateurs` (base) |
-| A-03  | Ouverte, à corriger par F3 | Bandeau d'avancement à 390 px : tout écran connecté hors saisie (`/` et `/ma-fiche` compris), aperçu `avancement` ; page `ministère FIJ \| pages` (base) | Le bouton « Voir les étapes » ne montre que « Voir » sous 600 px : environ 24 x 44 px. Correction : ajouter `min-w-cible` à `BOUTON`.                                                                                             | Non bloquant : cible, pas de faute axe ni de défilement ; son nom accessible est complet, et le bandeau est fermable et temporaire. Correction d'une classe. | Bandeau d'avancement (T50) | `avancement berger`, `avancement ministère` (aperçus, projet « telephone ») ; `ministère FIJ \| pages` (base, 390 et 360 px)            |
-| A-04  | Ouverte, à corriger par F3 | Liste des ministères `/ministeres` : berger, conseil et EJP Tech (base)                                                                                  | Même motif que A-02 : le lien du nom (`-my-3 inline-flex min-h-cible`) n'a pas de largeur minimale. Le ministère « FIJ » du jeu d'exemple en fait environ 25. Correction : ajouter `min-w-cible` aux deux liens.                  | Non bloquant : cible, même raison que A-02. Correction d'une classe.                                                                                         | Fiche et liste (étape 4)   | `berger \| /ministeres`, `conseil \| /ministeres`, `admin_plateforme \| /ministeres` (base)                                             |
+| Ligne | Statut                                              | Écran                                                                                                                                                    | Faute                                                                                                                                                                                                                             | Gravité                                                                                                                                                      | Lot propriétaire           | Contrôle                                                                                                                                |
+| ----- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| A-01  | Corrigée par F1                                     | Toute lecture : `/ministeres`, choix de session, carte FIJ                                                                                               | Hors ligne, `src/lib/requetes.ts` laissait TanStack Query en mode réseau `online` : la lecture restait en pause, `fetchAvecDelai` ne s'exécutait jamais et « Chargement » ne finissait pas.                                       | Bloquant (un ministère sans réseau le dimanche était bloqué)                                                                                                 | F1                         | `berger \| sans réseau` (base), sans entrée dans `FAUTES_CONNUES`                                                                       |
+| A-02  | Ouverte, écran du lot L3b, corrigée après sa fusion | Configuration des indicateurs, liste : `/indicateurs` (administration de l'église et EJP Tech) et les aperçus `indicateurs liste*`                       | Le lien du nom d'un ministère court (« Kumi » dans les aperçus, « FIJ » dans la base) mesure moins de 44 px de large : `min-h-cible` fixe la hauteur, aucune largeur minimale. Correction : ajouter `min-w-cible` aux deux liens. | Non bloquant : cible, écran de réglage, deux profils, usage rare. Correction d'une classe.                                                                   | L3a                        | `indicateurs liste`, `indicateurs liste ejp-tech` (aperçus) ; `admin_eglise \| /indicateurs`, `admin_plateforme \| /indicateurs` (base) |
+| A-03  | Corrigée par F3 (`min-w-cible` sur `BOUTON`)        | Bandeau d'avancement à 390 px : tout écran connecté hors saisie (`/` et `/ma-fiche` compris), aperçu `avancement` ; page `ministère FIJ \| pages` (base) | Le bouton « Voir les étapes » ne montre que « Voir » sous 600 px : environ 24 x 44 px. Correction : ajouter `min-w-cible` à `BOUTON`.                                                                                             | Non bloquant : cible, pas de faute axe ni de défilement ; son nom accessible est complet, et le bandeau est fermable et temporaire. Correction d'une classe. | Bandeau d'avancement (T50) | `avancement berger`, `avancement ministère` (aperçus, projet « telephone ») ; `ministère FIJ \| pages` (base, 390 et 360 px)            |
+| A-04  | Corrigée par F3 (`min-w-cible` sur les deux liens)  | Liste des ministères `/ministeres` : berger, conseil et EJP Tech (base)                                                                                  | Même motif que A-02 : le lien du nom (`-my-3 inline-flex min-h-cible`) n'a pas de largeur minimale. Le ministère « FIJ » du jeu d'exemple en fait environ 25. Correction : ajouter `min-w-cible` aux deux liens.                  | Non bloquant : cible, même raison que A-02. Correction d'une classe.                                                                                         | Fiche et liste (étape 4)   | `berger \| /ministeres`, `conseil \| /ministeres`, `admin_plateforme \| /ministeres` (base)                                             |
 
 Où elles vivent dans le code :
 
@@ -137,25 +139,42 @@ Où elles vivent dans le code :
   téléphone). La condition `tantQue` lit la chaîne de classes de ces deux liens : elle tombe dès
   qu'elles portent `min-w-cible` (ou `min-w-[44px]`).
 - **A-03** : `src/features/avancement/BandeauAvancement.tsx`, constante `BOUTON` (ligne 16) utilisée
-  par le bouton « Voir ». Même condition sur la chaîne `BOUTON`. Le texte complet n'apparaît qu'à
-  partir de 600 px (`sr-only min-[600px]:not-sr-only`). Le bandeau est masqué sur `/saisir` et
-  `/signaler` seulement (`bandeauMasque`) : il paraît sur `/` et `/ma-fiche`.
+  par les boutons « Voir » et « Fermer ». **Corrigée par le lot F3** : `min-w-cible` ajouté à
+  `BOUTON`, entrée retirée de `fautes-connues.ts`. Le texte complet n'apparaît qu'à partir de 600 px
+  (`sr-only min-[600px]:not-sr-only`). Le bandeau est masqué sur `/saisir` et `/signaler`
+  seulement (`bandeauMasque`) : il paraît sur `/` et `/ma-fiche`. Garde : un test de composant
+  (`BandeauAvancement.test.tsx`) et les aperçus `avancement` à 390 px, désormais stricts.
 - **A-04** : `src/features/ministeres/TableauListeMinisteres.tsx:57` et
-  `src/features/ministeres/ListeMinisteresTelephone.tsx:25`. Même condition. Les composants
-  `NomMinistere.tsx` et `EvenementsAConfirmer.tsx` portent déjà `min-w-cible` : c'est la convention
-  du projet. **L'aperçu ne couvre pas cette faute** : ses données d'exemple
+  `src/features/ministeres/ListeMinisteresTelephone.tsx:25`. **Corrigée par le lot F3** :
+  `min-w-cible` ajouté aux deux liens, entrées retirées de `fautes-connues.ts` (les trois pages
+  `/ministeres` de la base sont désormais strictes). Les composants `NomMinistere.tsx` et
+  `EvenementsAConfirmer.tsx` portaient déjà `min-w-cible` : c'est la convention du projet.
+  **L'aperçu ne couvre pas cette faute** : ses données d'exemple
   (`src/features/fiche/apercu/exemplesFiche.ts`) n'ont que des noms longs (Social, Intégration,
-  Coordination, Communication). Seule la base, avec le ministère « FIJ », la montre. Ajouter un nom
-  court à l'aperçu changerait les chiffres d'autres tests : cela se décidera avec la correction.
+  Coordination, Communication). Seule la base, avec le ministère « FIJ », la montre ; ajouter un nom
+  court à l'aperçu changerait les chiffres d'autres tests, donc la garde est un test de composant
+  (`ListesMinisteres.test.tsx`, nom de trois lettres) et le contrôle de la base en CI.
+
+### À corriger plus tard (non bloquant, écrans d'un lot en cours)
+
+- **A-02** reste ouverte : ses deux fichiers (`src/features/indicateurs/configuration/`) sont dans
+  le périmètre du lot L3b, qui les modifie en parallèle. La correction tient en une classe
+  (`min-w-cible` sur les deux liens de `ligne.nom`) ; elle se fait après la fusion de L3b, et
+  l'entrée `A02` de `fautes-connues.ts` se retire alors (4 écrans : `indicateurs liste`,
+  `indicateurs liste ejp-tech`, `admin_eglise | /indicateurs`, `admin_plateforme | /indicateurs`).
+- Les écrans « À valider » (L4), « Mes indicateurs » (L4) et les panneaux d'indicateurs (L3b)
+  s'ajoutent à l'audit quand leur lot est fusionné (section 5).
+- Aucune faute bloquante avant l'ouverture n'est connue sur les écrans fusionnés dans `main` :
+  connexion, double authentification, écrans du ministère et « Cette semaine » n'ont aucune faute
+  axe ni défilement horizontal à 360 px.
 
 Si la correction prend une autre forme qu'une largeur minimale de 44 px, la personne qui corrige
 retire l'entrée de `FAUTES_CONNUES`. Si une refonte déplace le lien, la condition ne le retrouve
 plus et la suite redevient stricte.
 
 Une faute connue ne masque que ses lignes, et seulement pour l'écran et le format de son entrée
-(`projets`). Les entrées de `FAUTES_CONNUES` sont A-02 (4 écrans), A-03 (3 écrans) et A-04
-(3 écrans). Toutes les autres pages sont jouées sans masque : la CI dira si un autre lien court y
-paraît.
+(`projets`). Les seules entrées de `FAUTES_CONNUES` sont celles de A-02 (4 écrans). Toutes les
+autres pages sont jouées sans masque : la CI dira si un autre lien court y paraît.
 
 ## 4. Ce qui reste à jouer (la CI le fera, GitHub revenu)
 
@@ -219,8 +238,7 @@ classe. Le reste est à corriger à J+7.
   polices (hors de sa liste d'accès) et les mesures se font avec une police de repli. Cette passe a
   été faite avec les polices du projet, en levant la restriction par un fichier de configuration
   local non versionné. La CI n'a pas ce défaut.
-- **À surveiller, non masqué** : dans « Ministères et comptes » (`/comptes`), le lien « Aucun » de
-  la colonne « Indicateurs » (`src/features/comptes/CelluleIndicateurs.tsx`, `Link` à `min-h-cible`
-  sans largeur minimale) mesure 43 x 44 px avec la police de repli et 44 px ou plus avec la police
-  du projet. Il réussit donc dans la CI. Même remède que A-02 : `min-w-cible`. Si la CI le fait
-  échouer un jour (changement de police), il devient la ligne A-04.
+- **Corrigé par prévention (lot F3)** : dans « Ministères et comptes » (`/comptes`), le lien
+  « Aucun » de la colonne « Indicateurs » (`src/features/comptes/CelluleIndicateurs.tsx`) mesurait
+  43 x 44 px avec la police de repli et 44 px ou plus avec la police du projet. `min-w-cible` y est
+  ajouté : il ne dépend plus de la police.

@@ -48,10 +48,8 @@ export function classeSansLargeurMinimale(fichier: string, ancre: RegExp): boole
   return classes !== undefined && !LARGEUR_MINIMALE.test(classes)
 }
 
-/** Le lien du nom d'un ministère : `to={ligne.href} className="..."` ou `to={ministere.href}`. */
+/** Le lien du nom d'un ministère dans la liste des indicateurs : `to={ligne.href} className="..."`. */
 const LIEN_LIGNE = /to=\{ligne\.href\}\s+className="([^"]*)"/
-const LIEN_MINISTERE = /to=\{ministere\.href\}\s+className="([^"]*)"/
-const BOUTON_BANDEAU = /const BOUTON =\s*'([^']*)'/
 
 function lienIndicateursEnFaute(): boolean {
   return (
@@ -66,49 +64,17 @@ function lienIndicateursEnFaute(): boolean {
   )
 }
 
-function lienListeMinisteresEnFaute(): boolean {
-  return (
-    classeSansLargeurMinimale(
-      'src/features/ministeres/TableauListeMinisteres.tsx',
-      LIEN_MINISTERE,
-    ) ||
-    classeSansLargeurMinimale(
-      'src/features/ministeres/ListeMinisteresTelephone.tsx',
-      LIEN_MINISTERE,
-    )
-  )
-}
-
-function bandeauEnFaute(): boolean {
-  return classeSansLargeurMinimale('src/features/avancement/BandeauAvancement.tsx', BOUTON_BANDEAU)
-}
-
 // A-02 : le lien du nom d'un ministère court (« Kumi » dans les aperçus, « FIJ » dans le jeu
 // d'exemple de la base) est plus étroit que 44 px dans la liste des indicateurs (tableau et liste du
-// téléphone) : `min-h-cible` fixe la hauteur, pas la largeur.
+// téléphone) : `min-h-cible` fixe la hauteur, pas la largeur. Écran du lot L3b, à corriger après sa
+// fusion (A-03 et A-04, corrigées par le lot F3, n'ont plus d'entrée : ces écrans sont stricts).
 const A02 = { ligne: 'A-02', tantQue: lienIndicateursEnFaute } as const
-// A-03 : à 390 px, le bouton « Voir les étapes » du bandeau d'avancement ne montre que « Voir »
-// (26 px de large). Le bandeau paraît sur toute page connectée hors saisie.
-const A03 = { ligne: 'A-03', tantQue: bandeauEnFaute, cibles: ['button « Voir'] } as const
-// A-04 : même motif dans la liste des ministères (`/ministeres`) : le lien de « FIJ » fait environ
-// 25 px de large.
-const A04 = {
-  ligne: 'A-04',
-  tantQue: lienListeMinisteresEnFaute,
-  cibles: ['a « FIJ »'],
-} as const
 
 export const FAUTES_CONNUES: Readonly<Record<string, FauteConnue>> = {
   'indicateurs liste': { ...A02, cibles: ['a « Kumi »'] },
   'indicateurs liste ejp-tech': { ...A02, cibles: ['a « Kumi »'] },
   'admin_eglise | /indicateurs': { ...A02, cibles: ['a « FIJ »'] },
   'admin_plateforme | /indicateurs': { ...A02, cibles: ['a « FIJ »'] },
-  'avancement berger': { ...A03, projets: ['telephone'] },
-  'avancement ministère': { ...A03, projets: ['telephone'] },
-  'ministère FIJ | pages': A03,
-  'berger | /ministeres': A04,
-  'conseil | /ministeres': A04,
-  'admin_plateforme | /ministeres': A04,
 }
 
 /** Sépare les lignes de cibles que la faute connue de l'écran explique de celles qui restent. */
