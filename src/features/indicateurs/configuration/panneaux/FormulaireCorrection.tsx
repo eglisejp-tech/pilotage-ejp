@@ -1,0 +1,146 @@
+import { useEffect, useId, useRef, useState } from 'react'
+import type { FormEvent } from 'react'
+import {
+  LONGUEUR_DEFINITION_MAX,
+  LONGUEUR_LIBELLE_MAX,
+  schemaCorrection,
+} from '@/data/indicateursEcriture'
+import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
+import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
+import { normaliser } from '@/features/indicateurs/configuration/normaliser'
+import { ChampIndicateur } from '@/features/indicateurs/configuration/panneaux/ChampIndicateur'
+import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/panneaux/ChangeEtResteIdentique'
+import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
+import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
+import {
+  erreursParChamp,
+  lireRefusEcriture,
+  sansErreur,
+} from '@/features/indicateurs/configuration/panneaux/refus'
+import {
+  REUSSITES_INDICATEURS,
+  TEXTES_PANNEAUX,
+} from '@/features/indicateurs/configuration/panneaux/textes'
+import { useVerificationLibelle } from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
+import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+
+interface Props {
+  controleur: ControleurPanneaux
+  ligne: LigneConfiguration
+}
+
+const textes = TEXTES_PANNEAUX.correction
+
+/**
+ * Panneau « Corriger l'indicateur » (7.2) : le libellé et la définition, préremplis, avec le
+ * rappel de l'administration sous le premier champ et la phrase « Vous pouvez corriger le libellé
+ * et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur. ». Le rythme, la
+ * sorte de nombre et le domaine ne changent jamais : un changement de sens passe par un
+ * remplacement. La base refuse la correction d'un chiffre qui a déjà des valeurs, d'un calcul dont
+ * les sources en ont, et d'une suggestion.
+ */
+export function FormulaireCorrection({ controleur, ligne }: Props) {
+  const { ecritures, ministere, terminer, fermer } = controleur
+  const id = useId()
+  const formulaire = useRef<HTMLFormElement>(null)
+  const occupe = useRef(false)
+  const [libelle, setLibelle] = useState(ligne.libelle)
+  const [definition, setDefinition] = useState(ligne.definition)
+  const [erreurs, setErreurs] = useState<Record<string, string>>({})
+  const [essais, setEssais] = useState(0)
+  const [refus, setRefus] = useState<string | null>(null)
+  const [enCours, setEnCours] = useState(false)
+
+  const verifications = useVerificationLibelle(ecritures, ministere.id, libelle, ligne.nature)
+  const memeLibelle = normaliser(libelle) === normaliser(ligne.libelle)
+  const controles = verifications.filter(
+    (verification) =>
+      verification.famille !== 'sensible' &&
+      !(verification.famille === 'calcul' && ligne.calcul !== null) &&
+      !(verification.famille === 'doublon' && memeLibelle),
+  )
+
+  useEffect(() => {
+    if (essais > 0) formulaire.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
+  }, [essais])
+
+  const soumettre = async (evenement: FormEvent) => {
+    evenement.preventDefault()
+    if (occupe.current) return
+    setRefus(null)
+    const lu = schemaCorrection.safeParse({ libelle, definition })
+    if (!lu.success) {
+      setErreurs(erreursParChamp(lu.error))
+      setEssais((precedent) => precedent + 1)
+      return
+    }
+    setErreurs({})
+    occupe.current = true
+    setEnCours(true)
+    try {
+      await ecritures.corriger(ministere.id, ligne.id, lu.data)
+      terminer(REUSSITES_INDICATEURS.correction)
+    } catch (erreur) {
+      setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      occupe.current = false
+      setEnCours(false)
+    }
+  }
+
+  return (
+    <>
+      <p className="leading-normal text-encre-2">{textes.note}</p>
+      <form
+        ref={formulaire}
+        noValidate
+        className="flex flex-col gap-5"
+        onSubmit={(evenement) => void soumettre(evenement)}
+      >
+        <ChampIndicateur
+          id={`${id}-libelle`}
+          libelle={TEXTES_PANNEAUX.ajout.libelle}
+          valeur={libelle}
+          onChange={(valeur) => {
+            setLibelle(valeur)
+            setErreurs((precedentes) => sansErreur(precedentes, 'libelle'))
+          }}
+          max={LONGUEUR_LIBELLE_MAX}
+          avecRappel
+          erreur={erreurs.libelle}
+          controles={<MessagesControle verifications={controles} />}
+        />
+        <ChampIndicateur
+          id={`${id}-definition`}
+          libelle={TEXTES_PANNEAUX.ajout.definition}
+          valeur={definition}
+          onChange={(valeur) => {
+            setDefinition(valeur)
+            setErreurs((precedentes) => sansErreur(precedentes, 'definition'))
+          }}
+          max={LONGUEUR_DEFINITION_MAX}
+          multiligne
+          erreur={erreurs.definition}
+        />
+        <ChangeEtResteIdentique
+          change={textes.change}
+          resteIdentique={
+            ligne.calcul === null ? textes.resteIdentique : textes.resteIdentiqueCalcul
+          }
+        />
+        <BoutonEnregistrer
+          libelle={textes.bouton}
+          enCours={enCours}
+          libelleEnCours={TEXTES_PANNEAUX.enCours}
+        />
+        <button
+          type="button"
+          onClick={fermer}
+          className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
+        >
+          {TEXTES_PANNEAUX.annuler}
+        </button>
+        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      </form>
+    </>
+  )
+}
