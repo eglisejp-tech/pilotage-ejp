@@ -52,7 +52,11 @@ describe('BandeauAvancement', () => {
     // contrôle la classe ; la mesure réelle est faite par l'audit (e2e/accessibilite.spec.ts).
     afficher()
     for (const nom of ['Voir les étapes', "Fermer le bandeau d'avancement"]) {
-      expect(screen.getByRole('button', { name: nom })).toHaveClass('min-h-cible', 'min-w-cible')
+      expect(screen.getByRole('button', { name: nom })).toHaveClass(
+        'min-h-cible',
+        'min-w-cible',
+        'justify-center',
+      )
     }
   })
 
