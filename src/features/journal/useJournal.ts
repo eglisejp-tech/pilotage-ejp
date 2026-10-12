@@ -4,6 +4,7 @@ import { lireIndicateursCommuns, lireSemaine } from '@/data/eglise'
 import { lireComptesJournal, lireJournal, TAILLE_PAGE_JOURNAL } from '@/data/journal'
 import type { CurseurJournal, SessionJournal } from '@/data/journal'
 import { lireMinisteres } from '@/data/ministeres'
+import { lirePrenomsDuJournal } from '@/data/personnes'
 import {
   filtresRetenus,
   optionMinistere,
@@ -38,6 +39,13 @@ export type ResultatJournal =
 /** Les sessions de toutes les pages lues, une fois chacune. */
 function sessionsDesPages(pages: readonly { sessions: SessionJournal[] }[]): SessionJournal[] {
   return [...new Map(pages.flatMap((p) => p.sessions).map((s) => [s.id, s] as const)).values()]
+}
+
+/** Les prénoms déclarés de toutes les pages lues (Journal technique d'EJP Tech, T56). */
+function prenomsDesPages(
+  pages: readonly { prenoms: ReadonlyMap<number, string | null> }[],
+): Map<number, string | null> {
+  return new Map(pages.flatMap((p) => [...p.prenoms]))
 }
 
 /**
@@ -86,10 +94,10 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
     ministeres.isSuccess &&
     (!avecComptes || comptes.isSuccess)
   const page = useInfiniteQuery({
-    queryKey: ['journal', 'lignes', filtres, aujourdhui],
-    queryFn: ({ pageParam }) => {
+    queryKey: ['journal', 'lignes', filtres, aujourdhui, profil],
+    queryFn: async ({ pageParam }) => {
       if (aujourdhui === null) throw new Error('Le jour de Paris est inconnu.')
-      return lireJournal({
+      const lue = await lireJournal({
         compte: filtres.compte,
         action: filtres.action,
         ministere: filtres.ministere,
@@ -97,6 +105,13 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
         apres: pageParam,
         limite: TAILLE_PAGE_JOURNAL,
       })
+      // Journal technique : la personne déclarée sur chaque ligne d'un compte de ministère (T56).
+      // Aucun autre profil ne lit de prénom.
+      const prenoms =
+        profil === 'admin_plateforme'
+          ? await lirePrenomsDuJournal(lue.lignes.map((ligne) => ligne.id))
+          : new Map<number, string | null>()
+      return { ...lue, prenoms }
     },
     initialPageParam: null as CurseurJournal | null,
     getNextPageParam: (derniere) => derniere.suivant ?? undefined,
@@ -122,7 +137,12 @@ export function useJournal(profil: TypeCompte, brut: FiltresJournal): ResultatJo
   const donnees = useMemo<DonneesJournal | null>(() => {
     if (!listesPretes || !communs.data || !ministeres.data || !page.data) return null
     const pages = page.data.pages
-    const contexte = contexteJournal(communs.data, ministeres.data, sessionsDesPages(pages))
+    const contexte = contexteJournal(
+      communs.data,
+      ministeres.data,
+      sessionsDesPages(pages),
+      prenomsDesPages(pages),
+    )
     // Une ligne n'est montrée qu'une fois, même si deux pages la portaient.
     const lignes = [
       ...new Map(pages.flatMap((p) => p.lignes).map((l) => [l.id, l] as const)).values(),

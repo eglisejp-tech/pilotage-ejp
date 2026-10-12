@@ -35,12 +35,14 @@ export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
     { libelle: 'Indicateurs', chemin: '/indicateurs' },
     { libelle: 'Journal', chemin: '/journal' },
   ],
-  // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29).
+  // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29). « Personnes »
+  // (T56) : qui utilise les comptes partagés des ministères ; EJP Tech seul.
   admin_plateforme: [
     { libelle: 'Modération', chemin: '/moderation' },
     { libelle: 'Indicateurs', chemin: '/indicateurs' },
     { libelle: 'Cette semaine', chemin: '/' },
     { libelle: 'Journal technique', chemin: '/journal-technique' },
+    { libelle: 'Personnes', chemin: '/personnes' },
   ],
 }
 
@@ -153,6 +155,8 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
     titre: 'Journal technique',
     etape: 6,
   },
+  // Personnes qui utilisent les comptes de ministère (T56) : EJP Tech seul lit les prénoms.
+  { chemin: '/personnes', profils: ['admin_plateforme'], titre: 'Personnes', etape: 8 },
 ]
 
 /** Adresse de l'application qui correspond au chemin, ou null (page introuvable). */

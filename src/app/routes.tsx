@@ -5,6 +5,9 @@ import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
+import { ApercuDeclaration } from '@/features/declaration/apercu/ApercuDeclaration'
+import { PageDeclaration } from '@/features/declaration/PageDeclaration'
+import { ApercuPersonnes } from '@/features/personnes/apercu/ApercuPersonnes'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
 import { ApercuJournal } from '@/features/journal/apercu/ApercuJournal'
@@ -39,6 +42,8 @@ import { PageIntrouvable } from '@/pages/PageIntrouvable'
 const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
   ? [
       { path: '/apercu/connexion', element: <ApercuConnexion /> },
+      // T56 : « Qui utilise l'outil ? » (déclaration simulée, aucune requête).
+      { path: '/apercu/qui-utilise', element: <ApercuDeclaration /> },
       {
         path: '/apercu',
         element: <MiseEnPageApercu />,
@@ -72,6 +77,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'sessions', element: <ApercuSessions /> },
           // Lot L6 : écran 15 « Modération » (décisions simulées, aucune requête).
           { path: 'moderation', element: <ApercuModeration /> },
+          // T56 : onglet « Personnes » d'EJP Tech et en-tête « Vous : Marie » (aucune requête).
+          { path: 'personnes', element: <ApercuPersonnes /> },
         ],
       },
     ]
@@ -106,6 +113,10 @@ export const routes: RouteObject[] = [
       {
         element: <Garde zone="conditions" />,
         children: [{ path: '/conditions-a-accepter', element: <PageAcceptation /> }],
+      },
+      {
+        element: <Garde zone="declaration" />,
+        children: [{ path: '/qui-utilise', element: <PageDeclaration /> }],
       },
       {
         element: (

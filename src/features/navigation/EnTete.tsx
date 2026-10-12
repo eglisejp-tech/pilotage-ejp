@@ -1,4 +1,6 @@
 import { Link } from 'react-router'
+import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
+import type { Personne } from '@/features/declaration/PersonneDeclaree'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import { MenuTelephone } from '@/features/navigation/MenuTelephone'
 import { NavigationOnglets } from '@/features/navigation/NavigationOnglets'
@@ -12,6 +14,8 @@ export type ProprietesEnTete = {
   accueil: string
   onSignOut: () => void
   deconnexionEnCours?: boolean
+  /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
+  personne?: Personne
 }
 
 /**
@@ -20,7 +24,7 @@ export type ProprietesEnTete = {
  * En dessous : voir MenuTelephone.
  */
 export function EnTete(proprietes: ProprietesEnTete) {
-  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours } = proprietes
+  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours, personne } = proprietes
   return (
     <header className="border-b border-filet bg-papier">
       {/* Les onglets prennent toute la hauteur : le soulignement de l'onglet actif touche le
@@ -41,6 +45,7 @@ export function EnTete(proprietes: ProprietesEnTete) {
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}
           </p>
+          {personne ? <PersonneDeclaree {...personne} /> : null}
           <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
         </div>
       </div>

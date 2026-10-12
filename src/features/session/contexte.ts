@@ -16,3 +16,9 @@ export function useCompteConnecte() {
   if (etat.statut !== 'connecte') throw new Error('useCompteConnecte : session sans aal2.')
   return etat.compte
 }
+
+/** Prénom déclaré sur cet appareil (T56), pour un compte de ministère ; null sinon. */
+export function usePrenomDeclare(): string | null {
+  const etat = useEtatVerifie()
+  return etat.statut === 'connecte' ? (etat.prenom ?? null) : null
+}

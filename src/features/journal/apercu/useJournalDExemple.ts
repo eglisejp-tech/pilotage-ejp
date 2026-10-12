@@ -37,6 +37,24 @@ function useLimiteDApercu(filtres: FiltresJournal): { limite: number; afficherPl
   }
 }
 
+const PRENOMS_EXEMPLE: readonly (string | null)[] = ['Marie D.', 'Paul', null]
+
+/**
+ * Journal technique d'EJP Tech (T56) : une personne déclarée d'exemple sur chaque ligne d'un
+ * compte de ministère (Marie D., Paul, ou personne non déclarée), comme `v_journal_intervenant`.
+ */
+function prenomsDExemple(
+  lignes: readonly { id: number; auteur_ministere_id: string | null }[],
+): Map<number, string | null> {
+  return new Map(
+    lignes.flatMap((ligne) =>
+      ligne.auteur_ministere_id === null
+        ? []
+        : [[ligne.id, PRENOMS_EXEMPLE[ligne.id % PRENOMS_EXEMPLE.length] ?? null] as const],
+    ),
+  )
+}
+
 /**
  * Ce que `useJournal` rend à la page, lu dans le journal d'exemple au lieu de la base : mêmes
  * filtres retenus, même période (jour de Paris de l'exemple), même limite de 50 lignes puis 50 de
@@ -77,7 +95,12 @@ export function useJournalDExemple(
           },
           profil,
         )
-    const contexte = contexteJournal(COMMUNS_EXEMPLE, MINISTERES_EXEMPLE, SESSIONS_EXEMPLE)
+    const contexte = contexteJournal(
+      COMMUNS_EXEMPLE,
+      MINISTERES_EXEMPLE,
+      SESSIONS_EXEMPLE,
+      profil === 'admin_plateforme' ? prenomsDExemple(lecture.lignes) : new Map(),
+    )
     return {
       filtres,
       comptes: choix.comptes,

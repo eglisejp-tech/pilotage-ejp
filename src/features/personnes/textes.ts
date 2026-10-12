@@ -1,0 +1,48 @@
+// Textes de l'onglet « Personnes » d'EJP Tech (décision T56). Aucun texte n'explique la
+// mécanique : l'écran dit qui a utilisé l'outil, quand, et comment effacer un prénom.
+
+import { PRENOM_EFFACE } from '@/lib/metier/declaration'
+import { accorder, nombre } from '@/lib/metier/texte'
+
+export const TEXTES_PERSONNES = {
+  surtitre: 'Administration de la plateforme',
+  introduction:
+    "Les prénoms que les personnes indiquent quand elles utilisent le compte partagé d'un ministère. EJP Tech seul les lit.",
+  titreActives: 'Actives sur 30 jours',
+  colonnes: {
+    connexions: 'Connexions',
+    jours: "Jours d'utilisation",
+    actions: 'Actions',
+    derniere: 'Dernière activité',
+  },
+  activesVide: "Personne n'a utilisé un compte de ministère depuis 30 jours.",
+  titreConnexions: 'Dernières connexions',
+  connexionsVide: 'Aucune connexion pour le moment.',
+  /** « Dim. 11 oct., 11 h : Ministère Communication, Marie D. » */
+  connexion: (quand: string, compte: string, prenom: string) => `${quand} : ${compte}, ${prenom}`,
+  compteInconnu: 'Compte inconnu',
+  plus: 'Afficher 50 de plus',
+  plusEnCours: 'Chargement',
+  anciens: (n: number) => `${nombre(n)} ${accorder(n, 'prénom a', 'prénoms ont')} plus de 12 mois.`,
+  effacerAnciens: 'Effacer les prénoms de plus de 12 mois',
+  effacer: 'Effacer ce prénom',
+  chargement: 'Chargement',
+  erreur: 'La connexion a échoué. Réessayez.',
+  reessayer: 'Réessayer',
+  reussiteUn: 'Prénom effacé.',
+  reussiteAnciens: (n: number) =>
+    n === 0
+      ? 'Aucun prénom à effacer.'
+      : `${nombre(n)} ${accorder(n, 'prénom effacé', 'prénoms effacés')}.`,
+} as const
+
+export const TEXTES_FENETRE_EFFACEMENT = {
+  titreUn: 'Effacer ce prénom',
+  titreAnciens: 'Effacer les prénoms de plus de 12 mois',
+  avertissementUn: `Ce prénom sera remplacé par « ${PRENOM_EFFACE} » partout. Cette action ne peut pas être annulée.`,
+  avertissementAnciens: `Ces prénoms seront remplacés par « ${PRENOM_EFFACE} » partout. Cette action ne peut pas être annulée.`,
+  annuler: 'Annuler',
+  bouton: 'Effacer définitivement',
+  boutonEnCours: 'Effacement en cours',
+  erreur: 'La connexion a échoué. Réessayez.',
+} as const

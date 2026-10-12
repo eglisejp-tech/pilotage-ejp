@@ -53,6 +53,32 @@ describe('une ligne du journal, en mots', () => {
     expect(construireLigne(ligne({ compte_libelle: null }), CONTEXTE).compte).toBe('Système')
   })
 
+  it('Journal technique (T56) : la personne déclarée, ou « personne non déclarée »', () => {
+    const avecPrenoms = contexteJournal(
+      COMMUNS_EXEMPLE,
+      MINISTERES_EXEMPLE,
+      SESSIONS_EXEMPLE,
+      new Map<number, string | null>([
+        [1, 'Marie D.'],
+        [2, null],
+      ]),
+    )
+    const communication = { compte_libelle: 'Ministère Communication' }
+    expect(construireLigne(ligne({ ...communication, id: 1 }), avecPrenoms).compte).toBe(
+      'Ministère Communication (Marie D.)',
+    )
+    expect(construireLigne(ligne({ ...communication, id: 2 }), avecPrenoms).compte).toBe(
+      'Ministère Communication (personne non déclarée)',
+    )
+    // Une ligne hors de la carte (Système, autre profil) et tous les autres profils : le libellé.
+    expect(construireLigne(ligne({ ...communication, id: 3 }), avecPrenoms).compte).toBe(
+      'Ministère Communication',
+    )
+    expect(construireLigne(ligne({ ...communication, id: 1 }), CONTEXTE).compte).toBe(
+      'Ministère Communication',
+    )
+  })
+
   it('une heure d’hiver et une heure d’été donnent l’heure de Paris', () => {
     expect(construireLigne(ligne({ le: '2026-12-15T22:30:00Z' }), CONTEXTE).quand).toBe(
       '15 déc., 23 h 30',

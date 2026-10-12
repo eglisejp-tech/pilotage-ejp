@@ -1,0 +1,128 @@
+import { useEffect, useState } from 'react'
+import { useTitrePage } from '@/features/connexion/useTitrePage'
+import { BlocActives } from '@/features/personnes/BlocActives'
+import { BlocConnexions } from '@/features/personnes/BlocConnexions'
+import { FenetreEffacement } from '@/features/personnes/FenetreEffacement'
+import type { ActionsPersonnes, ResultatPersonnes } from '@/features/personnes/usePersonnes'
+import { TEXTES_PERSONNES } from '@/features/personnes/textes'
+import { ErreurDePage } from '@/pages/ErreurDePage'
+
+interface Props {
+  /** « Personnes », titre de l'écran et de l'onglet. */
+  titre: string
+  resultat: ResultatPersonnes
+  actions: ActionsPersonnes
+}
+
+type Effacement =
+  { type: 'un'; intervenantId: number; contexte: string } | { type: 'anciens'; contexte: string }
+
+const classeBouton =
+  'inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold text-encre hover:bg-fond'
+
+/** « Chargement » n'apparaît qu'après 300 ms : une réponse rapide ne fait rien clignoter. */
+function Chargement() {
+  const [visible, setVisible] = useState(false)
+  useEffect(() => {
+    const minuterie = setTimeout(() => setVisible(true), 300)
+    return () => clearTimeout(minuterie)
+  }, [])
+  return (
+    <p role="status" aria-busy="true" className="py-[18px] text-encre-3">
+      {visible ? TEXTES_PERSONNES.chargement : null}
+    </p>
+  )
+}
+
+/**
+ * Onglet « Personnes » d'EJP Tech (T56) : qui a utilisé chaque compte de ministère, quand, et
+ * l'effacement d'un prénom (sur demande, ou ceux de plus de 12 mois, chaque mois). Le titre et sa
+ * phrase restent dans tous les états ; l'erreur de page propose « Réessayer ».
+ */
+export function VuePersonnes({ titre, resultat, actions }: Props) {
+  useTitrePage(titre)
+  const [effacement, setEffacement] = useState<Effacement | null>(null)
+  const [message, setMessage] = useState('')
+
+  const effacer = async () => {
+    if (effacement === null) return
+    if (effacement.type === 'un') {
+      await actions.effacer(effacement.intervenantId)
+      setMessage(TEXTES_PERSONNES.reussiteUn)
+    } else {
+      setMessage(TEXTES_PERSONNES.reussiteAnciens(await actions.effacerAnciens()))
+    }
+    setEffacement(null)
+  }
+
+  return (
+    <section aria-labelledby="titre-page" className="flex flex-col gap-10">
+      <header className="flex flex-col gap-2.5">
+        <p className="text-sm text-encre-2">{TEXTES_PERSONNES.surtitre}</p>
+        <h1 id="titre-page" className="font-lecture text-titre leading-tight font-medium">
+          {titre}
+        </h1>
+        <p className="max-w-[720px] leading-relaxed text-encre-2">
+          {TEXTES_PERSONNES.introduction}
+        </p>
+        <p role="status" className="text-[15px] font-semibold">
+          {message}
+        </p>
+      </header>
+
+      {resultat.etat === 'erreur' ? (
+        <ErreurDePage
+          message={TEXTES_PERSONNES.erreur}
+          libelleBouton={TEXTES_PERSONNES.reessayer}
+          onReessayer={resultat.reessayer}
+        />
+      ) : null}
+      {resultat.etat === 'chargement' ? <Chargement /> : null}
+      {resultat.etat === 'pret' ? (
+        <>
+          {resultat.donnees.aEffacer > 0 ? (
+            <div className="flex flex-col gap-3 bg-nuit-pale px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-[15px]">{TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer)}</p>
+              <button
+                type="button"
+                onClick={() =>
+                  setEffacement({
+                    type: 'anciens',
+                    contexte: TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer),
+                  })
+                }
+                className={classeBouton}
+              >
+                {TEXTES_PERSONNES.effacerAnciens}
+              </button>
+            </div>
+          ) : null}
+          <BlocActives
+            actives={resultat.donnees.actives}
+            surEffacer={(personne, compte) =>
+              setEffacement({
+                type: 'un',
+                intervenantId: personne.intervenantId,
+                contexte: `${personne.prenom}, ${compte.libelle}`,
+              })
+            }
+          />
+          <BlocConnexions
+            connexions={resultat.donnees.connexions}
+            aPlus={resultat.donnees.aPlus}
+            plusEnCours={resultat.donnees.plusEnCours}
+            surPlus={actions.afficherPlus}
+          />
+        </>
+      ) : null}
+
+      {effacement !== null ? (
+        <FenetreEffacement
+          cible={{ type: effacement.type, contexte: effacement.contexte }}
+          effacer={effacer}
+          onAnnuler={() => setEffacement(null)}
+        />
+      ) : null}
+    </section>
+  )
+}

@@ -93,7 +93,7 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'ejptech1@exemple.test',
     libelle: 'EJP Tech, compte 1',
     accueil: { chemin: '/moderation', titre: 'Modération' },
-    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
+    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique', 'Personnes'],
     adresseInterdite: '/ma-fiche',
   },
 ]
@@ -165,13 +165,35 @@ export async function saisirMotDePasse(page: Page, email: string) {
   await page.getByRole('button', { name: 'Se connecter' }).click()
 }
 
-/** Écrans 16 puis 18 : mot de passe, puis code à 6 chiffres. */
-export async function seConnecter(page: Page, email: string) {
+/** Prénom déclaré par les parcours qui se connectent avec un compte de ministère (T56). */
+export const PRENOM_TEST = 'Essai'
+
+/** Écran « Qui utilise l'outil ? » (T56) : le prénom, puis « Continuer ». */
+export async function declarerPrenom(page: Page, prenom: string) {
+  await expect(page.getByRole('heading', { level: 1, name: "Qui utilise l'outil ?" })).toBeVisible()
+  await page.getByLabel('Votre prénom').fill(prenom)
+  await page.getByRole('button', { name: 'Continuer' }).click()
+  await expect(page).not.toHaveURL(/\/qui-utilise/)
+}
+
+/**
+ * Écrans 16 puis 18 : mot de passe, puis code à 6 chiffres. Un compte de ministère dit ensuite
+ * qui utilise l'outil (T56) : `prenom` (« Essai » par défaut), ou null pour s'arrêter sur l'écran.
+ */
+export async function seConnecter(
+  page: Page,
+  email: string,
+  { prenom = PRENOM_TEST }: { prenom?: string | null } = {},
+) {
   await page.goto('/connexion')
   await saisirMotDePasse(page, email)
   await expect(page.getByRole('heading', { level: 1, name: 'Code de vérification' })).toBeVisible()
   await page.getByLabel('Code à 6 chiffres').fill(await codeTotp(secretDe(email)))
   await page.getByRole('button', { name: 'Vérifier' }).click()
+  await expect(page).not.toHaveURL(/\/double-authentification/)
+  if (prenom !== null && new URL(page.url()).pathname === '/qui-utilise') {
+    await declarerPrenom(page, prenom)
+  }
 }
 
 /** Chemins des requêtes de données (PostgREST) faites par la page. */
@@ -179,8 +201,15 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   const chemins: string[] = []
   page.on('request', (requete) => {
     const url = new URL(requete.url())
-    // L'acceptation des conditions est lue par la session en aal2 (T53), comme la ligne de compte.
-    if (url.pathname === '/rest/v1/acceptation_conditions') return
+    // L'acceptation des conditions est lue par la session en aal2 (T53), comme la ligne de compte ;
+    // un compte de ministère lit aussi sa déclaration et note son jour d'utilisation (T56).
+    if (
+      ['/rest/v1/acceptation_conditions', '/rest/v1/v_ma_declaration', '/rest/v1/passage'].includes(
+        url.pathname,
+      )
+    ) {
+      return
+    }
     if (url.pathname.startsWith('/rest/v1/')) chemins.push(url.pathname)
   })
   return chemins

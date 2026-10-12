@@ -34,6 +34,12 @@ export interface ContexteJournal {
   ministeres: ReadonlyMap<string, string>
   /** Sessions citées par les lignes, par identifiant. */
   sessions: ReadonlyMap<string, SessionJournal>
+  /**
+   * Journal technique d'EJP Tech seulement (T56) : la personne déclarée de chaque ligne d'un
+   * compte de ministère, par numéro de ligne (null : personne non déclarée). Vide pour les autres
+   * profils, qui ne lisent aucun prénom.
+   */
+  prenoms: ReadonlyMap<number, string | null>
 }
 
 /** Le contexte d'une lecture : les listes de la base, rangées par identifiant. */
@@ -41,6 +47,7 @@ export function contexteJournal(
   communs: readonly IndicateurCommun[],
   ministeres: readonly { id: string; nom: string }[],
   sessions: readonly SessionJournal[],
+  prenoms: ReadonlyMap<number, string | null> = new Map(),
 ): ContexteJournal {
   return {
     codesCommuns: new Map(
@@ -50,7 +57,18 @@ export function contexteJournal(
     ),
     ministeres: new Map(ministeres.map((ministere) => [ministere.id, ministere.nom] as const)),
     sessions: new Map(sessions.map((session) => [session.id, session] as const)),
+    prenoms,
   }
+}
+
+/** Ce que la colonne Compte dit d'une ligne écrite sans déclaration (T56). */
+export const PERSONNE_NON_DECLAREE = 'personne non déclarée'
+
+/** « Ministère Communication (Marie D.) » pour EJP Tech ; le libellé seul sinon. */
+function nomDuCompte(ligne: LigneJournal, contexte: ContexteJournal): string {
+  const libelle = ligne.compte_libelle ?? 'Système'
+  if (!contexte.prenoms.has(ligne.id)) return libelle
+  return `${libelle} (${contexte.prenoms.get(ligne.id) ?? PERSONNE_NON_DECLAREE})`
 }
 
 type Detail = LigneJournal['detail']
@@ -449,7 +467,7 @@ export function construireLigne(
   return {
     id: ligne.id,
     quand: formaterHorodatage(ligne.le),
-    compte: ligne.compte_libelle ?? 'Système',
+    compte: nomDuCompte(ligne, contexte),
     action: libelleAction(ligne.action),
     detail,
   }

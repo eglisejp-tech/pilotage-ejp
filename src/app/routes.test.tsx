@@ -164,7 +164,7 @@ describe('routes', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
     await waitFor(() =>
-      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-08' }),
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-12' }),
     )
   })
 
@@ -220,7 +220,7 @@ describe('routes', () => {
     [
       'admin_plateforme',
       'Modération',
-      ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
+      ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique', 'Personnes'],
     ],
   ])(
     '%s en aal2 : son accueil, ses onglets seulement, son libellé',

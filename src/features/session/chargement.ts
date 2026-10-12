@@ -1,6 +1,7 @@
 import { isAuthApiError } from '@supabase/supabase-js'
 import { lireMonCompte } from '@/data/compte'
 import { lireConditionsAcceptees } from '@/data/conditions'
+import { lireMaDeclaration, noterPassage } from '@/data/personnes'
 import { deduireEtat } from '@/features/session/etat'
 import type { EtatSession } from '@/features/session/etat'
 import { noterTransition } from '@/features/session/motif'
@@ -51,13 +52,27 @@ export async function chargerEtatSession(): Promise<EtatSession> {
         ? await lireConditionsAcceptees(session.user.id, VERSION_CONDITIONS)
         : false
 
-    return deduireEtat({
+    // Personne qui utilise un compte de ministère sur cet appareil (T56) : lue après les
+    // conditions, pour un compte de ministère seulement.
+    const declaration =
+      compte?.actif && compte.type === 'ministere' && conditionsAcceptees
+        ? await lireMaDeclaration()
+        : null
+
+    const etat = deduireEtat({
       utilisateur: { id: session.user.id, email: session.user.email ?? null },
       niveau: { actuel: niveau.currentLevel, suivant: niveau.nextLevel },
       compte,
       facteurVerifie,
       conditionsAcceptees,
+      declaration,
     })
+    // Jour d'utilisation (une ligne par jour, la base ignore les suivantes). Sans attendre : un
+    // échec ne bloque jamais l'outil.
+    if (etat.statut === 'connecte' && declaration !== null) {
+      noterPassage(declaration.id).catch(() => undefined)
+    }
+    return etat
   } catch (erreur) {
     // Session révoquée ailleurs (double authentification réinitialisée, compte supprimé) :
     // on l'oublie sur cet appareil, et la connexion s'affiche.

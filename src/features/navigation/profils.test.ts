@@ -120,6 +120,7 @@ describe('navigation par profil', () => {
       'Indicateurs',
       'Cette semaine',
       'Journal technique',
+      'Personnes',
     ])
     expect(accueil('admin_plateforme')).toBe('/moderation')
     expect(accueil('ministere')).toBe('/')
@@ -224,6 +225,13 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     expect(tech.indexOf('/indicateurs')).toBe(tech.indexOf('/moderation') + 1)
     for (const profil of ['ministere', 'berger', 'conseil'] as const) {
       expect(chemins(profil), profil).not.toContain('/indicateurs')
+    }
+  })
+
+  it('« Personnes » (T56) : EJP Tech seul, en dernier onglet', () => {
+    expect(ONGLETS.admin_plateforme.at(-1)).toEqual({ libelle: 'Personnes', chemin: '/personnes' })
+    for (const profil of PROFILS) {
+      expect(profilAutorise('/personnes', profil), profil).toBe(profil === 'admin_plateforme')
     }
   })
 
