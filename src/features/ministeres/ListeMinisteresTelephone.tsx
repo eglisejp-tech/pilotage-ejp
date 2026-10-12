@@ -22,7 +22,7 @@ export function ListeMinisteresTelephone({ ministeres, idTitre }: Props) {
           <span className="flex flex-wrap items-baseline justify-between gap-x-3">
             <Link
               to={ministere.href}
-              className="-my-3 inline-flex min-h-cible items-center font-semibold underline decoration-encre-3 underline-offset-4"
+              className="-my-3 inline-flex min-h-cible min-w-cible items-center font-semibold underline decoration-encre-3 underline-offset-4"
             >
               {ministere.nom}
             </Link>
