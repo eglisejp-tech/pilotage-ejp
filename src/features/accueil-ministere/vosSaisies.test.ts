@@ -103,6 +103,7 @@ describe('construireOuverture', () => {
     })
     expect(ouverture.secondaires).toEqual([
       { libelle: 'Saisir une session', vers: '/saisir/session/choisir' },
+      { libelle: 'Nouveau point', vers: '/saisir/point' },
     ])
   })
 
@@ -130,8 +131,9 @@ describe('construireOuverture', () => {
       libelle: "Saisir la présence à Bâtir l'Église",
       vers: '/saisir/session/batir-26',
     })
-    // « Saisir une session » est devenu le bouton principal : il quitte les secondaires.
-    expect(ouverture.secondaires).toEqual([])
+    // « Saisir une session » est devenu le bouton principal : il quitte les secondaires, pas
+    // « Nouveau point ».
+    expect(ouverture.secondaires.map((bouton) => bouton.libelle)).toEqual(['Nouveau point'])
 
     const evenementSeul = [LIGNE_DIMANCHE_FAIT, LIGNE_BATIR_FAITE, LIGNE_REUNION_FAITE]
     expect(
@@ -165,7 +167,10 @@ describe('construireOuverture', () => {
     expect(texte(lignes)).toBe('Tout est à jour pour la semaine 39.')
     expect(ouverture.phrase.some((morceau) => morceau.aDecider)).toBe(false)
     expect(ouverture.principal).toBeNull()
-    expect(ouverture.secondaires.map((bouton) => bouton.libelle)).toEqual(['Saisir une session'])
+    expect(ouverture.secondaires.map((bouton) => bouton.libelle)).toEqual([
+      'Saisir une session',
+      'Nouveau point',
+    ])
   })
 
   it('ministère FIJ : « Mettre à jour la carte des FIJ » en secondaire, sauf s’il devient principal', () => {
@@ -180,6 +185,7 @@ describe('construireOuverture', () => {
     const faites = [LIGNE_DIMANCHE_FAIT, LIGNE_REUNION_FAITE]
     expect(construireOuverture(faites, fij).secondaires.map((b) => b.libelle)).toEqual([
       'Saisir une session',
+      'Nouveau point',
       'Mettre à jour la carte des FIJ',
     ])
     const ouverture = construireOuverture([...faites, carteAFaire], fij)
@@ -187,7 +193,10 @@ describe('construireOuverture', () => {
       libelle: 'Mettre à jour la carte des FIJ',
       vers: '/saisir/fij',
     })
-    expect(ouverture.secondaires.map((b) => b.libelle)).toEqual(['Saisir une session'])
+    expect(ouverture.secondaires.map((b) => b.libelle)).toEqual([
+      'Saisir une session',
+      'Nouveau point',
+    ])
   })
 
   it('une seule session à saisir : « Saisir une session » ouvre directement sa saisie', () => {
@@ -201,6 +210,7 @@ describe('construireOuverture', () => {
     ]
     expect(construireOuverture(lignes, CONTEXTE_EXEMPLE).secondaires).toEqual([
       { libelle: 'Saisir une session', vers: '/saisir/session/batir-26' },
+      { libelle: 'Nouveau point', vers: '/saisir/point' },
     ])
   })
 })

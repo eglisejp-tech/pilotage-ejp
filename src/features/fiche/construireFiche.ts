@@ -763,8 +763,12 @@ export function construirePointsFiche(
   const ouverts = trierOuverts(points.filter(estOuvert))
   return [...ouverts, ...traitesRecents].map((point) => {
     const echeance = estOuvert(point) ? libelleEcheance(point.echeance, aujourdhui) : null
+    const mentionsDuPoint = mentions.filter((mention) => mention.point_id === point.id)
     return {
       id: point.id,
+      statut: point.statut,
+      ministereId: point.ministere_id,
+      mentionIds: mentionsDuPoint.map((mention) => mention.ministere_id),
       priorite: point.priorite,
       ministere: nom(point.ministere_id),
       echeance:

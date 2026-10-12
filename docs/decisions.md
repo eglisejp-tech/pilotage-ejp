@@ -683,6 +683,7 @@ P14 « Calculs affichés » garde son numéro. P15 à P30 ne changent pas. T26 �
 - **Décision** : le catalogue du canevas est validé par la personne responsable. Chaque écran et chaque bloc a un état vide conçu, rangé dans l'une des six situations du canevas : premier usage, en attente des autres, tout est fait, aucun résultat, pas pour ce profil, problème passager. Règles : garder la forme du bloc rempli (titre, filets, mise en page) ; une phrase complète qui dit ce qui se passe, puis ce qui viendra ou qui doit agir ; jamais un zéro trompeur (« Pas encore de saisie » et la complétude, 0 étant une vraie valeur saisie) ; une seule action, et seulement pour le profil qui peut la faire ; un bloc d'alerte disparaît quand il n'y a rien à signaler ; ni illustration, ni emoji, ni ton d'excuse ; chaque état se vérifie au clavier et au lecteur d'écran. Les textes marqués « Proposé » dans le canevas deviennent des textes retenus (`LISEZMOI.md`, « États »).
 - **Origine** : décision de la personne responsable
 - **Statut** : Décidé
+- **Textes de l'écran 05, proposés à la coordination (lot P3, 7 octobre 2026, à valider)** : « Aucun point pour l'instant. » (onglet Tous) ; « Les points que vous créez, et ceux qui vous mentionnent, apparaîtront ici. » (suite, « Mes points » du ministère) ; « Aucun point ouvert pour Social. » (ministère choisi dans le filtre) ; phrase de « Mes points » : « Les points créés par votre ministère ou qui le mentionnent, triés par priorité, puis par échéance. » ; phrase d'EJP Tech : « Triés par priorité, puis par échéance. Les décisions se prennent en conseil ; vous lisez les points sans les modifier. » ; ligne « Attendu : ... » sous la description. Détail et autres écarts : `docs/conception/ecran-05-points.md`.
 - **BRIEF** : section 9 (« États à construire ») ; `LISEZMOI.md`, « États » ; complète T22 ; le BRIEF n'est pas modifié
 
 ## Décisions d'EJP Tech du 6 octobre 2026 : indicateurs de la vague 1
@@ -1059,7 +1060,73 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 
 - **Date** : 7 octobre 2026
 - **Sujet** : la personne responsable veut le logo d'EJP Tech comme logo du site dans les aperçus de liens, avec la meilleure qualité possible.
-- **Décision** : balises Open Graph dans `index.html` et image `public/apercu-lien.png` (2400 x 1260). Le fichier fourni ne faisant que 360 px, le logo est redessiné en vectoriel (`docs/sources/logo EJP TECH/logo-ejp-tech.svg`, rendu 4K à côté). Si le fichier vectoriel d'origine du graphiste existe, il prime. L'adresse de l'image est celle de la préproduction : à changer pour l'adresse de production quand elle sera connue. L'icône de l'onglet et l'en-tête ne changent pas.
+- **Décision** : balises Open Graph dans `index.html` et image `public/apercu-lien.png` (2400 x 1260). Le fichier fourni ne faisant que 360 px, le logo est redessiné en vectoriel (`docs/sources/logo EJP TECH/logo-ejp-tech.svg`, rendu 4K à côté). Si le fichier vectoriel d'origine du graphiste existe, il prime. L'adresse de l'image est celle du site, `https://pilotage-ejp.netlify.app` (la production depuis T52) : à changer seulement si le domaine de l'église arrive. L'icône de l'onglet et l'en-tête ne changent pas.
 - **Origine** : demande écrite de la personne responsable (7 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026
 - **BRIEF** : aucun changement
+
+## Décision de la personne responsable du 7 octobre 2026 sur la production
+
+### T52. Le projet de préproduction devient la production, sur l'offre gratuite
+
+- **Date** : 7 octobre 2026
+- **Sujet** : le plan prévoyait une production séparée, sur l'offre Pro de Supabase (environ 25 $ par mois, P12). La personne responsable ne veut pas payer cette offre pour le moment.
+- **Options présentées** : un second projet gratuit comme production, la préproduction restant pour les essais (recommandé) ; ou la préproduction qui devient la production.
+- **Décision** : le projet `ugbitornbspatpcowlvg` (créé comme préproduction, organisation « EJP TECH », Paris, offre gratuite) devient la production. Le site `https://pilotage-ejp.netlify.app` (branche `main`) reste son site. Au moment de la bascule, la base ne contient que les ministères de référence (Coordination, FIJ), trois comptes réels (administration de l'église, EJP Tech, Ministère Coordination), aucune saisie, aucun point, aucun événement : rien d'essai à retirer.
+- **Ce qui change** :
+  - **Plus de préproduction distante.** Les essais passent par la CI (pile locale, pgTAP, parcours Playwright). Une migration est appliquée directement à la production, après une CI verte et l'accord écrit de la personne responsable. Aucun ministère, compte ou chiffre d'essai n'est créé dans la base : on ne peut rien y supprimer. Les aperçus Netlify des branches pointent aussi vers cette base : ils ne servent qu'à regarder, jamais à saisir.
+  - **Claude ne lit plus la base** (ni données, ni journaux techniques) : le serveur MCP Supabase est retiré de `.mcp.json`, et la personne responsable retire l'accès du connecteur Supabase de claude.ai à ce projet. Raison : la base contient les vrais chiffres de l'église, sensibles compris, et Anthropic n'est pas déclaré comme sous-traitant (page Confidentialité). Les contrôles se font au tableau de bord, par la personne responsable.
+  - **Sauvegardes** : l'offre gratuite n'en fait pas. L'export chiffré de `docs/exploitation.md` (section 9.2) devient **hebdomadaire**, et les **4 derniers** sont gardés. La page Confidentialité et le registre le disent.
+- **Risques acceptés** (écarts au BRIEF, section 8, et à P12, jusqu'au passage en Pro) : pas de sauvegarde automatique ni de restauration à un instant donné (une semaine de saisies au plus peut se perdre) ; pas de durée maximale de session ni de délai d'inactivité ; pas de protection contre les mots de passe divulgués ; mise en pause du projet après une semaine sans activité (les saisies du dimanche l'évitent ; sinon, le relancer au tableau de bord).
+- **Passage en Pro plus tard** : changer l'offre de l'organisation « EJP TECH » (ou transférer le projet dans une organisation payante), sans déplacer les données ; puis régler les durées de session et la protection des mots de passe, et revenir aux sauvegardes quotidiennes.
+- **Origine** : choix écrit de la personne responsable (7 octobre 2026), entre les deux options présentées
+- **Statut** : Décidé par la personne responsable le 7 octobre 2026. La phrase des sauvegardes de la page Confidentialité est validée par sa réponse écrite du 8 octobre 2026 (« Ok »)
+- **BRIEF** : section 8 (durées de session, protection des mots de passe) et section 13 (étape 8, environnements) ; `docs/exploitation.md` (sections 3, 5, 7, 9 et 14) ; `docs/conformite/registre-traitements.md` ; `DEMARRAGE.md` (serveur MCP Supabase retiré)
+
+## Décision de la personne responsable du 8 octobre 2026 sur l'acceptation des conditions
+
+### T53. Acceptation des conditions d'utilisation à la connexion
+
+- **Date** : 8 octobre 2026
+- **Sujet** : la personne responsable veut que chaque compte accepte les conditions d'utilisation, et prenne connaissance de la politique de confidentialité, avant d'utiliser l'outil.
+- **Décision** (réponses écrites de la personne responsable) :
+  - Après l'activation (mot de passe choisi, double authentification active) ou à une connexion ultérieure, un compte qui n'a pas accepté la **version courante** voit un écran avant l'application : une case décochée « J'accepte les conditions d'utilisation et j'ai pris connaissance de la politique de confidentialité », deux liens (`/conditions`, `/confidentialite`) qui s'ouvrent dans un nouvel onglet et le disent, et un bouton « Accepter et continuer ». Les conditions sont **acceptées** ; la politique n'est que **portée à la connaissance** (jamais un consentement).
+  - Pas de bouton « Refuser » (choix de la personne responsable) ; « Se déconnecter » reste. Sans case cochée : « Cochez la case pour continuer. » (le bouton n'est jamais grisé).
+  - L'acceptation est **par compte** (un compte de ministère est partagé).
+  - Elle est redemandée **seulement quand la version change** : une constante `VERSION_CONDITIONS` (`src/lib/metier/conditions.ts`, `2026-10-08` au départ), changée à la main quand les conditions ou la page Confidentialité changent sur le fond. Une faute de frappe corrigée ne la change pas. L'écran affiche la date de la version (« Conditions du 8 octobre 2026 »).
+  - **Modèle de données** (changement approuvé par la personne responsable) : table `acceptation_conditions` (compte, version, `saisi_le`, `saisi_par`), en ajout seulement, une ligne par compte et par version, lue **par le compte lui-même et par EJP Tech seul** (ni l'administration, ni le berger, ni le conseil, ni un autre ministère). Écrite par `accepter_conditions(p_version)`, idempotente, **sans ligne de journal** (l'administration lit le journal). Migration `20261010121000_acceptation_conditions.sql`.
+- **Proposé, à valider par la personne responsable** : la phrase ajoutée à « Données traitées » de la page Confidentialité (« La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech seul la lit. ») et la date « Dernière mise à jour » portée au 8 octobre 2026. Les textes de l'écran sont aussi proposés (titre « Conditions d'utilisation », phrase d'introduction, libellés des deux liens).
+- **Origine** : réponses écrites de la personne responsable (8 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 8 octobre 2026, sauf la phrase de la page Confidentialité (Proposée)
+- **BRIEF** : section 7 (matrice : `acceptation_conditions`) et section 8 (routage : écran des conditions entre le code et l'application) ; `docs/conformite/registre-traitements.md` (fiche 1) ; `docs/reference/maquettes/LISEZMOI.md` (écran sans maquette)
+
+## Décision de la personne responsable du 8 octobre 2026 sur les mentions d'un point
+
+### T54. Les mentions d'un point se modifient tant qu'il n'est pas traité
+
+- **Date** : 8 octobre 2026
+- **Sujet** : le BRIEF (section 3, règle 7) fixe les mentions d'un point à sa création : « pour associer un autre ministère, on crée un nouveau point ». La personne responsable veut pouvoir ajouter et retirer des ministères mentionnés après la création.
+- **Décision** (réponses écrites de la personne responsable) :
+  - Sur un point **pas encore traité**, le **ministère créateur**, le **berger** et le **conseil** ajoutent et retirent des ministères mentionnés (des ministères actifs autres que le créateur). Jamais un ministère seulement mentionné, jamais EJP Tech, jamais l'administration de l'église.
+  - Un point traité ne change plus de mentions, comme il ne change plus de statut.
+  - Un ministère **retiré ne voit plus le point** (il ne le lit plus nulle part : « À décider », « Vos points », fiche, écran 05, journal des points). Il garde seulement les lignes de journal de son propre compte (par exemple un changement de statut qu'il a fait), sans le titre du point. Un ministère **ajouté de nouveau le revoit**.
+  - Un ministère désactivé qui reste mentionné s'affiche « (désactivé) » ; on peut le retirer, plus l'ajouter.
+- **Tout reste en ajout seulement** : un ajout est une **nouvelle ligne de `point_mention`** (la clé devient un identifiant, avec `saisi_le` et `saisi_par` imposés par la base ; un ministère retiré puis ajouté de nouveau a deux lignes ; le trigger `mention_unique` refuse un second ajout tant que le premier n'a pas de retrait, même pour le propriétaire). Un retrait est une **nouvelle ligne de la table `point_mention_retrait`** (la ligne d'ajout qu'il annule, `saisi_le`, `saisi_par`). Rien n'est modifié ni effacé. La mention en vigueur d'un ministère est sa dernière ligne d'ajout qui n'a pas de retrait ; la vue `v_point_mention` la donne, et c'est elle que lit l'interface.
+- **Fonctions** (`private` en `security definer`, `exige_aal2()` en premier, appelées par une fonction `public` en `security invoker`) : `ajouter_mention_point(p_point_id, p_ministere_id)`, `retirer_mention_point(p_point_id, p_ministere_id)` et `modifier_mentions_point(p_point_id, p_mentions uuid[])` (la liste voulue : la base retire ceux qui n'y sont plus et ajoute les nouveaux, en une transaction ; c'est ce que l'écran appelle). Refus : un compte sans ce droit, ou un point absent, lève 42501 avec « Ce point n'existe pas ou vous n'y avez pas accès. » ; point traité (« Ce point est traité : ses mentions ne changent plus. ») ; ministère créateur, désactivé ou inconnu (« Ce ministère ne peut pas être mentionné. ») ; ajout d'un ministère déjà mentionné (« Ce ministère est déjà mentionné sur ce point. ») ; retrait d'un ministère qui n'est pas mentionné (« Ce ministère n'est pas mentionné sur ce point. ») ; `modifier_mentions_point` sans liste (« Choisissez les ministères à mentionner. »). Dans `modifier_mentions_point`, un ministère déjà mentionné qui reste dans la liste n'est pas revérifié (même désactivé depuis).
+- **Journal** : une ligne par ajout (`point_mention_ajoutee`) et par retrait (`point_mention_retiree`), au ministère créateur (comme les autres actions sur un point), cible `point_attention`, détail `{"ministere": uuid}` : un identifiant, jamais un nom ni un texte. L'administration de l'église ne les lit pas.
+- **Lecture** : la politique de `point_attention`, `changer_statut_point` et `marquer_traite` ne comptent que les mentions en vigueur ; `point_mention` et `point_mention_retrait` suivent les points lisibles.
+- **Proposé, à confirmer par la personne responsable** : un ministère encore mentionné lit, dans les tables brutes, toutes les lignes `point_mention` et `point_mention_retrait` du point, donc il peut apprendre qu'un autre ministère a été mentionné puis retiré, quand, et par quel compte. Ce ne sont pas des données personnelles et l'interface ne lit que `v_point_mention` (mentions en vigueur). Si la personne responsable ne le veut pas, la lecture brute passera au créateur, au berger, au conseil et à EJP Tech (fonction `security definer` contre la récursion, matrice pgTAP à ajuster).
+- **Interface** : une action « Modifier les mentions » à côté de « Changer le statut » et « Marquer traité » (fenêtre de 460 px, plein écran sous 600 px), pour les profils autorisés, sur les points non traités. Les ministères actifs autres que le créateur sont des cases, les mentions actuelles cochées ; un seul bouton « Enregistrer les mentions » ; message « Mentions enregistrées. » ; les lectures des points, de la fiche et de « Cette semaine » sont relues.
+- **Écart au BRIEF** : la section 3 (règle 7) et la section 11 (« Hors périmètre ») disaient le contraire ; l'étape 5 « hors de l'étape : changer ses mentions » est levée. CLAUDE.md dit « mentions : ajout seulement » : l'ajout reste un ajout et le retrait est une ligne ajoutée, la règle tient. La règle 10 du BRIEF (« un envoi de formulaire donne une seule ligne ») a une exception : `modifier_mentions_point` écrit une ligne de journal par mention ajoutée et par mention retirée, chacune avec le seul identifiant du ministère. Titre, description, action attendue, priorité et échéance restent fixés à la création.
+- **Origine** : réponses écrites de la personne responsable (8 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 8 octobre 2026. Les textes de la fenêtre (titre du groupe, note, boutons) sont Proposés
+- **BRIEF** : section 3 (règles 1, 7 et 10), section 6 (schéma et table du journal), section 7 (matrice des droits : `point_mention` et `point_mention_retrait`, fonctions, code de `points_mentionnant_mon_ministere`), section 11 (« Hors périmètre ») ; migration `20261010122000_mentions_modifiables.sql`
+
+### T55. Saisie rétroactive : les 8 derniers dimanches
+
+- **Date** : 8 octobre 2026
+- **Sujet** : un ministère qui commence à utiliser l'outil veut rattraper des dimanches passés. « Choisir un autre dimanche » n'en proposait que 4.
+- **Décision** : « Choisir un autre dimanche » propose les **8 derniers dimanches** (`DIMANCHES_PROPOSES`, `src/features/saisie-chiffres/choixPeriode.ts`). La base acceptait déjà tout dimanche passé : aucune migration. « Chiffres du mois » ne change pas (le mois en cours et les deux précédents).
+- **Origine** : réponse écrite de la personne responsable (8 octobre 2026), « plutôt 8 derniers dimanches »
+- **Statut** : Décidé par la personne responsable le 8 octobre 2026
+- **BRIEF** : section 9 (saisie du dimanche, 08)

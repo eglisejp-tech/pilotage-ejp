@@ -1,10 +1,17 @@
 import type { RouteObject } from 'react-router'
 import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
+import { PageAcceptation } from '@/features/acceptation/PageAcceptation'
+import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
+import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
+import { ApercuJournal } from '@/features/journal/apercu/ApercuJournal'
+import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
+import { ApercuNouveauPoint } from '@/features/nouveau-point/apercu/ApercuNouveauPoint'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
+import { ApercuSessions } from '@/features/sessions/apercu/ApercuSessions'
 import { ApercuSaisiesE4 } from '@/features/saisie-fij/apercu/ApercuSaisiesE4'
 import { PageAcces } from '@/features/connexion/PageAcces'
 import { PageChoixMotDePasse } from '@/features/connexion/PageChoixMotDePasse'
@@ -15,7 +22,10 @@ import { PageMotDePasseOublie } from '@/features/connexion/PageMotDePasseOublie'
 import { ApercuNavigation } from '@/features/navigation/apercu/ApercuNavigation'
 import { MiseEnPageApercu } from '@/features/navigation/apercu/MiseEnPageApercu'
 import { ADRESSES_APPLICATION } from '@/features/navigation/profils'
+import { ApercuPoints } from '@/features/points/apercu/ApercuPoints'
 import { Garde } from '@/features/session/Garde'
+import { ApercuActionsPoint } from '@/features/points-actions/apercu/ApercuActionsPoint'
+import { ApercuModeration } from '@/features/moderation/apercu/ApercuModeration'
 import { ApercuSignalements } from '@/features/signalement/apercu/ApercuSignalements'
 import { ApercuCetteSemaine } from '@/pages/ApercuCetteSemaine'
 import { ErreurApplication } from '@/pages/ErreurApplication'
@@ -35,6 +45,9 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
         children: [
           { path: 'cette-semaine', element: <ApercuCetteSemaine /> },
           { path: 'navigation', element: <ApercuNavigation /> },
+          { path: 'avancement', element: <ApercuAvancement /> },
+          // Lot L1 : écran 13, « Ministères et comptes » (actions simulées, aucune requête).
+          { path: 'comptes', element: <ApercuComptes /> },
           // Étape 4 : fiche (E2), saisies (E3, E4) et événements (E5, E6), lus par aide.spec.ts.
           { path: 'fiche', element: <ApercuFiche /> },
           { path: 'saisies', element: <ApercuSaisies /> },
@@ -45,6 +58,20 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'signalements', element: <ApercuSignalements /> },
           // Lot E6 : calendrier, prochaine réunion, bandeau de la fiche et bloc d'alerte.
           { path: 'calendrier', element: <ApercuCalendrier /> },
+          // Lot L3a : configuration des indicateurs (`/indicateurs` et `/indicateurs/:id`).
+          { path: 'indicateurs', element: <ApercuIndicateurs /> },
+          // Étape 5, lot P2 : « Nouveau point d'attention » (maquette 10).
+          { path: 'nouveau-point', element: <ApercuNouveauPoint /> },
+          // Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
+          { path: 'points-actions', element: <ApercuActionsPoint /> },
+          // Lot P3 : écran 05 « Points d'attention » et « Mes points », lus par e2e/points.spec.ts.
+          { path: 'points', element: <ApercuPoints /> },
+          // Lot L5 : écran 06 « Journal », « Mon journal » et « Journal technique ».
+          { path: 'journal', element: <ApercuJournal /> },
+          // Lot L2 : écran 14 « Sessions » (actions simulées, aucune requête).
+          { path: 'sessions', element: <ApercuSessions /> },
+          // Lot L6 : écran 15 « Modération » (décisions simulées, aucune requête).
+          { path: 'moderation', element: <ApercuModeration /> },
         ],
       },
     ]
@@ -75,6 +102,10 @@ export const routes: RouteObject[] = [
       {
         element: <Garde zone="double-authentification" />,
         children: [{ path: '/double-authentification', element: <PageDoubleAuthentification /> }],
+      },
+      {
+        element: <Garde zone="conditions" />,
+        children: [{ path: '/conditions-a-accepter', element: <PageAcceptation /> }],
       },
       {
         element: (

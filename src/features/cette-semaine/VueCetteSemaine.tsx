@@ -2,6 +2,7 @@ import { BlocVosPoints } from '@/features/accueil-ministere/BlocVosPoints'
 import { BlocVosSaisies } from '@/features/accueil-ministere/BlocVosSaisies'
 import { OuvertureMinistere } from '@/features/accueil-ministere/OuvertureMinistere'
 import type { DonneesAccueilMinistere } from '@/features/accueil-ministere/types'
+import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { ADecider } from './ADecider'
 import { BlocSession } from './BlocSession'
 import { CarteFij } from './CarteFij'
@@ -36,6 +37,12 @@ interface Props {
  */
 export function VueCetteSemaine({ donnees, accueil }: Props) {
   const decision = 'aDecider' in donnees ? donnees.aDecider : null
+  // « Marquer traité » de « À décider » : berger et conseil seulement. EJP Tech lit sans aucun
+  // bouton (`lectureSeule`, T29).
+  const compteDecision: CompteDesActions | null =
+    'aDecider' in donnees && !donnees.lectureSeule
+      ? { type: donnees.profil, ministereId: null }
+      : null
   const telephone = !useLargeurMin(600)
 
   const ouverture =
@@ -53,7 +60,12 @@ export function VueCetteSemaine({ donnees, accueil }: Props) {
     donnees.profil === 'ministere' && accueil
       ? {
           vosSaisies: <BlocVosSaisies lignes={accueil.vosSaisies} />,
-          vosPoints: <BlocVosPoints bloc={accueil.vosPoints} />,
+          vosPoints: (
+            <BlocVosPoints
+              bloc={accueil.vosPoints}
+              compte={{ type: 'ministere', ministereId: accueil.ministereId }}
+            />
+          ),
         }
       : undefined
   const session = <BlocSession bloc={donnees.session} />
@@ -95,7 +107,11 @@ export function VueCetteSemaine({ donnees, accueil }: Props) {
       }
       aDecider={
         decision ? (
-          <ADecider points={decision.points} lienTousLesPoints={decision.lienTousLesPoints} />
+          <ADecider
+            points={decision.points}
+            lienTousLesPoints={decision.lienTousLesPoints}
+            compte={compteDecision}
+          />
         ) : null
       }
       aDeciderEnTete={decision !== null && telephone && decision.urgent}

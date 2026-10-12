@@ -1,6 +1,8 @@
 import { CalendrierMinistere } from '@/features/fiche/CalendrierMinistere'
 import { ChiffresParDepartement } from '@/features/fiche/ChiffresParDepartement'
 import { ComptagesEvenements } from '@/features/fiche/ComptagesEvenements'
+import { EmplacementGererIndicateurs } from '@/features/fiche/EmplacementGererIndicateurs'
+import { EmplacementNouveauPoint } from '@/features/fiche/EmplacementNouveauPoint'
 import { GraphiquesFiche } from '@/features/fiche/GraphiquesFiche'
 import { ProchaineReunion } from '@/features/fiche/ProchaineReunion'
 import type { EmplacementFiche, ProprietesEmplacementFiche } from '@/features/fiche/types'
@@ -25,5 +27,9 @@ export function EmplacementDeFiche({ emplacement, ...fiche }: Proprietes) {
       return <ComptagesEvenements {...fiche} />
     case 'graphiques':
       return <GraphiquesFiche {...fiche} />
+    case 'nouveauPoint':
+      return <EmplacementNouveauPoint {...fiche} />
+    case 'gererIndicateurs':
+      return <EmplacementGererIndicateurs {...fiche} />
   }
 }

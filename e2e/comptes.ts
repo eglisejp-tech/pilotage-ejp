@@ -85,7 +85,7 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'administration@exemple.test',
     libelle: "Administration de l'église",
     accueil: { chemin: '/', titre: 'Cette semaine' },
-    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Journal'],
+    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Indicateurs', 'Journal'],
     adresseInterdite: '/points',
   },
   {
@@ -93,13 +93,23 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'ejptech1@exemple.test',
     libelle: 'EJP Tech, compte 1',
     accueil: { chemin: '/moderation', titre: 'Modération' },
-    onglets: ['Modération', 'Cette semaine', 'Journal technique'],
+    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
     adresseInterdite: '/ma-fiche',
   },
 ]
 
 /** Compte pour le parcours « Se déconnecter » (sa propre session, pas celle des autres tests). */
 export const COMPTE_DECONNEXION = { email: 'conseil3@exemple.test', libelle: 'Conseil, compte 3' }
+
+/**
+ * Compte qui n'a pas accepté les conditions (T53) : le script d'installation accepte la version
+ * courante pour tous les autres comptes à facteur, pour que les parcours existants ne voient pas
+ * l'écran d'acceptation. Seul e2e/base/acceptation-conditions.ecriture.spec.ts utilise ce compte.
+ */
+export const COMPTE_CONDITIONS = {
+  email: 'junior@exemple.test',
+  libelle: 'Ministère Prodiges Junior',
+}
 
 /** Compte laissé sans facteur par le script : il doit passer par l'activation. */
 export const COMPTE_SANS_FACTEUR = {
@@ -169,6 +179,8 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   const chemins: string[] = []
   page.on('request', (requete) => {
     const url = new URL(requete.url())
+    // L'acceptation des conditions est lue par la session en aal2 (T53), comme la ligne de compte.
+    if (url.pathname === '/rest/v1/acceptation_conditions') return
     if (url.pathname.startsWith('/rest/v1/')) chemins.push(url.pathname)
   })
   return chemins

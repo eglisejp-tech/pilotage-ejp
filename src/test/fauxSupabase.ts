@@ -15,6 +15,8 @@ export type ScenarioSession = {
     desactive_le: string | null
   } | null
   facteursVerifies?: string[]
+  /** Le compte a accepté la version courante des conditions (T53) ; vrai par défaut. */
+  conditionsAcceptees?: boolean
   /**
    * Lignes rendues par une vue ou une table autre que `compte` (`v_semaine`, `v_point`...).
    * Absente : aucune ligne. Les filtres et tris ne sont pas appliqués : le test donne les lignes
@@ -64,6 +66,9 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
 
   function lignesDe(table: string): unknown[] {
     if (table === 'compte') return scenario.compte ? [scenario.compte] : []
+    if (table === 'acceptation_conditions') {
+      return (scenario.conditionsAcceptees ?? true) ? [{ id: 'acceptation-1' }] : []
+    }
     return scenario.lignes?.[table] ?? []
   }
 
@@ -106,7 +111,9 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
   }
 
   const from = vi.fn((table: string) => {
-    tables.push(table)
+    // L'acceptation des conditions est lue par la session en aal2 (T53) : `tables` ne note que les
+    // lectures de données, que les tests comparent ; `from` garde la trace de celle-ci.
+    if (table !== 'acceptation_conditions') tables.push(table)
     return requete(table)
   })
 
@@ -146,5 +153,9 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     },
   }
 
-  return { client: { from, auth }, tables, auth, from, eq }
+  const rpc = vi.fn<(nom: string, args?: unknown) => Promise<Reponse>>(() =>
+    Promise.resolve({ data: null, error: null }),
+  )
+
+  return { client: { from, auth, rpc }, tables, auth, from, eq, rpc }
 }

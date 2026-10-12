@@ -108,6 +108,41 @@ describe('destination', () => {
   })
 })
 
+describe('destination : conditions à accepter (T53)', () => {
+  const conditions: EtatSession = { statut: 'conditions', compte: compte('ministere'), email: null }
+
+  it("avant l'application : toute autre zone renvoie à l'écran, qui garde l'adresse demandée", () => {
+    expect(destination(conditions, 'conditions', contexte())).toBeNull()
+    expect(
+      destination(conditions, 'application', contexte({ adresse: '/points?vue=traites' })),
+    ).toBe('/conditions-a-accepter?retour=%2Fpoints%3Fvue%3Dtraites')
+    expect(destination(conditions, 'application', contexte({ adresse: '/' }))).toBe(
+      '/conditions-a-accepter',
+    )
+    expect(destination(conditions, 'connexion', contexte({ retour: '/journal' }))).toBe(
+      '/conditions-a-accepter?retour=%2Fjournal',
+    )
+    expect(destination(conditions, 'double-authentification', contexte())).toBe(
+      '/conditions-a-accepter',
+    )
+  })
+
+  it('un mot de passe à choisir passe avant les conditions', () => {
+    const enAttente = contexte({ motDePasseAChoisir: true })
+    expect(destination(conditions, 'mot-de-passe', enAttente)).toBeNull()
+    expect(destination(conditions, 'conditions', enAttente)).toBe('/acces/mot-de-passe')
+  })
+
+  it("après l'acceptation : retour à l'adresse demandée, sinon l'accueil du profil", () => {
+    expect(destination(connecte('ministere'), 'conditions', contexte())).toBe('/')
+    expect(destination(connecte('berger'), 'conditions', contexte({ retour: '/points' }))).toBe(
+      '/points',
+    )
+    expect(destination(anonyme, 'conditions', contexte())).toBe('/connexion')
+    expect(destination(activation, 'conditions', contexte())).toBe('/double-authentification')
+  })
+})
+
 describe('retourValide', () => {
   it("garde un chemin de l'application auquel le profil a droit, avec ses filtres", () => {
     expect(retourValide('/points?vue=traites&ministere=m1', 'berger')).toBe(

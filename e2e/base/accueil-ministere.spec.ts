@@ -36,6 +36,10 @@ test.describe('ministère Communication : accueil 07', () => {
     await expect(page.locator('h1 mark')).toHaveCount(reste ? 1 : 0)
     await expect(actions.locator('.bg-lumiere')).toHaveCount(reste ? 1 : 0)
     await expect(actions.getByRole('link', { name: 'Saisir une session' })).toBeVisible()
+    await expect(actions.getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
     await expect(actions.getByRole('link', { name: 'Mettre à jour la carte des FIJ' })).toHaveCount(
       0,
     )

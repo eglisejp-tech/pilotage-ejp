@@ -1,8 +1,10 @@
 import { createClient, isAuthApiError } from '@supabase/supabase-js'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { generate } from 'otplib'
+import { VERSION_CONDITIONS } from '../src/lib/metier/conditions.ts'
 import {
   attendreTourDeVerification,
+  COMPTE_CONDITIONS,
   COMPTES_JEU_EXEMPLE,
   enregistrerSecrets,
   MOT_DE_PASSE_TEST,
@@ -105,6 +107,15 @@ export default async function installerComptes() {
     if (erreurEnrolement) throw new Error(`Enrôlement refusé pour ${email}.`)
     await verifierAvecRythme(client, facteur.id, facteur.totp.secret)
     secrets[email] = facteur.totp.secret
+    // La session est en aal2 : le compte accepte la version courante des conditions (T53), par la
+    // fonction publique, comme l'écran d'acceptation. Les parcours existants ne voient pas cet
+    // écran ; un seul compte reste sans acceptation, pour son parcours.
+    if (email !== COMPTE_CONDITIONS.email) {
+      const { error: erreurAcceptation } = await client.rpc('accepter_conditions', {
+        p_version: VERSION_CONDITIONS,
+      })
+      if (erreurAcceptation) throw new Error(`Acceptation des conditions refusée pour ${email}.`)
+    }
     await client.auth.signOut({ scope: 'local' })
   }
 

@@ -52,6 +52,11 @@ export function construireVosPoints({
     const ouvert = estOuvert(point)
     return {
       id: point.id,
+      statut: point.statut,
+      ministereId: point.ministere_id,
+      mentionIds: mentions
+        .filter((mention) => mention.point_id === point.id)
+        .map((mention) => mention.ministere_id),
       priorite: point.priorite,
       ministere: nom(point.ministere_id),
       echeance:

@@ -59,7 +59,7 @@ describe('dimanche de la saisie', () => {
     })
   })
 
-  it('propose les 4 derniers dimanches, « (déjà saisi) » s’il y a lieu', () => {
+  it('propose les 8 derniers dimanches, « (déjà saisi) » s’il y a lieu', () => {
     const semaine = { aujourdhui: '2026-09-29', dimanche: '2026-09-27' }
     const proposes = dimanchesProposes(semaine, new Set(['2026-09-20']), true)
     expect(proposes.map((propose) => propose.libelle)).toEqual([
@@ -67,6 +67,10 @@ describe('dimanche de la saisie', () => {
       'Dimanche 20 sept. (déjà saisi)',
       'Dimanche 13 sept.',
       'Dimanche 6 sept.',
+      'Dimanche 30 août',
+      'Dimanche 23 août',
+      'Dimanche 16 août',
+      'Dimanche 9 août',
     ])
   })
 
@@ -78,7 +82,7 @@ describe('dimanche de la saisie', () => {
       dejaSaisi: false,
       matin: true,
     })
-    expect(dimanchesProposes(matin, new Set(), false)).toHaveLength(4)
+    expect(dimanchesProposes(matin, new Set(), false)).toHaveLength(8)
   })
 
   it('écrit les adresses de saisie', () => {

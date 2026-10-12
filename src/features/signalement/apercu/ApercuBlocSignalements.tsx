@@ -10,7 +10,7 @@ import {
 import type { VueApercu } from '@/features/signalement/apercu/exemples'
 import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSignalements'
 import type { ContenuBloc } from '@/features/signalement/ContenuBlocSignalements'
-import { EcranModeration } from '@/features/signalement/EcranModeration'
+import { EcranModeration } from '@/features/moderation/EcranModeration'
 import type { Cloture } from '@/features/signalement/schemas'
 import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
 
@@ -51,8 +51,9 @@ export function ApercuBlocSignalements({ vue, echec }: Props) {
   else contenu = { etat: 'liste', signalements, cloturer, relire: () => undefined }
 
   return (
-    <EcranModeration titre="Modération">
-      <ContenuBlocSignalements contenu={contenu} />
-    </EcranModeration>
+    <EcranModeration
+      titre="Modération"
+      signalements={<ContenuBlocSignalements contenu={contenu} />}
+    />
   )
 }

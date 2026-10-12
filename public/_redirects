@@ -1,0 +1,4 @@
+# Netlify : l'application est une page unique. Toute adresse (dont /acces?token_hash=...) sert
+# index.html, puis le routeur de l'application affiche la bonne page. Les fichiers de dist/
+# existants (assets, favicon) passent avant cette règle.
+/*    /index.html    200

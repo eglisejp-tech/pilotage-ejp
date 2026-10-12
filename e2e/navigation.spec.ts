@@ -24,12 +24,12 @@ const PROFILS = [
   {
     profil: 'admin_eglise',
     libelle: "Administration de l'église",
-    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Journal'],
+    onglets: ['Cette semaine', 'Ministères et comptes', 'Sessions', 'Indicateurs', 'Journal'],
   },
   {
     profil: 'admin_plateforme',
     libelle: 'EJP Tech, compte 1',
-    onglets: ['Modération', 'Cette semaine', 'Journal technique'],
+    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
   },
 ] as const
 

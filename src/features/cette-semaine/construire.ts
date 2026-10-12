@@ -96,7 +96,7 @@ export interface LecturesCetteSemaine {
   /** ['ministeres','liste'] : tous, désactivés compris (créateurs et mentions « (désactivé) »). */
   ministeres: Pick<LigneTable<'ministere'>, 'id' | 'code' | 'nom' | 'desactive_le'>[]
   /** ['points','ouverts'] : berger, conseil et EJP Tech seulement, null pour les autres profils. */
-  points: { points: LigneVue<'v_point'>[]; mentions: LigneTable<'point_mention'>[] } | null
+  points: { points: LigneVue<'v_point'>[]; mentions: LigneVue<'v_point_mention'>[] } | null
 }
 
 type LigneSession = LigneVue<'v_session_completude'>
@@ -638,8 +638,10 @@ function nomAvecEtat(contexte: Contexte, id: string): string {
 }
 
 function pointADecider(point: LigneVue<'v_point'>, contexte: Contexte): PointADecider {
-  const mentions = (contexte.lectures.points?.mentions ?? [])
-    .filter((mention) => mention.point_id === point.id)
+  const mentionsDuPoint = (contexte.lectures.points?.mentions ?? []).filter(
+    (mention) => mention.point_id === point.id,
+  )
+  const mentions = mentionsDuPoint
     .map((mention) => nomAvecEtat(contexte, mention.ministere_id))
     .sort(comparerNoms)
   return {
@@ -657,6 +659,9 @@ function pointADecider(point: LigneVue<'v_point'>, contexte: Contexte): PointADe
     description: texteLibreOuNull(point.description),
     attendu: texteLibreOuNull(point.action_attendue),
     mentions,
+    statut: point.statut,
+    ministereId: point.ministere_id,
+    mentionIds: mentionsDuPoint.map((mention) => mention.ministere_id),
   }
 }
 

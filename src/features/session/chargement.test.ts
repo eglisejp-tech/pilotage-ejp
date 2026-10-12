@@ -5,6 +5,7 @@ import {
   chargerEtatSessionSuivi,
   DELAI_MAX_SESSION,
 } from '@/features/session/chargement'
+import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
@@ -61,10 +62,35 @@ describe('chargerEtatSession', () => {
       statut: 'connecte',
       compte: { type: 'berger', libelle: 'Berger', actif: true },
     })
+    // La ligne de compte, puis (en aal2 seulement) l'acceptation de la version courante.
     expect(faux.tables).toEqual(['compte'])
+    expect(faux.from).toHaveBeenCalledWith('acceptation_conditions')
     expect(faux.eq).toHaveBeenCalledWith('user_id', 'u-berger')
+    expect(faux.eq).toHaveBeenCalledWith('compte', 'u-berger')
+    expect(faux.eq).toHaveBeenCalledWith('version', VERSION_CONDITIONS)
     // En aal2, la liste des facteurs ne sert pas.
     expect(faux.auth.mfa.listFactors).not.toHaveBeenCalled()
+  })
+
+  it('aal2 sans acceptation de la version courante : conditions', async () => {
+    installer({
+      utilisateur,
+      compte: berger,
+      niveau: { currentLevel: 'aal2', nextLevel: 'aal2' },
+      conditionsAcceptees: false,
+    })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'conditions' })
+  })
+
+  it("aal1 : l'acceptation n'est pas lue (elle exige aal2)", async () => {
+    const faux = installer({
+      utilisateur,
+      compte: berger,
+      niveau: { currentLevel: 'aal1', nextLevel: 'aal2' },
+      facteursVerifies: ['f1'],
+    })
+    await chargerEtatSession()
+    expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
   })
 
   it('aal1 avec un facteur vérifié : code, sur le premier facteur', async () => {

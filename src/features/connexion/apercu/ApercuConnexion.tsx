@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
+import { EcranAcceptation } from '@/features/acceptation/EcranAcceptation'
+import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { cleExemple, qrCodeExemple } from '@/features/connexion/apercu/exemples'
 import {
   clesEcransSimules,
@@ -106,6 +108,17 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
       )
     case 'compte-desactive':
       return <EcranCompteDesactive lienConnexion={lien('connexion')} />
+    case 'acceptation':
+      return (
+        <EcranAcceptation
+          libelleCompte={libelleCompte}
+          version={VERSION_CONDITIONS}
+          onAccept={() => signaler('onAccept, acceptation des conditions.')}
+          onSignOut={seDeconnecter}
+          enCours={etat.enCours}
+          erreur={etat.erreur}
+        />
+      )
   }
 }
 

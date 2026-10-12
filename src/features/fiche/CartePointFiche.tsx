@@ -1,23 +1,27 @@
 import { useId } from 'react'
 import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
+import { PoseActionsPoint } from '@/features/cette-semaine/PoseActionsPoint'
 import { couleursPriorite } from '@/features/cette-semaine/priorites'
 import type { PointFiche } from '@/features/fiche/modeleFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
+import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { LIBELLE_PRIORITE } from '@/lib/metier/points'
 import { cn } from '@/lib/utils'
 
 interface Props {
   point: PointFiche
+  /** Compte connecté, pour les boutons du point. Null ou absent : lecture seule (EJP Tech, T29). */
+  compte?: CompteDesActions | null
 }
 
 /**
- * Un point de la fiche (maquettes 04 et 12), en lecture : priorité, ministère créateur et
- * échéance, titre, description, action attendue et mentions ; « Mentionné par Intégration. » pour
- * le ministère mentionné ; « Traité le 30 sept. » et le commentaire pour un point traité depuis
- * 7 jours. Les boutons « Changer le statut » et « Marquer traité » arrivent à l'étape 5, jamais
- * pour EJP Tech (T29).
+ * Un point de la fiche (maquettes 04, 07 et 12) : priorité, ministère créateur et échéance, titre,
+ * description, action attendue et mentions ; « Mentionné par Intégration. » pour le ministère
+ * mentionné ; puis les boutons « Changer le statut » et « Marquer traité » (`ActionsPoint`,
+ * étape 5), jamais pour EJP Tech (T29) ni sur un point traité ; « Traité le 30 sept. » et le
+ * commentaire pour un point traité depuis 7 jours.
  */
-export function CartePointFiche({ point }: Props) {
+export function CartePointFiche({ point, compte = null }: Props) {
   const idTitre = useId()
   const avecAttendu = point.attendu !== null || point.mentions.length > 0
   return (
@@ -78,6 +82,7 @@ export function CartePointFiche({ point }: Props) {
           {TEXTES_FICHE.points.mentionnePar(point.mentionnePar)}
         </p>
       ) : null}
+      <PoseActionsPoint point={point} compte={compte} />
       {point.traite !== null ? (
         <p className="text-sm text-encre-2">
           <span className="font-semibold text-bien">{point.traite.texte}</span>

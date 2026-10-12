@@ -229,6 +229,7 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
   return {
     etat: 'pret',
     donnees: {
+      ministereId: id,
       ouverture: construireOuverture(vosSaisies, {
         semaine: { aujourdhui: jour.aujourdhui, dimanche: jour.dimanche, numero: jour.numero },
         sessions: sessionsLues,

@@ -46,7 +46,7 @@ describe('ADecider', () => {
     expect(within(troisieme!).getByText('@Coordination')).toBeInTheDocument()
   })
 
-  it("n'affiche pas « Marquer traité » avant sa fenêtre (étape 5, T19)", () => {
+  it('sans compte (lecture seule, EJP Tech), aucun bouton : la pose est vérifiée par PoseActionsPoint.test.tsx', () => {
     const region = afficher()
     expect(within(region).queryByRole('button')).not.toBeInTheDocument()
   })

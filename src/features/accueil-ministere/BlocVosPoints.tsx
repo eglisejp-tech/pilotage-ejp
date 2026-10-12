@@ -5,9 +5,12 @@ import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc, PointFiche } from '@/features/fiche/modeleFiche'
+import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 
 interface Props {
   bloc: EtatBloc<PointFiche[]>
+  /** Compte du ministère, pour les boutons de chaque point (créé ou mentionné). */
+  compte: CompteDesActions
 }
 
 /**
@@ -15,13 +18,14 @@ interface Props {
  * ceux qui le mentionnent, puis ceux traités depuis 7 jours, chacun comme sur « Ma fiche »
  * (`CartePointFiche`). Aide `accueil.points` à côté du titre, hors du titre (T38). Tout est fait :
  * « Aucun point ouvert pour votre ministère. » Lu à part : un problème passager garde le titre et
- * propose « Réessayer ». Les boutons « Changer le statut » et « Marquer traité » arrivent à
- * l'étape 5.
+ * propose « Réessayer ». Chaque point porte ses boutons « Changer le statut » et « Marquer
+ * traité » (`ActionsPoint`, étape 5). Le bloc porte le repère de focus de la page
+ * (`data-repli-focus`) : quand un point traité quitte la liste, le focus y revient.
  */
-export function BlocVosPoints({ bloc }: Props) {
+export function BlocVosPoints({ bloc, compte }: Props) {
   const idTitre = useId()
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
+    <section aria-labelledby={idTitre} data-repli-focus className="flex min-w-0 flex-col">
       <div
         data-ligne-aide
         className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b-2 border-encre pb-3"
@@ -49,7 +53,7 @@ export function BlocVosPoints({ bloc }: Props) {
         ) : (
           <div className="flex flex-col divide-y divide-filet">
             {bloc.donnees.map((point) => (
-              <CartePointFiche key={point.id} point={point} />
+              <CartePointFiche key={point.id} point={point} compte={compte} />
             ))}
           </div>
         )

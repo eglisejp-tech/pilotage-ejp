@@ -6,12 +6,14 @@ import type { TypeCompte } from '@/lib/base'
 // « Adresses »). Fonctions pures : la garde React les applique, les tests les vérifient.
 
 /** Groupes d'adresses protégées par une même garde. */
-export type Zone = 'connexion' | 'double-authentification' | 'mot-de-passe' | 'application'
+export type Zone =
+  'connexion' | 'double-authentification' | 'mot-de-passe' | 'conditions' | 'application'
 
 export const ADRESSE_CONNEXION = '/connexion'
 export const ADRESSE_DOUBLE_AUTHENTIFICATION = '/double-authentification'
 export const ADRESSE_MOT_DE_PASSE = '/acces/mot-de-passe'
 export const ADRESSE_COMPTE_DESACTIVE = '/compte-desactive'
+export const ADRESSE_CONDITIONS_A_ACCEPTER = '/conditions-a-accepter'
 
 export type ContexteGarde = {
   /** Adresse demandée : chemin, paramètres et ancre. */
@@ -78,6 +80,10 @@ export function destination(
       return zone === 'double-authentification'
         ? null
         : avecRetour(ADRESSE_DOUBLE_AUTHENTIFICATION, aRetrouver)
+    case 'conditions':
+      // Le mot de passe d'abord (invitation, récupération), puis les conditions, puis l'application.
+      if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
+      return zone === 'conditions' ? null : avecRetour(ADRESSE_CONDITIONS_A_ACCEPTER, aRetrouver)
     case 'connecte':
       if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
       if (zone === 'application') return null

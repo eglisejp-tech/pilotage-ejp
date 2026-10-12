@@ -32,11 +32,13 @@ export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
     { libelle: 'Cette semaine', chemin: '/' },
     { libelle: 'Ministères et comptes', chemin: '/comptes' },
     { libelle: 'Sessions', chemin: '/sessions' },
+    { libelle: 'Indicateurs', chemin: '/indicateurs' },
     { libelle: 'Journal', chemin: '/journal' },
   ],
   // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29).
   admin_plateforme: [
     { libelle: 'Modération', chemin: '/moderation' },
+    { libelle: 'Indicateurs', chemin: '/indicateurs' },
     { libelle: 'Cette semaine', chemin: '/' },
     { libelle: 'Journal technique', chemin: '/journal-technique' },
   ],
@@ -59,8 +61,8 @@ export type AdresseApplication = {
 
 /**
  * Table des adresses (BRIEF section 9, « Adresses » ; plan de l'étape 4, section 4). Les saisies
- * arrivent aux étapes 4 et 5 ; l'étape 4 les déclare toutes une fois, ce fichier est ensuite figé
- * jusqu'au lot I.
+ * arrivent aux étapes 4 et 5. Le lot C0 (plan des étapes 5 à 8, section 3.0) ajoute les adresses
+ * des étapes 5 et 6 ; ce fichier est ensuite figé jusqu'à leur intégration.
  * Les adresses de lecture du berger s'ouvrent à LECTEURS (berger, conseil, et EJP Tech en
  * lecture seule, T29) ; leurs boutons d'action se montrent par estDecideur
  * (src/lib/metier/droits.ts), jamais par ce droit d'adresse.
@@ -110,6 +112,9 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   // « Signaler une difficulté » (T39) : le ministère seul écrit, EJP Tech lit dans le bloc
   // « Signalements » de /moderation, le berger et le conseil n'y ont aucun accès.
   { chemin: '/signaler', profils: ['ministere'], titre: 'Signaler une difficulté', etape: 4 },
+  // Nouveau point (maquette 10, étape 5) : seul un compte de ministère crée un point (BRIEF
+  // règle 7). Ni le berger, ni le conseil, ni l'administration, ni EJP Tech n'y ont accès.
+  { chemin: '/saisir/point', profils: ['ministere'], titre: 'Nouveau point', etape: 5 },
   {
     chemin: '/points',
     profils: ['ministere', ...LECTEURS],
@@ -125,6 +130,22 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   },
   { chemin: '/comptes', profils: ['admin_eglise'], titre: 'Ministères et comptes', etape: 6 },
   { chemin: '/sessions', profils: ['admin_eglise'], titre: 'Sessions', etape: 6 },
+  // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2) : l'administration
+  // de l'église et EJP Tech seulement. Le ministère règle les siens par /ma-fiche/indicateurs
+  // (7.3) ; le berger et le conseil les lisent sur la fiche, sans écran de réglage.
+  {
+    chemin: '/indicateurs',
+    profils: ['admin_eglise', 'admin_plateforme'],
+    titre: 'Indicateurs',
+    etape: 6,
+  },
+  {
+    chemin: '/indicateurs/:id',
+    profils: ['admin_eglise', 'admin_plateforme'],
+    titre: "Indicateurs d'un ministère",
+    etape: 6,
+  },
+  { chemin: '/ma-fiche/indicateurs', profils: ['ministere'], titre: 'Mes indicateurs', etape: 6 },
   { chemin: '/moderation', profils: ['admin_plateforme'], titre: 'Modération', etape: 6 },
   {
     chemin: '/journal-technique',

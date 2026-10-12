@@ -3,6 +3,7 @@ import {
   accorder,
   comparerNoms,
   listeNoms,
+  longueurEnCaracteres,
   majusculeInitiale,
   MOINS,
   nombre,
@@ -126,5 +127,15 @@ describe('terminerPhrase', () => {
   it("garde un point d'exclamation ou d'interrogation", () => {
     expect(terminerPhrase('Bravo !')).toBe('Bravo !')
     expect(terminerPhrase('Vraiment ?')).toBe('Vraiment ?')
+  })
+})
+
+describe('longueurEnCaracteres', () => {
+  it('compte comme char_length de la base : un émoji vaut un caractère', () => {
+    expect(longueurEnCaracteres('')).toBe(0)
+    expect(longueurEnCaracteres('Salle réservée')).toBe(14)
+    expect(longueurEnCaracteres('🙏')).toBe(1)
+    expect('🙏'.length).toBe(2)
+    expect(longueurEnCaracteres('Fait 🙏🙏🙏')).toBe(8)
   })
 })

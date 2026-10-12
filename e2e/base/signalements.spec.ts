@@ -79,7 +79,8 @@ test.describe('EJP Tech', () => {
     await expect(clos.getByRole('article').filter({ hasText: TEXTE_CLOS })).toContainText(
       COMMENTAIRE_CLOS,
     )
-    await expect(clos.getByRole('button')).toHaveCount(0)
+    // Un signalement clos ne se clôt plus ; seul « Masquer le texte » (lot L6) y reste possible.
+    await expect(clos.getByRole('button', { name: 'Clore le signalement' })).toHaveCount(0)
   })
 
   test('/signaler : la page non disponible (EJP Tech ne signale pas)', async ({ page }) => {

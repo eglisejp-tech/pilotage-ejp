@@ -35,6 +35,23 @@
   --text-shadow-*: initial;
 }
 
+/*
+ * Première animation de l'outil (T50, acceptée par la personne responsable) : le remplissage des
+ * cases du bandeau d'avancement. La règle prefers-reduced-motion de tokens.css la coupe.
+ */
+@theme {
+  --animate-remplir: remplir 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+  @keyframes remplir {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+}
+
 @theme inline {
   /* Couleurs de la direction C */
   --color-fond: var(--fond);

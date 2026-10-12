@@ -38,7 +38,7 @@ select format($$
   'update public.moderation set motif = motif where cible_id in (select cible_id from essai_moderation)'),
   $$ select 'EJP Tech', tech from ctx union all select 'ministère', ministere from ctx $$;
 
-select plan(72 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
+select plan(74 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
 
 -- Listes attendues
 create temp table attendu_action (code text primary key);
@@ -50,7 +50,8 @@ insert into attendu_action values
   ('double_auth_reinitialisee'), ('texte_relu'), ('texte_masque'),
   ('indicateur_cree'), ('indicateurs_prevus_crees'), ('indicateur_corrige'), ('indicateur_valide'),
   ('indicateur_refuse'), ('indicateur_retire'), ('fij_statistiques_saisies'),
-  ('difficulte_signalee'), ('signalement_clos');
+  ('difficulte_signalee'), ('signalement_clos'),
+  ('point_mention_ajoutee'), ('point_mention_retiree');
 
 create temp table attendu_cible_journal (code text primary key);
 insert into attendu_cible_journal values
@@ -92,7 +93,7 @@ $$, 'les cinq contraintes du journal et de la modération portent le nom fixé p
 -- Listes exactes
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_action_check') $$,
               $$ select code from attendu_action $$,
-  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, rien d''autre');
+  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, les 2 codes des mentions modifiables (T54), rien d''autre');
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_cible_check') $$,
               $$ select code from attendu_cible_journal $$,
   'journal.cible : les 7 cibles des étapes 1 à 3, indicateur, signalement et les cibles de la modération (precision_sensible comprise, B8), rien d''autre');

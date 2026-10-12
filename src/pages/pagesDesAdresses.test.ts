@@ -14,6 +14,16 @@ describe('pages des adresses', () => {
     }
   })
 
+  it('chaque adresse des étapes 5 et 6 a sa page (amorce du lot C0), que son lot remplace', () => {
+    for (const adresse of ADRESSES_APPLICATION.filter((a) => a.etape === 5 || a.etape === 6)) {
+      expect(PAGES_DES_ADRESSES[adresse.chemin], adresse.chemin).toBeDefined()
+    }
+  })
+
+  it('le journal et le journal technique partagent une seule page', () => {
+    expect(PAGES_DES_ADRESSES['/journal-technique']).toBe(PAGES_DES_ADRESSES['/journal'])
+  })
+
   it('« / » garde sa propre vue : elle n’est pas dans la table', () => {
     expect(PAGES_DES_ADRESSES['/']).toBeUndefined()
   })

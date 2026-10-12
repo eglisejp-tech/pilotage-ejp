@@ -2,14 +2,17 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
+import { AvecRequetes } from '@/test/AvecRequetes'
 import { simulerLargeur } from '@/test/largeur'
 
 function afficher(requete: string) {
   simulerLargeur(1440)
+  // Le cache de requêtes sert aux boutons des points de la fiche (`ActionsPoint`, étape 5).
   return render(
     <MemoryRouter initialEntries={[`/apercu/calendrier${requete}`]}>
       <ApercuCalendrier />
     </MemoryRouter>,
+    { wrapper: AvecRequetes },
   )
 }
 

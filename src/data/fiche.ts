@@ -113,7 +113,7 @@ export async function lirePrecisionsMinistere(
 /** Points de la fiche et toutes leurs mentions (noms des ministères mentionnés). */
 export interface PointsFiche {
   points: LigneVue<'v_point'>[]
-  mentions: LigneTable<'point_mention'>[]
+  mentions: LigneVue<'v_point_mention'>[]
 }
 
 const COLONNES_POINT =
@@ -126,7 +126,7 @@ const COLONNES_POINT =
  */
 export async function lirePointsMinistere(ministereId: string): Promise<PointsFiche> {
   const lectureMentionnant = await supabase()
-    .from('point_mention')
+    .from('v_point_mention')
     .select('point_id, ministere_id')
     .eq('ministere_id', ministereId)
   if (lectureMentionnant.error) throw lectureMentionnant.error
@@ -142,7 +142,7 @@ export async function lirePointsMinistere(ministereId: string): Promise<PointsFi
   if (points.length === 0) return { points, mentions: [] }
 
   const lectureMentions = await supabase()
-    .from('point_mention')
+    .from('v_point_mention')
     .select('point_id, ministere_id')
     .in(
       'point_id',

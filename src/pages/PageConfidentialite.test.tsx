@@ -54,7 +54,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 7 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 8 octobre 2026.",
     )
   })
 
@@ -105,6 +105,15 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     )
   })
 
+  it("annonce l'acceptation des conditions dans « Données traitées » : date et version, lues par EJP Tech seul (T53)", () => {
+    afficher()
+    const acceptation = elementExact(
+      'li',
+      'La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech seul la lit.',
+    )
+    expect(partie('Données traitées')).toContainElement(acceptation)
+  })
+
   it("parle d'une seule boîte Gmail, celle d'EJP Tech, et des transferts propres à Google et à Netlify", () => {
     afficher()
     elementExact(
@@ -138,6 +147,13 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     elementExact(
       'p',
       "Une saisie ne se modifie pas : une correction s'ajoute comme une nouvelle saisie. Un texte qui contient une information personnelle est masqué.",
+    )
+  })
+
+  it("dit que le navigateur retient la fermeture du bandeau d'avancement", () => {
+    afficher()
+    expect(partie('Cookies et traceurs')).toHaveTextContent(
+      "Ce navigateur retient aussi que vous avez fermé le bandeau d'avancement.",
     )
   })
 

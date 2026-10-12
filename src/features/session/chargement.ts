@@ -1,8 +1,10 @@
 import { isAuthApiError } from '@supabase/supabase-js'
 import { lireMonCompte } from '@/data/compte'
+import { lireConditionsAcceptees } from '@/data/conditions'
 import { deduireEtat } from '@/features/session/etat'
 import type { EtatSession } from '@/features/session/etat'
 import { noterTransition } from '@/features/session/motif'
+import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { clientRequetes, CLE_SESSION } from '@/lib/requetes'
 import { supabase } from '@/lib/supabase'
 
@@ -43,11 +45,18 @@ export async function chargerEtatSession(): Promise<EtatSession> {
       facteurVerifie = facteurs.totp[0]?.id ?? null
     }
 
+    // Acceptation des conditions (T53) : lisible en aal2 seulement ; avant, elle ne sert à rien.
+    const conditionsAcceptees =
+      compte?.actif && niveau.currentLevel === 'aal2'
+        ? await lireConditionsAcceptees(session.user.id, VERSION_CONDITIONS)
+        : false
+
     return deduireEtat({
       utilisateur: { id: session.user.id, email: session.user.email ?? null },
       niveau: { actuel: niveau.currentLevel, suivant: niveau.nextLevel },
       compte,
       facteurVerifie,
+      conditionsAcceptees,
     })
   } catch (erreur) {
     // Session révoquée ailleurs (double authentification réinitialisée, compte supprimé) :

@@ -83,21 +83,21 @@ describe('lectures de la fiche', () => {
 describe('lirePointsMinistere', () => {
   it('les points créés par le ministère ou qui le mentionnent, puis leurs mentions', async () => {
     const faux = client({
-      point_mention: { data: [{ point_id: 'p2', ministere_id: 'm1' }], error: null },
+      v_point_mention: { data: [{ point_id: 'p2', ministere_id: 'm1' }], error: null },
       v_point: { data: [{ id: 'p1' }, { id: 'p2' }], error: null },
     })
     const lus = await lirePointsMinistere('m1')
     expect(lus.points).toEqual([{ id: 'p1' }, { id: 'p2' }])
-    expect(appelsDe(faux.de('point_mention')[0])).toContain('eq("ministere_id", "m1")')
+    expect(appelsDe(faux.de('v_point_mention')[0])).toContain('eq("ministere_id", "m1")')
     expect(appelsDe(faux.de('v_point')[0])).toContain('or("ministere_id.eq.m1,id.in.(p2)")')
-    expect(appelsDe(faux.de('point_mention')[1])).toContain('in("point_id", ["p1","p2"])')
+    expect(appelsDe(faux.de('v_point_mention')[1])).toContain('in("point_id", ["p1","p2"])')
   })
 
   it('aucun point : pas de lecture des mentions', async () => {
     const faux = client({ v_point: { data: [], error: null } })
     expect(await lirePointsMinistere('m1')).toEqual({ points: [], mentions: [] })
     expect(appelsDe(faux.de('v_point')[0])).toContain('or("ministere_id.eq.m1")')
-    expect(faux.de('point_mention')).toHaveLength(1)
+    expect(faux.de('v_point_mention')).toHaveLength(1)
   })
 })
 

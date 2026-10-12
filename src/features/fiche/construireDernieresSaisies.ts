@@ -30,6 +30,8 @@ const LIBELLES_ACTIONS: Readonly<Record<string, string>> = {
   point_cree: 'Nouveau point',
   point_statut: "Statut d'un point changé",
   point_traite: 'Point marqué traité',
+  point_mention_ajoutee: 'Mention ajoutée',
+  point_mention_retiree: 'Mention retirée',
   indicateur_cree: 'Indicateur demandé',
   indicateur_corrige: 'Indicateur corrigé',
 }
@@ -113,6 +115,8 @@ function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, strin
     case 'point_cree':
     case 'point_statut':
     case 'point_traite':
+    case 'point_mention_ajoutee':
+    case 'point_mention_retiree':
     case 'indicateur_cree':
     case 'indicateur_corrige':
       return avecObjet(libelle, ligne.cible_texte)

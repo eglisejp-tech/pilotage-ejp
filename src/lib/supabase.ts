@@ -67,6 +67,10 @@ export function supabase(): ClientSupabase {
         detectSessionInUrl: true,
       },
       global: { fetch: fetchAvecDelai },
+      // Sans cette option, le client relance seul chaque lecture en échec réseau (1, 2 puis 4 s),
+      // et un délai dépassé (TimeoutError) compte comme un échec réseau : une route sans réponse
+      // ferait attendre 47 s au lieu de 10 s. Le nouvel essai appartient à TanStack Query.
+      db: { retry: false },
     })
   }
   return client

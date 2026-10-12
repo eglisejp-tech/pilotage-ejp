@@ -28,6 +28,10 @@ const ignores = avecBase
 const ignoresEcriture = avecBase ? [preparation] : [preparation, testsAvecBase]
 const dependances = avecBase ? ['connexion'] : []
 const projetsDeLecture = ['ordinateur', 'tablette', 'telephone']
+// En CI, chaque format et les écritures tournent dans des jobs séparés, chacun avec sa base neuve
+// (E2E_ECRITURES_SEULES=1 dans le job des écritures) : aucune lecture ne partage alors la base des
+// écritures, qui n'attendent plus que la connexion.
+const ecrituresSeules = process.env.E2E_ECRITURES_SEULES === '1'
 
 // Trois formats de référence (BRIEF section 12) : ordinateur 1440, tablette 834, téléphone 390.
 export default defineConfig({
@@ -88,7 +92,7 @@ export default defineConfig({
       name: 'ecritures',
       testMatch: parcoursEcriture,
       testIgnore: ignoresEcriture,
-      dependencies: projetsDeLecture,
+      dependencies: ecrituresSeules ? dependances : projetsDeLecture,
       workers: 1,
       fullyParallel: false,
       use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },

@@ -55,7 +55,7 @@ function lignesFiche(): Record<string, unknown[]> {
     v_ventilation_sensible: l.repartitions,
     v_precision_sensible: l.precisions,
     v_point: l.points.points,
-    point_mention: l.points.mentions,
+    v_point_mention: l.points.mentions,
     v_journal: DERNIERES_SAISIES_EXEMPLE,
   }
 }

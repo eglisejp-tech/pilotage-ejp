@@ -1,8 +1,10 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { EtatVide } from '@/components/etats/EtatVide'
 import type { LigneSignalement } from '@/data/signalements'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
+import type { Masquage } from '@/features/moderation/schemas'
+import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { LigneSignalementBloc } from '@/features/signalement/LigneSignalementBloc'
@@ -20,6 +22,11 @@ export type ContenuBloc =
       cloturer: (cloture: Cloture) => Promise<void>
       /** Relit la liste (après « Ce signalement est déjà clos. »). */
       relire: () => void
+      /**
+       * « Masquer le texte » (lot L6) : remplace le texte du signalement ou le commentaire de
+       * clôture par « [texte masqué par EJP Tech] ». Sans cette fonction, le bouton n'existe pas.
+       */
+      masquer?: (masquage: Masquage) => Promise<void>
     }
 
 interface Props {
@@ -42,6 +49,7 @@ export function ContenuBlocSignalements({ contenu }: Props) {
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [refus, setRefus] = useState<string | null>(null)
+  const [masques, setMasques] = useState(0)
 
   const ouverts =
     contenu.etat === 'liste' ? contenu.signalements.filter((ligne) => ligne.ouvert) : []
@@ -73,6 +81,24 @@ export function ContenuBlocSignalements({ contenu }: Props) {
           },
         }
       : undefined
+
+  // « Masquer le texte » : après le masquage, le message est annoncé et le focus va au titre du
+  // bloc, une fois la fenêtre démontée (qui rendait le focus au bouton, parfois disparu).
+  const masquage =
+    contenu.etat === 'liste' && contenu.masquer
+      ? {
+          masquer: contenu.masquer,
+          surMasque: () => {
+            setRefus(null)
+            setReussite(TEXTES_MODERATION.reussiteMasque)
+            setEnvoi((precedent) => precedent + 1)
+            setMasques((precedent) => precedent + 1)
+          },
+        }
+      : undefined
+  useEffect(() => {
+    if (masques > 0) titre.current?.focus()
+  }, [masques])
 
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
@@ -128,7 +154,11 @@ export function ContenuBlocSignalements({ contenu }: Props) {
             <ol>
               {ouverts.map((signalement) => (
                 <li key={signalement.id} className="border-t border-filet first:border-t-0">
-                  <LigneSignalementBloc signalement={signalement} cloture={cloture} />
+                  <LigneSignalementBloc
+                    signalement={signalement}
+                    cloture={cloture}
+                    masquage={masquage}
+                  />
                 </li>
               ))}
             </ol>
@@ -144,7 +174,7 @@ export function ContenuBlocSignalements({ contenu }: Props) {
               <ol>
                 {clos.map((signalement) => (
                   <li key={signalement.id} className="border-t border-filet first:border-t-0">
-                    <LigneSignalementBloc signalement={signalement} />
+                    <LigneSignalementBloc signalement={signalement} masquage={masquage} />
                   </li>
                 ))}
               </ol>

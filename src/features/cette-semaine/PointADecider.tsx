@@ -1,19 +1,23 @@
 import { useId } from 'react'
+import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { ChampLibre } from './ChampLibre'
+import { PoseActionsPoint } from './PoseActionsPoint'
 import { couleursPriorite, libellesPriorite } from './priorites'
 import type { PointADecider as DonneesPoint } from './types'
 
 interface Props {
   point: DonneesPoint
+  /** Compte connecté, pour les boutons du point. Null : lecture seule (EJP Tech), aucun bouton. */
+  compte?: CompteDesActions | null
 }
 
 /**
  * Un point de « À décider » : priorité, ministère et échéance, titre, description (cachée sur
- * téléphone, comme la maquette 03), action attendue et mentions. « Marquer traité » arrive avec
- * sa fenêtre à l'étape 5 : pas de bouton sans effet d'ici là (docs/decisions.md, T19). Il ne
- * s'affichera jamais quand la vue est en lecture seule (EJP Tech, `lectureSeule`, T29).
+ * téléphone, comme la maquette 03), action attendue et mentions, puis « Marquer traité »
+ * (`ActionsPoint`, étape 5 : berger et conseil, commentaire facultatif). Jamais de bouton quand la
+ * vue est en lecture seule (EJP Tech, `compte` nul, T29).
  */
-export function PointADecider({ point }: Props) {
+export function PointADecider({ point, compte = null }: Props) {
   const idTitre = useId()
   const avecAttendu = Boolean(point.attendu) || point.mentions.length > 0
 
@@ -68,6 +72,7 @@ export function PointADecider({ point }: Props) {
           ))}
         </p>
       ) : null}
+      <PoseActionsPoint point={point} compte={compte} />
     </article>
   )
 }

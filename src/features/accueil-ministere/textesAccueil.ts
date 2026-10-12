@@ -9,8 +9,9 @@ export const TEXTES_ACCUEIL = {
   complementPoints: 'Créés ou mentionnés',
   /** Mot d'état d'une ligne de « Vos saisies », toujours écrit : jamais la couleur seule. */
   etat: { fait: 'Fait', a_faire: 'À faire' },
-  /** Boutons secondaires (BRIEF, section 9). « Nouveau point » arrive à l'étape 5 (lot P4). */
+  /** Boutons secondaires (BRIEF, section 9). */
   saisirUneSession: 'Saisir une session',
+  nouveauPoint: 'Nouveau point',
   carteFij: 'Mettre à jour la carte des FIJ',
   /** Nom de la liste des boutons de l'ouverture, pour les lecteurs d'écran. */
   actions: 'Saisies à faire',

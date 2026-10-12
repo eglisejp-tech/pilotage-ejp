@@ -45,6 +45,8 @@ export interface OuvertureAccueil {
 
 /** Ce que l'accueil du ministère ajoute à la vue de l'église (maquette 07). */
 export interface DonneesAccueilMinistere {
+  /** Ministère du compte : les boutons de « Vos points » lisent son lien à chaque point. */
+  ministereId: string
   ouverture: OuvertureAccueil
   vosSaisies: LigneVosSaisies[]
   /** Lu à part : un échec garde la page et propose « Réessayer » dans le bloc. */
