@@ -50,9 +50,10 @@ jobs:
   # (mot de passe et facteur TOTP de chaque compte d'exemple, par l'API).
   # Un job par format, plus un pour les écritures, en parallèle : la suite entière dépassait les
   # 30 minutes d'un seul job (8 octobre 2026). Chaque job a sa base locale neuve.
+  # Pas d'attente du job « qualite » : chaque job installe tout lui-même, et attendre coûtait
+  # 3 minutes à chaque run (mesuré le 12 octobre 2026).
   e2e:
     name: Parcours Playwright (${{ matrix.partie.nom }})
-    needs: qualite
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
