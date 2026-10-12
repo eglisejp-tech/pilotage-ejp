@@ -1130,3 +1130,12 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : réponse écrite de la personne responsable (8 octobre 2026), « plutôt 8 derniers dimanches »
 - **Statut** : Décidé par la personne responsable le 8 octobre 2026
 - **BRIEF** : section 9 (saisie du dimanche, 08)
+
+### T58. Icône de l'onglet : le logo d'EJP Tech
+
+- **Date** : 12 octobre 2026
+- **Sujet** : la personne responsable veut que l'icône du site (onglet, favoris, écran d'accueil d'un téléphone) soit aussi le logo d'EJP Tech. T51 l'avait laissée inchangée.
+- **Décision** : l'icône reprend le **monogramme** du logo (« ejp » et sa flamme, sans « TECH », illisible à 16 px), sur un carreau blanc aux coins arrondis, lisible dans un onglet clair ou sombre ; traits épaissis pour les petites tailles. Fichiers : `public/favicon.svg` (source), `public/favicon.ico` (32 et 48 px) et `public/apple-touch-icon.png` (180 px), tirés du SVG. L'en-tête de l'application ne change pas.
+- **Origine** : demande écrite de la personne responsable (12 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 12 octobre 2026
+- **BRIEF** : aucun changement
