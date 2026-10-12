@@ -7,8 +7,11 @@ import {
   parcourirAuClavier,
   problemesDeStructure,
   problemesEchapDesAides,
+  problemesEchapDuMenu,
   problemesPiegeDuFocus,
 } from './outils/controles.ts'
+import { classeSansLargeurMinimale, separerCiblesConnues } from './outils/fautes-connues.ts'
+import type { FauteConnue } from './outils/fautes-connues.ts'
 
 // Les outils de l'audit (e2e/outils) se vérifient eux-mêmes sur de petites pages construites
 // pour avoir une faute précise. Un outil qui ne voit rien ferait passer l'audit au vert à tort :
@@ -161,5 +164,75 @@ test.describe('outils de l’audit', () => {
     expect(await problemesEchapDesAides(page)).toEqual([
       'Aide : le chiffre : Échap ne la ferme pas',
     ])
+  })
+
+  /** Un menu comme celui des écrans étroits : « Ouvrir le menu » laisse place à « Fermer le menu ». */
+  function pageAvecMenu(fermeAvecEchap: boolean): string {
+    return `
+      <html lang="fr"><body>
+        <button type="button" id="ouvrir">Ouvrir le menu</button>
+        <button type="button" id="fermer" hidden>Fermer le menu</button>
+        <script>
+          (() => {
+            const ouvrir = document.getElementById('ouvrir')
+            const fermer = document.getElementById('fermer')
+            const refermer = () => { fermer.hidden = true; ouvrir.hidden = false; ouvrir.focus() }
+            ouvrir.addEventListener('click', () => { ouvrir.hidden = true; fermer.hidden = false })
+            fermer.addEventListener('click', refermer)
+            ${fermeAvecEchap ? "document.addEventListener('keydown', (e) => { if (e.key === 'Escape') refermer() })" : ''}
+          })()
+        </script>
+      </body></html>`
+  }
+
+  test('Échap du menu : un menu qui ignore Échap est signalé, un menu sain non', async ({
+    page,
+  }) => {
+    await page.setContent(pageAvecMenu(false))
+    expect(await problemesEchapDuMenu(page)).toEqual(['Échap ne ferme pas le menu'])
+    await page.setContent(pageAvecMenu(true))
+    expect(await problemesEchapDuMenu(page)).toEqual([])
+  })
+
+  // Les fautes connues (e2e/outils/fautes-connues.ts) ne retirent que leurs propres lignes, dans
+  // le format et tant que la condition est vraie. Fonctions pures : aucun navigateur n'est utile.
+  const lignes = [
+    'a « FIJ » : 25 x 44 px',
+    'button « Voir » : 26 x 44 px',
+    'a « Social » : 30 x 44 px',
+  ]
+  const fautes: Record<string, FauteConnue> = {
+    liste: { ligne: 'A-04', cibles: ['a « FIJ »'] },
+    telephone: { ligne: 'A-03', cibles: ['button « Voir'], projets: ['telephone'] },
+    corrigee: { ligne: 'A-02', cibles: ['a « FIJ »'], tantQue: () => false },
+  }
+
+  test('fautes connues : une faute retire ses lignes et laisse les autres', () => {
+    expect(separerCiblesConnues('liste', 'ordinateur', lignes, fautes)).toEqual({
+      restantes: ['button « Voir » : 26 x 44 px', 'a « Social » : 30 x 44 px'],
+      connues: ['a « FIJ » : 25 x 44 px'],
+      ligne: 'A-04',
+    })
+  })
+
+  test('fautes connues : une faute limitée à un format ne vaut pas pour les autres', () => {
+    expect(separerCiblesConnues('telephone', 'ordinateur', lignes, fautes).restantes).toEqual(
+      lignes,
+    )
+    expect(separerCiblesConnues('telephone', 'telephone', lignes, fautes).connues).toEqual([
+      'button « Voir » : 26 x 44 px',
+    ])
+  })
+
+  test('fautes connues : condition fausse ou écran inconnu, rien n’est retiré', () => {
+    expect(separerCiblesConnues('corrigee', 'ordinateur', lignes, fautes).restantes).toEqual(lignes)
+    expect(separerCiblesConnues('autre écran', 'ordinateur', lignes, fautes).restantes).toEqual(
+      lignes,
+    )
+  })
+
+  test('fautes connues : fichier illisible ou ancre introuvable, la suite est stricte', () => {
+    expect(classeSansLargeurMinimale('src/fichier-absent.tsx', /className="([^"]*)"/)).toBe(false)
+    expect(classeSansLargeurMinimale('package.json', /"introuvable": "([^"]*)"/)).toBe(false)
   })
 })

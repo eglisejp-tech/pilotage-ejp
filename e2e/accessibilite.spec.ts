@@ -12,7 +12,7 @@ import {
   problemesDeStructure,
   problemesPiegeDuFocus,
 } from './outils/controles.ts'
-import { marquerFauteConnue } from './outils/fautes-connues.ts'
+import { ciblesHorsFautesConnues } from './outils/fautes-connues.ts'
 
 // Audit transversal de l'étape 7 (plan, section 3.3, lot F2) sur TOUS les aperçus de
 // développement et sur les pages publiques : aucune faute axe (WCAG 2.1 A et AA), aucun
@@ -398,10 +398,11 @@ const ECRANS: Ecran[] = [
   ...JOURNAL,
 ]
 
-// Dans la CI, le job « e2e » a 30 minutes pour toute la suite : l'audit des 161 écrans aux trois
-// formats (environ 25 minutes) n'y tient pas. La CI joue donc un écran représentatif par famille,
-// à 1440 et 390 px. La passe complète (tous les écrans, trois formats) se joue à la main, sans
-// `CI`, ou avec `AUDIT_COMPLET=1` : `npx playwright test e2e/accessibilite.spec.ts`.
+// Dans la CI, un job par format (1440, 834 et 390 px) a 30 minutes, et ses parcours durent déjà 14 à
+// 17 minutes : l'audit des 246 écrans à chaque format n'y tient pas (environ 30 minutes sur un
+// poste, pour les trois formats). La CI joue donc un écran représentatif par famille, à chaque
+// format. La passe complète (tous les écrans, trois formats) se joue à la main, sans `CI`, ou
+// avec `AUDIT_COMPLET=1` : `npx playwright test e2e/accessibilite.spec.ts`.
 const AUDIT_COMPLET = !process.env.CI || process.env.AUDIT_COMPLET === '1'
 
 const ECRANS_CI = new Set([
@@ -474,15 +475,14 @@ for (const ecran of ECRANS) {
   // minutes pour tout le job « e2e »). Les contrôles sont mous (`expect.soft`) : une faute n'en
   // cache pas une autre, et chaque ligne dit quoi corriger. Le clavier passe en dernier, car il
   // ouvre des bulles et le menu. Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts)
-  // marque tout l'écran `test.fail()`.
+  // retire seulement ses propres lignes du contrôle des cibles : le reste de l'écran reste strict.
   test(ecran.nom, async ({ page }, testInfo) => {
     // Le premier chargement d'un aperçu compile ses modules : 90 s laissent de la marge.
     test.setTimeout(90_000)
     test.skip(
-      !AUDIT_COMPLET && (!ECRANS_CI.has(ecran.nom) || testInfo.project.name === 'tablette'),
-      'dans la CI, un écran représentatif par famille, à 1440 et 390 px (AUDIT_COMPLET=1 pour tout)',
+      !AUDIT_COMPLET && !ECRANS_CI.has(ecran.nom),
+      'dans la CI, un écran représentatif par famille, à chaque format (AUDIT_COMPLET=1 pour tout)',
     )
-    marquerFauteConnue(ecran.nom, testInfo.project.name)
     await ouvrir(page, ecran)
     expect
       .soft(decrireFautes(await auditerAxe(page, ecran.exclure)), 'axe : WCAG 2.1 A et AA')
@@ -490,7 +490,12 @@ for (const ecran of ECRANS) {
     expect
       .soft(await problemesDeStructure(page, ecran.exclure), 'structure : titre, langue, main')
       .toEqual([])
-    expect.soft(await ciblesTropPetites(page, ecran.exclure), 'cibles de 44 px').toEqual([])
+    expect
+      .soft(
+        ciblesHorsFautesConnues(ecran.nom, await ciblesTropPetites(page, ecran.exclure)),
+        'cibles de 44 px',
+      )
+      .toEqual([])
     expect
       .soft(
         [

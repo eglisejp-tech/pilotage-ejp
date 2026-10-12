@@ -14,7 +14,7 @@ import {
   problemesDeStructure,
   problemesPiegeDuFocus,
 } from '../outils/controles.ts'
-import { marquerFauteConnue } from '../outils/fautes-connues.ts'
+import { ciblesHorsFautesConnues } from '../outils/fautes-connues.ts'
 
 // Audit transversal de l'étape 7 (plan, section 3.3, lot F2) avec la base locale (job « e2e » de
 // la CI, E2E_BASE=1) : les vraies pages de chaque profil, avec les vraies données du jeu
@@ -25,9 +25,10 @@ import { marquerFauteConnue } from '../outils/fautes-connues.ts'
 // Une page ajoutée par un lot ultérieur se déclare dans `PAGES_PAR_PROFIL`.
 //
 // Un seul format de base, le projet « ordinateur » : chaque page y est mesurée à 1440 px puis à
-// 360 px, et le ministère FIJ passe aussi à 390 px. Le job « e2e » de la CI a 30 minutes pour toute
-// la suite : les projets « tablette » et « telephone » doubleraient ce coût pour peu de pages en
-// plus. Les écrans à panneau se jouent à 834 et 390 px dans les aperçus (accessibilite.spec.ts).
+// 360 px, et le ministère FIJ passe aussi à 390 px. Chaque job de la CI (un par format) a 30
+// minutes et ses parcours en prennent déjà 14 à 17 : les projets « tablette » et « telephone »
+// rejoueraient les mêmes pages pour peu de pages en plus. Les écrans à panneau se jouent à 834 et
+// 390 px dans les aperçus (accessibilite.spec.ts).
 test.skip(({ hasTouch }) => hasTouch, 'un seul format dans la CI (ordinateur, puis 360 px)')
 
 type Profil = CompteTest['profil']
@@ -82,13 +83,21 @@ async function ouvrirPage(page: Page, adresse: string) {
   await page.evaluate(() => document.fonts.ready)
 }
 
-/** Les contrôles de la page ouverte, au format de fenêtre courant. */
-async function controlerPage(page: Page, adresse: string) {
+/**
+ * Les contrôles de la page ouverte, au format de fenêtre courant. `cle` est celle de
+ * `FAUTES_CONNUES` : seules les cibles de la faute décrite dans l'audit sont retirées.
+ */
+async function controlerPage(page: Page, adresse: string, cle: string) {
   expect.soft(decrireFautes(await auditerAxe(page)), `${adresse} : axe`).toEqual([])
   expect
     .soft(await debordementHorizontal(page), `${adresse} : défilement horizontal`)
     .toBeLessThanOrEqual(0)
-  expect.soft(await ciblesTropPetites(page), `${adresse} : cibles de 44 px`).toEqual([])
+  expect
+    .soft(
+      ciblesHorsFautesConnues(cle, await ciblesTropPetites(page)),
+      `${adresse} : cibles de 44 px`,
+    )
+    .toEqual([])
   expect.soft(await problemesDeStructure(page), `${adresse} : structure`).toEqual([])
   const clavier = [
     ...decrireRapportClavier(await parcourirAuClavier(page)),
@@ -99,12 +108,34 @@ async function controlerPage(page: Page, adresse: string) {
   expect.soft(clavier, `${adresse} : clavier`).toEqual([])
 }
 
-/** Un panneau ouvert se ferme avec Échap (et la page d'origine revient). */
+/** Les saisies s'ouvrent en panneau (un `role="dialog"`) à partir de 600 px de large. */
+function ouvreUnPanneau(chemin: string): boolean {
+  return chemin === '/signaler' || chemin.startsWith('/saisir/')
+}
+
+/**
+ * Un panneau ouvert se ferme avec Échap et la page d'origine revient. Une saisie à 600 px ou plus
+ * doit ouvrir un panneau (sinon le contrôle ne vérifierait plus rien) ; les autres pages n'en ont
+ * pas, sauf mention contraire. Adresse ouverte directement : la fermeture ramène à l'accueil ou à
+ * « Ma fiche », donc l'adresse change et la page d'arrivée a son titre.
+ */
 async function controlerEchapDuPanneau(page: Page, adresse: string) {
   const panneau = page.getByRole('dialog')
-  if ((await panneau.count()) === 0) return
+  const chemin = new URL(page.url()).pathname
+  if (ouvreUnPanneau(chemin)) {
+    await expect(panneau, `${adresse} : la saisie s'ouvre en panneau`).toHaveCount(1)
+  } else if ((await panneau.count()) === 0) {
+    return
+  }
   await page.keyboard.press('Escape')
   await expect(panneau, `${adresse} : Échap ferme le panneau`).toHaveCount(0)
+  expect(new URL(page.url()).pathname, `${adresse} : Échap ramène à la page d'origine`).not.toBe(
+    chemin,
+  )
+  await expect(
+    page.getByRole('heading', { level: 1 }).first(),
+    `${adresse} : la page d'origine revient`,
+  ).toBeVisible()
 }
 
 /** Le plus petit téléphone visé : aucun défilement horizontal à 360 px. */
@@ -122,10 +153,9 @@ for (const [profil, pages] of Object.entries(PAGES_PAR_PROFIL) as [Profil, strin
 
     for (const adresse of pages) {
       test(adresse, async ({ page }, testInfo) => {
-        // Faute décrite dans l'audit (e2e/outils/fautes-connues.ts) : le test est attendu en échec.
-        marquerFauteConnue(`${profil} | ${adresse}`, testInfo.project.name)
         await ouvrirPage(page, adresse)
-        await controlerPage(page, adresse)
+        // Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts) retire ses seules cibles.
+        await controlerPage(page, adresse, `${profil} | ${adresse}`)
         await controlerEchapDuPanneau(page, adresse)
         // Les largeurs fixes se mesurent une fois, dans le projet « ordinateur ».
         if (testInfo.project.name === 'ordinateur') await controler360(page, adresse)
@@ -140,7 +170,6 @@ for (const [profil, pages] of Object.entries(PAGES_PAR_PROFIL) as [Profil, strin
 test.describe('ministère FIJ : accessibilité des pages', () => {
   test('connexion, puis chaque page à 1440, 390 et 360 px', async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== 'ordinateur', 'une seule connexion pour les trois largeurs')
-    marquerFauteConnue('ministère FIJ | pages', testInfo.project.name)
     test.setTimeout(180_000)
     await seConnecter(page, EMAIL_FIJ)
     await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
@@ -148,7 +177,7 @@ test.describe('ministère FIJ : accessibilité des pages', () => {
       await page.setViewportSize({ width: largeur, height: 900 })
       for (const adresse of PAGES_FIJ) {
         await ouvrirPage(page, adresse)
-        await controlerPage(page, `${adresse} à ${largeur} px`)
+        await controlerPage(page, `${adresse} à ${largeur} px`, 'ministère FIJ | pages')
         // Le panneau latéral s'ouvre à partir de 600 px : plus bas, la saisie est une page.
         if (largeur >= 600) await controlerEchapDuPanneau(page, `${adresse} à ${largeur} px`)
       }
@@ -192,9 +221,7 @@ test.describe('berger : sans réseau et erreur de page', () => {
   test('sans réseau : la page ne reste pas en chargement et reste accessible', async ({
     page,
     context,
-  }, testInfo) => {
-    // Faute connue tant que le lot F1 n'est pas fusionné (audit, ligne A-01).
-    marquerFauteConnue('berger | sans réseau', testInfo.project.name)
+  }) => {
     // Même parcours que ci-dessus, mais la connexion est coupée avant de changer de page.
     await ouvrirPage(page, '/')
     await context.setOffline(true)
