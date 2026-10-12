@@ -24,7 +24,8 @@ import { ministereDEssai } from './outils-ministere.ts'
 
 test.describe.configure({ mode: 'serial' })
 
-const NOM_MINISTERE = 'Essai panneaux'
+// Une consonne au début : le titre dit « Indicateurs de … » (« d'Essai » devant une voyelle).
+const NOM_MINISTERE = 'Panneaux essai'
 let ministere = ''
 
 test.beforeAll(async () => {
@@ -108,8 +109,10 @@ test.describe('administration de l’église', () => {
 
   test('deux indicateurs du mois, ajoutés sans valeur ni texte au journal', async ({ page }) => {
     await ouvrirLeMinistere(page)
+    // Un nom que la coordination ne connaît pas : aucun indicateur, et le bloc « Prévus » à choisir.
+    expect(await indicateursDe(page)).toHaveLength(0)
     await expect(
-      page.getByText(`Aucun indicateur pour ${NOM_MINISTERE}.`, { exact: false }),
+      page.getByRole('button', { name: 'Ajouter un indicateur', exact: true }),
     ).toBeVisible()
     await ajouterUnIndicateur(
       page,
