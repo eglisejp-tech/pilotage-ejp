@@ -12,6 +12,7 @@ import {
   MENTIONS_ORIGINE,
   phraseMesIndicateurs,
   rythmeEnPhrase,
+  SUITE_EN_ATTENTE,
   TEXTES_MES_INDICATEURS,
   texteDerniereSaisie,
   texteEnAttente,
@@ -45,8 +46,10 @@ export interface LigneMonIndicateur {
   enAttente: boolean
   /** « Prévu par la coordination », « Suggestion ajoutée par vous le 12 oct. »... */
   origine: string
-  /** « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir : ... » ; sinon null. */
+  /** « À valider par EJP Tech depuis 2 jours. » ; sinon null. */
   attente: string | null
+  /** « Vous pouvez déjà le saisir. », dite sous l'attente ; sinon null. */
+  attenteSuite: string | null
   /** « Dernière saisie le 2 oct. », « Jamais saisi » ; null pour un calcul. */
   usage: string | null
 }
@@ -98,8 +101,14 @@ export interface DonneesMesIndicateurs {
   limite: LimiteAtteinte | null
 }
 
-/** Préfixe des codes de suggestions du catalogue (`modele = 'suggestion'`, migration B3). */
-const PREFIXE_SUGGESTION = 'suggestion_'
+/**
+ * Préfixe des codes de suggestions du catalogue (`modele = 'suggestion'`, migration
+ * 20261009100000). Convention gardée de deux côtés : le test pgTAP `indicateurs-vague-1` fixe la
+ * liste des 11 codes de ce modèle, et `mesIndicateurs.test.ts` vérifie ce préfixe sur les
+ * suggestions des aperçus. Une suggestion ajoutée plus tard par migration doit le suivre, ou
+ * ces deux tests le disent.
+ */
+export const PREFIXE_SUGGESTION = 'suggestion_'
 
 function estSuggestion(indicateur: Pick<IndicateurDuMinistere, 'modele_code'>): boolean {
   return indicateur.modele_code?.startsWith(PREFIXE_SUGGESTION) === true
@@ -150,6 +159,7 @@ function construireLigne(
     enAttente,
     origine: mentionOrigine(indicateur),
     attente: enAttente ? texteEnAttente(lu?.attente_jours ?? null) : null,
+    attenteSuite: enAttente ? SUITE_EN_ATTENTE : null,
     usage,
   }
 }

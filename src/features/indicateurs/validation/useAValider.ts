@@ -2,13 +2,17 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { lireAValider } from '@/data/indicateurs'
 import {
-  lireAttentesAdministration,
-  lireDecisionsRecentes,
-  validerIndicateur,
-} from '@/data/validationIndicateurs'
+  lireIndicateursPropres,
+  lireMinisteresConfiguration,
+  lireUsageConfiguration,
+} from '@/data/indicateursConfiguration'
+import { masquerTexte } from '@/data/moderation'
+import { lireDecisionsRecentes, validerIndicateur } from '@/data/validationIndicateurs'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
+import { CLES_CONFIGURATION } from '@/features/indicateurs/configuration/cles'
 import {
+  construireAttentesAdministration,
   construireDecidees,
   construireLignesAdministration,
   construireLignesEjpTech,
@@ -19,7 +23,6 @@ import type { ActionsLigne } from '@/features/indicateurs/validation/LigneAValid
 /** Clés des lectures du bloc : une par profil, pour que chacun relise ce que lit la base. */
 export const CLES_A_VALIDER = {
   ejpTech: ['indicateurs', 'a-valider', 'ejp-tech'],
-  administration: ['indicateurs', 'a-valider', 'administration'],
   decidees: ['indicateurs', 'a-valider', 'decidees'],
 } as const
 
@@ -70,6 +73,15 @@ export function useBlocEjpTech(): BlocAValiderLu {
           apresEcriture()
         }
       },
+      // « Masquer le texte » (`masquer_texte`) : le « Pourquoi » d'une demande ou le motif d'un
+      // refus. Les lectures sont relues, réussi ou non.
+      masquer: async (masquage) => {
+        try {
+          await masquerTexte(masquage)
+        } finally {
+          apresEcriture()
+        }
+      },
     }),
     [apresEcriture],
   )
@@ -78,19 +90,53 @@ export function useBlocEjpTech(): BlocAValiderLu {
 }
 
 /**
- * Bloc de l'administration de l'église : l'attente, lue dans `indicateur` et `v_usage_indicateurs`
- * (jamais `demande_indicateur` : le « Pourquoi » n'est lu que par le ministère et EJP Tech). Aucune
- * action, aucune décision.
+ * Bloc de l'administration de l'église : l'attente, lue dans `indicateur`, `v_usage_indicateurs` et
+ * `ministere` (jamais `demande_indicateur` : le « Pourquoi » n'est lu que par le ministère et EJP
+ * Tech). Ces trois lectures sont celles du tableau de l'écran (mêmes clés que L3a) : rien n'est lu
+ * deux fois. Aucune action, aucune décision.
  */
 export function useBlocAdministration(): BlocAValiderLu {
-  const attentes = useQuery({
-    queryKey: CLES_A_VALIDER.administration,
-    queryFn: lireAttentesAdministration,
+  // Les trois lectures du tableau de l'écran (L3a), sous les mêmes clés. Le bloc se monte une fois
+  // le tableau lu : sans `refetchOnMount: false`, TanStack Query relirait ces données « périmées »
+  // dès qu'il s'y abonne. Après une écriture, `invaliderConfiguration` les relit comme avant.
+  const indicateurs = useQuery({
+    queryKey: CLES_CONFIGURATION.indicateurs,
+    queryFn: lireIndicateursPropres,
+    refetchOnMount: false,
+  })
+  const usage = useQuery({
+    queryKey: CLES_CONFIGURATION.usage,
+    queryFn: lireUsageConfiguration,
+    refetchOnMount: false,
+  })
+  const ministeres = useQuery({
+    queryKey: CLES_CONFIGURATION.ministeres,
+    queryFn: lireMinisteresConfiguration,
+    refetchOnMount: false,
   })
   const lignes = useMemo((): EtatBloc<LigneAValider[]> => {
-    if (attentes.isError) return { etat: 'erreur', reessayer: () => void attentes.refetch() }
-    if (attentes.data === undefined) return { etat: 'chargement' }
-    return { etat: 'donnees', donnees: construireLignesAdministration(attentes.data) }
-  }, [attentes])
+    const requetes = [indicateurs, usage, ministeres]
+    if (requetes.some((requete) => requete.isError)) {
+      return {
+        etat: 'erreur',
+        reessayer: () => {
+          for (const requete of requetes) if (requete.isError) void requete.refetch()
+        },
+      }
+    }
+    if (
+      indicateurs.data === undefined ||
+      usage.data === undefined ||
+      ministeres.data === undefined
+    ) {
+      return { etat: 'chargement' }
+    }
+    return {
+      etat: 'donnees',
+      donnees: construireLignesAdministration(
+        construireAttentesAdministration(indicateurs.data, ministeres.data, usage.data),
+      ),
+    }
+  }, [indicateurs, usage, ministeres])
   return { lignes, decidees: null, actions: null }
 }

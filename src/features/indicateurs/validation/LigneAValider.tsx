@@ -3,7 +3,10 @@ import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import type { LigneAValider as Ligne } from '@/features/indicateurs/validation/construire'
 import { FenetreRefus } from '@/features/indicateurs/validation/FenetreRefus'
+import { MasquageTexte } from '@/features/indicateurs/validation/MasquageTexte'
 import { lireRefusValidation } from '@/features/indicateurs/validation/refus'
+import type { Masquage } from '@/features/moderation/schemas'
+import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import {
   nomBoutonDecision,
   reussiteRefus,
@@ -17,6 +20,8 @@ import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 export interface ActionsLigne {
   valider: (ligne: Ligne) => Promise<void>
   refuser: (ligne: Ligne, motif: string) => Promise<void>
+  /** « Masquer le texte » d'un « Pourquoi » ou d'un motif de refus (`masquer_texte`). */
+  masquer: (masquage: Masquage) => Promise<void>
 }
 
 interface Props {
@@ -104,6 +109,23 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
               />
               &nbsp;»
             </p>
+          ) : null}
+          {actions !== null && ligne.pourquoi !== null && ligne.pourquoi !== TEXTE_MASQUE ? (
+            <div>
+              <MasquageTexte
+                contexte={`${TEXTES_A_VALIDER.contexteMasquagePourquoi}, ${ligne.ministere}`}
+                cible="demande_indicateur"
+                cibleId={ligne.id}
+                champ={{
+                  code: 'pourquoi',
+                  libelle: TEXTES_A_VALIDER.pourquoi,
+                  texte: ligne.pourquoi,
+                }}
+                masquer={actions.masquer}
+                surMasque={() => surFait(TEXTES_MODERATION.reussiteMasque)}
+                decritPar={idTitre}
+              />
+            </div>
           ) : null}
           {ligne.nbValeurs !== null && ligne.nbValeurs > 0 ? (
             <p className="text-note text-encre-3">{texteValeursSaisies(ligne.nbValeurs)}</p>

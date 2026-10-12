@@ -25,16 +25,23 @@ import { appeler, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 
 test.describe.configure({ mode: 'serial' })
 
+// Trois suggestions « chaque mois » que le modèle « communication » n'a pas déjà comme prévus :
+// `private.suggestions()` retire d'une fiche toute suggestion dont le libellé est déjà dessus
+// (« Demandes reçues » et « Demandes traitées » y sont des prévus). L'ordre sert au parcours :
+// la première est validée, la deuxième refusée, la troisième reste à valider. Le jeu d'exemple
+// laisse aussi « Participants » de Jeunesse à valider, et deux décisions d'EJP Tech y sont déjà
+// écrites : les comptes d'ensemble se lisent donc sur les lignes (voir `attendus`), et les
+// lignes de Communication se retrouvent par le titre de leur ministère.
 const SUGGESTIONS = [
   {
-    code: 'suggestion_demandes_recues',
-    libelle: 'Demandes reçues',
-    pourquoi: 'Suivre les demandes reçues chaque mois pour répartir le travail.',
+    code: 'suggestion_evenements_couverts',
+    libelle: 'Événements couverts',
+    pourquoi: 'Suivre les événements que nous couvrons chaque mois pour répartir le travail.',
   },
   {
-    code: 'suggestion_demandes_traitees',
-    libelle: 'Demandes traitées',
-    pourquoi: 'Mesurer les demandes menées à terme chaque mois par le ministère.',
+    code: 'suggestion_activites_realisees',
+    libelle: 'Activités réalisées',
+    pourquoi: 'Mesurer les activités tenues chaque mois par le ministère.',
   },
   {
     code: 'suggestion_personnes_formees',
@@ -74,6 +81,22 @@ const ligneAValider = (page: Page, libelle: string) =>
     .getByRole('region', { name: 'À valider' })
     .getByRole('article')
     .filter({ hasText: new RegExp(`Nouvel indicateur\\s*: «\\s*${libelle}\\s*»`) })
+
+/** Les lignes du bloc « À valider » (une par ajout, tous ministères). */
+const lignesDuBloc = (page: Page) =>
+  page.getByRole('region', { name: 'À valider' }).getByRole('article')
+
+/** Les lignes du bloc qui sont celles de Communication. */
+const lignesDeCommunication = (page: Page) =>
+  lignesDuBloc(page).filter({
+    has: page.getByRole('heading', { level: 3, name: 'Communication', exact: true }),
+  })
+
+/** « 3 ajouts en attente » : la phrase du titre du bloc pour un nombre de lignes. */
+function phraseEnAttente(nombre: number): string {
+  if (nombre === 0) return 'Aucun ajout en attente'
+  return `${nombre} ${nombre === 1 ? 'ajout' : 'ajouts'} en attente`
+}
 
 test.describe('Communication envoie ses suggestions', () => {
   test.use({ storageState: fichierSession('ministere') })
@@ -172,7 +195,7 @@ test.describe('Communication envoie ses suggestions', () => {
     for (const suggestion of SUGGESTIONS) {
       expect(JSON.stringify(journal)).not.toContain(suggestion.pourquoi)
     }
-    const demande = demandes.get('Demandes reçues')
+    const demande = demandes.get('Événements couverts')
     expect(demande).toBeTruthy()
     const refus = await appeler(page, 'valider_indicateur', {
       p_demande_id: demande,
@@ -215,7 +238,7 @@ for (const profil of ['berger', 'conseil'] as const) {
       expect(await lire<unknown>(page, 'demande_indicateur?select=pourquoi')).toEqual([])
       expect(await lire<unknown>(page, 'v_a_valider?select=pourquoi')).toEqual([])
       const decision = await appeler(page, 'valider_indicateur', {
-        p_demande_id: demandes.get('Demandes reçues'),
+        p_demande_id: demandes.get('Événements couverts'),
         p_decision: 'valide',
       })
       expect(decision.status()).toBe(403)
@@ -237,8 +260,10 @@ test.describe('l’administration de l’église lit le bloc « À valider »', 
     await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs' })).toBeVisible()
     await attendreLaFinDuChargement(page)
     const bloc = page.getByRole('region', { name: 'À valider' })
-    await expect(bloc.getByText('3 ajouts en attente')).toBeVisible()
-    await expect(bloc.getByRole('heading', { level: 3, name: 'Communication' })).toHaveCount(3)
+    // Les trois de Communication, plus « Participants » de Jeunesse, laissé à valider par le jeu
+    // d'exemple : le titre dit le nombre de lignes, quelles qu'elles soient.
+    await expect(lignesDeCommunication(page)).toHaveCount(3)
+    await expect(bloc.getByText(phraseEnAttente(await lignesDuBloc(page).count()))).toBeVisible()
     for (const suggestion of SUGGESTIONS) {
       await expect(
         bloc.getByText(new RegExp(`Nouvel indicateur\\s*: «\\s*${suggestion.libelle}`)),
@@ -258,7 +283,7 @@ test.describe('l’administration de l’église lit le bloc « À valider »', 
     expect(await lire<unknown>(page, 'demande_indicateur?select=pourquoi')).toEqual([])
     expect(await lire<unknown>(page, 'v_a_valider?select=pourquoi')).toEqual([])
     const decision = await appeler(page, 'valider_indicateur', {
-      p_demande_id: demandes.get('Demandes reçues'),
+      p_demande_id: demandes.get('Événements couverts'),
       p_decision: 'valide',
     })
     expect(decision.status()).toBe(403)
@@ -268,34 +293,42 @@ test.describe('l’administration de l’église lit le bloc « À valider »', 
 test.describe('EJP Tech valide une suggestion et en refuse une', () => {
   test.use({ storageState: fichierSession('admin_plateforme') })
 
-  test('lit les « Pourquoi », valide « Demandes reçues » en un clic', async ({ page }) => {
+  test('lit les « Pourquoi », valide « Événements couverts » en un clic', async ({ page }) => {
     await page.goto('/indicateurs')
     await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs' })).toBeVisible()
     await attendreLaFinDuChargement(page)
     const bloc = page.getByRole('region', { name: 'À valider' })
-    await expect(bloc.getByText('3 ajouts en attente')).toBeVisible()
+    await expect(lignesDeCommunication(page)).toHaveCount(3)
+    const avant = await lignesDuBloc(page).count()
+    await expect(bloc.getByText(phraseEnAttente(avant))).toBeVisible()
     for (const suggestion of SUGGESTIONS) {
       await expect(ligneAValider(page, suggestion.libelle)).toContainText(suggestion.pourquoi)
     }
     await page
-      .getByRole('button', { name: /^Valider «\s*Demandes reçues\s*» de Communication$/ })
+      .getByRole('button', { name: /^Valider «\s*Événements couverts\s*» de Communication$/ })
       .click()
     await expect(page.getByText('Indicateur validé.')).toBeVisible()
-    await expect(ligneAValider(page, 'Demandes reçues')).toHaveCount(0)
-    await expect(bloc.getByText('2 ajouts en attente')).toBeVisible()
+    await expect(ligneAValider(page, 'Événements couverts')).toHaveCount(0)
+    await expect(lignesDeCommunication(page)).toHaveCount(2)
+    await expect(bloc.getByText(phraseEnAttente(avant - 1))).toBeVisible()
     const indicateurs = await indicateursDeCommunication(page)
-    expect(indicateurs.find((indicateur) => indicateur.libelle === 'Demandes reçues')?.etat).toBe(
-      'actif',
-    )
+    expect(
+      indicateurs.find((indicateur) => indicateur.libelle === 'Événements couverts')?.etat,
+    ).toBe('actif')
   })
 
-  test('refuse « Demandes traitées » avec un motif de 10 à 280 caractères', async ({ page }) => {
+  test('refuse « Activités réalisées » avec un motif de 10 à 280 caractères', async ({ page }) => {
     await page.goto('/indicateurs')
     await attendreLaFinDuChargement(page)
+    const bloc = page.getByRole('region', { name: 'À valider' })
+    // Il reste deux lignes de Communication (une validée avant) : on compte les lignes une fois
+    // la liste affichée.
+    await expect(lignesDeCommunication(page)).toHaveCount(2)
+    const avant = await lignesDuBloc(page).count()
     await page
-      .getByRole('button', { name: /^Refuser «\s*Demandes traitées\s*» de Communication$/ })
+      .getByRole('button', { name: /^Refuser «\s*Activités réalisées\s*» de Communication$/ })
       .click()
-    const fenetre = page.getByRole('dialog', { name: /Refuser «\s*Demandes traitées\s*» \?/ })
+    const fenetre = page.getByRole('dialog', { name: /Refuser «\s*Activités réalisées\s*» \?/ })
     await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toBeVisible()
     // Trop court : refusé par le formulaire, rien n'est écrit.
     await fenetre.getByRole('textbox', { name: 'Pourquoi ce refus ?' }).fill('Court')
@@ -307,16 +340,47 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
 
     const indicateurs = await indicateursDeCommunication(page)
-    const refuse = indicateurs.find((indicateur) => indicateur.libelle === 'Demandes traitées')
+    const refuse = indicateurs.find((indicateur) => indicateur.libelle === 'Activités réalisées')
     expect(refuse).toMatchObject({ etat: 'retire', retrait_motif: 'refuse' })
-    // La liste repliée des décisions montre le motif, le bloc garde « Personnes formées ».
-    await page.getByText(/Décidées ces 30 derniers jours \(2\)/).click()
+    // La liste repliée des décisions montre le motif (le jeu d'exemple y ajoute deux décisions de
+    // Jeunesse : le nombre exact n'est pas celui de ce parcours), le bloc garde « Personnes formées ».
+    await page.getByText(/Décidées ces 30 derniers jours \(\d+\)/).click()
     await expect(
       page.getByText(/Refusée le .* : «\s*Ce chiffre existe déjà sur votre fiche/),
     ).toBeVisible()
+    await expect(lignesDeCommunication(page)).toHaveCount(1)
     await expect(ligneAValider(page, 'Personnes formées')).toBeVisible()
+    await expect(bloc.getByText(phraseEnAttente(avant - 1))).toBeVisible()
+  })
+
+  test('masque le « Pourquoi » d’une demande : le texte est remplacé, le bouton disparaît', async ({
+    page,
+  }) => {
+    await page.goto('/indicateurs')
+    await attendreLaFinDuChargement(page)
+    const ligne = ligneAValider(page, 'Personnes formées')
+    // Les motifs de refus de la liste repliée se masquent aussi (le bouton est posé, pas utilisé ici).
+    await page.getByText(/Décidées ces 30 derniers jours \(\d+\)/).click()
     await expect(
-      page.getByRole('region', { name: 'À valider' }).getByText('1 ajout en attente'),
+      page
+        .getByRole('region', { name: 'À valider' })
+        .getByRole('button', { name: 'Masquer le texte' })
+        .last(),
+    ).toBeVisible()
+    await ligne.getByRole('button', { name: 'Masquer le texte' }).click()
+    const boite = page.getByRole('dialog', { name: 'Masquer le texte' })
+    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await expect(boite.getByText('Choisissez un motif dans la liste.')).toBeVisible()
+    await boite.getByRole('radio', { name: "Nom d'une personne" }).check()
+    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByText('Texte masqué.')).toBeVisible()
+    await expect(ligne).toContainText('[texte masqué par EJP Tech]')
+    await expect(ligne).not.toContainText(SUGGESTIONS[2].pourquoi)
+    await expect(ligne.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(0)
+    // La décision reste possible sur une ligne dont le texte est masqué.
+    await expect(
+      page.getByRole('button', { name: /^Valider «\s*Personnes formées\s*» de Communication$/ }),
     ).toBeVisible()
   })
 
@@ -325,7 +389,7 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
   }) => {
     await page.goto('/')
     const seconde = await appeler(page, 'valider_indicateur', {
-      p_demande_id: demandes.get('Demandes reçues'),
+      p_demande_id: demandes.get('Événements couverts'),
       p_decision: 'valide',
     })
     expect(seconde.status()).toBe(400)
@@ -356,8 +420,10 @@ test.describe('Communication lit la suite', () => {
     await expect(page.getByText(/Vous pouvez en ajouter 1 autre\./)).toBeVisible()
     // Une seule ligne reste « à valider » : « Personnes formées ».
     await expect(page.getByText(/^À valider par EJP Tech depuis/)).toHaveCount(1)
-    await expect(page.getByText('Demandes reçues', { exact: true })).toBeVisible()
-    await page.getByText(/^Retirés \(1\)$/).click()
+    await expect(page.getByText('Événements couverts', { exact: true })).toBeVisible()
+    // « Retirés » s'ouvre de lui-même : il porte le motif d'un refus, que Communication doit lire.
+    await expect(page.getByText(/^Retirés \(1\)$/)).toBeVisible()
+    await expect(page.locator('details[open] summary', { hasText: 'Retirés' })).toHaveCount(1)
     await expect(
       page.getByText(new RegExp(`Refusé le .* : «\\s*${MOTIF_REFUS}\\s*»\\.`)),
     ).toBeVisible()
@@ -371,14 +437,14 @@ test.describe('Communication lit la suite', () => {
     await page.getByRole('button', { name: 'Ajouter un indicateur' }).click()
     const panneau = page.getByRole('dialog', { name: 'Ajouter un indicateur' })
     await expect(panneau.getByRole('button', { name: /^Choisir «/ }).first()).toBeVisible()
-    // « Demandes traitées » a été refusée : elle revient dans la liste.
+    // « Activités réalisées » a été refusée : elle revient dans la liste.
     await expect(
-      panneau.getByRole('button', { name: /^Choisir «\s*Demandes traitées/ }),
+      panneau.getByRole('button', { name: /^Choisir «\s*Activités réalisées/ }),
     ).toBeVisible()
     // Celles qui sont déjà sur la fiche n'y sont plus.
-    await expect(panneau.getByRole('button', { name: /^Choisir «\s*Demandes reçues/ })).toHaveCount(
-      0,
-    )
+    await expect(
+      panneau.getByRole('button', { name: /^Choisir «\s*Événements couverts/ }),
+    ).toHaveCount(0)
     await expect(
       panneau.getByRole('button', { name: /^Choisir «\s*Personnes formées/ }),
     ).toHaveCount(0)

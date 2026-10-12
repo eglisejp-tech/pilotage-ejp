@@ -114,7 +114,10 @@ export const MENTIONS_ORIGINE = {
   ajoutMinistere: (jour: string) => `Ajouté par vous le ${jour}`,
 } as const
 
-/** « À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir : ... » (7.3). */
+/**
+ * « À valider par EJP Tech depuis 2 jours. » : l'état d'un ajout qui attend, en gras orange avec le
+ * mot (7.3). La suite, `SUITE_EN_ATTENTE`, est dite à part, en texte normal.
+ */
 export function texteEnAttente(jours: number | null): string {
   const depuis =
     jours === null
@@ -122,8 +125,15 @@ export function texteEnAttente(jours: number | null): string {
       : jours <= 0
         ? " depuis aujourd'hui"
         : ` depuis ${nombre(jours)} ${accorder(jours, 'jour', 'jours')}`
-  return `À valider par EJP Tech${depuis}. Vous pouvez déjà le saisir : le berger voit ses valeurs, marquées «${NBSP}à valider${NBSP}».`
+  return `À valider par EJP Tech${depuis}.`
 }
+
+/**
+ * Ce que le ministère peut faire pendant l'attente : la phrase déjà dite sur la fiche et dans la
+ * saisie (« Vous pouvez déjà le saisir. »), sans la mécanique interne (qui voit quoi) de
+ * configuration-indicateurs.md, 7.3. Proposé.
+ */
+export const SUITE_EN_ATTENTE = 'Vous pouvez déjà le saisir.'
 
 /** « Dernière saisie le 2 oct. » : le jour de Paris, la valeur n'est jamais lue ici. */
 export function texteDerniereSaisie(jour: string): string {

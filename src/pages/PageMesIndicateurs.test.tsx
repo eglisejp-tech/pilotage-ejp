@@ -142,9 +142,11 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
-    expect(
-      screen.getByText(/À valider par EJP Tech depuis 2 jours\. Vous pouvez déjà le saisir/),
-    ).toBeInTheDocument()
+    // L'état en gras orange, puis ce qu'on peut faire, en texte normal et sur sa ligne.
+    const attente = screen.getByText('À valider par EJP Tech depuis 2 jours.')
+    expect(attente).toBeInTheDocument()
+    expect(attente.nextElementSibling).toHaveTextContent('Vous pouvez déjà le saisir.')
+    expect(screen.queryByText(/le berger voit ses valeurs/)).toBeNull()
     expect(screen.getByText('Suggestion ajoutée par vous le 8 oct.')).toBeInTheDocument()
     expect(screen.getAllByText('Prévu par la coordination')).toHaveLength(5)
     expect(screen.getByText('Dernière saisie le 2 oct.')).toBeInTheDocument()
@@ -152,18 +154,45 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     expect(screen.getByText('Se calcule tout seul')).toBeInTheDocument()
   })
 
-  it('« Retirés » est replié, puis dit le refus avec le motif d’EJP Tech', async () => {
+  it('« Retirés » s’ouvre de lui-même quand il porte le motif d’un refus, et son titre est souligné', async () => {
     connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
     const resume = screen.getByText('Retirés (2)')
-    expect(resume.closest('details')).not.toHaveAttribute('open')
+    expect(resume.closest('details')).toHaveAttribute('open')
+    expect(resume).toHaveClass('underline')
     expect(
       screen.getByText(
         /Refusé le 5 oct\. : «\s*Ce chiffre existe déjà sur votre fiche sous le nom Publications\.\s*»\./,
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Retiré le 3 oct. : doublon.')).toBeInTheDocument()
+    // Le ministère peut le replier.
+    await userEvent.click(resume)
+    expect(resume.closest('details')).not.toHaveAttribute('open')
+  })
+
+  it('« Retirés » reste replié quand aucun motif de refus n’est à lire', async () => {
+    connecte('ministere', { lignes: { validation: [], demande_indicateur: [] } })
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    const resume = screen.getByText('Retirés (2)')
+    expect(resume.closest('details')).not.toHaveAttribute('open')
+    expect(resume).toHaveClass('underline')
+  })
+
+  it('l’onglet « Ma fiche » reste l’onglet courant sur cette sous-page', async () => {
+    connecte('ministere')
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    const navigation = screen.getAllByRole('navigation', { name: 'Navigation principale' })[0]!
+    expect(within(navigation).getByRole('link', { name: 'Ma fiche' })).toHaveAttribute(
+      'aria-current',
+      'page',
+    )
+    expect(within(navigation).getByRole('link', { name: 'Cette semaine' })).not.toHaveAttribute(
+      'aria-current',
+    )
   })
 
   it('un ministère sans indicateur : l’état vide de LISEZMOI, le bouton reste', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { lecturesNormales, lecturesVides } from '@/features/mes-indicateurs/apercu/exemples'
-import { construireMesIndicateurs } from '@/features/mes-indicateurs/construire'
+import { construireMesIndicateurs, PREFIXE_SUGGESTION } from '@/features/mes-indicateurs/construire'
 import { lireRefusSuggestion } from '@/features/mes-indicateurs/refus'
 import { schemaFormulaireSuggestion, schemaSuggestion } from '@/features/mes-indicateurs/schemas'
 import {
@@ -10,6 +10,7 @@ import {
   phraseMesIndicateurs,
   reussiteSuggestion,
   rythmeEnPhrase,
+  SUITE_EN_ATTENTE,
   texteEnAttente,
   texteRetrait,
 } from '@/features/mes-indicateurs/textes'
@@ -170,13 +171,12 @@ describe('phrases de l’écran', () => {
     ).toBe('Kumi suit 1 indicateur : 1 prévu par la coordination.')
   })
 
-  it('l’attente d’une validation dit les jours et ce qu’on peut déjà faire', () => {
-    expect(espaces(texteEnAttente(2))).toBe(
-      'À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir : le berger voit ses valeurs, marquées « à valider ».',
-    )
-    expect(texteEnAttente(0)).toContain("depuis aujourd'hui")
-    expect(texteEnAttente(1)).toContain('depuis 1 jour.')
-    expect(texteEnAttente(null)).toMatch(/^À valider par EJP Tech\. Vous pouvez/)
+  it('l’attente d’une validation dit les jours, puis ce qu’on peut déjà faire, à part', () => {
+    expect(texteEnAttente(2)).toBe('À valider par EJP Tech depuis 2 jours.')
+    expect(texteEnAttente(0)).toBe("À valider par EJP Tech depuis aujourd'hui.")
+    expect(texteEnAttente(1)).toBe('À valider par EJP Tech depuis 1 jour.')
+    expect(texteEnAttente(null)).toBe('À valider par EJP Tech.')
+    expect(SUITE_EN_ATTENTE).toBe('Vous pouvez déjà le saisir.')
   })
 
   it('un retrait dit son jour et son motif', () => {
@@ -241,7 +241,32 @@ describe('l’écran construit à partir des lectures', () => {
     const lignes = donnees.sections.flatMap((section) => section.lignes)
     const projets = lignes.find((ligne) => ligne.libelle === 'Projets en cours')
     expect(projets?.enAttente).toBe(true)
-    expect(projets?.attente).toContain('depuis 2 jours')
+    expect(projets?.attente).toBe('À valider par EJP Tech depuis 2 jours.')
+    expect(projets?.attenteSuite).toBe('Vous pouvez déjà le saisir.')
+    // Une ligne qui n'attend pas ne dit ni l'une ni l'autre.
+    const publications = lignes.find((ligne) => ligne.libelle === 'Publications')
+    expect(publications).toMatchObject({ attente: null, attenteSuite: null })
+  })
+
+  it('une suggestion se reconnaît à son code : toutes celles des aperçus portent le préfixe', () => {
+    const lectures = lecturesNormales()
+    expect(lectures.suggestions.length).toBeGreaterThan(0)
+    for (const suggestion of lectures.suggestions) {
+      expect(suggestion.code.startsWith(PREFIXE_SUGGESTION), suggestion.code).toBe(true)
+    }
+    // Un ajout du ministère issu d'une suggestion est dit « Suggestion ajoutée par vous », un
+    // ajout libre « Ajouté par vous » : seul le préfixe du code les distingue.
+    const [premier] = lectures.indicateurs
+    const libre = { ...premier!, origine: 'ministere' as const, modele_code: 'autre_code' }
+    const resultat = construireMesIndicateurs({
+      ...lectures,
+      indicateurs: [libre],
+      suivi: [],
+      refus: [],
+    })
+    expect(resultat.sections.flatMap((section) => section.lignes)[0]?.origine).toMatch(
+      /^Ajouté par vous le /,
+    )
   })
 
   it('« Retirés » : un retrait avec son motif, un refus avec le motif d’EJP Tech', () => {

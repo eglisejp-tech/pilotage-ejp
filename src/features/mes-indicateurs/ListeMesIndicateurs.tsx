@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
@@ -27,6 +27,9 @@ function LigneIndicateur({ ligne }: { ligne: LigneMonIndicateur }) {
         <p className="max-w-prose text-[15px] leading-normal font-semibold text-attention">
           {ligne.attente}
         </p>
+      ) : null}
+      {ligne.attenteSuite !== null ? (
+        <p className="max-w-prose text-[15px] leading-normal text-encre-2">{ligne.attenteSuite}</p>
       ) : null}
     </li>
   )
@@ -57,13 +60,19 @@ export function SectionsMesIndicateurs({ sections }: { sections: SectionMesIndic
 /**
  * « Retirés (2) », replié : le libellé, le rythme et la date et le motif du retrait ; un refus d'EJP
  * Tech dit son motif en citation (« Refusé le 8 oct. : « motif ». »), en `--encre-3` quand EJP
- * Tech l'a masqué.
+ * Tech l'a masqué. Le titre est souligné comme les autres listes repliées. La liste s'ouvre
+ * d'elle-même quand elle porte le motif d'un refus : le ministère doit le lire.
  */
 export function RetiresMesIndicateurs({ retires }: { retires: LigneMonRetire[] }) {
+  const [ouvert, setOuvert] = useState(retires.some((ligne) => ligne.motifRefus !== null))
   if (retires.length === 0) return null
   return (
-    <details className="border-t border-filet">
-      <summary className="flex min-h-cible cursor-pointer items-center text-[15px] font-semibold">
+    <details
+      open={ouvert}
+      onToggle={(evenement) => setOuvert(evenement.currentTarget.open)}
+      className="border-t border-filet"
+    >
+      <summary className="inline-flex min-h-cible cursor-pointer items-center text-[15px] font-semibold underline underline-offset-4">
         {TEXTES_MES_INDICATEURS.titreRetires} ({nombre(retires.length)})
       </summary>
       <ul className="divide-y divide-filet pb-2">

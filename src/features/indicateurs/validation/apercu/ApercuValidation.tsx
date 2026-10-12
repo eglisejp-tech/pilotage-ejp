@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import type { DecisionRecente } from '@/data/validationIndicateurs'
+import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import {
   ATTENTES_EXEMPLE,
@@ -33,7 +34,8 @@ const reessayer = () => undefined
  * d'exemple et des décisions simulées. Adresse : /apercu/validation-indicateurs.
  * - `?profil=admin_plateforme` (défaut : EJP Tech décide et lit le « Pourquoi ») ou `admin_eglise`
  *   (lit l'attente sans bouton ni « Pourquoi ») ; tout autre profil : « Page non disponible » ;
- * - `vue=liste` (défaut), `vide` (rien n'attend), `chargement`, `probleme` ;
+ * - `vue=liste` (défaut), `vide` (rien n'attend), `chargement`, `probleme`, `decisions-probleme`
+ *   (la liste « Décidées » ne se lit pas) ;
  * - `&envoi=echec` simule une connexion perdue, `&envoi=decidee` une demande déjà décidée par un
  *   autre compte, `&envoi=motif` un refus du motif par la base (donnée personnelle).
  * Enregistrée seulement en développement.
@@ -47,6 +49,8 @@ export function ApercuValidation() {
     vue === 'vide' ? [] : DEMANDES_EXEMPLE.map((demande) => demande.demande_id),
   )
   const [decisions, setDecisions] = useState<readonly DecisionRecente[]>(DECISIONS_EXEMPLE)
+  /** Identifiants des demandes et des décisions dont EJP Tech a masqué le texte. */
+  const [masquees, setMasquees] = useState<readonly string[]>([])
   const occupe = useRef(false)
 
   const lignes = useMemo((): EtatBloc<LigneAValider[]> => {
@@ -68,19 +72,38 @@ export function ApercuValidation() {
     return {
       etat: 'donnees',
       donnees: construireLignesEjpTech(
-        DEMANDES_EXEMPLE.filter((demande) => restantes.includes(demande.demande_id)),
+        DEMANDES_EXEMPLE.filter((demande) => restantes.includes(demande.demande_id)).map(
+          (demande) =>
+            masquees.includes(demande.demande_id)
+              ? { ...demande, pourquoi: TEXTE_MASQUE }
+              : demande,
+        ),
       ),
     }
-  }, [profil, vue, restantes])
+  }, [profil, vue, restantes, masquees])
 
-  const decidees = useMemo(
-    (): EtatBloc<LigneDecidee[]> => ({ etat: 'donnees', donnees: construireDecidees(decisions) }),
-    [decisions],
-  )
+  const decidees = useMemo((): EtatBloc<LigneDecidee[]> => {
+    if (vue === 'decisions-probleme') return { etat: 'erreur', reessayer }
+    return {
+      etat: 'donnees',
+      donnees: construireDecidees(
+        decisions.map((decision) =>
+          masquees.includes(decision.validation_id) && decision.motif !== null
+            ? { ...decision, motif: TEXTE_MASQUE }
+            : decision,
+        ),
+      ),
+    }
+  }, [vue, decisions, masquees])
 
   const actions: ActionsLigne = {
     valider: (ligne) => decider(ligne, 'valide', null),
     refuser: (ligne, motif) => decider(ligne, 'refuse', motif),
+    masquer: async (masquage) => {
+      await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
+      if (envoi === 'echec') throw new Error('Réseau coupé (aperçu).')
+      setMasquees((courantes) => [...courantes, masquage.cibleId])
+    },
   }
 
   /** Décision simulée : les mêmes refus que la base, aucun appel au serveur. */

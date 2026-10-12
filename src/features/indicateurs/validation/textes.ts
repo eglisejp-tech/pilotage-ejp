@@ -48,6 +48,11 @@ export const TEXTES_A_VALIDER = {
   enRetard: 'en retard',
   /** Titre de la liste repliée des décisions (EJP Tech). */
   titreDecidees: 'Décidées ces 30 derniers jours',
+  /** Fenêtre « Masquer le texte » (EJP Tech) : ce qu'on masque, sous son titre. Proposé. */
+  contexteMasquagePourquoi: 'Indicateur à valider',
+  contexteMasquageMotif: 'Indicateur refusé',
+  /** Nom du champ du motif de refus, dans la fenêtre « Masquer le texte ». */
+  motifDuRefus: 'Motif du refus',
   /** Annonces après une décision. */
   reussiteValide: 'Indicateur validé.',
 } as const

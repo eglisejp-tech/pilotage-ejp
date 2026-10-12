@@ -12,6 +12,8 @@ import type {
 } from '@/features/indicateurs/validation/construire'
 import { LigneAValider } from '@/features/indicateurs/validation/LigneAValider'
 import type { ActionsLigne } from '@/features/indicateurs/validation/LigneAValider'
+import { MasquageTexte } from '@/features/indicateurs/validation/MasquageTexte'
+import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { TEXTES_A_VALIDER, texteNombreEnAttente } from '@/features/indicateurs/validation/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
@@ -96,9 +98,12 @@ export function VueAValider({ decide, lignes, decidees, actions }: Props) {
           ) : null
         }
       />
-      <p className="mt-3 max-w-prose text-encre-2">
-        {decide ? TEXTES_A_VALIDER.introEjpTech : TEXTES_A_VALIDER.introAdministration}
-      </p>
+      {/* Rien n'attend : l'état vide parle seul, l'introduction dirait le contraire. */}
+      {liste !== null && liste.length > 0 ? (
+        <p className="mt-3 max-w-prose text-encre-2">
+          {decide ? TEXTES_A_VALIDER.introEjpTech : TEXTES_A_VALIDER.introAdministration}
+        </p>
+      ) : null}
       <MessageReussite message={reussite} envoi={envoi} />
       {refus !== null ? (
         <div className="mt-3">
@@ -107,20 +112,7 @@ export function VueAValider({ decide, lignes, decidees, actions }: Props) {
       ) : null}
 
       {lignes.etat === 'chargement' ? <ChargementBloc /> : null}
-      {lignes.etat === 'erreur' ? (
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-alerte-fond px-4 py-3">
-          <p role="alert" className="text-[15px] leading-normal text-alerte">
-            {TEXTES_A_VALIDER.erreur}
-          </p>
-          <button
-            type="button"
-            onClick={lignes.reessayer}
-            className="inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond"
-          >
-            {TEXTES_A_VALIDER.reessayer}
-          </button>
-        </div>
-      ) : null}
+      {lignes.etat === 'erreur' ? <BandeauErreur reessayer={lignes.reessayer} /> : null}
       {liste !== null && liste.length === 0 ? (
         <EtatVide situation="tout_est_fait">{TEXTES_A_VALIDER.vide}</EtatVide>
       ) : null}
@@ -139,41 +131,99 @@ export function VueAValider({ decide, lignes, decidees, actions }: Props) {
         </ul>
       ) : null}
 
-      {decidees !== null && decidees.etat === 'donnees' && decidees.donnees.length > 0 ? (
-        <Decidees lignes={decidees.donnees} />
+      {/* Sans la file (chargement, erreur), aucun chiffre ne paraît seul : le bandeau parle. */}
+      {liste !== null && decidees !== null && decidees.etat === 'donnees' ? (
+        decidees.donnees.length > 0 ? (
+          <Decidees lignes={decidees.donnees} actions={actions} surMasque={annoncer} />
+        ) : null
+      ) : null}
+      {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
+        <BandeauErreur reessayer={decidees.reessayer} />
       ) : null}
     </section>
   )
 }
 
-/** « Décidées ces 30 derniers jours », repliées : « Validée le 8 oct. », « Refusée le 8 oct. : « motif » ». */
-function Decidees({ lignes }: { lignes: LigneDecidee[] }) {
+/** « La connexion a échoué. Réessayez. » et « Réessayer » : la lecture en cause est relancée. */
+function BandeauErreur({ reessayer }: { reessayer: () => void }) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 bg-alerte-fond px-4 py-3">
+      <p role="alert" className="text-[15px] leading-normal text-alerte">
+        {TEXTES_A_VALIDER.erreur}
+      </p>
+      <button
+        type="button"
+        onClick={reessayer}
+        className="inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond"
+      >
+        {TEXTES_A_VALIDER.reessayer}
+      </button>
+    </div>
+  )
+}
+
+interface PropsDecidees {
+  lignes: LigneDecidee[]
+  /** `null` : lecture seule, aucun « Masquer le texte ». */
+  actions: ActionsLigne | null
+  surMasque: (message: string) => void
+}
+
+/**
+ * « Décidées ces 30 derniers jours », repliées : « Validée le 8 oct. », « Refusée le 8 oct. :
+ * « motif » ». Le titre est souligné comme les autres listes repliées, pour qu'on voie qu'il
+ * s'ouvre. EJP Tech peut masquer le motif d'un refus (même après la décision).
+ */
+function Decidees({ lignes, actions, surMasque }: PropsDecidees) {
+  const prefixe = useId()
   return (
     <details className="mt-4 border-t border-filet">
-      <summary className="flex min-h-cible cursor-pointer items-center text-[15px] font-semibold">
+      <summary className="inline-flex min-h-cible cursor-pointer items-center text-[15px] font-semibold underline underline-offset-4">
         {TEXTES_A_VALIDER.titreDecidees} ({nombre(lignes.length)})
       </summary>
       <ul className="divide-y divide-filet pb-2">
-        {lignes.map((ligne) => (
-          <li key={ligne.id} className="flex flex-col gap-0.5 py-3">
-            <p className="text-[15px] wrap-anywhere">
-              <span className="font-semibold">{ligne.ministere}</span>
-              {', '}«&nbsp;{ligne.libelle}&nbsp;»
-            </p>
-            <p className="text-note wrap-anywhere text-encre-3">
-              {ligne.texte}
-              {ligne.motif !== null ? (
-                <>
-                  {' : '}«&nbsp;
-                  <ChampLibre
-                    texte={{ texte: ligne.motif, masque: ligne.motif === TEXTE_MASQUE }}
+        {lignes.map((ligne) => {
+          const idTitre = `${prefixe}-${ligne.id}`
+          const motif = ligne.motif
+          const masquable = actions !== null && motif !== null && motif !== TEXTE_MASQUE
+          return (
+            <li key={ligne.id} className="flex flex-col gap-0.5 py-3">
+              <p id={idTitre} className="text-[15px] wrap-anywhere">
+                <span className="font-semibold">{ligne.ministere}</span>
+                {', '}«&nbsp;{ligne.libelle}&nbsp;»
+              </p>
+              <p className="text-note wrap-anywhere text-encre-3">
+                {ligne.texte}
+                {ligne.motif !== null ? (
+                  <>
+                    {' : '}«&nbsp;
+                    <ChampLibre
+                      texte={{ texte: ligne.motif, masque: ligne.motif === TEXTE_MASQUE }}
+                    />
+                    &nbsp;»
+                  </>
+                ) : null}
+              </p>
+              {masquable ? (
+                <div className="mt-1">
+                  <MasquageTexte
+                    contexte={`${TEXTES_A_VALIDER.contexteMasquageMotif}, ${ligne.ministere}`}
+                    cible="validation"
+                    cibleId={ligne.id}
+                    champ={{
+                      code: 'motif',
+                      libelle: TEXTES_A_VALIDER.motifDuRefus,
+                      texte: motif,
+                    }}
+                    masquer={actions.masquer}
+                    surMasque={() => surMasque(TEXTES_MODERATION.reussiteMasque)}
+                    decritPar={idTitre}
                   />
-                  &nbsp;»
-                </>
+                </div>
               ) : null}
-            </p>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
     </details>
   )

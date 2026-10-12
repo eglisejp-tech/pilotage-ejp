@@ -2,6 +2,11 @@
 // la base rend. Les jours d'attente viennent de la base (heure de Paris) ; l'écran ne compte rien.
 // L'administration de l'église lit l'attente sans « Pourquoi » : sa ligne n'en porte jamais.
 
+import type {
+  IndicateurConfiguration,
+  LigneUsage,
+  MinistereConfiguration,
+} from '@/data/indicateursConfiguration'
 import type { AttenteAdministration, DecisionRecente } from '@/data/validationIndicateurs'
 import {
   estEnRetard,
@@ -74,6 +79,37 @@ export function construireLignesEjpTech(
       pourquoi: demande.pourquoi,
       nbValeurs: demande.nb_valeurs,
     }))
+}
+
+/**
+ * Les ajouts qui attendent EJP Tech, tels que l'administration les lit : les définitions
+ * (`indicateur`), le nom des ministères et les jours d'attente (`v_usage_indicateurs`, jamais une
+ * valeur). Ce sont les trois lectures de l'écran Indicateurs (L3a), lues une seule fois pour le
+ * tableau et pour ce bloc. Jamais un « Pourquoi » : la base ne le rend pas à l'administration.
+ */
+export function construireAttentesAdministration(
+  indicateurs: readonly IndicateurConfiguration[],
+  ministeres: readonly MinistereConfiguration[],
+  usage: readonly LigneUsage[],
+): AttenteAdministration[] {
+  const noms = new Map(ministeres.map((ministere) => [ministere.id, ministere.nom]))
+  const jours = new Map(usage.map((ligne) => [ligne.indicateur_id, ligne.attente_jours]))
+  return indicateurs.flatMap((indicateur) =>
+    indicateur.etat !== 'en_attente' || indicateur.ministere_id === null
+      ? []
+      : [
+          {
+            indicateur_id: indicateur.id,
+            ministere_id: indicateur.ministere_id,
+            ministere_nom: noms.get(indicateur.ministere_id) ?? '',
+            libelle: indicateur.libelle,
+            definition: indicateur.definition,
+            nature: indicateur.nature,
+            cree_le: indicateur.cree_le,
+            attente_jours: jours.get(indicateur.id) ?? null,
+          },
+        ],
+  )
 }
 
 /** Lignes lues par l'administration : la même attente, sans « Pourquoi » ni nombre de valeurs. */

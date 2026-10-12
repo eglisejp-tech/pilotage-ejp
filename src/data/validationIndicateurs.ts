@@ -12,6 +12,7 @@ import { schemaDecision } from '@/features/indicateurs/validation/schemas'
 import type { Decision } from '@/features/indicateurs/validation/schemas'
 import { schemaSuggestion } from '@/features/mes-indicateurs/schemas'
 import type { SuggestionEnvoyee } from '@/features/mes-indicateurs/schemas'
+import { debutDeJourParis } from '@/features/journal/periodes'
 import type { LigneTable } from '@/lib/base'
 import { ajouterJours } from '@/lib/metier/dates'
 import { supabase } from '@/lib/supabase'
@@ -71,57 +72,10 @@ export interface AttenteAdministration {
   attente_jours: number | null
 }
 
-type LigneAttente = Pick<
-  LigneTable<'indicateur'>,
-  'id' | 'libelle' | 'definition' | 'nature' | 'ministere_id' | 'cree_le' | 'etat'
->
-
-/**
- * Ajouts qui attendent EJP Tech, du plus ancien au plus récent : les définitions (`indicateur`),
- * le nom des ministères et les jours d'attente (`v_usage_indicateurs`, jamais une valeur). Lecture
- * de l'administration de l'église ; EJP Tech lit `v_a_valider`.
- */
-export async function lireAttentesAdministration(): Promise<AttenteAdministration[]> {
-  const reponse = await supabase()
-    .from('indicateur')
-    .select('id, libelle, definition, nature, ministere_id, cree_le, etat')
-    .eq('etat', 'en_attente')
-    .order('cree_le', { ascending: true })
-  if (reponse.error) throw reponse.error
-  const attentes: LigneAttente[] = reponse.data.filter(
-    (ligne) => ligne.etat === 'en_attente' && ligne.ministere_id !== null,
-  )
-  if (attentes.length === 0) return []
-  const ids = attentes.map((ligne) => ligne.id)
-  const [ministeres, usage] = await Promise.all([
-    supabase().from('ministere').select('id, nom'),
-    supabase()
-      .from('v_usage_indicateurs')
-      .select('indicateur_id, attente_jours')
-      .in('indicateur_id', ids),
-  ])
-  if (ministeres.error) throw ministeres.error
-  if (usage.error) throw usage.error
-  const noms = new Map(ministeres.data.map((ministere) => [ministere.id, ministere.nom]))
-  const jours = new Map(usage.data.map((ligne) => [ligne.indicateur_id, ligne.attente_jours]))
-  return attentes.flatMap((ligne) =>
-    ligne.ministere_id === null
-      ? []
-      : [
-          {
-            indicateur_id: ligne.id,
-            ministere_id: ligne.ministere_id,
-            ministere_nom: noms.get(ligne.ministere_id) ?? '',
-            libelle: ligne.libelle,
-            definition: ligne.definition,
-            nature: ligne.nature,
-            cree_le: ligne.cree_le,
-            attente_jours: jours.get(ligne.id) ?? null,
-          },
-        ],
-  )
-}
-
+// L'attente se construit à partir des trois lectures de l'écran Indicateurs (indicateurs propres,
+// usage, ministères : `src/data/indicateursConfiguration.ts`, mêmes clés de requête que le tableau
+// de L3a), par `construireAttentesAdministration` : aucune lecture de plus.
+//
 // Lectures d'EJP Tech : la file `v_a_valider` (avec le « Pourquoi ») se lit par `lireAValider` de
 // `src/data/indicateurs.ts`.
 
@@ -138,13 +92,15 @@ export interface DecisionRecente {
 
 /**
  * Décisions d'EJP Tech des 30 derniers jours, de la plus récente à la plus ancienne. Le jour de
- * départ se lit dans `v_semaine` (heure de Paris), jamais dans la date du navigateur. La lecture
- * de `validation` est celle d'EJP Tech ; les demandes donnent le nom de l'indicateur envoyé.
+ * départ se lit dans `v_semaine` (heure de Paris), jamais dans la date du navigateur ; la borne
+ * envoyée est minuit, heure de Paris, de ce jour (un instant explicite : une date nue serait lue
+ * à minuit dans le fuseau de la base, à 1 ou 2 heures de là). La lecture de `validation` est celle
+ * d'EJP Tech ; les demandes donnent le nom de l'indicateur envoyé.
  */
 export async function lireDecisionsRecentes(): Promise<DecisionRecente[]> {
   const semaine = await lireSemaine()
   if (semaine === null) throw new Error('Lecture sans donnée.')
-  const depuis = ajouterJours(semaine.aujourdhui, -JOURS_DECISIONS)
+  const depuis = debutDeJourParis(ajouterJours(semaine.aujourdhui, -JOURS_DECISIONS))
   const decisions = await supabase()
     .from('validation')
     .select('id, demande_id, ministere_id, decision, motif, saisi_le')
@@ -216,8 +172,9 @@ export interface RefusRecu {
 
 /**
  * Les refus d'EJP Tech sur les ajouts du ministère. Le ministère lit ses demandes et leurs
- * décisions (RLS) ; le motif n'est lu que par lui et par EJP Tech, le berger lit seulement le fait
- * du refus.
+ * décisions (RLS). Le motif d'un refus se lit aussi par le berger, le conseil, l'administration de
+ * l'église et EJP Tech (politique de lecture de `validation`) ; seul le « Pourquoi » de la demande
+ * est réservé au ministère et à EJP Tech.
  */
 export async function lireMesRefus(ministereId: string): Promise<RefusRecu[]> {
   const [decisions, demandes] = await Promise.all([

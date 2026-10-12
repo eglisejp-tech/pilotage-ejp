@@ -76,25 +76,31 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await expect(page.getByText('Prévu par la coordination')).toHaveCount(5)
   })
 
-  test('un ajout à valider dit son attente et ce que le berger voit', async ({ page }) => {
+  test('un ajout à valider dit son attente, puis ce qu’on peut déjà faire, en deux lignes', async ({
+    page,
+  }) => {
     await ouvrir(page)
-    await expect(
-      page.getByText(
-        'À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir : le berger voit ses valeurs, marquées « à valider ».',
-      ),
-    ).toBeVisible()
+    const attente = page.getByText('À valider par EJP Tech depuis 2 jours.', { exact: true })
+    await expect(attente).toBeVisible()
+    await expect(page.getByText('Vous pouvez déjà le saisir.', { exact: true })).toBeVisible()
+    await expect(page.getByText(/le berger voit ses valeurs/)).toHaveCount(0)
     await expect(page.getByText('Suggestion ajoutée par vous le 8 oct.')).toBeVisible()
   })
 
-  test('« Retirés (2) » est replié, puis dit le refus avec le motif d’EJP Tech', async ({
+  test('« Retirés (2) » s’ouvre de lui-même : il porte le motif d’un refus d’EJP Tech', async ({
     page,
   }) => {
     await ouvrir(page)
     const motif = page.getByText(/Refusé le 5 oct\. : «.*Publications\..*»\./)
-    await expect(motif).toBeHidden()
-    await page.getByText('Retirés (2)').click()
     await expect(motif).toBeVisible()
     await expect(page.getByText('Retiré le 3 oct. : doublon.')).toBeVisible()
+    // Le titre est souligné (on voit qu'il s'ouvre et se referme) ; un clic le replie.
+    const titre = page.getByText('Retirés (2)')
+    await expect(titre).toHaveCSS('text-decoration-line', 'underline')
+    await titre.click()
+    await expect(motif).toBeHidden()
+    await titre.click()
+    await expect(motif).toBeVisible()
   })
 
   test('« Ajouter un indicateur » : les suggestions, rythme et définition, « Rien ne convient ? »', async ({
@@ -250,7 +256,7 @@ test.describe('accessibilité et petits écrans', () => {
     test.setTimeout(120_000)
     for (const ecran of TOUS) {
       await ouvrir(page, ecran)
-      if (ecran.vue === 'normal') await page.getByText('Retirés (2)').click()
+      // « Retirés (2) » est déjà ouvert sur la vue normale : l'audit lit aussi la liste.
       try {
         await auditer(page)
       } catch (erreur) {

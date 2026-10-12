@@ -3,7 +3,6 @@ import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import type { ReponseFausse } from '@/test/fauxRequete'
 import {
   ajouterSuggestion,
-  lireAttentesAdministration,
   lireDecisionsRecentes,
   lireMesIndicateurs,
   lireMesRefus,
@@ -121,79 +120,6 @@ describe('validerIndicateur', () => {
   })
 })
 
-describe('lectures de l’administration de l’église', () => {
-  const attente = {
-    id: INDICATEUR,
-    libelle: 'Demandes reçues',
-    definition: 'Demandes reçues par le ministère dans le mois, sans nom ni objet.',
-    nature: 'mois',
-    ministere_id: KUMI,
-    cree_le: '2026-10-01T10:00:00+02:00',
-    etat: 'en_attente',
-  }
-
-  it('lit les définitions à valider, les noms et les jours d’attente, jamais un « Pourquoi »', async () => {
-    const faux = installer({
-      indicateur: { data: [attente], error: null },
-      ministere: { data: [{ id: KUMI, nom: 'Kumi' }], error: null },
-      v_usage_indicateurs: {
-        data: [{ indicateur_id: INDICATEUR, attente_jours: 9 }],
-        error: null,
-      },
-    })
-    const lignes = await lireAttentesAdministration()
-    expect(lignes).toEqual([
-      {
-        indicateur_id: INDICATEUR,
-        ministere_id: KUMI,
-        ministere_nom: 'Kumi',
-        libelle: 'Demandes reçues',
-        definition: 'Demandes reçues par le ministère dans le mois, sans nom ni objet.',
-        nature: 'mois',
-        cree_le: '2026-10-01T10:00:00+02:00',
-        attente_jours: 9,
-      },
-    ])
-    expect(appelsDe(faux.de('indicateur')[0])).toEqual([
-      'select("id, libelle, definition, nature, ministere_id, cree_le, etat")',
-      'eq("etat", "en_attente")',
-      'order("cree_le", {"ascending":true})',
-    ])
-    // La RLS de `demande_indicateur` ne lui ouvre rien : l'administration ne la lit jamais.
-    const tables = faux.from.mock.calls.map(([table]) => table)
-    expect(tables).not.toContain('demande_indicateur')
-    expect(tables).not.toContain('v_a_valider')
-    expect(tables).not.toContain('validation')
-    expect(tables).not.toContain('mesure')
-  })
-
-  it('ne garde que les ajouts qui attendent, même si la réponse en rend d’autres', async () => {
-    installer({
-      indicateur: {
-        data: [attente, { ...attente, id: 'autre', etat: 'actif' }],
-        error: null,
-      },
-      ministere: { data: [{ id: KUMI, nom: 'Kumi' }], error: null },
-      v_usage_indicateurs: { data: [], error: null },
-    })
-    const lignes = await lireAttentesAdministration()
-    expect(lignes.map((ligne) => ligne.indicateur_id)).toEqual([INDICATEUR])
-    expect(lignes[0]?.attente_jours).toBeNull()
-  })
-
-  it('rien n’attend : une seule lecture, aucune autre', async () => {
-    const faux = installer({ indicateur: { data: [], error: null } })
-    expect(await lireAttentesAdministration()).toEqual([])
-    expect(faux.from).toHaveBeenCalledTimes(1)
-  })
-
-  it('une lecture refusée est relancée', async () => {
-    const erreur = { code: 'PGRST301', message: 'refus' }
-    installer({ indicateur: { data: null, error: erreur } })
-    await expect(lireAttentesAdministration()).rejects.toBe(erreur)
-  })
-})
-
 describe('décisions des 30 derniers jours (EJP Tech)', () => {
   it('part du jour de Paris de v_semaine, jamais de la date du navigateur', async () => {
     const faux = installer({
@@ -226,7 +152,8 @@ describe('décisions des 30 derniers jours (EJP Tech)', () => {
       },
     ])
     const appels = appelsDe(faux.de('validation')[0])
-    expect(appels[1]).toBe('gte("saisi_le", "2026-09-12")')
+    // Minuit du 12 septembre, heure de Paris (UTC+2 en été) : un instant, pas une date nue.
+    expect(appels[1]).toBe('gte("saisi_le", "2026-09-11T22:00:00.000Z")')
   })
 
   it('sans décision : aucune autre lecture', async () => {
