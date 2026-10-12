@@ -1,12 +1,13 @@
 import type { FunctionComponent } from 'react'
+import { ANCRE_A_VALIDER } from '@/features/indicateurs/validation/ancre'
+import {
+  useBlocAdministration,
+  useBlocEjpTech,
+} from '@/features/indicateurs/validation/useAValider'
+import { VueAValider } from '@/features/indicateurs/validation/VueAValider'
 import type { TypeCompte } from '@/lib/base'
 
-/**
- * Ancre du bloc dans `/indicateurs` : le lien « Voir dans À valider » d'une ligne de
- * `/indicateurs/:id` (L3a) et celui de l'en-tête de la modération (L6) mènent à
- * `/indicateurs#a-valider`.
- */
-export const ANCRE_A_VALIDER = 'a-valider'
+export { ANCRE_A_VALIDER }
 
 export interface ProprietesBlocAValider {
   /**
@@ -17,12 +18,27 @@ export interface ProprietesBlocAValider {
   profil: TypeCompte
 }
 
+function BlocEjpTech() {
+  const { lignes, decidees, actions } = useBlocEjpTech()
+  return <VueAValider decide lignes={lignes} decidees={decidees} actions={actions} />
+}
+
+function BlocAdministration() {
+  const { lignes, decidees, actions } = useBlocAdministration()
+  return <VueAValider decide={false} lignes={lignes} decidees={decidees} actions={actions} />
+}
+
 /**
  * Bloc « À valider » de l'écran Indicateurs (configuration-indicateurs.md, 7.1 ;
  * validation-metier.md, 5.1), sous la phrase de l'écran : les ajouts des ministères qui attendent
- * EJP Tech, du plus ancien au plus récent. Propriétés figées par le lot C0 : le lot L3a le pose
- * dans `PageIndicateurs.tsx`, le lot L4 le remplit (`src/features/indicateurs/validation/`), sans
- * changer ces propriétés. Le bloc lit ses données lui-même et ne rend rien quand rien n'attend.
- * Amorce : ne rend rien.
+ * EJP Tech, du plus ancien au plus récent. Propriétés figées par le lot C0 ; le lot L3a le pose
+ * dans `PageIndicateurs.tsx`, le lot L4 le remplit (`src/features/indicateurs/validation/`). Le
+ * bloc lit ses données lui-même. Il garde son titre quand rien n'attend (« Rien à valider. »),
+ * pour que son ancre et les liens qui y mènent arrivent toujours quelque part. Un profil sans
+ * droit ne lit rien : le bloc ne rend rien, sans requête.
  */
-export const BlocAValider: FunctionComponent<ProprietesBlocAValider> = () => null
+export const BlocAValider: FunctionComponent<ProprietesBlocAValider> = ({ profil }) => {
+  if (profil === 'admin_plateforme') return <BlocEjpTech />
+  if (profil === 'admin_eglise') return <BlocAdministration />
+  return null
+}

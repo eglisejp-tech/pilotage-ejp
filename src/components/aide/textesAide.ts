@@ -154,6 +154,12 @@ export const TEXTES_AIDE = {
     'Les ministères qui saisissent leurs STARs présents à cette session. Gardez cochés ceux qui y participent.',
   'sessions.saisies':
     'Les ministères attendus qui ont saisi leurs présents. « 6 sur 8 » : 2 ministères restent à saisir.',
+
+  // « Mes indicateurs » (lot L4, statut Proposé ; validation-metier.md, 2.2) : indicateurs.pourquoi
+  // sur le champ « Pourquoi cet indicateur ? » du panneau d'ajout. Le texte vient de la conception
+  // (T30). Le champ n'a pas de rappel sur les données personnelles (exception voulue).
+  'indicateurs.pourquoi':
+    'Ce que ce chiffre vous aidera à voir ou à décider. EJP Tech le lit avant de valider.',
 } as const
 
 /**
