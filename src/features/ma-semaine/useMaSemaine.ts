@@ -5,14 +5,18 @@ import {
   lireCarteFij,
   lireIndicateursCommuns,
   lireSemaine,
-  lireSessionsPassees,
   lireTotauxDimanche,
+  lireTotauxSessionsPassees,
 } from '@/data/eglise'
 import { lireMesuresCommunsMinistere } from '@/data/fiche'
 import { CODE_MINISTERE_FIJ, lireCodeMinistere, lireStatistiquesFij } from '@/data/fij'
 import { lireCommunsFiche, lireSuiviIndicateurs } from '@/data/indicateurs'
 import { lireMesParticipations, lireSessionsAttendues } from '@/data/participations'
-import { useAccueilMinistere } from '@/features/accueil-ministere/useAccueilMinistere'
+import {
+  CLE_SESSIONS_TOTAUX,
+  cleMesParticipations,
+  useAccueilMinistere,
+} from '@/features/accueil-ministere/useAccueilMinistere'
 import { DELAI_MAX_CHARGEMENT } from '@/features/cette-semaine/useCetteSemaine'
 import { CLE_STATISTIQUES_FIJ } from '@/features/saisie-fij/useSaisiesFij'
 import { libellePeriode } from '@/lib/metier/semaine'
@@ -21,6 +25,7 @@ import {
   construireDansLEglise,
   construireFij,
   sessionsALire,
+  versSessionLue,
 } from './construireMaSemaine'
 import type { LecturesMaSemaine, SessionLue } from './construireMaSemaine'
 import type { DonneesMaSemaine } from './types'
@@ -34,10 +39,14 @@ export type ResultatMaSemaine =
  * Lit « Ma semaine » d'un ministère : l'accueil de 07 (`useAccueilMinistere` : « Vos saisies » et
  * « Vos points »), puis ce que le ministère lit déjà pour ses chiffres : ses mesures, son suivi,
  * ses présences aux sessions de la semaine (et à la session précédente de chaque type, pour
- * l'écart), deux totaux de l'église, et sa carte FIJ s'il est FIJ. Aucune des lectures de la vue du
- * berger n'est faite. Toutes les clés sont sous `eglise` (une saisie les relit) ; celles de
- * l'accueil sont partagées, rien n'est lu deux fois. Sans réponse au bout de 10 s, ou lecture en
- * échec : « Réessayer ». Aucune date du navigateur : le jour de Paris vient de `v_semaine`.
+ * l'écart), deux totaux de l'église, et sa carte FIJ s'il est FIJ. Aucune des lectures propres au
+ * berger n'est faite (tableau des ministères, apports de chaque ministère, écarts, totaux « à ce
+ * jour », pourcentage de l'église, points ouverts de l'église). Les sessions passées sont lues sans
+ * la colonne `manquants` : le navigateur du ministère ne reçoit le nom d'aucun autre ministère. Les
+ * autres lectures (semaine, indicateurs communs, totaux du dimanche, carte FIJ) ne portent aucun
+ * nom. Toutes les clés sont sous `eglise` (une saisie les relit) ; celles de l'accueil sont
+ * partagées, rien n'est lu deux fois. Sans réponse au bout de 10 s, ou lecture en échec :
+ * « Réessayer ». Aucune date du navigateur : le jour de Paris vient de `v_semaine`.
  */
 export function useMaSemaine(ministereId: string): ResultatMaSemaine {
   const accueil = useAccueilMinistere(ministereId)
@@ -58,7 +67,7 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
     queryFn: () => lireSuiviIndicateurs(ministereId),
   })
   // Mêmes clés que l'accueil du ministère : la lecture est partagée.
-  const sessions = useQuery({ queryKey: ['eglise', 'sessions'], queryFn: lireSessionsPassees })
+  const sessions = useQuery({ queryKey: CLE_SESSIONS_TOTAUX, queryFn: lireTotauxSessionsPassees })
   const attendues = useQuery({
     queryKey: ['eglise', 'accueil', 'sessions-attendues', ministereId],
     queryFn: () => lireSessionsAttendues(ministereId),
@@ -83,15 +92,7 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
     enabled: estFij,
   })
 
-  const sessionsLues: SessionLue[] = (sessions.data ?? []).map((session) => ({
-    session_id: session.session_id,
-    type: session.type,
-    intitule: session.intitule,
-    date: session.date,
-    nb_attendus: session.nb_attendus,
-    nb_saisis: session.nb_saisis,
-    total: session.total,
-  }))
+  const sessionsLues: SessionLue[] = (sessions.data ?? []).map(versSessionLue)
   const idsSessions =
     semaine.data && sessions.data && attendues.data
       ? sessionsALire({
@@ -101,7 +102,8 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
         })
       : []
   const participations = useQuery({
-    queryKey: ['eglise', 'ma-semaine', 'participations', ministereId, ...idsSessions],
+    // Même clé que l'accueil : une seule lecture des présences.
+    queryKey: cleMesParticipations(ministereId, idsSessions),
     queryFn: () => lireMesParticipations(ministereId, idsSessions),
     enabled: semaine.isSuccess && sessions.isSuccess && attendues.isSuccess,
   })

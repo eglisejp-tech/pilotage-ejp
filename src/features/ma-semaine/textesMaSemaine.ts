@@ -11,8 +11,8 @@ export const TEXTES_MA_SEMAINE = {
   lienFiche: 'Tous vos chiffres dans Ma fiche',
   presentsA: 'Présents à',
   /** Ministère FIJ seulement. */
-  carteFij: 'Carte des FIJ',
-  statistiquesFij: 'Chiffres par département',
-  /** Un total de l'église sans saisie : jamais un 0. */
-  pasEncoreDeSaisie: 'Pas encore de saisie',
+  carteFij: 'Total de la carte des FIJ',
+  statistiquesFij: 'Chiffres par département saisis',
+  /** Indicateur du dimanche dont la dernière saisie n'est pas celle de cette semaine. */
+  derniereSaisie: 'Dernière saisie :',
 } as const

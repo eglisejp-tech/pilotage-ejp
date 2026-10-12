@@ -101,12 +101,13 @@ test.describe('Ma semaine, aperçu', () => {
 
   test('la carte et les chiffres par département : le ministère FIJ seul', async ({ page }) => {
     await ouvrir(page)
-    await expect(page.getByText('Carte des FIJ', { exact: true })).toHaveCount(0)
+    await expect(page.getByText('Total de la carte des FIJ', { exact: true })).toHaveCount(0)
     await ouvrir(page, 'fij')
     const chiffres = page.getByRole('region', { name: 'Vos chiffres de la semaine' })
-    await expect(chiffres).toContainText('Carte des FIJ')
+    await expect(chiffres).toContainText('Total de la carte des FIJ')
     await expect(chiffres).toContainText('8 dép., saisi le 21 sept.')
-    await expect(chiffres).toContainText('Chiffres par département')
+    await expect(chiffres).toContainText('Chiffres par département saisis')
+    await expect(chiffres).toContainText('sur 32, dimanche 27 sept.')
     await expect(page.getByRole('heading', { name: 'FIJ en Île-de-France' })).toHaveCount(0)
   })
 

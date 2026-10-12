@@ -60,6 +60,7 @@ import {
 } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import { ecartMinistere } from '@/lib/metier/ecarts'
+import type { Comparaison } from '@/lib/metier/ecarts'
 import { fraicheur, joursDepuis, libelleMiseAJour } from '@/lib/metier/fraicheur'
 import {
   formaterResultatCalcul,
@@ -153,12 +154,14 @@ function valeurDe(valeur: number | null, unite: UniteIndicateur): ValeurFiche {
   return { etat: 'saisie', texte: formaterValeur(valeur, unite), unite: null }
 }
 
-function ecartFiche(
+/** Écart de la fiche (et de « Ma semaine ») à la période précédente : dimanche ou session. */
+export function ecartFiche(
   valeur: number | null,
   precedente: number | null,
   datePrecedente: DateIso,
+  comparaison: Comparaison = 'dimanche',
 ): EcartFiche | null {
-  const ecart = ecartMinistere(valeur, precedente, datePrecedente, 'dimanche')
+  const ecart = ecartMinistere(valeur, precedente, datePrecedente, comparaison)
   if (ecart === null) return null
   const sens =
     ecart.ecart === null
@@ -487,7 +490,11 @@ function detailSensible(contexte: Contexte, ligne: LigneSuivi): DetailSensible {
 }
 
 /** « Octobre en cours : 6 », « Octobre en cours : pas encore de saisie ». */
-function texteMoisEnCours(mois: string, valeur: number | null, unite: UniteIndicateur): string {
+export function texteMoisEnCours(
+  mois: string,
+  valeur: number | null,
+  unite: UniteIndicateur,
+): string {
   if (valeur === null) return moisEnCoursSansSaisie(mois)
   return `${libelleMoisEnCours(mois)} : ${formaterValeur(valeur, unite)}`
 }

@@ -11,6 +11,7 @@ import {
   lireSessionsPassees,
   lireTotauxACeJour,
   lireTotauxDimanche,
+  lireTotauxSessionsPassees,
 } from './eglise'
 
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
@@ -107,6 +108,18 @@ describe("lectures de la vue de l'église", () => {
       'eq("a_eu_lieu", true)',
       'order("date", {"ascending":false})',
     ])
+  })
+
+  it('lireTotauxSessionsPassees : les mêmes sessions, jamais la colonne manquants', async () => {
+    const faux = brancher()
+    await lireTotauxSessionsPassees()
+    const appels = appelsDe(faux.de('v_session_completude')[0])
+    expect(appels).toEqual([
+      'select("session_id, type, date, intitule, nb_attendus, nb_saisis, total")',
+      'eq("a_eu_lieu", true)',
+      'order("date", {"ascending":false})',
+    ])
+    expect(appels.join(' ')).not.toContain('manquants')
   })
 
   it('lireEcartsSessions : v_ecart_session', async () => {

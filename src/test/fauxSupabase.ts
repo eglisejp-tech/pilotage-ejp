@@ -63,6 +63,14 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
 
   const tables: string[] = []
   const eq = vi.fn<(colonne: string, valeur: unknown) => void>()
+  /** Colonnes demandées (`select`) et filtres posés (`eq`, `neq`, `or`), par table lue. */
+  const selections: { table: string; colonnes: string }[] = []
+  const filtres: {
+    table: string
+    operateur: 'eq' | 'neq' | 'or'
+    colonne: string
+    valeur: unknown
+  }[] = []
 
   function lignesDe(table: string): unknown[] {
     if (table === 'compte') return scenario.compte ? [scenario.compte] : []
@@ -83,12 +91,19 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     const lignes = lignesDe(table)
     const suite = () => fausse
     const fausse: FausseRequete = {
-      select: suite,
-      eq: (colonne, valeur) => {
-        eq(colonne, valeur)
+      select: (colonnes) => {
+        selections.push({ table, colonnes: colonnes ?? '*' })
         return fausse
       },
-      neq: suite,
+      eq: (colonne, valeur) => {
+        eq(colonne, valeur)
+        filtres.push({ table, operateur: 'eq', colonne, valeur })
+        return fausse
+      },
+      neq: (colonne, valeur) => {
+        filtres.push({ table, operateur: 'neq', colonne, valeur })
+        return fausse
+      },
       gt: suite,
       gte: suite,
       lt: suite,
@@ -96,7 +111,10 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
       in: suite,
       is: suite,
       not: suite,
-      or: suite,
+      or: (valeurs) => {
+        filtres.push({ table, operateur: 'or', colonne: '', valeur: valeurs })
+        return fausse
+      },
       filter: suite,
       match: suite,
       order: suite,
@@ -157,5 +175,5 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     Promise.resolve({ data: null, error: null }),
   )
 
-  return { client: { from, auth, rpc }, tables, auth, from, eq, rpc }
+  return { client: { from, auth, rpc }, tables, selections, filtres, auth, from, eq, rpc }
 }

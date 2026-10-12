@@ -10,14 +10,18 @@
 // - jamais un 0 pour une absence ;
 // - la carte et les chiffres par département n'existent que pour le ministère FIJ.
 
-import type { IndicateurCommun } from '@/data/eglise'
+import type { IndicateurCommun, SessionTotaux } from '@/data/eglise'
 import type { LigneVue, TypeSession } from '@/lib/base'
-import { lignesCommunesDuMinistere } from '@/features/fiche/construireFiche'
+import {
+  ecartFiche,
+  lignesCommunesDuMinistere,
+  texteMoisEnCours,
+} from '@/features/fiche/construireFiche'
 import type { EcartFiche, LigneCommune, ValeurFiche } from '@/features/fiche/modeleFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import { NOMBRE_DEPARTEMENTS, RUBRIQUES_FIJ } from '@/features/saisie-fij/departements'
 import type { Departement } from '@/lib/base'
-import { libelleCompletude } from '@/lib/metier/completude'
+import { libelleCompletude, libelleDepartements } from '@/lib/metier/completude'
 import {
   formaterJourAbrege,
   formaterJourCourt,
@@ -25,7 +29,6 @@ import {
   jourDeParis,
 } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
-import { ecartMinistere } from '@/lib/metier/ecarts'
 import { libelleMois, libelleMoisEnCours, moisDe } from '@/lib/metier/periodes'
 import { nomSession } from '@/lib/metier/phrases'
 import { comparerNoms, nombre } from '@/lib/metier/texte'
@@ -42,6 +45,22 @@ export interface SessionLue {
   nb_attendus: number
   nb_saisis: number
   total: number | null
+}
+
+/**
+ * Une ligne de `v_session_completude` devient une `SessionLue` : seuls ces champs passent, jamais
+ * `manquants` (les noms des ministères qui n'ont pas saisi), même si la ligne le porte.
+ */
+export function versSessionLue(ligne: SessionTotaux): SessionLue {
+  return {
+    session_id: ligne.session_id,
+    type: ligne.type,
+    intitule: ligne.intitule,
+    date: ligne.date,
+    nb_attendus: ligne.nb_attendus,
+    nb_saisis: ligne.nb_saisis,
+    total: ligne.total,
+  }
 }
 
 /** Ce que « Ma semaine » lit, une lecture de `src/data/` par propriété. */
@@ -161,28 +180,13 @@ function lignesSessions(lectures: LecturesMaSemaine): LigneCommune[] {
       precedente === null
         ? null
         : ecartFiche(
-            ecartMinistere(
-              presents,
-              saisies.get(precedente.session_id) ?? null,
-              precedente.date,
-              'session',
-            ),
+            presents,
+            saisies.get(precedente.session_id) ?? null,
+            precedente.date,
+            'session',
           )
     return ligne(`session:${session.session_id}`, libelle, valeurNombre(presents), detail, ecart)
   })
-}
-
-function ecartFiche(ecart: ReturnType<typeof ecartMinistere>): EcartFiche | null {
-  if (ecart === null) return null
-  const sens =
-    ecart.ecart === null
-      ? 'non_saisi'
-      : ecart.ecart > 0
-        ? 'hausse'
-        : ecart.ecart < 0
-          ? 'baisse'
-          : 'stable'
-  return { texte: ecart.texte, sens, description: ecart.etiquette }
 }
 
 // Indicateurs propres
@@ -204,30 +208,57 @@ function lignesIndicateursPropres(lectures: LecturesMaSemaine): LigneCommune[] {
     )
     .map((suivi): LigneCommune => {
       const cle = `indicateur:${suivi.indicateur_id}`
+      const derniere =
+        suivi.derniere_periode === null || suivi.derniere_valeur === null
+          ? null
+          : {
+              periode: suivi.derniere_periode,
+              texte: formaterValeur(suivi.derniere_valeur, suivi.unite),
+              valeur: suivi.derniere_valeur,
+            }
       if (suivi.nature === 'dimanche') {
-        if (suivi.derniere_periode === null || suivi.derniere_valeur === null) {
-          return ligne(cle, suivi.libelle, VIDE, null)
+        if (derniere === null) return ligne(cle, suivi.libelle, VIDE, null)
+        // Une saisie d'un dimanche plus ancien n'est pas un chiffre de cette semaine : pas de
+        // chiffre, la date de la dernière saisie.
+        if (derniere.periode < lectures.semaine.dimanche) {
+          return ligne(
+            cle,
+            suivi.libelle,
+            VIDE,
+            `${TEXTES_MA_SEMAINE.derniereSaisie} ${formaterJourSemaineTitre(derniere.periode).toLowerCase()}`,
+          )
         }
         return ligne(
           cle,
           suivi.libelle,
-          valeurNombre(suivi.derniere_valeur, formaterValeur(suivi.derniere_valeur, suivi.unite)),
-          formaterJourSemaineTitre(suivi.derniere_periode),
+          valeurNombre(derniere.valeur, derniere.texte),
+          formaterJourSemaineTitre(derniere.periode),
         )
       }
-      const enCours =
-        suivi.mois_en_cours_valeur === null
-          ? null
-          : `${libelleMoisEnCours(moisCourant)} : ${formaterValeur(suivi.mois_en_cours_valeur, suivi.unite)}`
-      if (suivi.derniere_periode === null || suivi.derniere_valeur === null) {
-        return ligne(cle, suivi.libelle, VIDE, enCours)
+      // Indicateur du mois : le mois en cours d'abord s'il a une saisie, avec le mois écoulé en
+      // détail ; sinon le mois écoulé et « pas encore de saisie » pour le mois en cours.
+      if (suivi.mois_en_cours_valeur !== null) {
+        const detail =
+          derniere === null
+            ? libelleMoisEnCours(moisCourant)
+            : `${libelleMoisEnCours(moisCourant)}. ${libelleMois(moisDe(derniere.periode))} : ${derniere.texte}`
+        return ligne(
+          cle,
+          suivi.libelle,
+          valeurNombre(
+            suivi.mois_en_cours_valeur,
+            formaterValeur(suivi.mois_en_cours_valeur, suivi.unite),
+          ),
+          detail,
+        )
       }
-      const mois = libelleMois(moisDe(suivi.derniere_periode))
+      const enCours = texteMoisEnCours(moisCourant, null, suivi.unite)
+      if (derniere === null) return ligne(cle, suivi.libelle, VIDE, enCours)
       return ligne(
         cle,
         suivi.libelle,
-        valeurNombre(suivi.derniere_valeur, formaterValeur(suivi.derniere_valeur, suivi.unite)),
-        enCours === null ? mois : `${mois}. ${enCours}`,
+        valeurNombre(derniere.valeur, derniere.texte),
+        `${libelleMois(moisDe(derniere.periode))}. ${enCours}`,
       )
     })
 }
@@ -251,7 +282,7 @@ function lignesFij(lectures: LecturesMaSemaine): LigneCommune[] {
           'carte_fij',
           TEXTES_MA_SEMAINE.carteFij,
           valeurNombre(total),
-          `${nombre(lectures.carte.length)} dép., saisi le ${formaterJourCourt(jourDeParis(dernierEnvoi))}`,
+          `${libelleDepartements(lectures.carte.length)}, saisi le ${formaterJourCourt(jourDeParis(dernierEnvoi))}`,
         )
   const valeurs = lectures.statistiques
     .filter((statistique) => statistique.dimanche === lectures.semaine.dimanche)
@@ -263,7 +294,7 @@ function lignesFij(lectures: LecturesMaSemaine): LigneCommune[] {
           'fij_statistiques',
           TEXTES_MA_SEMAINE.statistiquesFij,
           valeurNombre(valeurs),
-          `sur ${nombre(VALEURS_PAR_SEMAINE)} valeurs, ${formaterJourSemaineTitre(lectures.semaine.dimanche).toLowerCase()}`,
+          `sur ${nombre(VALEURS_PAR_SEMAINE)}, ${formaterJourSemaineTitre(lectures.semaine.dimanche).toLowerCase()}`,
         )
   return [carte, statistiques]
 }
@@ -301,14 +332,9 @@ export function construireDansLEglise(
     (total) => total.indicateur_id === idService && total.dimanche === dimanche,
   )
   const jour = formaterJourSemaineTitre(dimanche)
-  if (duDimanche === undefined) {
-    lignes.push({
-      cle: 'service',
-      libelle: TEXTES_FICHE.communs.service,
-      valeur: null,
-      detail: jour,
-    })
-  } else {
+  // Sans ligne de total pour ce dimanche, il n'y a pas de complétude à montrer : un total sans
+  // complétude ne s'affiche pas.
+  if (duDimanche !== undefined) {
     lignes.push({
       cle: 'service',
       libelle: TEXTES_FICHE.communs.service,

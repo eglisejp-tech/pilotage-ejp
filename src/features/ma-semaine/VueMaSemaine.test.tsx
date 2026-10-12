@@ -77,7 +77,7 @@ describe('VueMaSemaine', () => {
     expect(within(bloc).getByText('11 sur 14, calculé')).toBeInTheDocument()
     expect(within(bloc).getByText("Présents à Bâtir l'Église")).toBeInTheDocument()
     expect(within(bloc).getByText('Visuels livrés ce mois')).toBeInTheDocument()
-    expect(within(bloc).getByText('Août 2026. Septembre en cours : 2')).toBeInTheDocument()
+    expect(within(bloc).getByText('Septembre en cours. Août 2026 : 6')).toBeInTheDocument()
     expect(
       within(bloc).getByRole('link', { name: 'Tous vos chiffres dans Ma fiche' }),
     ).toHaveAttribute('href', '/ma-fiche')
@@ -105,13 +105,14 @@ describe('VueMaSemaine', () => {
 
   it('la carte et les chiffres par département : le ministère FIJ seul', () => {
     const { unmount } = afficher(exempleMaSemaine())
-    expect(within(chiffres()).queryByText('Carte des FIJ')).not.toBeInTheDocument()
-    expect(within(chiffres()).queryByText('Chiffres par département')).not.toBeInTheDocument()
+    expect(within(chiffres()).queryByText('Total de la carte des FIJ')).not.toBeInTheDocument()
+    expect(within(chiffres()).queryByText('Chiffres par département saisis')).toBeNull()
     unmount()
     afficher(exempleFij())
-    expect(within(chiffres()).getByText('Carte des FIJ')).toBeInTheDocument()
+    expect(within(chiffres()).getByText('Total de la carte des FIJ')).toBeInTheDocument()
     expect(within(chiffres()).getByText('8 dép., saisi le 21 sept.')).toBeInTheDocument()
-    expect(within(chiffres()).getByText('Chiffres par département')).toBeInTheDocument()
+    expect(within(chiffres()).getByText('Chiffres par département saisis')).toBeInTheDocument()
+    expect(within(chiffres()).getByText('sur 32, dimanche 27 sept.')).toBeInTheDocument()
     expect(titres()).not.toContain('FIJ en Île-de-France')
   })
 

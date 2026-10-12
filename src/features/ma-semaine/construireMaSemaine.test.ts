@@ -5,8 +5,10 @@ import {
   construireFij,
   sessionsALire,
   sessionsDeLaSemaine,
+  versSessionLue,
 } from './construireMaSemaine'
 import type { SessionLue } from './construireMaSemaine'
+import type { LigneVue } from '@/lib/base'
 import {
   exempleFij,
   exempleMaSemaine,
@@ -84,11 +86,62 @@ describe('« Vos chiffres de la semaine »', () => {
     })
   })
 
-  it('les indicateurs propres : le mois écoulé et le mois en cours', () => {
+  it('indicateur du mois : le mois en cours en chiffre, le mois écoulé en détail', () => {
     expect(ligneDe(chiffres, 'indicateur:visuels')).toMatchObject({
       libelle: 'Visuels livrés ce mois',
+      valeur: { texte: '2' },
+      detail: 'Septembre en cours. Août 2026 : 6',
+    })
+  })
+
+  it('indicateur du mois sans saisie du mois en cours : le mois écoulé et « pas encore de saisie »', () => {
+    const propre = lecturesExemple().suivi[0]!
+    const lignes = construireChiffres(
+      lecturesExemple({ suivi: [{ ...propre, mois_en_cours_valeur: null }] }),
+    )
+    expect(ligneDe(lignes, 'indicateur:visuels')).toMatchObject({
       valeur: { texte: '6' },
-      detail: 'Août 2026. Septembre en cours : 2',
+      detail: 'Août 2026. Septembre en cours : pas encore de saisie',
+    })
+    const jamais = construireChiffres(
+      lecturesExemple({
+        suivi: [
+          { ...propre, mois_en_cours_valeur: null, derniere_periode: null, derniere_valeur: null },
+        ],
+      }),
+    )
+    expect(ligneDe(jamais, 'indicateur:visuels')).toMatchObject({
+      valeur: { etat: 'vide' },
+      detail: 'Septembre en cours : pas encore de saisie',
+    })
+  })
+
+  it('indicateur du dimanche : le chiffre de ce dimanche, sinon la date de la dernière saisie', () => {
+    const propre = lecturesExemple().suivi[0]!
+    const dimanche = {
+      ...propre,
+      indicateur_id: 'ateliers',
+      libelle: 'Ateliers tenus',
+      nature: 'dimanche' as const,
+      mois_en_cours_valeur: null,
+    }
+    const recent = construireChiffres(
+      lecturesExemple({
+        suivi: [{ ...dimanche, derniere_periode: '2026-09-27', derniere_valeur: 4 }],
+      }),
+    )
+    expect(ligneDe(recent, 'indicateur:ateliers')).toMatchObject({
+      valeur: { texte: '4' },
+      detail: 'Dimanche 27 sept.',
+    })
+    const ancien = construireChiffres(
+      lecturesExemple({
+        suivi: [{ ...dimanche, derniere_periode: '2026-06-14', derniere_valeur: 4 }],
+      }),
+    )
+    expect(ligneDe(ancien, 'indicateur:ateliers')).toMatchObject({
+      valeur: { etat: 'vide' },
+      detail: 'Dernière saisie : dimanche 14 juin',
     })
   })
 
@@ -205,12 +258,14 @@ describe('carte et chiffres par département : le ministère FIJ seul', () => {
   it('FIJ : le total de la carte, « 8 dép. », le dernier envoi, puis la complétude des valeurs', () => {
     const fij = construireFij(lecturesFijExemple())
     expect(ligneDe(fij, 'carte_fij')).toMatchObject({
+      libelle: 'Total de la carte des FIJ',
       valeur: { texte: '29' },
       detail: '8 dép., saisi le 21 sept.',
     })
     expect(ligneDe(fij, 'fij_statistiques')).toMatchObject({
+      libelle: 'Chiffres par département saisis',
       valeur: { texte: '30' },
-      detail: 'sur 32 valeurs, dimanche 27 sept.',
+      detail: 'sur 32, dimanche 27 sept.',
     })
   })
 
@@ -247,11 +302,52 @@ describe('« Dans l’église »', () => {
     for (const ligne of lignes) expect(ligne.detail).toMatch(/\d+ sur \d+$/)
   })
 
-  it('aucun nom d’un autre ministère, aucun classement', () => {
+  it('aucun nom d’un autre ministère, aucun classement, même quand les lignes lues les portent', () => {
+    // Lignes brutes de la base : `manquants` porte des noms, un indicateur est celui d'un autre
+    // ministère. Rien de cela ne doit atteindre l'écran.
+    const brutes: LigneVue<'v_session_completude'>[] = [
+      {
+        session_id: 'batir-26',
+        type: 'batir',
+        date: '2026-09-26',
+        intitule: null,
+        a_eu_lieu: true,
+        nb_attendus: 8,
+        nb_saisis: 6,
+        total_saisi: 58,
+        total: 58,
+        manquants: ['Social', 'Intégration'],
+      },
+      {
+        session_id: 'batir-19',
+        type: 'batir',
+        date: '2026-09-19',
+        intitule: null,
+        a_eu_lieu: true,
+        nb_attendus: 8,
+        nb_saisis: 8,
+        total_saisi: 72,
+        total: 72,
+        manquants: [],
+      },
+    ]
+    const propre = lectures.suivi[0]!
+    const donnees = lecturesExemple({
+      sessions: brutes.map(versSessionLue),
+      suivi: [
+        propre,
+        {
+          ...propre,
+          indicateur_id: 'jeunesse-camps',
+          ministere_id: 'jeunesse',
+          libelle: 'Camps Jeunesse',
+        },
+      ],
+    })
     const textes = tousLesTextes([
-      construireChiffres(lectures),
-      construireFij(lectures),
-      construireDansLEglise(lectures),
+      construireChiffres(donnees),
+      construireFij(donnees),
+      construireDansLEglise(donnees),
     ])
     for (const nom of AUTRES_MINISTERES) {
       expect(
@@ -260,13 +356,39 @@ describe('« Dans l’église »', () => {
       ).toEqual([])
     }
     expect(textes.filter((texte) => /\d(er|e) sur|rang|classement/i.test(texte))).toEqual([])
-    // Les manquants ne sont jamais lus : la ligne de session ne porte que des nombres.
-    expect(Object.keys(construireDansLEglise(lectures)[1]!).toSorted()).toEqual([
+    // Les manquants ne passent pas : la ligne de session ne porte que des nombres.
+    expect(Object.keys(construireDansLEglise(donnees)[1]!).toSorted()).toEqual([
       'cle',
       'detail',
       'libelle',
       'valeur',
     ])
+  })
+
+  it('versSessionLue : seuls les champs de « Ma semaine » passent, jamais manquants', () => {
+    const brute: LigneVue<'v_session_completude'> = {
+      session_id: 's',
+      type: 'batir',
+      date: '2026-09-26',
+      intitule: null,
+      a_eu_lieu: true,
+      nb_attendus: 8,
+      nb_saisis: 6,
+      total_saisi: 58,
+      total: 58,
+      manquants: ['Social', 'Intégration'],
+    }
+    const lue = versSessionLue(brute)
+    expect(Object.keys(lue).toSorted()).toEqual([
+      'date',
+      'intitule',
+      'nb_attendus',
+      'nb_saisis',
+      'session_id',
+      'total',
+      'type',
+    ])
+    expect(JSON.stringify(lue)).not.toMatch(/Social|Intégration|manquants/)
   })
 
   it('personne n’a saisi : « Pas encore de saisie » à la place du nombre, complétude « 0 sur 8 »', () => {
@@ -298,9 +420,10 @@ describe('« Dans l’église »', () => {
     })
   })
 
-  it('le dimanche de référence sans ligne de total : le jour, sans complétude inventée', () => {
+  it('le dimanche de référence sans ligne de total : pas de ligne, un total sans complétude disparaît', () => {
     const lignes = construireDansLEglise(lecturesExemple({ totauxDimanche: [] }))
-    expect(lignes[0]).toMatchObject({ valeur: null, detail: 'Dimanche 27 sept.' })
+    expect(lignes.map((ligne) => ligne.cle)).toEqual(['session'])
+    expect(construireDansLEglise(lecturesExemple({ totauxDimanche: [], sessions: [] }))).toEqual([])
   })
 
   it('premier dimanche : aucun nom ni nombre inventé dans toute la page', () => {

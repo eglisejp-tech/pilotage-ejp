@@ -100,6 +100,15 @@ test.describe('ministère Communication : accueil 07', () => {
     page,
   }) => {
     const requetes = suivreRequetesDeDonnees(page)
+    // Adresses complètes de deux lectures sensibles : l'apport de chaque ministère et les noms de
+    // ceux qui n'ont pas saisi.
+    const presences: string[] = []
+    const sessionsLues: string[] = []
+    page.on('request', (requete) => {
+      const url = new URL(requete.url())
+      if (url.pathname === '/rest/v1/v_participation_courante') presences.push(url.search)
+      if (url.pathname === '/rest/v1/v_session_completude') sessionsLues.push(url.search)
+    })
     await ouvrir(page)
 
     // Ses chiffres : 10 au service, 14 actifs dont 11 en FIJ (79 %), 13 présents à Bâtir l'Église.
@@ -140,6 +149,13 @@ test.describe('ministère Communication : accueil 07', () => {
         ),
       ),
     ).toEqual([])
+    // Ses présences seulement : chaque lecture est filtrée sur son ministère.
+    expect(presences.length).toBeGreaterThan(0)
+    for (const recherche of presences) expect(recherche).toContain('ministere_id=eq.')
+    // Les sessions sont lues sans la colonne des manquants (noms des autres ministères).
+    expect(sessionsLues.length).toBeGreaterThan(0)
+    for (const recherche of sessionsLues)
+      expect(decodeURIComponent(recherche)).not.toContain('manquants')
   })
 
   test('« Corriger » ouvre la saisie du dimanche de référence', async ({ page }) => {

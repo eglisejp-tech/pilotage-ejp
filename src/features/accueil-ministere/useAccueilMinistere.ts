@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { lireCarteFij, lireSemaine, lireSessionsPassees } from '@/data/eglise'
+import { lireCarteFij, lireSemaine, lireTotauxSessionsPassees } from '@/data/eglise'
 import { lireEvenementsMinistere } from '@/data/evenements'
 import { lirePointsMinistere } from '@/data/fiche'
 import { CODE_MINISTERE_FIJ, lireCodeMinistere, lireStatistiquesFij } from '@/data/fij'
@@ -20,8 +20,16 @@ import { construireVosPoints } from '@/features/accueil-ministere/vosPoints'
 import { construireOuverture, rangerVosSaisies } from '@/features/accueil-ministere/vosSaisies'
 import { DELAI_MAX_CHARGEMENT } from '@/features/cette-semaine/useCetteSemaine'
 import type { EtatBloc, PointFiche } from '@/features/fiche/modeleFiche'
+import { sessionsALire, versSessionLue } from '@/features/ma-semaine/construireMaSemaine'
 import { RACINE_SAISIE_CHIFFRES } from '@/features/saisie-chiffres/useSaisieDimanche'
 import { CLE_STATISTIQUES_FIJ } from '@/features/saisie-fij/useSaisiesFij'
+
+/** Sessions passées sans `manquants` : lecture d'un compte de ministère (accueil, Ma semaine). */
+export const CLE_SESSIONS_TOTAUX = ['eglise', 'sessions', 'totaux'] as const
+
+/** Présences du ministère aux sessions données : une seule lecture pour l'accueil et Ma semaine. */
+export const cleMesParticipations = (ministereId: string, sessionIds: readonly string[]) =>
+  ['eglise', 'accueil', 'mes-participations', ministereId, ...sessionIds] as const
 
 export type ResultatAccueilMinistere =
   /** Un autre profil qu'un ministère : rien n'est lu. */
@@ -64,9 +72,10 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     queryFn: () => lireMesuresPeriode(id, 'mois'),
     enabled: actif,
   })
+  // Sans les noms des ministères qui n'ont pas saisi : un compte de ministère ne les reçoit pas.
   const sessions = useQuery({
-    queryKey: ['eglise', 'sessions'],
-    queryFn: lireSessionsPassees,
+    queryKey: CLE_SESSIONS_TOTAUX,
+    queryFn: lireTotauxSessionsPassees,
     enabled: actif,
   })
   const attendues = useQuery({
@@ -74,18 +83,18 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     queryFn: () => lireSessionsAttendues(id),
     enabled: actif,
   })
-  // Présences du ministère pour les seules sessions de la semaine où il est attendu.
-  const lundi = semaine.data?.lundi
-  const attendu = new Set(attendues.data ?? [])
+  // Présences du ministère pour les sessions de la semaine où il est attendu et la session
+  // précédente de chaque type : les mêmes que « Ma semaine », qui partage cette lecture.
   const idsSemaine =
-    lundi === undefined
-      ? []
-      : (sessions.data ?? [])
-          .filter((session) => attendu.has(session.session_id) && session.date >= lundi)
-          .map((session) => session.session_id)
-          .sort()
+    semaine.data && sessions.data && attendues.data
+      ? sessionsALire({
+          semaine: semaine.data,
+          sessions: sessions.data.map(versSessionLue),
+          attendues: attendues.data,
+        })
+      : []
   const participations = useQuery({
-    queryKey: ['eglise', 'accueil', 'mes-participations', id, ...idsSemaine],
+    queryKey: cleMesParticipations(id, idsSemaine),
     queryFn: () => lireMesParticipations(id, idsSemaine),
     enabled: actif && semaine.isSuccess && sessions.isSuccess && attendues.isSuccess,
   })
