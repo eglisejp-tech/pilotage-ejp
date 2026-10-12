@@ -28,6 +28,7 @@ export const MESSAGES_ECRITURE = {
   haut: 'Choisissez le chiffre du haut.',
   bas: 'Choisissez le chiffre du bas.',
   distincts: 'Un calcul se fait sur des chiffres distincts.',
+  partTaux: 'Seul un taux peut être une part.',
   motif: 'Choisissez le motif du retrait.',
 } as const
 
@@ -55,6 +56,13 @@ const schemaDefinition = texteEntre(10, LONGUEUR_DEFINITION_MAX, MESSAGES_ECRITU
 export const NATURES_CHOISIES = ['dimanche', 'mois', 'a_ce_jour'] as const
 /** Les trois sortes de nombre qu'un panneau propose (configuration-indicateurs.md, 3.2). */
 export const UNITES_CHOISIES = ['nombre', 'grand_nombre', 'euros'] as const
+/**
+ * Les deux sortes qu'un panneau ne propose jamais à l'ajout, mais que la base accepte : le
+ * remplaçant d'une heure ou d'un nombre de jours garde la sorte de l'ancien indicateur, sans quoi
+ * une heure (0 à 1 439 minutes) deviendrait un compte.
+ */
+export const UNITES_GARDEES = ['heure', 'jours'] as const
+const UNITES_ACCEPTEES = [...UNITES_CHOISIES, ...UNITES_GARDEES] as const
 
 /** Un libellé et une définition : la correction d'un indicateur. */
 export const schemaCorrection = z.object({
@@ -70,7 +78,7 @@ export const schemaAjout = z
     libelle: schemaLibelle,
     definition: schemaDefinition,
     nature: z.enum(NATURES_CHOISIES, { error: MESSAGES_ECRITURE.rythme }),
-    unite: z.enum(UNITES_CHOISIES, { error: MESSAGES_ECRITURE.sorte }),
+    unite: z.enum(UNITES_ACCEPTEES, { error: MESSAGES_ECRITURE.sorte }),
     sensible: z.boolean(),
     pasSensible: z.boolean(),
   })
@@ -102,10 +110,18 @@ export const schemaCalcul = z
     type: z.enum(['taux', 'moyenne'], { error: MESSAGES_ECRITURE.type }),
     hautId: z.uuid({ error: MESSAGES_ECRITURE.haut }),
     basId: z.uuid({ error: MESSAGES_ECRITURE.bas }),
+    /**
+     * P49 : un taux qui est une part ne dépasse jamais 100 %. Posée à la création, jamais modifiée
+     * ensuite. Omise (le remplacement d'un calcul), la base reprend celle du calcul remplacé.
+     */
+    part: z.boolean().optional(),
   })
   .superRefine((calcul, contexte) => {
     if (calcul.hautId === calcul.basId) {
       contexte.addIssue({ code: 'custom', path: ['basId'], message: MESSAGES_ECRITURE.distincts })
+    }
+    if (calcul.part === true && calcul.type !== 'taux') {
+      contexte.addIssue({ code: 'custom', path: ['part'], message: MESSAGES_ECRITURE.partTaux })
     }
   })
 export type EntreeCalcul = z.input<typeof schemaCalcul>
@@ -116,7 +132,7 @@ export const MOTIFS_RETRAIT: ReadonlyArray<{ code: MotifRetraitChoisi; libelle: 
   { code: 'plus_suivi', libelle: "N'est plus suivi" },
   { code: 'doublon', libelle: "Doublon d'un autre chiffre" },
   { code: 'erreur', libelle: 'Créé par erreur' },
-  { code: 'se_calcule', libelle: 'Se calcule à partir d’autres chiffres' },
+  { code: 'se_calcule', libelle: "Se calcule à partir d'autres chiffres" },
   { code: 'deja_commun', libelle: 'Déjà compté par un chiffre commun' },
   { code: 'domaine_sensible', libelle: "Domaine sensible : à créer par l'administration" },
   { code: 'hors_regles', libelle: "Hors des règles de l'outil" },
@@ -171,6 +187,7 @@ export async function ajouterCalcul(
     p_haut_id: calcul.hautId,
     p_bas_id: calcul.basId,
     p_remplace_id: remplaceId === null ? null : schemaIdentifiant.parse(remplaceId),
+    p_part: calcul.part ?? null,
   })
   if (error) throw error
   return data

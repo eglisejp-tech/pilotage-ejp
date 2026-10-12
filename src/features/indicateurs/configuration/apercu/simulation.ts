@@ -24,6 +24,10 @@ export interface EtatSimule {
 
 const LIGNES_MAX = 30
 const MASQUE = '[retiré pour confidentialité]'
+/** Les mots sensibles que l'aperçu connaît (la base en a une liste de plus de vingt). */
+const MOT_SENSIBLE = /sant[eé]|enfant|accompagn/i
+const MESSAGE_SENSIBLE =
+  "Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas."
 
 function suivis(lectures: LecturesConfiguration, ministereId: string) {
   return lectures.indicateurs.filter(
@@ -120,6 +124,14 @@ export function ajouterSimule(
   maintenant: string,
 ): EtatSimule {
   verifierPlace(etat.lectures, ministereId, remplaceId)
+  // Libellé et définition : un mot sensible demande la case ou la confirmation du contraire.
+  if (
+    !entree.sensible &&
+    !entree.pasSensible &&
+    (MOT_SENSIBLE.test(entree.libelle) || MOT_SENSIBLE.test(entree.definition))
+  ) {
+    throw new RefusSimule(MESSAGE_SENSIBLE)
+  }
   const pris = libellePris(etat.lectures, ministereId, entree.libelle, remplaceId)
   if (pris !== null) throw new RefusSimule(`Cette fiche a déjà « ${pris} ».`)
   const compteur = etat.compteur + 1
@@ -141,10 +153,19 @@ export function ajouterSimule(
     retire_le: null,
     retrait_motif: null,
   }
-  const anciens =
-    remplaceId === null
-      ? etat.lectures.indicateurs
-      : retirerUn(etat.lectures.indicateurs, remplaceId, 'remplace', maintenant)
+  // Comme la base (`retirer_calculs_de`) : les calculs qui se servaient de l'ancien partent avec lui.
+  let anciens = etat.lectures.indicateurs
+  if (remplaceId !== null) {
+    anciens = retirerUn(anciens, remplaceId, 'remplace', maintenant)
+    const dependants = new Set(
+      etat.termes.filter((terme) => terme.source_id === remplaceId).map((t) => t.calcul_id),
+    )
+    for (const id of dependants) {
+      if (anciens.some((indicateur) => indicateur.id === id && indicateur.etat !== 'retire')) {
+        anciens = retirerUn(anciens, id, 'source_retiree', maintenant)
+      }
+    }
+  }
   const lectures = {
     ...avecGeste(etat, ministereId, 'indicateur_cree', maintenant),
     indicateurs: [...anciens, nouveau],
@@ -313,13 +334,8 @@ export function verifierSimule(
       bloquant: true,
     })
   }
-  if (/sant[eé]|enfant|accompagn/i.test(libelle)) {
-    verifications.push({
-      famille: 'sensible',
-      message:
-        'Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n’est pas le cas.',
-      bloquant: true,
-    })
+  if (MOT_SENSIBLE.test(libelle)) {
+    verifications.push({ famille: 'sensible', message: MESSAGE_SENSIBLE, bloquant: true })
   }
   const pris = libellePris(etat.lectures, ministereId, libelle, null)
   if (pris !== null) {

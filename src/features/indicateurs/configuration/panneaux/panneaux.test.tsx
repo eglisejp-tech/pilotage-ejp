@@ -282,6 +282,75 @@ describe('panneau « Ajouter un indicateur »', () => {
     })
   })
 
+  const SENSIBLE = {
+    famille: 'sensible' as const,
+    message:
+      "Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas.",
+    bloquant: true,
+  }
+  /** Un mot « enfant » dans le texte contrôlé : l'avertissement de la base. */
+  const verifierEnfant = () =>
+    vi.fn((texte: string) => Promise.resolve(/enfant/i.test(texte) ? [SENSIBLE] : []))
+
+  it('un mot sensible dans la définition seule demande aussi la confirmation', async () => {
+    const ecritures = ecrituresDe({ verifier: verifierEnfant() })
+    const { utilisateur, panneau } = await ouvrir(ecritures)
+    await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Annonces')
+    expect(
+      within(panneau).queryByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }),
+    ).not.toBeInTheDocument()
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on compte exactement"),
+      'Annonces faites aux enfants.',
+    )
+    expect(
+      await within(panneau).findByText(/Ce chiffre semble sensible/, {}, { timeout: 3000 }),
+    ).toBeVisible()
+    await utilisateur.click(
+      within(panneau).getByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }),
+    )
+    await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    await waitFor(() => expect(ecritures.ajouter).toHaveBeenCalled())
+    expect(ecritures.ajouter.mock.calls[0]?.[1]).toMatchObject({
+      libelle: 'Annonces',
+      sensible: false,
+      pasSensible: true,
+    })
+  })
+
+  it('une confirmation ne vaut que pour l’avertissement qu’elle suit : elle tombe avec lui', async () => {
+    const ecritures = ecrituresDe({ verifier: verifierEnfant() })
+    const { utilisateur, panneau } = await ouvrir(ecritures)
+    const libelle = within(panneau).getByLabelText('Ce que vous comptez')
+    await utilisateur.type(libelle, 'Enfants accueillis')
+    await utilisateur.click(
+      await within(panneau).findByRole(
+        'checkbox',
+        { name: "Ce n'est pas un domaine sensible" },
+        { timeout: 3000 },
+      ),
+    )
+    // Le libellé change : l'avertissement disparaît, la confirmation avec lui.
+    await utilisateur.clear(libelle)
+    await utilisateur.type(libelle, 'Accueillis')
+    await waitFor(
+      () =>
+        expect(
+          within(panneau).queryByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }),
+        ).not.toBeInTheDocument(),
+      { timeout: 3000 },
+    )
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on compte exactement"),
+      'Personnes accueillies à l’entrée.',
+    )
+    await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    await waitFor(() => expect(ecritures.ajouter).toHaveBeenCalled())
+    expect(ecritures.ajouter.mock.calls[0]?.[1]).toMatchObject({ pasSensible: false })
+  })
+
   it('les refus de la base pendant la frappe s’affichent sous le libellé', async () => {
     const ecritures = ecrituresDe({
       verifier: vi.fn(() =>
@@ -438,10 +507,69 @@ describe('panneau « Ajouter un calcul »', () => {
         type: 'taux',
         hautId: idDe('Publications'),
         basId: idDe('Demandes reçues'),
+        part: false,
       },
       null,
     )
     expect(await screen.findByText('Calcul ajouté.')).toBeVisible()
+  })
+
+  it('la case « C’est une part » (P49) n’existe que pour un taux, et se pose à la création', async () => {
+    const { utilisateur, panneau, ecritures } = await ouvrir()
+    const part = () => within(panneau).queryByRole('checkbox', { name: /C'est une part/ })
+    expect(part()).not.toBeInTheDocument()
+    await utilisateur.click(within(panneau).getByRole('radio', { name: 'En moyenne' }))
+    expect(part()).not.toBeInTheDocument()
+    await utilisateur.click(within(panneau).getByRole('radio', { name: 'En pourcentage' }))
+    expect(part()).toBeVisible()
+    expect(
+      within(panneau).getByText(
+        /Si le haut dépasse le bas, la fiche affiche « Non calculé, à vérifier »/,
+      ),
+    ).toBeVisible()
+    await utilisateur.click(part() as HTMLElement)
+    await utilisateur.type(within(panneau).getByLabelText('Nom du calcul'), 'Part des publications')
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on calcule"),
+      'Publications sur demandes reçues.',
+    )
+    await utilisateur.selectOptions(
+      within(panneau).getByLabelText('Chiffre du haut'),
+      'Publications',
+    )
+    await utilisateur.selectOptions(
+      within(panneau).getByLabelText('Chiffre du bas'),
+      'Demandes reçues',
+    )
+    await utilisateur.click(within(panneau).getByRole('button', { name: 'Ajouter le calcul' }))
+    await waitFor(() => expect(ecritures.ajouterCalcul).toHaveBeenCalledTimes(1))
+    expect(ecritures.ajouterCalcul.mock.calls[0]?.[1]).toMatchObject({ type: 'taux', part: true })
+  })
+
+  it('une part cochée puis un passage en moyenne n’envoie pas de part', async () => {
+    const { utilisateur, panneau, ecritures } = await ouvrir()
+    await utilisateur.click(within(panneau).getByRole('radio', { name: 'En pourcentage' }))
+    await utilisateur.click(within(panneau).getByRole('checkbox', { name: /C'est une part/ }))
+    await utilisateur.click(within(panneau).getByRole('radio', { name: 'En moyenne' }))
+    await utilisateur.type(within(panneau).getByLabelText('Nom du calcul'), 'Moyenne des visuels')
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on calcule"),
+      'Visuels par demande reçue.',
+    )
+    await utilisateur.selectOptions(
+      within(panneau).getByLabelText('Chiffre du haut'),
+      'Visuels livrés',
+    )
+    await utilisateur.selectOptions(
+      within(panneau).getByLabelText('Chiffre du bas'),
+      'Demandes reçues',
+    )
+    await utilisateur.click(within(panneau).getByRole('button', { name: 'Ajouter le calcul' }))
+    await waitFor(() => expect(ecritures.ajouterCalcul).toHaveBeenCalledTimes(1))
+    expect(ecritures.ajouterCalcul.mock.calls[0]?.[1]).toMatchObject({
+      type: 'moyenne',
+      part: false,
+    })
   })
 
   it('envoyé vide : les chiffres et le type manquants sont dits', async () => {
@@ -482,6 +610,16 @@ describe('panneau « Ajouter un calcul »', () => {
     expect(within(panneau).queryByRole('button', { name: 'Ajouter le calcul' })).toBeNull()
     await utilisateur.click(within(panneau).getByRole('button', { name: 'Retour' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('sans deux chiffres qui se calculent, le panneau dit quoi faire et mène à « Ajouter un indicateur »', async () => {
+    const { utilisateur, panneau } = await ouvrir(ID_KUMI)
+    expect(
+      within(panneau).getByText('Ajoutez un indicateur, puis revenez ajouter le calcul.'),
+    ).toBeVisible()
+    await utilisateur.click(within(panneau).getByRole('button', { name: 'Ajouter un indicateur' }))
+    expect(await screen.findByRole('dialog', { name: 'Ajouter un indicateur' })).toBeVisible()
+    expect(screen.queryByRole('dialog', { name: 'Ajouter un calcul' })).not.toBeInTheDocument()
   })
 
   it('« Jeunesse » : un grand compte et des jours du même rythme se calculent', async () => {
@@ -553,6 +691,54 @@ describe('panneau « Corriger »', () => {
   })
 })
 
+describe('panneau « Corriger » d’un calcul dont les chiffres sont saisis', () => {
+  it('le dit avant tout formulaire et propose « Remplacer le calcul »', async () => {
+    const lectures = lecturesExemple()
+    const termes = termesExemple(lectures)
+    const ecritures = ecrituresDe({ termes: vi.fn(() => Promise.resolve(termes)) })
+    const utilisateur = afficher(ID_COMMUNICATION, ecritures)
+    await utilisateur.click(bouton('Corriger « Taux de demandes traitées »'))
+    const panneau = await screen.findByRole('dialog', { name: "Corriger l'indicateur" })
+    // « Visuels livrés », l'un de ses deux chiffres, est saisi (1 mois sur 4).
+    expect(
+      await within(panneau).findByText(/Ce calcul a déjà des valeurs : les chiffres qu'il utilise/),
+    ).toBeVisible()
+    expect(within(panneau).queryByLabelText('Ce que vous comptez')).not.toBeInTheDocument()
+    expect(ecritures.corriger).not.toHaveBeenCalled()
+    await utilisateur.click(within(panneau).getByRole('button', { name: 'Remplacer le calcul' }))
+    expect(await screen.findByRole('dialog', { name: 'Remplacer le calcul' })).toBeVisible()
+  })
+
+  it('des chiffres jamais saisis laissent le formulaire', async () => {
+    const lectures = lecturesExemple()
+    const demandes = lectures.indicateurs.find((ligne) => ligne.libelle === 'Demandes reçues')
+    const calcul = lectures.indicateurs.find(
+      (ligne) => ligne.libelle === 'Taux de demandes traitées',
+    )
+    const ecritures = ecrituresDe({
+      termes: vi.fn(() =>
+        Promise.resolve([
+          { calcul_id: calcul?.id ?? '', source_id: demandes?.id ?? '', role: 'bas' as const },
+        ]),
+      ),
+    })
+    const utilisateur = afficher(ID_COMMUNICATION, ecritures)
+    await utilisateur.click(bouton('Corriger « Taux de demandes traitées »'))
+    const panneau = await screen.findByRole('dialog', { name: "Corriger l'indicateur" })
+    expect(await within(panneau).findByLabelText('Ce que vous comptez')).toBeVisible()
+  })
+
+  it('si les chiffres du calcul ne se lisent pas : un message et « Réessayer »', async () => {
+    const ecritures = ecrituresDe({ termes: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const utilisateur = afficher(ID_COMMUNICATION, ecritures)
+    await utilisateur.click(bouton('Corriger « Taux de demandes traitées »'))
+    const panneau = await screen.findByRole('dialog', { name: "Corriger l'indicateur" })
+    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
+      "Le calcul n'a pas pu être lu.",
+    )
+  })
+})
+
 describe('panneau « Remplacer »', () => {
   it('un indicateur : prérempli, avec ce qu’il remplace, et ses saisies restent sous l’ancien', async () => {
     const ecritures = ecrituresDe()
@@ -560,7 +746,7 @@ describe('panneau « Remplacer »', () => {
     await utilisateur.click(bouton('Remplacer « Publications »'))
     const panneau = await screen.findByRole('dialog', { name: "Remplacer l'indicateur" })
     expect(
-      within(panneau).getByText(
+      await within(panneau).findByText(
         "Remplace « Publications » (chaque mois). Ses saisies restent sous l'ancien indicateur.",
       ),
     ).toBeVisible()
@@ -583,6 +769,63 @@ describe('panneau « Remplacer »', () => {
     expect(await screen.findByText('Indicateur remplacé.')).toBeVisible()
   })
 
+  it('une source de calcul : le panneau nomme le calcul qui part avec elle, et le message le compte', async () => {
+    const lectures = lecturesExemple()
+    const termes = termesExemple(lectures)
+    const ecritures = ecrituresDe({ termes: vi.fn(() => Promise.resolve(termes)) })
+    const utilisateur = afficher(ID_COMMUNICATION, ecritures)
+    await utilisateur.click(bouton('Remplacer « Demandes reçues »'))
+    const panneau = await screen.findByRole('dialog', { name: "Remplacer l'indicateur" })
+    expect(
+      await within(panneau).findByText(
+        "L'ancien indicateur est retiré et le nouveau prend sa place. Le calcul « Taux de demandes traitées » sera retiré aussi.",
+      ),
+    ).toBeVisible()
+    expect(ecritures.termes).toHaveBeenCalledWith({
+      sourceId: lectures.indicateurs.find((ligne) => ligne.libelle === 'Demandes reçues')?.id,
+    })
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Remplacer l'indicateur" }))
+    expect(await screen.findByText('Indicateur remplacé. 1 calcul retiré avec lui.')).toBeVisible()
+  })
+
+  it('tant que les calculs liés ne sont pas lus, le formulaire attend', async () => {
+    const attente = ecrituresDe({ termes: vi.fn(() => new Promise<never>(() => undefined)) })
+    const utilisateur = afficher(ID_COMMUNICATION, attente)
+    await utilisateur.click(bouton('Remplacer « Publications »'))
+    const enAttente = await screen.findByRole('dialog', { name: "Remplacer l'indicateur" })
+    expect(within(enAttente).getByText('Lecture des calculs liés.')).toBeVisible()
+    expect(within(enAttente).queryByLabelText('Ce que vous comptez')).not.toBeInTheDocument()
+  })
+
+  it('une lecture des calculs liés ratée le dit, avec « Réessayer »', async () => {
+    const ecritures = ecrituresDe({ termes: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const utilisateur = afficher(ID_COMMUNICATION, ecritures)
+    await utilisateur.click(bouton('Remplacer « Publications »'))
+    const panneau = await screen.findByRole('dialog', { name: "Remplacer l'indicateur" })
+    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
+      "Les calculs liés n'ont pas pu être lus.",
+    )
+    expect(within(panneau).getByRole('button', { name: 'Réessayer' })).toBeVisible()
+  })
+
+  it('des jours gardent leur sorte : le remplaçant n’en fait pas un simple compte', async () => {
+    const ecritures = ecrituresDe()
+    const utilisateur = afficher(ID_JEUNESSE, ecritures)
+    await utilisateur.click(bouton('Remplacer « Jours de camp »'))
+    const panneau = await screen.findByRole('dialog', { name: "Remplacer l'indicateur" })
+    const jours = await within(panneau).findByRole('radio', {
+      name: "Un nombre de jours (comme l'ancien indicateur)",
+    })
+    expect(jours).toBeChecked()
+    expect(within(panneau).getByRole('radio', { name: /Un compte/ })).not.toBeChecked()
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Remplacer l'indicateur" }))
+    await waitFor(() => expect(ecritures.ajouter).toHaveBeenCalledTimes(1))
+    expect(ecritures.ajouter.mock.calls[0]?.[1]).toMatchObject({
+      libelle: 'Jours de camp',
+      unite: 'jours',
+    })
+  })
+
   it('un calcul : ses deux chiffres sont relus, puis préremplis', async () => {
     const lectures = lecturesExemple()
     const termes = termesExemple(lectures)
@@ -595,8 +838,12 @@ describe('panneau « Remplacer »', () => {
     )
     expect(within(panneau).getByLabelText('Chiffre du bas')).toHaveDisplayValue('Demandes reçues')
     expect(within(panneau).getByRole('radio', { name: 'En pourcentage' })).toBeChecked()
+    // La part est celle de l'ancien calcul : la base la reprend, le panneau ne la propose pas.
+    expect(within(panneau).queryByRole('checkbox', { name: /C'est une part/ })).toBeNull()
+    expect(within(panneau).getByText(/Un taux qui était une part le reste\./)).toBeVisible()
     await utilisateur.click(within(panneau).getByRole('button', { name: 'Remplacer le calcul' }))
     await waitFor(() => expect(ecritures.ajouterCalcul).toHaveBeenCalledTimes(1))
+    expect(ecritures.ajouterCalcul.mock.calls[0]?.[1]).not.toHaveProperty('part')
     expect(ecritures.ajouterCalcul.mock.calls[0]?.[2]).toBe(
       lectures.indicateurs.find((ligne) => ligne.libelle === 'Taux de demandes traitées')?.id,
     )

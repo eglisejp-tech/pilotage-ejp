@@ -7,6 +7,7 @@ import {
 } from '@/data/indicateursEcriture'
 import type { LigneTerme } from '@/data/indicateursEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
+import { CaseACocher } from '@/features/indicateurs/configuration/panneaux/CaseACocher'
 import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
 import { normaliser } from '@/features/indicateurs/configuration/normaliser'
 import {
@@ -20,6 +21,7 @@ import { ChampListe } from '@/features/indicateurs/configuration/panneaux/ChampL
 import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/panneaux/ChangeEtResteIdentique'
 import { ChoixRadios } from '@/features/indicateurs/configuration/panneaux/ChoixRadios'
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
+import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import {
@@ -35,7 +37,6 @@ import {
   useTermes,
   useVerificationLibelle,
 } from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
-import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import type { TypeCalcul } from '@/lib/base'
 
 interface Props {
@@ -50,6 +51,8 @@ interface Brouillon {
   type: TypeCalcul | ''
   hautId: string
   basId: string
+  /** P49 : à l'ajout seulement. Un remplacement reprend la part du calcul remplacé (la base). */
+  part: boolean
 }
 
 const textes = TEXTES_PANNEAUX.calcul
@@ -61,7 +64,7 @@ const OPTIONS_TYPE = (['taux', 'moyenne'] as const).map((valeur) => ({
 
 function brouillonDe(remplace: LigneConfiguration | undefined, termes: LigneTerme[]): Brouillon {
   if (remplace === undefined) {
-    return { libelle: '', definition: '', type: '', hautId: '', basId: '' }
+    return { libelle: '', definition: '', type: '', hautId: '', basId: '', part: false }
   }
   const source = (role: LigneTerme['role']) =>
     termes.find((terme) => terme.role === role)?.source_id ?? ''
@@ -71,6 +74,7 @@ function brouillonDe(remplace: LigneConfiguration | undefined, termes: LigneTerm
     type: remplace.calcul === 'moyenne' ? 'moyenne' : 'taux',
     hautId: source('haut'),
     basId: source('bas'),
+    part: false,
   }
 }
 
@@ -95,8 +99,20 @@ export function FormulaireCalcul({ controleur, remplace }: Props) {
     )
   }
   if (remplace === undefined && !calculPossible(controleur.sources)) {
-    // Le lien « Retour » du panneau suffit pour revenir : aucun second bouton.
-    return <p className="leading-normal text-encre-2">{textes.pasAssezDeSources}</p>
+    // Le lien « Retour » du panneau suffit pour revenir ; le bouton mène à ce qui manque.
+    return (
+      <div className="flex flex-col items-start gap-4">
+        <p className="leading-normal text-encre-2">{textes.pasAssezDeSources}</p>
+        <p className="leading-normal text-encre-2">{textes.pasAssezDeSourcesSuite}</p>
+        <button
+          type="button"
+          onClick={() => controleur.ouvrir({ genre: 'ajout' })}
+          className="inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
+        >
+          {TEXTES_PANNEAUX.actions.ajouterIndicateur}
+        </button>
+      </div>
+    )
   }
   return <CorpsCalcul controleur={controleur} remplace={remplace} termes={termes.data ?? []} />
 }
@@ -164,7 +180,12 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
     evenement.preventDefault()
     if (occupe.current) return
     setRefus(null)
-    const lu = schemaCalcul.safeParse(brouillon)
+    const { part, ...saisi } = brouillon
+    // La part se pose à la création et ne change plus : un remplacement ne l'envoie pas, la base
+    // reprend celle de l'ancien calcul. Un calcul en moyenne n'est jamais une part.
+    const lu = schemaCalcul.safeParse(
+      remplace === undefined ? { ...saisi, part: part && brouillon.type === 'taux' } : saisi,
+    )
     if (!lu.success) {
       setErreurs(erreursParChamp(lu.error))
       setEssais((precedent) => precedent + 1)
@@ -254,6 +275,14 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
           onChange={(valeur) => changer('type', valeur)}
           erreur={erreurs.type}
         />
+        {remplace === undefined && brouillon.type === 'taux' ? (
+          <CaseACocher
+            libelle={textes.part}
+            coche={brouillon.part}
+            onChange={(coche) => changer('part', coche)}
+            note={textes.partNote}
+          />
+        ) : null}
         <ApercuDeSaisie
           titre={textes.apercu}
           texte={apercuCalcul(brouillon.type === '' ? null : brouillon.type, haut?.unite)}
@@ -269,6 +298,7 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
           enCours={enCours}
           libelleEnCours={TEXTES_PANNEAUX.enCours}
         />
+        {refus !== null ? <ErreurEnvoi message={refus} /> : null}
         <button
           type="button"
           onClick={fermer}
@@ -276,7 +306,6 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
         >
           {TEXTES_PANNEAUX.annuler}
         </button>
-        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
       </form>
     </>
   )

@@ -89,6 +89,44 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await expect(page.getByRole('radio', { name: 'Des euros' })).toBeDisabled()
   })
 
+  test('un mot sensible dans la définition : l’avertissement et la confirmation', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Ajouter un indicateur').click()
+    await remplirAjout(page, 'Annonces', 'Annonces faites aux enfants.', /Chaque mois/)
+    await expect(page.getByText(/Ce chiffre semble sensible/)).toBeVisible()
+    // Sans confirmation, la base refuse l'envoi et le dit sous le bouton.
+    await bouton(page, "Ajouter l'indicateur").click()
+    await expect(page.getByRole('alert')).toContainText('Ce chiffre semble sensible')
+    await page.getByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }).check()
+    await bouton(page, "Ajouter l'indicateur").click()
+    await expect(page.getByText('Indicateur ajouté.')).toBeVisible()
+  })
+
+  test('remplacer la source d’un calcul : le panneau nomme le calcul qui part avec elle', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await page.getByRole('button', { name: 'Remplacer « Demandes reçues »' }).click()
+    await expect(
+      page.getByText(
+        "L'ancien indicateur est retiré et le nouveau prend sa place. Le calcul « Taux de demandes traitées » sera retiré aussi.",
+      ),
+    ).toBeVisible()
+    await page.getByLabel('Ce que vous comptez').fill('Demandes reçues par mail')
+    await bouton(page, "Remplacer l'indicateur").click()
+    await expect(page.getByText('Indicateur remplacé. 1 calcul retiré avec lui.')).toBeVisible()
+  })
+
+  test('remplacer des jours : la sorte « jours » est gardée', async ({ page }) => {
+    await ouvrir(page, { vue: 'jeunesse' })
+    await page.getByRole('button', { name: 'Remplacer « Jours de camp »' }).click()
+    await expect(
+      page.getByRole('radio', { name: "Un nombre de jours (comme l'ancien indicateur)" }),
+    ).toBeChecked()
+  })
+
   test('corriger un indicateur jamais saisi, puis le remplacer', async ({ page }) => {
     await ouvrir(page)
     await expect(page.getByRole('button', { name: 'Corriger « Publications »' })).toHaveCount(0)
@@ -159,11 +197,43 @@ test.describe('ajouter un calcul', () => {
     await expect(page.getByText('Choisissez un taux ou une moyenne.')).toBeVisible()
   })
 
-  test('une fiche qui n’a pas deux chiffres qui se calculent ensemble le dit', async ({ page }) => {
+  test('une fiche qui n’a pas deux chiffres qui se calculent ensemble le dit et mène à l’ajout', async ({
+    page,
+  }) => {
     await ouvrir(page, { vue: 'eagles' })
     await bouton(page, 'Ajouter un calcul').click()
     await expect(page.getByText(/Un calcul demande deux indicateurs saisis, actifs/)).toBeVisible()
     await expect(page.getByLabel('Nom du calcul')).toHaveCount(0)
+    await expect(
+      page.getByText('Ajoutez un indicateur, puis revenez ajouter le calcul.'),
+    ).toBeVisible()
+    // Le bouton de la page et celui du panneau portent le même nom : le panneau vient en dernier.
+    await bouton(page, 'Ajouter un indicateur').last().click()
+    await expect(titre(page, 'Ajouter un indicateur')).toBeVisible()
+    await expect(page.getByLabel('Ce que vous comptez')).toBeVisible()
+  })
+
+  test('la case « part » (P49) n’existe que pour un taux', async ({ page }) => {
+    await ouvrir(page)
+    await bouton(page, 'Ajouter un calcul').click()
+    const part = page.getByRole('checkbox', { name: /C'est une part/ })
+    await expect(part).toHaveCount(0)
+    await page.getByRole('radio', { name: 'En pourcentage' }).check()
+    await expect(part).toBeVisible()
+    await page.getByRole('radio', { name: 'En moyenne' }).check()
+    await expect(part).toHaveCount(0)
+  })
+
+  test('corriger un calcul dont un chiffre est saisi : le panneau le dit et propose de le remplacer', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await page.getByRole('button', { name: 'Corriger « Taux de demandes traitées »' }).click()
+    await expect(titre(page, "Corriger l'indicateur")).toBeVisible()
+    await expect(page.getByText(/Ce calcul a déjà des valeurs/)).toBeVisible()
+    await expect(page.getByLabel('Ce que vous comptez')).toHaveCount(0)
+    await bouton(page, 'Remplacer le calcul').click()
+    await expect(titre(page, 'Remplacer le calcul')).toBeVisible()
   })
 
   test('remplacer un calcul relit ses deux chiffres', async ({ page }) => {
@@ -344,6 +414,8 @@ test.describe('accessibilité et petits écrans', () => {
 
     await page.getByRole('button', { name: 'Remplacer « Publications »' }).click()
     await expect(titre(page, "Remplacer l'indicateur")).toBeVisible()
+    // Les calculs liés sont lus d'abord : le formulaire vient après.
+    await expect(page.getByLabel('Ce que vous comptez')).toBeVisible()
     await apres('remplacer')
     await bouton(page, 'Annuler').click()
 
@@ -438,7 +510,7 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
       fullPage: true,
     })
   await ouvrir(page)
-  await capturer('ministere')
+  await capturer('page')
   await bouton(page, 'Ajouter un indicateur').click()
   await expect(titre(page, 'Ajouter un indicateur')).toBeVisible()
   await capturer('ajout')
@@ -473,4 +545,82 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await capturer('calcul-impossible')
   await ouvrir(page, { vue: 'protocole' })
   await capturer('protocole')
+  // Corriger un calcul dont un chiffre est saisi : le panneau le dit, sans formulaire.
+  await ouvrir(page)
+  await page.getByRole('button', { name: 'Corriger « Taux de demandes traitées »' }).click()
+  await expect(page.getByText(/Ce calcul a déjà des valeurs/)).toBeVisible()
+  await capturer('corriger-calcul-saisi')
+  // Remplacer une source de calcul : le calcul qui part avec elle est nommé.
+  await ouvrir(page)
+  await page.getByRole('button', { name: 'Remplacer « Demandes reçues »' }).click()
+  await expect(page.getByText(/sera retiré aussi/)).toBeVisible()
+  await capturer('remplacer-source')
 })
+
+// Les états d'erreur de l'envoi : le refus de la base (`envoi=refus`) et la connexion perdue
+// (`envoi=echec`), dans un panneau (ajout) et dans les deux fenêtres de retrait.
+for (const envoi of ['refus', 'echec'] as const) {
+  test(
+    `captures des erreurs d’envoi (${envoi}) en 1440, 834 et 390 px`,
+    {
+      tag: '@captures',
+    },
+    async ({ page }) => {
+      test.setTimeout(180_000)
+      const largeur = page.viewportSize()?.width ?? 0
+      const capturer = (nom: string) =>
+        page.screenshot({
+          path: `test-results/captures/indicateurs-panneaux-${nom}-${envoi}-${largeur}.png`,
+          fullPage: true,
+        })
+      await ouvrir(page, { envoi })
+      await bouton(page, 'Ajouter un indicateur').click()
+      await remplirAjout(page, 'Tournages', 'Tournages réalisés dans le mois.', /Chaque mois/)
+      await bouton(page, "Ajouter l'indicateur").click()
+      await expect(page.getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alert')).toBeInViewport()
+      await capturer('ajout')
+      await bouton(page, 'Annuler').click()
+      await page.getByRole('button', { name: 'Retirer « Publications »' }).click()
+      const fenetre = page.getByRole('alertdialog')
+      await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()
+      await fenetre.getByRole('button', { name: "Retirer l'indicateur" }).click()
+      await expect(fenetre.getByRole('alert')).toBeVisible()
+      await capturer('retirer')
+      await fenetre.getByRole('button', { name: 'Annuler' }).click()
+      await page
+        .getByRole('button', { name: 'Retirer pour confidentialité « Publications »' })
+        .click()
+      await page
+        .getByRole('alertdialog')
+        .getByRole('button', { name: 'Retirer pour confidentialité' })
+        .click()
+      await expect(page.getByRole('alertdialog').getByRole('alert')).toBeVisible()
+      await capturer('confidentialite')
+    },
+  )
+}
+
+// Les profils sans accès à la page : la même page non disponible, aux trois largeurs.
+test(
+  'captures de la page non disponible (ministère, berger, conseil)',
+  {
+    tag: '@captures',
+  },
+  async ({ page }) => {
+    const largeur = page.viewportSize()?.width ?? 0
+    for (const profil of ['ministere', 'berger', 'conseil']) {
+      await ouvrir(page, { profil })
+      await expect(
+        page.getByRole('heading', {
+          level: 1,
+          name: "Cette page n'est pas disponible avec votre compte.",
+        }),
+      ).toBeVisible()
+      await page.screenshot({
+        path: `test-results/captures/indicateurs-panneaux-non-disponible-${profil}-${largeur}.png`,
+        fullPage: true,
+      })
+    }
+  },
+)

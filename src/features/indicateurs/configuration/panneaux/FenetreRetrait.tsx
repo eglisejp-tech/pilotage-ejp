@@ -2,9 +2,11 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { MOTIFS_RETRAIT, schemaMotifRetrait } from '@/data/indicateursEcriture'
 import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
+import { calculsQuiPartent } from '@/features/indicateurs/configuration/panneaux/apercu'
 import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/panneaux/ChangeEtResteIdentique'
 import { ChoixRadios } from '@/features/indicateurs/configuration/panneaux/ChoixRadios'
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
+import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
 import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux/EtatLectureTermes'
 import { lireRefusEcriture } from '@/features/indicateurs/configuration/panneaux/refus'
 import {
@@ -14,7 +16,6 @@ import {
   TEXTES_PANNEAUX,
 } from '@/features/indicateurs/configuration/panneaux/textes'
 import { useTermes } from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
-import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 import type { MotifRetraitChoisi } from '@/lib/base'
 
@@ -65,11 +66,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
   // Les calculs qui se servent de cet indicateur partent avec lui : la fenêtre les nomme.
   const termes = useTermes(ecritures, { sourceId: ligne.id }, ligne.calcul === null)
   const pret = ligne.calcul !== null || termes.isSuccess
-  const libellesCalculs = (termes.data ?? [])
-    .map((terme) => calculs.find((calcul) => calcul.id === terme.calcul_id)?.libelle)
-    .filter((libelle): libelle is string => libelle !== undefined)
-  const uniques = [...new Set(libellesCalculs)]
-  const phraseCalculs = phraseCalculsLies(uniques)
+  const phraseCalculs = phraseCalculsLies(calculsQuiPartent(termes.data ?? [], calculs))
 
   const texte = confidentialite
     ? TEXTES_PANNEAUX.confidentialite.texte
@@ -120,7 +117,10 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
         tabIndex={-1}
         className="relative flex max-h-full w-full max-w-[520px] flex-col gap-5 overflow-y-auto border border-filet bg-papier p-6 outline-hidden"
       >
-        <h2 id={idTitre} className="font-lecture text-[28px] leading-tight font-medium">
+        <h2
+          id={idTitre}
+          className="font-lecture text-[28px] leading-tight font-medium text-balance"
+        >
           {confidentialite
             ? TEXTES_PANNEAUX.confidentialite.titre(ligne.libelle)
             : TEXTES_PANNEAUX.retrait.titre(ligne.libelle)}
@@ -174,6 +174,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
                 : TEXTES_PANNEAUX.retrait.resteIdentique
             }
           />
+          {refus !== null ? <ErreurEnvoi message={refus} /> : null}
           <div className="flex flex-col-reverse gap-2 min-[480px]:flex-row min-[480px]:justify-end">
             <button
               type="button"
@@ -197,7 +198,6 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
                   : TEXTES_PANNEAUX.retrait.bouton}
             </button>
           </div>
-          {refus !== null ? <ErreurFormulaire message={refus} /> : null}
         </form>
       </div>
     </div>,

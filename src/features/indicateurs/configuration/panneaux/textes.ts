@@ -46,6 +46,11 @@ export const TEXTES_PANNEAUX = {
       grand_nombre: "Un grand compte (jusqu'à 9 999 999)",
       euros: 'Des euros',
     },
+    /** Proposé : la sorte d'un indicateur remplacé qui n'est pas dans la liste, gardée telle quelle. */
+    sorteGardeeOptions: {
+      heure: "Une heure du jour (comme l'ancien indicateur)",
+      jours: "Un nombre de jours (comme l'ancien indicateur)",
+    },
     sensible: 'Domaine sensible (santé, accompagnement, enfants)',
     sensibleConsequence: 'Saisi chaque mois, mois en cours compris.',
     pasSensible: "Ce n'est pas un domaine sensible",
@@ -64,6 +69,9 @@ export const TEXTES_PANNEAUX = {
     resteIdentique:
       "Les saisies de l'ancien indicateur restent sur la fiche, sous son nom. La courbe du nouveau repart de zéro.",
     sensibleVerrouille: 'Un indicateur sensible reste sensible quand on le remplace.',
+    /** Proposé : les calculs qui se servent de l'ancien indicateur partent avec lui. */
+    lectureCalculs: 'Lecture des calculs liés.',
+    calculsIllisibles: "Les calculs liés n'ont pas pu être lus.",
   },
   calcul: {
     titre: 'Ajouter un calcul',
@@ -84,21 +92,30 @@ export const TEXTES_PANNEAUX = {
     resteIdentique: "Les deux chiffres qu'il utilise et toutes leurs saisies.",
     changeRemplacement: "L'ancien calcul est retiré et le nouveau prend sa place.",
     resteIdentiqueRemplacement:
-      "Les deux chiffres qu'ils utilisent et leurs saisies. L'ancien calcul reste sous « Retirés ».",
+      "Les deux chiffres qu'ils utilisent et leurs saisies. L'ancien calcul reste sous « Retirés ». Un taux qui était une part le reste.",
+    /** Proposé (P49) : la part se pose à la création d'un taux et ne change plus. */
+    part: "C'est une part : elle ne dépasse jamais 100 %",
+    partNote:
+      'Pour une présence, une couverture ou une participation. Si le haut dépasse le bas, la fiche affiche « Non calculé, à vérifier ». Ce choix ne se change plus ensuite.',
     /** Proposé : la fiche n'a pas deux chiffres qui se calculent ensemble. */
     pasAssezDeSources:
       "Un calcul demande deux indicateurs saisis, actifs, sans domaine sensible, qui se calculent ensemble. Cette fiche n'en a pas assez.",
+    /** Proposé : la suite de la phrase précédente, avec le bouton « Ajouter un indicateur ». */
+    pasAssezDeSourcesSuite: 'Ajoutez un indicateur, puis revenez ajouter le calcul.',
     lectureTermes: 'Lecture du calcul.',
     termesIllisibles: "Le calcul n'a pas pu être lu.",
   },
   correction: {
     titre: "Corriger l'indicateur",
     note: "Vous pouvez corriger le libellé et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur.",
+    /** Proposé : un calcul dont les chiffres ont des valeurs ne se corrige plus (la base le refuse). */
+    calculDejaSaisi:
+      "Ce calcul a déjà des valeurs : les chiffres qu'il utilise sont saisis. Pour changer son nom ou ce qu'il calcule, remplacez-le.",
     bouton: 'Enregistrer la correction',
     change: 'Le libellé et la définition.',
     resteIdentique:
       "Le rythme, la sorte de nombre et le domaine : pour les changer, remplacez l'indicateur.",
-    resteIdentiqueCalcul: 'Le type de calcul et les deux chiffres qu’il utilise.',
+    resteIdentiqueCalcul: "Le type de calcul et les deux chiffres qu'il utilise.",
   },
   retrait: {
     titre: (libelle: string) => `Retirer « ${libelle} » ?`,
@@ -126,7 +143,7 @@ export const TEXTES_PANNEAUX = {
     bouton: 'Retirer pour confidentialité',
     change:
       "Le libellé et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
-    resteIdentique: 'Les valeurs saisies : rien ne se supprime, elles ne s’affichent plus.',
+    resteIdentique: "Les valeurs saisies : rien ne se supprime, elles ne s'affichent plus.",
   },
 } as const
 
@@ -148,6 +165,13 @@ export const REUSSITES_INDICATEURS = {
   correction: 'Correction enregistrée.',
   confidentialite: 'Indicateur retiré pour confidentialité.',
 } as const
+
+/** « Indicateur remplacé. », avec les calculs qui sont partis avec l'ancien (lus avant l'envoi). */
+export function reussiteRemplacement(calculsRetires: number): string {
+  return calculsRetires > 0
+    ? `${REUSSITES_INDICATEURS.remplacement} ${calculsRetires} ${accorder(calculsRetires, 'calcul retiré', 'calculs retirés')} avec lui.`
+    : REUSSITES_INDICATEURS.remplacement
+}
 
 /** « Indicateur retiré, ses saisies restent sur la fiche. » ou, sans saisie, « Indicateur retiré. » */
 export function reussiteRetrait(sansSaisie: boolean, calculsRetires: number): string {

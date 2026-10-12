@@ -13,8 +13,15 @@ export interface ProprietesActionsLigne {
   profil: TypeCompte
 }
 
-const classeAction =
-  'inline-flex min-h-cible items-center px-2 text-[15px] font-semibold text-encre underline underline-offset-4'
+const classeBase =
+  'inline-flex min-h-cible items-center px-2 text-[15px] font-semibold underline underline-offset-4'
+const classeAction = `${classeBase} text-encre`
+
+/**
+ * « Retirer pour confidentialité » est définitif : sous 600 px il a sa propre ligne, loin de
+ * « Retirer », et il garde la couleur d'alerte (le mot reste le premier signe, jamais la couleur).
+ */
+const classeDefinitive = `${classeBase} basis-full text-alerte min-[600px]:basis-auto`
 
 type GenreLigne = Extract<
   PanneauOuvert['genre'],
@@ -39,14 +46,14 @@ export const ActionsLigne: FunctionComponent<ProprietesActionsLigne> = ({ ligne 
     { genre: 'confidentialite', libelle: TEXTES_PANNEAUX.actions.retirerConfidentialite },
   ]
   return (
-    <div className="flex flex-wrap gap-x-1 min-[600px]:justify-end">
+    <div className="flex flex-wrap gap-x-1 gap-y-2 min-[600px]:justify-end">
       {actions.map((action) => (
         <button
           key={action.genre}
           type="button"
           aria-label={nomAction(action.libelle, ligne.libelle)}
           onClick={() => controleur.ouvrir({ genre: action.genre, ligne })}
-          className={classeAction}
+          className={action.genre === 'confidentialite' ? classeDefinitive : classeAction}
         >
           {action.libelle}
         </button>

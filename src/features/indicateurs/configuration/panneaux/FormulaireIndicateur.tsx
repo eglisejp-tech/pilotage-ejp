@@ -6,17 +6,23 @@ import {
   LONGUEUR_LIBELLE_MAX,
   schemaAjout,
   UNITES_CHOISIES,
+  UNITES_GARDEES,
 } from '@/data/indicateursEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { CLES_CONFIGURATION } from '@/features/indicateurs/configuration/cles'
 import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
 import { normaliser } from '@/features/indicateurs/configuration/normaliser'
-import { apercuSaisie } from '@/features/indicateurs/configuration/panneaux/apercu'
+import {
+  apercuSaisie,
+  calculsQuiPartent,
+} from '@/features/indicateurs/configuration/panneaux/apercu'
 import { CaseACocher } from '@/features/indicateurs/configuration/panneaux/CaseACocher'
 import { ChampIndicateur } from '@/features/indicateurs/configuration/panneaux/ChampIndicateur'
 import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/panneaux/ChangeEtResteIdentique'
 import { ChoixRadios } from '@/features/indicateurs/configuration/panneaux/ChoixRadios'
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
+import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux/EtatLectureTermes'
+import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import { ApercuDeSaisie } from '@/features/indicateurs/configuration/panneaux/ApercuDeSaisie'
@@ -25,11 +31,15 @@ import {
   lireRefusEcriture,
 } from '@/features/indicateurs/configuration/panneaux/refus'
 import {
+  phraseCalculsLies,
   REUSSITES_INDICATEURS,
+  reussiteRemplacement,
   TEXTES_PANNEAUX,
 } from '@/features/indicateurs/configuration/panneaux/textes'
-import { useVerificationLibelle } from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
-import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import {
+  useTermes,
+  useVerificationLibelle,
+} from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
 import type { NatureIndicateur } from '@/lib/base'
 import { libelleRythme } from '@/lib/metier/indicateurs'
 
@@ -39,7 +49,8 @@ interface Props {
   remplace?: LigneConfiguration
 }
 
-type Unite = (typeof UNITES_CHOISIES)[number]
+type UniteGardee = (typeof UNITES_GARDEES)[number]
+type Unite = (typeof UNITES_CHOISIES)[number] | UniteGardee
 
 interface Brouillon {
   libelle: string
@@ -56,10 +67,22 @@ const OPTIONS_RYTHME = (['dimanche', 'mois', 'a_ce_jour'] as const).map((valeur)
   valeur,
   libelle: textes.quandOptions[valeur],
 }))
-const OPTIONS_SORTE = UNITES_CHOISIES.map((valeur) => ({
-  valeur,
-  libelle: textes.sorteOptions[valeur],
-}))
+const OPTIONS_SORTE: readonly { valeur: Unite; libelle: string }[] = UNITES_CHOISIES.map(
+  (valeur) => ({ valeur, libelle: textes.sorteOptions[valeur] }),
+)
+
+/** La sorte de l'indicateur remplacé quand elle n'est pas dans la liste (une heure, des jours). */
+function uniteGardee(remplace: LigneConfiguration | undefined): UniteGardee | null {
+  return UNITES_GARDEES.find((unite) => unite === remplace?.unite) ?? null
+}
+
+/** Les sortes proposées : les trois du panneau, plus celle de l'ancien indicateur s'il en a une autre. */
+function optionsSorte(remplace: LigneConfiguration | undefined) {
+  const gardee = uniteGardee(remplace)
+  return gardee === null
+    ? OPTIONS_SORTE
+    : [...OPTIONS_SORTE, { valeur: gardee, libelle: textes.sorteGardeeOptions[gardee] }]
+}
 
 function brouillonDe(remplace: LigneConfiguration | undefined): Brouillon {
   if (remplace === undefined) {
@@ -72,7 +95,8 @@ function brouillonDe(remplace: LigneConfiguration | undefined): Brouillon {
       pasSensible: false,
     }
   }
-  const unite = UNITES_CHOISIES.find((choix) => choix === remplace.unite) ?? 'nombre'
+  const unite: Unite =
+    UNITES_CHOISIES.find((choix) => choix === remplace.unite) ?? uniteGardee(remplace) ?? 'nombre'
   return {
     libelle: remplace.libelle,
     definition: remplace.definition,
@@ -89,9 +113,36 @@ function brouillonDe(remplace: LigneConfiguration | undefined): Brouillon {
  * personnelles), ce qu'on compte exactement (140), quand le saisir, la sorte de nombre, la case
  * « Domaine sensible » (cochée et verrouillée pour le remplaçant d'un indicateur sensible),
  * l'aperçu de la saisie, puis ce qui change et ce qui ne change pas. Les contrôles de la base
- * s'affichent pendant la frappe ; son refus à l'envoi, sous le bouton.
+ * s'affichent pendant la frappe ; son refus à l'envoi, sous le bouton. Un remplacement lit d'abord
+ * les calculs qui se servent de l'ancien indicateur : ils partent avec lui, le panneau les nomme.
  */
 export function FormulaireIndicateur({ controleur, remplace }: Props) {
+  const { ecritures, calculs } = controleur
+  const termes = useTermes(ecritures, { sourceId: remplace?.id ?? '' }, remplace !== undefined)
+  if (remplace !== undefined && termes.data === undefined) {
+    return (
+      <EtatLectureTermes
+        enCours={termes.isPending}
+        message={TEXTES_PANNEAUX.remplacement.lectureCalculs}
+        erreur={TEXTES_PANNEAUX.remplacement.calculsIllisibles}
+        reessayer={() => void termes.refetch()}
+      />
+    )
+  }
+  return (
+    <CorpsIndicateur
+      controleur={controleur}
+      remplace={remplace}
+      calculsLies={calculsQuiPartent(termes.data ?? [], calculs)}
+    />
+  )
+}
+
+function CorpsIndicateur({
+  controleur,
+  remplace,
+  calculsLies,
+}: Props & { calculsLies: readonly string[] }) {
   const { ecritures, ministere, terminer, fermer } = controleur
   const id = useId()
   const formulaire = useRef<HTMLFormElement>(null)
@@ -122,10 +173,22 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
     (verification) =>
       verification.famille !== 'sensible' && !(verification.famille === 'doublon' && memeLibelle),
   )
-  const semblableSensible = verifications.some(
+  // La base écarte aussi un mot sensible de la définition, tant que rien n'est confirmé : la
+  // définition passe donc par le même contrôle, et seule la famille « sensible » en est gardée.
+  const verificationsDefinition = useVerificationLibelle(
+    ecritures,
+    ministere.id,
+    brouillon.definition,
+    brouillon.nature,
+  )
+  const messageSensible = [...verifications, ...verificationsDefinition].find(
     (verification) => verification.famille === 'sensible',
   )
-  const messageSensible = verifications.find((verification) => verification.famille === 'sensible')
+  const semblableSensible = messageSensible !== undefined
+  // Une confirmation ne vaut que pour l'avertissement qu'elle suit : sans lui, elle retombe.
+  if (!semblableSensible && brouillon.pasSensible) {
+    setBrouillon((precedent) => ({ ...precedent, pasSensible: false }))
+  }
 
   // Le premier champ en erreur reçoit le focus après un envoi refusé par le schéma.
   useEffect(() => {
@@ -157,7 +220,10 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
     evenement.preventDefault()
     if (occupe.current) return
     setRefus(null)
-    const lu = schemaAjout.safeParse(brouillon)
+    const lu = schemaAjout.safeParse({
+      ...brouillon,
+      pasSensible: brouillon.pasSensible && semblableSensible,
+    })
     if (!lu.success) {
       setErreurs(erreursParChamp(lu.error))
       setEssais((precedent) => precedent + 1)
@@ -169,7 +235,9 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
     try {
       await ecritures.ajouter(ministere.id, lu.data, remplace?.id ?? null)
       terminer(
-        remplace === undefined ? REUSSITES_INDICATEURS.ajout : REUSSITES_INDICATEURS.remplacement,
+        remplace === undefined
+          ? REUSSITES_INDICATEURS.ajout
+          : reussiteRemplacement(calculsLies.length),
       )
     } catch (erreur) {
       setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
@@ -236,7 +304,7 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
         />
         <ChoixRadios
           legende={textes.sorte}
-          options={OPTIONS_SORTE}
+          options={optionsSorte(remplace)}
           valeur={brouillon.unite}
           onChange={(valeur) => changer('unite', valeur)}
           erreur={erreurs.unite}
@@ -273,7 +341,9 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
           change={
             remplace === undefined
               ? textes.change(ministere.nom)
-              : TEXTES_PANNEAUX.remplacement.change
+              : [TEXTES_PANNEAUX.remplacement.change, phraseCalculsLies(calculsLies)]
+                  .filter((phrase) => phrase !== null)
+                  .join(' ')
           }
           resteIdentique={
             remplace === undefined
@@ -286,6 +356,7 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
           enCours={enCours}
           libelleEnCours={TEXTES_PANNEAUX.enCours}
         />
+        {refus !== null ? <ErreurEnvoi message={refus} /> : null}
         <button
           type="button"
           onClick={fermer}
@@ -293,7 +364,6 @@ export function FormulaireIndicateur({ controleur, remplace }: Props) {
         >
           {TEXTES_PANNEAUX.annuler}
         </button>
-        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
       </form>
     </>
   )

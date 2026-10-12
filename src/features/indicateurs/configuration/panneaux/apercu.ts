@@ -80,6 +80,8 @@ export interface SourceCalcul {
   libelle: string
   nature: NatureIndicateur
   unite: UniteIndicateur
+  /** Aucune saisie depuis l'ajout : un calcul de cette source se corrige encore. */
+  jamaisSaisi: boolean
 }
 
 /**
@@ -102,6 +104,19 @@ export function basCompatibles(
 /** Un calcul demande au moins deux sources dont l'une accepte l'autre comme bas. */
 export function calculPossible(sources: readonly SourceCalcul[]): boolean {
   return sources.some((source) => basCompatibles(sources, source.id).length > 0)
+}
+
+/**
+ * Les calculs suivis de la fiche qui se servent d'un indicateur (ses termes lus dans
+ * `indicateur_terme`) : ceux qui partent avec lui quand il est retiré ou remplacé. Chaque nom une
+ * seule fois, dans l'ordre de la fiche ; un calcul déjà retiré n'est pas suivi, donc absent.
+ */
+export function calculsQuiPartent(
+  termes: readonly { calcul_id: string }[],
+  calculs: readonly { id: string; libelle: string }[],
+): string[] {
+  const concernes = new Set(termes.map((terme) => terme.calcul_id))
+  return [...new Set(calculs.filter((calcul) => concernes.has(calcul.id)).map((c) => c.libelle))]
 }
 
 export interface EtatLimite {

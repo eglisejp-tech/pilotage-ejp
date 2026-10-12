@@ -160,7 +160,7 @@ export const TEXTES_AIDE = {
   // panneau de calcul. Les conséquences d'un choix (« Saisi chaque mois, mois en cours compris. »)
   // restent des textes visibles sous le champ.
   'indicateurs.domaine':
-    "Un chiffre de santé, d'accompagnement ou d'enfants. Seuls le ministère, le berger, le conseil et EJP Tech le voient.",
+    'Santé, accompagnement ou enfants : seuls le ministère, le berger, le conseil et EJP Tech voient ses valeurs.',
   'indicateurs.calcul':
     'Le haut est divisé par le bas. Exemple : 16 résolues (haut) sur 20 demandes (bas) donnent 80 %.',
 } as const

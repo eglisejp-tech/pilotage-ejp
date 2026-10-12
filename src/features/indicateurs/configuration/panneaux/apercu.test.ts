@@ -4,6 +4,7 @@ import {
   apercuSaisie,
   basCompatibles,
   calculPossible,
+  calculsQuiPartent,
   etatLimite,
   periodeApercu,
 } from '@/features/indicateurs/configuration/panneaux/apercu'
@@ -15,6 +16,7 @@ const source = (id: string, nature: SourceCalcul['nature']): SourceCalcul => ({
   libelle: id,
   nature,
   unite: 'nombre',
+  jamaisSaisi: false,
 })
 
 describe('apercuCalcul : des nombres d’exemple, jamais une valeur lue', () => {
@@ -157,5 +159,22 @@ describe('etatLimite : la fiche de 30 lignes', () => {
     expect(etatLimite(limites(0), false).phrase).toBe(
       'La fiche compte 0 indicateur sur 30 au plus.',
     )
+  })
+})
+
+describe('calculsQuiPartent : les calculs suivis qui se servent d’un indicateur', () => {
+  const calculs = [
+    { id: 'c1', libelle: 'Taux A' },
+    { id: 'c2', libelle: 'Taux B' },
+  ]
+
+  it('nomme chaque calcul suivi une seule fois, dans l’ordre de la fiche', () => {
+    const termes = [{ calcul_id: 'c2' }, { calcul_id: 'c1' }, { calcul_id: 'c2' }]
+    expect(calculsQuiPartent(termes, calculs)).toEqual(['Taux A', 'Taux B'])
+  })
+
+  it('ignore un calcul qui n’est plus suivi (déjà retiré) et ne nomme rien sans terme', () => {
+    expect(calculsQuiPartent([{ calcul_id: 'retire' }], calculs)).toEqual([])
+    expect(calculsQuiPartent([], calculs)).toEqual([])
   })
 })

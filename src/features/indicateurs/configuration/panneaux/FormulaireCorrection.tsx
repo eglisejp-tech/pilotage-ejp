@@ -11,6 +11,8 @@ import { normaliser } from '@/features/indicateurs/configuration/normaliser'
 import { ChampIndicateur } from '@/features/indicateurs/configuration/panneaux/ChampIndicateur'
 import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/panneaux/ChangeEtResteIdentique'
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
+import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux/EtatLectureTermes'
+import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import {
   erreursParChamp,
@@ -21,8 +23,10 @@ import {
   REUSSITES_INDICATEURS,
   TEXTES_PANNEAUX,
 } from '@/features/indicateurs/configuration/panneaux/textes'
-import { useVerificationLibelle } from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
-import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import {
+  useTermes,
+  useVerificationLibelle,
+} from '@/features/indicateurs/configuration/panneaux/useLecturesPanneaux'
 
 interface Props {
   controleur: ControleurPanneaux
@@ -37,9 +41,46 @@ const textes = TEXTES_PANNEAUX.correction
  * et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur. ». Le rythme, la
  * sorte de nombre et le domaine ne changent jamais : un changement de sens passe par un
  * remplacement. La base refuse la correction d'un chiffre qui a déjà des valeurs, d'un calcul dont
- * les sources en ont, et d'une suggestion.
+ * les sources en ont, et d'une suggestion. Pour un calcul, les sources sont lues avant : si l'une
+ * a déjà des valeurs, le panneau le dit et propose « Remplacer le calcul », sans formulaire qui
+ * ne ferait que recevoir le refus de la base.
  */
 export function FormulaireCorrection({ controleur, ligne }: Props) {
+  const { ecritures, sources } = controleur
+  const estCalcul = ligne.calcul !== null
+  const termes = useTermes(ecritures, { calculId: ligne.id }, estCalcul)
+  if (estCalcul && termes.data === undefined) {
+    return (
+      <EtatLectureTermes
+        enCours={termes.isPending}
+        message={TEXTES_PANNEAUX.calcul.lectureTermes}
+        erreur={TEXTES_PANNEAUX.calcul.termesIllisibles}
+        reessayer={() => void termes.refetch()}
+      />
+    )
+  }
+  // Une source absente de la liste (retirée, sensible) n'est pas jugée ici : la base répondra.
+  const sourcesSaisies = (termes.data ?? []).some((terme) =>
+    sources.some((source) => source.id === terme.source_id && !source.jamaisSaisi),
+  )
+  if (estCalcul && sourcesSaisies) {
+    return (
+      <div className="flex flex-col items-start gap-4">
+        <p className="leading-normal text-encre-2">{textes.calculDejaSaisi}</p>
+        <button
+          type="button"
+          onClick={() => controleur.ouvrir({ genre: 'remplacer', ligne })}
+          className="inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
+        >
+          {TEXTES_PANNEAUX.calcul.boutonRemplacement}
+        </button>
+      </div>
+    )
+  }
+  return <CorpsCorrection controleur={controleur} ligne={ligne} />
+}
+
+function CorpsCorrection({ controleur, ligne }: Props) {
   const { ecritures, ministere, terminer, fermer } = controleur
   const id = useId()
   const formulaire = useRef<HTMLFormElement>(null)
@@ -132,6 +173,7 @@ export function FormulaireCorrection({ controleur, ligne }: Props) {
           enCours={enCours}
           libelleEnCours={TEXTES_PANNEAUX.enCours}
         />
+        {refus !== null ? <ErreurEnvoi message={refus} /> : null}
         <button
           type="button"
           onClick={fermer}
@@ -139,7 +181,6 @@ export function FormulaireCorrection({ controleur, ligne }: Props) {
         >
           {TEXTES_PANNEAUX.annuler}
         </button>
-        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
       </form>
     </>
   )

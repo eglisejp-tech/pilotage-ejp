@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { fichierSession, suivreRequetesDeDonnees } from '../comptes.ts'
-import { verifierAdresseLocale } from '../installer-comptes.ts'
-import { appeler, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
+import { appeler, lire } from './outils-evenements.ts'
+import { ministereDEssai } from './outils-ministere.ts'
 
 // Panneaux de configuration des indicateurs (lot L3b, configuration-indicateurs.md, 7.2) qui
 // écrivent dans la base locale : projet « ecritures » (en série, à 1440 px, après les projets de
@@ -16,8 +15,8 @@ import { appeler, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 //   définition masqués en base, une seule ligne de journal sans texte ;
 // - EJP Tech voit « Voir la fiche » et remplace un indicateur : l'ancien est retiré (motif
 //   « Remplacé »), le nouveau le cite ;
-// - le ministère et le berger reçoivent la page non disponible, sans requête, et la base refuse
-//   leurs appels directs.
+// - le ministère, le berger et le conseil reçoivent la page non disponible, sans requête, et la base
+//   refuse leurs appels directs (relus avec la clé secrète locale : rien n'a changé).
 //
 // Ce parcours ne se rejoue pas sur la même base : le ministère d'essai et ses indicateurs y
 // restent. Dans la CI, le projet `ecritures` passe sur une base neuve. En local, lancez
@@ -27,30 +26,6 @@ test.describe.configure({ mode: 'serial' })
 
 const NOM_MINISTERE = 'Essai panneaux'
 let ministere = ''
-
-/** Identifiant du ministère d'essai, créé s'il n'existe pas (clé secrète de la pile locale). */
-async function ministereDEssai(nom: string): Promise<string> {
-  const url = process.env.VITE_SUPABASE_URL
-  const cleSecrete = process.env.E2E_CLE_SECRETE_LOCALE
-  if (!url || !cleSecrete) {
-    throw new Error('VITE_SUPABASE_URL et E2E_CLE_SECRETE_LOCALE manquent : voir le job « e2e ».')
-  }
-  verifierAdresseLocale(url)
-  const admin = createClient(url, cleSecrete, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  })
-  const { data: existant, error: erreurLecture } = await admin
-    .from('ministere')
-    .select('id')
-    .eq('nom', nom)
-    .maybeSingle()
-  if (erreurLecture)
-    throw new Error(`Lecture du ministère d'essai impossible (${erreurLecture.code}).`)
-  if (existant) return (existant as { id: string }).id
-  const { data, error } = await admin.from('ministere').insert({ nom }).select('id').single()
-  if (error) throw new Error(`Création du ministère d'essai impossible (${error.code}).`)
-  return (data as { id: string }).id
-}
 
 test.beforeAll(async () => {
   ministere = await ministereDEssai(NOM_MINISTERE)
@@ -103,13 +78,26 @@ async function ouvrirLeMinistere(page: Page) {
   await attendreLaFinDuChargement(page)
 }
 
-/** Ajoute un indicateur du mois par le panneau, puis attend le message et la ligne. */
-async function ajouterUnIndicateur(page: Page, libelle: string, definition: string) {
+/**
+ * Ajoute un indicateur du mois par le panneau, puis attend le message et la ligne. Un texte qui
+ * ressemble à un domaine sensible (libellé ou définition) demande la confirmation « Ce n'est pas un
+ * domaine sensible » : `confirmerPasSensible` la coche, une fois l'avertissement de la base lu.
+ */
+async function ajouterUnIndicateur(
+  page: Page,
+  libelle: string,
+  definition: string,
+  confirmerPasSensible = false,
+) {
   await page.getByRole('button', { name: 'Ajouter un indicateur', exact: true }).click()
   const panneau = page.getByRole('dialog', { name: 'Ajouter un indicateur' })
   await panneau.getByLabel('Ce que vous comptez').fill(libelle)
   await panneau.getByLabel("Ce qu'on compte exactement").fill(definition)
   await panneau.getByRole('radio', { name: /Chaque mois/ }).check()
+  if (confirmerPasSensible) {
+    await expect(panneau.getByText(/Ce chiffre semble sensible/)).toBeVisible()
+    await panneau.getByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }).check()
+  }
   await panneau.getByRole('button', { name: "Ajouter l'indicateur" }).click()
   await expect(page.getByText('Indicateur ajouté.')).toBeVisible()
   await expect(page.getByText(libelle, { exact: true })).toBeVisible()
@@ -234,11 +222,34 @@ test.describe('administration de l’église', () => {
     expect(journal[0]?.detail).toEqual({ motif: 'doublon', avec_saisies: false, calculs: 1 })
   })
 
+  test('un mot sensible dans la définition : la base demande de confirmer, la case le permet', async ({
+    page,
+  }) => {
+    await ouvrirLeMinistere(page)
+    // « enfants » est de la famille sensible : le libellé, lui, est clair.
+    await ajouterUnIndicateur(
+      page,
+      'Annonces essai',
+      'Annonces faites aux enfants dans le mois.',
+      true,
+    )
+    expect(parLibelle(await indicateursDe(page), 'Annonces essai')).toMatchObject({
+      etat: 'actif',
+      nature: 'mois',
+    })
+  })
+
   test('retirer pour confidentialité : libellé et définition masqués, une seule ligne de journal', async ({
     page,
   }) => {
     await ouvrirLeMinistere(page)
-    await ajouterUnIndicateur(page, 'Interventions essai', 'Interventions menées dans le mois.')
+    // « intervention » est de la famille sensible : le libellé demande la confirmation.
+    await ajouterUnIndicateur(
+      page,
+      'Interventions essai',
+      'Interventions menées dans le mois.',
+      true,
+    )
     await page
       .getByRole('button', { name: 'Retirer pour confidentialité « Interventions essai »' })
       .click()
@@ -295,21 +306,22 @@ test.describe('EJP Tech', () => {
         "Remplace « Résolues essai » (chaque mois). Ses saisies restent sous l'ancien indicateur.",
       ),
     ).toBeVisible()
-    await panneau.getByLabel('Ce que vous comptez').fill('Résolues essai par semaine')
+    // Aucun mot de période dans le libellé : le rythme se choisit plus bas.
+    await panneau.getByLabel('Ce que vous comptez').fill('Résolues essai bis')
     await panneau.getByRole('radio', { name: /Chaque dimanche/ }).check()
     await panneau.getByRole('button', { name: "Remplacer l'indicateur" }).click()
     await expect(page.getByText('Indicateur remplacé.')).toBeVisible()
 
     const lignes = await indicateursDe(page)
     const ancien = parLibelle(lignes, 'Résolues essai')
-    const nouveau = parLibelle(lignes, 'Résolues essai par semaine')
+    const nouveau = parLibelle(lignes, 'Résolues essai bis')
     expect(ancien).toMatchObject({ etat: 'retire', retrait_motif: 'remplace' })
     expect(nouveau).toMatchObject({ etat: 'actif', nature: 'dimanche', remplace_id: ancien?.id })
   })
 })
 
-test.describe('le ministère et le berger', () => {
-  for (const profil of ['ministere', 'berger'] as const) {
+test.describe('le ministère, le berger et le conseil', () => {
+  for (const profil of ['ministere', 'berger', 'conseil'] as const) {
     test.describe(profil, () => {
       test.use({ storageState: fichierSession(profil) })
 
@@ -330,11 +342,25 @@ test.describe('le ministère et le berger', () => {
         expect(requetes.filter((chemin) => chemin !== '/rest/v1/compte')).toEqual([])
       })
 
-      test('la base refuse leurs appels directs, rien n’est écrit', async ({ page }) => {
+      test('la base refuse leurs appels directs, rien n’est écrit', async ({ page, browser }) => {
         await page.goto('/')
-        const avant = (await indicateursDe(page)).length
+        // Le berger lit toutes les fiches : il relit le ministère d'essai avant et après, car un
+        // ministère ne voit pas la fiche d'un autre (0 = 0 ne prouverait rien).
+        const indicateursVusParLeBerger = async () => {
+          const contexte = await browser.newContext({ storageState: fichierSession('berger') })
+          try {
+            const pageBerger = await contexte.newPage()
+            await pageBerger.goto('/')
+            return await indicateursDe(pageBerger)
+          } finally {
+            await contexte.close()
+          }
+        }
+        const avant = await indicateursVusParLeBerger()
+        const cible = avant.find((ligne) => ligne.etat === 'actif')
+        if (cible === undefined) throw new Error('Le ministère d’essai n’a aucun indicateur actif.')
         const ajout = await appeler(page, 'creer_indicateur', {
-          p_ministere_id: MINISTERE_COMMUNICATION,
+          p_ministere_id: ministere,
           p_libelle: 'Tentative directe',
           p_definition: 'Tentative directe depuis un profil sans droit.',
           p_nature: 'mois',
@@ -345,11 +371,14 @@ test.describe('le ministère et le berger', () => {
         })
         expect(ajout.status()).toBe(403)
         const retrait = await appeler(page, 'retirer_indicateur', {
-          p_indicateur_id: '20000000-0000-4000-8000-0000000000aa',
+          p_indicateur_id: cible.id,
           p_motif: 'confidentialite',
         })
         expect(retrait.status()).toBe(403)
-        expect((await indicateursDe(page)).length).toBe(avant)
+        const apres = await indicateursVusParLeBerger()
+        expect(apres).toHaveLength(avant.length)
+        expect(apres.some((ligne) => ligne.libelle === 'Tentative directe')).toBe(false)
+        expect(apres.find((ligne) => ligne.id === cible.id)).toEqual(cible)
       })
     })
   }

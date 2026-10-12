@@ -30,7 +30,7 @@ import type { SourceCalcul } from '@/features/indicateurs/configuration/panneaux
 import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
 import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
-import { estPeuSaisi } from '@/features/indicateurs/configuration/usage'
+import { estJamaisSaisi, estPeuSaisi } from '@/features/indicateurs/configuration/usage'
 import type { TypeCompte } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
 import { trierIndicateurs } from '@/lib/metier/indicateurs'
@@ -233,7 +233,13 @@ export function construireMinistere(
         (indicateur) =>
           indicateur.calcul === null && !indicateur.sensible && indicateur.etat === 'actif',
       ),
-    ).map(({ id, libelle, nature, unite }) => ({ id, libelle, nature, unite })),
+    ).map(({ id, libelle, nature, unite }) => ({
+      id,
+      libelle,
+      nature,
+      unite,
+      jamaisSaisi: estJamaisSaisi(usage.get(id)),
+    })),
     sections: construireSections(siens, usage, ministere.nom, { suggestions }),
     retires: construireRetires(siens),
     sansIndicateur: suivis.length === 0,

@@ -82,8 +82,13 @@ describe('schemaAjout : les bornes de la base avant l’appel', () => {
   it('le rythme et la sorte se choisissent ; hors liste, le message de la base', () => {
     const sansRythme = schemaAjout.safeParse({ ...ajout, nature: '' })
     expect(sansRythme.error?.issues[0]?.message).toBe(MESSAGES_ECRITURE.rythme)
-    const sansSorte = schemaAjout.safeParse({ ...ajout, unite: 'jours' })
+    const sansSorte = schemaAjout.safeParse({ ...ajout, unite: 'litres' })
     expect(sansSorte.error?.issues[0]?.message).toBe(MESSAGES_ECRITURE.sorte)
+  })
+
+  it('une heure ou des jours (remplaçant d’un tel indicateur) gardent leur sorte', () => {
+    expect(schemaAjout.safeParse({ ...ajout, unite: 'heure' }).success).toBe(true)
+    expect(schemaAjout.safeParse({ ...ajout, unite: 'jours' }).success).toBe(true)
   })
 
   it('un domaine sensible se saisit chaque mois, en compte simple', () => {
@@ -198,7 +203,7 @@ describe('ajouterIndicateur', () => {
 })
 
 describe('ajouterCalcul', () => {
-  it('envoie le type et les deux chiffres, sans part', async () => {
+  it('envoie le type et les deux chiffres ; sans part, la base reprend celle du calcul remplacé', async () => {
     installerRpc({ data: INDICATEUR, error: null })
     await ajouterCalcul({
       libelle: 'Taux de résolution',
@@ -214,7 +219,40 @@ describe('ajouterCalcul', () => {
       p_haut_id: INDICATEUR,
       p_bas_id: AUTRE,
       p_remplace_id: null,
+      p_part: null,
     })
+  })
+
+  it('une part (P49) se pose à la création d’un taux', async () => {
+    installerRpc({ data: INDICATEUR, error: null })
+    const taux = {
+      libelle: 'Taux de présence',
+      definition: 'Présents sur attendus.',
+      type: 'taux' as const,
+      hautId: INDICATEUR,
+      basId: AUTRE,
+    }
+    await ajouterCalcul({ ...taux, part: true })
+    expect(rpc.mock.calls[0]?.[1]).toMatchObject({ p_part: true })
+    await ajouterCalcul({ ...taux, part: false })
+    expect(rpc.mock.calls[1]?.[1]).toMatchObject({ p_part: false })
+  })
+
+  it('une moyenne ne peut pas être une part : refusé avant tout appel', () => {
+    installerRpc({ data: INDICATEUR, error: null })
+    const lu = schemaCalcul.safeParse({
+      libelle: 'Panier',
+      definition: 'Dons sur donateurs.',
+      type: 'moyenne',
+      hautId: INDICATEUR,
+      basId: AUTRE,
+      part: true,
+    })
+    expect(lu.error?.issues[0]).toMatchObject({
+      path: ['part'],
+      message: MESSAGES_ECRITURE.partTaux,
+    })
+    expect(rpc).not.toHaveBeenCalled()
   })
 
   it('un calcul sur deux fois le même chiffre n’atteint jamais la base', async () => {

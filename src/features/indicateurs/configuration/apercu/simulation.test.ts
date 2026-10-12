@@ -90,6 +90,45 @@ describe('ajouterSimule', () => {
     })
   })
 
+  it('remplacer la source d’un calcul retire le calcul avec elle (source retirée), comme la base', () => {
+    const courant = etat()
+    const source = idDe(courant, 'Demandes reçues')
+    const calcul = idDe(courant, 'Taux de demandes traitées')
+    const suivant = ajouterSimule(
+      courant,
+      ID_COMMUNICATION,
+      { ...ajout, libelle: 'Demandes reçues par mail' },
+      source,
+      MAINTENANT,
+    )
+    expect(ligneDe(suivant, source)).toMatchObject({ retrait_motif: 'remplace' })
+    expect(ligneDe(suivant, calcul)).toMatchObject({
+      etat: 'retire',
+      retrait_motif: 'source_retiree',
+    })
+  })
+
+  it('un mot sensible du libellé ou de la définition demande la case ou la confirmation', () => {
+    const courant = etat()
+    const refus = /Ce chiffre semble sensible/
+    expect(() =>
+      ajouterSimule(courant, ID_COMMUNICATION, { ...ajout, libelle: 'Enfants' }, null, MAINTENANT),
+    ).toThrow(refus)
+    expect(() =>
+      ajouterSimule(
+        courant,
+        ID_COMMUNICATION,
+        { ...ajout, definition: 'Annonces faites aux enfants.' },
+        null,
+        MAINTENANT,
+      ),
+    ).toThrow(refus)
+    const confirme = { ...ajout, definition: 'Annonces faites aux enfants.', pasSensible: true }
+    expect(() => ajouterSimule(courant, ID_COMMUNICATION, confirme, null, MAINTENANT)).not.toThrow()
+    const coche = { ...ajout, definition: 'Annonces faites aux enfants.', sensible: true }
+    expect(() => ajouterSimule(courant, ID_COMMUNICATION, coche, null, MAINTENANT)).not.toThrow()
+  })
+
   it('refuse l’ajout quand la fiche compte 30 indicateurs, mais pas le remplacement', () => {
     let plein = etat()
     for (let rang = 0; limitesSimulees(plein, ID_COMMUNICATION).lignes < 30; rang += 1) {
