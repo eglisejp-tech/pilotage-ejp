@@ -96,7 +96,7 @@ describe('adresses de l’étape 4', () => {
 describe('navigation par profil', () => {
   it('reprend les onglets de la maquette 00, le premier étant l’accueil', () => {
     expect(ONGLETS.ministere.map((o) => o.libelle)).toEqual([
-      'Cette semaine',
+      'Ma semaine',
       'Ma fiche',
       'Mes points',
       'Mon journal',
@@ -123,6 +123,22 @@ describe('navigation par profil', () => {
     ])
     expect(accueil('admin_plateforme')).toBe('/moderation')
     expect(accueil('ministere')).toBe('/')
+  })
+
+  it('« / » s’appelle « Ma semaine » pour le ministère, « Cette semaine » pour tous les autres (T57)', () => {
+    const accueilApplication = trouverAdresse('/')
+    expect(accueilApplication).not.toBeNull()
+    if (accueilApplication === null) return
+    expect(titrePour(accueilApplication, 'ministere')).toBe('Ma semaine')
+    for (const profil of ['berger', 'conseil', 'admin_eglise', 'admin_plateforme'] as const) {
+      expect(titrePour(accueilApplication, profil), profil).toBe('Cette semaine')
+      expect(
+        ONGLETS[profil].some((onglet) => onglet.libelle === 'Ma semaine'),
+        profil,
+      ).toBe(false)
+    }
+    // L'onglet du ministère mène toujours à la même adresse.
+    expect(ONGLETS.ministere[0]?.chemin).toBe('/')
   })
 
   it('EJP Tech lit les écrans de lecture du berger, sans ses écrans à lui (T29)', () => {

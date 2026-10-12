@@ -60,8 +60,8 @@ export const COMPTES_PROFILS: CompteTest[] = [
     profil: 'ministere',
     email: 'communication@exemple.test',
     libelle: 'Ministère Communication',
-    accueil: { chemin: '/', titre: 'Cette semaine' },
-    onglets: ['Cette semaine', 'Ma fiche', 'Mes points', 'Mon journal'],
+    accueil: { chemin: '/', titre: 'Ma semaine' },
+    onglets: ['Ma semaine', 'Ma fiche', 'Mes points', 'Mon journal'],
     adresseInterdite: '/ministeres',
   },
   {

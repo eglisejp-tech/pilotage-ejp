@@ -209,7 +209,7 @@ describe('routes', () => {
   })
 
   it.each<[TypeCompte, string, string[]]>([
-    ['ministere', 'Cette semaine', ['Cette semaine', 'Ma fiche', 'Mes points', 'Mon journal']],
+    ['ministere', 'Ma semaine', ['Ma semaine', 'Ma fiche', 'Mes points', 'Mon journal']],
     ['berger', 'Cette semaine', ['Cette semaine', 'Ministères', "Points d'attention", 'Journal']],
     ['conseil', 'Cette semaine', ['Cette semaine', 'Ministères', "Points d'attention", 'Journal']],
     [
@@ -279,6 +279,30 @@ describe('routes', () => {
     expect(document.title).toBe('Cette semaine, Pilotage EJP')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'À décider' })).toBeInTheDocument()
+  })
+
+  it('ministère sur « / » : « Ma semaine », sans les lectures de la vue du berger (T57)', async () => {
+    const faux = installerVueDeLEglise('ministere')
+    const routeur = afficher('/')
+    await waitFor(() => expect(document.title).toBe('Ma semaine, Pilotage EJP'))
+    expect(routeur.state.location.pathname).toBe('/')
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Vos chiffres de la semaine' }),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(faux.tables).toContain('v_total_dimanche'))
+    // Ni le tableau des ministères, ni les écarts de l'église, ni les totaux « à ce jour », ni le
+    // pourcentage FIJ de l'église : ces lectures sont celles du berger.
+    for (const table of [
+      'v_tableau_ministeres',
+      'v_ecart_dimanche',
+      'v_ecart_session',
+      'v_total_a_ce_jour',
+      'v_pourcentage_fij',
+    ]) {
+      expect(faux.tables, table).not.toContain(table)
+    }
+    expect(screen.queryByRole('heading', { name: 'À décider' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Les ministères' })).not.toBeInTheDocument()
   })
 
   it('EJP Tech sur « / » : la vue du berger, en lecture seule, sans aucun bouton d’action (T29)', async () => {

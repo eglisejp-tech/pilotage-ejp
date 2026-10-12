@@ -1130,3 +1130,21 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : réponse écrite de la personne responsable (8 octobre 2026), « plutôt 8 derniers dimanches »
 - **Statut** : Décidé par la personne responsable le 8 octobre 2026
 - **BRIEF** : section 9 (saisie du dimanche, 08)
+
+## Décision de la personne responsable du 12 octobre 2026 sur l'accueil d'un ministère
+
+### T57. « Ma semaine » : l'accueil d'un ministère montre ses propres chiffres
+
+- **Date** : 12 octobre 2026
+- **Sujet** : la moitié basse de « Cette semaine » est la page du berger (session détaillée par ministère, tableau « Les ministères », carte des FIJ, six chiffres de l'église). Elle ne sert pas un ministère, et ses propres chiffres de la semaine n'y étaient pas.
+- **Décision** (réponse écrite de la personne responsable, option 1 de l'étude) :
+  - Pour un compte de ministère, `/` s'appelle **« Ma semaine »** (onglet et titre de l'écran). Les autres profils gardent « Cette semaine ».
+  - Elle garde l'ouverture de 07, « Vos saisies » et « Vos points », et ajoute **« Vos chiffres de la semaine »** : ses STARs au service (écart au dimanche d'avant, courbe), ses STARs actifs, son pourcentage en FIJ (calculé), une ligne par session de la semaine où il est attendu (ses présents, écart à la session précédente du même type), ses indicateurs propres du dimanche et du mois (« Août 2026. Septembre en cours : 2 »), et, pour le seul ministère FIJ, sa carte et ses chiffres par département. Un lien « Tous vos chiffres dans Ma fiche » mène à l'historique complet.
+  - Elle garde un court encadré **« Dans l'église »** : deux totaux de l'église (STARs au service du dimanche de référence, présents à la dernière session), chacun avec sa complétude (« 6 sur 8 »). Jamais le nom, la valeur ni la complétude d'un autre ministère, jamais de classement.
+  - Elle ne montre plus aucun bloc du berger : ni session détaillée par ministère, ni tableau des ministères, ni carte des FIJ (sauf pour le ministère FIJ, dans ses chiffres), ni les six chiffres de l'église avec « Tout voir ». La page ne lit plus les lectures de la vue du berger.
+  - « Ma fiche » garde tout l'historique (sommes de l'année, calendrier, dernières saisies).
+- **Écran seulement** : aucun changement de la base ni des droits. Les totaux lisibles par tous les ministères restent lisibles (la personne responsable : « si tout le monde peut voir ça, il n'y a pas vraiment de problème »). Aucune migration.
+- **Coordination** : pas besoin de la prévenir (réponse de la personne responsable).
+- **Origine** : réponse écrite de la personne responsable (12 octobre 2026) : option 1 pour « Ma semaine », encadré « Dans l'église » gardé, l'écran d'abord et la base ensuite, sans prévenir la coordination.
+- **Statut** : Décidé par la personne responsable le 12 octobre 2026
+- **BRIEF** : section 2 (ligne du ministère), section 9 (onglets, « Vue de l'église selon le profil », « Accueil du ministère » ; code : `src/features/ma-semaine/`, `src/pages/PageMaSemaine.tsx`) ; `docs/reference/maquettes/LISEZMOI.md` (écart avec le bas de 07)

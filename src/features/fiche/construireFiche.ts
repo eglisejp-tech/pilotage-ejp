@@ -173,7 +173,17 @@ function ecartFiche(
 
 // Chiffres communs
 
-interface Contexte {
+/** Ce que lisent les trois chiffres communs du ministère (« Ma fiche » et « Ma semaine »). */
+export type LecturesCommunsMinistere = Pick<
+  LecturesFiche,
+  'semaine' | 'communs' | 'libellesCommuns' | 'mesuresCommuns'
+>
+
+interface ContexteCommuns {
+  lectures: LecturesCommunsMinistere
+}
+
+interface Contexte extends ContexteCommuns {
   lectures: LecturesFiche
   lecteur: LecteurFiche
   /** Le lecteur lit-il les valeurs exactes de la fiche ? Le ministère seul. */
@@ -182,26 +192,32 @@ interface Contexte {
   moisCourant: DateIso
 }
 
-function idCommun(lectures: LecturesFiche, code: string): string | undefined {
+function idCommun(lectures: LecturesCommunsMinistere, code: string): string | undefined {
   return lectures.communs.find((commun) => commun.code === code)?.id
 }
 
 /** Valeurs du ministère pour un commun, de la plus ancienne à la plus récente. */
-function mesuresDuCommun(lectures: LecturesFiche, code: string): LigneVue<'v_mesure_periode'>[] {
+function mesuresDuCommun(
+  lectures: LecturesCommunsMinistere,
+  code: string,
+): LigneVue<'v_mesure_periode'>[] {
   const id = idCommun(lectures, code)
   return lectures.mesuresCommuns
     .filter((mesure) => mesure.indicateur_id === id && mesure.valeur !== null)
     .sort((a, b) => (a.periode < b.periode ? -1 : a.periode > b.periode ? 1 : 0))
 }
 
-function libelleDemande(lectures: LecturesFiche, code: 'service' | 'actifs' | 'en_fij'): string {
+function libelleDemande(
+  lectures: LecturesCommunsMinistere,
+  code: 'service' | 'actifs' | 'en_fij',
+): string {
   const demande = lectures.libellesCommuns.find(
     (ligne) => ligne.commun_code === code && !ligne.reference_eglise,
   )
   return demande?.libelle ?? TEXTES_FICHE.communs[code]
 }
 
-function ligneService(contexte: Contexte): LigneCommune {
+function ligneService(contexte: ContexteCommuns): LigneCommune {
   const { lectures } = contexte
   const reference = lectures.semaine.dimanche
   const mesures = mesuresDuCommun(lectures, 'service').filter((m) => m.periode <= reference)
@@ -229,7 +245,7 @@ function ligneService(contexte: Contexte): LigneCommune {
 }
 
 /** Dernière valeur « à ce jour » d'un commun, ou undefined. */
-function derniereACeJour(lectures: LecturesFiche, code: string) {
+function derniereACeJour(lectures: LecturesCommunsMinistere, code: string) {
   return mesuresDuCommun(lectures, code).at(-1)
 }
 
@@ -249,7 +265,7 @@ function detailSaisiLe(
     : { texte, signale: false }
 }
 
-function ligneActifs(contexte: Contexte): LigneCommune {
+function ligneActifs(contexte: ContexteCommuns): LigneCommune {
   const { lectures } = contexte
   const derniere = derniereACeJour(lectures, 'actifs')
   const base = {
@@ -270,7 +286,7 @@ function ligneActifs(contexte: Contexte): LigneCommune {
   }
 }
 
-function ligneEnFij(contexte: Contexte): LigneCommune {
+function ligneEnFij(contexte: ContexteCommuns): LigneCommune {
   const { lectures } = contexte
   const actifs = derniereACeJour(lectures, 'actifs')?.valeur ?? null
   const enFij = derniereACeJour(lectures, 'en_fij')?.valeur ?? null
@@ -334,6 +350,16 @@ function ligneReference(contexte: Contexte, ligne: LigneVue<'v_commun_fiche'>): 
     detail: libelleCompletude(total.nb_saisis, total.nb_actifs),
     detailSignale: !completude(total.nb_saisis, total.nb_actifs).complet,
   }
+}
+
+/**
+ * Les trois chiffres du ministère (STARs au service avec écart et courbe, STARs actifs, STARs
+ * présents en FIJ calculé), tels que « Ma fiche » les écrit : « Ma semaine » les reprend sans les
+ * recompter.
+ */
+export function lignesCommunesDuMinistere(lectures: LecturesCommunsMinistere): LigneCommune[] {
+  const contexte: ContexteCommuns = { lectures }
+  return [ligneService(contexte), ligneActifs(contexte), ligneEnFij(contexte)]
 }
 
 function lignesCommunes(contexte: Contexte): LigneCommune[] {

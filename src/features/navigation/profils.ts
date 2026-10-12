@@ -10,8 +10,9 @@ export type Onglet = { libelle: string; chemin: string }
 
 /** Onglets de chaque profil. Le premier est l'accueil. */
 export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
+  // « Ma semaine » : l'accueil du ministère montre ses propres chiffres (décision T57).
   ministere: [
-    { libelle: 'Cette semaine', chemin: '/' },
+    { libelle: 'Ma semaine', chemin: '/' },
     { libelle: 'Ma fiche', chemin: '/ma-fiche' },
     { libelle: 'Mes points', chemin: '/points' },
     { libelle: 'Mon journal', chemin: '/journal' },

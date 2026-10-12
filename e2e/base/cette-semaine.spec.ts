@@ -11,7 +11,8 @@ import type { CompteTest } from '../comptes.ts'
 // phrases qui en sont indépendants.
 
 type Profil = CompteTest['profil']
-const PROFILS: Profil[] = ['berger', 'conseil', 'ministere', 'admin_eglise', 'admin_plateforme']
+// Le ministère a « Ma semaine » (T57) : e2e/base/accueil-ministere.spec.ts.
+const PROFILS: Profil[] = ['berger', 'conseil', 'admin_eglise', 'admin_plateforme']
 
 const phraseSemaine =
   "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
@@ -24,18 +25,6 @@ async function ouvrir(page: Page, adresse = '/') {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
   await expect(page.getByRole('alert')).toHaveCount(0)
   await page.evaluate(() => document.fonts.ready)
-}
-
-/** Ministère sous 600 px : « Tout voir » déplie les blocs de l'église. */
-async function toutVoirSiBesoin(page: Page) {
-  const bouton = page.getByRole('button', { name: 'Tout voir' })
-  if (await bouton.isVisible()) {
-    await bouton.click()
-    await expect(page.getByRole('button', { name: 'Voir moins' })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    )
-  }
 }
 
 // EJP Tech lit la même vue que le berger, en lecture seule (T29).
@@ -100,43 +89,6 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
   })
 }
 
-test.describe('ministère (Communication) : « L’église cette semaine »', () => {
-  test.use({ storageState: fichierSession('ministere') })
-
-  // L'ouverture de 07 (phrase, boutons, « Vos saisies », « Vos points ») : accueil-ministere.spec.ts.
-  test('les blocs de l’église, sans « À décider », seul son nom ouvre « Ma fiche »', async ({
-    page,
-  }, infos) => {
-    await ouvrir(page)
-    await expect(page.getByRole('heading', { level: 1 })).not.toHaveText(phraseEglise)
-    await expect(
-      page.getByRole('heading', { level: 2, name: "L'église cette semaine" }),
-    ).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'À décider' })).toHaveCount(0)
-
-    if (infos.project.name === 'telephone') {
-      await expect(
-        page.getByRole('region', { name: "L'église cette semaine" }).getByRole('listitem'),
-      ).toHaveCount(3)
-      await expect(page.getByRole('button', { name: 'Tout voir' })).toHaveAttribute(
-        'aria-expanded',
-        'false',
-      )
-      await toutVoirSiBesoin(page)
-    } else {
-      await expect(page.getByRole('button', { name: 'Tout voir' })).toHaveCount(0)
-      await expect(
-        page.getByRole('region', { name: 'Les ministères' }).getByRole('columnheader'),
-      ).toHaveText(['Ministère', 'Mise à jour', 'Prochain événement'])
-    }
-
-    const liens = page.getByRole('region', { name: 'Les ministères' }).getByRole('link')
-    await expect(liens).toHaveCount(1)
-    await expect(liens).toHaveText('Communication')
-    await expect(liens).toHaveAttribute('href', '/ma-fiche')
-  })
-})
-
 test.describe("administration de l'église : la vue de l'église, sans action", () => {
   test.use({ storageState: fichierSession('admin_eglise') })
 
@@ -160,7 +112,6 @@ for (const profil of PROFILS) {
 
     test("aucune violation d'accessibilité détectée par axe", async ({ page }) => {
       await ouvrir(page)
-      await toutVoirSiBesoin(page)
       const resultat = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze()
@@ -172,7 +123,6 @@ for (const profil of PROFILS) {
         test.skip(infos.project.name !== 'telephone', 'Largeurs de téléphone')
         await page.setViewportSize({ width: largeur, height: 800 })
         await ouvrir(page)
-        await toutVoirSiBesoin(page)
         const debordement = await page.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         )
@@ -187,13 +137,6 @@ for (const profil of PROFILS) {
         path: `test-results/captures/base-cette-semaine-${profil}-${largeur}.png`,
         fullPage: true,
       })
-      if (await page.getByRole('button', { name: 'Tout voir' }).isVisible()) {
-        await toutVoirSiBesoin(page)
-        await page.screenshot({
-          path: `test-results/captures/base-cette-semaine-${profil}-tout-voir-${largeur}.png`,
-          fullPage: true,
-        })
-      }
     })
   })
 }

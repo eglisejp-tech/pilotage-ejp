@@ -4,6 +4,13 @@ import { exempleCetteSemaine, exemplePremierDimanche } from '@/features/cette-se
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import type { DonneesCetteSemaine, ProfilVue } from '@/features/cette-semaine/types'
 import { VueCetteSemaine } from '@/features/cette-semaine/VueCetteSemaine'
+import { ChargementMaSemaine } from '@/features/ma-semaine/ChargementMaSemaine'
+import {
+  exempleFij,
+  exempleMaSemaine,
+  exemplePremierDimanche as exemplePremierDimancheMinistere,
+} from '@/features/ma-semaine/exempleMaSemaine'
+import { VueMaSemaine } from '@/features/ma-semaine/VueMaSemaine'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
 const profils: { valeur: ProfilVue; libelle: string }[] = [
@@ -14,9 +21,10 @@ const profils: { valeur: ProfilVue; libelle: string }[] = [
   { valeur: 'admin_plateforme', libelle: 'EJP Tech' },
 ]
 
-type EtatApercu = 'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'chargement' | 'erreur'
+type EtatApercu =
+  'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'fij' | 'chargement' | 'erreur'
 
-const etats: { valeur: EtatApercu; libelle: string }[] = [
+const etatsEglise: { valeur: EtatApercu; libelle: string }[] = [
   { valeur: 'semaine', libelle: 'Semaine 39' },
   { valeur: 'premier-dimanche', libelle: 'Premier dimanche' },
   { valeur: 'session-jamais-tenue', libelle: 'Rassemblement jamais tenu' },
@@ -24,12 +32,25 @@ const etats: { valeur: EtatApercu; libelle: string }[] = [
   { valeur: 'erreur', libelle: 'Erreur' },
 ]
 
+// « Ma semaine » du ministère (décision T57) : pas de rassemblement choisi, mais le ministère FIJ.
+const etatsMinistere: { valeur: EtatApercu; libelle: string }[] = [
+  { valeur: 'semaine', libelle: 'Semaine 39' },
+  { valeur: 'premier-dimanche', libelle: 'Premier dimanche' },
+  { valeur: 'fij', libelle: 'Ministère FIJ' },
+  { valeur: 'chargement', libelle: 'Chargement' },
+  { valeur: 'erreur', libelle: 'Erreur' },
+]
+
+function etatsDuProfil(profil: ProfilVue) {
+  return profil === 'ministere' ? etatsMinistere : etatsEglise
+}
+
 function lireProfil(valeur: string | null): ProfilVue {
   return profils.find((profil) => profil.valeur === valeur)?.valeur ?? 'berger'
 }
 
-function lireEtat(valeur: string | null): EtatApercu {
-  return etats.find((etat) => etat.valeur === valeur)?.valeur ?? 'semaine'
+function lireEtat(valeur: string | null, profil: ProfilVue): EtatApercu {
+  return etatsDuProfil(profil).find((etat) => etat.valeur === valeur)?.valeur ?? 'semaine'
 }
 
 /** `?session=autre` sans aucun autre rassemblement passé (T20, T22). */
@@ -60,10 +81,36 @@ const classeLien =
 export function ApercuCetteSemaine() {
   const [parametres] = useSearchParams()
   const profil = lireProfil(parametres.get('profil'))
-  const etat = lireEtat(parametres.get('etat'))
+  const etat = lireEtat(parametres.get('etat'), profil)
   const session = parametres.get('session') === 'anti-dispersion' ? 'anti_dispersion' : 'batir'
+  const etats = etatsDuProfil(profil)
+
+  function contenuMinistere() {
+    switch (etat) {
+      case 'premier-dimanche':
+        return <VueMaSemaine donnees={exemplePremierDimancheMinistere()} />
+      case 'fij':
+        return <VueMaSemaine donnees={exempleFij()} />
+      case 'chargement':
+        return <ChargementMaSemaine />
+      case 'erreur':
+        return (
+          <>
+            <h1 className="sr-only">Ma semaine</h1>
+            <ErreurDePage
+              message={TEXTES_VIDES.page.erreur}
+              libelleBouton={TEXTES_VIDES.page.reessayer}
+              onReessayer={() => undefined}
+            />
+          </>
+        )
+      default:
+        return <VueMaSemaine donnees={exempleMaSemaine()} />
+    }
+  }
 
   function contenu() {
+    if (profil === 'ministere') return contenuMinistere()
     switch (etat) {
       case 'semaine':
         return <VueCetteSemaine donnees={exempleCetteSemaine(profil, session)} />
@@ -73,6 +120,7 @@ export function ApercuCetteSemaine() {
         return <VueCetteSemaine donnees={sessionJamaisTenue(profil)} />
       case 'chargement':
         return <ChargementCetteSemaine profil={profil} />
+      case 'fij':
       case 'erreur':
         return (
           <>
