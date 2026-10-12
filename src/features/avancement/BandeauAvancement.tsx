@@ -14,7 +14,7 @@ import {
 } from '@/features/avancement/textesAvancement'
 
 const BOUTON =
-  'inline-flex min-h-cible items-center text-sm whitespace-nowrap text-encre-3 underline underline-offset-4'
+  'inline-flex min-h-cible min-w-cible items-center text-sm whitespace-nowrap text-encre-3 underline underline-offset-4'
 
 // Le remplissage des cases ne joue qu'une fois par chargement de la page.
 let remplissageJoue = false
