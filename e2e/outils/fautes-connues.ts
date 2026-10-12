@@ -30,12 +30,45 @@ function codeContient(fichier: string, texte: string): boolean {
   }
 }
 
+/** Le fichier fixe une largeur minimale de 44 px (classe `min-w-cible` ou `min-w-[44px]`). */
+function aUneLargeurMinimale(fichier: string): boolean {
+  return codeContient(fichier, 'min-w-cible') || codeContient(fichier, 'min-w-[44px]')
+}
+
+function ciblesIndicateursEnFaute(): boolean {
+  return !(
+    aUneLargeurMinimale('src/features/indicateurs/configuration/TableauIndicateurs.tsx') &&
+    aUneLargeurMinimale('src/features/indicateurs/configuration/ListeIndicateursTelephone.tsx')
+  )
+}
+
+function bandeauEnFaute(): boolean {
+  return !aUneLargeurMinimale('src/features/avancement/BandeauAvancement.tsx')
+}
+
 export const FAUTES_CONNUES: Readonly<Record<string, FauteConnue>> = {
   // A-01 : hors ligne, TanStack Query garde les lectures en pause et « Chargement » ne finit pas.
   // Le lot F1 règle `networkMode: 'always'` dans src/lib/requetes.ts : la faute tombe seule.
   'berger | sans réseau': {
     ligne: 'A-01',
     tantQue: () => !codeContient('src/lib/requetes.ts', "networkMode: 'always'"),
+  },
+  // A-02 : le lien du nom d'un ministère court (« Kumi ») fait 36 px de large dans la liste des
+  // indicateurs (tableau et liste du téléphone) : `min-h-cible` fixe la hauteur, pas la largeur.
+  // Tombe seule dès que les deux liens portent une largeur minimale.
+  'indicateurs liste': { ligne: 'A-02', tantQue: ciblesIndicateursEnFaute },
+  'indicateurs liste ejp-tech': { ligne: 'A-02', tantQue: ciblesIndicateursEnFaute },
+  // A-03 : à 390 px, le bouton « Voir les étapes » du bandeau d'avancement ne montre que « Voir »
+  // (26 px de large). Tombe seule dès que `BOUTON` porte une largeur minimale.
+  'avancement berger': {
+    ligne: 'A-03',
+    projets: ['telephone'],
+    tantQue: bandeauEnFaute,
+  },
+  'avancement ministère': {
+    ligne: 'A-03',
+    projets: ['telephone'],
+    tantQue: bandeauEnFaute,
   },
 }
 

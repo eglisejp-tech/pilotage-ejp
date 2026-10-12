@@ -240,17 +240,162 @@ const EVENEMENTS: Ecran[] = [
   { nom: 'evenements page non disponible', adresse: '/apercu/evenements?profil=berger' },
 ]
 
+// Bandeau d'avancement (aperçu de la mise en page).
+const AVANCEMENT: Ecran[] = [
+  { nom: 'avancement berger', adresse: '/apercu/avancement?profil=berger' },
+  { nom: 'avancement ministère', adresse: '/apercu/avancement?profil=ministere' },
+]
+
+// Lot L1 : écran 13, « Ministères et comptes » (administration de l'église), et la page non
+// disponible des autres profils.
+const COMPTES: Ecran[] = [
+  ...['donnees', 'premier-usage', 'chargement', 'probleme'].map((vue) => ({
+    nom: `comptes ${vue}`,
+    adresse: `/apercu/comptes?profil=admin_eglise&vue=${vue}`,
+  })),
+  {
+    nom: 'comptes envoi en échec',
+    adresse: '/apercu/comptes?profil=admin_eglise&envoi=echec',
+  },
+  { nom: 'comptes page non disponible', adresse: '/apercu/comptes?profil=berger' },
+]
+
+// Lot L2 : écran 14, « Sessions ».
+const SESSIONS: Ecran[] = [
+  ...['donnees', 'vide', 'chargement', 'probleme'].map((vue) => ({
+    nom: `sessions ${vue}`,
+    adresse: `/apercu/sessions?profil=admin_eglise&vue=${vue}`,
+  })),
+  { nom: 'sessions page non disponible', adresse: '/apercu/sessions?profil=berger' },
+]
+
+// Lot L6 : écran « Modération » (EJP Tech), avec ses vues.
+const MODERATION: Ecran[] = [
+  ...['ecran', 'sans-indicateur', 'file-vide', 'file-chargement', 'file-probleme', 'lien-long'].map(
+    (vue) => ({
+      nom: `moderation ${vue}`,
+      adresse: `/apercu/moderation?profil=admin_plateforme&vue=${vue}`,
+    }),
+  ),
+  { nom: 'moderation page non disponible', adresse: '/apercu/moderation?profil=berger' },
+]
+
+// Lot L3a : configuration des indicateurs (liste, écran d'un ministère, états).
+const INDICATEURS: Ecran[] = [
+  ...[
+    'liste',
+    'liste-vide',
+    'liste-chargement',
+    'liste-probleme',
+    'communication',
+    'kumi',
+    'eagles',
+    'jeunesse',
+    'protocole',
+    'introuvable',
+    'chargement',
+    'probleme',
+  ].map((vue) => ({
+    nom: `indicateurs ${vue}`,
+    adresse: `/apercu/indicateurs?profil=admin_eglise&vue=${vue}`,
+  })),
+  { nom: 'indicateurs liste ejp-tech', adresse: '/apercu/indicateurs?profil=admin_plateforme' },
+  {
+    nom: 'indicateurs kumi envoi en échec',
+    adresse: '/apercu/indicateurs?profil=admin_eglise&vue=kumi&envoi=echec',
+  },
+  { nom: 'indicateurs page non disponible', adresse: '/apercu/indicateurs?profil=berger' },
+]
+
+// Lot P2 : « Nouveau point d'attention » (maquette 10).
+const NOUVEAU_POINT: Ecran[] = [
+  ...['formulaire', 'sans-mention', 'chargement', 'probleme'].map((ecran) => ({
+    nom: `nouveau-point ${ecran}`,
+    adresse: `/apercu/nouveau-point?profil=ministere&ecran=${ecran}`,
+  })),
+  {
+    nom: 'nouveau-point formulaire envoi en échec',
+    adresse: '/apercu/nouveau-point?profil=ministere&ecran=formulaire&envoi=echec',
+  },
+  { nom: 'nouveau-point page non disponible', adresse: '/apercu/nouveau-point?profil=berger' },
+]
+
+// Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
+const POINTS_ACTIONS: Ecran[] = [
+  'profil=ministere&lien=createur',
+  'profil=ministere&lien=mentionne',
+  'profil=ministere&lien=aucun',
+  'profil=ministere&statut=en_cours',
+  'profil=ministere&statut=attente_decision',
+  'profil=ministere&statut=traite',
+  'profil=ministere&mentions=aucune',
+  'profil=ministere&mentions=desactive',
+  'profil=ministere&ministeres=probleme',
+  'profil=ministere&ministeres=lent',
+  'profil=ministere&envoi=echec',
+  'profil=ministere&envoi=refus',
+  'profil=berger',
+  'profil=berger&titre=masque',
+  'profil=conseil',
+  'profil=admin_eglise',
+  'profil=admin_plateforme',
+].map((requete) => ({
+  nom: `points-actions ${requete.replaceAll('&', ' ')}`,
+  adresse: `/apercu/points-actions?${requete}`,
+}))
+
+// Lot P3 : écran 05 « Points d'attention » et « Mes points ».
+const POINTS: Ecran[] = [
+  ...(['berger', 'conseil', 'ministere'] as const).flatMap((profil) =>
+    ['liste', 'vide', 'chargement', 'erreur'].map((etat) => ({
+      nom: `points ${profil} ${etat}`,
+      adresse: `/apercu/points?profil=${profil}&etat=${etat}`,
+    })),
+  ),
+  { nom: 'points berger traités', adresse: '/apercu/points?profil=berger&vue=traites' },
+  { nom: 'points berger tous', adresse: '/apercu/points?profil=berger&vue=tous' },
+  { nom: 'points page non disponible', adresse: '/apercu/points?profil=admin_eglise' },
+]
+
+// Lot L5 : écran 06 « Journal », « Mon journal » et « Journal technique ».
+const JOURNAL: Ecran[] = [
+  ...PROFILS.map((profil) => ({
+    nom: `journal ${profil} liste`,
+    adresse: `/apercu/journal?profil=${profil}`,
+  })),
+  ...['vide', 'chargement', 'erreur', 'relecture'].map((etat) => ({
+    nom: `journal berger ${etat}`,
+    adresse: `/apercu/journal?profil=berger&etat=${etat}`,
+  })),
+]
+
+// Acceptation des conditions (T53), ajoutée aux écrans de connexion simulés.
+const ACCEPTATION: Ecran[] = ['normal', 'en-cours', 'erreur-reseau'].map((etat) => ({
+  nom: `connexion acceptation ${etat}`,
+  adresse: `/apercu/connexion?outils=non&ecran=acceptation&etat=${etat}`,
+}))
+
 const ECRANS: Ecran[] = [
   ...CONNEXION,
+  ...ACCEPTATION,
   ...PUBLICS,
   ...CETTE_SEMAINE,
   ...NAVIGATION,
+  ...AVANCEMENT,
   ...FICHE,
   ...SAISIES,
   ...SAISIES_E4,
   ...EVENEMENTS,
   ...SIGNALEMENTS,
   ...CALENDRIER,
+  ...COMPTES,
+  ...SESSIONS,
+  ...MODERATION,
+  ...INDICATEURS,
+  ...NOUVEAU_POINT,
+  ...POINTS_ACTIONS,
+  ...POINTS,
+  ...JOURNAL,
 ]
 
 // Dans la CI, le job « e2e » a 30 minutes pour toute la suite : l'audit des 161 écrans aux trois
@@ -289,6 +434,19 @@ const ECRANS_CI = new Set([
   'signalements ejp-tech bloc',
   'calendrier fiche-alerte ministere',
   'calendrier a-confirmer berger',
+  'connexion acceptation normal',
+  'avancement berger',
+  'comptes donnees',
+  'sessions donnees',
+  'moderation ecran',
+  'indicateurs liste',
+  'indicateurs kumi',
+  'nouveau-point formulaire',
+  'points-actions profil=ministere lien=createur',
+  'points berger liste',
+  'points ministere liste',
+  'journal berger liste',
+  'journal admin_plateforme liste',
 ])
 
 async function ouvrir(page: Page, ecran: Ecran) {
