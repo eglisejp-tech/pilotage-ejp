@@ -98,7 +98,7 @@ test.describe('ministère Communication : accueil 07', () => {
 
   test('« Ma semaine » : ses propres chiffres et deux totaux de l’église, aucun autre ministère', async ({
     page,
-  }) => {
+  }, infos) => {
     const requetes = suivreRequetesDeDonnees(page)
     // Adresses complètes de deux lectures sensibles : l'apport de chaque ministère et les noms de
     // ceux qui n'ont pas saisi.
@@ -116,7 +116,10 @@ test.describe('ministère Communication : accueil 07', () => {
     const service = chiffres.getByRole('listitem').filter({ hasText: 'STARs au service' })
     await expect(service).toContainText('10')
     await expect(service).toContainText(/[+−]\d|Stable|non saisi/)
-    await expect(service.getByRole('img', { name: /^Dix derniers dimanches : / })).toBeVisible()
+    // Sous 768 px, la courbe n'existe pas : l'écart et la date suffisent.
+    await expect(service.getByRole('img', { name: /^Dix derniers dimanches : / })).toHaveCount(
+      infos.project.name === 'telephone' ? 0 : 1,
+    )
     const actifs = chiffres.getByRole('listitem').filter({ hasText: 'STARs actifs' })
     await expect(actifs).toContainText('14')
     await expect(chiffres.getByRole('listitem').filter({ hasText: 'en FIJ' })).toContainText('79')
