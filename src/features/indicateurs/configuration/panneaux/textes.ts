@@ -19,6 +19,8 @@ export const TEXTES_PANNEAUX = {
   /** Mots communs aux panneaux et aux fenêtres. */
   annuler: 'Annuler',
   enCours: 'Envoi en cours',
+  /** « Ajouter l'indicateur » et « Ajouter le calcul » pendant l'envoi (m231, Proposé). */
+  ajoutEnCours: 'Ajout en cours',
   reessayer: 'Réessayer',
   /** Proposé : la connexion échoue pendant un envoi, le formulaire garde ce qui est écrit. */
   connexionFormulaire:
@@ -123,14 +125,17 @@ export const TEXTES_PANNEAUX = {
     bouton: "Retirer l'indicateur",
     /** Proposé : le motif manque. */
     motifManquant: 'Choisissez le motif du retrait.',
+    /**
+     * La conséquence, puis « C'est définitif. » (m232, Proposé ; guide des messages, 10.7). Le
+     * nombre de valeurs du texte proposé (« Ses 9 valeurs ») ne s'affiche pas : l'administration ne
+     * lit aucune valeur (LISEZMOI, lot L3b, écart 1).
+     */
     avecSaisies:
-      'Il ne sera plus proposé à la saisie. Ses saisies restent sur la fiche. Un indicateur retiré ne revient pas.',
+      "Il ne sera plus proposé à la saisie. Ses saisies restent sur la fiche. C'est définitif.",
     sansSaisie:
-      "Il ne sera plus proposé à la saisie. Il n'a aucune saisie : il disparaîtra de la fiche. Un indicateur retiré ne revient pas.",
+      "Il ne sera plus proposé à la saisie. Il n'a aucune saisie : il disparaîtra de la fiche. C'est définitif.",
     calcul:
-      "Il ne s'affichera plus sur la fiche. Les deux chiffres qu'il utilise et leurs saisies restent sur la fiche. Un indicateur retiré ne revient pas.",
-    reprendre:
-      'Pour reprendre ce chiffre plus tard, ajoutez un nouvel indicateur : sa courbe repart de zéro.',
+      "Il ne s'affichera plus sur la fiche. Les deux chiffres qu'il utilise et leurs saisies restent sur la fiche. C'est définitif.",
     change: "L'indicateur n'est plus proposé à la saisie.",
     resteIdentique: 'Ses saisies : rien ne se supprime.',
     lectureCalculs: 'Lecture des calculs liés.',
@@ -138,8 +143,8 @@ export const TEXTES_PANNEAUX = {
   },
   confidentialite: {
     titre: (libelle: string) => `Retirer « ${libelle} » pour confidentialité ?`,
-    texte:
-      "Le libellé et la définition seront remplacés par « [retiré pour confidentialité] ». L'indicateur et ses valeurs disparaîtront de toutes les fiches. Cette action est définitive.",
+    /** m232, Proposé : ce qui disparaît des fiches est dit sous « Ce qui change ». */
+    texte: "Le nom et la définition seront masqués. C'est définitif.",
     bouton: 'Retirer pour confidentialité',
     change:
       "Le libellé et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
@@ -173,11 +178,12 @@ export function reussiteRemplacement(calculsRetires: number): string {
     : REUSSITES_INDICATEURS.remplacement
 }
 
-/** « Indicateur retiré, ses saisies restent sur la fiche. » ou, sans saisie, « Indicateur retiré. » */
-export function reussiteRetrait(sansSaisie: boolean, calculsRetires: number): string {
-  const base = sansSaisie
-    ? 'Indicateur retiré.'
-    : 'Indicateur retiré, ses saisies restent sur la fiche.'
+/**
+ * « Indicateur retiré. », avec les calculs qui sont partis avec lui (m231, Proposé : la fenêtre a
+ * déjà dit que les saisies restent sur la fiche).
+ */
+export function reussiteRetrait(calculsRetires: number): string {
+  const base = 'Indicateur retiré.'
   return calculsRetires > 0
     ? `${base} ${calculsRetires} ${accorder(calculsRetires, 'calcul retiré', 'calculs retirés')} avec lui.`
     : base

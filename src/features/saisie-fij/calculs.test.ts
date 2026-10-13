@@ -59,7 +59,24 @@ describe('valeur d’un champ FIJ', () => {
     expect(erreurValeurFij('9999', true)).toBeNull()
     expect(erreurValeurFij('10000', true)).toBe('Entre 0 et 9 999.')
     expect(erreurValeurFij('-1', false)).toBe('Entre 0 et 9 999.')
-    expect(erreurValeurFij('1.5', false)).toBe('Entre 0 et 9 999.')
+  })
+
+  it('un texte qui n’est pas un nombre entier demande d’être corrigé, jamais converti (m100)', () => {
+    for (const texte of ['1.5', '12,5', '1 2', '12a']) {
+      expect(erreurValeurFij(texte, false), texte).toBe(
+        'Saisissez un nombre entier, sans virgule ni lettre.',
+      )
+    }
+    expect(erreurValeurFij('1 000', true)).toBeNull()
+  })
+
+  it('un texte à corriger ne compte ni dans le total ni dans les valeurs envoyées (m100)', () => {
+    const champs = { ...champsDepartementsVides(), '75': '12', '77': '12,5' }
+    expect(ligneTotalCarte(champs)).toBe('Total : 12 FIJ, 1 dép. sur 8')
+    const statistiques = { ...champsStatistiquesVides(), culte_ejp: champs }
+    expect(valeursStatistiques(statistiques)).toEqual([
+      { rubrique: 'culte_ejp', departement: '75', valeur: 12 },
+    ])
   })
 })
 

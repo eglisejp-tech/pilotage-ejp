@@ -240,7 +240,9 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
 
   it('pendant la création, le bouton dit qu’il travaille et ne se grise pas', () => {
     afficherMinistere(ID_KUMI, creationDe({ enCours: ID_KUMI }))
-    const bouton = screen.getByRole('button', { name: 'Créer ces 6 indicateurs' })
+    // Le texte visible le dit pendant l'envoi (m227).
+    const bouton = screen.getByRole('button', { name: 'Création en cours' })
+    expect(screen.queryByRole('button', { name: 'Créer ces 6 indicateurs' })).toBeNull()
     expect(bouton).toHaveAttribute('aria-busy', 'true')
     expect(bouton).not.toBeDisabled()
   })

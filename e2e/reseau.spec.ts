@@ -8,7 +8,11 @@ import type { Page, Route } from '@playwright/test'
 // l'adresse locale factice du client Supabase. Les parcours avec la vraie base (e2e/base/) ne
 // sont pas touchés.
 
-const TEXTE_HORS_LIGNE = 'Pas de connexion internet. Les chiffres affichés peuvent dater.'
+const TEXTE_HORS_LIGNE =
+  "Pas de connexion internet. Les chiffres affichés peuvent dater, et vos saisies ne s'enregistrent pas."
+/** Au retour du réseau, la région dit « Connexion rétablie. » 4 s (m246), puis se vide. */
+const TEXTE_RETOUR = 'Connexion rétablie.'
+const APRES_RETOUR = { timeout: 10_000 }
 const ECHEC = 'La connexion a échoué. Réessayez.'
 // Adresse du client Supabase : celle de playwright.config.ts (variable VITE_SUPABASE_URL, sinon la
 // base locale par défaut). Le client range sa session sous « sb-<premier mot du nom d'hôte>-auth-token ».
@@ -129,7 +133,8 @@ test.describe('bandeau hors ligne', () => {
     await expect(page.getByRole('button', { name: 'Se connecter' })).toBeVisible()
 
     await context.setOffline(false)
-    await expect(regionBandeau(page)).toHaveText('')
+    await expect(regionBandeau(page)).toHaveText(TEXTE_RETOUR)
+    await expect(regionBandeau(page)).toHaveText('', APRES_RETOUR)
     await expect(regionBandeau(page)).toHaveCount(1)
   })
 
@@ -140,7 +145,7 @@ test.describe('bandeau hors ligne', () => {
       await context.setOffline(true)
       await expect(bandeau(page)).toBeVisible()
       await context.setOffline(false)
-      await expect(regionBandeau(page)).toHaveText('')
+      await expect(regionBandeau(page)).toHaveText('', APRES_RETOUR)
     }
   })
 
@@ -241,7 +246,7 @@ test.describe('lecture interrompue', () => {
 
     reseauRetabli = true
     await context.setOffline(false)
-    await expect(regionBandeau(page)).toHaveText('')
+    await expect(regionBandeau(page)).toHaveText('', APRES_RETOUR)
     await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(0)
   })

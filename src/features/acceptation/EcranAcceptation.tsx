@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { schemaAcceptation } from '@/features/acceptation/schemas'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
@@ -20,6 +21,13 @@ export type ProprietesEcranAcceptation = {
   enCours?: boolean
   /** Message du bandeau (échec de l'enregistrement), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /** Réussite de l'étape précédente (« Double authentification activée. »), en tête de l'écran. */
+  annonce?: ReactNode
+  /**
+   * Le compte avait accepté une version précédente : l'écran dit pourquoi il revient (m056). La
+   * lecture de cette acceptation précédente reste à écrire dans `src/data/conditions.ts`.
+   */
+  conditionsChangees?: boolean
 }
 
 const lienTexte =
@@ -37,6 +45,8 @@ export function EcranAcceptation({
   onSignOut,
   enCours = false,
   erreur,
+  annonce,
+  conditionsChangees = false,
 }: ProprietesEcranAcceptation) {
   useTitrePage("Conditions d'utilisation")
   const {
@@ -60,10 +70,16 @@ export function EcranAcceptation({
 
   return (
     <ColonneConnexion>
+      {annonce}
       <TitreConnexion surtitre={libelleCompte} titre="Conditions d'utilisation" taille="moyenne">
         Avant d'ouvrir l'outil, lisez les conditions d'utilisation et la politique de
         confidentialité.
       </TitreConnexion>
+      {conditionsChangees ? (
+        <p className="border-l-4 border-attention bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre">
+          Les conditions ont changé. Lisez-les avant de continuer.
+        </p>
+      ) : null}
 
       <p className="text-sm text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
 

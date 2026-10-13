@@ -207,15 +207,20 @@ test.describe('Changer le statut', () => {
     await expect(boutonDuPoint(page, 'Changer le statut')).toBeVisible()
   })
 
-  test('enregistrer le statut déjà en place ferme la fenêtre sans message', async ({ page }) => {
+  test('le statut déjà en place : la fenêtre reste ouverte et le dit (m146)', async ({ page }) => {
     await ouvrir(page, 'profil=ministere&statut=en_cours')
     await boutonDuPoint(page, 'Changer le statut').click()
     const boite = fenetre(page)
     await expect(boite.getByRole('radio', { name: 'En cours' })).toBeChecked()
     await boite.getByRole('button', { name: 'Enregistrer le statut' }).click()
+    await expect(
+      boite.getByText('Ce statut est déjà enregistré. Choisissez-en un autre.'),
+    ).toBeVisible()
+    await expect(page.locator('[data-annonce-point]')).toHaveCount(0)
+    // « Annuler » ferme sans rien écrire, et le focus revient au bouton.
+    await boite.getByRole('button', { name: 'Annuler' }).click()
     await expect(boite).toHaveCount(0)
     await expect(boutonDuPoint(page, 'Changer le statut')).toBeFocused()
-    await expect(page.locator('[data-annonce-point]')).toHaveCount(0)
   })
 
   test('les flèches du clavier changent de statut', async ({ page }) => {

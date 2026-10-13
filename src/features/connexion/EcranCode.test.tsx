@@ -41,6 +41,26 @@ describe('EcranCode (maquette 18)', () => {
     expect(screen.getByText(/refaire l'activation/)).toBeInTheDocument()
   })
 
+  it('renvoie vers EJP Tech pour un téléphone perdu, sans la phrase sur les 30 secondes (m049)', () => {
+    afficher()
+    expect(
+      screen.getByText(
+        /Téléphone perdu ou changé\s\? Demandez à EJP Tech de refaire l'activation\./,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/administration de l'église/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/30 secondes/)).not.toBeInTheDocument()
+  })
+
+  it('après « Mot de passe oublié », annonce le choix du nouveau mot de passe (m051)', () => {
+    const { rafraichir } = afficher()
+    expect(screen.queryByText(/nouveau mot de passe/)).not.toBeInTheDocument()
+    rafraichir({ apresRecuperation: true })
+    expect(
+      screen.getByText('Vous choisirez ensuite votre nouveau mot de passe.'),
+    ).toBeInTheDocument()
+  })
+
   it('accepte un code collé de 6 chiffres et le vérifie', async () => {
     const { onVerifyCode, utilisateur } = afficher()
     await utilisateur.click(champCode())

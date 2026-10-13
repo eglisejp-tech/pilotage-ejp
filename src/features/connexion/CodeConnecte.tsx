@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Compte } from '@/data/compte'
 import { EcranCode } from '@/features/connexion/EcranCode'
 import { seDeconnecter, verifierCode } from '@/features/session/actions'
+import { useMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 
 type Proprietes = {
   compte: Compte
@@ -13,6 +14,8 @@ type Proprietes = {
 export function CodeConnecte({ compte, facteurId }: Proprietes) {
   const [enCours, setEnCours] = useState(false)
   const [erreur, setErreur] = useState<string>()
+  // Lien « Mot de passe oublié » : le nouveau mot de passe se choisit juste après ce code.
+  const apresRecuperation = useMotDePasseAChoisir() === 'recuperation'
 
   async function verifier(code: string) {
     setErreur(undefined)
@@ -31,6 +34,7 @@ export function CodeConnecte({ compte, facteurId }: Proprietes) {
       onSignOut={() => void seDeconnecter()}
       enCours={enCours}
       erreur={erreur}
+      apresRecuperation={apresRecuperation}
     />
   )
 }

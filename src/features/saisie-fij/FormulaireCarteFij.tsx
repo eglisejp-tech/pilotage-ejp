@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { normaliserChamp } from '@/features/saisie/chiffres'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import {
@@ -56,9 +57,7 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
   const [champs, setChamps] = useState<ChampsDepartements>(() => champsCarte(carte))
   const [erreurs, setErreurs] = useState<ErreursCarte>({})
   const envoi = useEnvoiSaisie()
-  const signature = DEPARTEMENTS_FIJ.map(({ code }) =>
-    champs[code] === '' ? '' : String(Number(champs[code])),
-  ).join(',')
+  const signature = DEPARTEMENTS_FIJ.map(({ code }) => normaliserChamp(champs[code])).join(',')
 
   const changer = (departement: Departement) => (valeur: string) => {
     setChamps((precedents) => ({ ...precedents, [departement]: valeur }))

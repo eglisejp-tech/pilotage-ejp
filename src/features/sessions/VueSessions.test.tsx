@@ -191,4 +191,30 @@ describe('VueSessions (écran 14)', () => {
     afficher({ etat: 'erreur', reessayer: vi.fn() })
     expect(screen.getByText('La connexion a échoué. Réessayez.')).toBeInTheDocument()
   })
+
+  it('« Modifier » dont la lecture échoue : « Réessayer » dans le panneau, puis le recours (m212, m250)', async () => {
+    const actions = actionsFausses()
+    actions.lireAttendus
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    afficher(donnees(), actions)
+    await userEvent.click(screen.getByRole('button', { name: "Modifier Bâtir l'Église du 3 oct." }))
+    const panneau = await screen.findByRole('dialog', {
+      name: "Modifier Bâtir l'Église du 3 oct.",
+    })
+    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    // Premier nouvel essai : il échoue encore, la phrase ajoute le recours.
+    await userEvent.click(within(panneau).getByRole('button', { name: 'Réessayer' }))
+    await waitFor(() =>
+      expect(within(panneau).getByRole('alert')).toHaveTextContent(
+        'La connexion a échoué. Réessayez, et si le problème revient, prévenez EJP Tech.',
+      ),
+    )
+    // Deuxième nouvel essai : la lecture répond, le formulaire s'affiche dans le même panneau.
+    await userEvent.click(within(panneau).getByRole('button', { name: 'Réessayer' }))
+    expect(await within(panneau).findByText('3 sur 8')).toBeInTheDocument()
+    expect(actions.lireAttendus).toHaveBeenCalledTimes(3)
+  })
 })

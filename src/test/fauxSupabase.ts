@@ -146,6 +146,7 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     ),
     onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
     signInWithPassword: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+    updateUser: vi.fn(() => Promise.resolve({ data: {}, error: null })),
     signOut: vi.fn(() => Promise.resolve({ error: null })),
     mfa: {
       getAuthenticatorAssuranceLevel: vi.fn(() => Promise.resolve({ data: niveau, error: null })),

@@ -47,6 +47,12 @@ describe('EcranConnexion (maquette 16)', () => {
     expect(document.title).toBe('Connexion, Pilotage EJP')
   })
 
+  it("dit à qui demander un compte : EJP Tech, jamais l'administration (m002)", () => {
+    afficher()
+    expect(screen.getByText(/Pas de compte\s\? Demandez-en un à EJP Tech\./)).toBeInTheDocument()
+    expect(screen.queryByText(/administration de l'église/)).not.toBeInTheDocument()
+  })
+
   it('refuse un envoi vide : messages reliés aux champs et focus sur le premier', async () => {
     const { onSubmit, utilisateur } = afficher()
     await utilisateur.click(boutonConnexion())

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { Departement, RubriqueFij } from '@/lib/base'
+import { lireChamp, MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import { DEPARTEMENTS_FIJ, RUBRIQUES_FIJ, VALEUR_FIJ_MAX } from '@/features/saisie-fij/departements'
 import { estDateIso, jourDeLaSemaine } from '@/lib/metier/dates'
 
@@ -76,9 +77,14 @@ export const schemaStatistiquesFij = z.object({
 
 export type SaisieStatistiquesFij = z.infer<typeof schemaStatistiquesFij>
 
-/** Erreur d'un champ numérique (texte du formulaire) ; null : rien à dire. */
+/**
+ * Erreur d'un champ numérique (texte du formulaire) ; null : rien à dire. Un texte qui n'est pas
+ * un nombre entier (« 12,5 ») n'est jamais converti : il demande d'être corrigé (m100).
+ */
 export function erreurValeurFij(texte: string, obligatoire: boolean): string | null {
-  if (texte === '') return obligatoire ? MESSAGES_FIJ.valeurManquante : null
-  const resultat = schemaValeurFij.safeParse(Number(texte))
+  const lecture = lireChamp(texte)
+  if (lecture.etat === 'format') return MESSAGE_NOMBRE_ENTIER
+  if (lecture.etat === 'vide') return obligatoire ? MESSAGES_FIJ.valeurManquante : null
+  const resultat = schemaValeurFij.safeParse(lecture.valeur)
   return resultat.success ? null : (resultat.error.issues[0]?.message ?? MESSAGES_FIJ.valeurBornes)
 }

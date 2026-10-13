@@ -16,6 +16,8 @@ type Props = Omit<
   aide?: CodeAide
   /** Premier champ libre du formulaire : le rappel sur les données personnelles le suit. */
   avecRappel?: boolean
+  /** Phrase sous le champ, lue avec lui (« Votre texte précédent a été masqué. »). */
+  note?: string
   erreur?: string
 }
 
@@ -31,13 +33,16 @@ export function ChampTexteCourt({
   longueur,
   aide,
   avecRappel = false,
+  note,
   erreur,
   ...proprietes
 }: Props) {
+  const idNote = `${id}-note`
   const idRappel = `${id}-rappel`
   const idCompteur = `${id}-compteur`
   const idErreur = `${id}-erreur`
   const decritPar = [
+    note ? idNote : '',
     avecRappel ? idRappel : '',
     longueur >= DEBUT_COMPTEUR ? idCompteur : '',
     erreur ? idErreur : '',
@@ -62,6 +67,11 @@ export function ChampTexteCourt({
         aria-describedby={decritPar || undefined}
         className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
+      {note ? (
+        <p id={idNote} className="text-sm leading-normal text-encre-2">
+          {note}
+        </p>
+      ) : null}
       {avecRappel ? <RappelDonneesPersonnelles id={idRappel} /> : null}
       <Compteur
         id={idCompteur}

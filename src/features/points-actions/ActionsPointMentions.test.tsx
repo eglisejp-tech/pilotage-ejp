@@ -168,15 +168,23 @@ describe('la fenêtre « Modifier les mentions »', () => {
     await waitFor(() => expect(modifierMentions).toHaveBeenCalledWith(POINT_ID, []))
   })
 
-  it('enregistrer sans rien changer ferme la fenêtre sans écrire ni message', async () => {
+  it('sans rien changer : rien ne part, la fenêtre reste ouverte et le dit (m155)', async () => {
     const { invalider } = afficher(compteMinistere(CREATEUR))
     const fenetre = await ouvrir()
-    await within(fenetre).findByRole('checkbox', { name: 'Social' })
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Enregistrer les mentions' }))
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    const social = await within(fenetre).findByRole('checkbox', { name: 'Social' })
+    const enregistrer = within(fenetre).getByRole('button', { name: 'Enregistrer les mentions' })
+    expect(enregistrer).not.toHaveAttribute('aria-disabled')
+    await userEvent.click(enregistrer)
+    expect(within(fenetre).getByRole('status')).toHaveTextContent(
+      'Ces mentions sont déjà enregistrées. Cochez ou décochez un ministère.',
+    )
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(modifierMentions).not.toHaveBeenCalled()
     expect(invalider).not.toHaveBeenCalled()
     expect(screen.queryByText('Mentions enregistrées.')).toBeNull()
+    // Une case touchée : la phrase s'efface.
+    await userEvent.click(social)
+    expect(within(fenetre).getByRole('status')).toBeEmptyDOMElement()
   })
 
   it('« Annuler » ferme sans rien écrire', async () => {

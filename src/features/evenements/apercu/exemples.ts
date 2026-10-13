@@ -34,6 +34,8 @@ export const ECRANS_APERCU = [
   'probleme',
   'reunion',
   'reunion-modifier',
+  // L'objet de la réunion déclarée a été masqué par EJP Tech (m136).
+  'reunion-masquee',
   'reunion-probleme',
 ] as const
 
@@ -127,18 +129,21 @@ export function contenuEvenement(ecran: EcranApercu, echec: boolean): ContenuPan
 
 export function contenuReunion(ecran: EcranApercu, echec: boolean): ContenuPanneauReunion {
   if (ecran === 'reunion-probleme') return { etat: 'probleme', reessayer: () => undefined }
+  const masquee = ecran === 'reunion-masquee'
   return {
     etat: 'formulaire',
     aujourdhui: AUJOURDHUI_EXEMPLE,
     prochaine:
-      ecran === 'reunion-modifier'
+      ecran === 'reunion-modifier' || masquee
         ? {
             date: '2026-10-12',
             heure: '20:00',
-            objet: 'Préparer la soirée de louange',
+            // Un objet masqué s'ouvre vide (SaisieReunion), et le formulaire le dit.
+            objet: masquee ? '' : 'Préparer la soirée de louange',
             decision: 'Choisir la salle',
           }
         : null,
+    masques: { objet: masquee, decision: false },
     envoyer: envoiSimule(echec),
   }
 }

@@ -2,6 +2,7 @@
 // ligne calculée, phrase de complétude, lignes de « Choisir la session » et adresses. Fonctions
 // pures : les nombres viennent des vues (`v_session_completude`, `v_participation_courante`).
 
+import { lireChamp, normaliserChamp } from '@/features/saisie/chiffres'
 import type { ChampsSession } from '@/features/saisie-session/schemas'
 import type { TypeSession } from '@/lib/base'
 import {
@@ -54,21 +55,19 @@ export function adresseSaisirUneSession(sessionsASaisir: readonly string[]): str
     : adresseSaisieSession()
 }
 
-/** Nombre écrit dans un champ, ou null s'il est vide. */
-function lire(texte: string): number | null {
-  return texte === '' ? null : Number(texte)
-}
-
 /**
  * « Comptés dans le total de l'église : 11. » : présents moins déjà comptés par leur ministère
  * principal (BRIEF, règle 5). Null tant que les présents manquent ou que la saisie est impossible
- * (déjà comptés au-delà des présents) : la ligne ne montre jamais un nombre faux.
+ * (déjà comptés au-delà des présents, ou un texte qui n'est pas un nombre entier) : la ligne ne
+ * montre jamais un nombre faux.
  */
 export function comptesDansTotal(champs: ChampsSession): number | null {
-  const presents = lire(champs.presents)
-  const dejaComptes = lire(champs.dejaComptes) ?? 0
-  if (presents === null || dejaComptes > presents) return null
-  return presents - dejaComptes
+  const presents = lireChamp(champs.presents)
+  const dejaComptes = lireChamp(champs.dejaComptes)
+  if (presents.etat !== 'nombre' || dejaComptes.etat === 'format') return null
+  const deja = dejaComptes.etat === 'nombre' ? dejaComptes.valeur : 0
+  if (deja > presents.valeur) return null
+  return presents.valeur - deja
 }
 
 /**
@@ -79,7 +78,7 @@ export function comptesDansTotal(champs: ChampsSession): number | null {
 export function ligneComptesDansTotal(champs: ChampsSession): string {
   const comptes = comptesDansTotal(champs)
   if (comptes !== null) return `Comptés dans le total de l'église : ${nombre(comptes)}.`
-  return lire(champs.presents) === null
+  return lireChamp(champs.presents).etat === 'vide'
     ? "Comptés dans le total de l'église : saisissez d'abord les présents."
     : "Comptés dans le total de l'église : à corriger."
 }
@@ -89,8 +88,7 @@ export function ligneComptesDansTotal(champs: ChampsSession): string {
  * « Enregistrer » avec la même signature n'envoie rien (`useEnvoiSaisie`).
  */
 export function signatureSession(champs: ChampsSession): string {
-  const normaliser = (texte: string) => (texte === '' ? '' : String(Number(texte)))
-  return `${normaliser(champs.presents)}|${normaliser(champs.dejaComptes)}`
+  return `${normaliserChamp(champs.presents)}|${normaliserChamp(champs.dejaComptes)}`
 }
 
 /**

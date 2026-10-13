@@ -22,6 +22,7 @@ import { ChangeEtResteIdentique } from '@/features/indicateurs/configuration/pan
 import { ChoixRadios } from '@/features/indicateurs/configuration/panneaux/ChoixRadios'
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
 import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import {
@@ -119,6 +120,8 @@ export function FormulaireCalcul({ controleur, remplace }: Props) {
 
 function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTerme[] }) {
   const { ecritures, ministere, sources, terminer, fermer } = controleur
+  // « Annuler » demande confirmation si un champ a changé (m265).
+  const annuler = useFermetureSaisie(fermer)
   const id = useId()
   const formulaire = useRef<HTMLFormElement>(null)
   const occupe = useRef(false)
@@ -296,12 +299,14 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
         <BoutonEnregistrer
           libelle={remplace === undefined ? textes.bouton : textes.boutonRemplacement}
           enCours={enCours}
-          libelleEnCours={TEXTES_PANNEAUX.enCours}
+          libelleEnCours={
+            remplace === undefined ? TEXTES_PANNEAUX.ajoutEnCours : TEXTES_PANNEAUX.enCours
+          }
         />
         {refus !== null ? <ErreurEnvoi message={refus} /> : null}
         <button
           type="button"
-          onClick={fermer}
+          onClick={annuler}
           className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
         >
           {TEXTES_PANNEAUX.annuler}

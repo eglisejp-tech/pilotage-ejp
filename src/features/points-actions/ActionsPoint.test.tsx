@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import * as ecriture from '@/data/pointsEcriture'
@@ -555,17 +555,29 @@ describe('« Changer le statut »', () => {
     },
   )
 
-  it('enregistrer le statut déjà en place ferme la fenêtre sans rien écrire ni dire', async () => {
+  it('le statut déjà en place : rien ne part, la fenêtre reste ouverte et le dit (m146)', async () => {
     const utilisateur = userEvent.setup()
     const { invalider } = afficher(ministere(CREATEUR), unPoint('en_cours'))
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
     expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
-    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
-    expect(screen.queryByRole('dialog')).toBeNull()
+    const enregistrer = screen.getByRole('button', { name: 'Enregistrer le statut' })
+    // Le bouton n'est jamais grisé : il répond, par une phrase.
+    expect(enregistrer).not.toHaveAttribute('aria-disabled')
+    await utilisateur.click(enregistrer)
+    const fenetre = screen.getByRole('dialog')
+    const phrase = within(fenetre).getByText(
+      'Ce statut est déjà enregistré. Choisissez-en un autre.',
+    )
+    expect(phrase.closest('[role="status"]')).not.toBeNull()
     await new Promise((fini) => window.setTimeout(fini, 80))
     expect(changerStatut).not.toHaveBeenCalled()
     expect(invalider).not.toHaveBeenCalled()
     expect(screen.queryByText(/Statut enregistré/)).toBeNull()
+    // Un autre statut choisi : la phrase s'efface, l'envoi part.
+    await utilisateur.click(screen.getByRole('radio', { name: 'À traiter' }))
+    expect(within(fenetre).queryByText(/déjà enregistré/)).toBeNull()
+    await utilisateur.click(enregistrer)
+    await waitFor(() => expect(changerStatut).toHaveBeenCalledTimes(1))
   })
 
   it('le bouton « Changer le statut » garde le focus après un enregistrement', async () => {

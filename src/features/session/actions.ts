@@ -1,5 +1,9 @@
 import { isAuthApiError } from '@supabase/supabase-js'
 import {
+  annoncerSurEcranSuivant,
+  ANNONCE_MOT_DE_PASSE,
+} from '@/features/connexion/reussiteEnAttente'
+import {
   schemaCode,
   schemaConnexion,
   schemaMotDePasseOublie,
@@ -104,14 +108,25 @@ export async function preparerActivation(): Promise<Activation | { erreur: strin
   }
 }
 
-/** Code à 6 chiffres (écrans 17 et 18) : la session passe en aal2. */
-export async function verifierCode(facteurId: string, code: string): Promise<Resultat> {
+/**
+ * Code à 6 chiffres (écrans 17 et 18) : la session passe en aal2. `annonce` : réussite à dire sur
+ * l'écran suivant (activation, m045), posée avant la relecture de la session, car la garde change
+ * d'écran dès qu'elle la lit.
+ */
+export async function verifierCode(
+  facteurId: string,
+  code: string,
+  annonce?: string,
+): Promise<Resultat> {
   const valeurs = schemaCode.safeParse({ code })
   if (!valeurs.success) return { erreur: messagesConnexion.codeFaux }
   const resultat = await executer('code', () =>
     supabase().auth.mfa.challengeAndVerify({ factorId: facteurId, code: valeurs.data.code }),
   )
-  if (!resultat.erreur) await rafraichirSession()
+  if (!resultat.erreur) {
+    if (annonce) annoncerSurEcranSuivant(annonce)
+    await rafraichirSession()
+  }
   return resultat
 }
 
@@ -157,6 +172,8 @@ export async function choisirMotDePasse(valeurs: ValeursNouveauMotDePasse): Prom
     supabase().auth.updateUser({ password: motDePasse }),
   )
   if (!resultat.erreur) {
+    // Avant d'effacer l'étape : la garde quitte l'écran dès qu'elle disparaît (m037).
+    annoncerSurEcranSuivant(ANNONCE_MOT_DE_PASSE)
     effacerMotDePasseAChoisir()
     await rafraichirSession()
   }

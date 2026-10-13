@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { lireRefusSignalement } from '@/features/signalement/refus'
@@ -44,6 +45,8 @@ export function FormulaireSignalement({
     defaultValues: { ecran, texte: '' },
   })
   const texte = useWatch({ control, name: 'texte' })
+  // Dans le panneau : « Annuler » demande confirmation si le texte a changé (m265).
+  const annuler = useFermetureSaisie(onAnnuler)
   const [refus, setRefus] = useState<RefusSignalement | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
@@ -101,7 +104,7 @@ export function FormulaireSignalement({
       />
       <button
         type="button"
-        onClick={onAnnuler}
+        onClick={annuler}
         className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
       >
         {envoye ? TEXTES_SIGNALEMENT.boutonFermer : TEXTES_SIGNALEMENT.boutonAnnuler}

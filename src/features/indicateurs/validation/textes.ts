@@ -53,19 +53,17 @@ export const TEXTES_A_VALIDER = {
   contexteMasquageMotif: 'Indicateur refusé',
   /** Nom du champ du motif de refus, dans la fenêtre « Masquer le texte ». */
   motifDuRefus: 'Motif du refus',
-  /** Annonces après une décision. */
+  /** Annonces après une décision (m231, Proposé : la fenêtre a déjà dit qui lira le motif). */
   reussiteValide: 'Indicateur validé.',
+  reussiteRefus: 'Indicateur refusé.',
+  /** « Valider » pendant l'envoi (m231, Proposé). */
+  validationEnCours: 'Validation en cours',
 } as const
 
 /** « 2 ajouts en attente », « Aucun ajout en attente » : à droite du titre du bloc. */
 export function texteNombreEnAttente(n: number): string {
   if (n === 0) return 'Aucun ajout en attente'
   return `${nombre(n)} ${accorder(n, 'ajout en attente', 'ajouts en attente')}`
-}
-
-/** « Indicateur refusé. Communication verra le motif. » */
-export function reussiteRefus(ministere: string): string {
-  return `Indicateur refusé. ${ministere} verra le motif.`
 }
 
 /** « Envoyé le 2 oct. » : le jour de Paris de l'envoi (jamais la date du navigateur). */
@@ -117,7 +115,8 @@ export const TEXTES_FENETRE_REFUS = {
   rappel: "N'écrivez aucun nom ni information personnelle.",
   annuler: 'Annuler',
   bouton: 'Refuser',
-  boutonEnCours: 'Envoi en cours',
+  /** m231, Proposé : le nom de l'action, suivi de « en cours ». */
+  boutonEnCours: 'Refus en cours',
   /** « L'indicateur sera retiré : ses valeurs ne s'afficheront plus. Communication lira ce motif. » */
   consequence: (ministere: string) =>
     `L'indicateur sera retiré : ses valeurs ne s'afficheront plus. ${ministere} lira ce motif.`,

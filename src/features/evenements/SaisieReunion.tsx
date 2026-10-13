@@ -26,6 +26,14 @@ function valeursDe(reunion: LigneVue<'v_prochaine_reunion'>): ValeursReunion {
   }
 }
 
+/** Textes de la réunion déclarée masqués par EJP Tech : le formulaire le dit sous le champ (m136). */
+function masquesDe(reunion: LigneVue<'v_prochaine_reunion'> | null) {
+  return {
+    objet: reunion?.objet === TEXTE_MASQUE,
+    decision: reunion?.decision_attendue === TEXTE_MASQUE,
+  }
+}
+
 /**
  * `/saisir/reunion` : lit le jour de Paris et la prochaine réunion déjà déclarée (« Modifier »
  * préremplit, « Renseigner » ouvre vide), puis ouvre le formulaire. Chaque envoi ajoute une
@@ -57,6 +65,7 @@ export function SaisieReunion({
       etat: 'formulaire',
       aujourdhui: semaine.data.aujourdhui,
       prochaine: prochaine.data === null ? null : valeursDe(prochaine.data),
+      masques: masquesDe(prochaine.data),
       envoyer,
       // Un refus de date : le jour de Paris a changé, `v_semaine` est relue.
       actualiserJour: () => void semaine.refetch(),

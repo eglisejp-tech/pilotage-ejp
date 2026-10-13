@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { BarreCompte } from '@/features/connexion/BarreCompte'
 import { ColonneConnexion } from '@/features/connexion/ColonneConnexion'
 import { EtapeTitre } from '@/features/connexion/EtapeTitre'
@@ -16,6 +17,11 @@ export type ProprietesEcranActivation = {
   qrCode?: string
   /** Clé à saisir à la main (`totp.secret`) quand le QR code ne peut pas être scanné. */
   cle?: string
+  /** La préparation du QR code a échoué : le cadre le dit et propose « Réessayer » (m044). */
+  qrEnEchec?: boolean
+  onReessayerQr?: () => void
+  /** Réussite de l'étape précédente (« Mot de passe enregistré. »), en tête de l'écran. */
+  annonce?: ReactNode
   /** Code à 6 chiffres saisi (étape 2 : mfa.challengeAndVerify). */
   onVerifyCode: (code: string) => void
   onSignOut: () => void
@@ -35,15 +41,19 @@ export function EcranActivation({
   comptePartage,
   qrCode,
   cle,
+  qrEnEchec = false,
+  onReessayerQr,
   onVerifyCode,
   onSignOut,
   enCours,
   erreur,
+  annonce,
 }: ProprietesEcranActivation) {
   useTitrePage('Activer la double authentification')
 
   return (
     <ColonneConnexion barre={<BarreCompte libelleCompte={libelleCompte} onSignOut={onSignOut} />}>
+      {annonce}
       <TitreConnexion
         surtitre="Première connexion"
         titre="Activer la double authentification"
@@ -64,7 +74,7 @@ export function EcranActivation({
         <li className="flex flex-col gap-6">
           <EtapeTitre numero={2}>Scannez ce code avec l'application.</EtapeTitre>
           <div className="flex flex-col gap-3">
-            <QrCodeActivation qrCode={qrCode} />
+            <QrCodeActivation qrCode={qrCode} enEchec={qrEnEchec} onReessayer={onReessayerQr} />
             <p className="text-sm leading-normal text-encre-2">
               Vous pouvez aussi scanner ce code avec un deuxième téléphone, en secours.
             </p>

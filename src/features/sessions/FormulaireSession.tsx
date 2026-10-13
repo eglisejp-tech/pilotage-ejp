@@ -4,6 +4,7 @@ import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { ChoixMinisteres } from '@/features/sessions/ChoixMinisteres'
 import type { MinistereAChoisir } from '@/features/sessions/ChoixMinisteres'
 import { ChoixType } from '@/features/sessions/ChoixType'
@@ -33,6 +34,8 @@ interface Props {
 
 type Erreurs = Partial<Record<'type' | 'date' | 'nom' | 'ministeres', string>>
 
+function sansAction() {}
+
 /**
  * Formulaire de l'écran 14 (maquette 14) : type, date, nom du rassemblement (pour « Autre
  * rassemblement » seulement, avec le rappel sur les données personnelles), ministères attendus
@@ -56,6 +59,8 @@ export function FormulaireSession({
     ministeres: [...(coches ?? ministeres.map((ministere) => ministere.id))],
   })
   const [valeurs, setValeurs] = useState<ValeursDeclaration>(depart)
+  // Dans le panneau : « Annuler » demande confirmation si un champ a changé (m265).
+  const annuler = useFermetureSaisie(onAnnuler ?? sansAction)
   const [erreurs, setErreurs] = useState<Erreurs>({})
   const [refus, setRefus] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
@@ -165,7 +170,7 @@ export function FormulaireSession({
       {onAnnuler ? (
         <button
           type="button"
-          onClick={onAnnuler}
+          onClick={annuler}
           className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
         >
           {TEXTES_SESSIONS.annuler}

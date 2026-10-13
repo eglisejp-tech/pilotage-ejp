@@ -9,7 +9,6 @@ import type { Masquage } from '@/features/moderation/schemas'
 import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import {
   nomBoutonDecision,
-  reussiteRefus,
   TEXTES_A_VALIDER,
   texteNouvelIndicateur,
   texteValeursSaisies,
@@ -147,14 +146,18 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
               >
                 {TEXTES_A_VALIDER.refuser}
               </button>
+              {/* Pendant l'envoi, « Validation en cours » (m231) devient aussi le nom accessible. */}
               <button
                 type="button"
-                aria-label={nomBoutonDecision('valider', ligne.libelle, ligne.ministere)}
+                aria-label={
+                  enCours ? undefined : nomBoutonDecision('valider', ligne.libelle, ligne.ministere)
+                }
                 aria-disabled={enCours ? true : undefined}
+                aria-busy={enCours ? true : undefined}
                 onClick={() => void valider()}
                 className={boutonPrincipal}
               >
-                {TEXTES_A_VALIDER.valider}
+                {enCours ? TEXTES_A_VALIDER.validationEnCours : TEXTES_A_VALIDER.valider}
               </button>
             </div>
           </div>
@@ -168,7 +171,7 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
           refuser={(motif) => actions.refuser(ligne, motif)}
           onFait={() => {
             setFenetre(false)
-            surFait(reussiteRefus(ligne.ministere))
+            surFait(TEXTES_A_VALIDER.reussiteRefus)
           }}
           onRefusDeDemande={(message) => {
             setFenetre(false)

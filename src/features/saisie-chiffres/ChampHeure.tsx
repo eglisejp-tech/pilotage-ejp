@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import type { CodeAide } from '@/components/aide/textesAide'
-import { garderChiffres } from '@/features/saisie/chiffres'
+import { formatAReprendre, MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import { TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
 
 interface Props {
@@ -27,7 +27,9 @@ const classeChamp =
  * Champ d'une heure (unité « heure », BRIEF section 4) : deux champs, les heures et les minutes,
  * rendus en minutes depuis minuit par le schéma partagé (`schemaHeure`). Le format reste un texte
  * visible (aides-contextuelles.md, section 8). Le groupe porte le libellé de l'indicateur ; son
- * aide, s'il en a une, est à côté du libellé, hors des `<label>`.
+ * aide, s'il en a une, est à côté du libellé, hors des `<label>`. Comme ChampNombre, chaque champ
+ * garde ce qui est écrit : un texte qui n'est pas un nombre entier reste visible et la consigne
+ * s'affiche dès la frappe (m100).
  */
 export function ChampHeure({
   id,
@@ -48,13 +50,15 @@ export function ChampHeure({
   const idNote = `${id}-note`
   const idDeja = `${id}-deja`
   const idErreur = `${id}-erreur`
+  const aReprendre = formatAReprendre(valeur.heures) || formatAReprendre(valeur.minutes)
+  const message = aReprendre ? MESSAGE_NOMBRE_ENTIER : erreur
   const decritPar = [
     definition ? idDefinition : '',
     mention ? idMention : '',
     idFormat,
     note ? idNote : '',
     dejaSaisi ? idDeja : '',
-    erreur ? idErreur : '',
+    message ? idErreur : '',
   ]
     .filter(Boolean)
     .join(' ')
@@ -87,12 +91,9 @@ export function ChampHeure({
             type="text"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={2}
             value={valeur.heures}
-            onChange={(evenement) =>
-              onChange({ ...valeur, heures: garderChiffres(evenement.target.value) })
-            }
-            aria-invalid={erreur ? true : undefined}
+            onChange={(evenement) => onChange({ ...valeur, heures: evenement.target.value })}
+            aria-invalid={message ? true : undefined}
             aria-describedby={decritPar}
             className={classeChamp}
           />
@@ -106,12 +107,9 @@ export function ChampHeure({
             type="text"
             inputMode="numeric"
             autoComplete="off"
-            maxLength={2}
             value={valeur.minutes}
-            onChange={(evenement) =>
-              onChange({ ...valeur, minutes: garderChiffres(evenement.target.value) })
-            }
-            aria-invalid={erreur ? true : undefined}
+            onChange={(evenement) => onChange({ ...valeur, minutes: evenement.target.value })}
+            aria-invalid={message ? true : undefined}
             aria-describedby={decritPar}
             className={classeChamp}
           />
@@ -130,11 +128,15 @@ export function ChampHeure({
           {dejaSaisi}
         </p>
       ) : null}
-      {erreur ? (
+      {message ? (
         <p id={idErreur} className="text-[15px] leading-normal text-alerte">
-          {erreur}
+          {message}
         </p>
       ) : null}
+      {/* La consigne apparaît pendant la frappe : cette région, hors du flux, l'annonce. */}
+      <span aria-live="polite" className="sr-only">
+        {aReprendre ? MESSAGE_NOMBRE_ENTIER : ''}
+      </span>
     </div>
   )
 }

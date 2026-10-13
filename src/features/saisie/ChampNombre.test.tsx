@@ -62,13 +62,86 @@ describe('ChampNombre', () => {
     expect(new Set(noms).size).toBe(4)
   })
 
-  it('n’accepte que des chiffres et garde un champ vide vide', async () => {
-    const utilisateur = userEvent.setup()
+  it('garde un champ vide vide', () => {
     render(<Champ depart="" />)
     const champ = screen.getByLabelText('STARs au service ce dimanche')
     expect(champ).toHaveValue('')
-    await utilisateur.type(champ, 'a1b2')
+    expect(champ).not.toHaveAttribute('aria-invalid')
+  })
+
+  it.each(['12,5', '12.5', '1 2', '12a'])(
+    'garde « %s » tel quel et explique sous le champ, sans jamais le réécrire (m100)',
+    async (texte) => {
+      const utilisateur = userEvent.setup()
+      render(<Champ depart="" />)
+      const champ = screen.getByLabelText('STARs au service ce dimanche')
+      await utilisateur.type(champ, texte)
+      expect(champ).toHaveValue(texte)
+      expect(champ).toHaveAttribute('aria-invalid', 'true')
+      expect(champ).toHaveAccessibleDescription(
+        'Saisissez un nombre entier, sans virgule ni lettre.',
+      )
+      // La consigne est aussi dans une région annoncée : elle arrive pendant la frappe.
+      const annonces = document.querySelectorAll('[aria-live="polite"]')
+      expect([...annonces].map((region) => region.textContent)).toContain(
+        'Saisissez un nombre entier, sans virgule ni lettre.',
+      )
+      // Les boutons plus et moins n'agissent pas sur un texte à corriger.
+      const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
+      expect(plus).toHaveAttribute('aria-disabled', 'true')
+      await utilisateur.click(plus)
+      expect(champ).toHaveValue(texte)
+    },
+  )
+
+  it('la consigne disparaît dès que le champ contient un nombre entier ; « 1 000 » en est un', async () => {
+    const utilisateur = userEvent.setup()
+    render(<Champ depart="" />)
+    const champ = screen.getByLabelText('STARs au service ce dimanche')
+    await utilisateur.type(champ, '12,')
+    expect(champ).toHaveAccessibleDescription('Saisissez un nombre entier, sans virgule ni lettre.')
+    await utilisateur.type(champ, '{Backspace}')
     expect(champ).toHaveValue('12')
+    expect(screen.queryByText('Saisissez un nombre entier, sans virgule ni lettre.')).toBeNull()
+    await utilisateur.clear(champ)
+    await utilisateur.type(champ, '1 000')
+    expect(champ).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('0 et le vide sont des saisies valides ; « Retirer un » est inactif à 0', async () => {
+    const utilisateur = userEvent.setup()
+    render(<Champ depart="0" />)
+    const champ = screen.getByLabelText('STARs au service ce dimanche')
+    expect(champ).not.toHaveAttribute('aria-invalid')
+    const moins = screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' })
+    expect(moins).toHaveAttribute('aria-disabled', 'true')
+    await utilisateur.click(moins)
+    expect(champ).toHaveValue('0')
+  })
+
+  it('au plafond, « Ajouter un » se dit inactif et garde le focus ; « Retirer un » reste actif', async () => {
+    const utilisateur = userEvent.setup()
+    render(<Champ depart="9998" />)
+    const champ = screen.getByLabelText('STARs au service ce dimanche')
+    const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
+    expect(plus).not.toHaveAttribute('aria-disabled')
+    await utilisateur.click(plus)
+    expect(champ).toHaveValue('9999')
+    expect(plus).toHaveAttribute('aria-disabled', 'true')
+    expect(plus).toHaveFocus()
+    await utilisateur.click(plus)
+    expect(champ).toHaveValue('9999')
+    expect(
+      screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' }),
+    ).not.toHaveAttribute('aria-disabled')
+  })
+
+  it('la consigne de format passe avant une erreur reçue (borne, refus)', () => {
+    render(<ChampNombre {...proprietes('12,5')} erreur="Entre 0 et 9 999." />)
+    expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveAccessibleDescription(
+      'Saisissez un nombre entier, sans virgule ni lettre.',
+    )
+    expect(screen.queryByText('Entre 0 et 9 999.')).toBeNull()
   })
 
   it('en variante compacte : pas de boutons plus et moins', () => {

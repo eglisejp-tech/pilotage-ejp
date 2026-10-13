@@ -4,7 +4,7 @@
 // valeur et l'heure, `./schemas.ts` pour la précision et les catégories).
 
 import { schemaHeure, schemaValeur } from '@/features/indicateurs/schemas'
-import { lireNombre } from '@/features/saisie/chiffres'
+import { lireChamp, MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import type { ChampChiffre } from '@/features/saisie-chiffres/champs'
 import {
   schemaPrecision,
@@ -34,24 +34,29 @@ export function valeurDepart(champ: Pick<ChampChiffre, 'unite' | 'depart'>): Val
 /**
  * Valeur d'un champ : vide (rien n'est envoyé), un entier de 0 au plafond de l'unité, ou le
  * message de la borne (« Entre 0 et 9 999. »). Une heure partielle (heures sans minutes) est une
- * erreur, jamais une heure devinée.
+ * erreur, jamais une heure devinée. Un texte qui n'est pas un nombre entier (« 12,5 ») est une
+ * erreur, jamais un nombre deviné (m100).
  */
 export function lireValeur(unite: UniteIndicateur, valeur: ValeurChamp): Lecture<number> {
   if (typeof valeur !== 'string') {
-    const heures = lireNombre(valeur.heures)
-    const minutes = lireNombre(valeur.minutes)
-    if (heures === null && minutes === null) return { etat: 'vide' }
+    const heures = lireChamp(valeur.heures)
+    const minutes = lireChamp(valeur.minutes)
+    if (heures.etat === 'format' || minutes.etat === 'format') {
+      return { etat: 'erreur', message: MESSAGE_NOMBRE_ENTIER }
+    }
+    if (heures.etat === 'vide' && minutes.etat === 'vide') return { etat: 'vide' }
     const resultat = schemaHeure.safeParse({
-      heures: heures ?? undefined,
-      minutes: minutes ?? undefined,
+      heures: heures.etat === 'nombre' ? heures.valeur : undefined,
+      minutes: minutes.etat === 'nombre' ? minutes.valeur : undefined,
     })
     return resultat.success
       ? { etat: 'ok', valeur: resultat.data }
       : { etat: 'erreur', message: resultat.error.issues[0]?.message ?? 'Saisissez une heure.' }
   }
-  const nombre = lireNombre(valeur)
-  if (nombre === null) return { etat: 'vide' }
-  const resultat = schemaValeur(unite).safeParse(nombre)
+  const lecture = lireChamp(valeur)
+  if (lecture.etat === 'format') return { etat: 'erreur', message: MESSAGE_NOMBRE_ENTIER }
+  if (lecture.etat === 'vide') return { etat: 'vide' }
+  const resultat = schemaValeur(unite).safeParse(lecture.valeur)
   return resultat.success
     ? { etat: 'ok', valeur: resultat.data }
     : { etat: 'erreur', message: resultat.error.issues[0]?.message ?? 'Saisissez un nombre.' }
@@ -68,7 +73,8 @@ export function lirePrecision(texte: string): Lecture<string> {
 
 /**
  * Grille de répartition : vide si aucune catégorie n'est remplie (pas de répartition), sinon la
- * valeur de chaque catégorie remplie. Une catégorie hors bornes donne son message.
+ * valeur de chaque catégorie remplie. Une catégorie hors bornes donne son message ; une catégorie
+ * qui n'est pas un nombre entier donne `MESSAGE_NOMBRE_ENTIER` (dit aussi sous son champ).
  */
 export function lireRepartition(
   codes: readonly string[],
@@ -76,9 +82,10 @@ export function lireRepartition(
 ): Lecture<Record<string, number>> {
   const valeurs: Record<string, number> = {}
   for (const code of codes) {
-    const nombre = lireNombre(saisie[code] ?? '')
-    if (nombre === null) continue
-    const resultat = schemaValeurCategorie.safeParse(nombre)
+    const lecture = lireChamp(saisie[code] ?? '')
+    if (lecture.etat === 'format') return { etat: 'erreur', message: MESSAGE_NOMBRE_ENTIER }
+    if (lecture.etat === 'vide') continue
+    const resultat = schemaValeurCategorie.safeParse(lecture.valeur)
     if (!resultat.success) {
       return { etat: 'erreur', message: resultat.error.issues[0]?.message ?? 'Entre 0 et 9 999.' }
     }

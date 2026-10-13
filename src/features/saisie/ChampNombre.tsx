@@ -1,6 +1,11 @@
 import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
 import type { CodeAide } from '@/components/aide/textesAide'
-import { ajusterNombre, garderChiffres } from '@/features/saisie/chiffres'
+import {
+  ajusterNombre,
+  formatAReprendre,
+  MESSAGE_NOMBRE_ENTIER,
+  peutAjuster,
+} from '@/features/saisie/chiffres'
 import { MOINS } from '@/lib/metier/texte'
 import { cn } from '@/lib/utils'
 
@@ -36,8 +41,12 @@ interface Props {
 
 /**
  * Champ numérique des saisies (maquette 08) : un vrai champ entre « moins » et « plus », de
- * grandes cibles de 64 px. Le texte est gardé tel quel (champ vide possible), seuls les chiffres
- * sont acceptés. Le libellé reste un `<label>` ; l'aide, si elle existe, est son voisin. Les
+ * grandes cibles de 64 px. Le texte est gardé tel quel (champ vide possible), jamais réécrit : un
+ * texte qui n'est pas un nombre entier (« 12,5 », « 12a ») reste visible, et la consigne
+ * `MESSAGE_NOMBRE_ENTIER` s'affiche sous le champ dès la frappe, annoncée aux lecteurs d'écran
+ * (m100). « Ajouter un » au plafond, « Retirer un » à 0 et les deux sur un texte à corriger sont
+ * inactifs (`aria-disabled` : le focus reste sur le bouton, qui se dit indisponible). Le libellé
+ * reste un `<label>` ; l'aide, si elle existe, est son voisin. Les
  * boutons « moins » et « plus » portent le libellé du champ dans leur nom accessible (« Ajouter
  * un : STARs actifs ») : un formulaire en a plusieurs paires, qui ne doivent pas se confondre.
  * Dans un conteneur de grille, le champ se range en bas de sa cellule : deux champs côte à côte
@@ -65,18 +74,24 @@ export function ChampNombre({
   const idNote = `${id}-note`
   const idDeja = `${id}-deja`
   const idErreur = `${id}-erreur`
+  // Un texte qui n'est pas un nombre entier : la consigne passe avant tout autre message, car
+  // l'erreur reçue (une borne, un refus) portait sur un nombre que le champ ne contient plus.
+  const aReprendre = formatAReprendre(valeur)
+  const message = aReprendre ? MESSAGE_NOMBRE_ENTIER : erreur
   const decritPar = [
     definition ? idDefinition : '',
     mention ? idMention : '',
     note ? idNote : '',
     dejaSaisi ? idDeja : '',
     decritAussi ?? '',
-    erreur ? idErreur : '',
+    message ? idErreur : '',
   ]
     .filter(Boolean)
     .join(' ')
   const grand = variante === 'grand'
-  const enErreur = Boolean(erreur) || invalide === true
+  const enErreur = Boolean(message) || invalide === true
+  const peutRetirer = peutAjuster(valeur, -1, max)
+  const peutAjouter = peutAjuster(valeur, 1, max)
   // Le nombre domine la page (maquette 08 : 112 px, graisse 900). Au-delà de 3 chiffres il se
   // réduit, pour que 4 chiffres tiennent entre les deux boutons à 390 px.
   const tailleGrand = valeur.length > 3 ? 'text-[84px]' : 'text-[112px]'
@@ -89,7 +104,7 @@ export function ChampNombre({
         inputMode="numeric"
         autoComplete="off"
         value={valeur}
-        onChange={(evenement) => onChange(garderChiffres(evenement.target.value))}
+        onChange={(evenement) => onChange(evenement.target.value)}
         aria-invalid={enErreur ? true : undefined}
         aria-describedby={decritPar || undefined}
         className={cn(
@@ -107,6 +122,10 @@ export function ChampNombre({
           {suffixe}
         </span>
       ) : null}
+      {/* La consigne apparaît pendant la frappe : cette région, hors du flux, l'annonce. */}
+      <span aria-live="polite" className="sr-only">
+        {aReprendre ? MESSAGE_NOMBRE_ENTIER : ''}
+      </span>
     </div>
   )
 
@@ -140,8 +159,11 @@ export function ChampNombre({
             <button
               type="button"
               aria-label={`Retirer un : ${libelle}`}
-              onClick={() => onChange(ajusterNombre(valeur, -1, max))}
-              className="h-cible-saisie border border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre"
+              aria-disabled={peutRetirer ? undefined : true}
+              onClick={() => {
+                if (peutRetirer) onChange(ajusterNombre(valeur, -1, max))
+              }}
+              className="h-cible-saisie border border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
             >
               <span aria-hidden="true">{MOINS}</span>
             </button>
@@ -149,8 +171,11 @@ export function ChampNombre({
             <button
               type="button"
               aria-label={`Ajouter un : ${libelle}`}
-              onClick={() => onChange(ajusterNombre(valeur, 1, max))}
-              className="h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier"
+              aria-disabled={peutAjouter ? undefined : true}
+              onClick={() => {
+                if (peutAjouter) onChange(ajusterNombre(valeur, 1, max))
+              }}
+              className="h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
             >
               <span aria-hidden="true">+</span>
             </button>
@@ -168,9 +193,9 @@ export function ChampNombre({
             {dejaSaisi}
           </p>
         ) : null}
-        {erreur ? (
+        {message ? (
           <p id={idErreur} className="text-[15px] leading-normal text-alerte">
-            {erreur}
+            {message}
           </p>
         ) : null}
       </div>

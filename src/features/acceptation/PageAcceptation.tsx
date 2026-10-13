@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { accepterConditions } from '@/data/conditions'
 import { EcranAcceptation } from '@/features/acceptation/EcranAcceptation'
+import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { messagesConnexion } from '@/features/connexion/messages'
 import { useEtatVerifie } from '@/features/session/contexte'
 import { seDeconnecter } from '@/features/session/actions'
@@ -39,6 +40,7 @@ export function PageAcceptation() {
       onSignOut={() => void seDeconnecter()}
       enCours={enCours}
       erreur={erreur}
+      annonce={<AnnonceSuivante dans="colonne" />}
     />
   )
 }

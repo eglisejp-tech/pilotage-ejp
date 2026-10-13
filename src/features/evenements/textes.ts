@@ -115,6 +115,10 @@ export const TEXTES_REUNION = {
   erreurHeure: 'Saisissez une heure, par exemple 20 h 00.',
   erreurObjetLong: "L'objet fait 80 caractères au plus.",
   erreurDecisionLongue: 'La décision attendue fait 80 caractères au plus.',
+  /** Second appui après une réussite, sans rien changer (m135, Proposé) : rien ne part. */
+  dejaEnregistree: 'Cette réunion est déjà enregistrée. Changez une information pour la corriger.',
+  /** Sous l'objet ou la décision qu'EJP Tech a masqué : le champ s'ouvre vide (m136, Proposé). */
+  texteMasque: 'Votre texte précédent a été masqué.',
 } as const
 
 /** Longueur d'un nom d'événement, d'un objet ou d'une décision attendue (BRIEF, règle 9). */

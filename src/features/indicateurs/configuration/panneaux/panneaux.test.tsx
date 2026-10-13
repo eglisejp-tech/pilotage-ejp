@@ -204,6 +204,31 @@ describe('panneau « Ajouter un indicateur »', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('pendant l’envoi, le bouton dit « Ajout en cours » (m231)', async () => {
+    let repondre: (() => void) | undefined
+    const { utilisateur, panneau, ecritures } = await ouvrir(
+      ecrituresDe({
+        ajouter: vi.fn(
+          () =>
+            new Promise<void>((resolve) => {
+              repondre = resolve
+            }),
+        ),
+      }),
+    )
+    await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Tournages')
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on compte exactement"),
+      'Tournages réalisés dans le mois.',
+    )
+    await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    expect(within(panneau).getByRole('button', { name: 'Ajout en cours' })).toBeVisible()
+    expect(ecritures.ajouter).toHaveBeenCalledTimes(1)
+    repondre?.()
+    expect(await screen.findByText('Indicateur ajouté.')).toBeVisible()
+  })
+
   it('l’aperçu cite le dernier mois fini, puis le dimanche de référence', async () => {
     const { utilisateur, panneau } = await ouvrir()
     await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Tournages')
@@ -868,11 +893,13 @@ describe('fenêtre « Retirer »', () => {
     const utilisateur = afficher(ID_COMMUNICATION, ecritures)
     await utilisateur.click(bouton('Retirer « Publications »'))
     const fenetre = await screen.findByRole('alertdialog', { name: 'Retirer « Publications » ?' })
+    // m232 : la conséquence, puis « C'est définitif. », sans autre phrase.
     expect(
       within(fenetre).getByText(
-        'Il ne sera plus proposé à la saisie. Ses saisies restent sur la fiche. Un indicateur retiré ne revient pas.',
+        "Il ne sera plus proposé à la saisie. Ses saisies restent sur la fiche. C'est définitif.",
       ),
     ).toBeVisible()
+    expect(within(fenetre).queryByText(/Pour reprendre ce chiffre/)).toBeNull()
     expect(within(fenetre).getByText('Ses saisies : rien ne se supprime.')).toBeVisible()
     expect(within(fenetre).getAllByRole('radio')).toHaveLength(7)
     await utilisateur.click(within(fenetre).getByRole('button', { name: "Retirer l'indicateur" }))
@@ -884,9 +911,8 @@ describe('fenêtre « Retirer »', () => {
     await utilisateur.click(within(fenetre).getByRole('button', { name: "Retirer l'indicateur" }))
     await waitFor(() => expect(ecritures.retirer).toHaveBeenCalledTimes(1))
     expect(ecritures.retirer).toHaveBeenCalledWith(ID_COMMUNICATION, expect.any(String), 'doublon')
-    expect(
-      await screen.findByText('Indicateur retiré, ses saisies restent sur la fiche.'),
-    ).toBeVisible()
+    // m231 : la réussite dit ce qui a été fait, la fenêtre a déjà dit le reste.
+    expect(await screen.findByText('Indicateur retiré.')).toBeVisible()
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
   })
 
@@ -993,8 +1019,10 @@ describe('fenêtre « Retirer pour confidentialité »', () => {
     const fenetre = await screen.findByRole('alertdialog', {
       name: 'Retirer « Publications » pour confidentialité ?',
     })
-    expect(within(fenetre).getByText(/« \[retiré pour confidentialité\] »/)).toBeVisible()
-    expect(within(fenetre).getByText(/Cette action est définitive\./)).toBeVisible()
+    // m232 : la conséquence en une phrase, puis « C'est définitif. ».
+    expect(
+      within(fenetre).getByText("Le nom et la définition seront masqués. C'est définitif."),
+    ).toBeVisible()
     expect(
       within(fenetre).getByText(
         "Le libellé et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",

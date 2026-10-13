@@ -33,11 +33,11 @@ const OPTIONS_MOTIF = MOTIFS_RETRAIT.map((motif) => ({
 
 /**
  * Fenêtres « Retirer » et « Retirer pour confidentialité » (7.2). Elles disent, avant de
- * confirmer, ce que le geste change et ce qui ne change pas : les saisies restent sur la fiche,
- * un calcul qui en dépend est retiré avec l'indicateur (lu avant l'ouverture du bouton), un
- * indicateur retiré ne revient pas. Le retrait pour confidentialité dit en plus que le libellé et
- * la définition seront masqués. Fenêtre modale : le focus y reste, Échap annule, le refus de la
- * base s'affiche sous les boutons et la fenêtre reste ouverte.
+ * confirmer, en une phrase, la conséquence puis « C'est définitif. » (m232) : les saisies restent
+ * sur la fiche, ou le nom et la définition seront masqués ; un calcul qui en dépend est retiré
+ * avec l'indicateur (lu avant l'ouverture du bouton). « Ce qui change » et « Ce qui ne change pas »
+ * suivent. Fenêtre modale : le focus y reste, Échap annule, le refus de la base s'affiche sous les
+ * boutons et la fenêtre reste ouverte.
  */
 export function FenetreRetrait({ controleur, ligne, genre }: Props) {
   const { ecritures, ministere, calculs, terminer, fermer } = controleur
@@ -93,11 +93,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
     setEnCours(true)
     try {
       const retires = await ecritures.retirer(ministere.id, ligne.id, choisi)
-      terminer(
-        confidentialite
-          ? reussiteConfidentialite(retires)
-          : reussiteRetrait(ligne.calcul !== null || ligne.jamaisSaisi, retires),
-      )
+      terminer(confidentialite ? reussiteConfidentialite(retires) : reussiteRetrait(retires))
     } catch (erreur) {
       setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFenetre))
       occupe.current = false
@@ -129,9 +125,6 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
           <p>{texte}</p>
           {phraseCalculs !== null ? (
             <p className="font-semibold text-encre">{phraseCalculs}</p>
-          ) : null}
-          {!confidentialite && ligne.calcul === null && !ligne.jamaisSaisi ? (
-            <p>{TEXTES_PANNEAUX.retrait.reprendre}</p>
           ) : null}
         </div>
         {!pret ? (

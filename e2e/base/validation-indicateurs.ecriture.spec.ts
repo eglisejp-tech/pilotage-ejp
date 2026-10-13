@@ -336,7 +336,7 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
     await expect(fenetre.getByText('Expliquez le refus (10 caractères au moins).')).toBeVisible()
     await fenetre.getByRole('textbox').fill(MOTIF_REFUS)
     await fenetre.getByRole('button', { name: 'Refuser' }).click()
-    await expect(page.getByText('Indicateur refusé. Communication verra le motif.')).toBeVisible()
+    await expect(page.getByText('Indicateur refusé.', { exact: true })).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
 
     const indicateurs = await indicateursDeCommunication(page)

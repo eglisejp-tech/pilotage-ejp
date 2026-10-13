@@ -83,6 +83,15 @@ describe('EcranAcceptation (T53)', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
   })
 
+  it('nouvelle version après une acceptation : l’écran dit pourquoi il revient (m056)', () => {
+    afficher()
+    expect(screen.queryByText(/Les conditions ont changé/)).not.toBeInTheDocument()
+    afficher({ conditionsChangees: true })
+    expect(
+      screen.getByText('Les conditions ont changé. Lisez-les avant de continuer.'),
+    ).toBeVisible()
+  })
+
   it('« Se déconnecter » appelle la déconnexion', async () => {
     const { onSignOut, utilisateur } = afficher()
     await utilisateur.click(screen.getByRole('button', { name: 'Se déconnecter' }))
