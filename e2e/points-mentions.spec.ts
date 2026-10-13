@@ -129,12 +129,16 @@ test.describe('la fenêtre', () => {
     ).toBeVisible()
   })
 
-  test('enregistrer la liste actuelle ferme la fenêtre sans message', async ({ page }) => {
+  test('la liste actuelle : la fenêtre reste ouverte et le dit (m155)', async ({ page }) => {
     const boite = await ouvrirFenetre(page)
     await boite.getByRole('button', { name: 'Enregistrer les mentions' }).click()
+    await expect(
+      boite.getByText('Ces mentions sont déjà enregistrées. Cochez ou décochez un ministère.'),
+    ).toBeVisible()
+    await expect(page.locator('[data-annonce-point]')).toHaveCount(0)
+    await boite.getByRole('button', { name: 'Annuler' }).click()
     await expect(boite).toHaveCount(0)
     await expect(boutonDuPoint(page, BOUTON)).toBeFocused()
-    await expect(page.locator('[data-annonce-point]')).toHaveCount(0)
   })
 
   test('« Annuler », « Retour » et Échap ferment sans rien écrire', async ({ page }) => {

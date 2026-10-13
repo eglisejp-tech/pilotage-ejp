@@ -25,6 +25,8 @@ export const TEXTES_ACTIONS_POINT = {
     /** Connexion perdue : le statut choisi reste dans le formulaire. */
     erreurConnexion:
       'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+    /** « Enregistrer le statut » avec le statut déjà en place (m146, Proposé) : rien ne part. */
+    dejaEnregistre: 'Ce statut est déjà enregistré. Choisissez-en un autre.',
   },
 
   /**
@@ -46,6 +48,8 @@ export const TEXTES_ACTIONS_POINT = {
     /** Suffixe d'un ministère désactivé qui reste mentionné : on peut le retirer, plus l'ajouter. */
     desactive: '(désactivé)',
     erreurConnexion: 'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
+    /** « Enregistrer les mentions » sans aucun changement (m155, Proposé) : rien ne part. */
+    dejaEnregistrees: 'Ces mentions sont déjà enregistrées. Cochez ou décochez un ministère.',
   },
 
   traite: {

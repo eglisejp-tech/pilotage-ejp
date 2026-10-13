@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
@@ -25,6 +26,11 @@ export type ProprietesEcranDeclaration = {
   enCours?: boolean
   /** Message du bandeau (échec de l'enregistrement), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /**
+   * Réussite de l'étape précédente (« Mot de passe enregistré. » après « Mot de passe oublié »,
+   * « Double authentification activée. »), en tête de l'écran.
+   */
+  annonce?: ReactNode
 }
 
 /**
@@ -40,6 +46,7 @@ export function EcranDeclaration({
   onCancel,
   enCours = false,
   erreur,
+  annonce,
 }: ProprietesEcranDeclaration) {
   useTitrePage(TEXTES_DECLARATION.titre)
   const {
@@ -62,6 +69,7 @@ export function EcranDeclaration({
 
   return (
     <ColonneConnexion>
+      {annonce}
       <TitreConnexion surtitre={libelleCompte} titre={TEXTES_DECLARATION.titre} taille="moyenne">
         {TEXTES_DECLARATION.phrase}
       </TitreConnexion>

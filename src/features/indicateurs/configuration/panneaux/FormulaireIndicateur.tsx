@@ -23,6 +23,7 @@ import { ChoixRadios } from '@/features/indicateurs/configuration/panneaux/Choix
 import type { ControleurPanneaux } from '@/features/indicateurs/configuration/panneaux/contexte'
 import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux/EtatLectureTermes'
 import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import { ApercuDeSaisie } from '@/features/indicateurs/configuration/panneaux/ApercuDeSaisie'
@@ -144,6 +145,8 @@ function CorpsIndicateur({
   calculsLies,
 }: Props & { calculsLies: readonly string[] }) {
   const { ecritures, ministere, terminer, fermer } = controleur
+  // « Annuler » demande confirmation si un champ a changé (m265).
+  const annuler = useFermetureSaisie(fermer)
   const id = useId()
   const formulaire = useRef<HTMLFormElement>(null)
   const occupe = useRef(false)
@@ -354,12 +357,14 @@ function CorpsIndicateur({
         <BoutonEnregistrer
           libelle={remplace === undefined ? textes.bouton : TEXTES_PANNEAUX.remplacement.bouton}
           enCours={enCours}
-          libelleEnCours={TEXTES_PANNEAUX.enCours}
+          libelleEnCours={
+            remplace === undefined ? TEXTES_PANNEAUX.ajoutEnCours : TEXTES_PANNEAUX.enCours
+          }
         />
         {refus !== null ? <ErreurEnvoi message={refus} /> : null}
         <button
           type="button"
-          onClick={fermer}
+          onClick={annuler}
           className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
         >
           {TEXTES_PANNEAUX.annuler}

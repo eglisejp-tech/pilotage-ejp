@@ -99,6 +99,22 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
   })
 
+  it('« 12,5 » dans la 2e catégorie : rien ne part, le focus va à cette case, qui dit quoi corriger', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = afficher(null)
+    await utilisateur.type(total(), '20')
+    await utilisateur.type(categorie('Malaise'), '4')
+    await utilisateur.type(categorie('Blessure'), '12,5')
+    await utilisateur.click(bouton())
+    expect(enregistrer).not.toHaveBeenCalled()
+    expect(categorie('Blessure')).toHaveFocus()
+    expect(categorie('Blessure')).toHaveAttribute('aria-invalid', 'true')
+    expect(categorie('Blessure')).toHaveAccessibleDescription(
+      'Saisissez un nombre entier, sans virgule ni lettre.',
+    )
+    expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
+  })
+
   it('la ligne du bas dit que la dernière saisie compte quand « Déjà saisi » est affiché', () => {
     afficher(null)
     expect(

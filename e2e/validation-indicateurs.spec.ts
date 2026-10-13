@@ -112,7 +112,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
 
     await champ.fill('Ce chiffre existe déjà sur votre fiche.')
     await fenetre.getByRole('button', { name: 'Refuser' }).click()
-    await expect(reussite(page)).toHaveText('Indicateur refusé. Communication verra le motif.')
+    await expect(reussite(page)).toHaveText('Indicateur refusé.')
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 3, name: 'Communication' })).toHaveCount(0)
     await page.getByText(/Décidées ces 30 derniers jours \(4\)/).click()

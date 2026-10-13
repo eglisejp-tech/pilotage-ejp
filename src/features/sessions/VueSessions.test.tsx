@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   AUJOURDHUI_APERCU,
   donneesExemple,
@@ -11,6 +11,7 @@ import { construireLignesSessions } from '@/features/sessions/construire'
 import type { ActionsSessions, DonneesSessions } from '@/features/sessions/types'
 import { VueSessions } from '@/features/sessions/VueSessions'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
+import { simulerLargeur } from '@/test/largeur'
 
 function donnees(vide = false): EtatBloc<DonneesSessions> {
   return {
@@ -191,4 +192,83 @@ describe('VueSessions (écran 14)', () => {
     afficher({ etat: 'erreur', reessayer: vi.fn() })
     expect(screen.getByText('La connexion a échoué. Réessayez.')).toBeInTheDocument()
   })
+
+  it('« Modifier » dont la lecture échoue : « Réessayer » dans le panneau, puis le recours (m212, m250)', async () => {
+    const actions = actionsFausses()
+    actions.lireAttendus
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    afficher(donnees(), actions)
+    await userEvent.click(screen.getByRole('button', { name: "Modifier Bâtir l'Église du 3 oct." }))
+    const panneau = await screen.findByRole('dialog', {
+      name: "Modifier Bâtir l'Église du 3 oct.",
+    })
+    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    // Premier nouvel essai : il échoue encore, la phrase ajoute le recours.
+    await userEvent.click(within(panneau).getByRole('button', { name: 'Réessayer' }))
+    await waitFor(() =>
+      expect(within(panneau).getByRole('alert')).toHaveTextContent(
+        'La connexion a échoué. Réessayez, et si le problème revient, prévenez EJP Tech.',
+      ),
+    )
+    // Deuxième nouvel essai : la lecture répond, le formulaire s'affiche dans le même panneau.
+    await userEvent.click(within(panneau).getByRole('button', { name: 'Réessayer' }))
+    expect(await within(panneau).findByText('3 sur 8')).toBeInTheDocument()
+    expect(actions.lireAttendus).toHaveBeenCalledTimes(3)
+  })
+
+  it('« Modifier » refusé par la base (42501) : la phrase du refus, sans « Réessayer » (m212)', async () => {
+    const actions = actionsFausses()
+    actions.lireAttendus.mockRejectedValueOnce({ code: '42501', message: 'Accès refusé.' })
+    afficher(donnees(), actions)
+    await userEvent.click(screen.getByRole('button', { name: "Modifier Bâtir l'Église du 3 oct." }))
+    const panneau = await screen.findByRole('dialog', {
+      name: "Modifier Bâtir l'Église du 3 oct.",
+    })
+    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
+      "Cette session n'existe pas ou vous n'y avez pas accès.",
+    )
+    expect(within(panneau).queryByRole('button', { name: 'Réessayer' })).toBeNull()
+  })
+})
+
+describe('VueSessions : passage du palier de 600 px pendant une saisie', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    [390, 834],
+    [834, 390],
+  ])(
+    'de %s à %s px : le panneau reste le même, la saisie et le focus sont gardés',
+    async (avant, apres) => {
+      simulerLargeur(avant)
+      const etat = donnees()
+      const actions = actionsFausses()
+      const ecran = () => (
+        <MemoryRouter>
+          <VueSessions titre="Sessions" donnees={etat} actions={actions} />
+        </MemoryRouter>
+      )
+      const { rerender } = render(ecran())
+      const utilisateur = userEvent.setup()
+      await utilisateur.click(screen.getByRole('button', { name: 'Déclarer une session' }))
+      const [caseMinistere] = screen.getAllByRole('checkbox')
+      if (caseMinistere === undefined) throw new Error('aucun ministère proposé')
+      expect(caseMinistere).toBeChecked()
+      await utilisateur.click(caseMinistere)
+      // Téléphone tourné ou fenêtre redimensionnée : le panneau change de forme, pas de contenu.
+      simulerLargeur(apres)
+      rerender(ecran())
+      expect(screen.queryByRole('dialog') !== null).toBe(apres >= 600)
+      expect(screen.getAllByRole('checkbox')[0]).toBe(caseMinistere)
+      expect(caseMinistere).not.toBeChecked()
+      expect(caseMinistere).toHaveFocus()
+      await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+      expect(screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })).toBeVisible()
+    },
+  )
 })

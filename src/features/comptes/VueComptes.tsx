@@ -105,7 +105,6 @@ export function VueComptes({ titre, donnees, actions }: Props) {
         <MessageReussite message={ecran.reussite} envoi={ecran.envoi} />
       </div>
 
-      {pleinePage ? panneau : null}
       {!pleinePage && donnees.etat === 'chargement' ? <ChargementBloc /> : null}
       {!pleinePage && donnees.etat === 'erreur' ? (
         <ErreurDePage
@@ -194,7 +193,9 @@ export function VueComptes({ titre, donnees, actions }: Props) {
         </>
       ) : null}
 
-      {pleinePage ? null : panneau}
+      {/* Toujours à la même place de l'arbre : passer le palier de 600 px garde la saisie. En
+          page entière, rien n'est rendu entre la région des messages et le panneau. */}
+      {panneau}
       {ecran.confirmation ? (
         <FenetreConfirmation
           confirmation={ecran.confirmation.texte}

@@ -106,10 +106,41 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
     await userEvent.click(bouton())
     expect(await screen.findByText('Réunion enregistrée.')).toBeInTheDocument()
     expect(bouton()).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.queryByText(/déjà enregistrée/)).toBeNull()
     await userEvent.click(bouton())
     expect(envoyer).toHaveBeenCalledTimes(1)
+    // Le second clic n'est plus muet (m135) : la phrase dit quoi faire, dans une région annoncée.
+    const phrase = screen.getByText(
+      'Cette réunion est déjà enregistrée. Changez une information pour la corriger.',
+    )
+    expect(phrase.closest('[role="status"]')).not.toBeNull()
+    // Elle remplace la réussite : un seul message sous le bouton.
+    expect(screen.queryByText('Réunion enregistrée.')).toBeNull()
     await userEvent.type(screen.getByLabelText('Objet (facultatif)'), 'Bilan')
     expect(bouton()).not.toHaveAttribute('aria-disabled')
+    expect(screen.queryByText(/déjà enregistrée/)).toBeNull()
+  })
+
+  it('un objet ou une décision masqués : le champ s’ouvre vide et le dit (m136)', async () => {
+    render(
+      <MemoryRouter>
+        <FormulaireReunion
+          aujourdhui="2026-10-06"
+          prochaine={{ date: '2026-10-12', heure: '', objet: '', decision: 'Choisir la salle' }}
+          masques={{ objet: true, decision: false }}
+          envoyer={() => Promise.resolve()}
+        />
+      </MemoryRouter>,
+    )
+    const objet = screen.getByLabelText('Objet (facultatif)')
+    expect(objet).toHaveValue('')
+    expect(objet).toHaveAccessibleDescription(
+      expect.stringContaining('Votre texte précédent a été masqué.'),
+    )
+    expect(screen.getAllByText('Votre texte précédent a été masqué.')).toHaveLength(1)
+    // Un nouveau texte écrit : la phrase n'a plus lieu d'être.
+    await userEvent.type(objet, 'Bilan')
+    expect(screen.queryByText('Votre texte précédent a été masqué.')).toBeNull()
   })
 
   it('refus de droit de la base (jour passé à minuit) : sous le champ date, le jour est relu', async () => {

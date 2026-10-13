@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
+import { EtatVide } from '@/components/etats/EtatVide'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
-import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { designationDeclaration } from '@/features/sessions/construire'
 import type { LigneSession } from '@/features/sessions/construire'
 import { FormulaireSession } from '@/features/sessions/FormulaireSession'
@@ -24,9 +24,16 @@ interface Props {
 type Attendus =
   { etat: 'chargement' } | { etat: 'erreur'; message: string } | { etat: 'pret'; ids: string[] }
 
-/** Ministères attendus d'une session, lus à l'ouverture de « Modifier ». */
-function useAttendus(lire: ActionsSessions['lireAttendus'], sessionId: string): Attendus {
+/**
+ * Ministères attendus d'une session, lus à l'ouverture de « Modifier ». `relire` relance la
+ * lecture après un échec (« Réessayer », m212).
+ */
+function useAttendus(
+  lire: ActionsSessions['lireAttendus'],
+  sessionId: string,
+): { attendus: Attendus; relire: () => void } {
   const [attendus, setAttendus] = useState<Attendus>({ etat: 'chargement' })
+  const [essai, setEssai] = useState(0)
   useEffect(() => {
     let courant = true
     lire(sessionId).then(
@@ -45,8 +52,12 @@ function useAttendus(lire: ActionsSessions['lireAttendus'], sessionId: string): 
     return () => {
       courant = false
     }
-  }, [lire, sessionId])
-  return attendus
+  }, [lire, sessionId, essai])
+  const relire = () => {
+    setAttendus({ etat: 'chargement' })
+    setEssai((precedent) => precedent + 1)
+  }
+  return { attendus, relire }
 }
 
 function Modification({
@@ -56,9 +67,21 @@ function Modification({
   onFait,
   onFermer,
 }: Omit<Props, 'panneau'> & { ligne: LigneSession }) {
-  const attendus = useAttendus(actions.lireAttendus, ligne.id)
+  const { attendus, relire } = useAttendus(actions.lireAttendus, ligne.id)
   if (attendus.etat === 'chargement') return <ChargementBloc />
-  if (attendus.etat === 'erreur') return <ErreurFormulaire message={attendus.message} />
+  if (attendus.etat === 'erreur') {
+    // Lecture impossible : la phrase et « Réessayer » dans le panneau, sans le fermer (m212).
+    // Un refus (session inaccessible, 42501) ne change pas à un nouvel essai : pas de bouton.
+    const connexion = attendus.message === TEXTES_SESSIONS.erreurConnexionSuppression
+    return (
+      <EtatVide
+        situation="probleme_passager"
+        action={connexion ? { libelle: TEXTES_SESSIONS.reessayer, surClic: relire } : undefined}
+      >
+        {attendus.message}
+      </EtatVide>
+    )
+  }
   // Un ministère désactivé depuis garde sa ligne, mais l'écran ne le propose plus.
   const proposes = new Set(donnees.ministeres.map((ministere) => ministere.id))
   return (

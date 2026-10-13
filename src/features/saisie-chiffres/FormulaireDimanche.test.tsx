@@ -58,6 +58,27 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(screen.getByText(/^50\s% des actifs$/)).toBeInTheDocument()
   })
 
+  it('« 12,5 » n’est jamais envoyé comme 125 : il reste visible, expliqué, et rien ne part (m100)', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = afficher(null)
+    await utilisateur.type(service(), '12,5')
+    expect(service()).toHaveValue('12,5')
+    expect(service()).toHaveAccessibleDescription(
+      expect.stringContaining('Saisissez un nombre entier, sans virgule ni lettre.'),
+    )
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(enregistrer).not.toHaveBeenCalled()
+    expect(service()).toHaveValue('12,5')
+    expect(service()).toHaveFocus()
+
+    // Corrigé en nombre entier, il part tel quel.
+    await utilisateur.clear(service())
+    await utilisateur.type(service(), '12')
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(enregistrer.mock.calls[0])).toContain('"valeur":12')
+  })
+
   it('« Dont en FIJ » au-dessus des actifs : le message d’erreur seul, aucun pourcentage absurde', async () => {
     const utilisateur = userEvent.setup()
     afficher(null)

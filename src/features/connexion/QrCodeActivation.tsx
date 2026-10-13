@@ -1,18 +1,34 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 const DELAI_CHARGEMENT = 300
+
+/** La préparation du QR code a échoué (m044) : le cadre le dit, avec « Réessayer ». */
+export const MESSAGE_QR_EN_ECHEC = "Le QR code n'a pas pu s'afficher. Réessayez."
 
 type Proprietes = {
   /** Image du QR code (adresse data:), absente tant que l'enrôlement n'a pas répondu. */
   qrCode?: string
+  /** L'enrôlement a échoué (connexion) : le message et « Réessayer » remplacent « Chargement ». */
+  enEchec?: boolean
+  onReessayer?: () => void
+  /**
+   * L'enrôlement est refusé pour une raison qu'un nouvel essai ne change pas tout de suite (trop
+   * de tentatives, compte désactivé, connexion expirée) : ce message, sans « Réessayer ».
+   */
+  refus?: string
 }
 
 /**
  * Encadré du QR code (maquette 17). Pendant sa préparation, « Chargement » apparaît après
- * 300 ms, sans animation, avec aria-busy (docs/reference/maquettes/LISEZMOI.md, « États »).
+ * 300 ms, sans animation, avec aria-busy (docs/reference/maquettes/LISEZMOI.md, « États »). Un
+ * échec de connexion se dit dans le cadre même (role="alert"), avec « Réessayer » : l'écran
+ * n'oblige plus à saisir un code pour relancer la préparation. Au clic, le focus reste sur le
+ * cadre, que le bouton quitte pendant le nouvel essai. Un refus précis se dit au même endroit,
+ * sans bouton : réessayer tout de suite ne servirait à rien, ou aggraverait une limite.
  */
-export function QrCodeActivation({ qrCode }: Proprietes) {
+export function QrCodeActivation({ qrCode, enEchec = false, onReessayer, refus }: Proprietes) {
   const [chargementVisible, setChargementVisible] = useState(false)
+  const cadre = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (qrCode) return
@@ -22,8 +38,10 @@ export function QrCodeActivation({ qrCode }: Proprietes) {
 
   return (
     <div
-      aria-busy={qrCode ? undefined : true}
-      className="flex justify-center border border-filet bg-papier p-4"
+      ref={cadre}
+      tabIndex={-1}
+      aria-busy={qrCode || enEchec || refus ? undefined : true}
+      className="flex justify-center border border-filet bg-papier p-4 outline-hidden"
     >
       {qrCode ? (
         <img
@@ -33,6 +51,30 @@ export function QrCodeActivation({ qrCode }: Proprietes) {
           height={200}
           className="box-content block size-50 bg-papier p-3"
         />
+      ) : refus ? (
+        <div className="flex min-h-56 w-full flex-col items-center justify-center text-center">
+          <p role="alert" className="text-[15px] leading-normal text-alerte">
+            {refus}
+          </p>
+        </div>
+      ) : enEchec ? (
+        <div className="flex min-h-56 w-full flex-col items-center justify-center gap-4 text-center">
+          <p role="alert" className="text-[15px] leading-normal text-alerte">
+            {MESSAGE_QR_EN_ECHEC}
+          </p>
+          {onReessayer ? (
+            <button
+              type="button"
+              onClick={() => {
+                cadre.current?.focus()
+                onReessayer()
+              }}
+              className="inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond"
+            >
+              Réessayer
+            </button>
+          ) : null}
+        </div>
       ) : (
         <p className="flex size-56 items-center justify-center text-encre-3">
           {chargementVisible ? 'Chargement' : null}

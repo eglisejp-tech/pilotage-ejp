@@ -1,7 +1,10 @@
 // Métier des saisies FIJ (carte des FIJ et chiffres par département) : totaux en direct, semaines
 // proposées, valeurs préremplies et valeurs envoyées. Fonctions pures. Un champ vide n'est jamais
-// un 0 : il ne compte ni dans le total ni dans la complétude, et il n'est pas envoyé.
+// un 0 : il ne compte ni dans le total ni dans la complétude, et il n'est pas envoyé. Un champ qui
+// n'est pas un nombre entier (« 12,5 ») ne compte pas non plus : son champ le dit, et le
+// formulaire ne part pas tant qu'il reste (m100).
 
+import { lireChamp, nombreACompter, valeurDuChamp } from '@/features/saisie/chiffres'
 import {
   DEPARTEMENTS_FIJ,
   NOMBRE_DEPARTEMENTS,
@@ -30,13 +33,16 @@ export function champsStatistiquesVides(): ChampsStatistiques {
   ) as ChampsStatistiques
 }
 
-/** Somme des champs remplis et nombre de départements qui ont une valeur. */
+/**
+ * Somme des champs remplis et nombre de départements qui ont une valeur. Un texte à corriger ou un
+ * nombre négatif (que l'envoi refuse) ne compte pas : le total en direct n'est jamais faux (m100).
+ */
 export function totalDepartements(champs: ChampsDepartements): { total: number; nombre: number } {
   return DEPARTEMENTS_FIJ.reduce(
     (cumul, { code }) => {
-      const texte = champs[code]
-      if (texte === '') return cumul
-      return { total: cumul.total + Number(texte), nombre: cumul.nombre + 1 }
+      const valeur = nombreACompter(champs[code])
+      if (valeur === null) return cumul
+      return { total: cumul.total + valeur, nombre: cumul.nombre + 1 }
     },
     { total: 0, nombre: 0 },
   )
@@ -80,7 +86,12 @@ export function champsCarte(
 export function valeursCarte(
   champs: ChampsDepartements,
 ): { departement: Departement; valeur: number }[] {
-  return DEPARTEMENTS_FIJ.map(({ code }) => ({ departement: code, valeur: Number(champs[code]) }))
+  // Après le contrôle du formulaire : chaque champ contient un nombre (un vide donnerait 0, jamais
+  // envoyé puisque la carte exige les 8 départements).
+  return DEPARTEMENTS_FIJ.map(({ code }) => ({
+    departement: code,
+    valeur: valeurDuChamp(champs[code]) ?? 0,
+  }))
 }
 
 /** Une semaine proposée à la saisie des chiffres par département. */
@@ -142,7 +153,8 @@ export function valeursEffacees(
   const enregistrees = champsStatistiques(statistiques, dimanche)
   return RUBRIQUES_FIJ.flatMap(({ code: rubrique }) =>
     DEPARTEMENTS_FIJ.flatMap(({ code: departement }) =>
-      enregistrees[rubrique][departement] !== '' && champs[rubrique][departement] === ''
+      enregistrees[rubrique][departement] !== '' &&
+      lireChamp(champs[rubrique][departement]).etat === 'vide'
         ? [{ rubrique, departement, valeur: Number(enregistrees[rubrique][departement]) }]
         : [],
     ),
@@ -172,8 +184,8 @@ export function champsStatistiques(
 export function valeursStatistiques(champs: ChampsStatistiques): ValeurFijStatistique[] {
   return RUBRIQUES_FIJ.flatMap(({ code: rubrique }) =>
     DEPARTEMENTS_FIJ.flatMap(({ code: departement }) => {
-      const texte = champs[rubrique][departement]
-      return texte === '' ? [] : [{ rubrique, departement, valeur: Number(texte) }]
+      const valeur = valeurDuChamp(champs[rubrique][departement])
+      return valeur === null ? [] : [{ rubrique, departement, valeur }]
     }),
   )
 }

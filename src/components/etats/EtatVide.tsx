@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
+import { noterReessai, texteLecture, useEchecRepete } from '@/components/etats/lectureImpossible'
 import type { ActionVide, SituationVide } from '@/components/etats/situations'
 import { cn } from '@/lib/utils'
 
@@ -24,10 +25,14 @@ const classeAction =
  * une phrase complète qui dit ce qui se passe, puis ce qui viendra ou qui doit agir. Jamais un
  * blanc, jamais un zéro qui aurait l'air d'une donnée, ni illustration, ni emoji, ni excuse. Le
  * « problème passager » est annoncé (`role="alert"`, fond d'erreur) ; les autres situations sont
- * du texte ordinaire. L'action n'existe que pour le profil qui peut agir.
+ * du texte ordinaire. L'action n'existe que pour le profil qui peut agir. Un problème passager qui
+ * revient après « Réessayer » ajoute le recours vers EJP Tech à la phrase commune (m250).
  */
 export function EtatVide({ situation, children, suite, action, peutAgir = true }: Props) {
   const probleme = situation === 'probleme_passager'
+  // Seul un problème passager lit (et consomme) le « Réessayer » qui vient d'être fait (m250).
+  const repete = useEchecRepete(false, probleme)
+  const phrase = probleme ? texteLecture(children, repete) : children
   return (
     <div
       data-situation={situation}
@@ -38,7 +43,7 @@ export function EtatVide({ situation, children, suite, action, peutAgir = true }
     >
       <div role={probleme ? 'alert' : undefined}>
         <p className={probleme ? 'text-[15px] leading-normal text-alerte' : 'text-encre-2'}>
-          {children}
+          {phrase}
         </p>
         {suite ? <p className="mt-1 text-encre-2">{suite}</p> : null}
       </div>
@@ -48,7 +53,14 @@ export function EtatVide({ situation, children, suite, action, peutAgir = true }
             {action.libelle}
           </Link>
         ) : (
-          <button type="button" onClick={action.surClic} className={classeAction}>
+          <button
+            type="button"
+            onClick={() => {
+              if (probleme) noterReessai()
+              action.surClic()
+            }}
+            className={classeAction}
+          >
             {action.libelle}
           </button>
         )

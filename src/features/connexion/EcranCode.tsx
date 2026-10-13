@@ -13,6 +13,11 @@ export type ProprietesEcranCode = {
   enCours?: boolean
   /** Message du bandeau (messagesConnexion), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /**
+   * Lien « Mot de passe oublié » d'un compte qui a la double authentification : le code vient
+   * avant le nouveau mot de passe, et l'écran le dit (m051).
+   */
+  apresRecuperation?: boolean
 }
 
 /** Écran 18 : code de double authentification, à chaque connexion. */
@@ -22,6 +27,7 @@ export function EcranCode({
   onSignOut,
   enCours,
   erreur,
+  apresRecuperation = false,
 }: ProprietesEcranCode) {
   useTitrePage('Code de vérification')
 
@@ -31,6 +37,11 @@ export function EcranCode({
         Ouvrez votre application d'authentification et saisissez le code à 6 chiffres de
         «&nbsp;Pilotage&nbsp;EJP&nbsp;».
       </TitreConnexion>
+      {apresRecuperation ? (
+        <p className="leading-[1.55] text-encre-2">
+          Vous choisirez ensuite votre nouveau mot de passe.
+        </p>
+      ) : null}
 
       <FormulaireCode
         id="code-connexion"
@@ -48,8 +59,7 @@ export function EcranCode({
       />
 
       <p className="text-sm leading-[1.55] text-encre-3">
-        Le code change toutes les 30 secondes. Téléphone perdu ou changé&nbsp;? Demandez à
-        l'administration de l'église de refaire l'activation.
+        Téléphone perdu ou changé&nbsp;? Demandez à EJP Tech de refaire l'activation.
       </p>
 
       <BoutonLien onClick={onSignOut}>Se déconnecter</BoutonLien>

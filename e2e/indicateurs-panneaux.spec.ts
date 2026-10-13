@@ -29,6 +29,18 @@ async function auditer(page: Page) {
 const titre = (page: Page, nom: string) => page.getByRole('heading', { level: 1, name: nom })
 const bouton = (page: Page, nom: string) => page.getByRole('button', { name: nom, exact: true })
 
+/**
+ * « Annuler » d'un panneau dont un champ a changé : la question « Fermer sans enregistrer ? »
+ * s'ouvre (m265), puis « Fermer sans enregistrer » ferme le panneau.
+ */
+async function annulerLaSaisie(page: Page) {
+  await bouton(page, 'Annuler').click()
+  const question = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+  await expect(question).toBeVisible()
+  await question.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
+  await expect(question).toHaveCount(0)
+}
+
 async function remplirAjout(page: Page, libelle: string, definition: string, rythme: RegExp) {
   await page.getByLabel('Ce que vous comptez').fill(libelle)
   await page.getByLabel("Ce qu'on compte exactement").fill(definition)
@@ -286,9 +298,8 @@ test.describe('retirer un indicateur', () => {
     await expect(fenetre.getByText('Ses saisies : rien ne se supprime.')).toBeVisible()
     await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()
     await fenetre.getByRole('button', { name: "Retirer l'indicateur" }).click()
-    await expect(
-      page.getByText('Indicateur retiré, ses saisies restent sur la fiche.'),
-    ).toBeVisible()
+    // m231 : la réussite dit ce qui a été fait, la fenêtre a déjà dit que les saisies restent.
+    await expect(page.getByText('Indicateur retiré.', { exact: true })).toBeVisible()
   })
 
   test('Annuler ferme la fenêtre sans rien retirer', async ({ page }) => {
@@ -330,8 +341,10 @@ test.describe('retirer pour confidentialité', () => {
     const fenetre = page.getByRole('alertdialog', {
       name: 'Retirer « Publications » pour confidentialité ?',
     })
-    await expect(fenetre.getByText(/« \[retiré pour confidentialité\] »/)).toBeVisible()
-    await expect(fenetre.getByText(/Cette action est définitive\./)).toBeVisible()
+    // m232 : la conséquence en une phrase, puis « C'est définitif. ».
+    await expect(
+      fenetre.getByText("Le nom et la définition seront masqués. C'est définitif."),
+    ).toBeVisible()
     await expect(fenetre.getByText(/rien ne se supprime/)).toBeVisible()
     await expect(fenetre.getByRole('radio')).toHaveCount(0)
     await fenetre.getByRole('button', { name: 'Retirer pour confidentialité' }).click()
@@ -400,7 +413,13 @@ test.describe('accessibilité et petits écrans', () => {
     await apres('ajout-erreurs')
     await page.getByRole('checkbox', { name: /Domaine sensible/ }).check()
     await apres('ajout-sensible')
+    // Une case a changé : « Annuler » pose la question avant de fermer (m265).
     await bouton(page, 'Annuler').click()
+    const question = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+    await expect(question).toBeVisible()
+    await apres('fermer-sans-enregistrer')
+    await question.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
+    await expect(question).toHaveCount(0)
 
     await bouton(page, 'Ajouter un calcul').click()
     await expect(titre(page, 'Ajouter un calcul')).toBeVisible()
@@ -518,13 +537,18 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await page.getByRole('radio', { name: /Chaque mois/ }).check()
   await bouton(page, "Ajouter l'indicateur").click()
   await capturer('ajout-erreurs')
+  // Des champs ont changé : « Annuler » pose la question avant de fermer (m265).
   await bouton(page, 'Annuler').click()
+  const question = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+  await expect(question).toBeVisible()
+  await capturer('fermer-sans-enregistrer')
+  await question.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
   await bouton(page, 'Ajouter un calcul').click()
   await page
     .getByRole('combobox', { name: 'Chiffre du haut' })
     .selectOption({ label: 'Publications' })
   await capturer('calcul')
-  await bouton(page, 'Annuler').click()
+  await annulerLaSaisie(page)
   await page.getByRole('button', { name: 'Corriger « Demandes reçues »' }).click()
   await capturer('corriger')
   await bouton(page, 'Annuler').click()
@@ -580,7 +604,7 @@ for (const envoi of ['refus', 'echec'] as const) {
       await expect(page.getByRole('alert')).toBeVisible()
       await expect(page.getByRole('alert')).toBeInViewport()
       await capturer('ajout')
-      await bouton(page, 'Annuler').click()
+      await annulerLaSaisie(page)
       await page.getByRole('button', { name: 'Retirer « Publications »' }).click()
       const fenetre = page.getByRole('alertdialog')
       await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()

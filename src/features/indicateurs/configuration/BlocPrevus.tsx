@@ -126,7 +126,8 @@ export function BlocPrevus({ donnees, creation }: Props) {
             onClick={() => void creation.creer(ministere, modele.code)}
             className={classeBouton}
           >
-            {boutonCreerPrevus(nombre)}
+            {/* Pendant l'envoi : « Création en cours » (m227). */}
+            {enCours ? TEXTES_CONFIGURATION.creationEnCours : boutonCreerPrevus(nombre)}
           </button>
         </div>
       ) : null}

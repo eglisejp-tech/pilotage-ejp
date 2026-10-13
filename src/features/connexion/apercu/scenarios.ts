@@ -11,6 +11,16 @@ export type EtatSimule = {
   lienInvalide?: boolean
   /** Pour l'écran 17 : QR code pas encore reçu. */
   chargement?: boolean
+  /** Pour l'écran 17 : la préparation du QR code a échoué (m044). */
+  qrEnEchec?: boolean
+  /** Pour l'écran 17 : la préparation du QR code est refusée, sans « Réessayer » (m044). */
+  qrRefus?: string
+  /** Pour l'écran 18 : code demandé après « Mot de passe oublié » (m051). */
+  apresRecuperation?: boolean
+  /** Pour les conditions : une version précédente avait été acceptée (m056). */
+  conditionsChangees?: boolean
+  /** Réussite de l'étape précédente, en tête de l'écran (m037, m045). */
+  annonce?: string
 }
 
 export const etatNormal: EtatSimule = { libelle: 'Normal' }
@@ -90,6 +100,16 @@ export const ecransSimules: Record<
     etats: {
       normal: etatNormal,
       chargement: { libelle: 'QR code en préparation', chargement: true },
+      'qr-echec': { libelle: 'QR code en échec', chargement: true, qrEnEchec: true },
+      'qr-refus': {
+        libelle: 'QR code refusé (trop de tentatives)',
+        chargement: true,
+        qrRefus: messagesConnexion.tropDeTentatives,
+      },
+      'apres-mot-de-passe': {
+        libelle: 'Après le mot de passe',
+        annonce: 'Mot de passe enregistré.',
+      },
       'en-cours': { libelle: 'Activation en cours', enCours: true },
       'erreur-code': erreurCode,
     },
@@ -98,6 +118,7 @@ export const ecransSimules: Record<
     libelle: 'Code à chaque connexion (18)',
     etats: {
       normal: etatNormal,
+      'apres-recuperation': { libelle: 'Après « Mot de passe oublié »', apresRecuperation: true },
       'en-cours': { libelle: 'Vérification en cours', enCours: true },
       'erreur-code': erreurCode,
       'erreur-tentatives': erreurTentatives,
@@ -122,6 +143,11 @@ export const ecransSimules: Record<
     libelle: 'Acceptation des conditions (T53, sans maquette)',
     etats: {
       normal: etatNormal,
+      'apres-activation': {
+        libelle: 'Après l’activation',
+        annonce: 'Double authentification activée.',
+      },
+      'conditions-changees': { libelle: 'Nouvelle version', conditionsChangees: true },
       'en-cours': { libelle: 'Enregistrement en cours', enCours: true },
       'erreur-reseau': erreurReseau,
     },

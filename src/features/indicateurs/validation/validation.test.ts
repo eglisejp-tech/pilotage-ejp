@@ -14,7 +14,8 @@ import { schemaDecision, schemaFormulaireRefus } from '@/features/indicateurs/va
 import {
   estEnRetard,
   JOURS_AVANT_RETARD,
-  reussiteRefus,
+  TEXTES_A_VALIDER,
+  TEXTES_FENETRE_REFUS,
   texteAttente,
   texteDecision,
   texteEnvoyeLe,
@@ -129,7 +130,11 @@ describe('textes du bloc', () => {
     // Les guillemets français et les deux-points s'écrivent avec une espace insécable.
     const espaces = (texte: string) => texte.replaceAll(' ', ' ')
     expect(espaces(titreRefus('Demandes reçues'))).toBe('Refuser « Demandes reçues » ?')
-    expect(reussiteRefus('Kumi')).toBe('Indicateur refusé. Kumi verra le motif.')
+    // m231 : réussites courtes et attente au nom de l'action.
+    expect(TEXTES_A_VALIDER.reussiteRefus).toBe('Indicateur refusé.')
+    expect(TEXTES_A_VALIDER.reussiteValide).toBe('Indicateur validé.')
+    expect(TEXTES_A_VALIDER.validationEnCours).toBe('Validation en cours')
+    expect(TEXTES_FENETRE_REFUS.boutonEnCours).toBe('Refus en cours')
     expect(espaces(texteNouvelIndicateur('Demandes reçues', 'chaque mois'))).toBe(
       'Nouvel indicateur : « Demandes reçues » (chaque mois)',
     )

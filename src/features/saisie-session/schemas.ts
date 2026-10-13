@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { lireChamp, MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 
 // Schéma de la présence à une session (maquette 09), partagé entre le formulaire et l'appel à la
 // base (CLAUDE.md : validation Zod partagée). La base reste l'autorité : `participation` refuse
@@ -52,18 +53,26 @@ export interface ChampsSession {
 
 export type ErreursSession = Partial<Record<keyof ChampsSession, string>>
 
-/** Erreurs de chaque champ du formulaire, d'après le schéma partagé. Vide : rien à corriger. */
+/**
+ * Erreurs de chaque champ du formulaire, d'après le schéma partagé. Vide : rien à corriger. Un
+ * texte qui n'est pas un nombre entier (« 12,5 ») n'est jamais converti (m100).
+ */
 export function erreursSession(
   champs: ChampsSession,
   ids: { sessionId: string; ministereId: string },
 ): ErreursSession {
+  const presents = lireChamp(champs.presents)
+  const dejaComptes = lireChamp(champs.dejaComptes)
+  const erreurs: ErreursSession = {}
+  // Un texte à corriger garde sa consigne ; l'autre champ reçoit quand même son propre message.
+  if (presents.etat === 'format') erreurs.presents = MESSAGE_NOMBRE_ENTIER
+  if (dejaComptes.etat === 'format') erreurs.dejaComptes = MESSAGE_NOMBRE_ENTIER
   const resultat = schemaParticipation.safeParse({
     ...ids,
-    valeur: champs.presents === '' ? undefined : Number(champs.presents),
-    dejaComptes: champs.dejaComptes === '' ? undefined : Number(champs.dejaComptes),
+    valeur: presents.etat === 'nombre' ? presents.valeur : undefined,
+    dejaComptes: dejaComptes.etat === 'nombre' ? dejaComptes.valeur : undefined,
   })
-  if (resultat.success) return {}
-  const erreurs: ErreursSession = {}
+  if (resultat.success) return erreurs
   for (const probleme of resultat.error.issues) {
     const champ = probleme.path[0] === 'valeur' ? 'presents' : probleme.path[0]
     if ((champ === 'presents' || champ === 'dejaComptes') && !erreurs[champ]) {

@@ -1,6 +1,7 @@
 import { useId } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import { idGrille } from '@/features/saisie-chiffres/envoi'
 import { CATEGORIE_MAX } from '@/features/saisie-chiffres/schemas'
 import { ligneNonReparti, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
@@ -38,8 +39,10 @@ export function GrilleRepartition({
   const idTitre = useId()
   const id = idGrille(indicateurId)
   const idEtat = `${id}-etat`
-  const message =
-    erreur ?? (etat.etat === 'depasse' || etat.etat === 'erreur' ? etat.message : null)
+  const lu = erreur ?? (etat.etat === 'depasse' || etat.etat === 'erreur' ? etat.message : null)
+  // Une catégorie qui n'est pas un nombre entier le dit sous son propre champ (ChampNombre) : la
+  // ligne de la grille ne le répète pas, et les autres champs ne passent pas en erreur.
+  const message = lu === MESSAGE_NOMBRE_ENTIER ? null : lu
   return (
     <div
       id={id}

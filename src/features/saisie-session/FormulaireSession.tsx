@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { valeurDuChamp } from '@/features/saisie/chiffres'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
@@ -95,8 +96,9 @@ export function FormulaireSession({
       () =>
         enregistrer({
           ...ids,
-          valeur: Number(champs.presents),
-          dejaComptes: Number(champs.dejaComptes),
+          // Après le contrôle : les deux champs contiennent un nombre.
+          valeur: valeurDuChamp(champs.presents) ?? 0,
+          dejaComptes: valeurDuChamp(champs.dejaComptes) ?? 0,
         }),
       messageReussiteSession(session.type, session.intitule, session.date),
       signature,

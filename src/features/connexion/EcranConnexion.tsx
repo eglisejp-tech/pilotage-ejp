@@ -103,8 +103,7 @@ export function EcranConnexion({
       </form>
 
       <p className="text-sm leading-[1.55] text-encre-3">
-        Pas de compte&nbsp;? Les comptes sont créés par l'administration de l'église. Mot de passe
-        oublié&nbsp;:{' '}
+        Pas de compte&nbsp;? Demandez-en un à EJP Tech. Mot de passe oublié&nbsp;:{' '}
         {/* Lien dans la phrase : la marge intérieure porte la zone cliquable à 44 px sans
             changer la hauteur de ligne. */}
         <Link

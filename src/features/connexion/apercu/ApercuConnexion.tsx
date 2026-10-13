@@ -18,6 +18,7 @@ import { EcranCompteDesactive } from '@/features/connexion/EcranCompteDesactive'
 import { EcranConnexion } from '@/features/connexion/EcranConnexion'
 import { EcranMotDePasse } from '@/features/connexion/EcranMotDePasse'
 import { EcranMotDePasseOublie } from '@/features/connexion/EcranMotDePasseOublie'
+import { MessageReussite } from '@/features/saisie/MessageReussite'
 
 const ADRESSE = '/apercu/connexion'
 
@@ -53,10 +54,14 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
           comptePartage={compteMinistere}
           qrCode={etat.chargement ? undefined : qrCodeExemple()}
           cle={etat.chargement ? undefined : cleExemple}
+          qrEnEchec={etat.qrEnEchec}
+          onReessayerQr={() => signaler('onReessayerQr, nouvelle préparation du QR code.')}
+          qrRefus={etat.qrRefus}
           onVerifyCode={verifierCode}
           onSignOut={seDeconnecter}
           enCours={etat.enCours}
           erreur={etat.erreur}
+          annonce={etat.annonce ? <MessageReussite message={etat.annonce} /> : undefined}
         />
       )
     case 'code':
@@ -67,6 +72,7 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
           onSignOut={seDeconnecter}
           enCours={etat.enCours}
           erreur={etat.erreur}
+          apresRecuperation={etat.apresRecuperation}
         />
       )
     case 'acces-invitation':
@@ -117,6 +123,8 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
           onSignOut={seDeconnecter}
           enCours={etat.enCours}
           erreur={etat.erreur}
+          annonce={etat.annonce ? <MessageReussite message={etat.annonce} /> : undefined}
+          conditionsChangees={etat.conditionsChangees}
         />
       )
   }

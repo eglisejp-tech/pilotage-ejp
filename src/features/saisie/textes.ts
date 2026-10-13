@@ -26,3 +26,14 @@ export function erreurDeConnexion(objet: ObjetSaisie): string {
 
 /** Largeur à partir de laquelle une saisie s'ouvre en panneau latéral de 460 px (BRIEF section 9). */
 export const LARGEUR_PANNEAU = 600
+
+/**
+ * Fermer un panneau de saisie dont un champ a changé (m265, guide des messages 10.7, Proposé) :
+ * « Retour », Échap, le fond du panneau ou « Annuler ».
+ */
+export const TEXTES_FERMER_SANS_ENREGISTRER = {
+  titre: 'Fermer sans enregistrer ?',
+  texte: 'Ce que vous avez saisi sera perdu.',
+  fermer: 'Fermer sans enregistrer',
+  continuer: 'Continuer la saisie',
+} as const

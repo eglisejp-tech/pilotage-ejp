@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { declarerIntervenant } from '@/data/personnes'
+import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { messagesConnexion } from '@/features/connexion/messages'
 import { EcranDeclaration } from '@/features/declaration/EcranDeclaration'
 import { accueil } from '@/features/navigation/profils'
@@ -13,7 +14,8 @@ import { motifDeclaration } from '@/lib/metier/declaration'
 /**
  * /qui-utilise : l'écran de déclaration relié à la base (T56). Après la connexion ou le rappel des
  * 7 jours, la session est relue et la garde ouvre l'adresse demandée. Après « Ce n'est pas moi »
- * (`?changer=1`), la page revient elle-même à la page quittée.
+ * (`?changer=1`), la page revient elle-même à la page quittée. Quand l'écran suit le choix du
+ * mot de passe ou l'activation de la double authentification, il en dit la réussite (m037, m045).
  */
 export function PageDeclaration() {
   const etat = useEtatVerifie()
@@ -50,6 +52,7 @@ export function PageDeclaration() {
       onCancel={changement ? () => void navigate(retour, { replace: true }) : undefined}
       enCours={enCours}
       erreur={erreur}
+      annonce={<AnnonceSuivante dans="colonne" />}
     />
   )
 }

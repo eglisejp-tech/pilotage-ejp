@@ -43,15 +43,17 @@ export function CellulePrevus({ ligne, creation }: Props) {
   return (
     <span className="flex flex-wrap items-center gap-x-3">
       <span>{texteACreer(nombre)}</span>
+      {/* Pendant l'envoi, le bouton dit « Création en cours » (m227) : son nom accessible est
+          alors ce texte visible. */}
       <button
         type="button"
-        aria-label={nomAccessibleCreer(nombre, ligne.nom)}
+        aria-label={enCours ? undefined : nomAccessibleCreer(nombre, ligne.nom)}
         aria-disabled={enCours || undefined}
         aria-busy={enCours || undefined}
         onClick={() => void creation.creer({ id: ligne.id, nom: ligne.nom }, prevus.modele.code)}
         className={classeBouton}
       >
-        {textes.creer}
+        {enCours ? TEXTES_CONFIGURATION.creationEnCours : textes.creer}
       </button>
     </span>
   )

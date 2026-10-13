@@ -197,6 +197,40 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  it('pendant l’envoi, « Valider » dit « Validation en cours » et ne renvoie rien (m231)', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    let repondre: (() => void) | undefined
+    faux.rpc.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          repondre = () => resolve({ data: null, error: null })
+        }),
+    )
+    const valider = screen.getByRole('button', {
+      name: /^Valider «\s*Demandes reçues\s*» de Kumi$/,
+    })
+    await userEvent.click(valider)
+    expect(valider).toHaveTextContent(/^Validation en cours$/)
+    expect(valider).toHaveAccessibleName('Validation en cours')
+    expect(valider).toHaveAttribute('aria-busy', 'true')
+    await userEvent.click(valider)
+    expect(faux.rpc).toHaveBeenCalledTimes(1)
+    // Pendant la validation, les autres décisions de la ligne se disent inactives et n'ouvrent rien.
+    const ligne = valider.closest('article')
+    if (ligne === null) throw new Error('ligne introuvable')
+    for (const nom of [/^Refuser «\s*Demandes reçues\s*» de Kumi$/, /^Masquer le texte$/]) {
+      const autre = within(ligne).getByRole('button', { name: nom })
+      expect(autre).toHaveAttribute('aria-disabled', 'true')
+      await userEvent.click(autre)
+    }
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    repondre?.()
+    expect(await screen.findByText('Indicateur validé.')).toBeInTheDocument()
+  })
+
   it('« Refuser » ouvre une fenêtre qui demande un motif de 10 à 280 caractères', async () => {
     const faux = connecte('admin_plateforme')
     afficher('/indicateurs')
@@ -239,7 +273,8 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
         p_motif: 'Neuf carah',
       }),
     )
-    expect(await screen.findByText('Indicateur refusé. Kumi verra le motif.')).toBeInTheDocument()
+    // m231 : la réussite dit ce qui a été fait ; la fenêtre a dit qui lira le motif.
+    expect(await screen.findByText('Indicateur refusé.')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 

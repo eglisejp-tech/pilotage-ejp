@@ -259,8 +259,9 @@ test.describe('administration de l’église', () => {
     const fenetre = page.getByRole('alertdialog', {
       name: 'Retirer « Interventions essai » pour confidentialité ?',
     })
-    await expect(fenetre.getByText(/« \[retiré pour confidentialité\] »/)).toBeVisible()
-    await expect(fenetre.getByText(/Cette action est définitive\./)).toBeVisible()
+    await expect(
+      fenetre.getByText("Le nom et la définition seront masqués. C'est définitif."),
+    ).toBeVisible()
     await fenetre.getByRole('button', { name: 'Retirer pour confidentialité' }).click()
     await expect(page.getByText('Indicateur retiré pour confidentialité.')).toBeVisible()
     await expect(page.getByText('Interventions essai', { exact: true })).toHaveCount(0)

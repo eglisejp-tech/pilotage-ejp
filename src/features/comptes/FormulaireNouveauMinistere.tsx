@@ -9,6 +9,7 @@ import type { EntreeNouveauMinistere, NouveauMinistere } from '@/features/compte
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 
 interface Props {
@@ -37,6 +38,8 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
   })
   const [nom, description] = useWatch({ control, name: ['nom', 'description'] })
   const [refus, setRefus] = useState<string | null>(null)
+  // Dans le panneau : « Annuler » demande confirmation si un champ a changé (m265).
+  const annuler = useFermetureSaisie(onAnnuler)
 
   const soumettre = handleSubmit(async (ministere) => {
     setRefus(null)
@@ -101,7 +104,7 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
       />
       <button
         type="button"
-        onClick={onAnnuler}
+        onClick={annuler}
         className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
       >
         {TEXTES_COMPTES.annuler}

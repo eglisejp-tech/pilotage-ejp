@@ -29,6 +29,7 @@ const reessayer = () => undefined
  * changeraient. Adresse : /apercu/sessions?profil=admin_eglise.
  * - `vue=donnees` (défaut), `vide` (aucune session), `chargement`, `probleme` (erreur de page) ;
  * - `envoi=echec` : la réponse n'arrive pas (« La connexion a échoué... ») ;
+ * - `lecture=echec` : les ministères attendus ne se lisent pas à l'ouverture de « Modifier » ;
  * - tout autre profil reçoit la page non disponible, comme dans l'application.
  * Enregistrée seulement en développement.
  */
@@ -41,11 +42,20 @@ export function ApercuSessions() {
       key={parametres.toString()}
       vue={lireVueApercuSessions(parametres.get('vue'))}
       echec={parametres.get('envoi') === 'echec'}
+      echecLecture={parametres.get('lecture') === 'echec'}
     />
   )
 }
 
-function EcranApercu({ vue, echec }: { vue: VueApercuSessions; echec: boolean }) {
+function EcranApercu({
+  vue,
+  echec,
+  echecLecture,
+}: {
+  vue: VueApercuSessions
+  echec: boolean
+  echecLecture: boolean
+}) {
   useTitrePage(TEXTES_SESSIONS.titre)
   const [donnees, setDonnees] = useState<DonneesApercu>(() =>
     vue === 'vide' ? donneesVides() : donneesExemple(),
@@ -77,10 +87,12 @@ function EcranApercu({ vue, echec }: { vue: VueApercuSessions; echec: boolean })
     supprimer: (sessionId) =>
       appliquer((avant) => ({ apres: simulerSuppression(avant, sessionId), resultat: undefined })),
     lireAttendus: (sessionId) =>
-      Promise.resolve(
-        courantes.current.sessions.find(({ ligne }) => ligne.session_id === sessionId)?.attendus ??
-          [],
-      ),
+      echecLecture
+        ? Promise.reject(new TypeError('Failed to fetch'))
+        : Promise.resolve(
+            courantes.current.sessions.find(({ ligne }) => ligne.session_id === sessionId)
+              ?.attendus ?? [],
+          ),
   }
 
   let etat: EtatBloc<DonneesSessions>

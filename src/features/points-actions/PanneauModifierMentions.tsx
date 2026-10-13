@@ -11,6 +11,7 @@ import { memesMentions, ministeresDeLaFenetre } from '@/features/points-actions/
 import { useEcrituresPoint } from '@/features/points-actions/ecritures'
 import { FenetreAction } from '@/features/points-actions/FenetreAction'
 import { TEXTES_ACTIONS_POINT } from '@/features/points-actions/textes'
+import { DejaEnregistre } from '@/features/saisie/DejaEnregistre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 
 interface Props {
@@ -30,9 +31,10 @@ interface Props {
  * Fenêtre « Modifier les mentions » (T54, dérivée de la maquette 10) : le titre du point, une case
  * par ministère actif autre que le créateur (les mentions actuelles cochées, un ministère mentionné
  * puis désactivé reste coché et se retire), la note sur ce que voit chacun, puis « Enregistrer les
- * mentions » et « Annuler ». Le bouton n'est jamais grisé. Enregistrer la liste actuelle ferme la
- * fenêtre sans rien écrire. Un refus de la base (« Ce point est traité : ses mentions ne changent
- * plus. ») se dit sous le bouton, tel quel ; une connexion perdue garde les cases.
+ * mentions » et « Annuler ». Le bouton n'est jamais grisé (BRIEF, section 9). Enregistrer la liste
+ * actuelle n'écrit rien : la fenêtre reste ouverte et le dit sous le bouton (m155), jusqu'à la
+ * prochaine case cochée ou décochée. Un refus de la base (« Ce point est traité : ses mentions ne
+ * changent plus. ») se dit sous le bouton, tel quel ; une connexion perdue garde les cases.
  */
 export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, onFermer }: Props) {
   const id = useId()
@@ -44,15 +46,19 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
   const [coches, setCoches] = useState<string[]>([...mentions])
   const [refus, setRefus] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
+  // Appuis sur « Enregistrer » sans changement (0 : aucun depuis la dernière case touchée).
+  const [inchange, setInchange] = useState(0)
 
   const soumettre = async (evenement: FormEvent<HTMLFormElement>) => {
     evenement.preventDefault()
     if (enCours) return
-    // Rien n'a changé : la base n'écrirait rien, la fenêtre se ferme sans message.
+    // Rien n'a changé : la base n'écrirait rien ; la fenêtre le dit et reste ouverte.
     if (memesMentions(coches, mentions)) {
-      onFermer()
+      setRefus(null)
+      setInchange((essais) => essais + 1)
       return
     }
+    setInchange(0)
     setRefus(null)
     setEnCours(true)
     try {
@@ -76,6 +82,7 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
           onChange={(ids) => {
             setCoches(ids)
             setRefus(null)
+            setInchange(0)
           }}
           titre={TEXTES_ACTIONS_POINT.mentions.libelle}
           notes={TEXTES_ACTIONS_POINT.mentions.notes}
@@ -84,6 +91,10 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
           libelle={TEXTES_ACTIONS_POINT.mentions.bouton}
           enCours={enCours}
           libelleEnCours={TEXTES_ACTIONS_POINT.mentions.boutonEnCours}
+        />
+        <DejaEnregistre
+          message={inchange > 0 ? TEXTES_ACTIONS_POINT.mentions.dejaEnregistrees : null}
+          essai={inchange}
         />
         {refus ? <ErreurFormulaire message={refus} /> : null}
         <button

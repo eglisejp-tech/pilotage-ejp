@@ -52,6 +52,8 @@ export const TEXTES_CONFIGURATION = {
     calculSansSaisie: 'Se calcule tout seul',
     aucunRetire: 'Aucun indicateur retiré.',
   },
+  /** Bouton « Créer » ou « Créer ces 6 indicateurs » pendant l'envoi (m227, Proposé). */
+  creationEnCours: 'Création en cours',
   /** Erreurs de page (LISEZMOI, « États »). */
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',

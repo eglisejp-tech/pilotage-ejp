@@ -6,6 +6,7 @@ import type { StatutChoisi } from '@/data/pointsEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { FenetreAction } from '@/features/points-actions/FenetreAction'
 import { CHOIX_STATUT, TEXTES_ACTIONS_POINT } from '@/features/points-actions/textes'
+import { DejaEnregistre } from '@/features/saisie/DejaEnregistre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import type { StatutPoint } from '@/lib/base'
 
@@ -29,9 +30,10 @@ function statutInitial(statut: StatutPoint): StatutChoisi {
  * Fenêtre « Changer le statut » (BRIEF section 9, dérivée du choix de priorité de 10) : le titre
  * du point, trois vrais boutons radio segmentés (« À traiter », « En cours », « En attente de
  * décision », le statut actuel choisi), le texte visible sur l'effet de « En attente de décision »,
- * puis « Enregistrer le statut » et « Annuler ». Le bouton n'est jamais grisé. Un refus de la base
- * (« Ce point est traité : il ne change plus. ») se dit sous le bouton d'enregistrement, avant
- * « Annuler », tel quel. Enregistrer le statut déjà en place ferme la fenêtre sans rien écrire.
+ * puis « Enregistrer le statut » et « Annuler ». Le bouton n'est jamais grisé (BRIEF, section 9).
+ * Un refus de la base (« Ce point est traité : il ne change plus. ») se dit sous le bouton
+ * d'enregistrement, avant « Annuler », tel quel. Enregistrer le statut déjà en place n'écrit rien :
+ * la fenêtre reste ouverte et le dit sous le bouton (m146), jusqu'au choix d'un autre statut.
  */
 export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props) {
   const id = useId()
@@ -40,15 +42,19 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
   const [choisi, setChoisi] = useState<StatutChoisi>(statutInitial(statut))
   const [refus, setRefus] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
+  // Appuis sur « Enregistrer » avec le statut déjà en place (0 : aucun depuis le dernier choix).
+  const [inchange, setInchange] = useState(0)
 
   const soumettre = async (evenement: FormEvent<HTMLFormElement>) => {
     evenement.preventDefault()
     if (enCours) return
-    // Le statut n'a pas changé : la base n'écrirait rien, la fenêtre se ferme sans message.
+    // Le statut n'a pas changé : la base n'écrirait rien ; la fenêtre le dit et reste ouverte.
     if (choisi === statut) {
-      onFermer()
+      setRefus(null)
+      setInchange((essais) => essais + 1)
       return
     }
+    setInchange(0)
     setRefus(null)
     setEnCours(true)
     try {
@@ -83,7 +89,10 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
                   name={`${id}-statut`}
                   value={option.valeur}
                   checked={choisi === option.valeur}
-                  onChange={() => setChoisi(option.valeur)}
+                  onChange={() => {
+                    setChoisi(option.valeur)
+                    setInchange(0)
+                  }}
                   className="peer sr-only"
                 />
                 <span className="flex min-h-14 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
@@ -100,6 +109,10 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           libelle={TEXTES_ACTIONS_POINT.statut.bouton}
           enCours={enCours}
           libelleEnCours={TEXTES_ACTIONS_POINT.statut.boutonEnCours}
+        />
+        <DejaEnregistre
+          message={inchange > 0 ? TEXTES_ACTIONS_POINT.statut.dejaEnregistre : null}
+          essai={inchange}
         />
         {refus ? <ErreurFormulaire message={refus} /> : null}
         <button

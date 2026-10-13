@@ -51,6 +51,18 @@ describe('présents moins déjà comptés (BRIEF, règle 5)', () => {
       "Comptés dans le total de l'église : à corriger.",
     )
   })
+
+  it('un nombre négatif ne donne jamais un total : « à corriger » (m100)', () => {
+    // 5 présents et « -4 » déjà comptés donneraient 9, plus que les présents.
+    expect(comptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBeNull()
+    expect(comptesDansTotal({ presents: '-3', dejaComptes: '' })).toBeNull()
+    expect(ligneComptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
+    expect(ligneComptesDansTotal({ presents: '-3', dejaComptes: '' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
+  })
 })
 
 describe('schemaParticipation, partagé entre le formulaire et l’appel', () => {
@@ -70,12 +82,31 @@ describe('schemaParticipation, partagé entre le formulaire et l’appel', () =>
     })
   })
 
-  it('refuse un nombre négatif, décimal ou au-delà de 999', () => {
-    for (const presents of ['-1', '2.5', '1000']) {
+  it('refuse un nombre négatif ou au-delà de 999', () => {
+    for (const presents of ['-1', '1000']) {
       expect(erreursSession({ presents, dejaComptes: '0' }, IDS).presents, presents).toBe(
         'Entre 0 et 999.',
       )
     }
+  })
+
+  it('un texte qui n’est pas un nombre entier demande d’être corrigé, jamais converti (m100)', () => {
+    for (const presents of ['2.5', '12,5', '1 2', '12a']) {
+      expect(erreursSession({ presents, dejaComptes: '0' }, IDS), presents).toEqual({
+        presents: 'Saisissez un nombre entier, sans virgule ni lettre.',
+      })
+    }
+    // L'autre champ garde son propre message.
+    expect(erreursSession({ presents: '', dejaComptes: '1,5' }, IDS)).toEqual({
+      presents: MESSAGES_SESSION.presentsManquants,
+      dejaComptes: 'Saisissez un nombre entier, sans virgule ni lettre.',
+    })
+    // La ligne calculée ne montre jamais un nombre deviné.
+    expect(comptesDansTotal({ presents: '12,5', dejaComptes: '0' })).toBeNull()
+    expect(comptesDansTotal({ presents: '12', dejaComptes: '1a' })).toBeNull()
+    expect(ligneComptesDansTotal({ presents: '12,5', dejaComptes: '0' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
   })
 
   it('accepte 0 présent et 0 déjà compté', () => {

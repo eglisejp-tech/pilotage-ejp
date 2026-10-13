@@ -9,6 +9,7 @@ import type { Adresse, EntreeAdresse } from '@/features/comptes/schemas'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 
 interface Props {
   /** « Email partagé du ministère » ou « Email personnel », avec son aide. */
@@ -36,6 +37,8 @@ export function FormulaireAdresse({ libelle, aide, nomAffiche, envoyer, onAnnule
     defaultValues: { email: '' },
   })
   const [refus, setRefus] = useState<string | null>(null)
+  // Dans le panneau : « Annuler » demande confirmation si l'adresse a changé (m265).
+  const annuler = useFermetureSaisie(onAnnuler)
 
   const soumettre = handleSubmit(async (adresse) => {
     setRefus(null)
@@ -81,7 +84,7 @@ export function FormulaireAdresse({ libelle, aide, nomAffiche, envoyer, onAnnule
       />
       <button
         type="button"
-        onClick={onAnnuler}
+        onClick={annuler}
         className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
       >
         {TEXTES_COMPTES.annuler}

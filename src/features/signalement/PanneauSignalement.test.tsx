@@ -161,14 +161,40 @@ describe('« Signaler une difficulté »', () => {
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull()
     await userEvent.type(champ(), 'Autre')
     expect(screen.queryByRole('button', { name: 'Fermer' })).toBeNull()
+    // Un nouveau texte n'est pas envoyé : « Annuler » demande avant de le perdre (m265).
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
-    expect(onFermer).toHaveBeenCalled()
+    expect(onFermer).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Fermer sans enregistrer' }))
+    expect(onFermer).toHaveBeenCalledTimes(1)
+  })
+
+  it('après l’envoi, « Fermer » ferme sans question : le texte est parti', async () => {
+    const { onFermer } = afficher()
+    await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
+    await envoyerLeFormulaire()
+    await screen.findByText('Signalement envoyé. EJP Tech le lira.')
+    await userEvent.click(screen.getByRole('button', { name: 'Fermer' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(onFermer).toHaveBeenCalledTimes(1)
   })
 
   it('« Annuler » ferme sans rien envoyer', async () => {
     const { envoyer, onFermer } = afficher()
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
     expect(onFermer).toHaveBeenCalled()
+    expect(envoyer).not.toHaveBeenCalled()
+  })
+
+  it('un texte écrit : « Annuler » demande « Fermer sans enregistrer ? » (m265)', async () => {
+    const { envoyer, onFermer } = afficher()
+    await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(
+      screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' }),
+    ).toHaveAccessibleDescription('Ce que vous avez saisi sera perdu.')
+    expect(onFermer).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer la saisie' }))
+    expect(champ()).toHaveValue('Je ne peux pas choisir la date.')
     expect(envoyer).not.toHaveBeenCalled()
   })
 })

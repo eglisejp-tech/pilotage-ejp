@@ -110,7 +110,13 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
 
   it('pendant la création, le bouton reste actif pour le clavier mais dit qu’il travaille', () => {
     afficher('admin_eglise', creationDe({ enCours: ID_KUMI }))
-    const bouton = screen.getByRole('button', { name: 'Créer les 6 indicateurs prévus de Kumi' })
+    // Le texte visible le dit (m227), et le nom accessible est ce texte.
+    const bouton = screen.getByRole('button', { name: 'Création en cours' })
+    const kumi = screen.getByRole('link', { name: 'Kumi' }).closest('tr')!
+    expect(within(kumi).getByRole('button')).toBe(bouton)
+    expect(
+      screen.queryByRole('button', { name: 'Créer les 6 indicateurs prévus de Kumi' }),
+    ).toBeNull()
     expect(bouton).not.toBeDisabled()
     expect(bouton).toHaveAttribute('aria-disabled', 'true')
     expect(bouton).toHaveAttribute('aria-busy', 'true')

@@ -1,13 +1,110 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { useState } from 'react'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { SITUATIONS_VIDES } from '@/components/etats/situations'
 
 function afficher(ui: React.ReactElement) {
   return render(<MemoryRouter>{ui}</MemoryRouter>)
 }
+
+/** Une lecture qui échoue toujours : « Réessayer » passe par « Chargement », puis l'échec revient. */
+function LectureEnEchec() {
+  const [enCours, setEnCours] = useState(false)
+  if (enCours) {
+    return (
+      <button type="button" onClick={() => setEnCours(false)}>
+        Fin du nouvel essai
+      </button>
+    )
+  }
+  return (
+    <EtatVide
+      situation="probleme_passager"
+      action={{ libelle: 'Réessayer', surClic: () => setEnCours(true) }}
+    >
+      La connexion a échoué. Réessayez.
+    </EtatVide>
+  )
+}
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('EtatVide, problème passager qui revient (m250)', () => {
+  it('premier échec : la phrase commune ; échec après « Réessayer » : la phrase et le recours', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(<LectureEnEchec />)
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('EJP Tech')
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Réessayez, et si le problème revient, prévenez EJP Tech.',
+    )
+  })
+
+  it('un échec bien après le dernier « Réessayer » reprend la phrase commune', async () => {
+    const utilisateur = userEvent.setup()
+    const maintenant = Date.now()
+    afficher(<LectureEnEchec />)
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    vi.spyOn(Date, 'now').mockReturnValue(maintenant + 60_000)
+    await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.getByRole('alert')).not.toHaveTextContent('EJP Tech')
+  })
+
+  it('le « Réessayer » sert au seul écran d’erreur qui le suit : un autre échec garde la phrase commune', async () => {
+    const utilisateur = userEvent.setup()
+    const { unmount } = afficher(<LectureEnEchec />)
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(/prévenez EJP Tech\.$/)
+    unmount()
+    // Un autre bloc de la même page échoue ensuite pour la première fois.
+    afficher(
+      <EtatVide situation="probleme_passager" action={{ libelle: 'Réessayer', surClic: vi.fn() }}>
+        La connexion a échoué. Réessayez.
+      </EtatVide>,
+    )
+    expect(screen.getByRole('alert')).toHaveTextContent(/^La connexion a échoué\. Réessayez\.$/)
+  })
+
+  it('un « Réessayer » qui a réussi ne change pas le premier échec d’une autre page', async () => {
+    const utilisateur = userEvent.setup()
+    const { unmount } = afficher(<LectureEnEchec />)
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    unmount()
+    window.history.pushState({}, '', '/autre-page')
+    try {
+      afficher(
+        <EtatVide situation="probleme_passager" action={{ libelle: 'Réessayer', surClic: vi.fn() }}>
+          La connexion a échoué. Réessayez.
+        </EtatVide>,
+      )
+      expect(screen.getByRole('alert')).not.toHaveTextContent('EJP Tech')
+    } finally {
+      window.history.pushState({}, '', '/')
+    }
+  })
+
+  it('une phrase propre à l’écran reste telle quelle', async () => {
+    const utilisateur = userEvent.setup()
+    const surClic = vi.fn()
+    afficher(
+      <EtatVide situation="probleme_passager" action={{ libelle: 'Réessayer', surClic }}>
+        La connexion a échoué.
+      </EtatVide>,
+    )
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    expect(surClic).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('alert')).toHaveTextContent(/^La connexion a échoué\.$/)
+  })
+})
 
 describe('EtatVide', () => {
   it('connaît les six situations de T36', () => {
