@@ -1,0 +1,520 @@
+import { QueryClientProvider } from '@tanstack/react-query'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { createMemoryRouter } from 'react-router'
+import { RouterProvider } from 'react-router/dom'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { routes } from '@/app/routes'
+import {
+  ATTENTES_EXEMPLE,
+  DECISIONS_EXEMPLE,
+  DEMANDES_EXEMPLE,
+} from '@/features/indicateurs/validation/apercu/exemples'
+import type { TypeCompte } from '@/lib/base'
+import { clientRequetes } from '@/lib/requetes'
+import { fauxSupabase } from '@/test/fauxSupabase'
+
+// Bloc « À valider » de `/indicateurs` (lot L4), par les routes de l'application : EJP Tech lit la
+// file avec le « Pourquoi » et décide par `valider_indicateur` ; l'administration de l'église lit
+// l'attente sans bouton ni « Pourquoi », sans jamais lire `v_a_valider`, `validation` ni
+// `demande_indicateur`.
+
+const courant = vi.hoisted(() => ({ client: undefined as unknown }))
+vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
+
+type Options = {
+  lignes?: Record<string, unknown[]>
+  enEchec?: string[]
+}
+
+function connecte(type: TypeCompte, options: Options = {}) {
+  const faux = fauxSupabase({
+    utilisateur: { id: `u-${type}`, email: `${type}@exemple.test` },
+    niveau: { currentLevel: 'aal2', nextLevel: 'aal2' },
+    compte: {
+      user_id: `u-${type}`,
+      type,
+      ministere_id: null,
+      libelle: 'Compte',
+      desactive_le: null,
+    },
+    facteursVerifies: ['f1'],
+    lignes: {
+      ministere: [
+        {
+          id: '10000000-0000-4000-8000-000000000011',
+          code: null,
+          nom: 'Kumi',
+          desactive_le: null,
+        },
+        {
+          id: '10000000-0000-4000-8000-000000000001',
+          code: null,
+          nom: 'Communication',
+          desactive_le: null,
+        },
+        {
+          id: '10000000-0000-4000-8000-000000000003',
+          code: null,
+          nom: 'Intégration',
+          desactive_le: null,
+        },
+      ],
+      indicateur: [
+        ...ATTENTES_EXEMPLE.map((attente) => ({
+          id: attente.indicateur_id,
+          libelle: attente.libelle,
+          definition: attente.definition,
+          nature: attente.nature,
+          ministere_id: attente.ministere_id,
+          cree_le: attente.cree_le,
+          etat: 'en_attente',
+          origine: 'ministere',
+        })),
+      ],
+      v_usage_indicateurs: ATTENTES_EXEMPLE.map((attente) => ({
+        indicateur_id: attente.indicateur_id,
+        attente_jours: attente.attente_jours,
+      })),
+      v_a_valider: [...DEMANDES_EXEMPLE],
+      v_semaine: [],
+      ...options.lignes,
+    },
+    enEchec: options.enEchec,
+  })
+  const rpc = vi.fn((nom: string, args: unknown) => {
+    void nom
+    void args
+    return Promise.resolve({ data: null, error: null })
+  })
+  courant.client = { ...faux.client, rpc }
+  return { ...faux, rpc }
+}
+
+function afficher(adresse: string) {
+  const routeur = createMemoryRouter(routes, { initialEntries: [adresse] })
+  render(
+    <QueryClientProvider client={clientRequetes}>
+      <RouterProvider router={routeur} />
+    </QueryClientProvider>,
+  )
+  return routeur
+}
+
+afterEach(async () => {
+  cleanup()
+  await clientRequetes.cancelQueries()
+  clientRequetes.clear()
+  vi.clearAllMocks()
+})
+
+/** Les lectures des décisions des 30 derniers jours (EJP Tech), avec le jour de Paris de `v_semaine`. */
+const AVEC_DECISIONS: Record<string, unknown[]> = {
+  v_semaine: [{ aujourdhui: '2026-10-12' }],
+  validation: DECISIONS_EXEMPLE.map((decision) => ({
+    id: decision.validation_id,
+    demande_id: `d-${decision.validation_id}`,
+    ministere_id: '10000000-0000-4000-8000-000000000011',
+    decision: decision.decision,
+    motif: decision.motif,
+    saisi_le: decision.saisi_le,
+  })),
+  demande_indicateur: DECISIONS_EXEMPLE.map((decision) => ({
+    id: `d-${decision.validation_id}`,
+    libelle: decision.libelle,
+  })),
+}
+
+const ligne = (ministere: string) =>
+  within(screen.getByRole('heading', { level: 3, name: ministere }).closest('article')!)
+
+/** Le bloc, une fois la liste affichée. */
+async function bloc() {
+  const section = await screen.findByRole('region', { name: 'À valider' }, { timeout: 5000 })
+  await screen.findByRole('heading', { level: 3, name: 'Kumi' }, { timeout: 5000 })
+  return within(section)
+}
+
+describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
+  it('lit la file avec le « Pourquoi », du plus ancien au plus récent, « en retard » avec le mot', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    const lu = await bloc()
+    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+    const noms = screen
+      .getAllByRole('heading', { level: 3 })
+      .map((titre) => titre.textContent ?? '')
+    expect(noms).toEqual(['Kumi', 'Communication', 'Intégration'])
+    expect(ligne('Kumi').getByText('Envoyé le 1 oct.')).toBeInTheDocument()
+    expect(ligne('Kumi').getByText(/depuis 9 jours/)).toBeInTheDocument()
+    expect(ligne('Kumi').getByText('en retard')).toBeInTheDocument()
+    expect(ligne('Communication').queryByText('en retard')).toBeNull()
+    expect(ligne('Kumi').getByText(/Suivre les demandes de l'équipe/)).toBeInTheDocument()
+    expect(ligne('Kumi').getByText('2 valeurs déjà saisies')).toBeInTheDocument()
+    expect(
+      ligne('Kumi').getByText(/Nouvel indicateur\s*: «\s*Demandes reçues\s*» \(chaque mois\)/),
+    ).toBeInTheDocument()
+    expect(ligne('Communication').getByText(/\(à ce jour\)/)).toBeInTheDocument()
+    expect(faux.tables).toContain('v_a_valider')
+  })
+
+  it('un « Pourquoi » masqué s’affiche tel quel, sans bouton de plus', async () => {
+    connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    expect(ligne('Intégration').getByText('[texte masqué par EJP Tech]')).toBeInTheDocument()
+  })
+
+  it('chaque ligne a « Valider » et « Refuser », nommés par l’indicateur et le ministère', async () => {
+    connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    expect(
+      screen.getByRole('button', { name: /^Valider «\s*Demandes reçues\s*» de Kumi$/ }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Valider / })).toHaveLength(3)
+    expect(screen.getAllByRole('button', { name: /^Refuser / })).toHaveLength(3)
+  })
+
+  it('« Valider » décide en un clic, sans fenêtre, et l’annonce', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Valider «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('valider_indicateur', {
+        p_demande_id: '00000000-0000-4000-8000-0000000000a1',
+        p_decision: 'valide',
+        p_motif: null,
+      }),
+    )
+    expect(await screen.findByText('Indicateur validé.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('« Refuser » ouvre une fenêtre qui demande un motif de 10 à 280 caractères', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog', {
+      name: /Refuser «\s*Demandes reçues\s*» \?/,
+    })
+    const champ = within(fenetre).getByRole('textbox', { name: 'Pourquoi ce refus ?' })
+    // Le rappel sur les données personnelles et le compteur sont sous le champ.
+    expect(
+      within(fenetre).getByText("N'écrivez aucun nom ni information personnelle."),
+    ).toBeVisible()
+    expect(within(fenetre).getByText('0 sur 280')).toBeInTheDocument()
+    expect(
+      within(fenetre).getByText(
+        "L'indicateur sera retiré : ses valeurs ne s'afficheront plus. Kumi lira ce motif.",
+      ),
+    ).toBeInTheDocument()
+
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(
+      await within(fenetre).findByText('Expliquez le refus (10 caractères au moins).'),
+    ).toBeInTheDocument()
+    await userEvent.type(champ, 'Neuf cara')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(
+      await within(fenetre).findByText('Expliquez le refus (10 caractères au moins).'),
+    ).toBeInTheDocument()
+    expect(faux.rpc).not.toHaveBeenCalled()
+
+    await userEvent.type(champ, 'h')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('valider_indicateur', {
+        p_demande_id: '00000000-0000-4000-8000-0000000000a1',
+        p_decision: 'refuse',
+        p_motif: 'Neuf carah',
+      }),
+    )
+    expect(await screen.findByText('Indicateur refusé. Kumi verra le motif.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('le motif de plus de 280 caractères est refusé avant tout appel', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.click(within(fenetre).getByRole('textbox'))
+    await userEvent.paste('a'.repeat(281))
+    expect(within(fenetre).getByText('281 sur 280')).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(await within(fenetre).findByText('Le motif dépasse 280 caractères.')).toBeInTheDocument()
+    expect(faux.rpc).not.toHaveBeenCalled()
+  })
+
+  it('un refus du motif par la base se dit sous le champ, la fenêtre reste ouverte', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({
+      code: 'P0001',
+      message: "N'écrivez aucun nom ni information personnelle.",
+    })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Merci de ne rien écrire ici.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    const message = await within(fenetre).findAllByText(
+      "N'écrivez aucun nom ni information personnelle.",
+    )
+    // Le rappel fixe et le refus de la base : deux fois la même phrase, le second sous le champ.
+    expect(message).toHaveLength(2)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('une connexion perdue garde le motif dans la fenêtre', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce(new Error('réseau'))
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre existe déjà ailleurs.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(
+      await within(fenetre).findByText(
+        /La connexion a échoué\. Votre message est encore dans le formulaire/,
+      ),
+    ).toBeInTheDocument()
+    expect(within(fenetre).getByRole('textbox')).toHaveValue('Ce chiffre existe déjà ailleurs.')
+  })
+
+  it('« Cette demande a déjà été décidée. » ferme la fenêtre et reste dit en haut du bloc', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({
+      code: 'P0001',
+      message: 'Cette demande a déjà été décidée.',
+    })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre existe déjà ailleurs.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Cette demande a déjà été décidée.')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('« Valider » refusé par la base : le message se dit, le bouton reste utilisable', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({
+      code: 'P0001',
+      message: "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.",
+    })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Valider «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.",
+    )
+  })
+
+  it('rien à valider : le titre reste, avec « Rien à valider. »', async () => {
+    connecte('admin_plateforme', { lignes: { v_a_valider: [] } })
+    afficher('/indicateurs')
+    const section = await screen.findByRole('region', { name: 'À valider' })
+    expect(await within(section).findByText(/^Rien à valider\./)).toBeInTheDocument()
+    expect(within(section).getByText('Aucun ajout en attente')).toBeInTheDocument()
+    expect(within(section).queryByRole('button')).toBeNull()
+    // L'introduction dirait le contraire de « Rien à valider. » : elle n'est pas là.
+    expect(within(section).queryByText(/Les ministères envoient leurs ajouts ici/)).toBeNull()
+  })
+
+  it('avec des ajouts en attente, l’introduction explique quoi faire', async () => {
+    connecte('admin_plateforme')
+    afficher('/indicateurs')
+    const lu = await bloc()
+    expect(lu.getByText(/Les ministères envoient leurs ajouts ici/)).toBeInTheDocument()
+  })
+
+  it('une lecture qui échoue : « La connexion a échoué. Réessayez. » et « Réessayer »', async () => {
+    connecte('admin_plateforme', { enEchec: ['v_a_valider'] })
+    afficher('/indicateurs')
+    const section = await screen.findByRole('region', { name: 'À valider' })
+    expect(await within(section).findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    expect(within(section).getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+  })
+
+  it('les décisions des 30 derniers jours sont repliées, le titre souligné, le motif d’un refus en citation', async () => {
+    connecte('admin_plateforme', { lignes: AVEC_DECISIONS })
+    afficher('/indicateurs')
+    await bloc()
+    const resume = await screen.findByText(/Décidées ces 30 derniers jours \(3\)/)
+    expect(resume.closest('details')).not.toHaveAttribute('open')
+    expect(resume).toHaveClass('underline')
+    expect(
+      screen.getByText(/Refusée le 5 oct\. : «\s*Ce chiffre existe déjà sur la fiche/),
+    ).toBeInTheDocument()
+  })
+
+  it('une lecture des décisions qui échoue : le bandeau et « Réessayer », la file reste lisible', async () => {
+    connecte('admin_plateforme', { lignes: AVEC_DECISIONS, enEchec: ['validation'] })
+    afficher('/indicateurs')
+    const lu = await bloc()
+    const alerte = await lu.findByRole('alert', {}, { timeout: 5000 })
+    expect(alerte).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(lu.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    expect(lu.queryByText(/Décidées ces 30 derniers jours/)).toBeNull()
+    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+  })
+
+  it('la file qui ne se lit pas : le bandeau seul, aucun compte de décisions à côté', async () => {
+    connecte('admin_plateforme', { lignes: AVEC_DECISIONS, enEchec: ['v_a_valider'] })
+    afficher('/indicateurs')
+    const section = await screen.findByRole('region', { name: 'À valider' })
+    expect(await within(section).findByRole('alert', {}, { timeout: 5000 })).toBeInTheDocument()
+    expect(within(section).queryByText(/Décidées ces 30 derniers jours/)).toBeNull()
+  })
+
+  it('« Masquer le texte » sous le « Pourquoi » : motif dans une liste, puis le texte est relu', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/indicateurs')
+    await bloc()
+    // Kumi et Communication ont un « Pourquoi » à masquer ; celui d'Intégration l'est déjà.
+    expect(screen.getAllByRole('button', { name: 'Masquer le texte' })).toHaveLength(2)
+    expect(ligne('Intégration').queryByRole('button', { name: 'Masquer le texte' })).toBeNull()
+    await userEvent.click(ligne('Kumi').getByRole('button', { name: 'Masquer le texte' }))
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    expect(within(fenetre).getByText('Indicateur à valider, Kumi')).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    expect(
+      await within(fenetre).findByText('Choisissez un motif dans la liste.'),
+    ).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('radio', { name: "Nom d'une personne" }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
+        p_cible: 'demande_indicateur',
+        p_cible_id: '00000000-0000-4000-8000-0000000000a1',
+        p_champ: 'pourquoi',
+        p_motif: 'nom_personne',
+      }),
+    )
+    expect(await screen.findByText('Texte masqué.')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('« Masquer le texte » sous le motif d’un refus décidé, jamais sous un motif déjà masqué', async () => {
+    const faux = connecte('admin_plateforme', { lignes: AVEC_DECISIONS })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(await screen.findByText(/Décidées ces 30 derniers jours \(3\)/))
+    const decidees = within(screen.getByText(/Décidées ces 30 derniers jours/).closest('details')!)
+    // Un seul motif lisible (« Activités réalisées ») : l'autre est déjà masqué, la validation n'en a pas.
+    const boutons = decidees.getAllByRole('button', { name: 'Masquer le texte' })
+    expect(boutons).toHaveLength(1)
+    await userEvent.click(boutons[0]!)
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    expect(within(fenetre).getByText('Indicateur refusé, Kumi')).toBeInTheDocument()
+    await userEvent.click(
+      within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
+        p_cible: 'validation',
+        p_cible_id: '00000000-0000-4000-8000-0000000000c2',
+        p_champ: 'motif',
+        p_motif: 'autre',
+      }),
+    )
+  })
+
+  it('un refus de la base au masquage se dit dans la fenêtre, qui reste ouverte', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({
+      code: 'P0001',
+      message: 'Texte introuvable, vide ou déjà masqué.',
+    })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(ligne('Kumi').getByRole('button', { name: 'Masquer le texte' }))
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    await userEvent.click(
+      within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    expect(
+      await within(fenetre).findByText('Texte introuvable, vide ou déjà masqué.'),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+})
+
+describe('/indicateurs, bloc « À valider » pour l’administration de l’église', () => {
+  it('lit l’attente sans bouton, sans « Pourquoi » ni nombre de valeurs', async () => {
+    const faux = connecte('admin_eglise')
+    afficher('/indicateurs')
+    const lu = await bloc()
+    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+    expect(lu.getByText(/Ces ajouts attendent EJP Tech\. Vous les lisez ici/)).toBeInTheDocument()
+    expect(lu.queryByRole('button')).toBeNull()
+    expect(lu.queryByText(/Pourquoi/)).toBeNull()
+    expect(lu.queryByText(/Suivre les demandes/)).toBeNull()
+    expect(lu.queryByText(/valeurs? déjà saisies?/)).toBeNull()
+    expect(ligne('Kumi').getByText(/depuis 9 jours/)).toBeInTheDocument()
+    expect(ligne('Kumi').getByText('en retard')).toBeInTheDocument()
+    expect(
+      ligne('Kumi').getByText(/Nouvel indicateur\s*: «\s*Demandes reçues\s*»/),
+    ).toBeInTheDocument()
+    // Jamais la file d'EJP Tech, ni les décisions, ni une valeur.
+    const tables = new Set(faux.tables)
+    for (const interdite of ['v_a_valider', 'validation', 'demande_indicateur', 'mesure']) {
+      expect(tables.has(interdite), interdite).toBe(false)
+    }
+  })
+
+  it('rien à valider : le titre reste, sans bouton ni introduction', async () => {
+    connecte('admin_eglise', { lignes: { indicateur: [], v_usage_indicateurs: [] } })
+    afficher('/indicateurs')
+    const section = await screen.findByRole('region', { name: 'À valider' })
+    expect(await within(section).findByText(/^Rien à valider\./)).toBeInTheDocument()
+    expect(within(section).queryByRole('button')).toBeNull()
+    expect(within(section).queryByText(/Ces ajouts attendent EJP Tech/)).toBeNull()
+  })
+
+  it('ne relit pas ce que le tableau de l’écran a déjà lu : une lecture de chaque table', async () => {
+    const faux = connecte('admin_eglise')
+    afficher('/indicateurs')
+    await bloc()
+    const lectures = (table: string) => faux.tables.filter((lue) => lue === table).length
+    expect(lectures('indicateur')).toBe(1)
+    expect(lectures('v_usage_indicateurs')).toBe(1)
+  })
+
+  it('si le tableau ne se lit pas, l’écran dit l’erreur une seule fois, sans bloc à côté', async () => {
+    connecte('admin_eglise', { enEchec: ['v_usage_indicateurs'] })
+    afficher('/indicateurs')
+    expect(await screen.findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    expect(screen.queryByRole('region', { name: 'À valider' })).toBeNull()
+  })
+})

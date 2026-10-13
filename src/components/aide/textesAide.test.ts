@@ -24,9 +24,10 @@ function nombreDePhrases(texte: string): number {
 describe('catalogue des aides (T38)', () => {
   // Étapes 5 et 6 (lot C0) : 15 aides proposées, ajoutées à la fin du catalogue (écran 13 et
   // configuration des indicateurs, 8 ; points d'attention, 5 ; sessions, 2), puis 2 aides du lot L3b
-  // (panneaux de la configuration des indicateurs : domaine sensible, chiffre du haut d'un calcul).
-  it('compte 28 textes de référence, 3 codes à retirer et 17 aides des étapes 5 et 6 (aides-contextuelles.md, section 6)', () => {
-    expect(ENTREES).toHaveLength(31 + 8 + 5 + 2 + 2)
+  // (panneaux de la configuration des indicateurs : domaine sensible, chiffre du haut d'un calcul)
+  // et 1 aide du lot L4 (« Pourquoi cet indicateur ? »).
+  it('compte 28 textes de référence, 3 codes à retirer et 18 aides des étapes 5 et 6 (aides-contextuelles.md, section 6)', () => {
+    expect(ENTREES).toHaveLength(31 + 8 + 5 + 2 + 2 + 1)
     expect(CODES_A_RETIRER).toHaveLength(3)
     for (const code of CODES_A_RETIRER) expect(Object.keys(TEXTES_AIDE)).toContain(code)
   })

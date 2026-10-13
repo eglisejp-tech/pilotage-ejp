@@ -163,6 +163,11 @@ export const TEXTES_AIDE = {
     'Santé, accompagnement ou enfants : seuls le ministère, le berger, le conseil et EJP Tech voient ses valeurs.',
   'indicateurs.calcul':
     'Le haut est divisé par le bas. Exemple : 16 résolues (haut) sur 20 demandes (bas) donnent 80 %.',
+  // « Mes indicateurs » (lot L4, statut Proposé ; validation-metier.md, 2.2) : indicateurs.pourquoi
+  // sur le champ « Pourquoi cet indicateur ? » du panneau d'ajout. Le texte vient de la conception
+  // (T30). Le champ n'a pas de rappel sur les données personnelles (exception voulue).
+  'indicateurs.pourquoi':
+    'Ce que ce chiffre vous aidera à voir ou à décider. EJP Tech le lit avant de valider.',
 } as const
 
 /**

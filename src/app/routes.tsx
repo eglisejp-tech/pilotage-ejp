@@ -9,6 +9,8 @@ import { ApercuEvenements } from '@/features/evenements/apercu/ApercuEvenements'
 import { ApercuFiche } from '@/features/fiche/apercu/ApercuFiche'
 import { ApercuJournal } from '@/features/journal/apercu/ApercuJournal'
 import { ApercuIndicateurs } from '@/features/indicateurs/configuration/apercu/ApercuIndicateurs'
+import { ApercuValidation } from '@/features/indicateurs/validation/apercu/ApercuValidation'
+import { ApercuMesIndicateurs } from '@/features/mes-indicateurs/apercu/ApercuMesIndicateurs'
 import { ApercuNouveauPoint } from '@/features/nouveau-point/apercu/ApercuNouveauPoint'
 import { ApercuSaisies } from '@/features/saisie/apercu/ApercuSaisies'
 import { ApercuSessions } from '@/features/sessions/apercu/ApercuSessions'
@@ -60,6 +62,9 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'calendrier', element: <ApercuCalendrier /> },
           // Lot L3a : configuration des indicateurs (`/indicateurs` et `/indicateurs/:id`).
           { path: 'indicateurs', element: <ApercuIndicateurs /> },
+          // Lot L4 : bloc « À valider » (EJP Tech décide, l'administration lit) et « Mes indicateurs ».
+          { path: 'validation-indicateurs', element: <ApercuValidation /> },
+          { path: 'mes-indicateurs', element: <ApercuMesIndicateurs /> },
           // Étape 5, lot P2 : « Nouveau point d'attention » (maquette 10).
           { path: 'nouveau-point', element: <ApercuNouveauPoint /> },
           // Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
