@@ -6,15 +6,18 @@
 // échoue si un message n'est ni dans la table ni dans la liste des garde-fous laissés au repli.
 //
 // Le code décide d'abord, le texte ensuite :
-// - pas de code et une erreur de fetch (code vide de postgrest-js, TypeError de fetch, erreur de
-//   fetch des clients Auth et Edge Functions) : `reseau`, l'écran dit sa phrase de connexion ;
-//   toute autre erreur sans code (`Error` levée par le code, corps illisible d'une passerelle en
-//   panne) n'est pas une coupure : elle prend le repli ;
+// - pas de code et une erreur de fetch (code vide de postgrest-js, TypeError au message de fetch,
+//   erreur de fetch des clients Auth et Edge Functions) : `reseau`, l'écran dit sa phrase de
+//   connexion ; toute autre erreur sans code (`Error` levée par le code, TypeError d'un bogue,
+//   corps illisible d'une passerelle en panne) n'est pas une coupure : elle prend le repli ;
 // - délai de 10 s dépassé : `delai`, l'écran dit « peut-être fait » pour une création ;
-// - jeton expiré ou refusé (PGRST301 à PGRST303) : connexion expirée ;
+// - jeton expiré ou refusé (PGRST301 à PGRST303, ou « JWT » dans le message, même sans code) :
+//   connexion expirée ;
 // - 42501 : « Double authentification requise. » donne connexion expirée, « Compte inactif ou
 //   inconnu. » donne compte désactivé ; un garde-fou technique prend le repli ; tout autre 42501
 //   est un refus d'accès, que l'écran dit avec sa propre phrase ;
+// - connexion expirée et compte désactivé font aussi relire la session (`surSessionChangee`) :
+//   la garde mène à l'écran qui convient, avec la page en retour (m271) ;
 // - P0001 : la phrase de la table ;
 // - P0001 absent de la table, 23505, 23514, 23503, 22003, 22P02, contrôle Zod imprévu : le repli.
 
@@ -482,14 +485,20 @@ function champDuChemin(chemin: readonly PropertyKey[]): ChampRefus | null {
 /** Message par défaut de Zod (en anglais) : un contrôle imprévu, jamais montré. */
 const MESSAGE_ZOD_PAR_DEFAUT = /^(Invalid|Too (big|small)|Expected|Unrecognized|Required)\b/
 
+/** Erreur de fetch des clients Supabase (`AuthRetryableFetchError`, `FunctionsFetchError`). */
+const NOM_ERREUR_FETCH = /^\w*FetchError$/
+
 /**
- * Une erreur JavaScript de fetch (réseau coupé, hors ligne) : Chrome, Firefox, Safari, et les
- * erreurs de fetch des clients Supabase (`AuthRetryableFetchError`, `FunctionsFetchError`).
+ * Message d'un fetch rejeté (réseau coupé, hors ligne) : Chrome, Firefox, Safari, Node. Le nom
+ * TypeError ne suffit pas : une TypeError d'un autre message est un bogue du code, pas une coupure.
  */
-const ERREUR_FETCH = /^(TypeError|\w*FetchError)\b|Failed to fetch|NetworkError|Load failed/
+const MESSAGE_ERREUR_FETCH = /Failed to fetch|NetworkError|Load failed|fetch failed/
 
 /** Codes de PostgREST d'un jeton refusé, expiré ou absent (401). */
 const JETON_REFUSE: ReadonlySet<string> = new Set(['PGRST301', 'PGRST302', 'PGRST303'])
+
+/** Jeton refusé dit par son texte : PostgREST, ou une passerelle qui répond 401 sans code. */
+const JETON_DANS_LE_MESSAGE = /\bJWT\b/
 
 function lireChamp(erreur: object, nom: 'code' | 'message' | 'name'): string | undefined {
   const valeur = (erreur as Record<string, unknown>)[nom]
@@ -498,6 +507,29 @@ function lireChamp(erreur: object, nom: 'code' | 'message' | 'name'): string | u
 
 function phrase(nature: NaturePhrase, message: string, champ: ChampRefus | null = null): ErreurLue {
   return { genre: 'message', nature, message, champ }
+}
+
+let rappelSession: (() => void) | null = null
+
+/**
+ * Enregistre ce que l'application fait quand un refus dit que la session a changé (connexion
+ * expirée, compte désactivé) : relire la session, pour que la garde mène à l'écran de connexion,
+ * de code ou « Compte désactivé », avec l'adresse de la page en retour (m271). `null` le retire.
+ * Le module de session l'enregistre : cette table ne dépend pas du client Supabase.
+ */
+export function surSessionChangee(rappel: (() => void) | null): void {
+  rappelSession = rappel
+}
+
+/** La phrase d'une session qui a changé, et sa relecture, après la lecture en cours. */
+function sessionChangee(nature: 'expiree' | 'desactive'): ErreurLue {
+  const rappel = rappelSession
+  // Jamais pendant la lecture : un écran peut lire l'erreur pendant son rendu.
+  if (rappel) setTimeout(rappel, 0)
+  return phrase(
+    nature,
+    nature === 'expiree' ? MESSAGES_COMMUNS.connexionExpiree : MESSAGES_COMMUNS.compteDesactive,
+  )
 }
 
 /**
@@ -524,25 +556,28 @@ export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): E
 
   if (code === undefined || code === '') {
     if (estDelaiDepasse(erreur)) return { genre: 'delai' }
+    // Une passerelle qui refuse le jeton (401) sans code PostgREST : connexion expirée (10.11).
+    if (JETON_DANS_LE_MESSAGE.test(message)) return sessionChangee('expiree')
     // Pas de code : aucune réponse de la base (guide, 10.11), seulement quand fetch a échoué.
-    // postgrest-js rend alors `code: ''` ; fetch lève une TypeError ; Auth et les Edge Functions
-    // lèvent leur `...FetchError`. Une autre `Error` sans code (« Limites absentes. », bogue) ou un
-    // corps que le serveur n'a pas su donner en JSON (passerelle en panne, 502) n'est pas une
-    // coupure : réessayer la connexion n'y changerait rien, donc le repli.
+    // postgrest-js rend alors `code: ''` ; fetch lève une TypeError au message connu ; Auth et les
+    // Edge Functions lèvent leur `...FetchError`. Une autre `Error` sans code (« Limites
+    // absentes. », TypeError d'un bogue) ou un corps que le serveur n'a pas su donner en JSON
+    // (passerelle en panne, 502) n'est pas une coupure : réessayer la connexion n'y changerait
+    // rien, donc le repli.
     const nom = lireChamp(erreur, 'name') ?? ''
-    if (code === '' || ERREUR_FETCH.test(nom) || ERREUR_FETCH.test(message)) {
+    if (code === '' || NOM_ERREUR_FETCH.test(nom) || MESSAGE_ERREUR_FETCH.test(message)) {
       return { genre: 'reseau' }
     }
     return repli
   }
-  if (JETON_REFUSE.has(code) || /\bJWT\b/.test(message)) {
-    return phrase('expiree', MESSAGES_COMMUNS.connexionExpiree)
+  if (JETON_REFUSE.has(code) || JETON_DANS_LE_MESSAGE.test(message)) {
+    return sessionChangee('expiree')
   }
   if (code === '42501') {
     const trouve = chercher(REFUS_DE_DROIT, MODELES_DROIT, message)
     const entree = trouve?.entree ?? 'acces'
-    if (entree === 'expiree') return phrase('expiree', MESSAGES_COMMUNS.connexionExpiree)
-    if (entree === 'desactive') return phrase('desactive', MESSAGES_COMMUNS.compteDesactive)
+    if (entree === 'expiree') return sessionChangee('expiree')
+    if (entree === 'desactive') return sessionChangee('desactive')
     if (entree === 'acces') return { genre: 'acces' }
     if (entree === REPLI) return repli
     return phrase('refus', rediger(entree, message, trouve?.valeurs ?? []), entree.champ ?? null)

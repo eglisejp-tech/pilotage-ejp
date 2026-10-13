@@ -1238,3 +1238,15 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : revue de sécurité du lot B (13 octobre 2026)
 - **Statut** : À décider par la personne responsable (numéro à donner à la fusion) ; en attendant, le message reste
 - **BRIEF** : section 8 (messages d'erreur) selon la réponse
+
+### Textes du lot B à trancher avec la validation des messages
+
+- **Date** : 14 octobre 2026
+- **Sujet** : quatre points relevés par les revues du lot B, laissés tels quels faute de validation (aucun texte hors des lignes du lot n'est réécrit avant la refonte).
+  1. Limite des 3 ajouts (m233) : la traduction du refus reprend le texte du contrôle avant l'envoi, « Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre. », et non le texte proposé « ... Retirez-en un ... » : au lot 1, le ministère ne retire pas lui-même un ajout (P53), et le guide (10.9) veut le même texte avant et après l'envoi.
+  2. Mots des messages et libellés des champs (m233, guide 10.8) : « Choisissez le type de nombre. » s'affiche sous « Sorte de nombre », « Donnez un nom de 2 à 60 caractères. » sous « Ce que vous comptez ». Soit les messages reprennent les libellés, soit les libellés changent.
+  3. « Fermez cette fenêtre pour mettre la page à jour » (m148, m149, m157) : la fenêtre se ferme par « Retour », « Annuler » ou Échap, et chacun relit la page ; aucun bouton ne s'appelle « Fermer ». Soit le bouton « Annuler » devient « Fermer » après un tel refus, soit la phrase nomme le bouton.
+  4. `reinitialiser-2fa` : une panne après le remplacement du mot de passe rend `activation_incomplete` et se consigne dans les journaux des fonctions, mais n'écrit aucune ligne au journal de l'outil. Écrire « réinitialisation commencée » avant le remplacement demande une fonction serveur et une migration.
+- **Origine** : revues du lot B (13 et 14 octobre 2026)
+- **Statut** : À décider par la personne responsable (numéro à donner à la fusion)
+- **BRIEF** : aucun changement tant que la réponse n'est pas donnée

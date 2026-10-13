@@ -5,6 +5,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
+import { lireErreurBase } from '@/data/messagesBase'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
 import { accueil, ADRESSES_APPLICATION, titrePour } from '@/features/navigation/profils'
@@ -224,6 +225,26 @@ describe('routes', () => {
       code: '123456',
     })
     expect(routeur.state.location.pathname).toBe('/journal')
+  })
+
+  it('refus « Double authentification requise. » : la session est relue, puis l’écran de code avec la page en retour (m271)', async () => {
+    const faux = connecte('berger')
+    const routeur = afficher('/journal')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Journal' })).toBeInTheDocument()
+
+    // La session n'est plus en aal2 ; un enregistrement reçoit le refus de la base.
+    faux.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: 'aal1', nextLevel: 'aal2' },
+      error: null,
+    })
+    expect(
+      lireErreurBase({ code: '42501', message: 'Double authentification requise.' }),
+    ).toMatchObject({ message: 'Votre connexion a expiré. Reconnectez-vous.' })
+
+    expect(await screen.findByLabelText('Code à 6 chiffres')).toBeInTheDocument()
+    expect(faux.auth.getUser).toHaveBeenCalled()
+    expect(routeur.state.location.pathname).toBe('/double-authentification')
+    expect(routeur.state.location.search).toBe('?retour=%2Fjournal')
   })
 
   it.each<[TypeCompte, string, string[]]>([

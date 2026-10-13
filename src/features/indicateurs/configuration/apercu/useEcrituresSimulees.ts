@@ -16,7 +16,18 @@ import { invaliderConfiguration } from '@/features/indicateurs/configuration/cle
 import type { EcrituresIndicateurs } from '@/features/indicateurs/configuration/panneaux/ecritures'
 
 const ATTENTE_SIMULEE_MS = 150
-const REFUS_EXEMPLE = 'Cette fiche a déjà « Publications ».'
+
+/**
+ * Refus de la base simulés par `envoi=refus` : un texte réel de chaque fonction, qui reste vrai pour
+ * l'écran affiché (un autre compte a écrit entre-temps). Un ajout : le nom tapé vient d'être pris,
+ * la phrase va sous le champ du nom (m233). Une correction ou un retrait : l'indicateur vient
+ * d'être retiré, la phrase va sous le bouton.
+ */
+const REFUS_SIMULES = {
+  ajout: (nom: string) => `Cette fiche a déjà « ${nom} ».`,
+  correction: () => 'Un indicateur retiré ne change plus.',
+  retrait: () => 'Cet indicateur est déjà retiré.',
+} as const
 
 /** Jour de Paris et dimanche de référence de l'aperçu : une date fixe, jamais celle du navigateur. */
 const SEMAINE_EXEMPLE = { aujourdhui: '2026-10-12', dimanche: '2026-10-11' }
@@ -34,13 +45,11 @@ export function useEcrituresSimulees(
 ): EcrituresIndicateurs {
   const client = useQueryClient()
   return useMemo((): EcrituresIndicateurs => {
-    const attendre = async () => {
+    const attendre = async (refus: string) => {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
       // L'erreur de fetch hors ligne : une autre `Error` serait lue comme un refus inattendu.
       if (envoi === 'echec') throw new TypeError('Failed to fetch')
-      if (envoi === 'refus') {
-        throw Object.assign(new Error(REFUS_EXEMPLE), { code: 'P0001' })
-      }
+      if (envoi === 'refus') throw Object.assign(new Error(refus), { code: 'P0001' })
     }
     const appliquer = async (suivant: EtatSimule) => {
       ecrire(suivant)
@@ -51,27 +60,27 @@ export function useEcrituresSimulees(
       semaine: () => Promise.resolve(SEMAINE_EXEMPLE),
       ajouter: async (ministereId, entree, remplaceId) => {
         const ajout = schemaAjout.parse(entree)
-        await attendre()
+        await attendre(REFUS_SIMULES.ajout(ajout.libelle))
         await appliquer(
           ajouterSimule(courant.current, ministereId, ajout, remplaceId, maintenant()),
         )
       },
       ajouterCalcul: async (ministereId, entree, remplaceId) => {
         const calcul = schemaCalcul.parse(entree)
-        await attendre()
+        await attendre(REFUS_SIMULES.ajout(calcul.libelle))
         await appliquer(
           ajouterCalculSimule(courant.current, ministereId, calcul, remplaceId, maintenant()),
         )
       },
       corriger: async (ministereId, indicateurId, entree) => {
         const correction = schemaCorrection.parse(entree)
-        await attendre()
+        await attendre(REFUS_SIMULES.correction())
         await appliquer(
           corrigerSimule(courant.current, ministereId, indicateurId, correction, maintenant()),
         )
       },
       retirer: async (ministereId, indicateurId, motif) => {
-        await attendre()
+        await attendre(REFUS_SIMULES.retrait())
         const { etat, calculs } = retirerSimule(
           courant.current,
           ministereId,

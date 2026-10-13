@@ -1,4 +1,4 @@
-import { isAuthApiError, isAuthError } from '@supabase/supabase-js'
+import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js'
 import {
   schemaCode,
   schemaConnexion,
@@ -170,8 +170,10 @@ export async function choisirMotDePasse(valeurs: ValeursNouveauMotDePasse): Prom
 
 /**
  * « Mot de passe oublié » : toujours le même message, qu'un compte existe ou non. Seules les
- * limites de fréquence, les pannes du réseau et celles du serveur s'affichent (un lien n'est
- * alors pas parti).
+ * limites de fréquence, une coupure du réseau et une panne de la passerelle (502 à 504, la même
+ * pour toute adresse) s'affichent : un lien n'est alors pas parti. Une erreur 500 d'Auth lui-même
+ * reste silencieuse : Auth répond 200 pour une adresse inconnue, mais 500 quand l'envoi de l'email
+ * d'un compte qui existe échoue ; la dire révélerait que le compte existe.
  */
 export async function demanderLien(valeurs: ValeursMotDePasseOublie): Promise<Resultat> {
   const { email } = schemaMotDePasseOublie.parse(valeurs)
@@ -189,8 +191,9 @@ export async function demanderLien(valeurs: ValeursMotDePasseOublie): Promise<Re
   if (message === messagesConnexion.tropDeTentatives || message === messagesConnexion.echecReseau) {
     return { erreur: message }
   }
-  // Une panne du serveur (5xx) se dit ; un refus 4xx reste silencieux, comme une adresse inconnue.
-  return isAuthError(erreur) && erreur.status !== undefined && erreur.status >= 500
+  // Une panne de la passerelle (502 à 504, `AuthRetryableFetchError`) se dit ; un refus 4xx ou une
+  // erreur 500 d'Auth reste silencieux, comme une adresse inconnue (aucune énumération).
+  return isAuthRetryableFetchError(erreur) && erreur.status >= 500
     ? { erreur: messagesConnexion.panneConnexion }
     : {}
 }

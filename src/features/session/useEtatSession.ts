@@ -1,19 +1,22 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { chargerEtatSessionSuivi } from '@/features/session/chargement'
+import { surSessionChangee } from '@/data/messagesBase'
+import { chargerEtatSessionSuivi, verifierSessionChangee } from '@/features/session/chargement'
 import { clientRequetes, CLE_SESSION, viderDonnees } from '@/lib/requetes'
 import { supabase } from '@/lib/supabase'
 
 let abonne = false
 
 /**
- * Réévalue l'état à chaque onAuthStateChange (BRIEF section 8, règle 7). Un seul abonnement pour
- * toute l'application. Le rappel ne doit pas appeler Supabase lui-même (verrou d'auth-js) : le
- * travail part au tour suivant de la boucle d'événements.
+ * Réévalue l'état à chaque onAuthStateChange (BRIEF section 8, règle 7), et après un refus de la
+ * base qui dit que la session a changé (connexion expirée, compte désactivé : m271). Un seul
+ * abonnement pour toute l'application. Le rappel ne doit pas appeler Supabase lui-même (verrou
+ * d'auth-js) : le travail part au tour suivant de la boucle d'événements.
  */
 function abonnerAuxChangements() {
   if (abonne) return
   abonne = true
+  surSessionChangee(() => void verifierSessionChangee())
   let utilisateurPrecedent: string | null | undefined
   try {
     supabase().auth.onAuthStateChange((evenement, session) => {

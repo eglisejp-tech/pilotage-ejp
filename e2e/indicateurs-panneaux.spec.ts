@@ -572,7 +572,15 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
 })
 
 // Les états d'erreur de l'envoi : le refus de la base (`envoi=refus`) et la connexion perdue
-// (`envoi=echec`), dans un panneau (ajout) et dans les deux fenêtres de retrait.
+// (`envoi=echec`), dans un panneau (ajout) et dans les deux fenêtres de retrait. Le refus simulé
+// reste vrai pour l'écran : le nom tapé vient d'être pris (sous le champ du nom, m233), puis
+// l'indicateur vient d'être retiré (sous le bouton de la fenêtre).
+const DOUBLON_TOURNAGES = 'Cette fiche a déjà un indicateur « Tournages ». Choisissez un autre nom.'
+const MESSAGES_RETRAIT = {
+  refus: 'Cet indicateur est déjà retiré.',
+  echec: /^La connexion a échoué\./,
+} as const
+
 for (const envoi of ['refus', 'echec'] as const) {
   test(
     `captures des erreurs d’envoi (${envoi}) en 1440, 834 et 390 px`,
@@ -591,15 +599,26 @@ for (const envoi of ['refus', 'echec'] as const) {
       await bouton(page, 'Ajouter un indicateur').click()
       await remplirAjout(page, 'Tournages', 'Tournages réalisés dans le mois.', /Chaque mois/)
       await bouton(page, "Ajouter l'indicateur").click()
-      await expect(page.getByRole('alert')).toBeVisible()
-      await expect(page.getByRole('alert')).toBeInViewport()
+      const nom = page.getByLabel('Ce que vous comptez')
+      if (envoi === 'refus') {
+        // Sous le champ du nom, relié à lui, avec le focus ; aucune alerte sous le bouton.
+        await expect(nom).toHaveAttribute('aria-invalid', 'true')
+        await expect(nom).toBeFocused()
+        await expect(nom).toHaveAccessibleDescription(new RegExp(DOUBLON_TOURNAGES))
+        await expect(page.getByText(DOUBLON_TOURNAGES)).toBeInViewport()
+        await expect(page.getByRole('alert')).toHaveCount(0)
+      } else {
+        await expect(page.getByRole('alert')).toHaveText(/^La connexion a échoué\./)
+        await expect(page.getByRole('alert')).toBeInViewport()
+        await expect(nom).not.toHaveAttribute('aria-invalid')
+      }
       await capturer('ajout')
       await bouton(page, 'Annuler').click()
       await page.getByRole('button', { name: 'Retirer « Publications »' }).click()
       const fenetre = page.getByRole('alertdialog')
       await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()
       await fenetre.getByRole('button', { name: "Retirer l'indicateur" }).click()
-      await expect(fenetre.getByRole('alert')).toBeVisible()
+      await expect(fenetre.getByRole('alert')).toHaveText(MESSAGES_RETRAIT[envoi])
       await capturer('retirer')
       await fenetre.getByRole('button', { name: 'Annuler' }).click()
       await page
@@ -609,7 +628,9 @@ for (const envoi of ['refus', 'echec'] as const) {
         .getByRole('alertdialog')
         .getByRole('button', { name: 'Retirer pour confidentialité' })
         .click()
-      await expect(page.getByRole('alertdialog').getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alertdialog').getByRole('alert')).toHaveText(
+        MESSAGES_RETRAIT[envoi],
+      )
       await capturer('confidentialite')
     },
   )

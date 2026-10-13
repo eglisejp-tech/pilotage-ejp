@@ -190,6 +190,23 @@ describe('reinitialiser-2fa', () => {
       code: 'session_revoquee',
     })
   })
+
+  it('un refus explicite après le mot de passe laisse une trace : l’action reste à relancer', async () => {
+    // L'appelant a perdu son droit entre deux étapes : la base répond `appelant_non_autorise`.
+    const { appelant } = clientFactice({ 'rpc:serveur_reinitialiser_2fa': 'appelant_non_autorise' })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 403,
+      code: 'acces_refuse',
+    })
+    // Un code court seulement : ni identifiant, ni email, ni texte de la base.
+    expect(console.error).toHaveBeenCalledWith(
+      JSON.stringify({
+        fonction: 'reinitialiser-2fa',
+        etape: 'apres_mot_de_passe',
+        code: 'acces_refuse',
+      }),
+    )
+  })
 })
 
 describe('desactiver-compte', () => {

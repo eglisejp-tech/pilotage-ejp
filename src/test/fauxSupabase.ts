@@ -161,6 +161,13 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
         error: null,
       }),
     ),
+    // Vérification de la session par le serveur, après un refus « connexion expirée » (m271).
+    getUser: vi.fn<() => Promise<{ data: { user: unknown }; error: unknown }>>(() =>
+      Promise.resolve({
+        data: { user: utilisateur ? { id: utilisateur.id, email: utilisateur.email } : null },
+        error: null,
+      }),
+    ),
     onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
     signInWithPassword: vi.fn(() => Promise.resolve({ data: {}, error: null })),
     signOut: vi.fn(() => Promise.resolve({ error: null })),

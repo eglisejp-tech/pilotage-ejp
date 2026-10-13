@@ -10,7 +10,10 @@ export const messagesConnexion = {
   sessionExpiree: 'Votre session a expiré. Reconnectez-vous.',
   /** Proposé (m015, T59) : la même phrase partout où un compte désactivé se présente. */
   compteDesactive: 'Ce compte est désactivé. Contactez EJP Tech.',
-  /** Proposé (m013, T59) : Google ou mot de passe d'une adresse sans compte actif. */
+  /**
+   * Proposé (m013, T59) : retour de Google d'une adresse sans compte actif. Une adresse inconnue
+   * saisie avec un mot de passe garde `identifiantsIncorrects` (aucune énumération des comptes).
+   */
   googleSansCompte:
     'Aucun compte actif pour cette adresse. Ouvrez votre invitation ou demandez un compte à EJP Tech.',
   /** Proposé (m014) : fenêtre de Google fermée ou refusée, ou retour de Google non reconnu. */

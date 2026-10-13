@@ -301,6 +301,32 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(enFij).not.toHaveAttribute('aria-invalid')
   })
 
+  it('pendant le refus de « Dont en FIJ », aucun pourcentage ne le contredit (m068)', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(
+      null,
+      vi.fn(() =>
+        Promise.reject({
+          code: 'P0001',
+          message: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+        }),
+      ),
+    )
+    const phrase = "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres."
+    // Les chiffres du formulaire (11 sur 14) donnent 79 %, mais la base a d'autres actifs.
+    expect(screen.getByText(/^79\s% des actifs$/)).toBeInTheDocument()
+    await utilisateur.type(service(), '8')
+    await utilisateur.click(enregistrerLesChiffres())
+    await screen.findByText(phrase)
+    expect(screen.queryByText(/% des actifs/)).toBeNull()
+    // La personne corrige un chiffre : le refus s'efface, le pourcentage revient.
+    const actifs = screen.getByLabelText('STARs actifs', { exact: true })
+    await utilisateur.clear(actifs)
+    await utilisateur.type(actifs, '22')
+    expect(screen.queryByText(phrase)).toBeNull()
+    expect(screen.getByText(/^50\s% des actifs$/)).toBeInTheDocument()
+  })
+
   it('le refus de « Dont en FIJ » disparaît aussi quand ce champ change (m068)', async () => {
     const utilisateur = userEvent.setup()
     afficher(

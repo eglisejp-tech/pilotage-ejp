@@ -33,13 +33,23 @@ describe('verifierLien', () => {
 })
 
 describe('demanderLien', () => {
-  it('panne du serveur Auth : dite, le lien n’est pas parti (m019)', async () => {
+  it('panne de la passerelle (502 à 504) : dite, le lien n’est pas parti (m019)', async () => {
+    for (const statut of [502, 503, 504]) {
+      resetPasswordForEmail.mockResolvedValue({
+        error: new AuthRetryableFetchError('Bad Gateway', statut),
+      })
+      await expect(demanderLien({ email: 'a@exemple.fr' })).resolves.toEqual({
+        erreur: messagesConnexion.panneConnexion,
+      })
+    }
+  })
+
+  it('erreur 500 d’Auth (envoi de l’email d’un compte qui existe) : rien, aucune énumération', async () => {
+    // Auth répond 200 pour une adresse inconnue : dire cette panne révélerait le compte.
     resetPasswordForEmail.mockResolvedValue({
-      error: new AuthRetryableFetchError('Bad Gateway', 502),
+      error: new AuthApiError('Error sending recovery email', 500, 'unexpected_failure'),
     })
-    await expect(demanderLien({ email: 'a@exemple.fr' })).resolves.toEqual({
-      erreur: messagesConnexion.panneConnexion,
-    })
+    await expect(demanderLien({ email: 'a@exemple.fr' })).resolves.toEqual({})
   })
 
   it('refus 4xx (adresse inconnue...) : rien, comme une réussite (aucune énumération)', async () => {

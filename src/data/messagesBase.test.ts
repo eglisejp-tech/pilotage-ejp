@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { traduireErreurBase } from '../../supabase/functions/_shared/base.ts'
 import { MESSAGES_ECRITURE } from '@/data/indicateursEcriture'
@@ -10,6 +10,7 @@ import {
   MESSAGES_COMMUNS,
   phraseErreur,
   phraseLecture,
+  surSessionChangee,
 } from '@/data/messagesBase'
 import {
   explicationLimiteAjouts,
@@ -58,6 +59,40 @@ describe('lireErreurBase : le code décide d’abord', () => {
     expect(lireErreurBase(new Error('Limites absentes.'), { formulaire: false })).toMatchObject({
       message: MESSAGES_COMMUNS.repliAction,
     })
+  })
+
+  it('une TypeError qui ne vient pas de fetch (bogue du code) : le repli, pas la connexion', () => {
+    for (const erreur of [
+      new TypeError("Cannot read properties of null (reading 'map')"),
+      new TypeError('ecritures.ajouter is not a function'),
+    ]) {
+      expect(lireErreurBase(erreur)).toEqual({
+        genre: 'message',
+        nature: 'repli',
+        message: MESSAGES_COMMUNS.repliSaisie,
+        champ: null,
+      })
+    }
+    // Un fetch rejeté reste une coupure : Chrome, Firefox, Safari, Node.
+    for (const message of [
+      'Failed to fetch',
+      'NetworkError when attempting to fetch resource.',
+      'Load failed',
+      'fetch failed',
+    ]) {
+      expect(lireErreurBase(new TypeError(message))).toEqual({ genre: 'reseau' })
+    }
+  })
+
+  it('401 sans code PostgREST (corps de la passerelle « JWT expired ») : connexion expirée (m271)', () => {
+    for (const corps of [{ message: 'JWT expired' }, { message: 'Invalid JWT' }]) {
+      expect(lireErreurBase(corps)).toEqual({
+        genre: 'message',
+        nature: 'expiree',
+        message: MESSAGES_COMMUNS.connexionExpiree,
+        champ: null,
+      })
+    }
   })
 
   it('un corps sans code qui n’est pas une `Error` (passerelle en panne) : le repli', () => {
@@ -299,6 +334,38 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
     ['Écrivez seulement votre prénom, en lettres.', MESSAGES_PRENOM.lettres],
   ])('« %s »', (base, avantEnvoi) => {
     expect(phrase(base)).toBe(avantEnvoi)
+  })
+})
+
+describe('un refus qui dit que la session a changé la fait relire (m271, m272)', () => {
+  afterEach(() => surSessionChangee(null))
+
+  it('connexion expirée ou compte désactivé : le rappel de la session part après la lecture', async () => {
+    const relire = vi.fn()
+    surSessionChangee(relire)
+    for (const erreur of [
+      refus('JWT expired', 'PGRST303'),
+      refus('Double authentification requise.', '42501'),
+      refus('Session inconnue : reconnectez-vous.', '42501'),
+      { message: 'JWT expired' },
+      refus('Compte inactif ou inconnu.', '42501'),
+    ]) {
+      lireErreurBase(erreur)
+    }
+    // Jamais pendant la lecture : un écran peut lire l'erreur pendant son rendu.
+    expect(relire).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(relire).toHaveBeenCalledTimes(5))
+  })
+
+  it('un autre refus, une coupure ou le repli ne relisent pas la session', async () => {
+    const relire = vi.fn()
+    surSessionChangee(relire)
+    lireErreurBase(refus('row-level security', '42501'))
+    lireErreurBase(refus('Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'))
+    lireErreurBase(new TypeError('Failed to fetch'))
+    lireErreurBase({ message: '<html>502 Bad Gateway</html>' })
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(relire).not.toHaveBeenCalled()
   })
 })
 

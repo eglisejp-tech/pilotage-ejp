@@ -15,6 +15,9 @@ describe('EcranErreurSession', () => {
     render(<EcranErreurSession onRetry={vi.fn()} enCours={false} erreur={new TypeError('x')} />)
     expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    expect(
+      screen.getByText("Vos informations de connexion n'ont pas pu être vérifiées."),
+    ).toBeInTheDocument()
   })
 
   it('10 s dépassées : la réponse met trop de temps (m252)', () => {
@@ -34,6 +37,8 @@ describe('EcranErreurSession', () => {
     )
     expect(screen.getByRole('alert')).not.toHaveTextContent('VITE_SUPABASE_URL')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    // La panne vient du déploiement, pas du compte : rien ne parle des informations de connexion.
+    expect(screen.queryByText(/informations de connexion/)).not.toBeInTheDocument()
   })
 })
 

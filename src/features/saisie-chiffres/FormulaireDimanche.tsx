@@ -76,11 +76,12 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
     if (refusFij !== null && champFij) focaliserChamp(idChamp(champFij.id))
   }, [refusFij, champFij])
   // Pas de pourcentage absurde quand « Dont en FIJ » dépasse les actifs : le message d'erreur
-  // suffit, la note reste vide.
+  // suffit, la note reste vide. De même pendant le refus de la base (m068) : elle compare à
+  // d'autres actifs que ceux du formulaire, le pourcentage du formulaire la contredirait.
   const enFij = lu(tous, valeurs, 'en_fij')
   const actifs = lu(tous, valeurs, 'actifs')
   const pourcentage =
-    enFij !== null && actifs !== null && enFij > actifs
+    refusFij !== null || (enFij !== null && actifs !== null && enFij > actifs)
       ? null
       : notePourcentageActifs(pourcentageFij(enFij, actifs))
 

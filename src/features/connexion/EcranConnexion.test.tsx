@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { EcranConnexion } from '@/features/connexion/EcranConnexion'
@@ -111,5 +112,28 @@ describe('EcranConnexion (maquette 16)', () => {
     expect(onSubmit).not.toHaveBeenCalled()
     expect(onGoogle).not.toHaveBeenCalled()
     expect(screen.getByRole('status')).toHaveTextContent('Connexion en cours')
+  })
+
+  it('« Compte déconnecté. » entre dans une zone status déjà présente, pour être annoncé (m060)', async () => {
+    // Premier rendu (sans effets) : la zone existe, vide.
+    const premierRendu = renderToStaticMarkup(
+      <MemoryRouter>
+        <EcranConnexion
+          onGoogle={vi.fn()}
+          onSubmit={vi.fn()}
+          information={messagesConnexion.deconnecte}
+        />
+      </MemoryRouter>,
+    )
+    expect(premierRendu).toContain('<div role="status"></div>')
+    expect(premierRendu).not.toContain(messagesConnexion.deconnecte)
+
+    afficher({ information: messagesConnexion.deconnecte })
+    // La première zone status de la page ; celle du bouton « Se connecter » vient après.
+    const [zone] = screen.getAllByRole('status')
+    if (zone === undefined) throw new Error('Zone status absente.')
+    expect(zone.tagName).toBe('DIV')
+    expect(zone).toBeEmptyDOMElement()
+    await vi.waitFor(() => expect(zone).toHaveTextContent('Compte déconnecté.'))
   })
 })
