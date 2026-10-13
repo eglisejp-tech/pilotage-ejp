@@ -1163,3 +1163,14 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Reste à faire (nettoyage, sans effet à l'écran)** : la branche « ministère » de la vue du berger (`ProfilVue`, prop `accueil` de `VueCetteSemaine`, `ResumeEglise` et leurs tests) n'est plus atteinte, `PageCetteSemaine` envoie le ministère sur « Ma semaine ». À retirer dans un lot dédié, quand les autres lots ne touchent plus `src/features/cette-semaine`.
 - **Statut** : Décidé par la personne responsable le 12 octobre 2026
 - **BRIEF** : section 2 (ligne du ministère), section 9 (onglets, « Vue de l'église selon le profil », « Accueil du ministère » ; code : `src/features/ma-semaine/`, `src/pages/PageMaSemaine.tsx`) ; `docs/reference/maquettes/LISEZMOI.md` (écart avec le bas de 07)
+
+## Décision de la personne responsable du 12 octobre 2026 sur l'icône du site
+
+### T58. Icône de l'onglet : le logo d'EJP Tech
+
+- **Date** : 12 octobre 2026
+- **Sujet** : la personne responsable veut que l'icône du site (onglet, favoris, écran d'accueil d'un téléphone) soit aussi le logo d'EJP Tech. T51 l'avait laissée inchangée.
+- **Décision** : l'icône reprend le **monogramme** du logo (« ejp » et sa flamme, sans « TECH », illisible à 16 px), sur un carreau blanc aux coins arrondis, lisible dans un onglet clair ou sombre ; traits épaissis pour les petites tailles. Fichiers : `public/favicon.svg` (source), `public/favicon.ico` (32 et 48 px) et `public/apple-touch-icon.png` (180 px), tirés du SVG. L'en-tête de l'application ne change pas.
+- **Origine** : demande écrite de la personne responsable (12 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 12 octobre 2026
+- **BRIEF** : aucun changement
