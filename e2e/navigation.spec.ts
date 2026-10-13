@@ -155,6 +155,8 @@ test.describe('en-tête et menu (aperçu)', () => {
   })
 
   test("aucune violation d'accessibilité, menu fermé et ouvert", async ({ page }) => {
+    // Cinq profils, une analyse chacun ; le menu d'EJP Tech a neuf liens (T60).
+    test.setTimeout(60_000)
     for (const { profil } of PROFILS) {
       await ouvrir(page, profil)
       const menu = page.getByRole('button', { name: 'Ouvrir le menu' })

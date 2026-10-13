@@ -54,7 +54,6 @@ select tests.creer_ministere('Personnes T56 A') as a_m,
        gen_random_uuid() as s3,
        gen_random_uuid() as s4,
        gen_random_uuid() as sb,
-       gen_random_uuid() as sadm,
        gen_random_uuid() as stech;
 alter table ctx add column a uuid, add column b uuid;
 update ctx set a = tests.creer_compte('personnes-t56-a@exemple.test', 'ministere', a_m),
@@ -245,17 +244,17 @@ select is((select count(*)::integer from public.passage p join public.intervenan
             where i.compte = (select a from ctx) and i.prenom = 'Victor' and p.jour = private.aujourdhui()), 1,
   'un seul jour d''utilisation pour Victor, aujourd''hui à Paris');
 
--- 4. Edge Function : la session passée par p_session sert à l'attribution.
-insert into auth.sessions (id, user_id, aal) select sadm, admin, 'aal2'::auth.aal_level from ctx;
+-- 4. Edge Function : la session passée par p_session sert à l'attribution. L'appelant est
+-- EJP Tech, seul à gérer les comptes (T60) ; sa session stech existe déjà dans auth.sessions.
 insert into public.intervenant (compte, session_auth, prenom, motif)
-select admin, sadm, 'Nadia', 'connexion' from ctx;
-select lives_ok($$ select private.controler_session((select admin from ctx), (select sadm from ctx)) $$,
-  'controler_session accepte la session de l''administration');
-select is(private.session_courante(), (select sadm from ctx),
+select tech, stech, 'Nadia', 'connexion' from ctx;
+select lives_ok($$ select private.controler_session((select tech from ctx), (select stech from ctx)) $$,
+  'controler_session accepte la session d''EJP Tech');
+select is(private.session_courante(), (select stech from ctx),
   'controler_session pose la session de l''appelant pour la transaction');
 insert into public.journal (compte, action, cible, cible_id)
-select admin, 'compte_cree', 'compte', berger from ctx;
-select is(pg_temp.prenom_derniere_ligne((select admin from ctx)), 'Nadia',
+select tech, 'compte_cree', 'compte', berger from ctx;
+select is(pg_temp.prenom_derniere_ligne((select tech from ctx)), 'Nadia',
   'une ligne écrite par une fonction serveur est attribuée à la déclaration de sa session');
 select set_config('pilotage.session_appelant', '', true);
 
@@ -265,11 +264,11 @@ alter table ctx add column cible uuid;
 update ctx set cible = tests.creer_compte('personnes-t56-cible@exemple.test', 'conseil');
 grant select on ctx to service_role;
 set local role service_role;
-select public.serveur_desactiver_compte((select admin from ctx), (select sadm from ctx), (select cible from ctx));
+select public.serveur_desactiver_compte((select tech from ctx), (select stech from ctx), (select cible from ctx));
 reset role;
 select results_eq($$
   select j.action::text, i.prenom
-    from (select j.id, j.action from public.journal j where j.compte = (select admin from ctx)
+    from (select j.id, j.action from public.journal j where j.compte = (select tech from ctx)
            order by j.id desc limit 1) j
     left join public.journal_intervenant ji on ji.journal_id = j.id
     left join public.intervenant i on i.id = ji.intervenant_id
@@ -338,7 +337,7 @@ select is((select count(*)::integer from public.intervenant where prenom in ('An
 select is_empty($$
   select j.id from public.journal j
    where j::text ~ '(Bérénice|Jean-Pierre|Marie|marie|Paul|Léa|Victor|Nadia|Ancienne|Zoé)'
-     and j.compte in (select a from ctx union all select b from ctx union all select admin from ctx)
+     and j.compte in (select a from ctx union all select b from ctx union all select tech from ctx)
 $$, 'aucune ligne de journal (detail compris) ne contient un prénom déclaré');
 
 select * from finish();

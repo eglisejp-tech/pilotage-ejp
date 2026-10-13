@@ -48,6 +48,8 @@ export const TEXTES_COMPTES = {
   // Listes (maquette 13)
   statutsEvenement: "Statuts d'événement",
   noteStatuts: "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
+  /** Pour EJP Tech, qui gère l'écran (T60, Proposé) : il ne se demande rien à lui-même. */
+  noteStatutsGestion: "Liste commune à toute l'église.",
 
   // Pas de compte pour un ministère actif (FIJ, Coordination en production)
   pasDeCompte: 'Pas encore de compte',

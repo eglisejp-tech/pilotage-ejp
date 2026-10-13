@@ -196,6 +196,13 @@ describe('VueComptes (écran 13)', () => {
     expect(bouton('Désactiver Communication')).toBeInTheDocument()
   })
 
+  it('« Listes » : EJP Tech, qui gère, ne se demande rien à lui-même (T60)', () => {
+    afficher(donnees())
+    const listes = screen.getByRole('region', { name: 'Listes' })
+    expect(within(listes).getByText("Liste commune à toute l'église.")).toBeInTheDocument()
+    expect(within(listes).queryByText(/faites une demande à EJP Tech/)).toBeNull()
+  })
+
   it('adresse déjà utilisée : sous le champ, le panneau reste ouvert', async () => {
     const actions = actionsFausses()
     actions.creer.mockRejectedValue(new ErreurCompte('adresse_deja_utilisee'))
@@ -248,6 +255,10 @@ describe('VueComptes (écran 13), administration de l’église en lecture', () 
     expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull()
     expect(screen.queryByText('Votre compte')).toBeNull()
     for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled()
+    // « Listes » : la demande de changement va à EJP Tech.
+    expect(screen.getByRole('region', { name: 'Listes' })).toHaveTextContent(
+      "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
+    )
   })
 
   it('la note renvoie à l’écran Indicateurs pour lire, pas pour changer', () => {

@@ -201,9 +201,10 @@ test.describe('Sessions (administration), aperçu', () => {
     await page.goto('/apercu/sessions?profil=admin_plateforme')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sessions')
     await expect(liste(page)).toContainText('6 sur 8')
+    // Avant le formulaire : sous 600 px, il s'ouvre en page entière, par-dessus la liste.
+    await expect(bouton(page, "Modifier Bâtir l'Église du 3 oct.")).toBeVisible()
     const formulaire = await ouvrirDeclaration(page)
     await expect(formulaire.getByRole('button', { name: 'Déclarer la session' })).toBeVisible()
-    await expect(bouton(page, "Modifier Bâtir l'Église du 3 oct.")).toBeVisible()
   })
 
   test('aide : la bulle de « Ministères attendus »', async ({ page }) => {
@@ -263,5 +264,9 @@ test.describe('Sessions (administration), aperçu', () => {
     await page.screenshot({ path: `${dossier}/sessions-fenetre-${taille}.png` })
     await ouvrir(page, 'vue=vide')
     await page.screenshot({ path: `${dossier}/sessions-vide-${taille}.png`, fullPage: true })
+    // EJP Tech (T60) : le même écran, sous son en-tête à menu.
+    await page.goto('/apercu/sessions?profil=admin_plateforme')
+    await page.evaluate(() => document.fonts.ready)
+    await page.screenshot({ path: `${dossier}/sessions-ejp-tech-${taille}.png`, fullPage: true })
   })
 })

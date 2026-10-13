@@ -218,7 +218,7 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
     )
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'conseil' })
     await expect(
-      page.getByText("Aucun ministère actif. L'administration de l'église crée les ministères."),
+      page.getByText('Aucun ministère actif. EJP Tech crée les ministères.'),
     ).toBeVisible()
   })
 })

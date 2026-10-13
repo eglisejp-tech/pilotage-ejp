@@ -5,9 +5,10 @@ import { STATUTS_EVENEMENT } from '@/features/evenements/textes'
 
 /**
  * Section « Listes » de la maquette 13, en lecture : les statuts d'événement communs à toute
- * l'église. Seul EJP Tech change cette liste, sur demande.
+ * l'église. Seul EJP Tech change cette liste, sur demande. EJP Tech, qui gère aussi cet écran
+ * (T60), n'est pas renvoyé vers lui-même : sa note s'arrête à la première phrase.
  */
-export function ListesEglise() {
+export function ListesEglise({ lectureSeule = true }: { lectureSeule?: boolean }) {
   const idTitre = useId()
   const idStatuts = useId()
   return (
@@ -25,7 +26,9 @@ export function ListesEglise() {
           ))}
         </ul>
       </div>
-      <p className="mt-4 text-sm text-encre-3">{TEXTES_COMPTES.noteStatuts}</p>
+      <p className="mt-4 text-sm text-encre-3">
+        {lectureSeule ? TEXTES_COMPTES.noteStatuts : TEXTES_COMPTES.noteStatutsGestion}
+      </p>
     </section>
   )
 }

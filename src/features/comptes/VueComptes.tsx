@@ -213,7 +213,7 @@ export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi 
             resultat={resultat}
             moi={moi}
           />
-          <ListesEglise />
+          <ListesEglise lectureSeule={lectureSeule} />
         </>
       ) : null}
 

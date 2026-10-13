@@ -131,7 +131,7 @@ test.describe('écrans de connexion (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, 'ecran=acceptation', "Conditions d'utilisation")
-    await expect(page.getByText('Conditions du 12 octobre 2026')).toBeVisible()
+    await expect(page.getByText('Conditions du 13 octobre 2026')).toBeVisible()
     const bouton = page.getByRole('button', { name: 'Accepter et continuer' })
     await expect(bouton).toBeEnabled()
     await bouton.click()
