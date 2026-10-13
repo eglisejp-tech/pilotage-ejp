@@ -512,9 +512,11 @@ archivage du dépôt du code.
   jours, « Ce n'est pas moi »), identifiant technique de la session de connexion, lien vers les
   lignes du journal écrites pendant cette session, jours d'utilisation.
 - **Données sensibles** : aucune, au-delà de l'appartenance possible à l'église (fiche 1).
-- **Destinataires** : EJP Tech seul, dans l'onglet « Personnes » et dans le Journal technique. Ni
-  l'administration de l'église, ni le berger, ni le conseil, ni les ministères ; la base le garantit.
-  La personne voit seulement son propre prénom sur son appareil (« Vous : Marie »).
+- **Destinataires** : pendant la vie de l'outil, EJP Tech seul, dans l'onglet « Personnes » et
+  dans le Journal technique. Ni l'administration de l'église, ni le berger, ni le conseil, ni les
+  ministères ; la base le garantit. La personne voit seulement son propre prénom, celui de la
+  déclaration en cours sur son appareil (« Vous : Marie »), jamais ceux déclarés avant elle. À
+  l'arrêt de l'outil : la coordination, dans l'export final.
 - **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
 - **Durées** : 12 mois, puis le prénom est remplacé par « [prénom effacé] » (EJP Tech, chaque mois,
   `docs/exploitation.md`) ; 4 semaines au plus dans les sauvegardes. Les prénoms qui restent à
@@ -524,7 +526,10 @@ archivage du dépôt du code.
   - lecture réservée à EJP Tech par la base (RLS), double authentification (`aal2`) ;
   - le prénom n'entre jamais dans le journal, ni dans un email, ni dans un texte libre ;
   - ajout seulement, sauf l'effacement par une fonction dédiée, réservée à EJP Tech ;
-  - le prénom refuse les chiffres, @ et crochets : ni email, ni téléphone ;
+  - seuls les comptes de ministère indiquent un prénom (la base refuse les autres profils) ;
+  - le prénom refuse les chiffres, @ et crochets : ni email, ni téléphone. La base ne peut pas
+    distinguer un prénom composé d'un nom complet (« Marie Dupont » a la même forme) : l'écran
+    demande le prénom et, au plus, l'initiale du nom ;
   - le navigateur ne garde pas le prénom : il est lié à la session de connexion.
 - **Risque accepté** : l'attribution est déclarative. Une personne qui a le compte peut taper un
   autre prénom ; elle ne peut pas se faire passer pour la déclaration d'un autre appareil.

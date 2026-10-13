@@ -5,6 +5,7 @@ import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import { MenuTelephone } from '@/features/navigation/MenuTelephone'
 import { NavigationOnglets } from '@/features/navigation/NavigationOnglets'
 import type { Onglet } from '@/features/navigation/profils'
+import { cn } from '@/lib/utils'
 
 export type ProprietesEnTete = {
   /** Libellé du compte connecté, toujours visible : un email de ministère est partagé. */
@@ -40,7 +41,15 @@ export function EnTete(proprietes: ProprietesEnTete) {
           <span className="hidden text-sm text-encre-3 xl:inline">Église des Jeunes Prodiges</span>
         </div>
         <NavigationOnglets onglets={onglets} />
-        <div className="flex shrink-0 flex-col items-end self-center py-2 text-sm xl:flex-row xl:items-center xl:gap-4 xl:py-0">
+        {/* Avec « Vous : Marie D. » et « Ce n'est pas moi » (T56), le compte reste sur plusieurs
+            lignes à toutes les largeurs : sur une seule, la ligne déborde de 1280 à 1440 px, et
+            plus loin avec un long prénom. */}
+        <div
+          className={cn(
+            'flex shrink-0 flex-col items-end self-center py-2 text-sm',
+            personne ? 'max-w-72' : 'xl:flex-row xl:items-center xl:gap-4 xl:py-0',
+          )}
+        >
           <p className="font-semibold">
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}

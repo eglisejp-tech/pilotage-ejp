@@ -19,6 +19,11 @@ export interface LigneJournalAffichee {
   quand: string
   /** « Berger », « Communication », « Système ». */
   compte: string
+  /**
+   * Journal technique d'EJP Tech seulement (T56) : la personne déclarée (« Marie D. », ou
+   * « personne non déclarée »), affichée entre parenthèses après le compte.
+   */
+  personne?: string
   /** « A saisi des chiffres ». */
   action: string
   /** Texte actuel de l'objet visé, avec ce que la ligne dit de plus. */

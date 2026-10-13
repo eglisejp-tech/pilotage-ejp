@@ -61,9 +61,11 @@ export function MenuTelephone({
           >
             Pilotage EJP
           </Link>
-          <p className="mt-0.5 text-sm text-encre-2">
+          <p className="mt-0.5 text-sm wrap-anywhere text-encre-2">
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}
+            {/* La personne déclarée sur cet appareil (T56) se lit sans ouvrir le menu. */}
+            {personne ? `, ${personne.prenom}` : null}
           </p>
         </div>
         <button

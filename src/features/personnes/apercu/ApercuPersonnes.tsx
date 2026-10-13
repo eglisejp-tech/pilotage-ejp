@@ -4,6 +4,7 @@ import {
   connexionsAffichees,
   nombreAEffacer,
   personnesActives,
+  personnesSansActivite,
 } from '@/features/personnes/construirePersonnes'
 import {
   CONNEXIONS_EXEMPLE,
@@ -37,6 +38,7 @@ export function ApercuPersonnes() {
       etat: 'pret',
       donnees: {
         actives: personnesActives(lues),
+        sansActivite: personnesSansActivite(lues),
         aEffacer: nombreAEffacer(lues),
         connexions: connexionsAffichees(connexions, LIBELLES_EXEMPLE),
         aPlus: !vide && limite < CONNEXIONS_EXEMPLE.length,

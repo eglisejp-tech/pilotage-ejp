@@ -6,16 +6,16 @@ import { accorder, nombre } from '@/lib/metier/texte'
 
 export const TEXTES_PERSONNES = {
   surtitre: 'Administration de la plateforme',
-  introduction:
-    "Les prénoms que les personnes indiquent quand elles utilisent le compte partagé d'un ministère. EJP Tech seul les lit.",
+  introduction: 'Les prénoms indiqués sur les comptes partagés des ministères.',
   titreActives: 'Actives sur 30 jours',
   colonnes: {
     connexions: 'Connexions',
     jours: "Jours d'utilisation",
-    actions: 'Actions',
+    actions: 'Actions faites',
     derniere: 'Dernière activité',
   },
   activesVide: "Personne n'a utilisé un compte de ministère depuis 30 jours.",
+  titreSansActivite: 'Sans activité depuis 30 jours',
   titreConnexions: 'Dernières connexions',
   connexionsVide: 'Aucune connexion pour le moment.',
   /** « Dim. 11 oct., 11 h : Ministère Communication, Marie D. » */

@@ -40,7 +40,16 @@ describe('EcranDeclaration (T56)', () => {
     const lien = screen.getByRole('link', { name: 'Confidentialité (nouvel onglet)' })
     expect(lien).toHaveAttribute('href', '/confidentialite')
     expect(lien).toHaveAttribute('target', '_blank')
-    expect(screen.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
+    // « nouvel onglet » n'est lu que par les lecteurs d'écran.
+    expect(lien).toHaveTextContent(/^Confidentialité \(nouvel onglet\)$/)
+    expect(lien.querySelector('.sr-only')).toHaveTextContent('(nouvel onglet)')
+    const deconnexion = screen.getByRole('button', { name: 'Se déconnecter' })
+    expect(deconnexion).toBeVisible()
+    // Le bouton suit le champ ; le lien vient en pied de colonne, après « Se déconnecter ».
+    expect(bouton().compareDocumentPosition(lien) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(
+      deconnexion.compareDocumentPosition(lien) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
     // Pas de rappel « N'écrivez aucun nom » : il contredirait la question.
     expect(screen.queryByText(/N'écrivez aucun nom/)).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Annuler' })).not.toBeInTheDocument()
@@ -80,6 +89,7 @@ describe('EcranDeclaration (T56)', () => {
     await utilisateur.type(champ(), 'Marie')
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrement en cours' }))
     expect(onDeclare).not.toHaveBeenCalled()
+    expect(champ().closest('form')).toHaveAttribute('aria-busy', 'true')
   })
 
   it('affiche l’erreur de l’enregistrement dans un bandeau', () => {

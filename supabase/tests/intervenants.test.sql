@@ -14,7 +14,7 @@
 -- - le prénom n'entre jamais dans le journal.
 begin;
 
-select plan(48);
+select plan(56);
 
 -- Sessions de connexion des comptes du test : tests.se_connecter les pose dans le jeton.
 create temp table sessions_t56 (compte uuid primary key, session uuid not null);
@@ -33,11 +33,14 @@ begin
   perform set_config('request.jwt.claim.sub', p_utilisateur::text, true);
 end $$;
 
--- Change la session d'un compte (une autre connexion, sur un autre appareil).
+-- Change la session d'un compte (une autre connexion, sur un autre appareil) : la session existe
+-- aussi dans auth.sessions, comme après une vraie connexion.
 create function pg_temp.changer_session(p_compte uuid, p_session uuid) returns void
 language sql as $$
   insert into pg_temp.sessions_t56 (compte, session) values (p_compte, p_session)
   on conflict (compte) do update set session = excluded.session;
+  insert into auth.sessions (id, user_id, aal) values (p_session, p_compte, 'aal2'::auth.aal_level)
+  on conflict (id) do nothing;
 $$;
 
 create temp table ctx as
@@ -77,11 +80,26 @@ select throws_ok($$ select public.declarer_intervenant('Bérénice', 'connexion'
   '42501', 'Double authentification requise.', 'aal1 : declarer_intervenant refusée');
 select tests.deconnecter();
 
--- Sans session dans le jeton : refus.
+-- Comptes de ministère seulement (T56).
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.declarer_intervenant('Bérénice', 'connexion') $$,
+  '42501', 'Seul un compte de ministère indique un prénom.',
+  'l''administration de l''église n''indique pas de prénom');
+select tests.deconnecter();
+
+-- Sans session dans le jeton (B n'en a pas encore) : refus.
+select tests.se_connecter((select b from ctx), 'aal2');
 select throws_ok($$ select public.declarer_intervenant('Bérénice', 'connexion') $$,
   '42501', 'Session inconnue : reconnectez-vous.', 'un jeton sans session est refusé');
 select tests.deconnecter();
+
+-- Une session fermée ou révoquée (absente de auth.sessions) : refus.
+update pg_temp.sessions_t56 set session = gen_random_uuid() where compte = (select a from ctx);
+select tests.se_connecter((select a from ctx), 'aal2');
+select throws_ok($$ select public.declarer_intervenant('Bérénice', 'connexion') $$,
+  '42501', 'Session inconnue : reconnectez-vous.', 'une session fermée ou révoquée est refusée');
+select tests.deconnecter();
+select pg_temp.changer_session(a, s1) from ctx;
 
 select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$ select public.declarer_intervenant('', 'connexion') $$,
@@ -128,12 +146,15 @@ select lives_ok($$ select public.declarer_intervenant('M.', 'changement') $$,
   'une initiale seule est acceptée');
 select lives_ok($$ select public.declarer_intervenant('D''Arc', 'rappel') $$,
   'une apostrophe est acceptée');
+-- « Chloé » écrit e + accent combinant (copié depuis un téléphone) : accepté, enregistré en NFC.
+select lives_ok($$ select public.declarer_intervenant(U&'Chlo\0065\0301', 'rappel') $$,
+  'un prénom à l''accent décomposé est accepté');
 select tests.deconnecter();
 select results_eq($$
   select prenom, motif from public.intervenant where compte = (select a from ctx) order by id
 $$, $$ values ('Bérénice D.'::text, 'connexion'::text), ('Jean-Pierre', 'rappel'), ('M.', 'changement'),
-              ('D''Arc', 'rappel') $$,
-  'ensuite : changement pour « Ce n''est pas moi », rappel sinon (connexion demandée comprise)');
+              ('D''Arc', 'rappel'), (U&'Chlo\00E9', 'rappel') $$,
+  'ensuite : changement pour « Ce n''est pas moi », rappel sinon (connexion demandée comprise) ; prénom en NFC');
 
 -- Le compte, la session et l'heure sont imposés, même pour un ajout direct (rôle du propriétaire
 -- avec le jeton d'un compte de l'application).
@@ -199,12 +220,30 @@ select is((select count(*)::integer from public.intervenant
 -- 3. v_ma_declaration : la déclaration de la session, et son âge.
 select is(tests.lire((select a from ctx), 'aal2', 'select prenom from public.v_ma_declaration'),
   '[{"prenom": "Léa"}]'::jsonb, 'v_ma_declaration rend la dernière déclaration de la session');
+-- La session 1 a déclaré huit prénoms : le compte ne lit que le dernier, jamais ceux d'avant.
+select is(tests.lire((select a from ctx), 'aal2', 'select prenom from public.intervenant'),
+  '[{"prenom": "Léa"}]'::jsonb,
+  'une session ne lit que sa déclaration courante, pas les prénoms déclarés avant sur le même appareil');
 insert into public.intervenant (compte, session_auth, prenom, motif, declare_le)
 select a, s4, 'Victor', 'connexion', now() - interval '8 days' from ctx;
 select pg_temp.changer_session(a, s4) from ctx;
 select ok((tests.lire((select a from ctx), 'aal2', 'select age_secondes from public.v_ma_declaration')
              -> 0 ->> 'age_secondes')::integer >= 7 * 86400,
   'une déclaration de 8 jours a un âge d''au moins 7 jours (rappel)');
+
+-- Jour d'utilisation noté par l'écran (upsert de PostgREST : on conflict do nothing), deux fois
+-- le même jour : une seule ligne. Victor (écrit par le propriétaire) n'en avait aucune.
+select tests.se_connecter((select a from ctx), 'aal2');
+select lives_ok($$ insert into public.passage (intervenant_id) values (0)
+                   on conflict (intervenant_id, jour) do nothing $$,
+  'le compte note son jour d''utilisation');
+select lives_ok($$ insert into public.passage (intervenant_id) values (0)
+                   on conflict (intervenant_id, jour) do nothing $$,
+  'une seconde fois le même jour ne fait rien, sans erreur');
+select tests.deconnecter();
+select is((select count(*)::integer from public.passage p join public.intervenant i on i.id = p.intervenant_id
+            where i.compte = (select a from ctx) and i.prenom = 'Victor' and p.jour = private.aujourdhui()), 1,
+  'un seul jour d''utilisation pour Victor, aujourd''hui à Paris');
 
 -- 4. Edge Function : la session passée par p_session sert à l'attribution.
 insert into auth.sessions (id, user_id, aal) select sadm, admin, 'aal2'::auth.aal_level from ctx;
@@ -218,6 +257,24 @@ insert into public.journal (compte, action, cible, cible_id)
 select admin, 'compte_cree', 'compte', berger from ctx;
 select is(pg_temp.prenom_derniere_ligne((select admin from ctx)), 'Nadia',
   'une ligne écrite par une fonction serveur est attribuée à la déclaration de sa session');
+select set_config('pilotage.session_appelant', '', true);
+
+-- Le vrai chemin d'une Edge Function : public.serveur_desactiver_compte au nom de service_role
+-- (clé secrète, jeton sans session), avec la session de l'appelant passée en p_session.
+alter table ctx add column cible uuid;
+update ctx set cible = tests.creer_compte('personnes-t56-cible@exemple.test', 'conseil');
+grant select on ctx to service_role;
+set local role service_role;
+select public.serveur_desactiver_compte((select admin from ctx), (select sadm from ctx), (select cible from ctx));
+reset role;
+select results_eq($$
+  select j.action::text, i.prenom
+    from (select j.id, j.action from public.journal j where j.compte = (select admin from ctx)
+           order by j.id desc limit 1) j
+    left join public.journal_intervenant ji on ji.journal_id = j.id
+    left join public.intervenant i on i.id = ji.intervenant_id
+$$, $$ values ('compte_desactive'::text, 'Nadia'::text) $$,
+  'serveur_desactiver_compte (service_role) : la ligne de journal est attribuée à la déclaration de la session');
 select set_config('pilotage.session_appelant', '', true);
 
 -- 5. Effacement d'un prénom

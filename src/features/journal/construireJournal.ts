@@ -64,11 +64,13 @@ export function contexteJournal(
 /** Ce que la colonne Compte dit d'une ligne écrite sans déclaration (T56). */
 export const PERSONNE_NON_DECLAREE = 'personne non déclarée'
 
-/** « Ministère Communication (Marie D.) » pour EJP Tech ; le libellé seul sinon. */
-function nomDuCompte(ligne: LigneJournal, contexte: ContexteJournal): string {
-  const libelle = ligne.compte_libelle ?? 'Système'
-  if (!contexte.prenoms.has(ligne.id)) return libelle
-  return `${libelle} (${contexte.prenoms.get(ligne.id) ?? PERSONNE_NON_DECLAREE})`
+/**
+ * La personne de « Ministère Communication (Marie D.) » pour EJP Tech : le prénom déclaré, ou
+ * « personne non déclarée » ; rien pour une ligne hors de la carte et pour les autres profils.
+ */
+function personneDeLaLigne(ligne: LigneJournal, contexte: ContexteJournal): string | undefined {
+  if (!contexte.prenoms.has(ligne.id)) return undefined
+  return contexte.prenoms.get(ligne.id) ?? PERSONNE_NON_DECLAREE
 }
 
 type Detail = LigneJournal['detail']
@@ -464,10 +466,12 @@ export function construireLigne(
     // Une date ou une heure illisible ne casse pas l'écran : la ligne n'a simplement pas de détail.
     detail = []
   }
+  const personne = personneDeLaLigne(ligne, contexte)
   return {
     id: ligne.id,
     quand: formaterHorodatage(ligne.le),
-    compte: nomDuCompte(ligne, contexte),
+    compte: ligne.compte_libelle ?? 'Système',
+    ...(personne === undefined ? {} : { personne }),
     action: libelleAction(ligne.action),
     detail,
   }

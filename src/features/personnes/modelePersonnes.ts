@@ -6,7 +6,9 @@ import type { CompteAffiche, ConnexionAffichee } from '@/features/personnes/cons
 export interface DonneesPersonnes {
   /** Personnes actives sur 30 jours, par compte. */
   actives: readonly CompteAffiche[]
-  /** Déclarations de plus de 12 mois dont le prénom reste à effacer. */
+  /** Prénoms sans activité depuis 30 jours, pas encore effacés, par compte. */
+  sansActivite: readonly CompteAffiche[]
+  /** Prénoms (un par compte) qui ont une déclaration de plus de 12 mois à effacer. */
   aEffacer: number
   /** Dernières connexions, de la plus récente à la plus ancienne. */
   connexions: readonly ConnexionAffichee[]

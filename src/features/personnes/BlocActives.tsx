@@ -1,4 +1,5 @@
 import { EtatVide } from '@/components/etats/EtatVide'
+import { BoutonEffacerPrenom } from '@/features/personnes/BoutonEffacerPrenom'
 import type { CompteAffiche, PersonneAffichee } from '@/features/personnes/construirePersonnes'
 import { TEXTES_PERSONNES } from '@/features/personnes/textes'
 import { nombre } from '@/lib/metier/texte'
@@ -9,13 +10,12 @@ interface Props {
   surEffacer: (personne: PersonneAffichee, compte: CompteAffiche) => void
 }
 
-const classeBouton =
-  'inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond lg:self-center lg:justify-self-end'
+const classeChiffre = 'font-chiffres text-[19px] leading-tight font-extrabold tabular-nums'
 
 /**
  * « Actives sur 30 jours » (T56) : par compte de ministère, chaque prénom avec ses connexions,
  * ses jours d'utilisation, ses actions et sa dernière activité, puis « Effacer ce prénom ». Une
- * liste plutôt qu'un tableau : rien ne déborde à 360 px.
+ * liste plutôt qu'un tableau : rien ne déborde à 360 px. Les chiffres en Big Shoulders Display.
  */
 export function BlocActives({ actives, surEffacer }: Props) {
   const { colonnes } = TEXTES_PERSONNES
@@ -38,22 +38,22 @@ export function BlocActives({ actives, surEffacer }: Props) {
                     className="flex flex-col gap-2 border-t border-filet py-3 first:border-t-0 lg:grid lg:grid-cols-[12rem_minmax(0,1fr)_11rem] lg:items-center lg:gap-6"
                   >
                     <p
-                      className={`min-w-0 font-lecture text-[19px] wrap-anywhere ${personne.efface ? 'text-encre-3' : ''}`}
+                      className={`min-w-0 text-[17px] font-semibold wrap-anywhere ${personne.efface ? 'text-encre-3' : ''}`}
                     >
                       {personne.prenom}
                     </p>
                     <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
                       <div>
                         <dt className="text-encre-3">{colonnes.connexions}</dt>
-                        <dd className="tabular-nums">{nombre(personne.connexions)}</dd>
+                        <dd className={classeChiffre}>{nombre(personne.connexions)}</dd>
                       </div>
                       <div>
                         <dt className="text-encre-3">{colonnes.jours}</dt>
-                        <dd className="tabular-nums">{nombre(personne.jours)}</dd>
+                        <dd className={classeChiffre}>{nombre(personne.jours)}</dd>
                       </div>
                       <div>
                         <dt className="text-encre-3">{colonnes.actions}</dt>
-                        <dd className="tabular-nums">{nombre(personne.actions)}</dd>
+                        <dd className={classeChiffre}>{nombre(personne.actions)}</dd>
                       </div>
                       <div>
                         <dt className="text-encre-3">{colonnes.derniere}</dt>
@@ -61,14 +61,11 @@ export function BlocActives({ actives, surEffacer }: Props) {
                       </div>
                     </dl>
                     {personne.efface ? null : (
-                      <button
-                        type="button"
+                      <BoutonEffacerPrenom
+                        prenom={personne.prenom}
+                        compte={compte.libelle}
                         onClick={() => surEffacer(personne, compte)}
-                        className={classeBouton}
-                      >
-                        {TEXTES_PERSONNES.effacer}{' '}
-                        <span className="sr-only">{`(${personne.prenom}, ${compte.libelle})`}</span>
-                      </button>
+                      />
                     )}
                   </li>
                 ))}

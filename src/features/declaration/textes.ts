@@ -8,7 +8,9 @@ export const TEXTES_DECLARATION = {
   // Espaces insécables : « Marie D. » ne se coupe pas en fin de ligne.
   aide: "Vous pouvez ajouter l'initiale de votre nom : « Marie D. ».",
   information: "EJP Tech le voit, pour suivre l'utilisation de l'outil.",
-  lienConfidentialite: 'Confidentialité (nouvel onglet)',
+  lienConfidentialite: 'Confidentialité',
+  /** Lu seulement par les lecteurs d'écran, après « Confidentialité ». */
+  nouvelOnglet: '(nouvel onglet)',
   continuer: 'Continuer',
   enCours: 'Enregistrement en cours',
   annuler: 'Annuler',

@@ -13,8 +13,8 @@ const ID = 'declaration-prenom'
 
 /**
  * Champ « Votre prénom » (écran T56) : libellé, exemple d'initiale, champ de 52 px comme les
- * écrans de connexion, erreur, puis l'information sur ce qu'en fait EJP Tech et le lien vers la
- * page Confidentialité. Exemple et information sont lus avec le champ.
+ * écrans de connexion, erreur, puis l'information sur ce qu'en fait EJP Tech. Exemple et
+ * information sont lus avec le champ. Le lien « Confidentialité » est en pied de colonne.
  */
 export function ChampPrenom({ erreur, ...proprietes }: Proprietes) {
   const idAide = `${ID}-aide`
@@ -47,15 +47,7 @@ export function ChampPrenom({ erreur, ...proprietes }: Proprietes) {
         </p>
       ) : null}
       <p id={idInformation} className="text-sm leading-normal text-encre-3">
-        {TEXTES_DECLARATION.information}{' '}
-        <a
-          href="/confidentialite"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex min-h-cible items-center text-nuit underline underline-offset-4"
-        >
-          {TEXTES_DECLARATION.lienConfidentialite}
-        </a>
+        {TEXTES_DECLARATION.information}
       </p>
     </div>
   )

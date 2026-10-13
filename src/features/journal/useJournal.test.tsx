@@ -81,15 +81,17 @@ describe('useJournal : Journal technique (T56)', () => {
     if (tech.result.current.etat !== 'pret') throw new Error('attendu : prêt')
     const lignes = tech.result.current.donnees.lignes
     expect(prenoms).toHaveBeenCalledTimes(1)
-    expect(lignes.some((l) => l.compte.endsWith('(Marie D.)'))).toBe(true)
-    expect(lignes.some((l) => l.compte.endsWith('(personne non déclarée)'))).toBe(true)
+    expect(lignes.some((l) => l.personne === 'Marie D.')).toBe(true)
+    expect(lignes.some((l) => l.personne === 'personne non déclarée')).toBe(true)
 
     prenoms.mockClear()
     const berger = lire('berger')
     await waitFor(() => expect(berger.result.current.etat).toBe('pret'))
     if (berger.result.current.etat !== 'pret') throw new Error('attendu : prêt')
     expect(prenoms).not.toHaveBeenCalled()
-    expect(berger.result.current.donnees.lignes.some((l) => l.compte.includes('('))).toBe(false)
+    expect(
+      berger.result.current.donnees.lignes.some((l) => l.compte.includes('(') || l.personne),
+    ).toBe(false)
   })
 })
 

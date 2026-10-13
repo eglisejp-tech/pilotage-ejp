@@ -76,14 +76,34 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
 
   it('les prénoms de plus de 12 mois : la phrase, le bouton, puis le nombre effacé', async () => {
     apercu()
-    expect(screen.getByText('3 prénoms ont plus de 12 mois.')).toBeInTheDocument()
+    expect(screen.getByText('2 prénoms ont plus de 12 mois.')).toBeInTheDocument()
     await userEvent.click(
       screen.getByRole('button', { name: 'Effacer les prénoms de plus de 12 mois' }),
     )
     const fenetre = screen.getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois' })
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer définitivement' }))
-    expect(await screen.findByText('3 prénoms effacés.')).toBeInTheDocument()
-    expect(screen.queryByText('3 prénoms ont plus de 12 mois.')).not.toBeInTheDocument()
+    expect(await screen.findByText('2 prénoms effacés.')).toBeInTheDocument()
+    expect(screen.queryByText('2 prénoms ont plus de 12 mois.')).not.toBeInTheDocument()
+  })
+
+  it('une personne sans activité depuis 30 jours s’efface aussi, sans attendre les 12 mois', async () => {
+    apercu()
+    const sansActivite = screen.getByRole('region', { name: 'Sans activité depuis 30 jours' })
+    expect(within(sansActivite).getByText('Ancien')).toBeInTheDocument()
+    expect(
+      within(screen.getByRole('region', { name: 'Actives sur 30 jours' })).queryByText('Ancien'),
+    ).not.toBeInTheDocument()
+    await userEvent.click(
+      within(sansActivite).getByRole('button', {
+        name: 'Effacer ce prénom (Ancien, Ministère Intégration)',
+      }),
+    )
+    const fenetre = screen.getByRole('dialog', { name: 'Effacer ce prénom' })
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer définitivement' }))
+    expect(await screen.findByText('Prénom effacé.')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('region', { name: 'Sans activité depuis 30 jours' }),
+    ).not.toBeInTheDocument()
   })
 
   it('un échec de l’effacement reste dans la fenêtre', async () => {
@@ -116,6 +136,7 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
                 ],
               },
             ],
+            sansActivite: [],
             aEffacer: 0,
             connexions: [],
             aPlus: false,

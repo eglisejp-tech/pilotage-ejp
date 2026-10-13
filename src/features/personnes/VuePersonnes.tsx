@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { BlocActives } from '@/features/personnes/BlocActives'
 import { BlocConnexions } from '@/features/personnes/BlocConnexions'
+import { BlocSansActivite } from '@/features/personnes/BlocSansActivite'
+import type { CompteAffiche, PersonneAffichee } from '@/features/personnes/construirePersonnes'
 import { FenetreEffacement } from '@/features/personnes/FenetreEffacement'
 import type { ActionsPersonnes, ResultatPersonnes } from '@/features/personnes/usePersonnes'
 import { TEXTES_PERSONNES } from '@/features/personnes/textes'
@@ -15,7 +17,9 @@ interface Props {
 }
 
 type Effacement =
-  { type: 'un'; intervenantId: number; contexte: string } | { type: 'anciens'; contexte: string }
+  | { type: 'un'; intervenantId: number; contexte: string }
+  /** `prenoms` : le nombre affiché, repris dans le message de réussite. */
+  | { type: 'anciens'; contexte: string; prenoms: number }
 
 const classeBouton =
   'inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold text-encre hover:bg-fond'
@@ -36,8 +40,8 @@ function Chargement() {
 
 /**
  * Onglet « Personnes » d'EJP Tech (T56) : qui a utilisé chaque compte de ministère, quand, et
- * l'effacement d'un prénom (sur demande, ou ceux de plus de 12 mois, chaque mois). Le titre et sa
- * phrase restent dans tous les états ; l'erreur de page propose « Réessayer ».
+ * l'effacement d'un prénom (sur demande, actif ou non, ou ceux de plus de 12 mois, chaque mois).
+ * Le titre et sa phrase restent dans tous les états ; l'erreur de page propose « Réessayer ».
  */
 export function VuePersonnes({ titre, resultat, actions }: Props) {
   useTitrePage(titre)
@@ -50,10 +54,20 @@ export function VuePersonnes({ titre, resultat, actions }: Props) {
       await actions.effacer(effacement.intervenantId)
       setMessage(TEXTES_PERSONNES.reussiteUn)
     } else {
-      setMessage(TEXTES_PERSONNES.reussiteAnciens(await actions.effacerAnciens()))
+      // La base rend le nombre de déclarations changées ; l'écran parle en prénoms, comme la
+      // phrase « N prénoms ont plus de 12 mois. ».
+      const declarations = await actions.effacerAnciens()
+      setMessage(TEXTES_PERSONNES.reussiteAnciens(declarations === 0 ? 0 : effacement.prenoms))
     }
     setEffacement(null)
   }
+
+  const surEffacer = (personne: PersonneAffichee, compte: CompteAffiche) =>
+    setEffacement({
+      type: 'un',
+      intervenantId: personne.intervenantId,
+      contexte: `${personne.prenom}, ${compte.libelle}`,
+    })
 
   return (
     <section aria-labelledby="titre-page" className="flex flex-col gap-10">
@@ -89,6 +103,7 @@ export function VuePersonnes({ titre, resultat, actions }: Props) {
                   setEffacement({
                     type: 'anciens',
                     contexte: TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer),
+                    prenoms: resultat.donnees.aEffacer,
                   })
                 }
                 className={classeBouton}
@@ -97,16 +112,8 @@ export function VuePersonnes({ titre, resultat, actions }: Props) {
               </button>
             </div>
           ) : null}
-          <BlocActives
-            actives={resultat.donnees.actives}
-            surEffacer={(personne, compte) =>
-              setEffacement({
-                type: 'un',
-                intervenantId: personne.intervenantId,
-                contexte: `${personne.prenom}, ${compte.libelle}`,
-              })
-            }
-          />
+          <BlocActives actives={resultat.donnees.actives} surEffacer={surEffacer} />
+          <BlocSansActivite comptes={resultat.donnees.sansActivite} surEffacer={surEffacer} />
           <BlocConnexions
             connexions={resultat.donnees.connexions}
             aPlus={resultat.donnees.aPlus}

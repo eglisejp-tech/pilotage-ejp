@@ -64,18 +64,16 @@ describe('une ligne du journal, en mots', () => {
       ]),
     )
     const communication = { compte_libelle: 'Ministère Communication' }
-    expect(construireLigne(ligne({ ...communication, id: 1 }), avecPrenoms).compte).toBe(
-      'Ministère Communication (Marie D.)',
-    )
-    expect(construireLigne(ligne({ ...communication, id: 2 }), avecPrenoms).compte).toBe(
-      'Ministère Communication (personne non déclarée)',
-    )
+    const marie = construireLigne(ligne({ ...communication, id: 1 }), avecPrenoms)
+    expect([marie.compte, marie.personne]).toEqual(['Ministère Communication', 'Marie D.'])
+    const nonDeclaree = construireLigne(ligne({ ...communication, id: 2 }), avecPrenoms)
+    expect(nonDeclaree.personne).toBe('personne non déclarée')
     // Une ligne hors de la carte (Système, autre profil) et tous les autres profils : le libellé.
-    expect(construireLigne(ligne({ ...communication, id: 3 }), avecPrenoms).compte).toBe(
-      'Ministère Communication',
-    )
-    expect(construireLigne(ligne({ ...communication, id: 1 }), CONTEXTE).compte).toBe(
-      'Ministère Communication',
+    const horsCarte = construireLigne(ligne({ ...communication, id: 3 }), avecPrenoms)
+    expect(horsCarte.compte).toBe('Ministère Communication')
+    expect(horsCarte).not.toHaveProperty('personne')
+    expect(construireLigne(ligne({ ...communication, id: 1 }), CONTEXTE)).not.toHaveProperty(
+      'personne',
     )
   })
 

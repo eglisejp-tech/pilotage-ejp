@@ -3,6 +3,7 @@ import {
   connexionsAffichees,
   nombreAEffacer,
   personnesActives,
+  personnesSansActivite,
   quandConnexion,
 } from '@/features/personnes/construirePersonnes'
 import {
@@ -41,9 +42,29 @@ describe('onglet « Personnes » (T56)', () => {
     expect(efface?.efface).toBe(true)
   })
 
-  it('compte les déclarations de plus de 12 mois à effacer', () => {
-    expect(nombreAEffacer(PERSONNES_EXEMPLE)).toBe(3)
+  it('compte les prénoms de plus de 12 mois à effacer, pas les déclarations', () => {
+    // Joël a deux déclarations anciennes, Ancien une : deux prénoms.
+    expect(nombreAEffacer(PERSONNES_EXEMPLE)).toBe(2)
     expect(nombreAEffacer([])).toBe(0)
+    const chaqueSemaine = { ...PERSONNES_EXEMPLE[2]!, declarations_anciennes: 52 }
+    expect(nombreAEffacer([chaqueSemaine])).toBe(1)
+  })
+
+  it('une personne sans activité depuis 31 jours reste effaçable', () => {
+    const comptes = personnesSansActivite(PERSONNES_EXEMPLE)
+    expect(comptes.map((c) => c.libelle)).toEqual(['Ministère Intégration'])
+    expect(comptes[0]?.personnes.map((p) => [p.prenom, p.intervenantId])).toEqual([['Ancien', 3]])
+    const inactive = {
+      ...PERSONNES_EXEMPLE[0]!,
+      connexions_30_jours: 0,
+      jours_30_jours: 0,
+      actions_30_jours: 0,
+      derniere_activite: '2026-09-10T09:00:00+00:00',
+    }
+    expect(personnesActives([inactive])).toEqual([])
+    expect(personnesSansActivite([inactive])[0]?.personnes[0]?.prenom).toBe('Marie D.')
+    // Un prénom déjà effacé n'a plus rien à effacer.
+    expect(personnesSansActivite([{ ...inactive, prenom: '[prénom effacé]' }])).toEqual([])
   })
 
   it('écrit chaque connexion en une phrase, à l’heure de Paris', () => {

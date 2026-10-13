@@ -19,8 +19,10 @@ type Proprietes = Personne & {
  */
 export function PersonneDeclaree({ prenom, lienChangement, surChangement }: Proprietes) {
   return (
-    <div className="flex flex-wrap items-center gap-x-3">
-      <p className="text-sm text-encre-2">{TEXTES_EN_TETE_PERSONNE.vous(prenom)}</p>
+    <div className="flex min-w-0 flex-wrap items-center gap-x-3">
+      <p className="min-w-0 text-sm wrap-anywhere text-encre-2">
+        {TEXTES_EN_TETE_PERSONNE.vous(prenom)}
+      </p>
       <Link
         to={lienChangement}
         onClick={surChangement}

@@ -4,6 +4,7 @@ import {
   chargerEtatSession,
   chargerEtatSessionSuivi,
   DELAI_MAX_SESSION,
+  MESSAGE_PASSAGE_NON_NOTE,
 } from '@/features/session/chargement'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { fauxSupabase } from '@/test/fauxSupabase'
@@ -163,6 +164,21 @@ describe('chargerEtatSession : « Qui utilise l’outil ? »', () => {
     expect(faux.from).toHaveBeenCalledWith('passage')
     // Ni l'une ni l'autre n'est une lecture de données de l'écran.
     expect(faux.tables).toEqual(['compte'])
+  })
+
+  it('jour d’utilisation refusé : l’outil s’ouvre, la console le signale sans prénom', async () => {
+    const avertir = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    installer({
+      ...session,
+      declaration: { id: 7, prenom: 'Marie D.', age_secondes: 60 },
+      enEchec: ['passage'],
+    })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'connecte', prenom: 'Marie D.' })
+    await vi.waitFor(() =>
+      expect(avertir).toHaveBeenCalledWith(MESSAGE_PASSAGE_NON_NOTE, 'PGRST000'),
+    )
+    expect(JSON.stringify(avertir.mock.calls)).not.toContain('Marie')
+    avertir.mockRestore()
   })
 
   it('ministère sans déclaration sur cette session : déclaration, sans jour d’utilisation', async () => {

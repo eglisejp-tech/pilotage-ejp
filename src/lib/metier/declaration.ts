@@ -22,9 +22,12 @@ export const MESSAGES_PRENOM = {
 const LETTRES = 'A-Za-zÀ-ÖØ-öø-ɏ'
 const FORME_PRENOM = new RegExp(`^[${LETTRES}]+\\.?(?:[ '’-][${LETTRES}]+\\.?)*$`, 'u')
 
-/** Espaces retirés au début et à la fin, espaces répétés réduits à un : comme la base. */
+/**
+ * Accents composés (NFC : un « é » copié depuis un téléphone devient une seule lettre), espaces
+ * retirés au début et à la fin, espaces répétés réduits à un : comme la base.
+ */
 export function nettoyerPrenom(valeur: string): string {
-  return valeur.trim().replace(/\s+/g, ' ')
+  return valeur.normalize('NFC').trim().replace(/\s+/g, ' ')
 }
 
 /** Prénom nettoyé, puis contrôlé : le formulaire et l'appel à la base partagent ce schéma. */

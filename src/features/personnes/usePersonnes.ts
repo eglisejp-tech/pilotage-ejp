@@ -11,6 +11,7 @@ import {
   connexionsAffichees,
   nombreAEffacer,
   personnesActives,
+  personnesSansActivite,
 } from '@/features/personnes/construirePersonnes'
 import type { DonneesPersonnes } from '@/features/personnes/modelePersonnes'
 
@@ -48,6 +49,7 @@ export function usePersonnes(): { resultat: ResultatPersonnes; actions: ActionsP
     if (!personnes.data || !libelles.data || !connexions.data) return null
     return {
       actives: personnesActives(personnes.data),
+      sansActivite: personnesSansActivite(personnes.data),
       aEffacer: nombreAEffacer(personnes.data),
       connexions: connexionsAffichees(
         connexions.data.pages.flatMap((page) => page.connexions),

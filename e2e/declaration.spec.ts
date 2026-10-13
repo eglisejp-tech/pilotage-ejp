@@ -102,6 +102,32 @@ test.describe('en-tête d’un compte de ministère : « Vous : Marie D. » (ape
     await sansDebordementA360(page)
   })
 
+  test('sous 1024 px, le prénom suit le compte sans ouvrir le menu', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 800 })
+    await ouvrir(page, '/apercu/navigation?profil=ministere&vous=Marie%20D.')
+    await expect(
+      page
+        .getByRole('banner')
+        .getByText('Ministère Communication, Marie D.')
+        .filter({ visible: true }),
+    ).toBeVisible()
+  })
+
+  test('aucun débordement de l’en-tête de 1024 à 1536 px, même avec un long prénom', async ({
+    page,
+  }) => {
+    for (const vous of ['Marie%20D.', 'Marie-Bérénice%20Anne-Sophie%20D.']) {
+      await ouvrir(page, `/apercu/navigation?profil=ministere&vous=${vous}`)
+      for (const largeur of [1024, 1280, 1300, 1366, 1440, 1536]) {
+        await page.setViewportSize({ width: largeur, height: 900 })
+        const debord = await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        )
+        expect(debord, `${decodeURIComponent(vous)} à ${largeur} px`).toBeLessThanOrEqual(0)
+      }
+    }
+  })
+
   test('les autres profils n’ont ni prénom ni « Ce n’est pas moi »', async ({ page }) => {
     await ouvrir(page, '/apercu/navigation?profil=berger&vous=Marie')
     await expect(page.getByText(/Vous :/)).toHaveCount(0)
@@ -145,13 +171,31 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
 
   test('les prénoms de plus de 12 mois', async ({ page }) => {
     await ouvrir(page, '/apercu/personnes?profil=admin_plateforme')
-    await expect(page.getByText('3 prénoms ont plus de 12 mois.')).toBeVisible()
+    await expect(page.getByText('2 prénoms ont plus de 12 mois.')).toBeVisible()
     await page.getByRole('button', { name: 'Effacer les prénoms de plus de 12 mois' }).click()
     await page
       .getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois' })
       .getByRole('button', { name: 'Effacer définitivement' })
       .click()
-    await expect(page.getByText('3 prénoms effacés.')).toBeVisible()
+    await expect(page.getByText('2 prénoms effacés.')).toBeVisible()
+  })
+
+  test('une personne sans activité depuis 30 jours s’efface aussi ; cibles de 44 px', async ({
+    page,
+  }) => {
+    await ouvrir(page, '/apercu/personnes?profil=admin_plateforme')
+    const sansActivite = page.getByRole('region', { name: 'Sans activité depuis 30 jours' })
+    const bouton = sansActivite.getByRole('button', {
+      name: 'Effacer ce prénom (Ancien, Ministère Intégration)',
+    })
+    expect((await bouton.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await bouton.click()
+    await page
+      .getByRole('dialog', { name: 'Effacer ce prénom' })
+      .getByRole('button', { name: 'Effacer définitivement' })
+      .click()
+    await expect(page.getByText('Prénom effacé.')).toBeVisible()
+    await expect(sansActivite).toHaveCount(0)
   })
 
   test('vide, chargement et erreur', async ({ page }) => {

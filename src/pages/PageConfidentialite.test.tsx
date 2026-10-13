@@ -69,7 +69,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(partie('Qui voit les données')).toContainElement(
       elementExact(
         'p',
-        "Le prénom indiqué à la connexion n'est lu que par EJP Tech : ni l'administration de l'église, ni le berger, ni le conseil, ni les ministères.",
+        "Pendant la vie de l'outil, le prénom indiqué à la connexion n'est lu que par EJP Tech : ni l'administration de l'église, ni le berger, ni le conseil, ni les ministères. Les prénoms qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination.",
       ),
     )
     expect(partie('Durées de conservation')).toContainElement(

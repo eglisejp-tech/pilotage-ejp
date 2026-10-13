@@ -36,6 +36,12 @@ describe('schemaPrenom (T56, mêmes cas que la base)', () => {
     expect(schemaPrenom.parse('  Marie   D.  ')).toBe('Marie D.')
   })
 
+  it('accepte un accent décomposé (copié depuis un téléphone) et le compose, comme la base', () => {
+    const decompose = 'Chloé'
+    expect(decompose).toHaveLength(6)
+    expect(schemaPrenom.parse(decompose)).toBe('Chloé')
+  })
+
   it('refuse un prénom vide ou fait d’espaces', () => {
     expect(erreurDe('')).toBe(MESSAGES_PRENOM.vide)
     expect(erreurDe('    ')).toBe(MESSAGES_PRENOM.vide)

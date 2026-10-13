@@ -66,7 +66,12 @@ export function EcranDeclaration({
         {TEXTES_DECLARATION.phrase}
       </TitreConnexion>
 
-      <form noValidate onSubmit={envoyer} className="flex flex-col gap-6">
+      <form
+        noValidate
+        onSubmit={envoyer}
+        aria-busy={enCours || undefined}
+        className="flex flex-col gap-6"
+      >
         <ChampPrenom erreur={errors.prenom?.message} {...register('prenom')} />
         {erreur ? (
           <BandeauErreur id="declaration-bandeau" ref={bandeau}>
@@ -81,6 +86,15 @@ export function EcranDeclaration({
       <div className="flex flex-col">
         {onCancel ? <BoutonLien onClick={onCancel}>{TEXTES_DECLARATION.annuler}</BoutonLien> : null}
         <BoutonLien onClick={onSignOut}>{TEXTES_DECLARATION.seDeconnecter}</BoutonLien>
+        <a
+          href="/confidentialite"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-cible items-center self-start text-[15px] text-nuit underline underline-offset-4"
+        >
+          {TEXTES_DECLARATION.lienConfidentialite}{' '}
+          <span className="sr-only">{TEXTES_DECLARATION.nouvelOnglet}</span>
+        </a>
       </div>
     </ColonneConnexion>
   )
