@@ -34,10 +34,14 @@ export function BlocSansActivite({ comptes, surEffacer }: Props) {
                   <p className="min-w-0 text-[17px] font-semibold wrap-anywhere">
                     {personne.prenom}
                   </p>
-                  <dl className="text-sm">
-                    <dt className="text-encre-3">{TEXTES_PERSONNES.colonnes.derniere}</dt>
-                    <dd>{personne.derniereActivite}</dd>
-                  </dl>
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <dl className="text-sm">
+                      <dt className="text-encre-3">{TEXTES_PERSONNES.colonnes.derniere}</dt>
+                      <dd>{personne.derniereActivite}</dd>
+                    </dl>
+                    {/* Conditions acceptées par la personne (T61). */}
+                    <p className="text-sm leading-normal text-encre-2">{personne.conditions}</p>
+                  </div>
                   <BoutonEffacerPrenom
                     prenom={personne.prenom}
                     compte={compte.libelle}

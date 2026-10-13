@@ -24,7 +24,7 @@
 -- .claude/skills/nouvelle-table/SKILL.md, « Pièges connus des tests pgTAP »).
 begin;
 
-select plan(70);
+select plan(71);
 
 -- Politique restrictive de référence, écrite à l'identique de la migration (BRIEF, section 8),
 -- sur une table temporaire : chaque table de public doit avoir exactement la même. Un contrôle
@@ -47,8 +47,10 @@ select tables_are('public', array[
   -- étape 5 (T54)
   'point_mention_retrait',
   -- étape 8 (T56)
-  'intervenant', 'journal_intervenant', 'passage'
-]::name[], 'public contient les 31 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4, 1 de l''étape 5, 1 de l''étape 6, 3 de l''étape 8), rien de plus');
+  'intervenant', 'journal_intervenant', 'passage',
+  -- étape 8 (T61)
+  'acceptation_personne'
+]::name[], 'public contient les 32 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4, 1 de l''étape 5, 1 de l''étape 6, 4 de l''étape 8), rien de plus');
 select tables_are('private', array[
   'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun'
 ]::name[], 'private contient les 5 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs), rien de plus');
@@ -114,6 +116,8 @@ select bag_eq($$
 $$, $$ values
   ('acceptation_conditions', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('acceptation_conditions', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('acceptation_personne', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('acceptation_personne', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('categorie_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('categorie_sensible', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('compte', 'double_authentification', 'SELECT', 'RESTRICTIVE'),
@@ -180,7 +184,7 @@ $$, $$ values
   ('validation', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('ventilation_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('ventilation_sensible', 'lecture', 'SELECT', 'PERMISSIVE')
-$$, 'les 68 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère et sur passage, rien d''autre');
+$$, 'les 70 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère et sur passage, rien d''autre');
 
 -- GRANT des tables
 select is_empty($$
@@ -189,7 +193,7 @@ select is_empty($$
      and has_any_column_privilege('authenticated', c.oid, 'INSERT')
      and c.relname not in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion', 'passage')
 $$, 'authenticated : insert seulement sur les tables remplies directement par un ministère et sur passage (colonnes comprises)');
--- Droits exacts d'authenticated sur chacune des 31 tables : lecture (sous la RLS) partout, ajout
+-- Droits exacts d'authenticated sur chacune des 32 tables : lecture (sous la RLS) partout, ajout
 -- en plus sur les cinq tables remplies directement par un ministère et sur passage (T56 : jour
 -- d'utilisation, déclaration et jour imposés par la base).
 select table_privs_are('public', t.nom::name, 'authenticated',
@@ -203,7 +207,7 @@ select table_privs_are('public', t.nom::name, 'authenticated',
     'indicateur_terme', 'fij_statistique', 'evenement_mention', 'demande_indicateur', 'validation',
     'categorie_sensible', 'ventilation_sensible', 'precision_sensible', 'signalement',
     'signalement_suivi', 'acceptation_conditions', 'point_mention_retrait',
-    'intervenant', 'journal_intervenant', 'passage']) as t(nom)
+    'intervenant', 'journal_intervenant', 'passage', 'acceptation_personne']) as t(nom)
  order by t.nom;
 select is_empty($$
   with droits as (
@@ -412,6 +416,7 @@ $$, $$ values
   ('creer_indicateurs_prevus', 2, true, true, false),
   ('creer_point', 6, true, true, false),
   ('date_en_lettres', 1, false, false, false),
+  ('declarations_de_ma_personne', 0, true, true, false),
   ('declarer_intervenant', 2, true, true, false),
   ('declarer_session', 4, true, true, false),
   ('defaire_mention', 3, true, false, false),
@@ -510,7 +515,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 134 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 135 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -619,6 +624,9 @@ $$, $$ values
   ('public.acceptation_conditions', 'ajout_seulement'),
   ('public.acceptation_conditions', 'ajout_seulement_vider'),
   ('public.acceptation_conditions', 'forcer_auteur'),
+  ('public.acceptation_personne', 'ajout_seulement'),
+  ('public.acceptation_personne', 'ajout_seulement_vider'),
+  ('public.acceptation_personne', 'forcer_auteur'),
   ('public.categorie_sensible', 'controler_categorie_sensible'),
   ('public.categorie_sensible', 'controler_categorie_sensible_vider'),
   ('public.demande_indicateur', 'ajout_seulement'),
@@ -692,7 +700,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 77 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles, mention unique, inaltérabilité, termes complets, et eux seuls');
+$$, 'les 80 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles, mention unique, inaltérabilité, termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

@@ -85,6 +85,44 @@ test.describe('« Qui utilise l’outil ? » (aperçu)', () => {
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await auditer(page)
   })
+
+  test('rappel du jour (T63) : le prénom de la veille proposé, un seul appui le confirme', async ({
+    page,
+  }) => {
+    await ouvrir(page, '/apercu/qui-utilise?etat=rappel')
+    await expect(
+      page.getByText('Ce compte est partagé. Confirmez votre prénom, ou changez-le.'),
+    ).toBeVisible()
+    await expect(page.getByLabel('Votre prénom')).toHaveValue('Marie D.')
+    await expect(page.getByRole('button', { name: 'Annuler' })).toHaveCount(0)
+    await auditer(page)
+    await sansDebordementA360(page)
+    await page.getByRole('button', { name: 'Continuer' }).click()
+    await expect(page.getByText('Déclaration simulée : Marie D.')).toBeVisible()
+  })
+})
+
+test.describe('conditions acceptées par la personne déclarée (T61, aperçu)', () => {
+  test('« Vous : Marie D. » et « Ce n’est pas moi » sur l’écran des conditions', async ({
+    page,
+  }) => {
+    await ouvrir(page, '/apercu/connexion?ecran=acceptation&outils=non')
+    await expect(
+      page.getByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
+    ).toBeVisible()
+    await expect(
+      page.getByText(
+        "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
+      ),
+    ).toBeVisible()
+    await expect(page.getByText('Vous : Marie D.')).toBeVisible()
+    const lien = page.getByRole('link', { name: "Ce n'est pas moi" })
+    await expect(lien).toHaveAttribute('href', '/apercu/qui-utilise?changer=1')
+    const boite = await lien.boundingBox()
+    expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await auditer(page)
+    await sansDebordementA360(page)
+  })
 })
 
 test.describe('en-tête d’un compte de ministère : « Vous : Marie D. » (aperçu)', () => {
@@ -237,6 +275,9 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   const ecrans = [
     ['qui-utilise', '/apercu/qui-utilise'],
     ['qui-utilise-changement', '/apercu/qui-utilise?changer=1'],
+    ['qui-utilise-rappel', '/apercu/qui-utilise?etat=rappel'],
+    ['conditions-personne', '/apercu/connexion?ecran=acceptation&outils=non'],
+    ['conditions-compte', '/apercu/connexion?ecran=acceptation&compte=personnel&outils=non'],
     ['en-tete-ministere', '/apercu/navigation?profil=ministere&vous=Marie%20D.'],
     ['personnes', '/apercu/personnes?profil=admin_plateforme'],
     ['journal-technique', '/apercu/journal?profil=admin_plateforme'],

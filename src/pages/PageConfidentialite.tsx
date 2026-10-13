@@ -18,13 +18,16 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * du 12 octobre 2026 : prénom déclaré sur un compte partagé (T56, décidé par la personne
  * responsable), dans « Données traitées », « Qui voit les données », « Durées de conservation »
  * (export final compris) et « Vos droits ». La version des conditions change (VERSION_CONDITIONS).
+ * Mise à jour du 13 octobre 2026 : sur un compte partagé, chaque personne accepte elle-même les
+ * conditions (T61), dans « Données traitées » ; phrase proposée, à valider. La version des
+ * conditions change de nouveau.
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 12 octobre
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 13 octobre
         2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
@@ -63,8 +66,9 @@ export function PageConfidentialite() {
             </li>
             <li>Les adresses IP, dans les journaux techniques de Supabase et de Netlify.</li>
             <li>
-              La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech
-              seul la lit.
+              La date à laquelle chaque compte accepte les conditions, et leur version ; sur le
+              compte partagé d'un ministère, chaque personne les accepte elle-même, sous le prénom
+              qu'elle indique. EJP Tech seul lit ces dates.
             </li>
             <li>
               Le prénom que chaque personne indique quand elle utilise le compte partagé d'un

@@ -3,10 +3,9 @@ import { z } from 'zod'
 // Déclaration de la personne qui utilise un compte partagé de ministère (T56). Le prénom suit la
 // même règle que la base (20261013090000_observabilite_personnes.sql) : 1 à 30 caractères, des
 // lettres, avec espace, apostrophe ou trait d'union entre deux mots et un point après un mot
-// (« Marie D. »). Ni chiffre, ni @, ni crochet : ni email, ni téléphone.
-
-/** La question « Qui utilise l'outil ? » revient quand la déclaration a ce nombre de jours. */
-export const DUREE_DECLARATION_JOURS = 7
+// (« Marie D. »). Ni chiffre, ni @, ni crochet : ni email, ni téléphone. La question revient à
+// chaque connexion et à la première ouverture de chaque nouvelle journée, jour de Paris calculé
+// par la base (T63, à la place du rappel des 7 jours de T56).
 
 /** Marqueur d'un prénom effacé par EJP Tech (sur demande, ou au bout de 12 mois). */
 export const PRENOM_EFFACE = '[prénom effacé]'
@@ -49,21 +48,31 @@ export type MotifDeclaration = 'connexion' | 'rappel' | 'changement'
 export type Declaration = {
   id: number
   prenom: string
-  /** Âge selon l'horloge du serveur, en secondes. */
-  ageSecondes: number
+  /** Faite aujourd'hui, jour de Paris calculé par la base (`du_jour`, T63). */
+  duJour: boolean
 }
 
 /**
- * Faut-il demander le prénom ? Oui sans déclaration sur cette session, quand elle a 7 jours ou
- * plus, ou quand EJP Tech a effacé le prénom.
+ * Faut-il demander le prénom ? Oui sans déclaration sur cette session (une nouvelle connexion),
+ * quand elle date d'un jour précédent (rappel du jour, T63), ou quand EJP Tech a effacé le prénom.
  */
 export function declarationNecessaire(declaration: Declaration | null): boolean {
   if (declaration === null) return true
   if (declaration.prenom === PRENOM_EFFACE) return true
-  return declaration.ageSecondes >= DUREE_DECLARATION_JOURS * 24 * 60 * 60
+  return !declaration.duJour
 }
 
-/** Motif d'une déclaration : « Ce n'est pas moi », rappel des 7 jours, ou connexion. */
+/**
+ * Prénom déjà écrit dans le champ (T63) : au rappel du jour, celui de la dernière déclaration de
+ * cette connexion, qu'un seul appui sur « Continuer » confirme. Vide à une nouvelle connexion,
+ * après « Ce n'est pas moi », ou quand le prénom a été effacé.
+ */
+export function prenomPropose(changement: boolean, declaration: Declaration | null): string {
+  if (changement || declaration === null || declaration.prenom === PRENOM_EFFACE) return ''
+  return declaration.prenom
+}
+
+/** Motif d'une déclaration : « Ce n'est pas moi », rappel du jour (T63), ou connexion. */
 export function motifDeclaration(
   changement: boolean,
   declaration: Declaration | null,

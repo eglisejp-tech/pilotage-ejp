@@ -32,13 +32,13 @@ beforeEach(() => {
 })
 
 describe('lireMaDeclaration (T56)', () => {
-  it('lit la déclaration de la session, avec son âge', async () => {
+  it('lit la déclaration de la session, et si elle est du jour de Paris (T63)', async () => {
     const faux = installer({
-      v_ma_declaration: { data: { id: 3, prenom: 'Marie D.', age_secondes: 120 }, error: null },
+      v_ma_declaration: { data: { id: 3, prenom: 'Marie D.', du_jour: false }, error: null },
     })
-    expect(await lireMaDeclaration()).toEqual({ id: 3, prenom: 'Marie D.', ageSecondes: 120 })
+    expect(await lireMaDeclaration()).toEqual({ id: 3, prenom: 'Marie D.', duJour: false })
     expect(appelsDe(faux.de('v_ma_declaration')[0])).toEqual([
-      'select("id, prenom, age_secondes")',
+      'select("id, prenom, du_jour")',
       'maybeSingle()',
     ])
   })

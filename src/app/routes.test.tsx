@@ -165,7 +165,7 @@ describe('routes', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
     await waitFor(() =>
-      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-12' }),
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-13' }),
     )
   })
 

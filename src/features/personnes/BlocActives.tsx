@@ -42,24 +42,28 @@ export function BlocActives({ actives, surEffacer }: Props) {
                     >
                       {personne.prenom}
                     </p>
-                    <dl className="grid flex-1 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
-                      <div>
-                        <dt className="text-encre-3">{colonnes.connexions}</dt>
-                        <dd className={classeChiffre}>{nombre(personne.connexions)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-encre-3">{colonnes.jours}</dt>
-                        <dd className={classeChiffre}>{nombre(personne.jours)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-encre-3">{colonnes.actions}</dt>
-                        <dd className={classeChiffre}>{nombre(personne.actions)}</dd>
-                      </div>
-                      <div>
-                        <dt className="text-encre-3">{colonnes.derniere}</dt>
-                        <dd>{personne.derniereActivite}</dd>
-                      </div>
-                    </dl>
+                    <div className="flex min-w-0 flex-1 flex-col gap-2">
+                      <dl className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
+                        <div>
+                          <dt className="text-encre-3">{colonnes.connexions}</dt>
+                          <dd className={classeChiffre}>{nombre(personne.connexions)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-encre-3">{colonnes.jours}</dt>
+                          <dd className={classeChiffre}>{nombre(personne.jours)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-encre-3">{colonnes.actions}</dt>
+                          <dd className={classeChiffre}>{nombre(personne.actions)}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-encre-3">{colonnes.derniere}</dt>
+                          <dd>{personne.derniereActivite}</dd>
+                        </div>
+                      </dl>
+                      {/* Conditions acceptées par la personne (T61). */}
+                      <p className="text-sm leading-normal text-encre-2">{personne.conditions}</p>
+                    </div>
                     {personne.efface ? null : (
                       <BoutonEffacerPrenom
                         prenom={personne.prenom}

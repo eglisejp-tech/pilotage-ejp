@@ -2,7 +2,9 @@ import type { Connexion, Personne } from '@/data/personnes'
 
 // Exemples de l'onglet « Personnes » (T56), pour l'aperçu de développement : deux personnes sur
 // le compte de Communication (Marie D. et Paul, connectés au même moment sur deux appareils),
-// une sur Intégration, un prénom déjà effacé et des déclarations de plus de 12 mois.
+// une sur Intégration, un prénom déjà effacé et des déclarations de plus de 12 mois. Conditions
+// (T61) : Marie D. a accepté la version du 12 octobre, Paul rien encore, Joël et le prénom effacé
+// une version plus ancienne.
 
 const COMMUNICATION = '20000000-0000-4000-8000-000000000001'
 const INTEGRATION = '20000000-0000-4000-8000-000000000005'
@@ -23,6 +25,8 @@ export const PERSONNES_EXEMPLE: Personne[] = [
     actions_30_jours: 9,
     derniere_activite: '2026-10-11T09:00:00+00:00',
     declarations_anciennes: 0,
+    version_acceptee: '2026-10-12',
+    acceptee_le: '2026-10-12T07:30:00+00:00',
   },
   {
     compte: COMMUNICATION,
@@ -34,6 +38,8 @@ export const PERSONNES_EXEMPLE: Personne[] = [
     actions_30_jours: 0,
     derniere_activite: '2026-10-11T09:00:30+00:00',
     declarations_anciennes: 0,
+    version_acceptee: null,
+    acceptee_le: null,
   },
   {
     compte: INTEGRATION,
@@ -45,6 +51,8 @@ export const PERSONNES_EXEMPLE: Personne[] = [
     actions_30_jours: 2,
     derniere_activite: '2026-10-04T17:12:00+00:00',
     declarations_anciennes: 2,
+    version_acceptee: '2026-10-08',
+    acceptee_le: '2026-10-08T16:10:00+00:00',
   },
   {
     compte: INTEGRATION,
@@ -56,6 +64,8 @@ export const PERSONNES_EXEMPLE: Personne[] = [
     actions_30_jours: 1,
     derniere_activite: '2026-09-27T10:40:00+00:00',
     declarations_anciennes: 0,
+    version_acceptee: '2026-10-08',
+    acceptee_le: '2026-10-08T09:00:00+00:00',
   },
   {
     compte: INTEGRATION,
@@ -67,6 +77,8 @@ export const PERSONNES_EXEMPLE: Personne[] = [
     actions_30_jours: 0,
     derniere_activite: '2025-08-31T10:40:00+00:00',
     declarations_anciennes: 1,
+    version_acceptee: null,
+    acceptee_le: null,
   },
 ]
 

@@ -54,7 +54,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 12 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 13 octobre 2026.",
     )
   })
 
@@ -133,11 +133,11 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     )
   })
 
-  it("annonce l'acceptation des conditions dans « Données traitées » : date et version, lues par EJP Tech seul (T53)", () => {
+  it("annonce l'acceptation des conditions dans « Données traitées » : date et version, par personne sur un compte partagé, lues par EJP Tech seul (T53, T61)", () => {
     afficher()
     const acceptation = elementExact(
       'li',
-      'La date à laquelle chaque compte accepte les conditions, et leur version. EJP Tech seul la lit.',
+      "La date à laquelle chaque compte accepte les conditions, et leur version ; sur le compte partagé d'un ministère, chaque personne les accepte elle-même, sous le prénom qu'elle indique. EJP Tech seul lit ces dates.",
     )
     expect(partie('Données traitées')).toContainElement(acceptation)
   })

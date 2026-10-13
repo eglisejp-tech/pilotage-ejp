@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  conditionsDe,
   connexionsAffichees,
   nombreAEffacer,
   personnesActives,
@@ -34,7 +35,29 @@ describe('onglet « Personnes » (T56)', () => {
       jours: 6,
       actions: 9,
       derniereActivite: '11 oct., 11 h',
+      // La suite (« Pas encore celles du... ») dépend de la version en cours.
+      conditions: expect.stringMatching(
+        /^Conditions du 12 octobre 2026 acceptées le 12 oct\., 9 h 30\./,
+      ) as unknown,
     })
+  })
+
+  it('dit quelles conditions chaque personne a acceptées, et quand (T61)', () => {
+    expect(conditionsDe('2026-10-12', '2026-10-13T07:00:00+00:00', '2026-10-12')).toBe(
+      'Conditions du 12 octobre 2026 acceptées le 13 oct., 9 h.',
+    )
+    expect(conditionsDe('2026-10-08', '2026-10-09T16:10:00+00:00', '2026-10-12')).toBe(
+      'Conditions du 8 octobre 2026 acceptées le 9 oct., 18 h 10. Pas encore celles du 12 octobre 2026.',
+    )
+    expect(conditionsDe(null, null, '2026-10-12')).toBe('Conditions pas encore acceptées.')
+    const [communication, integration] = personnesActives(PERSONNES_EXEMPLE)
+    // Paul vient de dire son prénom, sans avoir encore accepté.
+    expect(communication?.personnes[0]?.conditions).toBe('Conditions pas encore acceptées.')
+    // Le prénom effacé garde son acceptation.
+    expect(integration?.personnes[1]?.prenom).toBe('[prénom effacé]')
+    expect(integration?.personnes[1]?.conditions).toMatch(
+      /^Conditions du 8 octobre 2026 acceptées le 8 oct\., 11 h\./,
+    )
   })
 
   it('un prénom déjà effacé n’a pas de bouton', () => {

@@ -1,37 +1,85 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import { VERSION_CONDITIONS } from '../../src/lib/metier/conditions.ts'
-import { COMPTE_CONDITIONS, declarerPrenom, PRENOM_TEST, seConnecter } from '../comptes.ts'
-import { lire } from './outils-evenements.ts'
+import {
+  COMPTE_CONDITIONS,
+  declarerPrenom,
+  fichierSession,
+  PRENOM_TEST,
+  seConnecter,
+} from '../comptes.ts'
+import { jetonAcces, lire } from './outils-evenements.ts'
 
-// Acceptation des conditions (T53) avec la base locale : projet « ecritures » (en série, 1440 px).
-// Le script d'installation (installer-comptes.ts) fait accepter la version courante à tous les
-// comptes d'exemple sauf Prodiges Junior : ce compte voit l'écran à sa première connexion, ne
-// peut pas continuer sans cocher la case, accepte, arrive sur son accueil, puis n'est plus
-// interrogé à la connexion suivante.
+// Acceptation des conditions (T53), par personne sur un compte partagé de ministère (T61), avec
+// la base locale : projet « ecritures » (en série, 1440 px). Le script d'installation
+// (installer-comptes.ts) fait accepter la version courante à tous les comptes d'exemple sauf
+// Prodiges Junior. Sur ce compte, la personne dit d'abord son prénom, puis voit l'écran à son
+// nom, ne peut pas continuer sans cocher la case, accepte, arrive sur la page demandée, et n'est
+// plus interrogée à sa connexion suivante. Une deuxième personne du même compte, sur un autre
+// appareil, ne profite pas de cette acceptation : elle accepte à son tour. EJP Tech lit qui a
+// accepté quelle version ; le compte n'écrit rien dans l'acceptation par compte.
 
 test.describe.configure({ mode: 'serial' })
 
 const TITRE = "Conditions d'utilisation"
-const lireMesAcceptations = (page: Parameters<typeof lire>[0]) =>
-  lire<{ version: string; saisi_par: string; compte: string }>(
+const DATE_VERSION = 'Conditions du 13 octobre 2026'
+
+/** « Léa Kqz » : trois lettres tirées au hasard, sans chiffre (la base refuse les chiffres). */
+function prenomUnique(): string {
+  const lettre = () => String.fromCharCode(97 + Math.floor(Math.random() * 26))
+  return `Léa ${lettre().toUpperCase()}${lettre()}${lettre()}`
+}
+const SECONDE_PERSONNE = prenomUnique()
+
+/** Les acceptations que la session de la page lit : celles de la personne déclarée seulement. */
+const lireMesAcceptations = (page: Page) =>
+  lire<{ version: string; saisi_par: string; intervenant_id: number }>(
     page,
-    'acceptation_conditions?select=version,saisi_par,compte',
+    'acceptation_personne?select=version,saisi_par,intervenant_id',
   )
 
-test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus interrogé", async ({
+/** Identifiant du compte de la page, lu dans son jeton. */
+async function idDuCompte(page: Page): Promise<string> {
+  const charge = (await jetonAcces(page)).split('.')[1] ?? ''
+  const { sub } = JSON.parse(Buffer.from(charge, 'base64url').toString('utf8')) as {
+    sub?: string
+  }
+  if (!sub) throw new Error('Jeton sans compte.')
+  return sub
+}
+
+async function cocherEtAccepter(page: Page) {
+  await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
+  await page.getByRole('button', { name: 'Accepter et continuer' }).click()
+  await expect(page).not.toHaveURL(/\/conditions-a-accepter/)
+}
+
+test("une personne qui n'a pas accepté dit son prénom, voit l'écran à son nom, accepte, puis n'est plus interrogée", async ({
   page,
 }) => {
-  await seConnecter(page, COMPTE_CONDITIONS.email)
+  test.setTimeout(180_000)
+  await seConnecter(page, COMPTE_CONDITIONS.email, { prenom: null })
 
-  // L'écran remplace l'application : ni onglets, ni données, et toute adresse y ramène.
-  await expect(page).toHaveURL(/\/conditions-a-accepter$/)
+  // Compte partagé (T61) : le prénom d'abord, l'adresse demandée gardée.
+  await expect(page).toHaveURL(/\/qui-utilise$/)
+  await page.goto('/points')
+  await expect(page).toHaveURL(/\/qui-utilise\?retour=%2Fpoints$/)
+  await declarerPrenom(page, PRENOM_TEST)
+
+  // Puis les conditions de cette personne : l'écran remplace l'application.
+  await expect(page).toHaveURL(/\/conditions-a-accepter\?retour=%2Fpoints$/)
   await expect(page.getByRole('heading', { level: 1, name: TITRE })).toBeVisible()
   await expect(page.getByText(COMPTE_CONDITIONS.libelle)).toBeVisible()
-  await expect(page.getByText('Conditions du 12 octobre 2026')).toBeVisible()
+  await expect(page.getByText(DATE_VERSION)).toBeVisible()
+  await expect(
+    page.getByText(
+      "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
+    ),
+  ).toBeVisible()
+  await expect(page.getByText(`Vous : ${PRENOM_TEST}`)).toBeVisible()
+  await expect(page.getByRole('link', { name: "Ce n'est pas moi" })).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
-  await page.goto('/points')
-  await expect(page).toHaveURL(/\/conditions-a-accepter\?retour=%2Fpoints$/)
   expect(await lireMesAcceptations(page)).toEqual([])
 
   // Accessibilité et 360 px.
@@ -60,24 +108,64 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await expect(page.getByText('Cochez la case pour continuer.')).toBeVisible()
   expect(await lireMesAcceptations(page)).toEqual([])
 
-  // Avec la case : un compte de ministère dit ensuite qui utilise l'outil (T56), puis retour à
-  // l'adresse demandée avant l'écran (« Mes points »), et une ligne d'acceptation pour ce compte.
-  await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
-  await bouton.click()
-  await expect(page).toHaveURL(/\/qui-utilise\?retour=%2Fpoints$/)
-  await declarerPrenom(page, PRENOM_TEST)
+  // Avec la case : retour à l'adresse demandée (« Mes points »), une ligne pour cette personne,
+  // saisie par le compte, et aucune acceptation par compte.
+  await cocherEtAccepter(page)
   await expect(page).toHaveURL((url) => url.pathname === '/points')
   await expect(page).toHaveTitle('Mes points, Pilotage EJP')
   const lignes = await lireMesAcceptations(page)
   expect(lignes).toHaveLength(1)
   expect(lignes[0]?.version).toBe(VERSION_CONDITIONS)
-  expect(lignes[0]?.saisi_par).toBe(lignes[0]?.compte)
+  expect(lignes[0]?.saisi_par).toBe(await idDuCompte(page))
+  expect(await lire(page, 'acceptation_conditions?select=version')).toEqual([])
 
-  // À la connexion suivante, la version est déjà acceptée : l'accueil, sans l'écran.
+  // À la connexion suivante, la même personne a déjà accepté : son prénom, puis l'accueil.
   await page.getByRole('banner').getByRole('button', { name: 'Se déconnecter' }).click()
   await expect(page).toHaveURL(/\/connexion/)
   await seConnecter(page, COMPTE_CONDITIONS.email)
   await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
   await expect(page).toHaveURL((url) => url.pathname === '/')
   expect(await lireMesAcceptations(page)).toHaveLength(1)
+})
+
+test('une deuxième personne du même compte, sur un autre appareil, accepte à son tour ; EJP Tech lit les deux', async ({
+  browser,
+}) => {
+  test.setTimeout(180_000)
+  const ailleurs = await browser.newContext()
+  const page = await ailleurs.newPage()
+  await seConnecter(page, COMPTE_CONDITIONS.email, { prenom: SECONDE_PERSONNE })
+
+  // L'acceptation de la première personne ne vaut pas pour elle.
+  await expect(page).toHaveURL(/\/conditions-a-accepter$/)
+  await expect(page.getByText(`Vous : ${SECONDE_PERSONNE}`)).toBeVisible()
+  expect(await lireMesAcceptations(page)).toEqual([])
+  await cocherEtAccepter(page)
+  await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
+  const lignes = await lireMesAcceptations(page)
+  expect(lignes).toHaveLength(1)
+  expect(lignes[0]?.version).toBe(VERSION_CONDITIONS)
+  const compte = await idDuCompte(page)
+  await ailleurs.close()
+
+  // EJP Tech : chaque personne du compte, avec la version qu'elle a acceptée.
+  const tech = await browser.newContext({ storageState: fichierSession('admin_plateforme') })
+  const pageTech = await tech.newPage()
+  await pageTech.goto('/personnes')
+  await expect(pageTech.getByRole('heading', { level: 1, name: 'Personnes' })).toBeVisible()
+  const personnes = await lire<{ prenom: string; version_acceptee: string | null }>(
+    pageTech,
+    `v_personnes?select=prenom,version_acceptee&compte=eq.${compte}`,
+  )
+  for (const prenom of [PRENOM_TEST, SECONDE_PERSONNE]) {
+    expect(personnes.find((p) => p.prenom === prenom)?.version_acceptee, prenom).toBe(
+      VERSION_CONDITIONS,
+    )
+  }
+  const actives = pageTech.getByRole('region', { name: 'Actives sur 30 jours' })
+  await expect(actives.getByText(SECONDE_PERSONNE, { exact: true })).toBeVisible()
+  await expect(actives.getByRole('listitem').filter({ hasText: SECONDE_PERSONNE })).toContainText(
+    `${DATE_VERSION} acceptées le `,
+  )
+  await tech.close()
 })

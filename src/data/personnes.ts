@@ -13,15 +13,15 @@ export const TAILLE_PAGE_CONNEXIONS = 50
 
 /**
  * Dernière déclaration de la session de cet appareil, ou null. Lisible en aal2 seulement ; la base
- * ne rend que celle de la session du jeton.
+ * ne rend que celle de la session du jeton, et dit si elle est du jour de Paris (T63).
  */
 export async function lireMaDeclaration(): Promise<Declaration | null> {
   const { data, error } = await supabase()
     .from('v_ma_declaration')
-    .select('id, prenom, age_secondes')
+    .select('id, prenom, du_jour')
     .maybeSingle()
   if (error) throw error
-  return data ? { id: data.id, prenom: data.prenom, ageSecondes: data.age_secondes } : null
+  return data ? { id: data.id, prenom: data.prenom, duJour: data.du_jour } : null
 }
 
 /** Déclare le prénom de la personne sur cette session ; le schéma le nettoie et le contrôle. */
@@ -49,12 +49,15 @@ export async function noterPassage(declarationId: number): Promise<void> {
 
 export type Personne = LigneVue<'v_personnes'>
 
-/** Les personnes déclarées, par compte et par prénom, de la plus récemment active à la moins. */
+/**
+ * Les personnes déclarées, par compte et par prénom, de la plus récemment active à la moins, avec
+ * la dernière version des conditions que chacune a acceptée (T61).
+ */
 export async function lirePersonnes(): Promise<Personne[]> {
   const { data, error } = await supabase()
     .from('v_personnes')
     .select(
-      'compte, compte_libelle, prenom, intervenant_id, connexions_30_jours, jours_30_jours, actions_30_jours, derniere_activite, declarations_anciennes',
+      'compte, compte_libelle, prenom, intervenant_id, connexions_30_jours, jours_30_jours, actions_30_jours, derniere_activite, declarations_anciennes, version_acceptee, acceptee_le',
     )
     .order('derniere_activite', { ascending: false })
   if (error) throw error

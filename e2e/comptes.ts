@@ -177,6 +177,18 @@ export async function declarerPrenom(page: Page, prenom: string) {
 }
 
 /**
+ * Écran « Conditions d'utilisation » (T53), s'il s'affiche : sur un compte de ministère, la
+ * personne qui vient de dire son prénom accepte elle-même (T61). Rend vrai s'il s'est affiché.
+ */
+export async function accepterConditionsSiDemande(page: Page): Promise<boolean> {
+  if (new URL(page.url()).pathname !== '/conditions-a-accepter') return false
+  await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
+  await page.getByRole('button', { name: 'Accepter et continuer' }).click()
+  await expect(page).not.toHaveURL(/\/conditions-a-accepter/)
+  return true
+}
+
+/**
  * Écrans 16 puis 18 : mot de passe, puis code à 6 chiffres. Un compte de ministère dit ensuite
  * qui utilise l'outil (T56) : `prenom` (« Essai » par défaut), ou null pour s'arrêter sur l'écran.
  */
@@ -201,15 +213,16 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   const chemins: string[] = []
   page.on('request', (requete) => {
     const url = new URL(requete.url())
-    // L'acceptation des conditions est lue par la session en aal2 (T53), comme la ligne de compte ;
-    // un compte de ministère lit aussi sa déclaration et note son jour d'utilisation (T56).
-    if (
-      ['/rest/v1/acceptation_conditions', '/rest/v1/v_ma_declaration', '/rest/v1/passage'].includes(
-        url.pathname,
-      )
-    ) {
-      return
-    }
+    // L'acceptation des conditions est lue par la session en aal2 (T53, par personne sur un compte
+    // de ministère, T61), comme la ligne de compte ; un compte de ministère lit aussi sa
+    // déclaration et note son jour d'utilisation (T56).
+    const lecturesDeSession = [
+      '/rest/v1/acceptation_conditions',
+      '/rest/v1/acceptation_personne',
+      '/rest/v1/v_ma_declaration',
+      '/rest/v1/passage',
+    ]
+    if (lecturesDeSession.includes(url.pathname)) return
     if (url.pathname.startsWith('/rest/v1/')) chemins.push(url.pathname)
   })
   return chemins

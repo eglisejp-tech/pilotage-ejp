@@ -8,11 +8,22 @@ import { BoutonPrincipal } from '@/features/connexion/BoutonPrincipal'
 import { ColonneConnexion } from '@/features/connexion/ColonneConnexion'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
+import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
+import type { Personne } from '@/features/declaration/PersonneDeclaree'
 import { dateDeVersionConditions } from '@/lib/metier/dateConditions'
+
+/** Phrase d'un compte partagé (T61), au-dessus de « Vous : Marie ». */
+export const PHRASE_ACCEPTATION_PERSONNE =
+  "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions."
 
 export type ProprietesEcranAcceptation = {
   /** Libellé du compte connecté (« Ministère Communication »), jamais le nom d'une personne. */
   libelleCompte: string
+  /**
+   * Compte de ministère (T61) : la personne déclarée sur cet appareil, qui accepte elle-même, et
+   * l'adresse de « Ce n'est pas moi ». Absente pour un compte non partagé.
+   */
+  personne?: Personne
   /** Version des conditions affichée, AAAA-MM-JJ. */
   version: string
   onAccept: () => void
@@ -28,10 +39,13 @@ const lienTexte =
 /**
  * Écran « Conditions d'utilisation » (décision T53, sans maquette : il suit les écrans 16 à 18).
  * Les conditions sont acceptées ; la politique de confidentialité est seulement lue (jamais un
- * consentement). Pas de « Refuser » : « Se déconnecter » reste l'unique autre sortie.
+ * consentement). Pas de « Refuser » : « Se déconnecter » reste l'unique autre sortie. Sur un
+ * compte de ministère, la personne déclarée accepte elle-même (T61) : l'écran dit qui elle est,
+ * avec « Ce n'est pas moi » si l'appareil a changé de mains.
  */
 export function EcranAcceptation({
   libelleCompte,
+  personne,
   version,
   onAccept,
   onSignOut,
@@ -66,6 +80,12 @@ export function EcranAcceptation({
       </TitreConnexion>
 
       <p className="text-sm text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
+      {personne ? (
+        <div className="flex flex-col gap-1">
+          <p className="text-[15px] leading-normal">{PHRASE_ACCEPTATION_PERSONNE}</p>
+          <PersonneDeclaree prenom={personne.prenom} lienChangement={personne.lienChangement} />
+        </div>
+      ) : null}
 
       <div className="flex flex-col">
         <a href="/conditions" target="_blank" rel="noopener noreferrer" className={lienTexte}>

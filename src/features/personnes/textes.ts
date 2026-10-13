@@ -1,5 +1,6 @@
-// Textes de l'onglet « Personnes » d'EJP Tech (décision T56). Aucun texte n'explique la
-// mécanique : l'écran dit qui a utilisé l'outil, quand, et comment effacer un prénom.
+// Textes de l'onglet « Personnes » d'EJP Tech (décisions T56 et T61). Aucun texte n'explique la
+// mécanique : l'écran dit qui a utilisé l'outil, quand, quelles conditions chaque personne a
+// acceptées, et comment effacer un prénom.
 
 import { PRENOM_EFFACE } from '@/lib/metier/declaration'
 import { accorder, nombre } from '@/lib/metier/texte'
@@ -15,6 +16,13 @@ export const TEXTES_PERSONNES = {
     derniere: 'Dernière activité',
   },
   activesVide: "Personne n'a utilisé un compte de ministère depuis 30 jours.",
+  /** « Conditions du 12 octobre 2026 acceptées le 13 oct., 9 h. » (T61) */
+  conditionsAcceptees: (version: string, quand: string) =>
+    `Conditions du ${version} acceptées le ${quand}.`,
+  /** Une version plus ancienne que celle en cours : la personne l'acceptera à sa prochaine connexion. */
+  conditionsAnciennes: (version: string, quand: string, courante: string) =>
+    `Conditions du ${version} acceptées le ${quand}. Pas encore celles du ${courante}.`,
+  conditionsAucune: 'Conditions pas encore acceptées.',
   titreSansActivite: 'Sans activité depuis 30 jours',
   titreConnexions: 'Dernières connexions',
   connexionsVide: 'Aucune connexion pour le moment.',

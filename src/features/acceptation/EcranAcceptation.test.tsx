@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { EcranAcceptation } from '@/features/acceptation/EcranAcceptation'
 import type { ProprietesEcranAcceptation } from '@/features/acceptation/EcranAcceptation'
@@ -87,5 +88,37 @@ describe('EcranAcceptation (T53)', () => {
     const { onSignOut, utilisateur } = afficher()
     await utilisateur.click(screen.getByRole('button', { name: 'Se déconnecter' }))
     expect(onSignOut).toHaveBeenCalledTimes(1)
+  })
+
+  it('compte non partagé : ni prénom, ni « Ce n’est pas moi »', () => {
+    afficher()
+    expect(screen.queryByText(/^Vous :/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/chaque personne/)).not.toBeInTheDocument()
+  })
+
+  it('compte de ministère : la personne déclarée accepte elle-même, avec « Ce n’est pas moi » (T61)', () => {
+    render(
+      <MemoryRouter>
+        <EcranAcceptation
+          libelleCompte="Ministère Communication"
+          personne={{ prenom: 'Marie D.', lienChangement: '/qui-utilise?changer=1' }}
+          version="2026-10-12"
+          onAccept={vi.fn()}
+          onSignOut={vi.fn()}
+        />
+      </MemoryRouter>,
+    )
+    expect(
+      screen.getByText(
+        "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
+      ),
+    ).toBeVisible()
+    expect(screen.getByText('Vous : Marie D.')).toBeVisible()
+    expect(screen.getByRole('link', { name: "Ce n'est pas moi" })).toHaveAttribute(
+      'href',
+      '/qui-utilise?changer=1',
+    )
+    // La case garde le texte décidé (T53).
+    expect(caseACocher()).not.toBeChecked()
   })
 })

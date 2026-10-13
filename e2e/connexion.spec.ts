@@ -36,6 +36,8 @@ const ETATS = [
   { adresse: 'ecran=mot-de-passe-oublie&etat=envoye', titre: 'Mot de passe oublié' },
   { adresse: 'ecran=acceptation&etat=erreur-reseau', titre: "Conditions d'utilisation" },
   { adresse: 'ecran=acceptation&etat=en-cours', titre: "Conditions d'utilisation" },
+  // Compte non partagé : l'acceptation reste par compte, sans prénom (T53, T61).
+  { adresse: 'ecran=acceptation&compte=personnel', titre: "Conditions d'utilisation" },
 ] as const
 
 async function ouvrir(page: Page, adresse: string, titre: string) {
@@ -131,7 +133,10 @@ test.describe('écrans de connexion (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, 'ecran=acceptation', "Conditions d'utilisation")
-    await expect(page.getByText('Conditions du 12 octobre 2026')).toBeVisible()
+    await expect(page.getByText('Conditions du 13 octobre 2026')).toBeVisible()
+    // Compte de ministère : la personne déclarée accepte elle-même (T61).
+    await expect(page.getByText('Vous : Marie D.')).toBeVisible()
+    await expect(page.getByRole('link', { name: "Ce n'est pas moi" })).toBeVisible()
     const bouton = page.getByRole('button', { name: 'Accepter et continuer' })
     await expect(bouton).toBeEnabled()
     await bouton.click()

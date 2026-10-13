@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { accepterConditions, lireConditionsAcceptees } from '@/data/conditions'
+import {
+  accepterConditions,
+  lireConditionsAcceptees,
+  lireConditionsAccepteesParLaPersonne,
+} from '@/data/conditions'
 import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import type { ReponseFausse } from '@/test/fauxRequete'
 
@@ -50,6 +54,36 @@ describe('lireConditionsAcceptees', () => {
     const faux = installer()
     await expect(lireConditionsAcceptees(COMPTE, '8 octobre')).rejects.toThrow()
     expect(faux.de('acceptation_conditions')).toHaveLength(0)
+  })
+})
+
+// Compte de ministère (T61) : la base ne rend que les lignes de la personne déclarée sur la session.
+describe('lireConditionsAccepteesParLaPersonne', () => {
+  it('lit les acceptations de la personne pour la version demandée', async () => {
+    const faux = installer({ acceptation_personne: { data: [{ id: 3 }], error: null } })
+    expect(await lireConditionsAccepteesParLaPersonne('2026-10-12')).toBe(true)
+    expect(appelsDe(faux.de('acceptation_personne')[0])).toEqual([
+      'select("id")',
+      'eq("version", "2026-10-12")',
+      'limit(1)',
+    ])
+    expect(faux.de('acceptation_conditions')).toHaveLength(0)
+  })
+
+  it('aucune ligne (nouvelle personne, ou nouvelle version) : faux', async () => {
+    installer({ acceptation_personne: { data: [], error: null } })
+    expect(await lireConditionsAccepteesParLaPersonne('2026-10-12')).toBe(false)
+  })
+
+  it('une erreur de lecture remonte', async () => {
+    installer({ acceptation_personne: { data: null, error: new Error('refus') } })
+    await expect(lireConditionsAccepteesParLaPersonne('2026-10-12')).rejects.toThrow('refus')
+  })
+
+  it('refuse une version mal formée avant tout appel', async () => {
+    const faux = installer()
+    await expect(lireConditionsAccepteesParLaPersonne('12 octobre')).rejects.toThrow()
+    expect(faux.de('acceptation_personne')).toHaveLength(0)
   })
 })
 

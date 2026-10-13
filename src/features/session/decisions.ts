@@ -107,9 +107,15 @@ export function destination(
     case 'conditions':
       // Le mot de passe d'abord (invitation, récupération), puis les conditions, puis l'application.
       if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
+      // « Ce n'est pas moi » sur l'écran des conditions d'une personne (T61) : le prénom change
+      // avant d'accepter, la nouvelle personne accepte ensuite elle-même.
+      if (zone === 'declaration' && etat.prenom !== undefined && changementDemande(adresse)) {
+        return null
+      }
       return zone === 'conditions' ? null : avecRetour(ADRESSE_CONDITIONS_A_ACCEPTER, aRetrouver)
     case 'declaration':
-      // Puis « Qui utilise l'outil ? » (T56), avant l'application.
+      // Un compte de ministère dit d'abord qui l'utilise (T56), puis cette personne accepte les
+      // conditions (T61), puis l'application.
       if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
       return zone === 'declaration' ? null : avecRetour(ADRESSE_DECLARATION, aRetrouver)
     case 'connecte':

@@ -17,6 +17,11 @@ const schemaDeclaration = z.object({ prenom: schemaPrenom })
 export type ProprietesEcranDeclaration = {
   /** Libellé du compte connecté (« Ministère Communication »). */
   libelleCompte: string
+  /**
+   * Rappel du jour (T63) : le prénom de la dernière déclaration de cette connexion, déjà écrit
+   * dans le champ ; « Continuer » le confirme. Vide ou absent : le champ part vide.
+   */
+  prenomPropose?: string
   /** Prénom nettoyé et valide. */
   onDeclare: (prenom: string) => void
   onSignOut: () => void
@@ -29,12 +34,14 @@ export type ProprietesEcranDeclaration = {
 
 /**
  * Écran « Qui utilise l'outil ? » (décision T56, sans maquette : il suit les écrans 16 à 18 et
- * l'écran des conditions). Un compte de ministère est partagé : la personne indique son prénom
- * après la connexion, tous les 7 jours, et après « Ce n'est pas moi ». Le bouton n'est jamais
- * grisé ; « Se déconnecter » reste l'autre sortie.
+ * l'écran des conditions). Un compte de ministère est partagé : la personne indique son prénom à
+ * chaque connexion, à la première ouverture de chaque nouvelle journée (T63 : le prénom de la
+ * veille est proposé) et après « Ce n'est pas moi ». Le bouton n'est jamais grisé ; « Se
+ * déconnecter » reste l'autre sortie.
  */
 export function EcranDeclaration({
   libelleCompte,
+  prenomPropose = '',
   onDeclare,
   onSignOut,
   onCancel,
@@ -48,7 +55,7 @@ export function EcranDeclaration({
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schemaDeclaration),
-    defaultValues: { prenom: '' },
+    defaultValues: { prenom: prenomPropose },
   })
   const bandeau = useRef<HTMLDivElement>(null)
 
@@ -63,7 +70,7 @@ export function EcranDeclaration({
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre={libelleCompte} titre={TEXTES_DECLARATION.titre} taille="moyenne">
-        {TEXTES_DECLARATION.phrase}
+        {prenomPropose ? TEXTES_DECLARATION.phraseRappel : TEXTES_DECLARATION.phrase}
       </TitreConnexion>
 
       <form

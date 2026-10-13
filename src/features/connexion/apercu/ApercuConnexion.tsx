@@ -112,6 +112,12 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
       return (
         <EcranAcceptation
           libelleCompte={libelleCompte}
+          // Compte de ministère : la personne déclarée accepte elle-même (T61).
+          personne={
+            compteMinistere
+              ? { prenom: 'Marie D.', lienChangement: '/apercu/qui-utilise?changer=1' }
+              : undefined
+          }
           version={VERSION_CONDITIONS}
           onAccept={() => signaler('onAccept, acceptation des conditions.')}
           onSignOut={seDeconnecter}

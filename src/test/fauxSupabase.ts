@@ -15,13 +15,17 @@ export type ScenarioSession = {
     desactive_le: string | null
   } | null
   facteursVerifies?: string[]
-  /** Le compte a accepté la version courante des conditions (T53) ; vrai par défaut. */
+  /**
+   * La version courante des conditions est acceptée : par le compte (T53), ou, pour un compte de
+   * ministère, par la personne déclarée sur la session (T61) ; vrai par défaut.
+   */
   conditionsAcceptees?: boolean
   /**
    * Dernière déclaration de la session (T56, `v_ma_declaration`), lue pour un compte de
-   * ministère : « Marie », déclarée il y a une minute, par défaut ; null : aucune déclaration.
+   * ministère : « Marie », déclarée aujourd'hui, par défaut ; null : aucune déclaration.
+   * `du_jour` (T63) : faite aujourd'hui, jour de Paris ; vrai si absent.
    */
-  declaration?: { id: number; prenom: string; age_secondes: number } | null
+  declaration?: { id: number; prenom: string; du_jour?: boolean } | null
   /**
    * Lignes rendues par une vue ou une table autre que `compte` (`v_semaine`, `v_point`...).
    * Absente : aucune ligne. Les filtres et tris ne sont pas appliqués : le test donne les lignes
@@ -78,17 +82,18 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     valeur: unknown
   }[] = []
 
+  // Déclaration de la session : `declarer_intervenant` la remplace, comme la base (T56, T63), pour
+  // que la session relue après « Continuer » voie le nouveau prénom, déclaré aujourd'hui.
+  let declaration =
+    scenario.declaration === undefined ? { id: 1, prenom: 'Marie' } : scenario.declaration
+
   function lignesDe(table: string): unknown[] {
     if (table === 'compte') return scenario.compte ? [scenario.compte] : []
-    if (table === 'acceptation_conditions') {
+    if (table === 'acceptation_conditions' || table === 'acceptation_personne') {
       return (scenario.conditionsAcceptees ?? true) ? [{ id: 'acceptation-1' }] : []
     }
     if (table === 'v_ma_declaration') {
-      const declaration =
-        scenario.declaration === undefined
-          ? { id: 1, prenom: 'Marie', age_secondes: 60 }
-          : scenario.declaration
-      return declaration ? [declaration] : []
+      return declaration ? [{ du_jour: true, ...declaration }] : []
     }
     return scenario.lignes?.[table] ?? []
   }
@@ -143,10 +148,17 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
   }
 
   const from = vi.fn((table: string) => {
-    // L'acceptation des conditions est lue par la session en aal2 (T53), la déclaration et le jour
-    // d'utilisation d'un compte de ministère aussi (T56) : `tables` ne note que les lectures de
-    // données, que les tests comparent ; `from` garde la trace de celles-ci.
-    if (!['acceptation_conditions', 'v_ma_declaration', 'passage'].includes(table)) {
+    // L'acceptation des conditions est lue par la session en aal2 (T53, par personne pour un
+    // ministère, T61), la déclaration et le jour d'utilisation d'un compte de ministère aussi
+    // (T56) : `tables` ne note que les lectures de données, que les tests comparent ; `from` garde
+    // la trace de celles-ci.
+    const lecturesDeSession = [
+      'acceptation_conditions',
+      'acceptation_personne',
+      'v_ma_declaration',
+      'passage',
+    ]
+    if (!lecturesDeSession.includes(table)) {
       tables.push(table)
     }
     return requete(table)
@@ -188,9 +200,13 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     },
   }
 
-  const rpc = vi.fn<(nom: string, args?: unknown) => Promise<Reponse>>(() =>
-    Promise.resolve({ data: null, error: null }),
-  )
+  const rpc = vi.fn<(nom: string, args?: unknown) => Promise<Reponse>>((nom, args) => {
+    if (nom === 'declarer_intervenant') {
+      const { p_prenom: prenom } = args as { p_prenom: string }
+      declaration = { id: (declaration?.id ?? 0) + 1, prenom, du_jour: true }
+    }
+    return Promise.resolve({ data: null, error: null })
+  })
 
   return { client: { from, auth, rpc }, tables, selections, filtres, auth, from, eq, rpc }
 }
