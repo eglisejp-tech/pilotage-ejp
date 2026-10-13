@@ -73,6 +73,35 @@ test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
     await expect(service).toHaveValue('9')
   })
 
+  test('le matin, après une coupure, tout vider puis renvoyer : une seule phrase (m066)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'dimanche', etat: 'matin-coupure' })
+    const nuit = page.getByLabel('Présents la nuit de prière', { exact: true })
+    await nuit.fill('12')
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
+    await expect(page.getByRole('alert')).toHaveText(/^La connexion a échoué/)
+    await nuit.fill('')
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
+    await expect(page.getByRole('alert')).toHaveText('Saisissez au moins un chiffre.')
+  })
+
+  test('la base refuse « Dont en FIJ » au-dessus des actifs : sous ce champ, focus (m068)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'dimanche', etat: 'refus-fij' })
+    await page.getByLabel('STARs au service ce dimanche', { exact: true }).fill('9')
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
+    const enFij = page.getByLabel('Dont en FIJ', { exact: true })
+    const phrase = "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres."
+    await expect(enFij).toBeFocused()
+    await expect(enFij).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByText(phrase)).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await page.getByLabel('STARs actifs', { exact: true }).fill('20')
+    await expect(page.getByText(phrase)).toHaveCount(0)
+  })
+
   test('correction : surtitre, « Déjà saisi » et « Enregistrer la correction »', async ({
     page,
   }) => {

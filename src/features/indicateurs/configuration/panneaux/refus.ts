@@ -1,6 +1,33 @@
 import type { z } from 'zod'
+import { lireErreurBase } from '@/data/messagesBase'
 import { TEXTES_PANNEAUX } from '@/features/indicateurs/configuration/panneaux/textes'
 import { messageDeRefusPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
+import type { VerificationLibelle } from '@/lib/base'
+
+/**
+ * Un refus de la base qui porte sur le nom (doublon, mot de calcul, période) ou sur la définition
+ * se dit sous ce champ, qui prend le focus (guide, 10.1 et 10.8) : rend l'erreur du champ à poser,
+ * ou null pour un refus qui se dit sous le bouton (`lireRefusEcriture`).
+ */
+export function erreurDeChamp(erreur: unknown): Record<string, string> | null {
+  const lue = lireErreurBase(erreur)
+  if (lue.genre !== 'message' || lue.nature !== 'refus') return null
+  if (lue.champ === 'nom') return { libelle: lue.message }
+  if (lue.champ === 'definition') return { definition: lue.message }
+  return null
+}
+
+/**
+ * Les contrôles pendant la frappe, sans celui que l'erreur du champ dit déjà : la phrase de la
+ * table est la même avant l'envoi et après le refus (m233), elle ne se dit qu'une fois.
+ */
+export function sansRepetition(
+  verifications: readonly VerificationLibelle[],
+  erreur: string | undefined,
+): readonly VerificationLibelle[] {
+  if (erreur === undefined) return verifications
+  return verifications.filter((verification) => verification.message !== erreur)
+}
 
 /**
  * Phrase d'un refus d'écriture, par la table de traduction de `src/data/messagesBase.ts` (m233) :

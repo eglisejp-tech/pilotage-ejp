@@ -35,7 +35,7 @@ La page d'accueil doit répondre en quelques secondes à quatre questions :
 
 Tous les comptes se connectent **avec Google ou avec email et mot de passe, puis avec un code de double authentification** (section 8). Aucun compte ne peut s'en passer.
 
-**Contact (T59, décidé le 12 octobre 2026)** : quand une personne ne peut pas s'en sortir seule (compte désactivé, invitation à renvoyer, compte à demander, indicateur à retirer, panne qui dure), les messages de l'outil nomment **EJP Tech**, jamais l'administration de l'église. Les droits ne changent pas : l'administration de l'église gère toujours les comptes (tableau ci-dessus, section 8).
+**Contact (T59, décidé le 12 octobre 2026)** : quand une personne ne peut pas s'en sortir seule (compte désactivé, invitation à renvoyer, compte à demander, indicateur à retirer, panne qui dure), les messages de l'outil nomment **EJP Tech**, jamais l'administration de l'église. T59 ne change pas les droits : seul l'interlocuteur nommé à l'écran change. Qui gère les comptes reste fixé par le tableau ci-dessus, la section 7 et leurs décisions.
 
 Chaque profil a sa propre navigation et son propre écran d'accueil (planche `maquettes/00-profils-qui-voit-quoi.png`) :
 

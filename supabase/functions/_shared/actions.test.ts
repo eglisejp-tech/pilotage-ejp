@@ -23,6 +23,10 @@ function clientFactice(
       appels.push(etape)
       parametresRpc.push(parametres)
       const message = echecs[etape]
+      // « 23505 » : une contrainte unique touchée (écriture faite ailleurs entre-temps).
+      if (message === '23505') {
+        return { data: null, error: { code: '23505', message: 'duplicate key value' } }
+      }
       return { data: null, error: message ? { code: 'P0001', message } : null }
     },
     from: () => ({
@@ -160,6 +164,23 @@ describe('reinitialiser-2fa', () => {
       statut: 500,
       code: 'activation_incomplete',
     })
+  })
+
+  it('un conflit d’écriture après le mot de passe : activation à relancer, pas « conflit »', async () => {
+    const { appelant } = clientFactice({ 'rpc:serveur_reinitialiser_2fa': '23505' })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 500,
+      code: 'activation_incomplete',
+    })
+  })
+
+  it('un conflit avant le mot de passe garde son code : rien n’a changé', async () => {
+    const { appelant, appels } = clientFactice({ 'rpc:serveur_controler_cible': '23505' })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 409,
+      code: 'conflit',
+    })
+    expect(appels).toEqual(['rpc:serveur_controler_cible'])
   })
 
   it('un refus explicite en cours de route garde son code (session de l’appelant révoquée)', async () => {

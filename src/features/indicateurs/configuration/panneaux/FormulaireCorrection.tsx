@@ -15,9 +15,11 @@ import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux
 import { ErreurEnvoi } from '@/features/indicateurs/configuration/panneaux/ErreurEnvoi'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import {
+  erreurDeChamp,
   erreursParChamp,
   lireRefusEcriture,
   sansErreur,
+  sansRepetition,
 } from '@/features/indicateurs/configuration/panneaux/refus'
 import {
   REUSSITES_INDICATEURS,
@@ -122,7 +124,14 @@ function CorpsCorrection({ controleur, ligne }: Props) {
       await ecritures.corriger(ministere.id, ligne.id, lu.data)
       terminer(REUSSITES_INDICATEURS.correction)
     } catch (erreur) {
-      setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      // Un refus du nom ou de la définition se dit sous son champ, une seule fois.
+      const surChamp = erreurDeChamp(erreur)
+      if (surChamp === null) {
+        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      } else {
+        setErreurs(surChamp)
+        setEssais((precedent) => precedent + 1)
+      }
       occupe.current = false
       setEnCours(false)
     }
@@ -148,7 +157,9 @@ function CorpsCorrection({ controleur, ligne }: Props) {
           max={LONGUEUR_LIBELLE_MAX}
           avecRappel
           erreur={erreurs.libelle}
-          controles={<MessagesControle verifications={controles} />}
+          controles={
+            <MessagesControle verifications={sansRepetition(controles, erreurs.libelle)} />
+          }
         />
         <ChampIndicateur
           id={`${id}-definition`}

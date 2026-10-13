@@ -144,10 +144,13 @@ test.describe('administration de l’église', () => {
     await panneau.getByLabel("Ce qu'on compte exactement").fill('Demandes reçues, encore une fois.')
     await panneau.getByRole('radio', { name: /Chaque mois/ }).check()
     await panneau.getByRole('button', { name: "Ajouter l'indicateur" }).click()
-    // Le refus de la base, traduit (m233).
-    await expect(panneau.getByRole('alert')).toHaveText(
-      'Cette fiche a déjà un indicateur « Demandes essai ». Choisissez un autre nom.',
-    )
+    // Le refus de la base, traduit (m233), dit une seule fois, sous le champ du nom (le contrôle
+    // pendant la frappe dit la même phrase).
+    const doublon = 'Cette fiche a déjà un indicateur « Demandes essai ». Choisissez un autre nom.'
+    const nom = panneau.getByLabel('Ce que vous comptez')
+    await expect(nom).toHaveAccessibleDescription(new RegExp(doublon.replace(/[.()]/g, '\\$&')))
+    await expect(panneau.getByText(doublon)).toHaveCount(1)
+    await expect(panneau.getByRole('alert')).toHaveCount(0)
     expect(await indicateursDe(page)).toHaveLength(2)
     await panneau.getByRole('button', { name: 'Annuler' }).click()
   })

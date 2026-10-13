@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -106,50 +106,91 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('un échec de l’effacement reste dans la fenêtre', async () => {
-    const actions: ActionsPersonnes = {
-      afficherPlus: vi.fn(),
-      effacer: vi.fn(() => Promise.reject(new Error('refus'))),
-      effacerAnciens: vi.fn(() => Promise.resolve(0)),
+  it.each([
+    ['une coupure', new TypeError('Failed to fetch'), 'La connexion a échoué. Réessayez.'],
+    [
+      'un prénom déjà effacé ailleurs',
+      { code: 'P0001', message: 'Prénom introuvable ou déjà effacé.' },
+      'Prénom introuvable ou déjà effacé.',
+    ],
+    [
+      'une connexion expirée',
+      { code: '42501', message: 'Double authentification requise.' },
+      'Votre connexion a expiré. Reconnectez-vous.',
+    ],
+    [
+      'un refus inattendu',
+      { code: '23505', message: 'duplicate key value' },
+      "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    ],
+  ])(
+    'un échec de l’effacement reste dans la fenêtre : %s, par la table (m270)',
+    async (_cas, erreur, phrase) => {
+      const actions: ActionsPersonnes = {
+        afficherPlus: vi.fn(),
+        effacer: vi.fn(() => Promise.reject(erreur)),
+        effacerAnciens: vi.fn(() => Promise.resolve(0)),
+      }
+      render(
+        <VuePersonnes
+          titre="Personnes"
+          actions={actions}
+          resultat={{
+            etat: 'pret',
+            donnees: {
+              actives: [
+                {
+                  compte: 'c1',
+                  libelle: 'Ministère Communication',
+                  personnes: [
+                    {
+                      intervenantId: 1,
+                      prenom: 'Marie',
+                      efface: false,
+                      connexions: 1,
+                      jours: 1,
+                      actions: 0,
+                      derniereActivite: '11 oct., 11 h',
+                    },
+                  ],
+                },
+              ],
+              sansActivite: [],
+              aEffacer: 0,
+              connexions: [],
+              aPlus: false,
+              plusEnCours: false,
+            },
+          }}
+        />,
+      )
+      expect(screen.getByText('Aucune connexion pour le moment.')).toBeInTheDocument()
+      await userEvent.click(screen.getByRole('button', { name: /Effacer ce prénom/ }))
+      await userEvent.click(screen.getByRole('button', { name: 'Effacer définitivement' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent(phrase)
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    },
+  )
+
+  it('« Chargement », puis « Chargement plus long que d’habitude » après 4 s (m248)', () => {
+    vi.useFakeTimers()
+    try {
+      render(
+        <VuePersonnes
+          titre="Personnes"
+          resultat={{ etat: 'chargement' }}
+          actions={{ afficherPlus: vi.fn(), effacer: vi.fn(), effacerAnciens: vi.fn() }}
+        />,
+      )
+      const zone = screen.getByRole('status', { busy: true })
+      expect(zone).toBeEmptyDOMElement()
+      act(() => vi.advanceTimersByTime(300))
+      expect(zone).toHaveTextContent(/^Chargement$/)
+      act(() => vi.advanceTimersByTime(3_700))
+      expect(zone).toHaveTextContent("Chargement plus long que d'habitude")
+    } finally {
+      vi.useRealTimers()
     }
-    render(
-      <VuePersonnes
-        titre="Personnes"
-        actions={actions}
-        resultat={{
-          etat: 'pret',
-          donnees: {
-            actives: [
-              {
-                compte: 'c1',
-                libelle: 'Ministère Communication',
-                personnes: [
-                  {
-                    intervenantId: 1,
-                    prenom: 'Marie',
-                    efface: false,
-                    connexions: 1,
-                    jours: 1,
-                    actions: 0,
-                    derniereActivite: '11 oct., 11 h',
-                  },
-                ],
-              },
-            ],
-            sansActivite: [],
-            aEffacer: 0,
-            connexions: [],
-            aPlus: false,
-            plusEnCours: false,
-          },
-        }}
-      />,
-    )
-    expect(screen.getByText('Aucune connexion pour le moment.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Effacer ce prénom/ }))
-    await userEvent.click(screen.getByRole('button', { name: 'Effacer définitivement' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('vide, chargement et erreur', () => {

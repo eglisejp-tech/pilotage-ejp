@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
+import { lireErreurBase, phraseErreur } from '@/data/messagesBase'
 import { declarerIntervenant } from '@/data/personnes'
 import { messagesConnexion } from '@/features/connexion/messages'
 import { EcranDeclaration } from '@/features/declaration/EcranDeclaration'
@@ -21,6 +22,8 @@ export function PageDeclaration() {
   const [parametres] = useSearchParams()
   const [enCours, setEnCours] = useState(false)
   const [erreur, setErreur] = useState<string>()
+  /** Refus du prénom par la base (T56) : sous le champ, comme le contrôle avant l'envoi. */
+  const [erreurPrenom, setErreurPrenom] = useState<string>()
 
   // La garde de la zone ne laisse passer que ces deux états.
   if (etat.statut !== 'declaration' && etat.statut !== 'connecte') return null
@@ -30,14 +33,19 @@ export function PageDeclaration() {
 
   async function declarer(prenom: string) {
     setErreur(undefined)
+    setErreurPrenom(undefined)
     setEnCours(true)
     try {
       const precedente = etat.statut === 'declaration' ? etat.declaration : null
       await declarerIntervenant(prenom, motifDeclaration(changement, precedente))
       await rafraichirSession()
       if (changement) void navigate(retour, { replace: true })
-    } catch {
-      setErreur(messagesConnexion.echecReseau)
+    } catch (echec) {
+      // Par la table de traduction (m270, m271) : seule une coupure dit « La connexion a échoué ».
+      // Les seuls refus de saisie de declarer_intervenant portent sur le prénom : sous le champ.
+      const lue = lireErreurBase(echec)
+      if (lue.genre === 'message' && lue.nature === 'refus') setErreurPrenom(lue.message)
+      else setErreur(phraseErreur(echec, { connexion: messagesConnexion.echecReseau }))
       setEnCours(false)
     }
   }
@@ -50,6 +58,7 @@ export function PageDeclaration() {
       onCancel={changement ? () => void navigate(retour, { replace: true }) : undefined}
       enCours={enCours}
       erreur={erreur}
+      erreurPrenom={erreurPrenom}
     />
   )
 }

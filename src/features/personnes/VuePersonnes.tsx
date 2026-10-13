@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useMotChargement } from '@/components/etats/useMotChargement'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { BlocActives } from '@/features/personnes/BlocActives'
 import { BlocConnexions } from '@/features/personnes/BlocConnexions'
@@ -24,16 +25,15 @@ type Effacement =
 const classeBouton =
   'inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold text-encre hover:bg-fond'
 
-/** « Chargement » n'apparaît qu'après 300 ms : une réponse rapide ne fait rien clignoter. */
+/**
+ * « Chargement » n'apparaît qu'après 300 ms (une réponse rapide ne fait rien clignoter), puis
+ * « Chargement plus long que d'habitude » après 4 s (m248), par le mot commun des écrans.
+ */
 function Chargement() {
-  const [visible, setVisible] = useState(false)
-  useEffect(() => {
-    const minuterie = setTimeout(() => setVisible(true), 300)
-    return () => clearTimeout(minuterie)
-  }, [])
+  const mot = useMotChargement(TEXTES_PERSONNES.chargement)
   return (
     <p role="status" aria-busy="true" className="py-[18px] text-encre-3">
-      {visible ? TEXTES_PERSONNES.chargement : null}
+      {mot}
     </p>
   )
 }

@@ -74,7 +74,8 @@ export function ApercuMesIndicateurs() {
     occupe.current = true
     try {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
-      if (envoi === 'echec') throw new Error('Réseau coupé (aperçu).')
+      // L'erreur de fetch hors ligne : une autre `Error` serait lue comme un refus inattendu.
+      if (envoi === 'echec') throw new TypeError('Failed to fetch')
       if (envoi === 'limite') throw erreurBase('P0001', LIMITE_EXEMPLE)
       if (envoi === 'motif') throw erreurBase('P0001', MOTIF_EXEMPLE)
       const suggestion = lectures.suggestions.find((possible) => possible.code === code)

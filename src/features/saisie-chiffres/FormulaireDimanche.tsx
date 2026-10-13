@@ -97,11 +97,15 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
     setErreurs(preparation.erreurs)
     if (!sansErreur(preparation.erreurs)) {
       setAucun(false)
+      // Rien ne part : l'échec de l'envoi précédent ne parle plus de ce formulaire.
+      setEchecVu(envoi.echec)
       const premier = premierChampEnErreur(tous, preparation.erreurs)
       if (premier) document.getElementById(premier)?.focus()
       return
     }
     if (preparation.lignes.length === 0) {
+      // Une seule phrase sous le bouton (m066) : l'échec précédent s'efface.
+      setEchecVu(envoi.echec)
       setAucun(true)
       return
     }

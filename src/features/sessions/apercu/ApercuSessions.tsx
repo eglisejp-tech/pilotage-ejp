@@ -56,7 +56,8 @@ function EcranApercu({ vue, echec }: { vue: VueApercuSessions; echec: boolean })
     changer: (avant: DonneesApercu) => { apres: DonneesApercu; resultat: T },
   ) => {
     await attendre()
-    if (echec) throw new Error('Connexion perdue (aperçu).')
+    // L'erreur de fetch hors ligne : une autre `Error` serait lue comme un refus inattendu.
+    if (echec) throw new TypeError('Failed to fetch')
     const { apres, resultat } = changer(courantes.current)
     courantes.current = apres
     setDonnees(apres)

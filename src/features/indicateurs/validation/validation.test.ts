@@ -250,23 +250,33 @@ describe('refus de la base', () => {
     })
   })
 
-  it('un refus inattendu prend le repli, sous les boutons (m270)', () => {
+  it('un refus inattendu prend le repli, sous les boutons, sans fermer la fenêtre (m270)', () => {
     const repli = {
-      ou: 'bouton',
+      ou: 'formulaire',
       message:
         "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
     }
     expect(lireRefusValidation({ code: 'PGRST000', message: 'x' })).toEqual(repli)
     expect(lireRefusValidation({ code: 'P0001', message: 'Un refus inconnu.' })).toEqual(repli)
+    expect(lireRefusValidation({ code: '23505', message: 'duplicate key' })).toEqual(repli)
     expect(lireRefusValidation(null)).toEqual(repli)
   })
 
-  it('connexion expirée et compte désactivé : leurs phrases, sous les boutons (m271, m272)', () => {
+  it('« Valider », sans formulaire : le repli d’une action', () => {
+    expect(
+      lireRefusValidation({ code: '23505', message: 'duplicate key' }, { formulaire: false }),
+    ).toEqual({
+      ou: 'formulaire',
+      message: "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    })
+  })
+
+  it('connexion expirée et compte désactivé : leurs phrases, sans fermer la fenêtre (m271, m272)', () => {
     expect(
       lireRefusValidation({ code: '42501', message: 'Double authentification requise.' }),
-    ).toEqual({ ou: 'bouton', message: 'Votre connexion a expiré. Reconnectez-vous.' })
+    ).toEqual({ ou: 'formulaire', message: 'Votre connexion a expiré. Reconnectez-vous.' })
     expect(lireRefusValidation({ code: '42501', message: 'Compte inactif ou inconnu.' })).toEqual({
-      ou: 'bouton',
+      ou: 'formulaire',
       message: 'Ce compte est désactivé. Contactez EJP Tech.',
     })
   })

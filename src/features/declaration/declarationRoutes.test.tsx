@@ -143,6 +143,62 @@ describe('« Qui utilise l’outil ? » (T56)', () => {
     await waitFor(() => expect(routeur.state.location.pathname).toBe('/journal'))
   })
 
+  describe('refus de declarer_intervenant, par la table de traduction (m270, m271)', () => {
+    async function declarerMarie(erreur: { code: string; message: string }) {
+      const faux = installer('ministere', { declaration: null })
+      faux.rpc.mockResolvedValueOnce({ data: null, error: erreur })
+      afficher('/')
+      expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+      await userEvent.type(screen.getByRole('textbox', { name: 'Votre prénom' }), 'Marie')
+      await userEvent.click(screen.getByRole('button', { name: 'Continuer' }))
+    }
+
+    it('session inconnue (42501) : se reconnecter, pas « La connexion a échoué »', async () => {
+      await declarerMarie({ code: '42501', message: 'Session inconnue : reconnectez-vous.' })
+      expect(
+        await screen.findByText('Votre connexion a expiré. Reconnectez-vous.'),
+      ).toBeInTheDocument()
+      expect(screen.queryByText(/La connexion a échoué/)).toBeNull()
+    })
+
+    it('compte désactivé (42501) : contacter EJP Tech', async () => {
+      await declarerMarie({ code: '42501', message: 'Compte inactif ou inconnu.' })
+      expect(
+        await screen.findByText('Ce compte est désactivé. Contactez EJP Tech.'),
+      ).toBeInTheDocument()
+    })
+
+    it('prénom refusé par la base (P0001) : sous le champ, qui prend le focus', async () => {
+      await declarerMarie({
+        code: 'P0001',
+        message: 'Écrivez seulement votre prénom, en lettres.',
+      })
+      const champ = screen.getByRole('textbox', { name: 'Votre prénom' })
+      await waitFor(() =>
+        expect(champ).toHaveAccessibleDescription(
+          expect.stringContaining('Écrivez seulement votre prénom, en lettres.'),
+        ),
+      )
+      expect(champ).toHaveAttribute('aria-invalid', 'true')
+      expect(champ).toHaveFocus()
+      expect(screen.queryByText(/La connexion a échoué/)).toBeNull()
+    })
+
+    it('un refus inattendu : le repli, pas la phrase de connexion', async () => {
+      await declarerMarie({ code: '23505', message: 'duplicate key value' })
+      expect(
+        await screen.findByText(
+          "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+        ),
+      ).toBeInTheDocument()
+    })
+
+    it('une coupure (code vide de postgrest-js) : « La connexion a échoué. Réessayez. »', async () => {
+      await declarerMarie({ code: '', message: 'TypeError: Failed to fetch' })
+      expect(await screen.findByText('La connexion a échoué. Réessayez.')).toBeInTheDocument()
+    })
+  })
+
   it.each(['berger', 'conseil', 'admin_eglise', 'admin_plateforme'] as const)(
     '%s : jamais l’écran, ni « Vous : » ni « Ce n’est pas moi »',
     async (type) => {

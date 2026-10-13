@@ -54,18 +54,21 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
   const idTitre = useId()
   const [fenetre, setFenetre] = useState(false)
   const [enCours, setEnCours] = useState(false)
-  const [connexionPerdue, setConnexionPerdue] = useState(false)
+  /** Phrase sous la ligne : connexion perdue ou expirée, refus inattendu (la ligne reste). */
+  const [erreurLigne, setErreurLigne] = useState<string | null>(null)
 
   const valider = async () => {
     if (enCours || actions === null) return
     setEnCours(true)
-    setConnexionPerdue(false)
+    setErreurLigne(null)
     try {
       await actions.valider(ligne)
       surFait(TEXTES_A_VALIDER.reussiteValide)
     } catch (erreur) {
-      const lu = lireRefusValidation(erreur)
-      if (lu.ou === 'connexion') setConnexionPerdue(true)
+      // « Valider » n'a pas de formulaire : un refus inattendu dit « L'action n'a pas abouti. ».
+      const lu = lireRefusValidation(erreur, { formulaire: false })
+      if (lu.ou === 'connexion') setErreurLigne(TEXTES_A_VALIDER.erreur)
+      else if (lu.ou === 'formulaire') setErreurLigne(lu.message)
       else surRefus(lu.message)
       setEnCours(false)
     }
@@ -160,7 +163,7 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
           </div>
         ) : null}
       </div>
-      {connexionPerdue ? <ErreurFormulaire message={TEXTES_A_VALIDER.erreur} /> : null}
+      {erreurLigne !== null ? <ErreurFormulaire message={erreurLigne} /> : null}
       {fenetre && actions !== null ? (
         <FenetreRefus
           ministere={ligne.ministere}

@@ -1,4 +1,4 @@
-import { phraseErreur } from '@/data/messagesBase'
+import { lireErreurBase, phraseErreur } from '@/data/messagesBase'
 import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 
 // Lecture d'un refus après « Déclarer », « Enregistrer » ou « Supprimer », par la table de
@@ -16,4 +16,17 @@ import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 export function lireRefusSession(erreur: unknown, connexion: string): string {
   const formulaire = connexion !== TEXTES_SESSIONS.erreurConnexionSuppression
   return phraseErreur(erreur, { connexion, acces: TEXTES_SESSIONS.erreurAcces }, { formulaire })
+}
+
+/**
+ * Refus d'une déclaration : sa phrase, et `date` quand la base refuse la date choisie (session du
+ * même type déjà déclarée ce jour-là, m210), pour la dire sous le champ date (guide, 10.1).
+ */
+export function lireRefusDeclaration(
+  erreur: unknown,
+  connexion: string,
+): { message: string; champ: 'date' | null } {
+  const lue = lireErreurBase(erreur)
+  const champ = lue.genre === 'message' && lue.champ === 'date' ? 'date' : null
+  return { message: lireRefusSession(erreur, connexion), champ }
 }

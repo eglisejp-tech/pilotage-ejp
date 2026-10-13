@@ -14,7 +14,6 @@ import {
 import type { EtatSimule } from '@/features/indicateurs/configuration/apercu/simulation'
 import { invaliderConfiguration } from '@/features/indicateurs/configuration/cles'
 import type { EcrituresIndicateurs } from '@/features/indicateurs/configuration/panneaux/ecritures'
-import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 
 const ATTENTE_SIMULEE_MS = 150
 const REFUS_EXEMPLE = 'Cette fiche a déjà « Publications ».'
@@ -37,7 +36,8 @@ export function useEcrituresSimulees(
   return useMemo((): EcrituresIndicateurs => {
     const attendre = async () => {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
-      if (envoi === 'echec') throw new Error(TEXTES_CONFIGURATION.erreur)
+      // L'erreur de fetch hors ligne : une autre `Error` serait lue comme un refus inattendu.
+      if (envoi === 'echec') throw new TypeError('Failed to fetch')
       if (envoi === 'refus') {
         throw Object.assign(new Error(REFUS_EXEMPLE), { code: 'P0001' })
       }

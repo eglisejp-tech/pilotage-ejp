@@ -69,18 +69,24 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await expect(page.getByText('Indicateur ajouté.')).toHaveCount(0)
   })
 
-  test('un doublon est refusé par la base : son message reste sous le bouton, le texte est gardé', async ({
+  test('un doublon est refusé par la base : son message reste sous le champ, une fois, le texte est gardé', async ({
     page,
   }) => {
     await ouvrir(page)
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Publications', 'Publications mises en ligne.', /Chaque mois/)
-    // Pendant la frappe et après l'envoi, la même phrase de la table de traduction (m233).
+    // Pendant la frappe et après l'envoi, la même phrase de la table de traduction (m233), dite
+    // une seule fois, sous le champ.
     const doublon = 'Cette fiche a déjà un indicateur « Publications ». Choisissez un autre nom.'
-    await expect(page.getByText(doublon).first()).toBeVisible()
+    await expect(page.getByText(doublon)).toHaveCount(1)
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByRole('alert')).toHaveText(doublon)
-    await expect(page.getByLabel('Ce que vous comptez')).toHaveValue('Publications')
+    const nom = page.getByLabel('Ce que vous comptez')
+    await expect(nom).toBeFocused()
+    await expect(nom).toHaveAttribute('aria-invalid', 'true')
+    await expect(nom).toHaveAccessibleDescription(new RegExp(doublon.replace(/[.()]/g, '\\$&')))
+    await expect(page.getByText(doublon)).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(nom).toHaveValue('Publications')
   })
 
   test('le domaine sensible impose « chaque mois » et un compte simple', async ({ page }) => {
@@ -101,9 +107,12 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Annonces', 'Annonces faites aux enfants.', /Chaque mois/)
     await expect(page.getByText(/Ce chiffre semble sensible/)).toBeVisible()
-    // Sans confirmation, la base refuse l'envoi et le dit sous le bouton.
+    // Sans confirmation, la base refuse l'envoi : l'avertissement, déjà sous la case, n'est pas
+    // répété sous le bouton, et la case « Domaine sensible » prend le focus (lot B, m233).
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByRole('alert')).toContainText('Ce chiffre semble sensible')
+    await expect(page.getByRole('checkbox', { name: /Domaine sensible/ })).toBeFocused()
+    await expect(page.getByText(/Ce chiffre semble sensible/)).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
     await page.getByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }).check()
     await bouton(page, "Ajouter l'indicateur").click()
     await expect(page.getByText('Indicateur ajouté.')).toBeVisible()

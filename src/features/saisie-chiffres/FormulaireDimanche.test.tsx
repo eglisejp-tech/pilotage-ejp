@@ -218,6 +218,25 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(enregistrer).not.toHaveBeenCalled()
   })
 
+  it('après une coupure, tout vider puis renvoyer : une seule phrase sous le bouton (m066)', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = afficher(
+      'matin',
+      vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    )
+    const nuit = screen.getByLabelText('Présents la nuit de prière', { exact: true })
+    await utilisateur.type(nuit, '12')
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(await screen.findByRole('alert')).toHaveTextContent(/La connexion a échoué/)
+    await utilisateur.clear(nuit)
+    await utilisateur.click(enregistrerLesChiffres())
+    const alertes = await screen.findAllByRole('alert')
+    expect(alertes).toHaveLength(1)
+    expect(alertes[0]).toHaveTextContent('Saisissez au moins un chiffre.')
+    expect(screen.queryByText(/La connexion a échoué/)).toBeNull()
+    expect(enregistrer).toHaveBeenCalledTimes(1)
+  })
+
   it('un refus de la couche data (Zod) n’est pas une coupure : sa consigne s’affiche (m066)', async () => {
     const utilisateur = userEvent.setup()
     const erreur = z
@@ -256,5 +275,50 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(
       screen.queryByText('Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'),
     ).toBeNull()
+  })
+
+  it('le refus de « Dont en FIJ » prend le focus, et disparaît quand les actifs changent (m068)', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(
+      null,
+      vi.fn(() =>
+        Promise.reject({
+          code: 'P0001',
+          message: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+        }),
+      ),
+    )
+    const phrase = "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres."
+    await utilisateur.type(service(), '8')
+    await utilisateur.click(enregistrerLesChiffres())
+    const enFij = screen.getByLabelText('Dont en FIJ', { exact: true })
+    await screen.findByText(phrase)
+    await vi.waitFor(() => expect(enFij).toHaveFocus())
+    // Aucune seconde phrase sous le bouton.
+    expect(screen.queryByRole('alert')).toBeNull()
+    await utilisateur.type(screen.getByLabelText('STARs actifs', { exact: true }), '0')
+    expect(screen.queryByText(phrase)).toBeNull()
+    expect(enFij).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('le refus de « Dont en FIJ » disparaît aussi quand ce champ change (m068)', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(
+      null,
+      vi.fn(() =>
+        Promise.reject({
+          code: 'P0001',
+          message: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+        }),
+      ),
+    )
+    const phrase = "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres."
+    await utilisateur.type(service(), '8')
+    await utilisateur.click(enregistrerLesChiffres())
+    await screen.findByText(phrase)
+    const enFij = screen.getByLabelText('Dont en FIJ', { exact: true })
+    await utilisateur.clear(enFij)
+    await utilisateur.type(enFij, '9')
+    expect(screen.queryByText(phrase)).toBeNull()
   })
 })

@@ -18,6 +18,7 @@ import {
 } from '@/features/mes-indicateurs/textes'
 import { TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
+import { MESSAGES_PRENOM } from '@/lib/metier/declaration'
 
 const refus = (message: string, code = 'P0001') => ({ code, message, details: null, hint: null })
 
@@ -43,8 +44,20 @@ describe('lireErreurBase : le code décide d’abord', () => {
     expect(lireErreurBase(fetchFonction)).toEqual({ genre: 'reseau' })
   })
 
-  it('une `Error` sans code, levée dans le navigateur : aucune réponse, réseau (guide, 10.11)', () => {
-    expect(lireErreurBase(new Error('Connexion perdue.'))).toEqual({ genre: 'reseau' })
+  it('une autre `Error` sans code (réponse inattendue, bogue) : le repli, pas la connexion (m256, m270)', () => {
+    // indicateursEcriture lève « Limites absentes. » quand le serveur répond sans ligne : la
+    // connexion a marché, la phrase de connexion tromperait.
+    for (const erreur of [new Error('Limites absentes.'), new RangeError('Curseur invalide')]) {
+      expect(lireErreurBase(erreur)).toEqual({
+        genre: 'message',
+        nature: 'repli',
+        message: MESSAGES_COMMUNS.repliSaisie,
+        champ: null,
+      })
+    }
+    expect(lireErreurBase(new Error('Limites absentes.'), { formulaire: false })).toMatchObject({
+      message: MESSAGES_COMMUNS.repliAction,
+    })
   })
 
   it('un corps sans code qui n’est pas une `Error` (passerelle en panne) : le repli', () => {
@@ -79,6 +92,28 @@ describe('lireErreurBase : le code décide d’abord', () => {
       nature: 'expiree',
       message: MESSAGES_COMMUNS.connexionExpiree,
     })
+  })
+
+  it('42501 « Session inconnue : reconnectez-vous. » (prénom, T56) : connexion expirée (m271)', () => {
+    expect(lireErreurBase(refus('Session inconnue : reconnectez-vous.', '42501'))).toMatchObject({
+      nature: 'expiree',
+      message: MESSAGES_COMMUNS.connexionExpiree,
+    })
+  })
+
+  it('refus du prénom (T56) : la phrase du contrôle avant l’envoi, sous le champ prénom', () => {
+    for (const message of Object.values(MESSAGES_PRENOM)) {
+      expect(lireErreurBase(refus(message))).toEqual({
+        genre: 'message',
+        nature: 'refus',
+        message,
+        champ: 'prenom',
+      })
+    }
+    expect(lireErreurBase(refus('Seul EJP Tech efface un prénom.', '42501'))).toEqual({
+      genre: 'acces',
+    })
+    expect(lireErreurBase(refus('Motif inconnu.'))).toMatchObject({ nature: 'repli' })
   })
 
   it('42501 « Compte inactif ou inconnu. » : compte désactivé, contacter EJP Tech (m272)', () => {
@@ -118,10 +153,12 @@ describe('lireErreurBase : le code décide d’abord', () => {
       message: "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres.",
       champ: 'en_fij',
     })
+    // Le dimanche vient de l'adresse : aucun champ de date, la phrase va sous le bouton.
     expect(
       lireErreurBase(refus("La date doit être un dimanche passé ou aujourd'hui.")),
     ).toMatchObject({
       message: "Choisissez un dimanche passé ou celui d'aujourd'hui.",
+      champ: null,
     })
     expect(lireErreurBase(refus('Ce chiffre se calcule : il ne se saisit pas.'))).toMatchObject({
       message: 'Ce chiffre se calcule seul. Rechargez la page, puis réessayez.',
@@ -257,6 +294,9 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
       TEXTES_SIGNALEMENT.dateRefuseeMiseAJour,
     ],
     ['Saisissez au moins un chiffre.', TEXTES_CHIFFRES.aucunChiffre],
+    ['Indiquez votre prénom.', MESSAGES_PRENOM.vide],
+    ['30 caractères au plus.', MESSAGES_PRENOM.long],
+    ['Écrivez seulement votre prénom, en lettres.', MESSAGES_PRENOM.lettres],
   ])('« %s »', (base, avantEnvoi) => {
     expect(phrase(base)).toBe(avantEnvoi)
   })

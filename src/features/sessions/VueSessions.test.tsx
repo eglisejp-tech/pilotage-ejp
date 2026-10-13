@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
@@ -117,7 +117,7 @@ describe('VueSessions (écran 14)', () => {
     expect(actions.declarer).not.toHaveBeenCalled()
   })
 
-  it('dit sous le bouton le refus de la base, traduit, et garde les valeurs (m210)', async () => {
+  it('dit sous le champ date la session déjà déclarée, traduite, et garde les valeurs (m210)', async () => {
     const actions = actionsFausses()
     actions.declarer.mockRejectedValueOnce({
       code: 'P0001',
@@ -127,10 +127,29 @@ describe('VueSessions (écran 14)', () => {
     const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
     await userEvent.click(within(colonne).getByRole('checkbox', { name: 'Social' }))
     await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
-    expect(await within(colonne).findByRole('alert')).toHaveTextContent(
-      "Une session Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date.",
-    )
+    const phrase =
+      "Une session Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date."
+    const date = within(colonne).getByLabelText('Date')
+    await waitFor(() => expect(date).toHaveFocus())
+    expect(date).toHaveAttribute('aria-invalid', 'true')
+    expect(date).toHaveAccessibleDescription(phrase)
+    expect(within(colonne).queryByRole('alert')).toBeNull()
     expect(within(colonne).getByText('7 sur 8')).toBeInTheDocument()
+    // Une autre date efface le refus : il ne parle plus de la date choisie.
+    fireEvent.change(date, { target: { value: '2026-10-17' } })
+    expect(date).not.toHaveAttribute('aria-invalid')
+    expect(within(colonne).queryByText(phrase)).toBeNull()
+  })
+
+  it('dit sous le bouton un refus qui ne porte pas sur la date', async () => {
+    const actions = actionsFausses()
+    actions.declarer.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value' })
+    afficher(donnees(true), actions)
+    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    expect(await within(colonne).findByRole('alert')).toHaveTextContent(
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    )
   })
 
   it('modifie les ministères attendus : le panneau se préremplit puis enregistre', async () => {

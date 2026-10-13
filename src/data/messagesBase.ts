@@ -6,9 +6,10 @@
 // échoue si un message n'est ni dans la table ni dans la liste des garde-fous laissés au repli.
 //
 // Le code décide d'abord, le texte ensuite :
-// - pas de code (fetch rejeté, hors ligne, `Error` levée dans le navigateur) : `reseau`, l'écran
-//   dit sa phrase de connexion ; un objet sans code qui n'est pas une `Error` (corps illisible
-//   d'une passerelle en panne) prend le repli ;
+// - pas de code et une erreur de fetch (code vide de postgrest-js, TypeError de fetch, erreur de
+//   fetch des clients Auth et Edge Functions) : `reseau`, l'écran dit sa phrase de connexion ;
+//   toute autre erreur sans code (`Error` levée par le code, corps illisible d'une passerelle en
+//   panne) n'est pas une coupure : elle prend le repli ;
 // - délai de 10 s dépassé : `delai`, l'écran dit « peut-être fait » pour une création ;
 // - jeton expiré ou refusé (PGRST301 à PGRST303) : connexion expirée ;
 // - 42501 : « Double authentification requise. » donne connexion expirée, « Compte inactif ou
@@ -56,6 +57,7 @@ export type ChampRefus =
   | 'precision'
   | 'repartition'
   | 'en_fij'
+  | 'prenom'
 
 /**
  * Une entrée de la table. `texte` absent : la phrase de la base est déjà écrite pour la personne
@@ -98,9 +100,9 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     { champ: 'nom' },
 
   // Chiffres du dimanche et du mois (controler_mesure_le, verifier_fij_actifs, saisir_chiffres_mois).
+  // Le dimanche vient de l'adresse, sans champ de date : la phrase se dit sous le bouton.
   "La date doit être un dimanche passé ou aujourd'hui.": {
     texte: "Choisissez un dimanche passé ou celui d'aujourd'hui.",
-    champ: 'date',
   },
   'Ce chiffre se calcule : il ne se saisit pas.': {
     texte: 'Ce chiffre se calcule seul. Rechargez la page, puis réessayez.',
@@ -198,6 +200,13 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   'Version des conditions inconnue.': {
     texte: 'Les conditions ont changé. Rechargez la page, puis acceptez-les.',
   },
+
+  // Prénom de la personne qui utilise un compte partagé (declarer_intervenant, effacer_prenom ;
+  // T56). Les mêmes textes que le contrôle avant l'envoi (`MESSAGES_PRENOM`, guide 10.9).
+  'Indiquez votre prénom.': { champ: 'prenom' },
+  '30 caractères au plus.': { champ: 'prenom' },
+  'Écrivez seulement votre prénom, en lettres.': { champ: 'prenom' },
+  'Prénom introuvable ou déjà effacé.': {},
 
   // Indicateurs : création, calculs, suggestions (creer_indicateur, creer_calcul,
   // ajouter_suggestion, m233).
@@ -321,6 +330,8 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Une répartition demande de 3 à 6 catégories en cours dans la liste de l'indicateur.": REPLI,
   "Une répartition reprend toutes les catégories en cours de la liste de l'indicateur, et elles seules.":
     REPLI,
+  // Le motif d'une déclaration de prénom est fixé par l'interface (T56).
+  'Motif inconnu.': REPLI,
   // Codes des fonctions serveur des comptes : seules les Edge Functions les reçoivent et les
   // traduisent (`supabase/functions/_shared/base.ts`, puis MESSAGES_ERREURS_COMPTES).
   adresse_deja_utilisee: REPLI,
@@ -345,6 +356,8 @@ const REFUS_DE_DROIT: Readonly<
   Record<string, 'expiree' | 'desactive' | 'acces' | typeof REPLI | Traduction>
 > = {
   'Double authentification requise.': 'expiree',
+  // Jeton sans session (declarer_intervenant, T56) : se reconnecter.
+  'Session inconnue : reconnectez-vous.': 'expiree',
   'Compte inactif ou inconnu.': 'desactive',
   "Cet élément n'existe pas ou vous n'y avez pas accès.": 'acces',
   "Ce point n'existe pas ou vous n'y avez pas accès.": 'acces',
@@ -353,6 +366,8 @@ const REFUS_DE_DROIT: Readonly<
   'Seul EJP Tech peut relire un texte.': 'acces',
   'Seul un compte de ministère peut ajouter un événement.': 'acces',
   "Seule l'administration de l'église déclare une session.": 'acces',
+  'Seul un compte de ministère indique un prénom.': 'acces',
+  'Seul EJP Tech efface un prénom.': 'acces',
   'Seul un compte de ministère peut créer un point.': {},
   // Garde-fous de la base (inaltérabilité, indicateurs, catégories) : le repli (m274).
   "Ce changement d'état n'est pas permis.": REPLI,
@@ -368,6 +383,8 @@ const REFUS_DE_DROIT: Readonly<
   'Un indicateur retiré ne change plus.': REPLI,
   "Une catégorie qui sert dans une répartition ne s'efface pas.": REPLI,
   'Une suggestion garde le texte du catalogue.': REPLI,
+  // Jour d'utilisation noté sans déclaration (forcer_passage, T56) : l'appel est silencieux.
+  "Indiquez d'abord votre prénom.": REPLI,
   // Fonctions serveur des comptes, appelées par les Edge Functions seules.
   appelant_non_autorise: REPLI,
   session_revoquee: REPLI,
@@ -451,6 +468,7 @@ const CHAMPS: ReadonlySet<string> = new Set<ChampRefus>([
   'precision',
   'repartition',
   'en_fij',
+  'prenom',
 ])
 
 /** Nom d'un champ de schéma Zod vers le champ de la table (« pourquoi », « motif » : un texte). */
@@ -506,17 +524,13 @@ export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): E
 
   if (code === undefined || code === '') {
     if (estDelaiDepasse(erreur)) return { genre: 'delai' }
-    // Pas de code : aucune réponse de la base (guide, 10.11). postgrest-js rend `code: ''` quand
-    // fetch échoue ; fetch lève une TypeError ; une erreur levée dans le navigateur est une
-    // `Error` sans code. Seul un objet sans code qui n'est pas une `Error` vient d'une réponse :
-    // un corps que le serveur n'a pas su donner en JSON (passerelle en panne, 502), donc le repli.
+    // Pas de code : aucune réponse de la base (guide, 10.11), seulement quand fetch a échoué.
+    // postgrest-js rend alors `code: ''` ; fetch lève une TypeError ; Auth et les Edge Functions
+    // lèvent leur `...FetchError`. Une autre `Error` sans code (« Limites absentes. », bogue) ou un
+    // corps que le serveur n'a pas su donner en JSON (passerelle en panne, 502) n'est pas une
+    // coupure : réessayer la connexion n'y changerait rien, donc le repli.
     const nom = lireChamp(erreur, 'name') ?? ''
-    if (
-      code === '' ||
-      erreur instanceof Error ||
-      ERREUR_FETCH.test(nom) ||
-      ERREUR_FETCH.test(message)
-    ) {
+    if (code === '' || ERREUR_FETCH.test(nom) || ERREUR_FETCH.test(message)) {
       return { genre: 'reseau' }
     }
     return repli

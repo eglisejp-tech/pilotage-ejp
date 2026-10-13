@@ -48,8 +48,12 @@ export async function reinitialiserDoubleAuthentification(
   try {
     await couperPuisJournaliser(cible, parametres, appelant)
   } catch (erreur) {
-    // Le mot de passe est déjà remplacé : une panne ici laisse le compte bloqué (m194).
-    if (erreur instanceof ErreurFonction && erreur.statut !== 500) throw erreur
+    // Le mot de passe est déjà remplacé : une panne ici laisse le compte bloqué (m194). Un refus
+    // qui vise l'appelant (session révoquée, accès refusé) ou la cible (désactivée entre-temps)
+    // garde son code ; un conflit d'écriture (23505), comme une panne, dit de relancer l'action.
+    if (erreur instanceof ErreurFonction && erreur.statut !== 500 && erreur.code !== 'conflit') {
+      throw erreur
+    }
     if (!(erreur instanceof ErreurFonction)) consigner(FONCTION, 'apres_mot_de_passe')
     throw new ErreurFonction(500, 'activation_incomplete')
   }

@@ -181,6 +181,17 @@ test.describe('la fenêtre', () => {
     expect(boiteAlerte?.y ?? 0).toBeLessThan(boiteAnnuler?.y ?? 0)
   })
 
+  test('mentions changées entre-temps : la phrase traduite dit de fermer la fenêtre (m157)', async ({
+    page,
+  }) => {
+    const boite = await ouvrirFenetre(page, 'profil=ministere&envoi=mentions-changees')
+    await basculer(page, boite, 'Social')
+    await boite.getByRole('button', { name: 'Enregistrer les mentions' }).click()
+    await expect(boite.getByRole('alert')).toHaveText(
+      'Les mentions de ce point viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',
+    )
+  })
+
   test('lecture des ministères en échec : « Réessayer » ; lente : « Chargement »', async ({
     page,
   }) => {

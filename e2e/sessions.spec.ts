@@ -92,7 +92,7 @@ test.describe('Sessions (administration), aperçu', () => {
     ).toBeVisible()
   })
 
-  test('une session déjà déclarée est refusée sous le bouton, les valeurs restent', async ({
+  test('une session déjà déclarée est refusée sous le champ date, les valeurs restent', async ({
     page,
   }) => {
     await ouvrir(page)
@@ -100,8 +100,11 @@ test.describe('Sessions (administration), aperçu', () => {
     await formulaire.locator('label').filter({ hasText: 'Anti-Dispersion' }).click()
     await formulaire.getByRole('checkbox', { name: 'Social' }).uncheck()
     await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
-    // Le refus de la base, traduit (m210).
-    await expect(formulaire.getByRole('alert')).toHaveText(
+    // Le refus de la base, traduit (m210), sous le champ date qui prend le focus.
+    const date = formulaire.getByLabel('Date', { exact: true })
+    await expect(date).toBeFocused()
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(date).toHaveAccessibleDescription(
       'Une session Anti-Dispersion existe déjà le samedi 10 octobre. Choisissez une autre date.',
     )
     await expect(formulaire.getByText('7 sur 8')).toBeVisible()

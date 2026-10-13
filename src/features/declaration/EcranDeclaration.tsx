@@ -25,6 +25,11 @@ export type ProprietesEcranDeclaration = {
   enCours?: boolean
   /** Message du bandeau (échec de l'enregistrement), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /**
+   * Refus du prénom par la base, remis à undefined à chaque nouvel envoi : il se dit sous le
+   * champ, qui prend le focus, et s'efface quand le prénom change.
+   */
+  erreurPrenom?: string
 }
 
 /**
@@ -40,11 +45,13 @@ export function EcranDeclaration({
   onCancel,
   enCours = false,
   erreur,
+  erreurPrenom,
 }: ProprietesEcranDeclaration) {
   useTitrePage(TEXTES_DECLARATION.titre)
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schemaDeclaration),
@@ -55,6 +62,11 @@ export function EcranDeclaration({
   useEffect(() => {
     if (erreur) bandeau.current?.focus()
   }, [erreur])
+
+  // Après un envoi, le formulaire se revalide à chaque frappe : le refus s'efface seul.
+  useEffect(() => {
+    if (erreurPrenom) setError('prenom', { message: erreurPrenom }, { shouldFocus: true })
+  }, [erreurPrenom, setError])
 
   const envoyer = handleSubmit(({ prenom }) => {
     if (!enCours) onDeclare(prenom)
