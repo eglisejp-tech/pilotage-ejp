@@ -61,11 +61,12 @@ function scenarioDe(
 }
 
 /** Session du profil et lignes du jeu d'exemple pour chaque lecture de « Cette semaine ». */
-function installerVueDeLEglise(type: TypeCompte) {
+function installerVueDeLEglise(type: TypeCompte, supplement: Record<string, unknown[]> = {}) {
   const lectures = lecturesExemple()
   return installer({
     ...scenarioDe(type),
     lignes: {
+      ...supplement,
       v_semaine: [lectures.semaine],
       indicateur: lectures.indicateurs,
       v_total_dimanche: lectures.totauxDimanche,
@@ -209,7 +210,7 @@ describe('routes', () => {
   })
 
   it.each<[TypeCompte, string, string[]]>([
-    ['ministere', 'Cette semaine', ['Cette semaine', 'Ma fiche', 'Mes points', 'Mon journal']],
+    ['ministere', 'Ma semaine', ['Ma semaine', 'Ma fiche', 'Mes points', 'Mon journal']],
     ['berger', 'Cette semaine', ['Cette semaine', 'Ministères', "Points d'attention", 'Journal']],
     ['conseil', 'Cette semaine', ['Cette semaine', 'Ministères', "Points d'attention", 'Journal']],
     [
@@ -279,6 +280,53 @@ describe('routes', () => {
     expect(document.title).toBe('Cette semaine, Pilotage EJP')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'À décider' })).toBeInTheDocument()
+  })
+
+  it('ministère sur « / » : « Ma semaine », sans les lectures de la vue du berger (T57)', async () => {
+    // Le ministère est attendu à la dernière session du jeu (s-b4) : ses présences sont lues.
+    const faux = installerVueDeLEglise('ministere', {
+      session_attendu: [{ session_id: 's-b4', ministere_id: 'm-communication' }],
+    })
+    const routeur = afficher('/')
+    await waitFor(() => expect(document.title).toBe('Ma semaine, Pilotage EJP'))
+    expect(routeur.state.location.pathname).toBe('/')
+    expect(
+      await screen.findByRole('heading', { level: 2, name: 'Vos chiffres de la semaine' }),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(faux.tables).toContain('v_total_dimanche'))
+    // Ni le tableau des ministères, ni les écarts de l'église, ni les totaux « à ce jour », ni le
+    // pourcentage FIJ de l'église : ces lectures sont celles du berger.
+    for (const table of [
+      'v_tableau_ministeres',
+      'v_ecart_dimanche',
+      'v_ecart_session',
+      'v_total_a_ce_jour',
+      'v_pourcentage_fij',
+    ]) {
+      expect(faux.tables, table).not.toContain(table)
+    }
+    // Ni l'apport de chaque ministère : ses présences seulement, filtrées sur son ministère.
+    await waitFor(() => expect(faux.tables).toContain('v_participation_courante'))
+    const presences = faux.filtres.filter((filtre) => filtre.table === 'v_participation_courante')
+    expect(presences).toContainEqual({
+      table: 'v_participation_courante',
+      operateur: 'eq',
+      colonne: 'ministere_id',
+      valeur: 'm-communication',
+    })
+    expect(faux.tables.filter((table) => table === 'v_participation_courante')).toHaveLength(
+      presences.filter((filtre) => filtre.colonne === 'ministere_id').length,
+    )
+    // Ni les points ouverts de l'église (v_point sans filtre de ministère, hors « traité »).
+    expect(
+      faux.filtres.filter((filtre) => filtre.table === 'v_point' && filtre.operateur === 'neq'),
+    ).toEqual([])
+    // Aucune lecture des sessions ne demande les noms des ministères qui n'ont pas saisi.
+    const sessions = faux.selections.filter((lecture) => lecture.table === 'v_session_completude')
+    expect(sessions.length).toBeGreaterThan(0)
+    for (const lecture of sessions) expect(lecture.colonnes).not.toContain('manquants')
+    expect(screen.queryByRole('heading', { name: 'À décider' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Les ministères' })).not.toBeInTheDocument()
   })
 
   it('EJP Tech sur « / » : la vue du berger, en lecture seule, sans aucun bouton d’action (T29)', async () => {

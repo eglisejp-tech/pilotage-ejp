@@ -1,5 +1,4 @@
 import { useSearchParams } from 'react-router'
-import { useAccueilMinistere } from '@/features/accueil-ministere/useAccueilMinistere'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { ChargementCetteSemaine } from '@/features/cette-semaine/ChargementCetteSemaine'
 import { typeSessionDeLAdresse } from '@/features/cette-semaine/lecteur'
@@ -8,6 +7,7 @@ import type { Lecteur } from '@/features/cette-semaine/types'
 import { useCetteSemaine } from '@/features/cette-semaine/useCetteSemaine'
 import { VueCetteSemaine } from '@/features/cette-semaine/VueCetteSemaine'
 import { ErreurDePage } from '@/pages/ErreurDePage'
+import { PageMaSemaine } from '@/pages/PageMaSemaine'
 
 type Proprietes = {
   /** Stable d'un rendu à l'autre (PageApplication le mémorise). */
@@ -15,41 +15,38 @@ type Proprietes = {
 }
 
 /**
- * Accueil « / » du ministère, du berger, du conseil et de l'administration de l'église (BRIEF
- * section 9). `?session=` choisit le type de la session affichée (T20). Le ministère a en plus
- * l'ouverture de 07 (phrase de ce qu'il reste à faire, boutons, « Vos saisies », « Vos points »),
- * lue par `useAccueilMinistere` ; les autres profils ne la lisent pas. Trois états : le
- * chargement (titres tout de suite, « Chargement » après 300 ms), l'erreur de page avec
- * « Réessayer » (échec ou 10 s sans réponse, de la vue ou de l'accueil), puis la vue. Titre :
- * « Cette semaine, Pilotage EJP ».
+ * Accueil « / » (BRIEF section 9). Un compte de ministère a « Ma semaine » (`PageMaSemaine`,
+ * décision T57) : ses propres chiffres, sans les lectures de la vue du berger. Le berger, le
+ * conseil, l'administration de l'église et EJP Tech ont « Cette semaine ».
  */
 export function PageCetteSemaine({ lecteur }: Proprietes) {
+  if (lecteur.profil === 'ministere') return <PageMaSemaine ministereId={lecteur.ministereId} />
+  return <PageEglise lecteur={lecteur} />
+}
+
+/**
+ * « Cette semaine » de l'église, pour le berger, le conseil, l'administration et EJP Tech.
+ * `?session=` choisit le type de la session affichée (T20). Trois états : le chargement (titres
+ * tout de suite, « Chargement » après 300 ms), l'erreur de page avec « Réessayer » (échec ou 10 s
+ * sans réponse), puis la vue. Titre : « Cette semaine, Pilotage EJP ».
+ */
+function PageEglise({ lecteur }: Proprietes) {
   useTitrePage('Cette semaine')
   const [parametres] = useSearchParams()
   const resultat = useCetteSemaine(lecteur, typeSessionDeLAdresse(parametres.get('session')))
-  const accueil = useAccueilMinistere(lecteur.profil === 'ministere' ? lecteur.ministereId : null)
 
-  if (resultat.erreur || accueil.etat === 'erreur') {
-    const reessayer = () => {
-      if (resultat.erreur) resultat.reessayer()
-      if (accueil.etat === 'erreur') accueil.reessayer()
-    }
+  if (resultat.erreur) {
     return (
       <>
         <h1 className="sr-only">Cette semaine</h1>
         <ErreurDePage
           message={TEXTES_VIDES.page.erreur}
           libelleBouton={TEXTES_VIDES.page.reessayer}
-          onReessayer={reessayer}
+          onReessayer={resultat.reessayer}
         />
       </>
     )
   }
-  if (resultat.donnees && accueil.etat === 'pret') {
-    return <VueCetteSemaine donnees={resultat.donnees} accueil={accueil.donnees} />
-  }
-  if (resultat.donnees && accueil.etat === 'sans_objet') {
-    return <VueCetteSemaine donnees={resultat.donnees} />
-  }
+  if (resultat.donnees) return <VueCetteSemaine donnees={resultat.donnees} />
   return <ChargementCetteSemaine profil={lecteur.profil} />
 }

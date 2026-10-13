@@ -95,6 +95,27 @@ export async function lireSessionsPassees(): Promise<LigneVue<'v_session_complet
   return data
 }
 
+/** Une session passée sans les noms des ministères qui n'ont pas saisi (jamais `manquants`). */
+export type SessionTotaux = Pick<
+  LigneVue<'v_session_completude'>,
+  'session_id' | 'type' | 'date' | 'intitule' | 'nb_attendus' | 'nb_saisis' | 'total'
+>
+
+/**
+ * Sessions passées avec leurs totaux et leur complétude, sans la colonne `manquants` : c'est la
+ * lecture d'un compte de ministère (« Ma semaine », accueil), qui ne reçoit jamais le nom d'un
+ * autre ministère. La vue du berger lit `lireSessionsPassees`, qui les porte.
+ */
+export async function lireTotauxSessionsPassees(): Promise<SessionTotaux[]> {
+  const { data, error } = await supabase()
+    .from('v_session_completude')
+    .select('session_id, type, date, intitule, nb_attendus, nb_saisis, total')
+    .eq('a_eu_lieu', true)
+    .order('date', { ascending: false })
+  if (error) throw error
+  return data
+}
+
 /** Écarts à périmètre égal entre une session et la précédente du même type. */
 export async function lireEcartsSessions(): Promise<LigneVue<'v_ecart_session'>[]> {
   const { data, error } = await supabase()

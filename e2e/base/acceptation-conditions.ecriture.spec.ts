@@ -75,7 +75,7 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await page.getByRole('banner').getByRole('button', { name: 'Se déconnecter' }).click()
   await expect(page).toHaveURL(/\/connexion/)
   await seConnecter(page, COMPTE_CONDITIONS.email)
-  await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
+  await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
   await expect(page).toHaveURL((url) => url.pathname === '/')
   expect(await lireMesAcceptations(page)).toHaveLength(1)
 })

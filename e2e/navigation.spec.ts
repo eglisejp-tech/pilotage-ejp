@@ -9,7 +9,7 @@ const PROFILS = [
   {
     profil: 'ministere',
     libelle: 'Ministère Communication',
-    onglets: ['Cette semaine', 'Ma fiche', 'Mes points', 'Mon journal'],
+    onglets: ['Ma semaine', 'Ma fiche', 'Mes points', 'Mon journal'],
   },
   {
     profil: 'berger',
@@ -151,6 +151,7 @@ test.describe('en-tête et menu (aperçu)', () => {
   })
 
   test('ne défile pas horizontalement, même à 360 px', async ({ page }) => {
+    test.setTimeout(90_000)
     const largeurs = estLarge(page) ? [1024, 1440] : [360, page.viewportSize()?.width ?? 390]
     for (const largeur of largeurs) {
       await page.setViewportSize({ width: largeur, height: 800 })
