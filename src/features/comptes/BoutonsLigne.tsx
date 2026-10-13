@@ -26,7 +26,12 @@ interface Props {
  */
 export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, moi }: Props) {
   if (moi != null && ligne.userId === moi) {
-    return <p className="text-sm text-encre-3">{TEXTES_COMPTES.votreCompte}</p>
+    // Dans le tableau, à droite, à la place des boutons des autres lignes.
+    return (
+      <p className={cn('text-sm text-encre-3', !pleineLargeur && 'text-right')}>
+        {TEXTES_COMPTES.votreCompte}
+      </p>
+    )
   }
   const actions = actionsDeLaLigne(ligne)
   return (
