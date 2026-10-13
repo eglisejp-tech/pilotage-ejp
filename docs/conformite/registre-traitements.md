@@ -120,15 +120,16 @@ Code ne lit pas la base (T52).
 
 ### Durées de conservation
 
-| Données                                 | Durée                                                                                                                             |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Comptes, saisies, historique et journal | Toute la vie de l'outil, puis suppression à son arrêt, après l'export final remis à la coordination                               |
-| Compte désactivé                        | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                                                       |
-| Nom et photo du profil Google           | Gardés avec le compte, jamais affichés, supprimés avec lui                                                                        |
-| Journaux techniques (adresses IP)       | Selon les durées de Supabase et de Netlify, au plus 1 an                                                                          |
-| Sauvegardes de la base                  | Export chiffré chaque semaine, 4 gardés. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus (T52) |
-| Copies des emails envoyés               | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil                                             |
-| Export final                            | À compléter par la coordination : durée de conservation de l'export et lieu où il est gardé                                       |
+| Données                                      | Durée                                                                                                                                                                                                                  |
+| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Comptes, saisies, historique et journal      | Toute la vie de l'outil, puis suppression à son arrêt, après l'export final remis à la coordination                                                                                                                    |
+| Compte désactivé                             | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                                                                                                                                            |
+| Nom et photo du profil Google                | Gardés avec le compte, jamais affichés, supprimés avec lui                                                                                                                                                             |
+| Journaux techniques (adresses IP)            | Selon les durées de Supabase et de Netlify, au plus 1 an                                                                                                                                                               |
+| Sauvegardes de la base                       | Export chiffré chaque semaine, 4 gardés. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus (T52)                                                                                      |
+| Copies des emails envoyés                    | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil                                                                                                                                  |
+| Prénoms déclarés sur un compte partagé (T56) | 12 mois, puis remplacés par « [prénom effacé] » (EJP Tech, chaque mois). 4 semaines au plus dans les sauvegardes. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination (fiche 7) |
+| Export final                                 | À compléter par la coordination : durée de conservation de l'export et lieu où il est gardé                                                                                                                            |
 
 L'arrêt de l'outil est décidé par la coordination et annoncé au moins une semaine avant (P13).
 Ensuite : export final remis à la coordination, suppression des projets et des comptes de service,
@@ -416,6 +417,9 @@ archivage du dépôt du code.
   - le berger et le conseil lisent les lignes de relecture et de masquage d'une précision (T45) ;
     l'heure exacte d'une saisie de chiffres, sensibles compris, reste lisible, sans dire ce que la
     saisie contient (T46) ;
+  - EJP Tech lit aussi le prénom déclaré lié à une ligne écrite par un compte de ministère (T56,
+    fiche 7). Le prénom n'est jamais écrit dans le journal : il vit dans une table à part, que seul
+    EJP Tech lit ;
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
     Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et
     double authentification activée sur ces accès.
@@ -490,6 +494,46 @@ archivage du dépôt du code.
 - **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
 - **Durées** : toute la vie de l'outil, comme les autres écritures.
 
+## Fiche 7. Prénom déclaré sur un compte partagé
+
+- **Statut** : décidé le 12 octobre 2026 par la personne responsable (T56), construit au lot
+  « observabilité des personnes ». Pas de validation préalable par la coordination avant la mise en
+  ligne (décision de la personne responsable).
+- **Finalité** : suivre l'adoption de l'outil et tracer qui a fait quelle action, pour l'assistance
+  et la sécurité. Un compte de ministère est partagé par plusieurs personnes : le prénom distingue
+  qui l'utilise.
+- **Base légale** : intérêt légitime de l'association (article 6.1.f), et article 9.2.d pour
+  l'appartenance religieuse que révèle le contexte.
+- **Mise en balance** : le prénom seul (l'initiale du nom est permise, une initiale ou un surnom
+  suffit), lu par EJP Tech seul, gardé 12 mois, effacé tout de suite sur demande, jamais utilisé
+  pour évaluer les personnes.
+- **Personnes concernées** : les personnes qui utilisent un compte de ministère.
+- **Catégories de données** : prénom déclaré, date et heure, motif (connexion, rappel au bout de 7
+  jours, « Ce n'est pas moi »), identifiant technique de la session de connexion, lien vers les
+  lignes du journal écrites pendant cette session, jours d'utilisation.
+- **Données sensibles** : aucune, au-delà de l'appartenance possible à l'église (fiche 1).
+- **Destinataires** : pendant la vie de l'outil, EJP Tech seul, dans l'onglet « Personnes » et
+  dans le Journal technique. Ni l'administration de l'église, ni le berger, ni le conseil, ni les
+  ministères ; la base le garantit. La personne voit seulement son propre prénom, celui de la
+  déclaration en cours sur son appareil (« Vous : Marie »), jamais ceux déclarés avant elle. À
+  l'arrêt de l'outil : la coordination, dans l'export final.
+- **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
+- **Durées** : 12 mois, puis le prénom est remplacé par « [prénom effacé] » (EJP Tech, chaque mois,
+  `docs/exploitation.md`) ; 4 semaines au plus dans les sauvegardes. Les prénoms qui restent à
+  l'arrêt de l'outil figurent dans l'export final remis à la coordination (décision de la personne
+  responsable, contre la recommandation de les exclure).
+- **Mesures propres** :
+  - lecture réservée à EJP Tech par la base (RLS), double authentification (`aal2`) ;
+  - le prénom n'entre jamais dans le journal, ni dans un email, ni dans un texte libre ;
+  - ajout seulement, sauf l'effacement par une fonction dédiée, réservée à EJP Tech ;
+  - seuls les comptes de ministère indiquent un prénom (la base refuse les autres profils) ;
+  - le prénom refuse les chiffres, @ et crochets : ni email, ni téléphone. La base ne peut pas
+    distinguer un prénom composé d'un nom complet (« Marie Dupont » a la même forme) : l'écran
+    demande le prénom et, au plus, l'initiale du nom ;
+  - le navigateur ne garde pas le prénom : il est lié à la session de connexion.
+- **Risque accepté** : l'attribution est déclarative. Une personne qui a le compte peut taper un
+  autre prénom ; elle ne peut pas se faire passer pour la déclaration d'un autre appareil.
+
 ## Ce qui reste à compléter
 
 Faits que les sources du projet ne donnent pas, à compléter avant la remise à la coordination :
@@ -543,5 +587,8 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 
 Ajout du 8 octobre 2026 (sans changer la version du document) : fiche 1, acceptation des conditions
 par compte (T53).
+
+Ajout du 12 octobre 2026 (sans changer la version du document) : fiche 7, prénom déclaré sur un
+compte partagé (T56) ; fiche 4 (EJP Tech lit le prénom lié à une ligne) et durées de conservation.
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

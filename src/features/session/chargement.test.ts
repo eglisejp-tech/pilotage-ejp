@@ -4,6 +4,7 @@ import {
   chargerEtatSession,
   chargerEtatSessionSuivi,
   DELAI_MAX_SESSION,
+  MESSAGE_PASSAGE_NON_NOTE,
 } from '@/features/session/chargement'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { fauxSupabase } from '@/test/fauxSupabase'
@@ -135,5 +136,84 @@ describe('chargerEtatSession', () => {
       new TypeError('Failed to fetch'),
     )
     await expect(chargerEtatSession()).rejects.toThrow('Failed to fetch')
+  })
+})
+
+// Personne qui utilise un compte de ministère (T56).
+describe('chargerEtatSession : « Qui utilise l’outil ? »', () => {
+  const ministere: NonNullable<ScenarioSession['compte']> = {
+    user_id: 'u-com',
+    type: 'ministere',
+    ministere_id: 'm-com',
+    libelle: 'Ministère Communication',
+    desactive_le: null,
+  }
+  const session = {
+    utilisateur: { id: 'u-com', email: 'communication@exemple.test' },
+    compte: ministere,
+    niveau: { currentLevel: 'aal2', nextLevel: 'aal2' },
+  } as const
+
+  it('ministère déclaré : connecté avec son prénom, et le jour d’utilisation noté', async () => {
+    const faux = installer({
+      ...session,
+      declaration: { id: 7, prenom: 'Marie D.', age_secondes: 60 },
+    })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'connecte', prenom: 'Marie D.' })
+    expect(faux.from).toHaveBeenCalledWith('v_ma_declaration')
+    expect(faux.from).toHaveBeenCalledWith('passage')
+    // Ni l'une ni l'autre n'est une lecture de données de l'écran.
+    expect(faux.tables).toEqual(['compte'])
+  })
+
+  it('jour d’utilisation refusé : l’outil s’ouvre, la console le signale sans prénom', async () => {
+    const avertir = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    installer({
+      ...session,
+      declaration: { id: 7, prenom: 'Marie D.', age_secondes: 60 },
+      enEchec: ['passage'],
+    })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'connecte', prenom: 'Marie D.' })
+    await vi.waitFor(() =>
+      expect(avertir).toHaveBeenCalledWith(MESSAGE_PASSAGE_NON_NOTE, 'PGRST000'),
+    )
+    expect(JSON.stringify(avertir.mock.calls)).not.toContain('Marie')
+    avertir.mockRestore()
+  })
+
+  it('ministère sans déclaration sur cette session : déclaration, sans jour d’utilisation', async () => {
+    const faux = installer({ ...session, declaration: null })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'declaration', declaration: null })
+    expect(faux.from).not.toHaveBeenCalledWith('passage')
+  })
+
+  it('déclaration de 7 jours ou plus : la question revient', async () => {
+    installer({ ...session, declaration: { id: 7, prenom: 'Marie', age_secondes: 7 * 86_400 } })
+    expect(await chargerEtatSession()).toMatchObject({
+      statut: 'declaration',
+      declaration: { id: 7, prenom: 'Marie', ageSecondes: 7 * 86_400 },
+    })
+  })
+
+  it('les conditions d’abord : la déclaration n’est pas lue tant qu’elles ne sont pas acceptées', async () => {
+    const faux = installer({ ...session, conditionsAcceptees: false, declaration: null })
+    expect((await chargerEtatSession()).statut).toBe('conditions')
+    expect(faux.from).not.toHaveBeenCalledWith('v_ma_declaration')
+  })
+
+  it('les autres profils : jamais lue, jamais demandée', async () => {
+    const faux = installer({
+      utilisateur,
+      compte: berger,
+      niveau: session.niveau,
+      declaration: null,
+    })
+    expect(await chargerEtatSession()).toStrictEqual({
+      statut: 'connecte',
+      compte: expect.objectContaining({ type: 'berger' }) as unknown,
+      email: 'berger@exemple.test',
+    })
+    expect(faux.from).not.toHaveBeenCalledWith('v_ma_declaration')
+    expect(faux.from).not.toHaveBeenCalledWith('passage')
   })
 })

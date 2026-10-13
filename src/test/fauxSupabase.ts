@@ -18,6 +18,11 @@ export type ScenarioSession = {
   /** Le compte a accepté la version courante des conditions (T53) ; vrai par défaut. */
   conditionsAcceptees?: boolean
   /**
+   * Dernière déclaration de la session (T56, `v_ma_declaration`), lue pour un compte de
+   * ministère : « Marie », déclarée il y a une minute, par défaut ; null : aucune déclaration.
+   */
+  declaration?: { id: number; prenom: string; age_secondes: number } | null
+  /**
    * Lignes rendues par une vue ou une table autre que `compte` (`v_semaine`, `v_point`...).
    * Absente : aucune ligne. Les filtres et tris ne sont pas appliqués : le test donne les lignes
    * telles que la base les rendrait.
@@ -42,6 +47,7 @@ export interface FausseRequete extends PromiseLike<Reponse> {
   is: (colonne: string, valeur: unknown) => FausseRequete
   not: (colonne: string, operateur: string, valeur: unknown) => FausseRequete
   or: (filtres: string) => FausseRequete
+  upsert: (valeurs: unknown, options?: unknown) => FausseRequete
   filter: (colonne: string, operateur: string, valeur: unknown) => FausseRequete
   match: (criteres: Record<string, unknown>) => FausseRequete
   order: (colonne: string, options?: unknown) => FausseRequete
@@ -76,6 +82,13 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
     if (table === 'compte') return scenario.compte ? [scenario.compte] : []
     if (table === 'acceptation_conditions') {
       return (scenario.conditionsAcceptees ?? true) ? [{ id: 'acceptation-1' }] : []
+    }
+    if (table === 'v_ma_declaration') {
+      const declaration =
+        scenario.declaration === undefined
+          ? { id: 1, prenom: 'Marie', age_secondes: 60 }
+          : scenario.declaration
+      return declaration ? [declaration] : []
     }
     return scenario.lignes?.[table] ?? []
   }
@@ -115,6 +128,7 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
         filtres.push({ table, operateur: 'or', colonne: '', valeur: valeurs })
         return fausse
       },
+      upsert: suite,
       filter: suite,
       match: suite,
       order: suite,
@@ -129,9 +143,12 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
   }
 
   const from = vi.fn((table: string) => {
-    // L'acceptation des conditions est lue par la session en aal2 (T53) : `tables` ne note que les
-    // lectures de données, que les tests comparent ; `from` garde la trace de celle-ci.
-    if (table !== 'acceptation_conditions') tables.push(table)
+    // L'acceptation des conditions est lue par la session en aal2 (T53), la déclaration et le jour
+    // d'utilisation d'un compte de ministère aussi (T56) : `tables` ne note que les lectures de
+    // données, que les tests comparent ; `from` garde la trace de celles-ci.
+    if (!['acceptation_conditions', 'v_ma_declaration', 'passage'].includes(table)) {
+      tables.push(table)
+    }
     return requete(table)
   })
 

@@ -76,11 +76,9 @@ export const ETAPES: readonly Etape[] = [
       { quoi: 'Bandeau hors ligne', date: '2026-10-07' },
       { quoi: 'Accessibilité', date: '2026-10-13' },
       { quoi: 'Ma semaine, pour chaque ministère', date: '2026-10-13' },
+      { quoi: "Qui utilise l'outil", date: '2026-10-13' },
     ],
-    prevu: [
-      { quoi: "Qui utilise l'outil", date: '2026-10-14' },
-      { quoi: 'Textes et messages revus', date: '2026-10-16' },
-    ],
+    prevu: [{ quoi: 'Textes et messages revus', date: '2026-10-16' }],
   },
   {
     numero: 8,

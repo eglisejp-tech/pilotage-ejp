@@ -54,7 +54,35 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 8 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 12 octobre 2026.",
+    )
+  })
+
+  it('dit ce que devient le prénom indiqué sur un compte partagé, qui le lit et comment l’effacer (T56)', () => {
+    afficher()
+    expect(partie('Données traitées')).toContainElement(
+      elementExact(
+        'li',
+        "Le prénom que chaque personne indique quand elle utilise le compte partagé d'un ministère, avec l'heure de chaque connexion, les jours d'utilisation et les actions faites ensuite. EJP Tech seul le lit, pour suivre l'utilisation de l'outil et savoir qui a fait quoi en cas de problème. Il ne sert pas à évaluer les personnes.",
+      ),
+    )
+    expect(partie('Qui voit les données')).toContainElement(
+      elementExact(
+        'p',
+        "Pendant la vie de l'outil, le prénom indiqué à la connexion n'est lu que par EJP Tech : ni l'administration de l'église, ni le berger, ni le conseil, ni les ministères. Les prénoms qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination.",
+      ),
+    )
+    expect(partie('Durées de conservation')).toContainElement(
+      elementExact(
+        'li',
+        "Prénoms indiqués à la connexion : 12 mois, puis remplacés par « [prénom effacé] ». Ils restent dans les sauvegardes 4 semaines au plus. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination.",
+      ),
+    )
+    expect(partie('Vos droits')).toContainElement(
+      elementExact(
+        'p',
+        "Vous pouvez demander à EJP Tech d'effacer votre prénom : il est remplacé par « [prénom effacé] » partout. À la connexion, une initiale ou un surnom suffit.",
+      ),
     )
   })
 

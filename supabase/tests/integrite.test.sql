@@ -4,7 +4,7 @@
 -- inaltérables, compte désactivé.
 begin;
 
-select plan(39);
+select plan(40);
 
 create temp table ctx as
 select tests.compte('Ministère Communication') as com,
@@ -192,7 +192,11 @@ select tests.deconnecter();
 select throws_ok($$ update public.journal set detail = detail $$, '42501', null,
   'journal : update refusé au propriétaire');
 select throws_ok($$ delete from public.journal $$, '42501', null, 'journal : delete refusé au propriétaire');
-select throws_ok($$ truncate public.journal $$, '42501', null, 'journal : truncate refusé au propriétaire');
+-- journal_intervenant (T56) pointe vers journal : PostgreSQL refuse le vidage simple avant les
+-- triggers (0A000), et le vidage en cascade est refusé par les triggers d'ajout seul.
+select throws_ok($$ truncate public.journal $$, '0A000', null, 'journal : truncate refusé au propriétaire');
+select throws_ok($$ truncate public.journal cascade $$, '42501', null,
+  'journal : truncate en cascade refusé au propriétaire');
 select throws_ok($$ update public.moderation set motif = motif $$, '42501', null,
   'modération : update refusé au propriétaire');
 select throws_ok($$ delete from public.moderation $$, '42501', null, 'modération : delete refusé au propriétaire');

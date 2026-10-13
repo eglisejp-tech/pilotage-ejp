@@ -7,13 +7,21 @@ import type { TypeCompte } from '@/lib/base'
 
 /** Groupes d'adresses protégées par une même garde. */
 export type Zone =
-  'connexion' | 'double-authentification' | 'mot-de-passe' | 'conditions' | 'application'
+  | 'connexion'
+  | 'double-authentification'
+  | 'mot-de-passe'
+  | 'conditions'
+  | 'declaration'
+  | 'application'
 
 export const ADRESSE_CONNEXION = '/connexion'
 export const ADRESSE_DOUBLE_AUTHENTIFICATION = '/double-authentification'
 export const ADRESSE_MOT_DE_PASSE = '/acces/mot-de-passe'
 export const ADRESSE_COMPTE_DESACTIVE = '/compte-desactive'
 export const ADRESSE_CONDITIONS_A_ACCEPTER = '/conditions-a-accepter'
+/** « Qui utilise l'outil ? » (T56) ; `?changer=1` : « Ce n'est pas moi ». */
+export const ADRESSE_DECLARATION = '/qui-utilise'
+export const PARAMETRE_CHANGEMENT = 'changer'
 
 export type ContexteGarde = {
   /** Adresse demandée : chemin, paramètres et ancre. */
@@ -28,6 +36,22 @@ const ORIGINE_FICTIVE = 'http://pilotage.invalid'
 
 export function avecRetour(chemin: string, retour: string | null): string {
   return retour ? `${chemin}?${new URLSearchParams({ retour }).toString()}` : chemin
+}
+
+/** Adresse de « Ce n'est pas moi » : l'écran de déclaration, puis retour à la page quittée. */
+export function adresseChangement(retour: string | null): string {
+  const parametres = new URLSearchParams({ [PARAMETRE_CHANGEMENT]: '1' })
+  if (retour && retour !== '/') parametres.set('retour', retour)
+  return `${ADRESSE_DECLARATION}?${parametres.toString()}`
+}
+
+/** L'adresse demandée est-elle « Ce n'est pas moi » (`?changer=1`) ? */
+export function changementDemande(adresse: string): boolean {
+  try {
+    return new URL(adresse, ORIGINE_FICTIVE).searchParams.get(PARAMETRE_CHANGEMENT) === '1'
+  } catch {
+    return false
+  }
 }
 
 /**
@@ -84,9 +108,21 @@ export function destination(
       // Le mot de passe d'abord (invitation, récupération), puis les conditions, puis l'application.
       if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
       return zone === 'conditions' ? null : avecRetour(ADRESSE_CONDITIONS_A_ACCEPTER, aRetrouver)
+    case 'declaration':
+      // Puis « Qui utilise l'outil ? » (T56), avant l'application.
+      if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
+      return zone === 'declaration' ? null : avecRetour(ADRESSE_DECLARATION, aRetrouver)
     case 'connecte':
       if (motDePasseAChoisir) return zone === 'mot-de-passe' ? null : ADRESSE_MOT_DE_PASSE
       if (zone === 'application') return null
+      // « Ce n'est pas moi » : un compte de ministère déjà déclaré revient sur l'écran.
+      if (
+        zone === 'declaration' &&
+        etat.compte.type === 'ministere' &&
+        changementDemande(adresse)
+      ) {
+        return null
+      }
       return retourValide(retour, etat.compte.type) ?? accueil(etat.compte.type)
   }
 }
