@@ -12,7 +12,7 @@ test.describe("bandeau d'avancement", () => {
     await page.goto(ADRESSE)
     const bandeau = page.getByRole('region', { name: "Avancement de l'outil" })
     await expect(bandeau).toBeVisible()
-    await expect(bandeau).toContainText('6 étapes sur 8 en ligne.')
+    await expect(bandeau).toContainText('7 étapes sur 8 en ligne.')
 
     const voir = bandeau.getByRole('button', { name: 'Voir les étapes' })
     await voir.click()

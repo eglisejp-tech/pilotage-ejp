@@ -172,7 +172,7 @@ test.describe('ministère FIJ : accessibilité des pages', () => {
     test.skip(testInfo.project.name !== 'ordinateur', 'une seule connexion pour les trois largeurs')
     test.setTimeout(180_000)
     await seConnecter(page, EMAIL_FIJ)
-    await expect(page).toHaveTitle('Cette semaine, Pilotage EJP')
+    await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
     for (const largeur of [1440, 390, LARGEUR_MINIMALE]) {
       await page.setViewportSize({ width: largeur, height: 900 })
       for (const adresse of PAGES_FIJ) {

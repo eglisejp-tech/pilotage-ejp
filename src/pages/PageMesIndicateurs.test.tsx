@@ -190,7 +190,7 @@ describe('/ma-fiche/indicateurs, lectures', () => {
       'aria-current',
       'page',
     )
-    expect(within(navigation).getByRole('link', { name: 'Cette semaine' })).not.toHaveAttribute(
+    expect(within(navigation).getByRole('link', { name: 'Ma semaine' })).not.toHaveAttribute(
       'aria-current',
     )
   })
