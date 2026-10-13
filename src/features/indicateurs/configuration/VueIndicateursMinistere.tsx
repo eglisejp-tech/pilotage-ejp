@@ -19,6 +19,7 @@ import { RetiresConfiguration } from '@/features/indicateurs/configuration/Retir
 import { SectionConfiguration } from '@/features/indicateurs/configuration/SectionConfiguration'
 import {
   aucunIndicateurPour,
+  prevusEnLecture,
   TEXTES_CONFIGURATION,
 } from '@/features/indicateurs/configuration/textes'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
@@ -67,10 +68,13 @@ function Donnees({
   const idLigneAide =
     donnees.sections.flatMap((section) => section.lignes).find((ligne) => ligne.usage !== null)
       ?.id ?? null
-  // T60 : seul EJP Tech crée les prévus ; l'administration lit la fiche, sans le bloc des prévus.
+  // T60 : seul EJP Tech crée les prévus ; l'administration lit la fiche, sans le bloc des prévus :
+  // sous le titre, la phrase qui dit qu'EJP Tech gère, puis ce qui reste à créer, sans bouton.
   const gestion = gereLOutil(profil)
+  const prevusLus = gestion ? null : prevusEnLecture(donnees.prevus)
   return (
     <>
+      {gestion ? null : <p className="mt-4 max-w-prose text-encre-2">{textes.lecture}</p>}
       {donnees.phrase !== null ? (
         <p className="mt-4 max-w-prose text-encre-2">{donnees.phrase}</p>
       ) : null}
@@ -82,7 +86,8 @@ function Donnees({
         </div>
       ) : null}
       {gestion ? <BlocPrevus key={donnees.id} donnees={donnees} creation={creation} /> : null}
-      {donnees.sansIndicateur && (!gestion || !resteAChoisirOuCreer(donnees.prevus)) ? (
+      {prevusLus !== null ? <p className="mt-4 max-w-prose text-encre-2">{prevusLus}</p> : null}
+      {donnees.sansIndicateur && !resteAChoisirOuCreer(donnees.prevus) ? (
         <EtatVide situation="premier_usage">{aucunIndicateurPour(donnees.nom)}</EtatVide>
       ) : null}
       {donnees.sections.map((section) => (
@@ -146,9 +151,6 @@ function Ecran({ titre, profil, ministere, creation, controleur }: PropsEcran) {
         {titreAffiche}
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
-      {gereLOutil(profil) ? null : (
-        <p className="mt-4 max-w-prose text-encre-2">{textes.lecture}</p>
-      )}
       {ministere.etat === 'erreur' ? (
         <div className="mt-6">
           <ErreurDePage
@@ -220,7 +222,9 @@ function AvecEcritures({
  */
 export function VueIndicateursMinistere(proprietes: Props) {
   const { ministere, ecritures } = proprietes
-  if (ministere.etat === 'pret' && ecritures !== undefined) {
+  // T60 : les écritures ne servent qu'à EJP Tech ; pour l'administration, l'écran reste en
+  // lecture seule même si on les lui passe.
+  if (ministere.etat === 'pret' && ecritures !== undefined && gereLOutil(proprietes.profil)) {
     return <AvecEcritures {...proprietes} donnees={ministere.donnees} ecritures={ecritures} />
   }
   return <Ecran {...proprietes} controleur={null} />

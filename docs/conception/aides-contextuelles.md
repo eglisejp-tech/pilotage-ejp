@@ -510,7 +510,7 @@ n'est lu que par le ministère qui l'écrit et par EJP Tech. Statut des textes :
   bouton, pas une aide).
 
 Un problème de compte ou de connexion ne passe pas par ce lien : un ministère qui ne peut pas se
-connecter écrit à l'administration.
+connecter écrit à EJP Tech, qui gère les comptes (T60, 13 octobre 2026 ; l'administration avant).
 
 ### Les textes
 

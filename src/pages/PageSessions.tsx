@@ -4,9 +4,9 @@ import { VueSessions } from '@/features/sessions/VueSessions'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
 /**
- * `/sessions`, écran 14 « Sessions » (lot L2), pour l'administration de l'église seulement :
- * `PageApplication` donne la page non disponible aux autres profils, sans requête. Les lectures
- * passent par la RLS (`v_session_completude`), les écritures par `declarer_session`,
+ * `/sessions`, écran 14 « Sessions » (lot L2), pour l'administration de l'église et EJP Tech
+ * (T60) : `PageApplication` donne la page non disponible aux autres profils, sans requête. Les
+ * lectures passent par la RLS (`v_session_completude`), les écritures par `declarer_session`,
  * `modifier_session` et `supprimer_session`.
  */
 export function PageSessions({ titre }: ProprietesPage) {

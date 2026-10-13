@@ -10,14 +10,15 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
 /**
  * Page « Conditions d'utilisation » : texte statique, lisible sans connexion, à côté de la page
  * Confidentialité. Ajoutée au BRIEF et validée par EJP Tech et la coordination le 5 octobre 2026
- * (docs/decisions.md, T17).
+ * (docs/decisions.md, T17). Mise à jour le 13 octobre 2026 (T60 : EJP Tech gère les comptes), la
+ * même date que `VERSION_CONDITIONS`.
  */
 export function PageConditions() {
   useTitrePage("Conditions d'utilisation")
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Conditions d'utilisation" taille="moyenne">
-        Les règles d'utilisation de l'outil. Mise à jour le 5 octobre 2026.
+        Les règles d'utilisation de l'outil. Mise à jour le 13 octobre 2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
         <PartieTexte titre="Objet">

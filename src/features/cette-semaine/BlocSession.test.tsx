@@ -102,7 +102,7 @@ describe('BlocSession', () => {
     const region = screen.getByRole('region', { name: 'Dernière session' })
     expect(within(region).getByText('Aucune session déclarée.')).toBeInTheDocument()
     expect(
-      within(region).getByText("L'administration de l'église déclare les sessions."),
+      within(region).getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
     ).toBeInTheDocument()
     expect(within(region).queryByRole('link')).not.toBeInTheDocument()
     expect(screen.queryByTestId('barre-session')).not.toBeInTheDocument()

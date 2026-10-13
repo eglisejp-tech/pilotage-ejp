@@ -270,8 +270,9 @@ ni l'ajout ni ses valeurs (configuration, 4.4).
   dire « 2 indicateurs attendent votre validation dans Pilotage EJP », sans nom ni texte.
 - **Mise en service** : la file peut recevoir jusqu'à 66 ajouts la première semaine (3 par ministère,
   22 ministères dans la liste de la coordination), une borne haute, chacun avec son « Pourquoi » à
-  lire. L'administration crée d'abord les prévus de chaque ministère, qui couvrent l'essentiel,
-  avant l'activation des comptes des ministères (configuration, section 9).
+  lire. EJP Tech (l'administration avant T60, 13 octobre 2026) crée d'abord les prévus de chaque
+  ministère, qui couvrent l'essentiel, avant l'activation des comptes des ministères
+  (configuration, section 9).
 
 ### 2.7 Journal
 

@@ -8,6 +8,10 @@ Date : 5 octobre 2026, revue appliquée le même jour, puis alignée sur T30 le 
 nouveau le 6 octobre 2026.
 Revu le 6 octobre 2026 (P45 à P47) : le mois en cours d'un indicateur sensible se saisit ; la
 précision et la répartition par catégories sont décrites dans `docs/decisions.md` (P46, P47, T41).
+Renvoi (13 octobre 2026) : remplacé en partie par **T60** (`docs/decisions.md`). Partout où ce
+document dit que l'administration de l'église crée les ministères, crée les prévus, crée, corrige,
+remplace ou retire un indicateur, lis **EJP Tech seul** ; l'administration lit les mêmes écrans,
+sans aucun bouton, et `private.peut_configurer()` ne rend vrai qu'à EJP Tech.
 
 Alignement sur T30 (`docs/conception/validation-metier.md`) et sur les décisions de la personne
 responsable du 5 et du 6 octobre 2026 :
@@ -821,6 +825,11 @@ affichée telle quelle. Aucun SQL dynamique.
 | `valider_indicateur(p_demande_id, p_decision, p_motif) returns void`                                                                               | 1 (avec la validation)  | EJP Tech seul (T30)                                                                                        | `validation` ; état (actif, ou retiré avec le motif « Refusé ») ou, au lot 2, nom corrigé ; une seule ligne de journal (`validation-metier.md`, 6.4) |
 | `rendre_officiel(p_indicateur_id) returns void`                                                                                                    | 2                       | administration, EJP Tech (procédure : Q13)                                                                 | origine, journal                                                                                                                                     |
 
+Depuis **T60** (13 octobre 2026), « administration, EJP Tech » se lit **EJP Tech seul** dans ce
+tableau : l'administration de l'église reçoit 42501 sur chacune de ces fonctions
+(`private.peut_configurer()`, migration `20261013130000_gestion_ejp_tech.sql`) ; un ministère garde
+ce qui lui est ouvert sur sa fiche.
+
 Contrôles d'un ajout (`creer_indicateur`, `ajouter_suggestion`, `creer_calcul`), dans l'ordre :
 
 1. `exige_aal2()` ; profil : administration ou EJP Tech et ministère actif ; pour un ministère,
@@ -1390,8 +1399,8 @@ revus), `jeu-exemple` (nombre d'envois de Communication), `structure`, `rls-chif
   seulement : les mots restent dans la base), « Pourquoi » compris (10 à 280) ; mention « à valider
   par EJP Tech depuis 2 jours ».
 - **E2E** (1440, 834 et 390 px, audit axe), lot 1 :
-  1. l'administration crée les prévus de Kumi, ajoute un calcul pour Tech, retire un indicateur
-     avec un motif et en retire un autre pour confidentialité ;
+  1. EJP Tech (l'administration avant T60) crée les prévus de Kumi, ajoute un calcul pour Tech,
+     retire un indicateur avec un motif et en retire un autre pour confidentialité ;
   2. Communication, qui n'a aucun ajout dans le jeu d'exemple, envoie les suggestions « Demandes
      reçues », « Événements couverts » et « Projets réalisés », chacune avec son « Pourquoi », lit
      le refus d'un quatrième ajout, saisit les chiffres de septembre ; le berger lit les ajouts « à
@@ -1430,8 +1439,8 @@ revus), `jeu-exemple` (nombre d'envois de Communication), `structure`, `rls-chif
   P29 (lots de migration, sans écran) coûtait 6 à 9 jours : le lot 1 en coûte 3 à 4 de plus avant
   la mise en service. L'estimation précédente (13 à 17 jours, dont 11 à 14 avant la mise en
   service) mettait presque tout avant.
-- **Repli** : lot 1 sans « Mes indicateurs » ; les ministères demandent tout à l'administration.
-- **Ordre de l'étape 8** : les migrations ; puis l'administration crée les 22 ministères ; puis
+- **Repli** : lot 1 sans « Mes indicateurs » ; les ministères demandent tout à EJP Tech (T60).
+- **Ordre de l'étape 8** : les migrations ; puis EJP Tech (T60) crée les 22 ministères ; puis
   « Créer » (ou « Aucun prévu ») sur chaque ligne de l'écran Indicateurs, de préférence avant
   l'activation des comptes des ministères. Cet ordre n'est plus une protection, puisque tout ajout
   d'un ministère est à valider (4.3) ; il évite seulement qu'EJP Tech reçoive des suggestions qu'un

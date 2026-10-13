@@ -207,7 +207,10 @@ export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi 
             }
             lignes={donnees.donnees.ejpTech}
             variante="personnes"
-            vide={{ texte: VIDES_COMPTES.ejpTech, suite: VIDES_COMPTES.ejpTechSuite }}
+            vide={{
+              texte: VIDES_COMPTES.ejpTech,
+              suite: lectureSeule ? VIDES_COMPTES.ejpTechSuite : VIDES_COMPTES.ejpTechSuiteGestion,
+            }}
             onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}

@@ -195,10 +195,16 @@ test.describe('administration de l’église, en lecture (T60, aperçu)', () => 
     await expect(page.getByRole('link', { name: /^Choisir/ })).toHaveCount(0)
   })
 
-  test('/indicateurs/:id : la phrase de lecture, ni prévus à créer, ni choix, ni bouton', async ({
+  test('/indicateurs/:id : la phrase de lecture, ni bloc des prévus, ni choix, ni bouton', async ({
     page,
   }) => {
-    for (const vue of ['kumi', 'jeunesse', 'communication']) {
+    // Ce qui reste à créer ou à choisir se lit, sans bouton, comme dans la liste.
+    const prevus: Record<string, string | null> = {
+      kumi: 'Liste « Kumi » de la coordination : 6 indicateurs à créer.',
+      jeunesse: 'Prévus par la coordination : la liste de ce ministère reste à choisir.',
+      communication: null,
+    }
+    for (const [vue, phrase] of Object.entries(prevus)) {
       await ouvrir(page, { vue, profil: 'admin_eglise' })
       await expect(page.getByText(LECTURE)).toBeVisible()
       await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
@@ -208,6 +214,7 @@ test.describe('administration de l’église, en lecture (T60, aperçu)', () => 
           .getByRole('main')
           .getByRole('button', { name: /Créer|Ajouter|Corriger|Remplacer|Retirer/ }),
       ).toHaveCount(0)
+      if (phrase !== null) await expect(page.getByText(phrase)).toBeVisible()
     }
     // Les indicateurs du ministère se lisent toujours.
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([

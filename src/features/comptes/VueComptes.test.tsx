@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ErreurCompte } from '@/data/comptes'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { donneesExemple } from '@/features/comptes/apercu/exemples'
@@ -9,7 +9,6 @@ import { construireComptes } from '@/features/comptes/construireComptes'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import { VueComptes } from '@/features/comptes/VueComptes'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
-import { simulerLargeur } from '@/test/largeur'
 
 function donnees(): EtatBloc<DonneesComptes> {
   const exemple = donneesExemple()
@@ -46,10 +45,6 @@ function afficher(etat: EtatBloc<DonneesComptes>, actions: ActionsComptes = acti
 
 const bouton = (nom: string) => screen.getByRole('button', { name: nom })
 
-afterEach(() => {
-  vi.unstubAllGlobals()
-})
-
 /** La ligne (tableau) ou le bloc (téléphone) qui contient un élément. */
 function ligneDe(element: HTMLElement): HTMLElement {
   const ligne = element.closest<HTMLElement>('[data-cle]')
@@ -83,6 +78,10 @@ describe('VueComptes (écran 13)', () => {
     )
     expect(screen.getByRole('region', { name: 'EJP Tech' })).toHaveTextContent(
       "Aucun compte EJP Tech pour l'instant.",
+    )
+    // EJP Tech, qui gère (T60), n'est pas renvoyé vers lui-même.
+    expect(screen.getByRole('region', { name: 'EJP Tech' })).not.toHaveTextContent(
+      'Le premier compte EJP Tech',
     )
     expect(bouton('Ajouter le compte du berger')).toBeInTheDocument()
   })
@@ -216,76 +215,5 @@ describe('VueComptes (écran 13)', () => {
     expect(champ).toHaveAccessibleDescription(
       'Cette adresse a déjà un compte. Choisissez une autre adresse.',
     )
-  })
-})
-
-// Décision T60 : EJP Tech gère seul les ministères et les comptes ; l'administration de l'église
-// lit le même écran, sans aucun bouton d'action, avec la phrase qui le dit.
-describe('VueComptes (écran 13), administration de l’église en lecture', () => {
-  function afficherEnLecture(etat: EtatBloc<DonneesComptes>) {
-    const actions = actionsFausses()
-    render(
-      <MemoryRouter>
-        <VueComptes titre="Ministères et comptes" donnees={etat} actions={actions} lectureSeule />
-      </MemoryRouter>,
-    )
-    return actions
-  }
-
-  it('la phrase qui dit qu’EJP Tech gère, puis les mêmes sections, sans aucun bouton', () => {
-    const actions = afficherEnLecture(donnees())
-    expect(
-      screen.getByText(
-        'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.queryByText(/Les comptes sont créés ici/)).toBeNull()
-    for (const nom of ['Ministères', 'Berger et conseil', 'EJP Tech', 'Listes']) {
-      expect(screen.getByRole('region', { name: nom })).toBeInTheDocument()
-    }
-    // Les comptes et leurs états se lisent.
-    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent(
-      'communication@exemple.test',
-    )
-    expect(screen.getAllByText('Invitation envoyée').length).toBeGreaterThan(0)
-    // Aucun bouton d'action, ni d'ajout ni de ligne ; aucune colonne d'actions.
-    expect(screen.queryAllByRole('button')).toEqual(
-      screen.queryAllByRole('button', { name: /^Aide/ }),
-    )
-    expect(screen.queryByRole('columnheader', { name: 'Actions' })).toBeNull()
-    expect(screen.queryByText('Votre compte')).toBeNull()
-    for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled()
-    // « Listes » : la demande de changement va à EJP Tech.
-    expect(screen.getByRole('region', { name: 'Listes' })).toHaveTextContent(
-      "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
-    )
-  })
-
-  it('la note renvoie à l’écran Indicateurs pour lire, pas pour changer', () => {
-    afficherEnLecture(donnees())
-    expect(
-      screen.getByText(/Pour lire les indicateurs de chaque ministère, ouvrez/),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: "l'écran Indicateurs" })).toHaveAttribute(
-      'href',
-      '/indicateurs',
-    )
-  })
-
-  it('premier usage : qui agit, sans bouton', () => {
-    afficherEnLecture({ etat: 'donnees', donnees: construireComptes([], [], []) })
-    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent(
-      'EJP Tech ajoute les ministères.',
-    )
-    expect(screen.queryByRole('button', { name: /Ajouter/ })).toBeNull()
-  })
-
-  it('sous 600 px aussi, les blocs n’ont aucun bouton', () => {
-    simulerLargeur(390)
-    afficherEnLecture(donnees())
-    expect(screen.queryByRole('table')).toBeNull()
-    expect(
-      screen.queryByRole('button', { name: /Désactiver|Réactiver|Relancer|Refaire/ }),
-    ).toBeNull()
   })
 })

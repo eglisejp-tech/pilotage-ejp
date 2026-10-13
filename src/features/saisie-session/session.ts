@@ -20,9 +20,15 @@ import { accorder, listeNoms, nombre, terminerPhrase } from '@/lib/metier/texte'
  * modèle de T22 ; T36 pour les six situations).
  */
 export const TEXTES_SESSION = {
-  /** En attente des autres : l'administration n'a déclaré aucune session passée. */
+  /** En attente des autres : ni l'administration ni EJP Tech n'ont déclaré de session passée. */
   aucuneSession: 'Aucune session à saisir.',
-  quiDeclare: "L'administration de l'église déclare les sessions.",
+  /** T60 : l'administration et EJP Tech déclarent les sessions (Proposé). */
+  quiDeclare: "L'administration de l'église ou EJP Tech déclare les sessions.",
+  /**
+   * Surtitre du panneau de saisie (maquette 09 : « Session déclarée par l'administration ») :
+   * depuis T60, EJP Tech déclare aussi les sessions (Proposé).
+   */
+  surtitre: 'Session déclarée',
   /** Tout est fait : chaque session récente a sa saisie. */
   toutesSaisies:
     'Toutes les sessions récentes sont saisies. Ouvrez une session pour corriger sa saisie.',

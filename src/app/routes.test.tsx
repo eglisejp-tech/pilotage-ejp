@@ -943,7 +943,11 @@ describe('/comptes, écran 13 (lot L1)', () => {
         'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
       ),
     ).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /^(Ajouter|Désactiver|Refaire)/ })).toBeNull()
+    // Dans la page, seules les aides (« ? ») sont des boutons : ni ajout, ni action de ligne.
+    const page = screen.getByRole('main')
+    expect(within(page).queryAllByRole('button')).toEqual(
+      within(page).queryAllByRole('button', { name: /^Aide/ }),
+    )
   })
 
   it('admin_plateforme en aal2 (T60) : l’onglet courant, les boutons, aucun sur sa propre ligne', async () => {

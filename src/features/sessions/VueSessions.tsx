@@ -39,12 +39,12 @@ function focusPerdu(): boolean {
 }
 
 /**
- * Écran 14, « Sessions » (administration de l'église ; maquette 14, BRIEF section 9) : titre et
- * phrase, la liste des sessions déclarées et, à partir de 1024 px, la colonne « Déclarer une
- * session » à droite. Sous 1024 px, le bouton « Déclarer une session » ouvre le même formulaire
- * dans un panneau (page entière sous 600 px). « Modifier » ouvre toujours un panneau ;
- * « Supprimer » passe par une fenêtre de confirmation. La réussite s'affiche en haut de la page,
- * 6 secondes. Quand le bouton qui avait le focus disparaît, le focus va au titre.
+ * Écran 14, « Sessions » (administration de l'église et EJP Tech, T60 ; maquette 14, BRIEF
+ * section 9) : titre et phrase, la liste des sessions déclarées et, à partir de 1024 px, la
+ * colonne « Déclarer une session » à droite. Sous 1024 px, le bouton « Déclarer une session »
+ * ouvre le même formulaire dans un panneau (page entière sous 600 px). « Modifier » ouvre toujours
+ * un panneau ; « Supprimer » passe par une fenêtre de confirmation. La réussite s'affiche en haut
+ * de la page, 6 secondes. Quand le bouton qui avait le focus disparaît, le focus va au titre.
  */
 export function VueSessions({ titre, donnees, actions }: Props) {
   const idListe = useId()

@@ -5,7 +5,7 @@
 -- l'église est refusée comme le conseil.
 begin;
 
-select plan(23);
+select plan(28);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -48,6 +48,10 @@ update ctx set m2 = tests.creer_ministere('Essai Relance Doublon');
 update ctx set cm2a = tests.creer_compte('essai-rr-doublon-a@exemple.test', 'ministere', m2);
 update public.compte set desactive_le = now() where user_id = (select cm2a from ctx);
 update ctx set cm2b = tests.creer_compte('essai-rr-doublon-b@exemple.test', 'ministere', m2);
+-- Un compte de l'administration désactivé (au tableau de bord) : jamais visé non plus (T60).
+alter table ctx add column eglise_inactive uuid;
+update ctx set eglise_inactive = tests.creer_compte('essai-rr-admin-inactif@exemple.test', 'admin_eglise');
+update public.compte set desactive_le = now() where user_id = (select eglise_inactive from ctx);
 -- Sessions aal2 des appelants (la base exige la session de l'appelant, décision T15).
 alter table ctx add column sa uuid default gen_random_uuid(), add column sc uuid default gen_random_uuid(),
   add column se uuid default gen_random_uuid();
@@ -105,6 +109,16 @@ select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx
   'P0001', 'propre_compte', 'EJP Tech ne réactive pas son propre compte');
 select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select cm2a from ctx)) $$,
   'P0001', 'ministere_a_deja_un_compte', 'l''ancien compte n''est pas réactivé quand son ministère a un compte actif');
+
+-- Le compte de l'administration de l'église n'est jamais visé (T60, migration 20261013130500)
+select throws_ok($$ select public.serveur_controler_relance((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'contrôle de relance refusé pour le compte de l''administration de l''église');
+select throws_ok($$ select public.serveur_relancer_invitation((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'relance refusée pour le compte de l''administration de l''église');
+select throws_ok($$ select public.serveur_controler_reactivation((select tech from ctx), (select sa from ctx), (select eglise_inactive from ctx)) $$,
+  'P0001', 'type_interdit', 'contrôle de réactivation refusé pour un compte de l''administration désactivé');
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select eglise_inactive from ctx)) $$,
+  'P0001', 'type_interdit', 'EJP Tech ne réactive pas un compte de l''administration de l''église');
 reset role;
 
 select results_eq($$
@@ -124,6 +138,10 @@ $$, $$ values ('compte_reactive'::text, (select tech from ctx), (select m from c
 select ok((select c.desactive_le is not null from public.compte c where c.user_id = (select ancien_berger from ctx))
           and not exists (select 1 from public.journal j where j.cible_id = (select ancien_berger from ctx)),
   'réactivation refusée : rien n''est écrit');
+select ok((select c.desactive_le is not null from public.compte c where c.user_id = (select eglise_inactive from ctx))
+          and not exists (select 1 from public.journal j
+                           where j.cible_id in ((select eglise from ctx), (select eglise_inactive from ctx))),
+  'compte de l''administration refusé : il reste désactivé, rien n''est écrit');
 
 select * from finish();
 rollback;

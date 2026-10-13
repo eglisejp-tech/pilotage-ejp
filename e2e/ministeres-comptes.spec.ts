@@ -279,6 +279,21 @@ test.describe('Ministères et comptes (administration de l’église, en lecture
     await auditer(page)
   })
 
+  test('« Ministères et comptes » est l’onglet courant, pour les deux profils', async ({
+    page,
+  }) => {
+    for (const profil of ['admin_eglise', 'admin_plateforme']) {
+      await ouvrir(page, '', profil)
+      const menu = page.getByRole('button', { name: 'Ouvrir le menu' })
+      if (await menu.isVisible()) await menu.click()
+      await expect(
+        page
+          .getByRole('navigation', { name: 'Navigation principale' })
+          .getByRole('link', { name: 'Ministères et comptes' }),
+      ).toHaveAttribute('aria-current', 'page')
+    }
+  })
+
   test('premier usage : qui agit, sans bouton', async ({ page }) => {
     await ouvrir(page, 'vue=premier-usage', 'admin_eglise')
     await expect(section(page, 'Ministères')).toContainText('EJP Tech ajoute les ministères.')

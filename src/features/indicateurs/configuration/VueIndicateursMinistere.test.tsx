@@ -335,18 +335,36 @@ describe('VueIndicateursMinistere : administration de l’église, en lecture (T
     expect(screen.queryByRole('link', { name: 'Voir la fiche' })).toBeNull()
   })
 
-  it('prévus à créer : ni bloc, ni choix, ni bouton ; un ministère sans indicateur le dit', () => {
+  it('prévus à créer : ni bloc, ni bouton, mais ce qui reste à créer, comme la liste le dit', () => {
     const creation = afficherMinistere(ID_KUMI, creationDe(), 'admin_eglise')
     expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
     expect(
-      screen.getByText('Aucun indicateur pour Kumi. Il saisit les chiffres communs.'),
+      screen.getByText('Liste « Kumi » de la coordination : 6 indicateurs à créer.'),
     ).toBeInTheDocument()
+    // L'état vide ne cache pas les prévus en attente.
+    expect(screen.queryByText(/^Aucun indicateur pour Kumi/)).toBeNull()
     expect(creation.creer).not.toHaveBeenCalled()
   })
 
-  it('nom non reconnu : aucun choix de modèle', () => {
+  it('nom non reconnu : aucun choix de modèle, la liste reste à choisir', () => {
     afficherMinistere(ID_JEUNESSE, creationDe(), 'admin_eglise')
     expect(screen.queryByRole('combobox')).toBeNull()
+    expect(
+      screen.getByText('Prévus par la coordination : la liste de ce ministère reste à choisir.'),
+    ).toBeInTheDocument()
+  })
+
+  it('aucun prévu (Protocole) : l’état vide, sans phrase de prévus', () => {
+    afficherMinistere(ID_PROTOCOLE, creationDe(), 'admin_eglise')
+    expect(screen.getByText(/^Aucun indicateur pour Protocole/)).toBeInTheDocument()
+    expect(screen.queryByText(/^Liste « /)).toBeNull()
+    expect(screen.queryByText(/reste à choisir/)).toBeNull()
+  })
+
+  it('EJP Tech ne lit ni la phrase de lecture ni la phrase des prévus : il a le bloc', () => {
+    afficherMinistere(ID_KUMI)
+    expect(screen.queryByText(/Adressez-lui vos demandes/)).toBeNull()
+    expect(screen.getByRole('region', { name: 'Prévus par la coordination' })).toBeInTheDocument()
   })
 })

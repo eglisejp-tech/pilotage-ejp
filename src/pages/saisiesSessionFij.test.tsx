@@ -124,7 +124,7 @@ describe('/saisir/session/:id', () => {
       await screen.findByText('Aucune session à saisir.', {}, ATTENTE_ECHEC),
     ).toBeInTheDocument()
     expect(
-      screen.getByText("L'administration de l'église déclare les sessions."),
+      screen.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
     ).toBeInTheDocument()
   })
 

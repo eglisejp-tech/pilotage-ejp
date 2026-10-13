@@ -372,8 +372,8 @@ Taux demandés, avec ce qu'il faut pour les calculer (question K4) :
 
 ### 3.8 Rattacher les indicateurs aux ministères
 
-En production, l'administration crée les ministères à l'écran 13, après le déploiement (BRIEF,
-section 8 : amorçage, puis `creer-compte`). En local et en CI, ils viennent de `seed.sql`, chargé
+En production, EJP Tech (l'administration avant T60, 13 octobre 2026) crée les ministères à
+l'écran 13, après le déploiement (BRIEF, section 8 : amorçage, puis `creer-compte`). En local et en CI, ils viennent de `seed.sql`, chargé
 **après** les migrations. Une migration qui cherche Kumi par son nom pour lui créer des indicateurs
 échoue de trois façons :
 

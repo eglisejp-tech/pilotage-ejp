@@ -121,27 +121,55 @@ describe("contrôle de l'appelant", () => {
     expect(await utilisateurParEmail(email)).toBeUndefined()
   })
 
-  it('refuse un compte qui n’est pas EJP Tech, administration de l’église comprise (403, T60)', async () => {
-    const autres = [
-      await connecterEnAal2(await creerCompteDeTest('conseil')),
-      await connecterEnAal2(
-        await creerCompteDeTest('admin_eglise', { libelle: "Administration de l'église" }),
-      ),
-    ]
-    const email = adresseDeTest('essai-refus-conseil')
-    for (const autre of autres) {
-      for (const fonction of FONCTIONS) {
-        const corps =
-          fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: tech.id }
-        attendreErreur(
-          await appeler(fonction, corps, { jeton: autre.jeton }),
-          403,
-          'acces_refuse',
-          [autre.jeton, email],
-        )
-      }
+  it('refuse un compte qui n’est pas EJP Tech : ministère, berger, conseil, administration (403, T60)', async () => {
+    // Un seul berger actif (index unique) : celui du jeu d'exemple est mis de côté pendant
+    // l'essai, puis rendu tel quel.
+    const secret = clientSecret()
+    const { data: bergers, error: erreurBergers } = await secret
+      .from('compte')
+      .select('user_id')
+      .eq('type', 'berger')
+      .is('desactive_le', null)
+    expect(erreurBergers).toBeNull()
+    const anciensBergers = (bergers ?? []).map((ligne) => String(ligne.user_id))
+    const poserDesactivation = async (ids: string[], date: string | null) => {
+      if (ids.length === 0) return
+      const { error } = await secret
+        .from('compte')
+        .update({ desactive_le: date })
+        .in('user_id', ids)
+      expect(error).toBeNull()
     }
-    expect(await utilisateurParEmail(email)).toBeUndefined()
+    await poserDesactivation(anciensBergers, new Date().toISOString())
+    const ministere = await creerMinistereDeTest()
+    const berger = await creerCompteDeTest('berger', { libelle: 'Berger' })
+    try {
+      const autres = [
+        await connecterEnAal2(await creerCompteDeTest('ministere', { ministereId: ministere.id })),
+        await connecterEnAal2(berger),
+        await connecterEnAal2(await creerCompteDeTest('conseil')),
+        await connecterEnAal2(
+          await creerCompteDeTest('admin_eglise', { libelle: "Administration de l'église" }),
+        ),
+      ]
+      const email = adresseDeTest('essai-refus-conseil')
+      for (const autre of autres) {
+        for (const fonction of FONCTIONS) {
+          const corps =
+            fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: tech.id }
+          attendreErreur(
+            await appeler(fonction, corps, { jeton: autre.jeton }),
+            403,
+            'acces_refuse',
+            [autre.jeton, email],
+          )
+        }
+      }
+      expect(await utilisateurParEmail(email)).toBeUndefined()
+    } finally {
+      await poserDesactivation([berger.id], new Date().toISOString())
+      await poserDesactivation(anciensBergers, null)
+    }
   })
 
   it('refuse un compte EJP Tech désactivé (403)', async () => {
@@ -633,5 +661,47 @@ describe('reactiver-compte', () => {
       'compte_actif',
     )
     expect(await lignesJournal(sessionTech, cible.id)).toHaveLength(2)
+  })
+})
+
+// T60 : le compte de l'administration de l'église se gère au tableau de bord, sur demande écrite
+// de la coordination ; aucune Edge Function ne le vise (migration 20261013130500).
+describe('compte de l’administration de l’église', () => {
+  it('ni désactivé, ni réinitialisé, ni relancé, ni réactivé par EJP Tech (400), rien ne change', async () => {
+    const administration = await creerCompteDeTest('admin_eglise', {
+      libelle: "Administration de l'église",
+    })
+    for (const fonction of ['desactiver-compte', 'reinitialiser-2fa', 'relancer-invitation']) {
+      attendreErreur(
+        await appeler(fonction, { user_id: administration.id }, { jeton: sessionTech.jeton }),
+        400,
+        'type_interdit',
+        [administration.email],
+      )
+    }
+    // Toujours actif, pas banni, son mot de passe sert encore.
+    expect((await compte(administration.id))?.desactive_le).toBeNull()
+    const { data } = await clientSecret().auth.admin.getUserById(administration.id)
+    const banni = data.user?.banned_until
+    expect(!banni || Date.parse(banni) <= Date.now()).toBe(true)
+    await expect(connecter(administration)).resolves.toBeDefined()
+
+    // Désactivé au tableau de bord : la réactivation est refusée aussi.
+    const { error } = await clientSecret()
+      .from('compte')
+      .update({ desactive_le: new Date().toISOString() })
+      .eq('user_id', administration.id)
+    expect(error).toBeNull()
+    attendreErreur(
+      await appeler(
+        'reactiver-compte',
+        { user_id: administration.id },
+        { jeton: sessionTech.jeton },
+      ),
+      400,
+      'type_interdit',
+    )
+    expect((await compte(administration.id))?.desactive_le).not.toBeNull()
+    expect(await lignesJournal(sessionTech, administration.id)).toEqual([])
   })
 })

@@ -237,6 +237,19 @@ describe('/ministeres', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
+  it('aucun ministère actif, lu par EJP Tech : il les crée lui-même (T60)', async () => {
+    installer('admin_plateforme', { v_semaine: [SEMAINE], v_tableau_ministeres: [] })
+    afficher('/ministeres')
+    expect(
+      await screen.findByText(
+        'Aucun ministère actif. Créez-les dans Ministères et comptes.',
+        {},
+        ATTENTE,
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/EJP Tech crée les ministères/)).toBeNull()
+  })
+
   it('problème passager : bandeau et « Réessayer »', async () => {
     installer('admin_plateforme', { v_semaine: [SEMAINE] }, ['v_tableau_ministeres'])
     afficher('/ministeres')

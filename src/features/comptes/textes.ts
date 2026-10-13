@@ -130,8 +130,13 @@ export const VIDES_COMPTES = {
   bergerConseil: "Aucun compte pour le berger ni pour le conseil pour l'instant.",
   bergerConseilSuite: 'Chaque compte reçoit une invitation à son email personnel.',
   ejpTech: "Aucun compte EJP Tech pour l'instant.",
-  /** T60 : EJP Tech crée les comptes ; son premier compte se crée à l'installation. */
+  /**
+   * En lecture (administration, T60) : EJP Tech crée les comptes ; son premier compte se crée à
+   * l'installation.
+   */
   ejpTechSuite: "Le premier compte EJP Tech se crée à l'installation de l'outil.",
+  /** Pour EJP Tech, qui gère (T60) : ce que fait l'ajout, sans le renvoyer vers lui-même. */
+  ejpTechSuiteGestion: 'Chaque compte reçoit une invitation à son email personnel.',
 } as const
 
 /** Messages de réussite, affichés 6 secondes (Proposé). */

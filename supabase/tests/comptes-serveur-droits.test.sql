@@ -2,12 +2,12 @@
 -- comptes_relance_reactivation, comptes_revocation_sessions, comptes_session_appelant) : aucune
 -- n'est exécutable par anon ni par authenticated ; chaque fonction public, contrôles préalables
 -- compris, est refusée à l'anonyme, à un compte connecté en aal1 et en aal2, et, au nom de
--- service_role, à un appelant qui n'est pas EJP Tech (décision T60 : le conseil, et
--- l'administration de l'église, qui ne gère plus les comptes). Puis la session de l'appelant
--- (décision T15) : absente, inconnue, d'un autre compte ou en aal1, elle est refusée.
+-- service_role, à un appelant qui n'est pas EJP Tech (décision T60 : un ministère, le berger, le
+-- conseil, et l'administration de l'église, qui ne gère plus les comptes). Puis la session de
+-- l'appelant (décision T15) : absente, inconnue, d'un autre compte ou en aal1, elle est refusée.
 begin;
 
-select plan(62);
+select plan(82);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction).
 do $$
@@ -27,21 +27,28 @@ begin
 end $$;
 
 -- Comptes et sessions : sa (EJP Tech, aal2), s1 (EJP Tech, aal1), sc (conseil, aal2),
--- se (administration de l'église, aal2).
+-- se (administration de l'église, aal2), sm (ministère, aal2), sb (berger, aal2).
 create temp table ctx as
 select tests.creer_compte('essai-matrice-tech@exemple.test', 'admin_plateforme') as tech,
        tests.creer_compte('essai-matrice-conseil@exemple.test', 'conseil') as conseil,
        tests.creer_compte('essai-matrice-eglise@exemple.test', 'admin_eglise') as eglise,
        tests.creer_compte('essai-matrice-cible@exemple.test', 'conseil') as cible,
+       tests.creer_compte('essai-matrice-ministere@exemple.test', 'ministere',
+                          tests.creer_ministere('Essai Matrice Ministère')) as ministere,
+       tests.creer_compte('essai-matrice-berger@exemple.test', 'berger') as berger,
        gen_random_uuid() as sa,
        gen_random_uuid() as s1,
        gen_random_uuid() as sc,
-       gen_random_uuid() as se;
+       gen_random_uuid() as se,
+       gen_random_uuid() as sm,
+       gen_random_uuid() as sb;
 insert into auth.sessions (id, user_id, aal)
 select sa, tech, 'aal2'::auth.aal_level from ctx
 union all select s1, tech, 'aal1'::auth.aal_level from ctx
 union all select sc, conseil, 'aal2'::auth.aal_level from ctx
-union all select se, eglise, 'aal2'::auth.aal_level from ctx;
+union all select se, eglise, 'aal2'::auth.aal_level from ctx
+union all select sm, ministere, 'aal2'::auth.aal_level from ctx
+union all select sb, berger, 'aal2'::auth.aal_level from ctx;
 
 -- Un appel par fonction public : %1$L est l'appelant, %2$L le compte visé, %3$L la session de
 -- l'appelant. Les valeurs sont écrites en littéraux, pour que seul le droit soit en jeu.
@@ -109,6 +116,15 @@ select throws_ok(format(a.modele, c.conseil, c.cible, c.sc), '42501', 'appelant_
 -- EJP Tech gère seul les comptes (décision T60).
 select throws_ok(format(a.modele, c.eglise, c.cible, c.se), '42501', 'appelant_non_autorise',
                  'service_role, appelant de l''administration de l''église : ' || a.nom || ' refusée')
+  from appels a cross join ctx c order by a.nom;
+
+-- Clé secrète, appelant d'un ministère ou du berger (avec sa session aal2) : refusé aussi
+-- (contrat commun des Edge Functions, BRIEF section 8).
+select throws_ok(format(a.modele, c.ministere, c.cible, c.sm), '42501', 'appelant_non_autorise',
+                 'service_role, appelant d''un ministère : ' || a.nom || ' refusée')
+  from appels a cross join ctx c order by a.nom;
+select throws_ok(format(a.modele, c.berger, c.cible, c.sb), '42501', 'appelant_non_autorise',
+                 'service_role, appelant du berger : ' || a.nom || ' refusée')
   from appels a cross join ctx c order by a.nom;
 
 -- Session de l'appelant (décision T15)

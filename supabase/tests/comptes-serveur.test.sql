@@ -5,7 +5,7 @@
 -- qui gère seul les comptes (décision T60) ; l'administration de l'église est refusée.
 begin;
 
-select plan(54);
+select plan(59);
 
 -- pgTAP est ouvert à anon et authenticated par 000-outils ; ce fichier appelle aussi au nom de
 -- service_role (droits annulés avec la transaction).
@@ -234,7 +234,22 @@ select throws_ok($$ select public.serveur_reinitialiser_2fa((select tech from ct
   'P0001', 'propre_compte', 'EJP Tech ne réinitialise pas sa propre double authentification');
 select lives_ok($$ select public.serveur_reinitialiser_2fa((select tech from ctx), (select sa from ctx), (select u2 from ctx)) $$,
   'réinitialisation de la double authentification d''un compte du conseil');
+-- Le compte de l'administration de l'église n'est jamais visé (T60, migration
+-- 20261013130500) : il se gère au tableau de bord, sur demande écrite de la coordination.
+select throws_ok($$ select public.serveur_controler_cible((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'contrôle préalable refusé pour le compte de l''administration de l''église');
+select throws_ok($$ select public.serveur_desactiver_compte((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'EJP Tech ne désactive pas le compte de l''administration de l''église');
+select throws_ok($$ select public.serveur_reinitialiser_2fa((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'EJP Tech ne réinitialise pas la double authentification de l''administration');
+select throws_ok($$ select public.serveur_revoquer_sessions((select tech from ctx), (select sa from ctx), (select eglise from ctx)) $$,
+  'P0001', 'type_interdit', 'EJP Tech ne supprime pas les sessions de l''administration de l''église');
 reset role;
+
+select ok((select c.desactive_le is null from public.compte c where c.user_id = (select eglise from ctx))
+          and exists (select 1 from auth.sessions s where s.id = (select se from ctx))
+          and not exists (select 1 from public.journal j where j.cible_id = (select eglise from ctx)),
+  'compte de l''administration refusé : toujours actif, sa session gardée, aucune ligne de journal');
 
 select ok((select c.desactive_le is not null from public.compte c where c.user_id = (select u5 from ctx))
           and (select m.desactive_le is not null from public.ministere m where m.id = (select m_a from ctx)),
