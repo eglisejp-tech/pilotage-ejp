@@ -6,7 +6,7 @@
 --    unités, 11 suggestions, 21 modèles), 29 calculs de la V1 et 12 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
 --    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts.
--- 2. Création par l'administration pour un ministère d'essai par modèle : comptes, état actif
+-- 2. Création par EJP Tech (T60) pour un ministère d'essai par modèle : comptes, état actif
 --    (sensibles compris), termes complets, journal, aucune validation ni ajout, MCAD 21 lignes
 --    sur 30, second appel sans doublon, « aucun » pour Protocole, suggestions déjà prévues
 --    écartées, aucun calcul sur un sensible ou un commun.
@@ -87,6 +87,7 @@ insert into sensibles_attendus values
 
 create temp table ctx as
 select tests.compte('Administration de l''église') as admin,
+       tests.compte('EJP Tech, compte 1') as tech,
        tests.compte('Berger') as berger,
        tests.creer_ministere('Essai vague 1, Protocole') as protocole,
        private.dimanche_reference() as ref,
@@ -222,16 +223,16 @@ select results_eq($$
     from private.libelle_commun
 $$, $$ values (13, 2, true) $$, '13 communs affichés sous le nom de la demande, dont 2 lignes de référence de MDS');
 
--- 2. Création par l'administration (bouton « Créer »)
+-- 2. Création par EJP Tech (bouton « Créer » ; décision T60)
 
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select count(public.creer_indicateurs_prevus(e.ministere, e.modele)) from essai e $$,
-  'l''administration crée les prévus d''un ministère d''essai pour chacun des 21 modèles');
+  'EJP Tech crée les prévus d''un ministère d''essai pour chacun des 21 modèles');
 select is(public.creer_indicateurs_prevus((select e.ministere from essai e where e.modele = 'mcad'), 'mcad'), 0,
   'un second appel ne crée aucun doublon');
 select is(public.creer_indicateurs_prevus((select protocole from ctx), 'aucun'), 0,
   'Protocole : modèle « aucun », aucun indicateur');
-select is(tests.lire((select admin from ctx), 'aal2',
+select is(tests.lire((select tech from ctx), 'aal2',
     format('select ajouts, ajouts_max, lignes, lignes_max from public.limites_indicateurs(%L)',
            (select e.ministere from essai e where e.modele = 'mcad'))),
   '[{"ajouts": 0, "ajouts_max": 3, "lignes": 21, "lignes_max": 30}]'::jsonb,

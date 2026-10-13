@@ -1,4 +1,4 @@
-// relancer-invitation (BRIEF, section 8, « Les Edge Functions ») : l'administration de l'église,
+// relancer-invitation (BRIEF, section 8, « Les Edge Functions ») : EJP Tech (T60),
 // en aal2, renvoie l'invitation d'un compte actif dont l'adresse n'est pas encore confirmée, puis
 // la base écrit le journal invitation_relancee. Une adresse déjà confirmée est refusée
 // (invitation_deja_acceptee) : ce compte passe par « Mot de passe oublié ».

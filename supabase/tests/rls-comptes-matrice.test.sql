@@ -17,8 +17,9 @@
 -- comme en aal2 (écran « Ce compte est désactivé »).
 -- Tests précis : les quatre états de v_etat_comptes (invitation envoyée, à activer, activée,
 -- désactivé), l'activation interrompue (facteur non vérifié : « À activer ») et l'adresse lue
--- dans Auth, pour l'administration seulement ; l'administration lit tous les comptes, et autant
--- d'indicateurs propres que la table en contient.
+-- dans Auth, pour l'administration et EJP Tech seulement (EJP Tech gère les comptes et
+-- l'administration les lit, décision T60) ; l'une et l'autre lisent tous les comptes, et
+-- l'administration autant d'indicateurs propres que la table en contient.
 begin;
 
 -- Comptes d'essai : invitation envoyée (adresse non confirmée), à activer (adresse confirmée,
@@ -86,11 +87,12 @@ create temp view matrice_l1_aal2 (profil, objet, action, aal, attendu, requete) 
                  (5, 'administration'), (6, 'EJP Tech'), (7, 'ministère désactivé'),
                  (8, 'administration désactivée')) as p(rang, profil)
    cross join (values
-     ('v_etat_comptes', 'lire', array['0', '0', '0', '0', '6', '0', '0', '0'],
+     -- L'administration lit (écran 13 sans bouton) ; EJP Tech lit et gère (décision T60).
+     ('v_etat_comptes', 'lire', array['0', '0', '0', '0', '6', '6', '0', '0'],
       'select 1 from public.v_etat_comptes where user_id in (select user_id from essais_l1)'),
-     ('v_etat_comptes (adresses)', 'lire', array['0', '0', '0', '0', '6', '0', '0', '0'],
+     ('v_etat_comptes (adresses)', 'lire', array['0', '0', '0', '0', '6', '6', '0', '0'],
       'select 1 from public.v_etat_comptes where email like ''matrice-l1-%@exemple.test'''),
-     ('private.etat_comptes', 'lire', array['0', '0', '0', '0', '6', '0', '0', '0'],
+     ('private.etat_comptes', 'lire', array['0', '0', '0', '0', '6', '6', '0', '0'],
       'select 1 from private.etat_comptes() e where e.user_id in (select user_id from essais_l1)'),
      ('compte', 'lire', array['6', '6', '6', '6', '6', '6', '1', '1'],
       'select 1 from public.compte where user_id in (select user_id from essais_l1)'),
@@ -136,7 +138,7 @@ grant select on matrice_l1_aal2, matrice_l1, profil_l1 to authenticated, anon;
 -- Le plan compte les 13 tests fixes (contexte, 4 états et l'activation interrompue, adresses,
 -- 2 totaux, 4 lectures vides de v_etat_comptes) et, par tests.nombre_essais, les essais de la
 -- matrice (lignes dérivées comprises).
-select plan(13
+select plan(14
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_l1',
                         'select profil, compte from profil_l1', true));
 
@@ -186,6 +188,9 @@ select is(tests.lire((select admin from ctx), 'aal2',
 select is(tests.compter((select admin from ctx), 'aal2', 'select 1 from public.v_etat_comptes'),
           (select count(*)::integer from public.compte),
           'l''administration lit l''état de chaque compte');
+select is(tests.compter((select tech from ctx), 'aal2', 'select 1 from public.v_etat_comptes'),
+          (select count(*)::integer from public.compte),
+          'EJP Tech, qui gère les comptes (T60), lit l''état de chaque compte');
 select is(tests.compter((select admin from ctx), 'aal2',
             'select 1 from public.indicateur where ministere_id is not null and etat in (''actif'', ''en_attente'')'),
           (select count(*)::integer from public.indicateur

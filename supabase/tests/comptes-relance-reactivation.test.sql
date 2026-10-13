@@ -1,9 +1,11 @@
 -- Fonctions serveur de relancer-invitation et reactiver-compte (migration
 -- comptes_relance_reactivation), appelées avec la clé secrète (service_role) : droits, appelant,
 -- invitation en attente, compte désactivé, conflits, effets et journal au nom de l'appelant.
+-- L'appelant est EJP Tech, qui gère seul les comptes (décision T60) ; l'administration de
+-- l'église est refusée comme le conseil.
 begin;
 
-select plan(21);
+select plan(23);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -25,7 +27,8 @@ end $$;
 -- Comptes de test : invitation en attente (adresse non confirmée), adresse confirmée, compte
 -- désactivé, compte de ministère désactivé avec son ministère, ancien berger désactivé.
 create temp table ctx as
-select tests.creer_compte('essai-rr-admin@exemple.test', 'admin_eglise') as admin,
+select tests.creer_compte('essai-rr-tech@exemple.test', 'admin_plateforme') as tech,
+       tests.creer_compte('essai-rr-admin@exemple.test', 'admin_eglise') as eglise,
        tests.creer_compte('essai-rr-conseil@exemple.test', 'conseil') as conseil,
        tests.creer_compte('essai-rr-invite@exemple.test', 'conseil') as invite,
        tests.creer_compte('essai-rr-confirme@exemple.test', 'conseil') as confirme,
@@ -46,72 +49,78 @@ update ctx set cm2a = tests.creer_compte('essai-rr-doublon-a@exemple.test', 'min
 update public.compte set desactive_le = now() where user_id = (select cm2a from ctx);
 update ctx set cm2b = tests.creer_compte('essai-rr-doublon-b@exemple.test', 'ministere', m2);
 -- Sessions aal2 des appelants (la base exige la session de l'appelant, décision T15).
-alter table ctx add column sa uuid default gen_random_uuid(), add column sc uuid default gen_random_uuid();
+alter table ctx add column sa uuid default gen_random_uuid(), add column sc uuid default gen_random_uuid(),
+  add column se uuid default gen_random_uuid();
 insert into auth.sessions (id, user_id, aal)
-select sa, admin, 'aal2'::auth.aal_level from ctx
-union all select sc, conseil, 'aal2'::auth.aal_level from ctx;
+select sa, tech, 'aal2'::auth.aal_level from ctx
+union all select sc, conseil, 'aal2'::auth.aal_level from ctx
+union all select se, eglise, 'aal2'::auth.aal_level from ctx;
 grant select on ctx to service_role, authenticated;
 
--- L'administration, même en aal2, n'appelle pas ces fonctions directement
-select tests.se_connecter((select admin from ctx), 'aal2');
-select throws_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
+-- EJP Tech, même en aal2, n'appelle pas ces fonctions directement
+select tests.se_connecter((select tech from ctx), 'aal2');
+select throws_ok($$ select public.serveur_relancer_invitation((select tech from ctx), (select sa from ctx), (select invite from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_relancer_invitation');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select cm from ctx)) $$,
   '42501', null, 'authenticated ne peut pas appeler serveur_reactiver_compte');
 select tests.deconnecter();
 
 set local role service_role;
--- Appelant : un compte actif de l'administration
+-- Appelant : un compte actif d'EJP Tech (T60)
 select throws_ok($$ select public.serveur_relancer_invitation((select conseil from ctx), (select sc from ctx), (select invite from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne relance pas d''invitation');
 select throws_ok($$ select public.serveur_reactiver_compte((select conseil from ctx), (select sc from ctx), (select cm from ctx)) $$,
   '42501', 'appelant_non_autorise', 'un compte du conseil ne réactive pas de compte');
+select throws_ok($$ select public.serveur_relancer_invitation((select eglise from ctx), (select se from ctx), (select invite from ctx)) $$,
+  '42501', 'appelant_non_autorise', 'l''administration de l''église ne relance plus d''invitation (T60)');
+select throws_ok($$ select public.serveur_reactiver_compte((select eglise from ctx), (select se from ctx), (select cm from ctx)) $$,
+  '42501', 'appelant_non_autorise', 'l''administration de l''église ne réactive plus de compte (T60)');
 
 -- Relance : invitation encore en attente, compte actif, autre que l'appelant
-select lives_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
+select lives_ok($$ select public.serveur_controler_relance((select tech from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'contrôle de relance accepté pour une invitation en attente');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select confirme from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select tech from ctx), (select sa from ctx), (select confirme from ctx)) $$,
   'P0001', 'invitation_deja_acceptee', 'relance refusée pour une adresse déjà confirmée');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select tech from ctx), (select sa from ctx), (select tech from ctx)) $$,
   'P0001', 'propre_compte', 'relance refusée pour le compte de l''appelant');
-select throws_ok($$ select public.serveur_controler_relance((select admin from ctx), (select sa from ctx), (select inactif from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_relance((select tech from ctx), (select sa from ctx), (select inactif from ctx)) $$,
   'P0001', 'compte_desactive', 'relance refusée pour un compte désactivé');
-select lives_ok($$ select public.serveur_relancer_invitation((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
+select lives_ok($$ select public.serveur_relancer_invitation((select tech from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'relance enregistrée');
 
 -- Réactivation : compte désactivé seulement, sans conflit
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select invite from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select invite from ctx)) $$,
   'P0001', 'compte_actif', 'un compte actif n''est pas réactivé');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), gen_random_uuid()) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), gen_random_uuid()) $$,
   'P0001', 'compte_inconnu', 'compte inconnu refusé');
-select lives_ok($$ select public.serveur_controler_reactivation((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
+select lives_ok($$ select public.serveur_controler_reactivation((select tech from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'contrôle de réactivation accepté pour un compte de ministère désactivé');
-select lives_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
+select lives_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'réactivation d''un compte de ministère');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select cm from ctx)) $$,
   'P0001', 'compte_actif', 'un compte déjà réactivé est refusé');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select ancien_berger from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select ancien_berger from ctx)) $$,
   'P0001', 'berger_deja_actif', 'l''ancien berger n''est pas réactivé tant qu''un berger est actif');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select admin from ctx)) $$,
-  'P0001', 'propre_compte', 'l''administration ne réactive pas son propre compte');
-select throws_ok($$ select public.serveur_reactiver_compte((select admin from ctx), (select sa from ctx), (select cm2a from ctx)) $$,
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select tech from ctx)) $$,
+  'P0001', 'propre_compte', 'EJP Tech ne réactive pas son propre compte');
+select throws_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx), (select cm2a from ctx)) $$,
   'P0001', 'ministere_a_deja_un_compte', 'l''ancien compte n''est pas réactivé quand son ministère a un compte actif');
 reset role;
 
 select results_eq($$
   select j.action, j.compte, j.ministere_id, j.cible, j.detail from public.journal j
    where j.cible_id = (select invite from ctx)
-$$, $$ values ('invitation_relancee'::text, (select admin from ctx), null::uuid, 'compte'::text, '{}'::jsonb) $$,
-  'relance : une ligne invitation_relancee au nom de l''administration');
+$$, $$ values ('invitation_relancee'::text, (select tech from ctx), null::uuid, 'compte'::text, '{}'::jsonb) $$,
+  'relance : une ligne invitation_relancee au nom d''EJP Tech');
 select ok((select c.desactive_le is null from public.compte c where c.user_id = (select cm from ctx))
           and (select m.desactive_le is null from public.ministere m where m.id = (select m from ctx)),
   'réactivation : le compte et son ministère redeviennent actifs');
 select results_eq($$
   select j.action, j.compte, j.ministere_id, j.cible, j.detail from public.journal j
    where j.cible_id = (select cm from ctx)
-$$, $$ values ('compte_reactive'::text, (select admin from ctx), (select m from ctx), 'compte'::text,
+$$, $$ values ('compte_reactive'::text, (select tech from ctx), (select m from ctx), 'compte'::text,
                '{"type": "ministere"}'::jsonb) $$,
-  'réactivation : une ligne compte_reactive au nom de l''administration');
+  'réactivation : une ligne compte_reactive au nom d''EJP Tech');
 select ok((select c.desactive_le is not null from public.compte c where c.user_id = (select ancien_berger from ctx))
           and not exists (select 1 from public.journal j where j.cible_id = (select ancien_berger from ctx)),
   'réactivation refusée : rien n''est écrit');

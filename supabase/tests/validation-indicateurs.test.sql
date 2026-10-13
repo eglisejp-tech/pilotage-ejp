@@ -5,7 +5,7 @@
 -- autre ministère ; file d'EJP Tech (attente à l'heure de Paris, retard, valeurs) ; décision
 -- unique, par EJP Tech seul, sous verrou ; refus retiré avec le motif « refuse », sans ligne
 -- indicateur_retire ; demande retirée ; fraîcheur du ministère inchangée par une décision ;
--- limite de 3 ajouts ; ajout de l'administration sans demande ; masquage du « Pourquoi » et du
+-- limite de 3 ajouts ; ajout d'EJP Tech sans demande (T60) ; masquage du « Pourquoi » et du
 -- motif sans trace.
 begin;
 
@@ -240,9 +240,9 @@ select lives_ok($$ select public.ajouter_suggestion((select a_m from ctx), 'essa
 select tests.deconnecter();
 update ctx set i4 = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.modele_code = 'essai_val_s4');
 update ctx set d4 = (select d.id from public.demande_indicateur d where d.indicateur_id = ctx.i4);
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.retirer_indicateur((select i4 from ctx), 'erreur') $$,
-  'l''administration retire l''ajout avant la décision');
+  'EJP Tech retire l''ajout avant la décision (il configure seul, T60)');
 select tests.deconnecter();
 select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.valider_indicateur((select d4 from ctx), 'valide') $$,
@@ -253,21 +253,21 @@ select is(tests.compter((select tech from ctx), 'aal2',
   format('select 1 from public.v_a_valider where demande_id = %L', (select d4 from ctx))), 0,
   'une demande sortie n''est plus dans la file');
 
--- 7. Ajout d'une suggestion par l'administration : actif, sans demande ; doublon refusé
-select tests.se_connecter((select admin from ctx), 'aal2');
+-- 7. Ajout d'une suggestion par EJP Tech (T60) : actif, sans demande ; doublon refusé
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.ajouter_suggestion((select a_m from ctx), 'essai_val_s8') $$,
-  'l''administration ajoute une suggestion sans « Pourquoi »');
+  'EJP Tech ajoute une suggestion sans « Pourquoi »');
 select throws_ok($$ select public.ajouter_suggestion((select a_m from ctx), 'essai_val_s1') $$,
   'P0001', 'Cette fiche a déjà « Essai validation suggestion une ».', 'une suggestion déjà sur la fiche est refusée');
 select tests.deconnecter();
 update ctx set i8 = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.modele_code = 'essai_val_s8');
 select results_eq($$ select i.etat, i.origine from public.indicateur i where i.id = (select i8 from ctx) $$,
-  $$ values ('actif'::text, 'eglise'::text) $$, 'un ajout de l''administration est actif tout de suite, d''origine église');
+  $$ values ('actif'::text, 'eglise'::text) $$, 'un ajout d''EJP Tech est actif tout de suite, d''origine église');
 select is((select count(*)::int from public.demande_indicateur d where d.indicateur_id = (select i8 from ctx)), 0,
-  'un ajout de l''administration n''a pas de demande');
+  'un ajout d''EJP Tech n''a pas de demande');
 select is((select j.detail from public.journal j where j.cible_id = (select i8 from ctx)),
   '{"nature": "mois", "unite": "nombre", "origine": "eglise", "remplace": null}'::jsonb,
-  'la ligne de journal d''un ajout de l''administration n''a ni attente ni demande');
+  'la ligne de journal d''un ajout d''EJP Tech n''a ni attente ni demande');
 
 -- 8. Masquage du « Pourquoi » et du motif par EJP Tech, sans trace
 select tests.se_connecter((select tech from ctx), 'aal2');

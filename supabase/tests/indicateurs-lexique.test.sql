@@ -75,7 +75,7 @@ select results_eq($$ select message, bloquant from private.verifier_texte('[x]',
 select results_eq($$ select bloquant from private.verifier_texte('Prises en charge', false) $$, $$ values (true) $$,
   'sensible : bloquant pour l''administration et EJP Tech (sauf case ou confirmation, B3)');
 select results_eq($$ select message, bloquant from private.verifier_texte('Prises en charge', true) $$,
-  $$ values ('Ce chiffre semble toucher la santé, l''accompagnement ou les enfants. Un domaine sensible se demande à l''administration de l''église. EJP Tech vérifiera votre ajout.', false) $$,
+  $$ values ('Ce chiffre semble toucher la santé, l''accompagnement ou les enfants. Un domaine sensible se demande à EJP Tech, qui vérifiera votre ajout.', false) $$,
   'sensible : simple indice pour un ministère');
 
 -- Accès

@@ -2,12 +2,13 @@
 -- « Matrice des droits » et « Tests obligatoires ») : chaque table et chaque vue lue par le
 -- berger rend les mêmes lignes à EJP Tech (les objets de l'étape 4 compris, depuis le lot I :
 -- indicateurs, calculs, statistiques FIJ, mentions, validations, et les sensibles avec leurs
--- valeurs exactes, P52) ; la modération reste à EJP Tech, l'état des comptes à
--- l'administration ; EJP Tech n'ajoute rien, n'appelle aucune fonction d'action du berger, du
--- conseil, d'un ministère ou de l'administration, et ne lit rien en aal1.
+-- valeurs exactes, P52) ; la modération reste à EJP Tech ; l'état des comptes se lit par
+-- l'administration et par EJP Tech, qui gère les comptes (T60) ; EJP Tech n'ajoute rien,
+-- n'appelle aucune fonction d'action du berger, du conseil ou d'un ministère, et ne lit rien en
+-- aal1. Les sessions, qu'EJP Tech déclare aussi depuis T60, sont dans rls-sessions-matrice.
 begin;
 
-select plan(182);
+select plan(179);
 
 -- Jeu d'essai : comptes du jeu d'exemple, plus un ministère A qui crée un point (il mentionne
 -- Communication), un événement et sa prochaine réunion.
@@ -99,7 +100,8 @@ end $$;
 
 select * from pg_temp.lectures();
 
--- Ce qui ne change pas : la modération reste à EJP Tech, l'état des comptes à l'administration.
+-- La modération reste à EJP Tech ; l'état des comptes se lit par l'administration (lecture) et
+-- par EJP Tech (gestion, T60).
 select is(tests.compter((select tech from ctx), 'aal2', 'select * from public.moderation'),
   (select count(*)::int from public.moderation), 'moderation : EJP Tech lit toutes les décisions');
 select is(tests.compter((select berger from ctx), 'aal2', 'select * from public.moderation'), 0,
@@ -108,8 +110,9 @@ select ok(tests.compter((select tech from ctx), 'aal2', 'select * from public.v_
   'file de relecture : EJP Tech la lit');
 select is(tests.compter((select berger from ctx), 'aal2', 'select * from public.v_textes_a_relire'), 0,
   'file de relecture : le berger n''y lit rien');
-select is(tests.compter((select tech from ctx), 'aal2', 'select * from public.v_etat_comptes'), 0,
-  'état des comptes : EJP Tech n''y lit rien');
+select is(tests.compter((select tech from ctx), 'aal2', 'select * from public.v_etat_comptes'),
+  tests.compter((select admin from ctx), 'aal2', 'select * from public.v_etat_comptes'),
+  'état des comptes : EJP Tech lit les mêmes lignes que l''administration (T60)');
 select ok(tests.compter((select admin from ctx), 'aal2', 'select * from public.v_etat_comptes') > 0,
   'état des comptes : l''administration de l''église le lit');
 
@@ -188,13 +191,6 @@ select throws_ok($$ select public.marquer_traite((select p1 from ctx), 'Réglé 
   '42501', 'Ce point n''existe pas ou vous n''y avez pas accès.', 'EJP Tech ne marque aucun point traité, avec un commentaire');
 select throws_ok($$ select public.marquer_traite((select p1 from ctx)) $$,
   '42501', 'Ce point n''existe pas ou vous n''y avez pas accès.', 'EJP Tech ne marque aucun point traité, sans commentaire');
-select throws_ok($$
-  select public.declarer_session('autre', private.aujourdhui() + 21, 'Rassemblement EJP Tech', array[(select a_m from ctx)])
-$$, '42501', 'Seule l''administration de l''église déclare une session.', 'EJP Tech ne déclare aucune session');
-select throws_ok($$ select public.modifier_session((select batir from ctx), array[(select a_m from ctx)]) $$,
-  '42501', 'Cette session n''existe pas ou vous n''y avez pas accès.', 'EJP Tech ne modifie aucune session');
-select throws_ok($$ select public.supprimer_session((select batir from ctx)) $$,
-  '42501', 'Cette session n''existe pas ou vous n''y avez pas accès.', 'EJP Tech ne supprime aucune session');
 select throws_ok($$
   insert into public.journal (compte, ministere_id, action, cible, cible_id)
   select ctx.tech, ctx.a_m, 'point_traite', 'point_attention', ctx.p1 from ctx
