@@ -71,8 +71,9 @@ describe('textes du signalement', () => {
       "La nouvelle date doit être aujourd'hui ou plus tard.",
     )
     expect(TEXTES_SIGNALEMENT.questionDate).toBe('Vous ne pouvez pas choisir de date ?')
+    // Formule « déjà enregistré » (m134, proposé le 12 octobre 2026).
     expect(TEXTES_SIGNALEMENT.ligneIdentique).toBe(
-      "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
     )
   })
 

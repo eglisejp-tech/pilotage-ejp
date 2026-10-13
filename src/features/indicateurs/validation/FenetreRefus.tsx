@@ -41,8 +41,8 @@ interface Props {
  * refus ? » (10 à 280 caractères, compteur) avec dessous le rappel sur les données personnelles,
  * une phrase qui dit ce qui arrive à l'indicateur et qui lira le motif, puis « Refuser ». Fenêtre
  * modale : le focus y reste, Échap annule, le focus revient au bouton d'origine à la fermeture. Un
- * refus du motif par la base se dit sous le champ ; la connexion perdue sous les boutons, motif
- * gardé.
+ * refus du motif par la base se dit sous le champ ; la connexion perdue, la connexion expirée ou un
+ * refus inattendu sous les boutons, motif gardé.
  */
 export function FenetreRefus({
   ministere,
@@ -90,7 +90,7 @@ export function FenetreRefus({
       await refuser(valeurs.motif)
       onFait()
     } catch (erreur) {
-      const lu = lireRefusValidation(erreur)
+      const lu = lireRefusValidation(erreur, { formulaire: true })
       if (lu.ou === 'champ') setError('motif', { message: lu.message }, { shouldFocus: true })
       else if (lu.ou === 'bouton') onRefusDeDemande(lu.message)
       else setRefus(lu)
@@ -182,6 +182,7 @@ export function FenetreRefus({
             </button>
           </div>
           {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}
+          {refus?.ou === 'formulaire' ? <ErreurFormulaire message={refus.message} /> : null}
         </form>
       </div>
     </div>,

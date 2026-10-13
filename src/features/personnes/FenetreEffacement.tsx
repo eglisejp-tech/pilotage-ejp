@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { phraseErreur } from '@/data/messagesBase'
 import { TEXTES_FENETRE_EFFACEMENT } from '@/features/personnes/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
@@ -24,7 +25,7 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
   const idAvertissement = useId()
   const fenetre = useRef<HTMLDivElement>(null)
   const [enCours, setEnCours] = useState(false)
-  const [echec, setEchec] = useState(false)
+  const [echec, setEchec] = useState<string | null>(null)
   usePiegeFocus(fenetre, true, () => {
     if (!enCours) onAnnuler()
   })
@@ -42,12 +43,20 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
 
   const soumettre = async () => {
     if (enCours) return
-    setEchec(false)
+    setEchec(null)
     setEnCours(true)
     try {
       await effacer()
-    } catch {
-      setEchec(true)
+    } catch (erreur) {
+      // Par la table de traduction (m270, m271) : seule une coupure dit « La connexion a échoué ».
+      // Une action sans formulaire : le repli ne parle pas de saisie gardée.
+      setEchec(
+        phraseErreur(
+          erreur,
+          { connexion: TEXTES_FENETRE_EFFACEMENT.erreur },
+          { formulaire: false },
+        ),
+      )
       setEnCours(false)
     }
   }
@@ -97,7 +106,7 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
             {enCours ? TEXTES_FENETRE_EFFACEMENT.boutonEnCours : TEXTES_FENETRE_EFFACEMENT.bouton}
           </button>
         </div>
-        {echec ? <ErreurFormulaire message={TEXTES_FENETRE_EFFACEMENT.erreur} /> : null}
+        {echec !== null ? <ErreurFormulaire message={echec} /> : null}
       </div>
     </div>,
     document.body,

@@ -69,8 +69,11 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await ouvrir(page)
     await bouton(page, 'Ajouter un indicateur').click()
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
-    await expect(page.getByText("Expliquez ce qu'on compte en 10 à 140 caractères.")).toBeVisible()
+    // Les mêmes phrases que la table de traduction (m233).
+    await expect(page.getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
+    await expect(
+      page.getByText('Expliquez ce qui est compté, en 10 à 140 caractères.'),
+    ).toBeVisible()
     await expect(
       page.getByText('Choisissez le rythme : chaque dimanche, chaque mois ou à ce jour.'),
     ).toBeVisible()
@@ -78,16 +81,24 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await expect(page.getByText('Indicateur ajouté.')).toHaveCount(0)
   })
 
-  test('un doublon est refusé par la base : son message reste sous le bouton, le texte est gardé', async ({
+  test('un doublon est refusé par la base : son message reste sous le champ, une fois, le texte est gardé', async ({
     page,
   }) => {
     await ouvrir(page)
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Publications', 'Publications mises en ligne.', /Chaque mois/)
-    await expect(page.getByText('Cette fiche a déjà « Publications ».').first()).toBeVisible()
+    // Pendant la frappe et après l'envoi, la même phrase de la table de traduction (m233), dite
+    // une seule fois, sous le champ.
+    const doublon = 'Cette fiche a déjà un indicateur « Publications ». Choisissez un autre nom.'
+    await expect(page.getByText(doublon)).toHaveCount(1)
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByRole('alert')).toHaveText('Cette fiche a déjà « Publications ».')
-    await expect(page.getByLabel('Ce que vous comptez')).toHaveValue('Publications')
+    const nom = page.getByLabel('Ce que vous comptez')
+    await expect(nom).toBeFocused()
+    await expect(nom).toHaveAttribute('aria-invalid', 'true')
+    await expect(nom).toHaveAccessibleDescription(new RegExp(doublon.replace(/[.()]/g, '\\$&')))
+    await expect(page.getByText(doublon)).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    await expect(nom).toHaveValue('Publications')
   })
 
   test('le domaine sensible impose « chaque mois » et un compte simple', async ({ page }) => {
@@ -108,9 +119,12 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Annonces', 'Annonces faites aux enfants.', /Chaque mois/)
     await expect(page.getByText(/Ce chiffre semble sensible/)).toBeVisible()
-    // Sans confirmation, la base refuse l'envoi et le dit sous le bouton.
+    // Sans confirmation, la base refuse l'envoi : l'avertissement, déjà sous la case, n'est pas
+    // répété sous le bouton, et la case « Domaine sensible » prend le focus (lot B, m233).
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByRole('alert')).toContainText('Ce chiffre semble sensible')
+    await expect(page.getByRole('checkbox', { name: /Domaine sensible/ })).toBeFocused()
+    await expect(page.getByText(/Ce chiffre semble sensible/)).toHaveCount(1)
+    await expect(page.getByRole('alert')).toHaveCount(0)
     await page.getByRole('checkbox', { name: "Ce n'est pas un domaine sensible" }).check()
     await bouton(page, "Ajouter l'indicateur").click()
     await expect(page.getByText('Indicateur ajouté.')).toBeVisible()
@@ -409,7 +423,7 @@ test.describe('accessibilité et petits écrans', () => {
     await expect(titre(page, 'Ajouter un indicateur')).toBeVisible()
     await apres('ajout')
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
+    await expect(page.getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
     await apres('ajout-erreurs')
     await page.getByRole('checkbox', { name: /Domaine sensible/ }).check()
     await apres('ajout-sensible')
@@ -582,7 +596,15 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
 })
 
 // Les états d'erreur de l'envoi : le refus de la base (`envoi=refus`) et la connexion perdue
-// (`envoi=echec`), dans un panneau (ajout) et dans les deux fenêtres de retrait.
+// (`envoi=echec`), dans un panneau (ajout) et dans les deux fenêtres de retrait. Le refus simulé
+// reste vrai pour l'écran : le nom tapé vient d'être pris (sous le champ du nom, m233), puis
+// l'indicateur vient d'être retiré (sous le bouton de la fenêtre).
+const DOUBLON_TOURNAGES = 'Cette fiche a déjà un indicateur « Tournages ». Choisissez un autre nom.'
+const MESSAGES_RETRAIT = {
+  refus: 'Cet indicateur est déjà retiré.',
+  echec: /^La connexion a échoué\./,
+} as const
+
 for (const envoi of ['refus', 'echec'] as const) {
   test(
     `captures des erreurs d’envoi (${envoi}) en 1440, 834 et 390 px`,
@@ -601,15 +623,26 @@ for (const envoi of ['refus', 'echec'] as const) {
       await bouton(page, 'Ajouter un indicateur').click()
       await remplirAjout(page, 'Tournages', 'Tournages réalisés dans le mois.', /Chaque mois/)
       await bouton(page, "Ajouter l'indicateur").click()
-      await expect(page.getByRole('alert')).toBeVisible()
-      await expect(page.getByRole('alert')).toBeInViewport()
+      const nom = page.getByLabel('Ce que vous comptez')
+      if (envoi === 'refus') {
+        // Sous le champ du nom, relié à lui, avec le focus ; aucune alerte sous le bouton.
+        await expect(nom).toHaveAttribute('aria-invalid', 'true')
+        await expect(nom).toBeFocused()
+        await expect(nom).toHaveAccessibleDescription(new RegExp(DOUBLON_TOURNAGES))
+        await expect(page.getByText(DOUBLON_TOURNAGES)).toBeInViewport()
+        await expect(page.getByRole('alert')).toHaveCount(0)
+      } else {
+        await expect(page.getByRole('alert')).toHaveText(/^La connexion a échoué\./)
+        await expect(page.getByRole('alert')).toBeInViewport()
+        await expect(nom).not.toHaveAttribute('aria-invalid')
+      }
       await capturer('ajout')
       await annulerLaSaisie(page)
       await page.getByRole('button', { name: 'Retirer « Publications »' }).click()
       const fenetre = page.getByRole('alertdialog')
       await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()
       await fenetre.getByRole('button', { name: "Retirer l'indicateur" }).click()
-      await expect(fenetre.getByRole('alert')).toBeVisible()
+      await expect(fenetre.getByRole('alert')).toHaveText(MESSAGES_RETRAIT[envoi])
       await capturer('retirer')
       await fenetre.getByRole('button', { name: 'Annuler' }).click()
       await page
@@ -619,7 +652,9 @@ for (const envoi of ['refus', 'echec'] as const) {
         .getByRole('alertdialog')
         .getByRole('button', { name: 'Retirer pour confidentialité' })
         .click()
-      await expect(page.getByRole('alertdialog').getByRole('alert')).toBeVisible()
+      await expect(page.getByRole('alertdialog').getByRole('alert')).toHaveText(
+        MESSAGES_RETRAIT[envoi],
+      )
       await capturer('confidentialite')
     },
   )

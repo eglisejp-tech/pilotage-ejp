@@ -6,6 +6,7 @@
 // Les lectures des points sont dans `points.ts` (« À décider ») et `pointsListe.ts` (écran 05).
 
 import { z } from 'zod'
+import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import type { Priorite, StatutPoint } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
 import { COMMENTAIRE_TRAITE_MAX, COMMENTAIRE_TRAITE_MIN_MINISTERE } from '@/lib/metier/droitsPoint'
@@ -19,8 +20,9 @@ export const LONGUEUR_ATTENDU_POINT = 80
 
 /**
  * Messages des fonctions de points. `refus` reprend, mot pour mot, les messages que la base lève
- * (erreur `P0001`) : un refus se reconnaît à son texte et s'affiche tel quel. `reussite` est ce
- * que l'écran dit après une écriture (« Point créé. », « Statut enregistré : En cours. »).
+ * (erreur `P0001`), que la table de traduction dit tels quels en attendant la refonte des
+ * messages ; les mêmes textes servent aux contrôles des formulaires. `reussite` est ce que l'écran
+ * dit après une écriture (« Point créé. », « Statut enregistré : En cours. »).
  */
 export const MESSAGES_POINT = {
   refus: {
@@ -35,6 +37,13 @@ export const MESSAGES_POINT = {
     pointDejaTraite: 'Ce point est déjà traité.',
     /** `modifier_mentions_point` : le point est traité, ses mentions ne changent plus. */
     pointTraiteMentions: 'Ce point est traité : ses mentions ne changent plus.',
+    /**
+     * `modifier_mentions_point` : un autre compte a changé les mentions entre-temps (ministère déjà
+     * mentionné, ou plus mentionné). Textes de la base, jamais montrés : la table de traduction dit
+     * « Les mentions de ce point viennent de changer... » (m157), et la page est relue.
+     */
+    mentionDejaPresente: 'Ce ministère est déjà mentionné sur ce point.',
+    mentionAbsente: "Ce ministère n'est pas mentionné sur ce point.",
     /** `modifier_mentions_point` : la liste n'a pas été envoyée. */
     mentionsVides: 'Choisissez les ministères à mentionner.',
     statutVide: 'Choisissez un statut.',
@@ -63,31 +72,38 @@ export type ContexteRefusPoint = 'creation' | 'action'
 
 /**
  * Texte à montrer sous le bouton pour un refus, ou null pour un problème de connexion (l'écran
- * garde les valeurs et dit « La connexion a échoué... »).
+ * garde les valeurs et dit « La connexion a échoué... »). La phrase vient de la table de
+ * traduction (`src/data/messagesBase.ts`), jamais du texte brut de la base :
  *
  * - Valeur refusée avant l'appel (`ZodError`, levée par `creerPoint`, `changerStatutPoint` ou
- *   `marquerTraite`) : le message de son premier problème. Les formulaires des lots P1 et P2
+ *   `marquerTraite`) : la consigne de son premier problème. Les formulaires des lots P1 et P2
  *   valident d'abord avec les schémas de ce fichier ; ce cas reste un filet.
- * - Erreur de saisie de la base (`P0001`) : son message, tel quel.
- * - Refus de droit (`42501`) : sans dire pourquoi (double authentification, compte inactif, point
- *   hors de portée). La création réservée aux ministères garde son texte ; sinon `creationAcces`
- *   pour la création, `acces` pour une action sur un point.
+ * - Refus de la base (`P0001`) : sa phrase dans la table ; absent de la table, le repli.
+ * - Double authentification absente, jeton expiré : « Votre connexion a expiré » ; compte
+ *   désactivé : « Ce compte est désactivé » (m271, m272).
+ * - Autre refus de droit (`42501`) : sans dire pourquoi (point hors de portée). La création
+ *   réservée aux ministères garde son texte ; sinon `creationAcces` pour la création, `acces`
+ *   pour une action sur un point.
+ * - Création restée sans réponse après 10 s : le point est peut-être créé, vérifier la liste avant
+ *   de réessayer (m259). Une action se refait sans doublon : null.
  */
 export function messageDeRefusPoint(
   erreur: unknown,
   contexte: ContexteRefusPoint = 'action',
 ): string | null {
-  if (erreur instanceof z.ZodError) return erreur.issues[0]?.message ?? null
-  if (typeof erreur !== 'object' || erreur === null) return null
-  const { code, message } = erreur as { code?: unknown; message?: unknown }
-  if (code === '42501') {
-    if (message === MESSAGES_POINT.refus.creationReservee) {
-      return MESSAGES_POINT.refus.creationReservee
-    }
-    return contexte === 'creation' ? MESSAGES_POINT.refus.creationAcces : MESSAGES_POINT.refus.acces
+  const lue = lireErreurBase(erreur)
+  switch (lue.genre) {
+    case 'reseau':
+      return null
+    case 'delai':
+      return contexte === 'creation' ? MESSAGES_COMMUNS.peutEtreFait : null
+    case 'acces':
+      return contexte === 'creation'
+        ? MESSAGES_POINT.refus.creationAcces
+        : MESSAGES_POINT.refus.acces
+    case 'message':
+      return lue.message
   }
-  if (code !== 'P0001' || typeof message !== 'string') return null
-  return message
 }
 
 const VALEURS_PRIORITE = ['normale', 'haute', 'urgente'] as const satisfies readonly Priorite[]

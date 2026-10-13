@@ -14,6 +14,8 @@ const TEXTE_HORS_LIGNE =
 const TEXTE_RETOUR = 'Connexion rétablie.'
 const APRES_RETOUR = { timeout: 10_000 }
 const ECHEC = 'La connexion a échoué. Réessayez.'
+// Lecture de la session abandonnée après 10 s (m252) : le cas « lent » a sa phrase.
+const TROP_LONG = 'La réponse met trop de temps. Réessayez.'
 // Adresse du client Supabase : celle de playwright.config.ts (variable VITE_SUPABASE_URL, sinon la
 // base locale par défaut). Le client range sa session sous « sb-<premier mot du nom d'hôte>-auth-token ».
 const SERVEUR = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
@@ -328,7 +330,11 @@ test.describe('route sans réponse', () => {
     const debut = Date.now()
     await page.goto('/')
     await expect(page.getByText('Chargement')).toBeVisible()
-    await expect(page.getByRole('alert').filter({ hasText: ECHEC })).toBeVisible({
+    // Après 4 s, le chargement le dit (m248), dans la même zone.
+    await expect(page.getByText("Chargement plus long que d'habitude")).toBeVisible({
+      timeout: 8_000,
+    })
+    await expect(page.getByRole('alert').filter({ hasText: TROP_LONG })).toBeVisible({
       timeout: 20_000,
     })
     const duree = Date.now() - debut

@@ -33,10 +33,36 @@ describe('lireRefusSignalement', () => {
     })
   })
 
-  it('toute autre erreur est un problème de connexion', () => {
+  it('aucune réponse : un problème de connexion', () => {
     expect(lireRefusSignalement(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
-    expect(lireRefusSignalement(refus('Erreur', 'PGRST301'))).toEqual({ ou: 'connexion' })
-    expect(lireRefusSignalement(null)).toEqual({ ou: 'connexion' })
+    expect(lireRefusSignalement({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
+      ou: 'connexion',
+    })
     expect(estDejaClos({ ou: 'connexion' })).toBe(false)
+  })
+
+  it('jeton expiré : se reconnecter, pas « La connexion a échoué » (m271)', () => {
+    expect(lireRefusSignalement(refus('JWT expired', 'PGRST301'))).toEqual({
+      ou: 'bouton',
+      message: 'Votre connexion a expiré. Reconnectez-vous.',
+    })
+  })
+
+  it('erreur inconnue : le repli, sous le bouton (m270)', () => {
+    expect(lireRefusSignalement(null)).toEqual({
+      ou: 'bouton',
+      message:
+        "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    })
+  })
+
+  it('signalement sans réponse après 10 s : vérifier la liste avant de réessayer (m259)', () => {
+    const delai = { code: '', message: 'TimeoutError: signal timed out' }
+    expect(lireRefusSignalement(delai)).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    })
+    // Une clôture se refait sans doublon : la base dit « déjà clos ».
+    expect(lireRefusSignalement(delai, 'cloture')).toEqual({ ou: 'connexion' })
   })
 })

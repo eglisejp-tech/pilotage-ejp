@@ -1,4 +1,4 @@
-import { isAuthApiError } from '@supabase/supabase-js'
+import { isAuthApiError, isAuthRetryableFetchError } from '@supabase/supabase-js'
 import {
   annoncerSurEcranSuivant,
   ANNONCE_MOT_DE_PASSE,
@@ -151,6 +151,11 @@ export async function verifierLien(
       await rafraichirSession()
       return { etat: 'valide' }
     }
+    // Un compte désactivé se dit avant tout autre refus : une nouvelle invitation ne servirait
+    // pas (m016).
+    if (isAuthApiError(error) && error.code === 'user_banned') {
+      return { etat: 'erreur', erreur: traduireErreur(error, 'lien-email') }
+    }
     if (
       isAuthApiError(error) &&
       error.status >= 400 &&
@@ -182,18 +187,31 @@ export async function choisirMotDePasse(valeurs: ValeursNouveauMotDePasse): Prom
 
 /**
  * « Mot de passe oublié » : toujours le même message, qu'un compte existe ou non. Seules les
- * limites de fréquence et les pannes réseau s'affichent.
+ * limites de fréquence, une coupure du réseau et une panne de la passerelle (502 à 504, la même
+ * pour toute adresse) s'affichent : un lien n'est alors pas parti. Une erreur 500 d'Auth lui-même
+ * reste silencieuse : Auth répond 200 pour une adresse inconnue, mais 500 quand l'envoi de l'email
+ * d'un compte qui existe échoue ; la dire révélerait que le compte existe.
  */
 export async function demanderLien(valeurs: ValeursMotDePasseOublie): Promise<Resultat> {
   const { email } = schemaMotDePasseOublie.parse(valeurs)
-  const resultat = await executer('lien-email', () =>
-    supabase().auth.resetPasswordForEmail(email, {
+  let erreur: unknown
+  try {
+    const { error } = await supabase().auth.resetPasswordForEmail(email, {
       redirectTo: new URL('/acces', window.location.origin).toString(),
-    }),
-  )
-  const message = resultat.erreur
-  return message === messagesConnexion.tropDeTentatives || message === messagesConnexion.echecReseau
-    ? resultat
+    })
+    if (!error) return {}
+    erreur = error
+  } catch (exception) {
+    erreur = exception
+  }
+  const message = traduireErreur(erreur, 'lien-email')
+  if (message === messagesConnexion.tropDeTentatives || message === messagesConnexion.echecReseau) {
+    return { erreur: message }
+  }
+  // Une panne de la passerelle (502 à 504, `AuthRetryableFetchError`) se dit ; un refus 4xx ou une
+  // erreur 500 d'Auth reste silencieux, comme une adresse inconnue (aucune énumération).
+  return isAuthRetryableFetchError(erreur) && erreur.status >= 500
+    ? { erreur: messagesConnexion.panneConnexion }
     : {}
 }
 
@@ -221,9 +239,11 @@ async function deconnexionLocaleReussie(): Promise<boolean> {
  * « Se déconnecter » : portée locale, pour ne pas déconnecter les autres personnes d'un compte
  * partagé (BRIEF section 8, règle 6). Sans réseau, auth-js garde la session : on l'efface
  * alors nous-mêmes et on recharge, pour qu'un appareil partagé ne reste jamais connecté.
+ * L'écran de connexion confirme ensuite « Compte déconnecté. » (m060) ; `annoncer` faux : rien
+ * (après l'écran « Compte désactivé », qui a déjà tout dit).
  */
-export async function seDeconnecter(): Promise<void> {
-  noterDeconnexionVolontaire()
+export async function seDeconnecter(annoncer = true): Promise<void> {
+  noterDeconnexionVolontaire(annoncer)
   effacerMotDePasseAChoisir()
   viderDonnees()
   if (!(await deconnexionLocaleReussie())) {
@@ -238,7 +258,7 @@ export async function seDeconnecter(): Promise<void> {
 export async function quitterSessionDesactivee(): Promise<void> {
   try {
     const { data } = await supabase().auth.getSession()
-    if (data.session) await seDeconnecter()
+    if (data.session) await seDeconnecter(false)
   } catch {
     // Configuration absente ou stockage illisible : aucune session à fermer.
   }

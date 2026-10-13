@@ -1,4 +1,5 @@
-import { useEffect, useId, useState } from 'react'
+import { useId } from 'react'
+import { useMotChargement } from '@/components/etats/useMotChargement'
 import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { GrilleCetteSemaine } from './GrilleCetteSemaine'
 import { voitADecider } from './lecteur'
@@ -6,9 +7,6 @@ import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { ProfilVue } from './types'
 import { useLargeurMin } from './useLargeurMin'
-
-/** « Chargement » n'apparaît qu'après 300 ms : une réponse rapide ne fait rien clignoter. */
-export const DELAI_CHARGEMENT = 300
 
 interface Props {
   profil: ProfilVue
@@ -27,16 +25,12 @@ function SectionEnAttente({ titre }: { titre: string }) {
 /**
  * Chargement de « Cette semaine » (LISEZMOI, « États ») : les titres de section et leurs filets
  * tout de suite, à leur place ; après 300 ms, « Chargement » en `--encre-3` à la place de la
- * phrase, avec `aria-busy`. Pas d'animation. Les 10 s et l'erreur viennent de useCetteSemaine.
+ * phrase, avec `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). Pas
+ * d'animation. Les 10 s et l'erreur viennent de useCetteSemaine.
  */
 export function ChargementCetteSemaine({ profil }: Props) {
-  const [visible, setVisible] = useState(false)
+  const mot = useMotChargement(TEXTES_VIDES.page.chargement)
   const telephone = !useLargeurMin(600)
-
-  useEffect(() => {
-    const minuterie = setTimeout(() => setVisible(true), DELAI_CHARGEMENT)
-    return () => clearTimeout(minuterie)
-  }, [])
 
   // La zone role="status" existe dès le départ, vide : « Chargement » y entre après 300 ms et
   // les lecteurs d'écran l'annoncent (une zone ajoutée avec son texte ne l'est pas toujours).
@@ -44,7 +38,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
     <header className="min-h-16">
       <h1 className="sr-only">Cette semaine</h1>
       <p role="status" className="text-encre-3">
-        {visible ? TEXTES_VIDES.page.chargement : null}
+        {mot}
       </p>
     </header>
   )

@@ -117,7 +117,7 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
     await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
     const alerte = page.getByRole('alert')
     await expect(alerte).toHaveText(
-      "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
     )
     await expect(alerte.getByRole('link')).toHaveCount(0)
   })

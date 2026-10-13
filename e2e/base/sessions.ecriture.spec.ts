@@ -86,8 +86,11 @@ test.describe("l'administration déclare, modifie et supprime une session", () =
     await colonne.getByLabel('Date', { exact: true }).fill(aujourdhui)
     await colonne.getByLabel('Nom du rassemblement').fill(NOM)
     await colonne.getByRole('button', { name: 'Déclarer la session' }).click()
-    await expect(colonne.getByRole('alert')).toContainText(
-      `Une session « ${NOM} » est déjà déclarée le`,
+    // Le refus de la base, traduit (m210), sous le champ date.
+    const date = colonne.getByLabel('Date', { exact: true })
+    await expect(date).toHaveAttribute('aria-invalid', 'true')
+    await expect(date).toHaveAccessibleDescription(
+      new RegExp(`^Une session « ${NOM} » existe déjà le .+\\. Choisissez une autre date\\.$`),
     )
     expect(await sessionsDuTest(page)).toHaveLength(1)
   })

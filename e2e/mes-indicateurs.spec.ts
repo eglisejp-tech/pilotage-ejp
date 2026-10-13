@@ -111,10 +111,9 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await expect(panneau.getByRole('heading', { level: 2, name: 'Suggestions' })).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(3)
     await expect(panneau.getByText('chaque mois')).toHaveCount(3)
+    // Contact : EJP Tech (T59).
     await expect(
-      panneau.getByText(
-        "Rien ne convient ? Demandez un indicateur à l'administration de l'église.",
-      ),
+      panneau.getByText('Rien ne convient ? Demandez un indicateur à EJP Tech.'),
     ).toBeVisible()
   })
 
@@ -133,11 +132,14 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
 
     await champ.fill('Neuf cara')
     await bouton(page, 'Envoyer pour validation').click()
-    await expect(panneau.getByText('Expliquez pourquoi en 10 caractères au moins.')).toBeVisible()
+    // Les phrases de la table de traduction (m233).
+    await expect(panneau.getByText('Expliquez pourquoi (10 caractères au moins).')).toBeVisible()
     await champ.fill('a'.repeat(281))
     await expect(panneau.getByText('281 sur 280')).toBeVisible()
     await bouton(page, 'Envoyer pour validation').click()
-    await expect(panneau.getByText('280 caractères au plus.')).toBeVisible()
+    await expect(
+      panneau.getByText('Raccourcissez ce texte : 280 caractères au plus.'),
+    ).toBeVisible()
 
     await champ.fill('Voir ce que le ministère a mené à terme.')
     await bouton(page, 'Envoyer pour validation').click()
@@ -158,7 +160,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await ouvrir(page, { vue: 'limite' })
     const panneau = await ouvrirLePanneau(page)
     await expect(panneau.getByText(/^Votre ministère a déjà 3 indicateurs à lui\./)).toBeVisible()
-    await expect(panneau.getByText(/Demandez à l'administration de l'église/)).toBeVisible()
+    await expect(panneau.getByText(/Demandez à EJP Tech/)).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
     await expect(panneau.getByRole('textbox')).toHaveCount(0)
     await panneau.getByRole('button', { name: 'Fermer' }).click()
@@ -268,7 +270,7 @@ test.describe('accessibilité et petits écrans', () => {
     await auditer(page)
     await choisir(panneau, 'Demandes traitées')
     await bouton(page, 'Envoyer pour validation').click()
-    await expect(panneau.getByText('Expliquez pourquoi en 10 caractères au moins.')).toBeVisible()
+    await expect(panneau.getByText('Expliquez pourquoi (10 caractères au moins).')).toBeVisible()
     await panneau.getByRole('button', { name: 'Aide : Pourquoi cet indicateur ?' }).click()
     await auditer(page)
     await ouvrir(page, { vue: 'limite' })

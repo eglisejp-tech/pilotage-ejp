@@ -318,7 +318,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
 
   it('une connexion perdue garde le motif dans la fenêtre', async () => {
     const faux = connecte('admin_plateforme')
-    faux.rpc.mockRejectedValueOnce(new Error('réseau'))
+    faux.rpc.mockRejectedValueOnce(new TypeError('Failed to fetch'))
     afficher('/indicateurs')
     await bloc()
     await userEvent.click(
@@ -333,6 +333,59 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       ),
     ).toBeInTheDocument()
     expect(within(fenetre).getByRole('textbox')).toHaveValue('Ce chiffre existe déjà ailleurs.')
+  })
+
+  it('un refus inattendu garde la fenêtre ouverte et le motif, avec la phrase de repli', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value' })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre existe déjà ailleurs.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(
+      await within(fenetre).findByText(
+        "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(within(fenetre).getByRole('textbox')).toHaveValue('Ce chiffre existe déjà ailleurs.')
+  })
+
+  it('une connexion expirée pendant « Refuser » : la fenêtre reste ouverte, le motif gardé', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({ code: '42501', message: 'Double authentification requise.' })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Refuser «\s*Demandes reçues\s*» de Kumi$/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre existe déjà ailleurs.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
+    expect(
+      await within(fenetre).findByText('Votre connexion a expiré. Reconnectez-vous.'),
+    ).toBeInTheDocument()
+    expect(within(fenetre).getByRole('textbox')).toHaveValue('Ce chiffre existe déjà ailleurs.')
+  })
+
+  it('« Valider » et un refus inattendu : « L’action n’a pas abouti » sous la ligne, qui reste', async () => {
+    const faux = connecte('admin_plateforme')
+    faux.rpc.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value' })
+    afficher('/indicateurs')
+    await bloc()
+    const valider = screen.getByRole('button', {
+      name: /^Valider «\s*Demandes reçues\s*» de Kumi$/,
+    })
+    await userEvent.click(valider)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    )
+    expect(valider).toBeInTheDocument()
+    expect(valider).not.toHaveAttribute('aria-disabled')
   })
 
   it('« Cette demande a déjà été décidée. » ferme la fenêtre et reste dit en haut du bloc', async () => {
@@ -496,8 +549,9 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    // Le refus de la base, traduit (m220).
     expect(
-      await within(fenetre).findByText('Texte introuvable, vide ou déjà masqué.'),
+      await within(fenetre).findByText('Ce texte est déjà masqué ou vide. Rechargez la page.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })

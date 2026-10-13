@@ -1198,3 +1198,55 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Origine** : note de conception d'EJP Tech et réponses écrites de la personne responsable (12 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 12 octobre 2026
 - **BRIEF** : section 2 (EJP Tech, onglet « Personnes »), section 3 (règles 1 et 9), section 6 (tables et trigger), section 7 (matrice, données personnelles, tests), section 8 (règle 6, routage), section 9 (écrans, adresses), section 11 ; `docs/conformite/registre-traitements.md` (fiche 7) ; `docs/exploitation.md` (11.1)
+
+## Décision de la personne responsable du 12 octobre 2026 sur le contact
+
+### T59. Contact : EJP Tech
+
+- **Date** : 12 octobre 2026
+- **Sujet** : en relisant la refonte des messages (guide des messages, chapitre 10, lignes m001 à m274), la personne responsable a demandé que les messages ne renvoient plus vers l'administration de l'église quand la personne est bloquée.
+- **Décision** : le contact pour toute demande ou tout blocage est **EJP Tech**, jamais l'administration de l'église. Un message nomme EJP Tech seulement quand la personne ne peut pas s'en sortir seule, avec trois tournures, pas d'autres : « Demandez à EJP Tech de ... » (une demande : compte, invitation, indicateur à retirer), « Contactez EJP Tech. » (compte désactivé), « si le problème revient, prévenez EJP Tech » (une panne qui dure).
+- **Textes** (Proposés, à valider par la personne responsable) : « Ce compte est désactivé. Contactez EJP Tech. » (connexion, code, lien d'un compte désactivé, écran « Compte désactivé », refus 42501 « Compte inactif ou inconnu. » de la base) ; « Aucun compte actif pour cette adresse. Ouvrez votre invitation ou demandez un compte à EJP Tech. » (retour de Google avec une adresse sans compte actif, seulement : la connexion par mot de passe garde « Email ou mot de passe incorrect », sans quoi l'écran dirait à n'importe qui si une adresse a un compte) ; « Demandez à EJP Tech de renvoyer l'invitation. » (page `/acces` et email d'invitation) ; « Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre. » (la phrase citée par P53, proposition 1, change de contact) ; « Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un. ».
+- **Aussi changé par le lot B** (hors des lignes, au nom de T59) : « Rien ne convient ? Demandez un indicateur à EJP Tech. » (panneau « Ajouter un indicateur » de « Mes indicateurs »).
+- **Pas changé par le lot B** : « Pas de compte ? Les comptes sont créés par l'administration de l'église. » (écran de connexion, ligne m002, portée par le lot A des écrans). D'ici la fusion du lot A, cet écran nomme encore les deux interlocuteurs.
+- **Inchangé** : les droits. T59 ne change que l'interlocuteur nommé à l'écran ; qui crée, désactive ou réactive un compte, renvoie une invitation ou fait « Refaire l'activation » reste fixé par la section 7 du BRIEF et ses décisions. Ouvrir les Edge Functions des comptes à un autre profil demande une décision, la matrice de la section 7 à jour et leurs tests (sans jeton, `aal1`, autre profil). Les messages de la base gardent leur texte (« Demandez à l'administration de l'église d'en retirer un. ») : la table de traduction (`src/data/messagesBase.ts`) dit la phrase de l'interface, sans migration.
+- **Origine** : demande de la personne responsable en relisant la refonte des messages (12 octobre 2026)
+- **Statut** : Décidé par la personne responsable le 12 octobre 2026 (le contact) ; les textes sont Proposés
+- **BRIEF** : section 2 (paragraphe « Contact ») et section 8 (routage : compte désactivé ; page `/acces` ; messages d'erreur) ; `docs/reference/maquettes/LISEZMOI.md` (« États », compte désactivé ; « Mes indicateurs », point 10)
+
+## Questions du lot B du 13 octobre 2026 (messages et base)
+
+### Clé d'idempotence des créations (m259), à décider
+
+- **Date** : 13 octobre 2026
+- **Sujet** : un envoi resté sans réponse après 10 s (délai de `fetchAvecDelai`) a peut-être été enregistré avant la coupure. Pour un ajout d'événement (`ajouter_evenement`), un nouveau point (`creer_point`) ou un signalement (`signaler_difficulte`), un nouvel essai crée alors un doublon, que rien ne permet d'effacer : les tables `evenement`, `point_attention` et `signalement` sont en ajout seulement (un doublon se neutralise seulement : statut « annulé », point marqué traité, signalement clos). Les autres écritures ne posent pas ce problème : une saisie de chiffres ou de présence renvoyée deux fois garde la plus récente, un doublon de session, de suggestion ou de compte est refusé par la base, une mise à jour identique aussi.
+- **Fait dans l'interface (lot B, sans changer le modèle de données)** : le bouton reste inactif pendant l'envoi (son nom suivi de « en cours » ; un second appui ne part pas, `BoutonEnregistrer`) ; après 10 s sans réponse, la phrase dit « La connexion a échoué. Vérifiez la liste avant de réessayer. » et les lectures de la page sont relues, pour que la liste montre ce qui est passé (`creerPuisRelire`, `src/features/evenements/useApresEcriture.ts`).
+- **Proposition, qui change le modèle de données (non faite)** : une clé d'idempotence par envoi.
+  - Base : une colonne `cle_envoi uuid` (nullable, sans valeur par défaut, écrite à l'ajout et jamais modifiée : les tables restent en ajout seulement) sur `evenement`, `point_attention` et `signalement`, avec un index unique partiel `(saisi_par, cle_envoi) where cle_envoi is not null`. Les fonctions `private.ajouter_evenement`, `private.creer_point` et `private.signaler_difficulte`, et leurs fonctions `public`, prennent un paramètre `p_cle_envoi uuid default null` (nouvelle signature : `drop function` puis `create function`, avec leurs `revoke` et `grant`) ; si une ligne du même compte porte déjà cette clé, la fonction rend son identifiant sans rien ajouter ni écrire au journal, sinon elle ajoute comme aujourd'hui.
+  - Cas à traiter dans la base : deux appels simultanés avec la même clé (le second reçoit 23505 de l'index unique : la fonction l'attrape et rend l'identifiant de la ligne déjà ajoutée, au lieu du message de repli) ; une clé déjà employée avec un autre contenu (la fonction la refuse au lieu de rendre l'ancienne ligne sans rien dire) ; la lecture de `cle_envoi` (colonne hors des GRANT de colonnes et des vues lues par les autres profils : ministères mentionnés, berger, conseil).
+  - Interface : `src/data/evenementsEcriture.ts`, `src/data/pointsEcriture.ts` et `src/data/signalements.ts` passent la clé ; chaque formulaire la tire (`crypto.randomUUID()`) à l'ouverture, la garde pour un nouvel essai du même contenu et la renouvelle après une réussite ou quand une valeur change (sinon la base rendrait la ligne déjà enregistrée, avec l'ancien contenu). La phrase « Vérifiez la liste avant de réessayer » redevient « La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez. ».
+  - Coût : une migration (3 colonnes, 3 index, 6 fonctions redéfinies), des tests pgTAP (même clé deux fois : un seul ajout, une seule ligne de journal, le même identifiant rendu ; la clé d'un autre compte ne rend rien ; deux appels simultanés ; même clé avec un autre contenu ; matrice des droits inchangée), les types de `src/lib/base` à jour, 3 fonctions de `src/data/` et 3 formulaires. Environ une journée de travail, dans un lot dédié. Aucune donnée personnelle de plus : la clé est un nombre tiré au hasard.
+- **Origine** : ligne m259 du guide des messages (12 octobre 2026), lot B des correctifs
+- **Statut** : À décider par la personne responsable (numéro à donner à la fusion)
+- **BRIEF** : aucun changement tant que la réponse n'est pas donnée
+
+### Compte désactivé à la connexion par mot de passe, à décider
+
+- **Date** : 13 octobre 2026
+- **Sujet** : à la connexion par mot de passe, Supabase Auth contrôle le bannissement avant le mot de passe (à confirmer sur la version déployée). L'écran dit donc « Ce compte est désactivé. Contactez EJP Tech. » quel que soit le mot de passe tapé : n'importe qui apprend qu'une adresse est un compte désactivé. Ce comportement existait avant le lot B, qui n'a changé que le texte et l'ordre des contrôles.
+- **Proposition** : garder ce message (une personne d'un ministère désactivé comprend tout de suite pourquoi elle ne peut pas entrer ; les adresses sont des boîtes de ministère, peu nombreuses et déjà connues), ou dire « Email ou mot de passe incorrect » à la connexion par mot de passe et garder le message du compte désactivé pour Google, le code et le lien.
+- **Origine** : revue de sécurité du lot B (13 octobre 2026)
+- **Statut** : À décider par la personne responsable (numéro à donner à la fusion) ; en attendant, le message reste
+- **BRIEF** : section 8 (messages d'erreur) selon la réponse
+
+### Textes du lot B à trancher avec la validation des messages
+
+- **Date** : 14 octobre 2026
+- **Sujet** : quatre points relevés par les revues du lot B, laissés tels quels faute de validation (aucun texte hors des lignes du lot n'est réécrit avant la refonte).
+  1. Limite des 3 ajouts (m233) : la traduction du refus reprend le texte du contrôle avant l'envoi, « Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre. », et non le texte proposé « ... Retirez-en un ... » : au lot 1, le ministère ne retire pas lui-même un ajout (P53), et le guide (10.9) veut le même texte avant et après l'envoi.
+  2. Mots des messages et libellés des champs (m233, guide 10.8) : « Choisissez le type de nombre. » s'affiche sous « Sorte de nombre », « Donnez un nom de 2 à 60 caractères. » sous « Ce que vous comptez ». Soit les messages reprennent les libellés, soit les libellés changent.
+  3. « Fermez cette fenêtre pour mettre la page à jour » (m148, m149, m157) : la fenêtre se ferme par « Retour », « Annuler » ou Échap, et chacun relit la page ; aucun bouton ne s'appelle « Fermer ». Soit le bouton « Annuler » devient « Fermer » après un tel refus, soit la phrase nomme le bouton.
+  4. `reinitialiser-2fa` : une panne après le remplacement du mot de passe rend `activation_incomplete` et se consigne dans les journaux des fonctions, mais n'écrit aucune ligne au journal de l'outil. Écrire « réinitialisation commencée » avant le remplacement demande une fonction serveur et une migration.
+- **Origine** : revues du lot B (13 et 14 octobre 2026)
+- **Statut** : À décider par la personne responsable (numéro à donner à la fusion)
+- **BRIEF** : aucun changement tant que la réponse n'est pas donnée

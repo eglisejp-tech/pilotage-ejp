@@ -12,11 +12,14 @@ export interface RefusCompte {
 /**
  * Place et phrase d'un refus des fonctions de comptes. L'adresse déjà utilisée se dit sous le
  * champ « Email », le nom déjà pris sous « Nom du ministère » ; tout le reste sous le bouton.
- * Une demande refusée par le schéma avant tout appel dit de vérifier les champs ; toute autre
- * erreur (réponse absente) dit de vérifier la liste avant de réessayer.
+ * Un identifiant de compte refusé par le schéma avant tout appel dit que le compte est
+ * introuvable (m197) ; toute autre demande refusée par le schéma dit de vérifier les champs ;
+ * toute autre erreur (réponse absente) dit de vérifier la liste avant de réessayer.
  */
 export function lireRefusCompte(erreur: unknown): RefusCompte {
   if (erreur instanceof z.ZodError) {
+    const probleme = erreur.issues[0]
+    if (probleme?.path[0] === 'user_id') return { ou: 'formulaire', message: probleme.message }
     return { ou: 'formulaire', message: MESSAGES_ERREURS_COMPTES.requete_invalide }
   }
   if (!(erreur instanceof ErreurCompte)) {

@@ -4,9 +4,12 @@ import {
   chargerEtatSession,
   chargerEtatSessionSuivi,
   DELAI_MAX_SESSION,
+  INTERVALLE_VERIFICATION_SESSION,
   MESSAGE_PASSAGE_NON_NOTE,
+  verifierSessionChangee,
 } from '@/features/session/chargement'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
+import { clientRequetes, CLE_SESSION, estDelaiDepasse } from '@/lib/requetes'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
@@ -42,6 +45,63 @@ describe('chargerEtatSessionSuivi', () => {
     const verification = expect(lecture).rejects.toThrow('Lecture de la session trop longue.')
     await vi.advanceTimersByTimeAsync(DELAI_MAX_SESSION)
     await verification
+    // Reconnue comme un délai dépassé : l'écran d'erreur le dit (m252).
+    expect(estDelaiDepasse(await lecture.catch((erreur: unknown) => erreur))).toBe(true)
+  })
+})
+
+describe('verifierSessionChangee (connexion expirée, m271)', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  // Une heure fictive par test, espacées de plus que l'intervalle : chaque test vérifie.
+  let heure = Date.UTC(2026, 9, 13, 8)
+  function nouvelleHeure() {
+    heure += 10 * INTERVALLE_VERIFICATION_SESSION
+    vi.useFakeTimers({ now: heure, toFake: ['Date'] })
+  }
+
+  it('session révoquée sur le serveur : oubliée sur cet appareil, puis l’état est relu', async () => {
+    nouvelleHeure()
+    const faux = installer({ utilisateur, compte: berger })
+    faux.auth.getUser.mockResolvedValueOnce({
+      data: { user: null },
+      error: new AuthApiError('Session not found', 403, 'session_not_found'),
+    })
+    const relecture = vi.spyOn(clientRequetes, 'invalidateQueries')
+    await verifierSessionChangee()
+    expect(faux.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    expect(relecture).toHaveBeenCalledWith({ queryKey: CLE_SESSION })
+  })
+
+  it('session encore bonne (jeton renouvelé) : pas de déconnexion, l’état est relu', async () => {
+    nouvelleHeure()
+    const faux = installer({ utilisateur, compte: berger })
+    const relecture = vi.spyOn(clientRequetes, 'invalidateQueries')
+    await verifierSessionChangee()
+    expect(faux.auth.getUser).toHaveBeenCalledTimes(1)
+    expect(faux.auth.signOut).not.toHaveBeenCalled()
+    expect(relecture).toHaveBeenCalledWith({ queryKey: CLE_SESSION })
+  })
+
+  it('Auth sans réponse : l’état est relu quand même, sans erreur', async () => {
+    nouvelleHeure()
+    const faux = installer({ utilisateur, compte: berger })
+    faux.auth.getUser.mockRejectedValueOnce(new TypeError('Failed to fetch'))
+    const relecture = vi.spyOn(clientRequetes, 'invalidateQueries')
+    await expect(verifierSessionChangee()).resolves.toBeUndefined()
+    expect(faux.auth.signOut).not.toHaveBeenCalled()
+    expect(relecture).toHaveBeenCalledWith({ queryKey: CLE_SESSION })
+  })
+
+  it('une seule vérification par intervalle, même si l’écran relit son erreur', async () => {
+    nouvelleHeure()
+    const faux = installer({ utilisateur, compte: berger })
+    await verifierSessionChangee()
+    await verifierSessionChangee()
+    expect(faux.auth.getUser).toHaveBeenCalledTimes(1)
+    vi.setSystemTime(heure + INTERVALLE_VERIFICATION_SESSION)
+    await verifierSessionChangee()
+    expect(faux.auth.getUser).toHaveBeenCalledTimes(2)
   })
 })
 

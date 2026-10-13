@@ -101,7 +101,8 @@ export function ApercuValidation() {
     refuser: (ligne, motif) => decider(ligne, 'refuse', motif),
     masquer: async (masquage) => {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
-      if (envoi === 'echec') throw new Error('Réseau coupé (aperçu).')
+      // L'erreur de fetch hors ligne : une autre `Error` serait lue comme un refus inattendu.
+      if (envoi === 'echec') throw new TypeError('Failed to fetch')
       setMasquees((courantes) => [...courantes, masquage.cibleId])
     },
   }
@@ -116,7 +117,7 @@ export function ApercuValidation() {
     occupe.current = true
     try {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
-      if (envoi === 'echec') throw new Error('Réseau coupé (aperçu).')
+      if (envoi === 'echec') throw new TypeError('Failed to fetch')
       if (envoi === 'motif' && decision === 'refuse') {
         throw erreurBase('P0001', MOTIF_REFUSE_EXEMPLE)
       }

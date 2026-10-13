@@ -1,22 +1,38 @@
-// Message d'un envoi refusé (lot E4). Une erreur de saisie levée par la base (P0001) s'affiche
-// telle quelle ; un refus de droit (42501, politique d'ajout) prend le message du contrat de
-// l'étape 4 (section 7) ; toute autre erreur est un problème de connexion : le formulaire affiche
-// alors la phrase de `LISEZMOI.md` (« La connexion a échoué. Vos chiffres sont encore dans le
-// formulaire : réessayez. ») et garde les valeurs.
+// Message d'un envoi refusé des saisies de chiffres (présence, dimanche, mois, carte et chiffres
+// par département), lu dans la table de traduction de `src/data/messagesBase.ts` (m270 à m272) :
+// un refus de la base prend sa phrase et son champ ; un refus de droit (42501, politique d'ajout)
+// prend le message du contrat de l'étape 4 (section 7) ; une connexion expirée, un compte
+// désactivé ou un refus inattendu ont chacun leur phrase. Seule une erreur sans réponse (réseau,
+// délai) laisse le formulaire dire la phrase de `LISEZMOI.md` (« La connexion a échoué. Vos
+// chiffres sont encore dans le formulaire : réessayez. »), réservée à ce cas (m256).
+
+import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
+import type { ChampRefus } from '@/data/messagesBase'
 
 /** Refus de droit, repris du contrat de l'étape 4 (section 7). */
-export const MESSAGE_ACCES_REFUSE = "Cet élément n'existe pas ou vous n'y avez pas accès."
+export const MESSAGE_ACCES_REFUSE = MESSAGES_COMMUNS.acces
 
-function lireChamp(erreur: unknown, champ: 'code' | 'message'): string | null {
-  if (typeof erreur !== 'object' || erreur === null || !(champ in erreur)) return null
-  const valeur = (erreur as Record<string, unknown>)[champ]
-  return typeof valeur === 'string' && valeur !== '' ? valeur : null
+/** Échec d'un envoi : sa phrase (null : sans réponse) et le champ où la dire, s'il y en a un. */
+export interface EchecEnvoi {
+  message: string | null
+  champ: ChampRefus | null
+}
+
+/** Phrase et champ d'un envoi refusé ; `message` null : problème de connexion. */
+export function lireEchecEnvoi(erreur: unknown): EchecEnvoi {
+  const lue = lireErreurBase(erreur)
+  switch (lue.genre) {
+    case 'reseau':
+    case 'delai':
+      return { message: null, champ: null }
+    case 'acces':
+      return { message: MESSAGE_ACCES_REFUSE, champ: null }
+    case 'message':
+      return { message: lue.message, champ: lue.champ }
+  }
 }
 
 /** Message à afficher sous le bouton ; null : problème de connexion (message par défaut). */
 export function messageErreurEnvoi(erreur: unknown): string | null {
-  const code = lireChamp(erreur, 'code')
-  if (code === 'P0001') return lireChamp(erreur, 'message')
-  if (code === '42501') return MESSAGE_ACCES_REFUSE
-  return null
+  return lireEchecEnvoi(erreur).message
 }

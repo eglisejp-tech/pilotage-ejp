@@ -9,6 +9,7 @@ import {
   phraseManquants,
   phraseSaisies,
   prochainSamedi,
+  TEXTES_SESSIONS,
 } from '@/features/sessions/textes'
 
 const A = '10000000-0000-4000-8000-000000000001'
@@ -152,8 +153,43 @@ describe('lireRefusSession', () => {
       "Cette session n'existe pas ou vous n'y avez pas accès.",
     )
   })
-  it('dit la connexion pour tout le reste', () => {
-    expect(lireRefusSession(new Error('réseau'), connexion)).toBe(connexion)
-    expect(lireRefusSession({ code: '500', message: 'x' }, connexion)).toBe(connexion)
+  it('dit la connexion pour une erreur sans réponse (réseau, délai)', () => {
+    expect(lireRefusSession(new TypeError('Failed to fetch'), connexion)).toBe(connexion)
+    expect(lireRefusSession({ code: '', message: 'TypeError: Failed to fetch' }, connexion)).toBe(
+      connexion,
+    )
+    expect(lireRefusSession({ code: '', message: 'TimeoutError: x' }, connexion)).toBe(connexion)
+  })
+  it('un refus inattendu prend le repli, jamais « La connexion a échoué » (m270)', () => {
+    const repli =
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
+    expect(lireRefusSession({ code: '500', message: 'x' }, connexion)).toBe(repli)
+    expect(lireRefusSession({ message: '<html>502 Bad Gateway</html>' }, connexion)).toBe(repli)
+    // La suppression est une action sans formulaire : son repli ne parle pas de saisie.
+    expect(
+      lireRefusSession({ code: '23503', message: 'x' }, TEXTES_SESSIONS.erreurConnexionSuppression),
+    ).toBe("L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.")
+  })
+  it('traduit le doublon et la suppression refusée (m210)', () => {
+    const doublon = 'Une session Anti-Dispersion est déjà déclarée le samedi 10 octobre.'
+    expect(lireRefusSession({ code: 'P0001', message: doublon }, connexion)).toBe(
+      'Une session Anti-Dispersion existe déjà le samedi 10 octobre. Choisissez une autre date.',
+    )
+    const dejaSaisie = 'Des ministères ont déjà saisi : la session ne peut plus être supprimée.'
+    expect(
+      lireRefusSession(
+        { code: 'P0001', message: dejaSaisie },
+        TEXTES_SESSIONS.erreurConnexionSuppression,
+      ),
+    ).toBe('Des ministères ont déjà saisi cette session. Elle reste dans la liste.')
+  })
+  it('connexion expirée et compte désactivé : leurs phrases (m271, m272)', () => {
+    const refus = (message: string) => ({ code: '42501', message })
+    expect(lireRefusSession(refus('Double authentification requise.'), connexion)).toBe(
+      'Votre connexion a expiré. Reconnectez-vous.',
+    )
+    expect(lireRefusSession(refus('Compte inactif ou inconnu.'), connexion)).toBe(
+      'Ce compte est désactivé. Contactez EJP Tech.',
+    )
   })
 })

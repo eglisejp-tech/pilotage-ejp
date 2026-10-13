@@ -236,10 +236,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
       'Choisir « Personnes formées »',
     ])
     expect(within(panneau).getAllByText('chaque mois')).toHaveLength(3)
+    // Contact : EJP Tech (T59).
     expect(
-      within(panneau).getByText(
-        "Rien ne convient ? Demandez un indicateur à l'administration de l'église.",
-      ),
+      within(panneau).getByText('Rien ne convient ? Demandez un indicateur à EJP Tech.'),
     ).toBeInTheDocument()
   })
 
@@ -267,7 +266,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     expect(within(panneau).getByText('40 sur 280')).toBeInTheDocument()
   })
 
-  it('un « Pourquoi » trop court est refusé avant tout appel, avec le message de la base', async () => {
+  it('un « Pourquoi » trop court est refusé avant tout appel, avec la phrase de la table (m233)', async () => {
     const faux = connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
@@ -278,7 +277,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.type(within(panneau).getByRole('textbox'), 'Neuf cara')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
     expect(
-      await within(panneau).findByText('Expliquez pourquoi en 10 caractères au moins.'),
+      await within(panneau).findByText('Expliquez pourquoi (10 caractères au moins).'),
     ).toBeInTheDocument()
     expect(faux.rpc).not.toHaveBeenCalledWith('ajouter_suggestion', expect.anything())
   })
@@ -294,7 +293,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.click(within(panneau).getByRole('textbox'))
     await userEvent.paste('a'.repeat(281))
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
-    expect(await within(panneau).findByText('280 caractères au plus.')).toBeInTheDocument()
+    expect(
+      await within(panneau).findByText('Raccourcissez ce texte : 280 caractères au plus.'),
+    ).toBeInTheDocument()
     expect(faux.rpc).not.toHaveBeenCalledWith('ajouter_suggestion', expect.anything())
   })
 
@@ -350,7 +351,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     expect(
       within(panneau).getByText(/^Votre ministère a déjà 3 indicateurs à lui\./),
     ).toBeInTheDocument()
-    expect(within(panneau).getByText(/Demandez à l'administration de l'église/)).toBeInTheDocument()
+    expect(within(panneau).getByText(/Demandez à EJP Tech/)).toBeInTheDocument()
     expect(within(panneau).queryByRole('button', { name: /^Choisir «/ })).toBeNull()
     expect(within(panneau).queryByRole('textbox')).toBeNull()
   })
@@ -362,7 +363,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     const panneau = await ouvrirLePanneau()
     expect(
       within(panneau).getByText(
-        "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
+        "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
       ),
     ).toBeInTheDocument()
   })
@@ -387,7 +388,10 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.type(within(panneau).getByRole('textbox'), 'Voir ce que le ministère a mené.')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
     const alerte = await within(panneau).findByRole('alert')
-    expect(alerte).toHaveTextContent(/^Votre ministère a déjà 3 indicateurs à lui\./)
+    // Le même texte que la limite vue avant l'envoi, contact EJP Tech (m233, T59).
+    expect(alerte).toHaveTextContent(
+      "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
+    )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })
 
@@ -423,7 +427,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     faux.rpc.mockImplementation((nom: string) =>
       nom === 'limites_indicateurs'
         ? Promise.resolve({ data: [LIMITES_EXEMPLE], error: null })
-        : Promise.reject(new Error('réseau')),
+        : Promise.reject(new TypeError('Failed to fetch')),
     )
     afficher('/ma-fiche/indicateurs')
     await ecran()

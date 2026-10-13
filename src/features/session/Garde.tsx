@@ -28,7 +28,11 @@ export function Garde({ zone, children }: Proprietes) {
   if (requete.data === undefined) {
     if (requete.isError) {
       return (
-        <EcranErreurSession onRetry={() => void requete.refetch()} enCours={requete.isFetching} />
+        <EcranErreurSession
+          onRetry={() => void requete.refetch()}
+          enCours={requete.isFetching}
+          erreur={requete.error}
+        />
       )
     }
     return <EcranChargement />

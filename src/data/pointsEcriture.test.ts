@@ -305,34 +305,58 @@ describe('messageDeRefusPoint', () => {
     )
   })
 
-  it('garde le refus de création réservée aux ministères, et tait la double authentification', () => {
+  it('garde le refus de création réservée aux ministères', () => {
     expect(
       messageDeRefusPoint({ code: '42501', message: MESSAGES_POINT.refus.creationReservee }),
     ).toBe('Seul un compte de ministère peut créer un point.')
-    expect(
-      messageDeRefusPoint({ code: '42501', message: 'Double authentification requise.' }),
-    ).toBe(MESSAGES_POINT.refus.acces)
+  })
+
+  it('double authentification absente : la connexion a expiré, pas « introuvable » (m271)', () => {
+    for (const contexte of ['action', 'creation'] as const) {
+      expect(
+        messageDeRefusPoint(
+          { code: '42501', message: 'Double authentification requise.' },
+          contexte,
+        ),
+      ).toBe('Votre connexion a expiré. Reconnectez-vous.')
+    }
+  })
+
+  it('compte désactivé : le dire, et dire à qui s’adresser (m272, T59)', () => {
+    for (const contexte of ['action', 'creation'] as const) {
+      expect(
+        messageDeRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' }, contexte),
+      ).toBe('Ce compte est désactivé. Contactez EJP Tech.')
+    }
   })
 
   it('en création, un autre refus de droit parle de la création, pas d’un point existant', () => {
-    expect(
-      messageDeRefusPoint(
-        { code: '42501', message: 'Double authentification requise.' },
-        'creation',
-      ),
-    ).toBe("Vous n'avez pas accès à la création de points.")
-    expect(
-      messageDeRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' }, 'creation'),
-    ).toBe(MESSAGES_POINT.refus.creationAcces)
+    expect(messageDeRefusPoint({ code: '42501', message: 'row-level security' }, 'creation')).toBe(
+      "Vous n'avez pas accès à la création de points.",
+    )
     expect(
       messageDeRefusPoint(
         { code: '42501', message: MESSAGES_POINT.refus.creationReservee },
         'creation',
       ),
     ).toBe(MESSAGES_POINT.refus.creationReservee)
+  })
+
+  it('mentions changées entre-temps par un autre compte : fermer la fenêtre (m157)', () => {
+    const changees =
+      'Les mentions de ce point viennent de changer. Fermez cette fenêtre pour mettre la page à jour.'
     expect(
-      messageDeRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' }, 'action'),
-    ).toBe(MESSAGES_POINT.refus.acces)
+      messageDeRefusPoint({
+        code: 'P0001',
+        message: 'Ce ministère est déjà mentionné sur ce point.',
+      }),
+    ).toBe(changees)
+    expect(
+      messageDeRefusPoint({
+        code: 'P0001',
+        message: "Ce ministère n'est pas mentionné sur ce point.",
+      }),
+    ).toBe(changees)
   })
 
   it('montre le premier problème d’une valeur refusée avant l’appel, pas « La connexion a échoué »', async () => {
@@ -353,11 +377,20 @@ describe('messageDeRefusPoint', () => {
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
-  it('rend null pour une panne de connexion ou une erreur inconnue', () => {
+  it('rend null pour une panne de connexion, le repli pour une erreur inconnue (m270)', () => {
     expect(messageDeRefusPoint(new Error('Failed to fetch'))).toBeNull()
-    expect(messageDeRefusPoint({ code: '57014', message: 'timeout' })).toBeNull()
-    expect(messageDeRefusPoint(null)).toBeNull()
-    expect(messageDeRefusPoint('boom')).toBeNull()
+    expect(messageDeRefusPoint({ code: '', message: 'TimeoutError: x' })).toBeNull()
+    const repli =
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
+    expect(messageDeRefusPoint({ code: '57014', message: 'timeout' })).toBe(repli)
+    expect(messageDeRefusPoint(null)).toBe(repli)
+    expect(messageDeRefusPoint('boom')).toBe(repli)
+  })
+
+  it('création sans réponse après 10 s : vérifier la liste avant de réessayer (m259)', () => {
+    expect(messageDeRefusPoint({ code: '', message: 'TimeoutError: x' }, 'creation')).toBe(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
   })
 
   it('les messages de réussite sont ceux du plan', () => {
@@ -367,12 +400,10 @@ describe('messageDeRefusPoint', () => {
     expect(MESSAGES_POINT.reussite.mentions).toBe('Mentions enregistrées.')
   })
 
-  it('un refus de mentions de la base se dit tel quel', () => {
+  it('un refus de mentions de la base garde le texte de la table (point traité, ministère refusé)', () => {
     for (const message of [
       MESSAGES_POINT.refus.pointTraiteMentions,
       MESSAGES_POINT.refus.mentionRefusee,
-      'Ce ministère est déjà mentionné sur ce point.',
-      "Ce ministère n'est pas mentionné sur ce point.",
     ]) {
       expect(messageDeRefusPoint({ code: 'P0001', message })).toBe(message)
     }

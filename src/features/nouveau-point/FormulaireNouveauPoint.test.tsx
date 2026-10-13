@@ -237,7 +237,7 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     expect(screen.getByLabelText('Échéance (facultatif)')).toHaveFocus()
   })
 
-  it('autre refus de la base : tel quel sous le bouton ; connexion perdue : valeurs gardées', async () => {
+  it('refus inconnu de la base : le repli sous le bouton, jamais le texte brut ; connexion perdue : valeurs gardées', async () => {
     const envoyer = vi
       .fn<(point: NouveauPoint) => Promise<void>>()
       .mockRejectedValueOnce({ code: 'P0001', message: 'Autre refus.' })
@@ -245,7 +245,11 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     afficher(envoyer)
     await remplir()
     await userEvent.click(bouton())
-    expect(await screen.findByRole('alert')).toHaveTextContent('Autre refus.')
+    const alerte = await screen.findByRole('alert')
+    expect(alerte).toHaveTextContent(
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    )
+    expect(alerte).not.toHaveTextContent('Autre refus.')
     await userEvent.click(bouton())
     expect(await screen.findByText(/La connexion a échoué/)).toHaveTextContent(
       'La connexion a échoué. Votre point est encore dans le formulaire : réessayez.',

@@ -32,6 +32,9 @@ export type CodeErreur =
   | 'invitation_trop_recente'
   | 'conflit'
   | 'invitation_non_envoyee'
+  // reinitialiser-2fa interrompue après le changement du mot de passe : le compte est bloqué tant
+  // que l'action n'est pas relancée (m194).
+  | 'activation_incomplete'
   | 'erreur_interne'
 
 // Refus attendu : il devient une réponse { erreur } avec son statut.

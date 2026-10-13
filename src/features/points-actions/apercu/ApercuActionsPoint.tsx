@@ -67,6 +67,8 @@ export function ApercuActionsPoint() {
   const compte = lireCompte(parametres)
   const echec = parametres.get('envoi') === 'echec'
   const refus = parametres.get('envoi') === 'refus'
+  // Les mentions ont changé dans un autre onglet pendant que la fenêtre était ouverte (m157).
+  const mentionsChangees = parametres.get('envoi') === 'mentions-changees'
   const masque = parametres.get('titre') === 'masque'
   const [statut, setStatut] = useState<StatutPoint>(lireStatut(parametres.get('statut')))
   const reglageMentions = parametres.get('mentions')
@@ -102,6 +104,9 @@ export function ApercuActionsPoint() {
         await attendre()
         if (echec) throw { message: 'FetchError: Failed to fetch', details: '', hint: '', code: '' }
         if (refus) throw { code: 'P0001', message: MESSAGES_POINT.refus.pointTraiteMentions }
+        if (mentionsChangees) {
+          throw { code: 'P0001', message: 'Ce ministère est déjà mentionné sur ce point.' }
+        }
         setMentions(voulues)
       },
       lireMinisteres: async () => {
@@ -112,7 +117,7 @@ export function ApercuActionsPoint() {
         return MINISTERES
       },
     }
-  }, [echec, refus, reglageMinisteres])
+  }, [echec, refus, mentionsChangees, reglageMinisteres])
 
   const point: PointDesActions = {
     id: POINT_EXEMPLE,

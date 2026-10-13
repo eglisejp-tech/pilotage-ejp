@@ -5,6 +5,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
+import { lireErreurBase } from '@/data/messagesBase'
 import { construireCetteSemaine } from '@/features/cette-semaine/construire'
 import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
 import { accueil, ADRESSES_APPLICATION, titrePour } from '@/features/navigation/profils'
@@ -169,6 +170,23 @@ describe('routes', () => {
     )
   })
 
+  it('conditions plus récentes que la page : recharger, pas « La connexion a échoué » (m055)', async () => {
+    const faux = installer({ ...scenarioDe('ministere'), conditionsAcceptees: false })
+    faux.rpc.mockResolvedValue({
+      data: null,
+      error: { code: 'P0001', message: 'Version des conditions inconnue.' },
+    })
+    afficher('/')
+    await screen.findByRole('heading', { level: 1, name: "Conditions d'utilisation" })
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Les conditions ont changé. Rechargez la page, puis acceptez-les.',
+    )
+    expect(screen.queryByText(/La connexion a échoué/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Version des conditions inconnue.')).not.toBeInTheDocument()
+  })
+
   it('aal1 sans facteur : activation, ni onglets ni données', async () => {
     const faux = connecte('ministere', 'aal1', [])
     const routeur = afficher('/')
@@ -207,6 +225,26 @@ describe('routes', () => {
       code: '123456',
     })
     expect(routeur.state.location.pathname).toBe('/journal')
+  })
+
+  it('refus « Double authentification requise. » : la session est relue, puis l’écran de code avec la page en retour (m271)', async () => {
+    const faux = connecte('berger')
+    const routeur = afficher('/journal')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Journal' })).toBeInTheDocument()
+
+    // La session n'est plus en aal2 ; un enregistrement reçoit le refus de la base.
+    faux.auth.mfa.getAuthenticatorAssuranceLevel.mockResolvedValue({
+      data: { currentLevel: 'aal1', nextLevel: 'aal2' },
+      error: null,
+    })
+    expect(
+      lireErreurBase({ code: '42501', message: 'Double authentification requise.' }),
+    ).toMatchObject({ message: 'Votre connexion a expiré. Reconnectez-vous.' })
+
+    expect(await screen.findByLabelText('Code à 6 chiffres')).toBeInTheDocument()
+    expect(faux.auth.getUser).toHaveBeenCalled()
+    expect(routeur.state.location.pathname).toBe('/double-authentification')
+    expect(routeur.state.location.search).toBe('?retour=%2Fjournal')
   })
 
   it.each<[TypeCompte, string, string[]]>([
@@ -462,12 +500,19 @@ describe('routes', () => {
   })
 
   it("configuration absente : l'écran d'erreur de session, jamais un chargement sans fin", async () => {
-    courant.client = new Error('VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY manquent.')
+    // L'erreur que lève `lireConfiguration` (`ErreurConfiguration`, reconnue par son nom).
+    courant.client = Object.assign(
+      new Error('VITE_SUPABASE_URL et VITE_SUPABASE_PUBLISHABLE_KEY manquent.'),
+      { name: 'ErreurConfiguration' },
+    )
     vi.spyOn(console, 'error').mockImplementation(() => undefined)
     afficher('/nimportequoi')
-    expect(
-      await screen.findByRole('button', { name: 'Réessayer' }, { timeout: 5000 }),
-    ).toBeInTheDocument()
+    // Un mauvais déploiement ne se règle pas en réessayant : prévenir EJP Tech (m253).
+    expect(await screen.findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
+      "Pilotage EJP n'est pas disponible pour le moment. Prévenez EJP Tech.",
+    )
+    expect(screen.queryByRole('button', { name: 'Réessayer' })).not.toBeInTheDocument()
+    expect(screen.getByRole('alert')).not.toHaveTextContent('VITE_SUPABASE_URL')
   })
 
   it('compte désactivé : message, puis déconnexion locale', async () => {

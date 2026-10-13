@@ -31,10 +31,35 @@ afterEach(() => {
 })
 
 describe('messageDeRefusPrevus', () => {
-  it('un refus de la base (P0001) se montre tel quel', () => {
-    const message =
-      'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
-    expect(messageDeRefusPrevus({ code: 'P0001', message })).toBe(message)
+  it('un refus de la base (P0001) prend sa phrase dans la table de traduction (m228)', () => {
+    expect(
+      messageDeRefusPrevus({
+        code: 'P0001',
+        message:
+          'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.',
+      }),
+    ).toBe(
+      'La fiche a déjà « Activités réalisées ». Retirez-le, puis créez les indicateurs prévus.',
+    )
+    expect(
+      messageDeRefusPrevus({ code: 'P0001', message: "Ce modèle n'existe pas dans le catalogue." }),
+    ).toBe('Cette liste est introuvable. Rechargez la page.')
+    expect(
+      messageDeRefusPrevus({
+        code: 'P0001',
+        message: "Cette fiche a déjà des indicateurs prévus : « aucun » ne s'applique pas.",
+      }),
+    ).toBe("Cette fiche a déjà des indicateurs prévus : « Aucun prévu » ne s'applique plus.")
+  })
+
+  it('un garde-fou technique (« le catalogue est à corriger ») : le repli, pas le texte', () => {
+    expect(
+      messageDeRefusPrevus({
+        code: 'P0001',
+        message:
+          'Deux indicateurs prévus portent le même nom, « X » : le catalogue est à corriger.',
+      }),
+    ).toBe("L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.")
   })
 
   it('un refus de droit (42501) dit seulement que l’élément n’est pas accessible', () => {
@@ -43,16 +68,17 @@ describe('messageDeRefusPrevus', () => {
     )
   })
 
-  it('la double authentification perdue (42501 aussi) garde le message de la base', () => {
+  it('la double authentification perdue : se reconnecter, pas le texte de la base (m271)', () => {
     expect(
       messageDeRefusPrevus({ code: '42501', message: 'Double authentification requise.' }),
-    ).toBe('Double authentification requise.')
+    ).toBe('Votre connexion a expiré. Reconnectez-vous.')
   })
 
-  it('un problème de connexion n’a pas de message de la base', () => {
+  it('un problème de connexion n’a pas de message ; une erreur inconnue prend le repli', () => {
     expect(messageDeRefusPrevus(new TypeError('Failed to fetch'))).toBeNull()
-    expect(messageDeRefusPrevus({ code: 'PGRST000', message: 'x' })).toBeNull()
-    expect(messageDeRefusPrevus(null)).toBeNull()
+    expect(messageDeRefusPrevus({ code: 'PGRST000', message: 'x' })).toBe(
+      "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    )
   })
 })
 
@@ -84,13 +110,13 @@ describe('useCreationPrevus', () => {
     })
   })
 
-  it('un refus 42501 de double authentification : le message de la base, pas « n’existe pas »', async () => {
+  it('un refus 42501 de double authentification : se reconnecter, ni « n’existe pas » ni le texte de la base (m271)', async () => {
     appel.creer.mockRejectedValue({ code: '42501', message: 'Double authentification requise.' })
     const { result } = monter()
     await act(async () => {
       await result.current.creer(KUMI, 'kumi')
     })
-    expect(result.current.refus).toBe('Double authentification requise.')
+    expect(result.current.refus).toBe('Votre connexion a expiré. Reconnectez-vous.')
     expect(result.current.dernier).toBe('m-kumi')
   })
 
@@ -122,7 +148,7 @@ describe('useCreationPrevus', () => {
     expect(result.current.reussite).toBe('Noté : aucun indicateur prévu pour Protocole.')
   })
 
-  it('un refus de la base : son texte, aucune réussite, aucune relecture', async () => {
+  it('un refus de la base : sa phrase traduite, aucune réussite, aucune relecture (m228)', async () => {
     appel.creer.mockRejectedValue({
       code: 'P0001',
       message:
@@ -133,7 +159,7 @@ describe('useCreationPrevus', () => {
       await result.current.creer(KUMI, 'kumi')
     })
     expect(result.current.refus).toBe(
-      'La fiche a déjà « Publications » : retirez-le avant de créer les indicateurs prévus.',
+      'La fiche a déjà « Publications ». Retirez-le, puis créez les indicateurs prévus.',
     )
     expect(result.current.reussite).toBeNull()
     expect(invalidation).not.toHaveBeenCalled()

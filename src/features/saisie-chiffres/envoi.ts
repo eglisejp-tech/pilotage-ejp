@@ -2,6 +2,7 @@
 // sous chaque champ avant tout envoi. Un envoi est tout ou rien : tant qu'un champ est refusé, rien
 // ne part (plan de l'étape 4, E3).
 
+import type { ChampRefus } from '@/data/messagesBase'
 import type { ChampChiffre } from '@/features/saisie-chiffres/champs'
 import type { LigneMois } from '@/features/saisie-chiffres/schemas'
 import { messageValeurEffacee, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
@@ -107,33 +108,27 @@ export function preparerDimanche(
   return { lignes, erreurs }
 }
 
-/** Refus de la base sur le texte d'une précision (B8 et `private.verifier_texte`, B1). */
-const MESSAGES_PRECISION_BASE = new Set([
-  'La précision doit faire entre 10 et 280 caractères.',
-  "N'écrivez aucun nom ni information personnelle.",
-  'Les crochets et « texte masqué » sont réservés à la modération.',
-])
-
 /** Où montrer un refus de la base : sous une précision, sous une grille, ou sous le bouton. */
 export type PlaceErreurBase =
   | { indicateurId: string; partie: 'precision' | 'repartition' }
   | { indicateurId: null; partie: 'bouton' }
 
 /**
- * Un refus de la base sur une précision s'affiche sous le champ, tel quel (plan, E3), quand une
- * seule ligne de l'envoi portait une précision ; la somme des catégories, sous la seule grille
- * envoyée. Sinon, sous le bouton : la base ne dit pas quelle ligne elle refuse.
+ * Un refus de la base sur une précision (texte libre : longueur, données personnelles, crochets)
+ * s'affiche sous le champ (plan, E3), quand une seule ligne de l'envoi portait une précision ; la
+ * somme des catégories, sous la seule grille envoyée. Sinon, sous le bouton : la base ne dit pas
+ * quelle ligne elle refuse. Le champ vient de la table de traduction (`src/data/messagesBase.ts`).
  */
 export function placerErreurBase(
-  message: string | null,
+  champ: ChampRefus | null,
   lignes: readonly LigneMois[],
 ): PlaceErreurBase {
-  if (message !== null && MESSAGES_PRECISION_BASE.has(message)) {
+  if (champ === 'precision' || champ === 'texte') {
     const avecPrecision = lignes.filter((ligne) => ligne.precision !== undefined)
     const seule = avecPrecision.length === 1 ? avecPrecision[0] : undefined
     if (seule) return { indicateurId: seule.indicateur_id, partie: 'precision' }
   }
-  if (message?.startsWith('La somme des catégories')) {
+  if (champ === 'repartition') {
     const avecGrille = lignes.filter((ligne) => ligne.categories !== undefined)
     const seule = avecGrille.length === 1 ? avecGrille[0] : undefined
     if (seule) return { indicateurId: seule.indicateur_id, partie: 'repartition' }

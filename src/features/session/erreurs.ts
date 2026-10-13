@@ -31,6 +31,8 @@ export function traduireErreur(erreur: unknown, contexte: Contexte): string {
   const code = codeDe(erreur)
   const statut = statutDe(erreur)
 
+  // Un compte désactivé se dit avant tout autre refus (guide, 10.11, point 5).
+  if (code === 'user_banned') return messagesConnexion.compteDesactive
   if (
     code === 'over_request_rate_limit' ||
     code === 'over_email_send_rate_limit' ||
@@ -38,7 +40,6 @@ export function traduireErreur(erreur: unknown, contexte: Contexte): string {
   ) {
     return messagesConnexion.tropDeTentatives
   }
-  if (code === 'user_banned') return messagesConnexion.compteDesactive
   if (code === 'signup_disabled' || code === 'email_address_not_authorized') {
     return messagesConnexion.googleSansCompte
   }
@@ -58,6 +59,11 @@ export function traduireErreur(erreur: unknown, contexte: Contexte): string {
     return contexte === 'code'
       ? messagesConnexion.connexionExpiree
       : messagesConnexion.sessionExpiree
+  }
+  // Le serveur a répondu (un code, ou un statut 5xx) : une panne, que réessayer tout de suite ne
+  // règle pas (m019). Sans réponse (statut 0, fetch rejeté) : le réseau.
+  if (code !== undefined || (statut !== undefined && statut >= 500)) {
+    return messagesConnexion.panneConnexion
   }
   return messagesConnexion.echecReseau
 }
@@ -79,5 +85,7 @@ export function erreurDeRetourGoogle(recherche: string, ancre: string): string |
   }
   if (code === 'user_banned' || /banned/i.test(description))
     return messagesConnexion.compteDesactive
-  return messagesConnexion.echecReseau
+  // Fenêtre de Google fermée ou refusée (access_denied), ou erreur non reconnue : une autre voie
+  // reste possible, l'email (m014).
+  return messagesConnexion.googleInterrompu
 }

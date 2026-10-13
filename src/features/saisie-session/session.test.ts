@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { MESSAGE_ACCES_REFUSE, messageErreurEnvoi } from '@/features/saisie-session/erreurs'
+import {
+  lireEchecEnvoi,
+  MESSAGE_ACCES_REFUSE,
+  messageErreurEnvoi,
+} from '@/features/saisie-session/erreurs'
 import {
   erreursSession,
   MESSAGES_SESSION,
@@ -192,10 +196,19 @@ describe('textes de la saisie', () => {
 })
 
 describe('message d’un envoi refusé', () => {
-  it('une erreur de saisie de la base s’affiche telle quelle', () => {
+  it('un refus de la base prend la phrase de la table de traduction', () => {
     expect(messageErreurEnvoi({ code: 'P0001', message: 'Saisissez au moins une valeur.' })).toBe(
       'Saisissez au moins une valeur.',
     )
+    expect(
+      lireEchecEnvoi({
+        code: 'P0001',
+        message: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+      }),
+    ).toEqual({
+      message: "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres.",
+      champ: 'en_fij',
+    })
   })
 
   it('un refus de droit prend le message du contrat', () => {
@@ -204,7 +217,29 @@ describe('message d’un envoi refusé', () => {
     )
   })
 
-  it('une coupure de connexion : null (le message de LISEZMOI par défaut)', () => {
+  it('connexion expirée et compte désactivé : leurs phrases, pas « introuvable » (m271, m272)', () => {
+    expect(messageErreurEnvoi({ code: '42501', message: 'Double authentification requise.' })).toBe(
+      'Votre connexion a expiré. Reconnectez-vous.',
+    )
+    expect(messageErreurEnvoi({ code: 'PGRST303', message: 'JWT expired' })).toBe(
+      'Votre connexion a expiré. Reconnectez-vous.',
+    )
+    expect(messageErreurEnvoi({ code: '42501', message: 'Compte inactif ou inconnu.' })).toBe(
+      'Ce compte est désactivé. Contactez EJP Tech.',
+    )
+  })
+
+  it('un refus inattendu : le repli, pas « La connexion a échoué » (m270)', () => {
+    const repli =
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
+    expect(messageErreurEnvoi({ code: '23505', message: 'duplicate key' })).toBe(repli)
+    expect(
+      messageErreurEnvoi({ code: 'P0001', message: 'Chaque chiffre est un nombre entier.' }),
+    ).toBe(repli)
+  })
+
+  it('une coupure de connexion ou un délai : null (le message de LISEZMOI par défaut)', () => {
     expect(messageErreurEnvoi(new TypeError('Failed to fetch'))).toBeNull()
+    expect(messageErreurEnvoi({ code: '', message: 'TimeoutError: signal timed out' })).toBeNull()
   })
 })

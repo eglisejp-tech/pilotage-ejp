@@ -21,11 +21,14 @@ export function PageConnexion() {
   const retour = parametres.get('retour')
   const erreurGoogle = erreurDeRetourGoogle(search, hash)
 
+  const [motif] = useState(lireMotif)
   const [erreur, setErreur] = useState<string | undefined>(() => {
     if (erreurGoogle) return erreurGoogle
-    const motif = lireMotif()
-    return motif ? MESSAGES_MOTIF[motif] : undefined
+    return motif && motif !== 'deconnexion' ? MESSAGES_MOTIF[motif] : undefined
   })
+  // Après « Se déconnecter » : une confirmation, pas une erreur (m060).
+  const information =
+    motif === 'deconnexion' && !erreurGoogle ? messagesConnexion.deconnecte : undefined
   const [enCours, setEnCours] = useState<'google' | 'mot-de-passe'>()
 
   // Le motif est annoncé une fois ; les paramètres d'erreur de Google quittent l'adresse.
@@ -61,6 +64,7 @@ export function PageConnexion() {
       onGoogle={() => void continuerAvecGoogle()}
       enCours={enCours}
       erreur={erreur}
+      information={erreur || enCours ? undefined : information}
     />
   )
 }

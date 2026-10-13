@@ -28,8 +28,10 @@ import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import { ApercuDeSaisie } from '@/features/indicateurs/configuration/panneaux/ApercuDeSaisie'
 import {
+  erreurDeChamp,
   erreursParChamp,
   lireRefusEcriture,
+  sansRepetition,
 } from '@/features/indicateurs/configuration/panneaux/refus'
 import {
   phraseCalculsLies,
@@ -114,7 +116,8 @@ function brouillonDe(remplace: LigneConfiguration | undefined): Brouillon {
  * personnelles), ce qu'on compte exactement (140), quand le saisir, la sorte de nombre, la case
  * « Domaine sensible » (cochée et verrouillée pour le remplaçant d'un indicateur sensible),
  * l'aperçu de la saisie, puis ce qui change et ce qui ne change pas. Les contrôles de la base
- * s'affichent pendant la frappe ; son refus à l'envoi, sous le bouton. Un remplacement lit d'abord
+ * s'affichent pendant la frappe ; son refus à l'envoi, sous le champ qu'il vise (nom, définition),
+ * sans répéter le contrôle, sinon sous le bouton. Un remplacement lit d'abord
  * les calculs qui se servent de l'ancien indicateur : ils partent avec lui, le panneau les nomme.
  */
 export function FormulaireIndicateur({ controleur, remplace }: Props) {
@@ -149,6 +152,7 @@ function CorpsIndicateur({
   const annuler = useFermetureSaisie(fermer)
   const id = useId()
   const formulaire = useRef<HTMLFormElement>(null)
+  const blocSensible = useRef<HTMLDivElement>(null)
   const occupe = useRef(false)
   const [brouillon, setBrouillon] = useState<Brouillon>(() => brouillonDe(remplace))
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
@@ -243,7 +247,17 @@ function CorpsIndicateur({
           : reussiteRemplacement(calculsLies.length),
       )
     } catch (erreur) {
-      setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      // Un refus du nom ou de la définition se dit sous son champ, une seule fois. L'avertissement
+      // « Ce chiffre semble sensible » est déjà sous la case : elle prend le focus, sans le répéter.
+      const surChamp = erreurDeChamp(erreur)
+      if (surChamp === null) {
+        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      } else if (surChamp.libelle !== undefined && surChamp.libelle === messageSensible?.message) {
+        blocSensible.current?.querySelector<HTMLElement>('input:not(:disabled)')?.focus()
+      } else {
+        setErreurs(surChamp)
+        setEssais((precedent) => precedent + 1)
+      }
       occupe.current = false
       setEnCours(false)
     }
@@ -286,7 +300,9 @@ function CorpsIndicateur({
           max={LONGUEUR_LIBELLE_MAX}
           avecRappel
           erreur={erreurs.libelle}
-          controles={<MessagesControle verifications={controlesLibelle} />}
+          controles={
+            <MessagesControle verifications={sansRepetition(controlesLibelle, erreurs.libelle)} />
+          }
         />
         <ChampIndicateur
           id={`${id}-definition`}
@@ -313,7 +329,7 @@ function CorpsIndicateur({
           erreur={erreurs.unite}
           verrouille={brouillon.sensible}
         />
-        <div className="flex flex-col gap-1">
+        <div ref={blocSensible} className="flex flex-col gap-1">
           <CaseACocher
             libelle={textes.sensible}
             aide="indicateurs.domaine"

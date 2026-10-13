@@ -26,8 +26,10 @@ import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessagesControle } from '@/features/indicateurs/configuration/panneaux/MessagesControle'
 import { NoteLimites } from '@/features/indicateurs/configuration/panneaux/NoteLimites'
 import {
+  erreurDeChamp,
   erreursParChamp,
   lireRefusEcriture,
+  sansRepetition,
 } from '@/features/indicateurs/configuration/panneaux/refus'
 import { EtatLectureTermes } from '@/features/indicateurs/configuration/panneaux/EtatLectureTermes'
 import {
@@ -205,7 +207,14 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
           : REUSSITES_INDICATEURS.remplacementCalcul,
       )
     } catch (erreur) {
-      setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      // Un refus du nom ou de la définition se dit sous son champ, une seule fois.
+      const surChamp = erreurDeChamp(erreur)
+      if (surChamp === null) {
+        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+      } else {
+        setErreurs(surChamp)
+        setEssais((precedent) => precedent + 1)
+      }
       occupe.current = false
       setEnCours(false)
     }
@@ -240,7 +249,9 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
           max={LONGUEUR_LIBELLE_MAX}
           avecRappel
           erreur={erreurs.libelle}
-          controles={<MessagesControle verifications={controles} />}
+          controles={
+            <MessagesControle verifications={sansRepetition(controles, erreurs.libelle)} />
+          }
         />
         <ChampIndicateur
           id={`${id}-definition`}

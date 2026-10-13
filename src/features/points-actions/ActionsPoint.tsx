@@ -51,8 +51,9 @@ const CLASSE_BOUTON =
   'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond'
 
 /**
- * Vrai pour un refus de la base qui dit que la page est périmée : point déjà traité (`P0001`,
- * messages de la base) ou point hors de portée (`42501`). Une connexion perdue n'en est pas un :
+ * Vrai pour un refus de la base qui dit que la page est périmée : point déjà traité, mentions
+ * changées par un autre compte (`P0001`, messages de la base ; la fenêtre dit de la fermer pour
+ * mettre la page à jour, m157) ou point hors de portée (`42501`). Une connexion perdue n'en est pas un :
  * supabase-js la rend sous la forme `{ message: 'FetchError: ...', code: '' }`, avec une propriété
  * `code` vide. Le texte tapé reste alors dans la fenêtre et rien n'est relu.
  */
@@ -64,7 +65,9 @@ function refusDePagePerimee(erreur: unknown): boolean {
     code === 'P0001' &&
     (message === MESSAGES_POINT.refus.pointDejaTraite ||
       message === MESSAGES_POINT.refus.pointTraiteStatut ||
-      message === MESSAGES_POINT.refus.pointTraiteMentions)
+      message === MESSAGES_POINT.refus.pointTraiteMentions ||
+      message === MESSAGES_POINT.refus.mentionDejaPresente ||
+      message === MESSAGES_POINT.refus.mentionAbsente)
   )
 }
 

@@ -166,9 +166,10 @@ describe('panneau « Ajouter un indicateur »', () => {
   it('envoyé vide : chaque champ dit ce qui manque, rien n’est envoyé, le focus va au premier', async () => {
     const { utilisateur, panneau, ecritures } = await ouvrir()
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
-    expect(within(panneau).getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
+    // Les mêmes phrases que la table de traduction (m233).
+    expect(within(panneau).getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
     expect(
-      within(panneau).getByText("Expliquez ce qu'on compte en 10 à 140 caractères."),
+      within(panneau).getByText('Expliquez ce qui est compté, en 10 à 140 caractères.'),
     ).toBeVisible()
     expect(
       within(panneau).getByText(
@@ -404,29 +405,69 @@ describe('panneau « Ajouter un indicateur »', () => {
     expect(ecritures.verifier).toHaveBeenCalledWith('Taux de présence', 'mois', ID_COMMUNICATION)
   })
 
-  it('le refus de la base à l’envoi reste sous le bouton, ce qui est écrit est gardé', async () => {
+  it('le refus « semble sensible » ne répète pas l’avertissement : la case prend le focus', async () => {
+    const sensible =
+      "Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas."
     const ecritures = ecrituresDe({
+      verifier: vi.fn(() =>
+        Promise.resolve([{ famille: 'sensible' as const, message: sensible, bloquant: true }]),
+      ),
+      ajouter: vi.fn(() => Promise.reject({ code: 'P0001', message: sensible })),
+    })
+    const { utilisateur, panneau } = await ouvrir(ecritures)
+    await utilisateur.type(
+      within(panneau).getByLabelText('Ce que vous comptez'),
+      'Enfants accueillis',
+    )
+    expect(await within(panneau).findByText(sensible, {}, { timeout: 3000 })).toBeVisible()
+    await utilisateur.type(
+      within(panneau).getByLabelText("Ce qu'on compte exactement"),
+      'Enfants accueillis à la garderie.',
+    )
+    await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
+    await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    await waitFor(() =>
+      expect(within(panneau).getByRole('checkbox', { name: /Domaine sensible/ })).toHaveFocus(),
+    )
+    expect(within(panneau).getAllByText(sensible)).toHaveLength(1)
+    expect(within(panneau).queryByRole('alert')).toBeNull()
+  })
+
+  it('le refus du nom par la base se dit sous le champ, une seule fois, ce qui est écrit est gardé', async () => {
+    const doublon = 'Cette fiche a déjà un indicateur « Tournages ». Choisissez un autre nom.'
+    const ecritures = ecrituresDe({
+      // Le contrôle pendant la frappe dit déjà le doublon (m233) : le refus ne le répète pas.
+      verifier: vi.fn(() =>
+        Promise.resolve([{ famille: 'doublon' as const, message: doublon, bloquant: true }]),
+      ),
       ajouter: vi.fn(() =>
         Promise.reject({ code: 'P0001', message: 'Cette fiche a déjà « Tournages ».' }),
       ),
     })
     const { utilisateur, panneau } = await ouvrir(ecritures)
-    await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Tournages')
+    const nom = within(panneau).getByLabelText('Ce que vous comptez')
+    await utilisateur.type(nom, 'Tournages')
+    expect(await within(panneau).findByText(doublon, {}, { timeout: 3000 })).toBeVisible()
     await utilisateur.type(
       within(panneau).getByLabelText("Ce qu'on compte exactement"),
       'Tournages réalisés dans le mois.',
     )
     await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
-    expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      'Cette fiche a déjà « Tournages ».',
-    )
-    expect(within(panneau).getByLabelText('Ce que vous comptez')).toHaveValue('Tournages')
+    // Le refus de la base, traduit par la table (m233), sous le champ qui prend le focus.
+    await waitFor(() => expect(nom).toHaveFocus())
+    expect(nom).toHaveAttribute('aria-invalid', 'true')
+    expect(nom).toHaveAccessibleDescription(expect.stringContaining(doublon))
+    expect(within(panneau).getAllByText(doublon)).toHaveLength(1)
+    expect(within(panneau).queryByRole('alert')).toBeNull()
+    expect(nom).toHaveValue('Tournages')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('une connexion perdue le dit sans effacer le formulaire', async () => {
-    const ecritures = ecrituresDe({ ajouter: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const ecritures = ecrituresDe({
+      ajouter: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    })
     const { utilisateur, panneau } = await ouvrir(ecritures)
     await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Tournages')
     await utilisateur.type(
@@ -993,7 +1034,9 @@ describe('fenêtre « Retirer »', () => {
   })
 
   it('une connexion perdue le dit', async () => {
-    const ecritures = ecrituresDe({ retirer: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const ecritures = ecrituresDe({
+      retirer: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    })
     const utilisateur = afficher(ID_COMMUNICATION, ecritures)
     await utilisateur.click(bouton('Retirer « Publications »'))
     const fenetre = await screen.findByRole('alertdialog')

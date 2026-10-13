@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState } from 'react'
-import { messageErreurEnvoi } from '@/features/saisie-session/erreurs'
+import { lireEchecEnvoi } from '@/features/saisie-session/erreurs'
+import type { EchecEnvoi } from '@/features/saisie-session/erreurs'
 
 /** Phrase sous le bouton quand la personne renvoie ce qui vient d'être enregistré. */
 export const MESSAGE_DEJA_ENREGISTRE =
@@ -7,8 +8,11 @@ export const MESSAGE_DEJA_ENREGISTRE =
 
 export interface EtatEnvoi {
   enCours: boolean
-  /** Envoi refusé : message de la base, ou null pour un problème de connexion. */
-  echec: { message: string | null } | null
+  /**
+   * Envoi refusé : la phrase de la table de traduction et son champ, ou un message null pour un
+   * problème de connexion.
+   */
+  echec: EchecEnvoi | null
   /** Dernière réussite et son numéro d'envoi (`MessageReussite`). */
   reussite: { message: string; envoi: number } | null
   /**
@@ -56,7 +60,7 @@ export function useEnvoiSaisie(): EtatEnvoi {
         return true
       } catch (erreur) {
         setReussite(null)
-        setEchec({ message: messageErreurEnvoi(erreur) })
+        setEchec(lireEchecEnvoi(erreur))
         return false
       } finally {
         verrou.current = false

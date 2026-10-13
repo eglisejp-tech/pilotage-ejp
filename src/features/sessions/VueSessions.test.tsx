@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -118,7 +118,7 @@ describe('VueSessions (écran 14)', () => {
     expect(actions.declarer).not.toHaveBeenCalled()
   })
 
-  it('dit sous le bouton le refus de la base et garde les valeurs', async () => {
+  it('dit sous le champ date la session déjà déclarée, traduite, et garde les valeurs (m210)', async () => {
     const actions = actionsFausses()
     actions.declarer.mockRejectedValueOnce({
       code: 'P0001',
@@ -128,10 +128,29 @@ describe('VueSessions (écran 14)', () => {
     const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
     await userEvent.click(within(colonne).getByRole('checkbox', { name: 'Social' }))
     await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
-    expect(await within(colonne).findByRole('alert')).toHaveTextContent(
-      "Une session Bâtir l'Église est déjà déclarée le samedi 10 octobre.",
-    )
+    const phrase =
+      "Une session Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date."
+    const date = within(colonne).getByLabelText('Date')
+    await waitFor(() => expect(date).toHaveFocus())
+    expect(date).toHaveAttribute('aria-invalid', 'true')
+    expect(date).toHaveAccessibleDescription(phrase)
+    expect(within(colonne).queryByRole('alert')).toBeNull()
     expect(within(colonne).getByText('7 sur 8')).toBeInTheDocument()
+    // Une autre date efface le refus : il ne parle plus de la date choisie.
+    fireEvent.change(date, { target: { value: '2026-10-17' } })
+    expect(date).not.toHaveAttribute('aria-invalid')
+    expect(within(colonne).queryByText(phrase)).toBeNull()
+  })
+
+  it('dit sous le bouton un refus qui ne porte pas sur la date', async () => {
+    const actions = actionsFausses()
+    actions.declarer.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value' })
+    afficher(donnees(true), actions)
+    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    expect(await within(colonne).findByRole('alert')).toHaveTextContent(
+      "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    )
   })
 
   it('modifie les ministères attendus : le panneau se préremplit puis enregistre', async () => {
@@ -172,8 +191,9 @@ describe('VueSessions (écran 14)', () => {
       name: 'Supprimer Anti-Dispersion du 10 oct. ?',
     })
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer la session' }))
+    // Le refus de la base, traduit (m210).
     expect(await within(fenetre).findByRole('alert')).toHaveTextContent(
-      'Des ministères ont déjà saisi : la session ne peut plus être supprimée.',
+      'Des ministères ont déjà saisi cette session. Elle reste dans la liste.',
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer la session' }))
     await waitFor(() => expect(actions.supprimer).toHaveBeenCalledTimes(2))

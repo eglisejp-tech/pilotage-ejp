@@ -86,9 +86,8 @@ test.describe('Communication', () => {
     ).toBe(ajoutsAvant + 1)
   })
 
-  test('une mise à jour sans changement est refusée par la base, sans ligne de journal', async ({
-    page,
-  }) => {
+  // m134 : la ligne identique est dite avant l'envoi (la base la refuserait aussi).
+  test('une mise à jour sans changement est refusée, sans ligne ni journal', async ({ page }) => {
     expect(evenementId).not.toBe('')
     await page.goto(`/saisir/evenement/${evenementId}`)
     await expect(page.getByText(NOM)).toBeVisible()
@@ -100,7 +99,7 @@ test.describe('Communication', () => {
     await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
     const alerte = page.getByRole('alert')
     await expect(alerte).toHaveText(
-      "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
     )
     await expect(alerte.getByRole('link')).toHaveCount(0)
     expect(await compter(page, `evenement_etat?select=id&evenement_id=eq.${evenementId}`)).toBe(

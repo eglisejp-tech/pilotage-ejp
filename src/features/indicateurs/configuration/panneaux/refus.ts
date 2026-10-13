@@ -1,16 +1,44 @@
-import { z } from 'zod'
+import type { z } from 'zod'
+import { lireErreurBase } from '@/data/messagesBase'
+import { TEXTES_PANNEAUX } from '@/features/indicateurs/configuration/panneaux/textes'
 import { messageDeRefusPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
+import type { VerificationLibelle } from '@/lib/base'
 
 /**
- * Phrase d'un refus d'écriture. Une erreur de saisie de la base (`P0001`) se lit telle quelle ;
- * un refus de droit dit seulement que l'élément n'est pas accessible (sauf la double
- * authentification, que la personne doit lire) ; une demande refusée par un schéma avant tout
- * appel (jamais atteinte depuis un formulaire qui valide d'abord) dit de vérifier les champs ;
- * tout le reste est un problème de connexion, dit par `connexion`.
+ * Un refus de la base qui porte sur le nom (doublon, mot de calcul, période) ou sur la définition
+ * se dit sous ce champ, qui prend le focus (guide, 10.1 et 10.8) : rend l'erreur du champ à poser,
+ * ou null pour un refus qui se dit sous le bouton (`lireRefusEcriture`).
+ */
+export function erreurDeChamp(erreur: unknown): Record<string, string> | null {
+  const lue = lireErreurBase(erreur)
+  if (lue.genre !== 'message' || lue.nature !== 'refus') return null
+  if (lue.champ === 'nom') return { libelle: lue.message }
+  if (lue.champ === 'definition') return { definition: lue.message }
+  return null
+}
+
+/**
+ * Les contrôles pendant la frappe, sans celui que l'erreur du champ dit déjà : la phrase de la
+ * table est la même avant l'envoi et après le refus (m233), elle ne se dit qu'une fois.
+ */
+export function sansRepetition(
+  verifications: readonly VerificationLibelle[],
+  erreur: string | undefined,
+): readonly VerificationLibelle[] {
+  if (erreur === undefined) return verifications
+  return verifications.filter((verification) => verification.message !== erreur)
+}
+
+/**
+ * Phrase d'un refus d'écriture, par la table de traduction de `src/data/messagesBase.ts` (m233) :
+ * un refus de la base ou d'un schéma prend sa phrase ; un refus de droit dit seulement que
+ * l'élément n'est pas accessible ; une connexion expirée, un compte désactivé ou un refus
+ * inattendu ont chacun leur phrase. Seule une erreur sans réponse prend `connexion`. La fenêtre de
+ * retrait (`connexionFenetre`) est une action sans formulaire : son repli ne parle pas de saisie.
  */
 export function lireRefusEcriture(erreur: unknown, connexion: string): string {
-  if (erreur instanceof z.ZodError) return erreur.issues[0]?.message ?? connexion
-  return messageDeRefusPrevus(erreur) ?? connexion
+  const formulaire = connexion !== TEXTES_PANNEAUX.connexionFenetre
+  return messageDeRefusPrevus(erreur, formulaire) ?? connexion
 }
 
 /** Les erreurs sans celle d'un champ qu'on vient de modifier. */

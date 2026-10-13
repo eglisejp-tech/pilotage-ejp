@@ -37,15 +37,20 @@ const reessayer = () => undefined
 /** Message d'un refus de la base sur une précision (`private.verifier_texte`, famille données personnelles). */
 export const REFUS_PRECISION_EXEMPLE = "N'écrivez aucun nom ni information personnelle."
 
+/** Message du trigger `verifier_fij_actifs` (deux saisies croisées), traduit par la table (m068). */
+const REFUS_FIJ_EXEMPLE = 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'
+
 /**
  * Saisie du dimanche dans l'état demandé : `correction` (une saisie fait déjà foi), `matin` (le
- * dimanche du jour avant midi), `matin-vide` (sans indicateur du matin), `refuse` (date de
- * l'adresse refusée), `chargement`, `erreur` (lecture en échec), `coupure` (envoi en échec).
+ * dimanche du jour avant midi), `matin-vide` (sans indicateur du matin), `matin-coupure` (le
+ * matin, envoi en échec), `refuse` (date de l'adresse refusée), `chargement`, `erreur` (lecture
+ * en échec), `coupure` (envoi en échec), `refus-fij` (la base refuse « Dont en FIJ » au-dessus
+ * des actifs, m068).
  */
 export function etatApercuDimanche(etat: string | null): EtatSaisieDimanche {
   if (etat === 'chargement') return { etat: 'chargement' }
   if (etat === 'erreur') return { etat: 'erreur', reessayer }
-  const matin = etat === 'matin' || etat === 'matin-vide'
+  const matin = etat === 'matin' || etat === 'matin-vide' || etat === 'matin-coupure'
   const semaine = matin ? SEMAINE_DIMANCHE_MATIN : SEMAINE_EXEMPLE
   const choix = choisirDimanche(
     etat === 'refuse' ? '2026-09-30' : matin ? semaine.aujourdhui : null,
@@ -74,7 +79,10 @@ export function etatApercuDimanche(etat: string | null): EtatSaisieDimanche {
       dimanchesSaisis(indicateurs, mesuresDimanche),
       aIndicateurDuMatin(indicateurs),
     ),
-    enregistrer: envoiExemple(etat === 'coupure' ? 'coupure' : 'reussite'),
+    enregistrer:
+      etat === 'refus-fij'
+        ? envoiExemple('refus', REFUS_FIJ_EXEMPLE)
+        : envoiExemple(etat === 'coupure' || etat === 'matin-coupure' ? 'coupure' : 'reussite'),
   }
 }
 

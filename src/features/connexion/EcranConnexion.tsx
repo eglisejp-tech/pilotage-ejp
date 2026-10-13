@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link } from 'react-router'
 import { adressesConnexion } from '@/features/connexion/adresses'
@@ -13,6 +13,7 @@ import { schemaConnexion } from '@/features/connexion/schemas'
 import type { ValeursConnexion } from '@/features/connexion/schemas'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
+import { MessageReussite } from '@/features/saisie/MessageReussite'
 
 export type ProprietesEcranConnexion = {
   /** « Continuer avec Google » (étape 2 : signInWithOAuth). */
@@ -23,6 +24,8 @@ export type ProprietesEcranConnexion = {
   enCours?: 'google' | 'mot-de-passe'
   /** Message du bandeau (messagesConnexion), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /** Confirmation sous le titre, sans alerte (« Compte déconnecté. », m060). */
+  information?: string
   lienMotDePasseOublie?: string
   lienConfidentialite?: string
   lienConditions?: string
@@ -34,6 +37,7 @@ export function EcranConnexion({
   onSubmit,
   enCours,
   erreur,
+  information,
   lienMotDePasseOublie = adressesConnexion.motDePasseOublie,
   lienConfidentialite = adressesConnexion.confidentialite,
   lienConditions = adressesConnexion.conditions,
@@ -55,6 +59,16 @@ export function EcranConnexion({
     if (erreur) bandeau.current?.focus()
   }, [erreur])
 
+  // « Compte déconnecté. » (m060) : la région `status` existe d'abord vide, et le message y entre
+  // juste après, pour qu'un lecteur d'écran l'annonce (une région ajoutée avec son texte ne l'est
+  // pas toujours). Visible 6 secondes, comme toute réussite (MessageReussite).
+  const [informationPrete, setInformationPrete] = useState<string>()
+  useEffect(() => {
+    if (!information) return
+    const minuterie = window.setTimeout(() => setInformationPrete(information), 0)
+    return () => window.clearTimeout(minuterie)
+  }, [information])
+
   const envoyer = handleSubmit((valeurs) => {
     if (!occupe) onSubmit(valeurs)
   })
@@ -64,6 +78,14 @@ export function EcranConnexion({
       <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Pilotage EJP">
         Connectez-vous avec l'adresse de votre ministère ou votre adresse personnelle.
       </TitreConnexion>
+
+      {information ? (
+        // Une fois le message masqué, la région vide ne prend pas de place dans la colonne : une
+        // marge négative annule son écart.
+        <div className="-mb-6 has-[p]:mb-0">
+          <MessageReussite message={informationPrete === information ? information : null} />
+        </div>
+      ) : null}
 
       <BoutonGoogle onClick={onGoogle} enCours={enCours === 'google'} occupe={occupe} />
 

@@ -10,7 +10,7 @@ const erreurBase = (message: string, code = 'P0001') => ({
   hint: null,
 })
 
-describe('refus de la base (contrat de l’étape 4, section 7 ; T37)', () => {
+describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de traduction)', () => {
   it('une date passée à l’ajout va sous le champ date, avec le texte de la section 7', () => {
     expect(lireRefus(erreurBase(MESSAGES_BASE.datePasseeAjout))).toEqual({
       ou: 'date',
@@ -25,17 +25,28 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37)', () => {
     })
   })
 
-  it('une ligne identique va sous le bouton, telle quelle', () => {
+  it('une ligne identique va sous le bouton, avec la formule « déjà enregistré » (m134)', () => {
     expect(lireRefus(erreurBase(MESSAGES_BASE.ligneIdentique))).toEqual({
       ou: 'bouton',
-      message: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      message: "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
     })
+    expect(TEXTES_SIGNALEMENT.ligneIdentique).toBe(
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
+    )
   })
 
-  it('une autre erreur de saisie s’affiche telle quelle sous le bouton', () => {
+  it('un autre refus de la table : sa phrase, sous le bouton', () => {
     expect(lireRefus(erreurBase('Ce ministère ne peut pas être mentionné.'))).toEqual({
       ou: 'bouton',
       message: 'Ce ministère ne peut pas être mentionné.',
+    })
+  })
+
+  it('un refus absent de la table : le repli, jamais le texte de la base (m270)', () => {
+    expect(lireRefus(erreurBase('Un refus que la table ne connaît pas.'))).toEqual({
+      ou: 'bouton',
+      message:
+        "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
     })
   })
 
@@ -55,12 +66,36 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37)', () => {
     })
   })
 
-  it('tout le reste est un problème de connexion', () => {
+  it('connexion expirée ou compte désactivé : leur phrase, même pour la réunion (m271, m272)', () => {
+    expect(lireRefus(erreurBase('Double authentification requise.', '42501'), 'reunion')).toEqual({
+      ou: 'bouton',
+      message: 'Votre connexion a expiré. Reconnectez-vous.',
+    })
+    expect(lireRefus(erreurBase('Compte inactif ou inconnu.', '42501'))).toEqual({
+      ou: 'bouton',
+      message: 'Ce compte est désactivé. Contactez EJP Tech.',
+    })
+    expect(lireRefus(erreurBase('JWT expired', 'PGRST303'))).toEqual({
+      ou: 'bouton',
+      message: 'Votre connexion a expiré. Reconnectez-vous.',
+    })
+  })
+
+  it('aucune réponse : un problème de connexion', () => {
     expect(lireRefus(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
     expect(lireRefus({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
       ou: 'connexion',
     })
-    expect(lireRefus(null)).toEqual({ ou: 'connexion' })
+  })
+
+  it('ajout resté sans réponse après 10 s : vérifier la liste avant de réessayer (m259)', () => {
+    const delai = { code: '', message: 'TimeoutError: signal timed out' }
+    expect(lireRefus(delai, 'ajout')).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    })
+    // La mise à jour se refait sans doublon : la base refuse la ligne identique.
+    expect(lireRefus(delai, 'evenement')).toEqual({ ou: 'connexion' })
   })
 
   it('seuls les deux messages de date refusée appellent le lien « Signaler une difficulté »', () => {

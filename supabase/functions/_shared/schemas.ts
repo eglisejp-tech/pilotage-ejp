@@ -44,8 +44,9 @@ export const schemaCreerCompte = z.discriminatedUnion('type', [
 ])
 export type DemandeCreerCompte = z.infer<typeof schemaCreerCompte>
 
-// desactiver-compte et reinitialiser-2fa visent un compte par son identifiant.
+// desactiver-compte et reinitialiser-2fa visent un compte par son identifiant. Le message est dit
+// tel quel par l'écran (m197, formule « introuvable »).
 export const schemaCibleCompte = z.strictObject({
-  user_id: z.uuid('Ce compte est introuvable.'),
+  user_id: z.uuid('Ce compte est introuvable. Rechargez la page.'),
 })
 export type DemandeCibleCompte = z.infer<typeof schemaCibleCompte>

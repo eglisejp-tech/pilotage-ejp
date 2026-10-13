@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { lireMesSignalements, signalerDifficulte } from '@/data/signalements'
 import { enEchec } from '@/features/evenements/lectures'
-import { useApresEcriture } from '@/features/evenements/useApresEcriture'
+import { creerPuisRelire, useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
 import type { ContenuMesSignalements } from '@/features/signalement/MesSignalements'
 import { PanneauSignalement } from '@/features/signalement/PanneauSignalement'
@@ -29,10 +29,8 @@ export function SaisieSignalement({ ministereId, libelleCompte, ecran }: Props) 
     queryFn: () => lireMesSignalements(ministereId, TEXTES_MES_SIGNALEMENTS.nombre),
   })
 
-  const envoyer = async (signalement: Signalement) => {
-    await signalerDifficulte(signalement)
-    apresEcriture()
-  }
+  const envoyer = (signalement: Signalement) =>
+    creerPuisRelire(() => signalerDifficulte(signalement), apresEcriture)
 
   let mesSignalements: ContenuMesSignalements
   if (lecture.data) mesSignalements = { etat: 'liste', signalements: lecture.data }

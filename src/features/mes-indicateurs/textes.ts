@@ -14,11 +14,14 @@ const NBSP = String.fromCodePoint(0xa0)
 export const LONGUEUR_MIN_POURQUOI = 10
 export const LONGUEUR_MAX_POURQUOI = 280
 
-/** Messages de la base (`ajouter_suggestion`), repris tels quels par l'écran. */
+/**
+ * Contrôles du « Pourquoi », avant l'envoi : les mêmes phrases que la table de traduction donne
+ * aux refus de `ajouter_suggestion` (m233, proposé ; `src/data/messagesBase.ts`).
+ */
 export const MESSAGES_BASE_SUGGESTION = {
-  pourquoiCourt: 'Expliquez pourquoi en 10 caractères au moins.',
-  pourquoiLong: '280 caractères au plus.',
-  inexistante: "Cette suggestion n'existe pas.",
+  pourquoiCourt: 'Expliquez pourquoi (10 caractères au moins).',
+  pourquoiLong: 'Raccourcissez ce texte : 280 caractères au plus.',
+  inexistante: 'Cet indicateur prévu est introuvable. Rechargez la page.',
   acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
 } as const
 
@@ -53,8 +56,8 @@ export const TEXTES_PANNEAU_AJOUT = {
   choisir: 'Choisir',
   /** Toutes les suggestions sont déjà sur la fiche (LISEZMOI, « États »). */
   toutesDejaLa: 'Toutes les suggestions sont déjà sur votre fiche.',
-  /** Au lot 1, sous la liste : le chiffre qui manque se demande à l'administration. */
-  rienNeConvient: "Rien ne convient ? Demandez un indicateur à l'administration de l'église.",
+  /** Au lot 1, sous la liste : le chiffre qui manque se demande à EJP Tech (T59). */
+  rienNeConvient: 'Rien ne convient ? Demandez un indicateur à EJP Tech.',
   libellePourquoi: 'Pourquoi cet indicateur ?',
   /** Sous le champ, pas de rappel sur les données personnelles (exception T30). */
   phraseVerification: 'EJP Tech vérifie chaque ajout. En attendant, vous pouvez déjà le saisir.',
@@ -65,13 +68,16 @@ export const TEXTES_PANNEAU_AJOUT = {
   retour: 'Retour',
 } as const
 
-/** Proposé : une limite atteinte, avec ce qu'il faut faire (le ministère ne retire pas lui-même au lot 1). */
+/**
+ * Proposé : une limite atteinte, avec ce qu'il faut faire (le ministère ne retire pas lui-même au
+ * lot 1). Le contact est EJP Tech (T59).
+ */
 export function explicationLimiteAjouts(limites: LimitesIndicateurs): string {
-  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs à lui. Demandez à l'administration de l'église d'en retirer un pour en ajouter un autre.`
+  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.`
 }
 
 export function explicationLimiteLignes(limites: LimitesIndicateurs): string {
-  return `Votre fiche compte déjà ${nombre(limites.lignes_max)} indicateurs. Demandez à l'administration de l'église d'en retirer un.`
+  return `Votre fiche compte déjà ${nombre(limites.lignes_max)} indicateurs. Demandez à EJP Tech d'en retirer un.`
 }
 
 /** Rythme dans une phrase : « chaque dimanche », « chaque mois », « à ce jour ». */

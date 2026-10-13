@@ -104,9 +104,11 @@ export const DELAI_MAX_SESSION = 10_000
 
 function avecDelaiMaximal<T>(promesse: Promise<T>): Promise<T> {
   let minuterie: ReturnType<typeof setTimeout> | undefined
+  // Une erreur nommée TimeoutError, comme le délai de fetchAvecDelai : l'écran d'erreur dit alors
+  // « La réponse met trop de temps » (m252, `estDelaiDepasse`).
   const delai = new Promise<never>((_, refuser) => {
     minuterie = setTimeout(
-      () => refuser(new Error('Lecture de la session trop longue.')),
+      () => refuser(new DOMException('Lecture de la session trop longue.', 'TimeoutError')),
       DELAI_MAX_SESSION,
     )
   })
@@ -123,4 +125,35 @@ export async function chargerEtatSessionSuivi(): Promise<EtatSession> {
   const etat = await avecDelaiMaximal(chargerEtatSession())
   noterTransition(precedent?.statut, etat.statut)
   return etat
+}
+
+/** Au plus une vérification par période : un écran qui relit son erreur ne relance rien. */
+export const INTERVALLE_VERIFICATION_SESSION = 10_000
+
+let derniereVerification: number | null = null
+
+/**
+ * Un refus de la base dit que la session a changé : connexion expirée ou compte désactivé (m271,
+ * `surSessionChangee` de `src/data/messagesBase.ts`). Auth vérifie d'abord la session auprès du
+ * serveur : révoquée ailleurs, elle s'oublie sur cet appareil. Puis l'état est relu : la garde mène
+ * à l'écran de connexion ou de code, avec la page en retour, ou à « Compte désactivé ». Une
+ * session encore bonne (jeton renouvelé entre-temps) laisse la page en place : réessayer suffit.
+ */
+export async function verifierSessionChangee(): Promise<void> {
+  const maintenant = Date.now()
+  if (
+    derniereVerification !== null &&
+    maintenant - derniereVerification < INTERVALLE_VERIFICATION_SESSION
+  ) {
+    return
+  }
+  derniereVerification = maintenant
+  try {
+    const auth = supabase().auth
+    const { error } = await auth.getUser()
+    if (sessionPerdue(error)) await auth.signOut({ scope: 'local' })
+  } catch {
+    // Pas de réponse d'Auth : la relecture de l'état dira ce qu'il en est.
+  }
+  await clientRequetes.invalidateQueries({ queryKey: CLE_SESSION })
 }

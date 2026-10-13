@@ -320,10 +320,22 @@ describe('corrigerIndicateur et retirerIndicateur', () => {
 })
 
 describe('contrôles, limites et termes', () => {
-  it('verifier_libelle part en POST avec le rythme et le ministère', async () => {
-    const reponse = [{ famille: 'doublon', message: 'Cette fiche a déjà « X ».', bloquant: true }]
+  it('verifier_libelle part en POST avec le rythme et le ministère, ses messages traduits (m233)', async () => {
+    const personnel = "N'écrivez aucun nom ni information personnelle."
+    const reponse = [
+      { famille: 'doublon', message: 'Cette fiche a déjà « X ».', bloquant: true },
+      { famille: 'donnees_personnelles', message: personnel, bloquant: true },
+    ]
     installerRpc({ data: reponse, error: null })
-    expect(await verifierLibelle('X', 'mois', MINISTERE)).toEqual(reponse)
+    // Pendant la frappe, la même phrase que le refus à l'envoi (guide, 10.9).
+    expect(await verifierLibelle('X', 'mois', MINISTERE)).toEqual([
+      {
+        famille: 'doublon',
+        message: 'Cette fiche a déjà un indicateur « X ». Choisissez un autre nom.',
+        bloquant: true,
+      },
+      { famille: 'donnees_personnelles', message: personnel, bloquant: true },
+    ])
     expect(rpc).toHaveBeenCalledWith('verifier_libelle', {
       p_libelle: 'X',
       p_nature: 'mois',

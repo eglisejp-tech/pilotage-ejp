@@ -25,13 +25,11 @@ describe('EcranAcces (/acces)', () => {
     expect(onContinue).toHaveBeenCalledTimes(1)
   })
 
-  it("lien d'invitation refusé : le dit, renvoie vers l'administration, focus sur le titre", () => {
+  it("lien d'invitation refusé : le dit, renvoie vers EJP Tech (T59), focus sur le titre", () => {
     afficher({ lienInvalide: true })
     const titre = screen.getByRole('heading', { level: 1, name: "Ce lien n'est plus valable" })
     expect(titre).toHaveFocus()
-    expect(
-      screen.getByText("Demandez à l'administration de l'église de relancer l'invitation."),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Demandez à EJP Tech de renvoyer l'invitation.")).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à la connexion' })).toHaveAttribute(
       'href',
       '/connexion',
@@ -59,9 +57,7 @@ describe('EcranCompteDesactive', () => {
       </MemoryRouter>,
     )
     expect(screen.getByRole('heading', { level: 1, name: 'Compte désactivé' })).toBeInTheDocument()
-    expect(
-      screen.getByText("Ce compte est désactivé. Adressez-vous à l'administration de l'église."),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Ce compte est désactivé. Contactez EJP Tech.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à la connexion' })).toBeInTheDocument()
   })
 })

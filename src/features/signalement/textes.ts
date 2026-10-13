@@ -32,8 +32,11 @@ export const TEXTES_SIGNALEMENT = {
   /** Sous le champ date de la mise à jour d'un événement, avant le lien. */
   dateRefuseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
   questionDate: 'Vous ne pouvez pas choisir de date ?',
-  /** Ligne identique à l'état actuel, sous le bouton : sans lien. */
-  ligneIdentique: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+  /**
+   * Ligne identique à l'état actuel, sous le bouton, sans lien : dite avant l'envoi, et par la
+   * table de traduction si la base la refuse (formule « déjà enregistré », m134, proposé).
+   */
+  ligneIdentique: "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
   bloc: {
     titre: 'Signalements',
     sousTitre: 'Difficultés signalées par les ministères',

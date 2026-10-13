@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { accepterConditions } from '@/data/conditions'
+import { phraseErreur } from '@/data/messagesBase'
 import { EcranAcceptation } from '@/features/acceptation/EcranAcceptation'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { messagesConnexion } from '@/features/connexion/messages'
@@ -10,7 +11,10 @@ import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 
 /**
  * /conditions-a-accepter : l'écran d'acceptation relié à la base. Réussite : la session est relue
- * et la garde envoie vers l'adresse demandée ou l'accueil du profil.
+ * et la garde envoie vers l'adresse demandée ou l'accueil du profil. Un refus passe par la table de
+ * traduction (`src/data/messagesBase.ts`) : une page plus ancienne que la base (« Version des
+ * conditions inconnue. ») dit de recharger la page, car réessayer échouerait toujours (m055) ;
+ * seule une erreur sans réponse dit « La connexion a échoué ».
  */
 export function PageAcceptation() {
   const etat = useEtatVerifie()
@@ -26,8 +30,14 @@ export function PageAcceptation() {
     try {
       await accepterConditions(VERSION_CONDITIONS)
       await rafraichirSession()
-    } catch {
-      setErreur(messagesConnexion.echecReseau)
+    } catch (exception) {
+      setErreur(
+        phraseErreur(
+          exception,
+          { connexion: messagesConnexion.echecReseau },
+          { formulaire: false },
+        ),
+      )
       setEnCours(false)
     }
   }

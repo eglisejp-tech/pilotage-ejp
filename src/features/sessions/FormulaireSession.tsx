@@ -8,7 +8,7 @@ import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { ChoixMinisteres } from '@/features/sessions/ChoixMinisteres'
 import type { MinistereAChoisir } from '@/features/sessions/ChoixMinisteres'
 import { ChoixType } from '@/features/sessions/ChoixType'
-import { lireRefusSession } from '@/features/sessions/refus'
+import { lireRefusDeclaration } from '@/features/sessions/refus'
 import { schemaDeclaration, schemaMinisteresAttendus } from '@/features/sessions/schemas'
 import type { ValeursDeclaration } from '@/features/sessions/schemas'
 import { prochainSamedi, TEXTES_SESSIONS } from '@/features/sessions/textes'
@@ -40,8 +40,9 @@ function sansAction() {}
  * Formulaire de l'écran 14 (maquette 14) : type, date, nom du rassemblement (pour « Autre
  * rassemblement » seulement, avec le rappel sur les données personnelles), ministères attendus
  * cochés par défaut, puis « Déclarer la session ». En mode « modifier », seuls les ministères
- * attendus changent. Les messages de la base (session déjà déclarée...) se disent sous le bouton ;
- * les valeurs restent. Après une déclaration réussie, le formulaire revient à son état de départ.
+ * attendus changent. Une session déjà déclarée à cette date se dit sous le champ date, qui prend le
+ * focus (m210) ; les autres messages de la base se disent sous le bouton ; les valeurs restent.
+ * Après une déclaration réussie, le formulaire revient à son état de départ.
  */
 export function FormulaireSession({
   mode,
@@ -63,6 +64,8 @@ export function FormulaireSession({
   const annuler = useFermetureSaisie(onAnnuler ?? sansAction)
   const [erreurs, setErreurs] = useState<Erreurs>({})
   const [refus, setRefus] = useState<string | null>(null)
+  /** Refus de la date par la base (session déjà déclarée ce jour-là), sous le champ date. */
+  const [refusDate, setRefusDate] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   const premierMinistere = useRef<HTMLInputElement>(null)
   const declarer = mode === 'declarer'
@@ -70,6 +73,7 @@ export function FormulaireSession({
   const modifier = (changement: Partial<ValeursDeclaration>) => {
     setValeurs((avant) => ({ ...avant, ...changement }))
     setRefus(null)
+    setRefusDate(null)
   }
 
   const valider = (): Erreurs => {
@@ -109,11 +113,18 @@ export function FormulaireSession({
     }
     setEnCours(true)
     setRefus(null)
+    setRefusDate(null)
     try {
       await envoyer(valeurs)
       if (declarer) setValeurs(depart())
     } catch (erreur) {
-      setRefus(lireRefusSession(erreur, TEXTES_SESSIONS.erreurConnexion))
+      const lu = lireRefusDeclaration(erreur, TEXTES_SESSIONS.erreurConnexion)
+      if (declarer && lu.champ === 'date') {
+        setRefusDate(lu.message)
+        document.getElementById(`${id}-date`)?.focus()
+      } else {
+        setRefus(lu.message)
+      }
     } finally {
       setEnCours(false)
     }
@@ -138,7 +149,7 @@ export function FormulaireSession({
             value={valeurs.date}
             onChange={(evenement) => modifier({ date: evenement.target.value })}
             dateChoisie={valeurs.date}
-            erreur={erreurs.date}
+            erreur={erreurs.date ?? refusDate ?? undefined}
           />
           {valeurs.type === 'autre' ? (
             <ChampTexteCourt
