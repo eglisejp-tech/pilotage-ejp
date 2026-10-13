@@ -71,10 +71,12 @@ function Modification({
   if (attendus.etat === 'chargement') return <ChargementBloc />
   if (attendus.etat === 'erreur') {
     // Lecture impossible : la phrase et « Réessayer » dans le panneau, sans le fermer (m212).
+    // Un refus (session inaccessible, 42501) ne change pas à un nouvel essai : pas de bouton.
+    const connexion = attendus.message === TEXTES_SESSIONS.erreurConnexionSuppression
     return (
       <EtatVide
         situation="probleme_passager"
-        action={{ libelle: TEXTES_SESSIONS.reessayer, surClic: relire }}
+        action={connexion ? { libelle: TEXTES_SESSIONS.reessayer, surClic: relire } : undefined}
       >
         {attendus.message}
       </EtatVide>

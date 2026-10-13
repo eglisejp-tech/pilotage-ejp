@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import { EtatVide } from '@/components/etats/EtatVide'
 import { EcranErreurSession } from '@/features/session/EcranErreurSession'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
@@ -57,6 +58,64 @@ describe('lecture impossible qui revient après « Réessayer » (m250)', () => 
     unmount()
     render(<PageEnEchec />)
     await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(RECOURS)
+  })
+
+  it('un nouvel essai lent (un échec près de 10 s, la relance, un second délai) garde le recours', async () => {
+    const utilisateur = userEvent.setup()
+    let maintenant = Date.parse('2026-10-13T10:00:00Z')
+    const horloge = vi.spyOn(Date, 'now').mockImplementation(() => maintenant)
+    try {
+      render(<PageEnEchec />)
+      await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+      // Premier essai : 9,9 s ; relance après 1 s ; second essai : 10 s (délai maximal).
+      maintenant += 9_900 + 1_000 + 10_000
+      await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
+      expect(screen.getByRole('alert')).toHaveTextContent(RECOURS)
+    } finally {
+      horloge.mockRestore()
+    }
+  })
+
+  it('un état vide ordinaire affiché après « Réessayer » ne consomme pas le nouvel essai', async () => {
+    const utilisateur = userEvent.setup()
+    // Pendant le nouvel essai, un bloc voisin affiche son état vide ; puis la lecture échoue.
+    function PageEtBloc() {
+      const [etape, setEtape] = useState<'echec' | 'essai' | 'vide' | 'nouvel-echec'>('echec')
+      if (etape === 'echec') {
+        return (
+          <ErreurDePage
+            message={PHRASE}
+            libelleBouton="Réessayer"
+            onReessayer={() => setEtape('essai')}
+          />
+        )
+      }
+      return (
+        <>
+          {etape === 'essai' ? (
+            <button type="button" onClick={() => setEtape('vide')}>
+              Bloc voisin lu
+            </button>
+          ) : (
+            <EtatVide situation="premier_usage">Aucun point ouvert.</EtatVide>
+          )}
+          {etape === 'vide' ? (
+            <button type="button" onClick={() => setEtape('nouvel-echec')}>
+              Fin du nouvel essai
+            </button>
+          ) : null}
+          {etape === 'nouvel-echec' ? (
+            <EtatVide situation="probleme_passager">{PHRASE}</EtatVide>
+          ) : null}
+        </>
+      )
+    }
+    render(<PageEtBloc />)
+    await utilisateur.click(screen.getByRole('button', { name: 'Réessayer' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Bloc voisin lu' }))
+    expect(screen.getByText('Aucun point ouvert.')).toBeInTheDocument()
     await utilisateur.click(screen.getByRole('button', { name: 'Fin du nouvel essai' }))
     expect(screen.getByRole('alert')).toHaveTextContent(RECOURS)
   })

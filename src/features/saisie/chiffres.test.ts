@@ -3,6 +3,7 @@ import {
   ajusterNombre,
   formatAReprendre,
   lireChamp,
+  nombreACompter,
   normaliserChamp,
   peutAjuster,
   valeurDuChamp,
@@ -41,6 +42,12 @@ describe('lireChamp (m100 : jamais un nombre deviné)', () => {
     expect(lireChamp('-3')).toEqual({ etat: 'nombre', valeur: -3 })
     expect(peutAjuster('-3', -1, 9999)).toBe(false)
     expect(ajusterNombre('-3', 1, 9999)).toBe('0')
+    // Un calcul en direct ne le compte jamais.
+    expect(nombreACompter('-3')).toBeNull()
+    expect(nombreACompter('0')).toBe(0)
+    expect(nombreACompter('1 000')).toBe(1000)
+    expect(nombreACompter('12,5')).toBeNull()
+    expect(nombreACompter('')).toBeNull()
   })
 
   it('garde un long nombre collé comme un nombre (le plafond le refusera), jamais réécrit', () => {

@@ -20,6 +20,8 @@ export type ProprietesEcranActivation = {
   /** La préparation du QR code a échoué : le cadre le dit et propose « Réessayer » (m044). */
   qrEnEchec?: boolean
   onReessayerQr?: () => void
+  /** La préparation est refusée (trop de tentatives, compte désactivé) : ce message, sans bouton. */
+  qrRefus?: string
   /** Réussite de l'étape précédente (« Mot de passe enregistré. »), en tête de l'écran. */
   annonce?: ReactNode
   /** Code à 6 chiffres saisi (étape 2 : mfa.challengeAndVerify). */
@@ -43,6 +45,7 @@ export function EcranActivation({
   cle,
   qrEnEchec = false,
   onReessayerQr,
+  qrRefus,
   onVerifyCode,
   onSignOut,
   enCours,
@@ -74,7 +77,12 @@ export function EcranActivation({
         <li className="flex flex-col gap-6">
           <EtapeTitre numero={2}>Scannez ce code avec l'application.</EtapeTitre>
           <div className="flex flex-col gap-3">
-            <QrCodeActivation qrCode={qrCode} enEchec={qrEnEchec} onReessayer={onReessayerQr} />
+            <QrCodeActivation
+              qrCode={qrCode}
+              enEchec={qrEnEchec}
+              onReessayer={onReessayerQr}
+              refus={qrRefus}
+            />
             <p className="text-sm leading-normal text-encre-2">
               Vous pouvez aussi scanner ce code avec un deuxième téléphone, en secours.
             </p>

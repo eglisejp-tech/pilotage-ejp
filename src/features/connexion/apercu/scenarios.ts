@@ -13,6 +13,8 @@ export type EtatSimule = {
   chargement?: boolean
   /** Pour l'écran 17 : la préparation du QR code a échoué (m044). */
   qrEnEchec?: boolean
+  /** Pour l'écran 17 : la préparation du QR code est refusée, sans « Réessayer » (m044). */
+  qrRefus?: string
   /** Pour l'écran 18 : code demandé après « Mot de passe oublié » (m051). */
   apresRecuperation?: boolean
   /** Pour les conditions : une version précédente avait été acceptée (m056). */
@@ -99,6 +101,11 @@ export const ecransSimules: Record<
       normal: etatNormal,
       chargement: { libelle: 'QR code en préparation', chargement: true },
       'qr-echec': { libelle: 'QR code en échec', chargement: true, qrEnEchec: true },
+      'qr-refus': {
+        libelle: 'QR code refusé (trop de tentatives)',
+        chargement: true,
+        qrRefus: messagesConnexion.tropDeTentatives,
+      },
       'apres-mot-de-passe': {
         libelle: 'Après le mot de passe',
         annonce: 'Mot de passe enregistré.',

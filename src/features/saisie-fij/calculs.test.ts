@@ -78,6 +78,17 @@ describe('valeur d’un champ FIJ', () => {
       { rubrique: 'culte_ejp', departement: '75', valeur: 12 },
     ])
   })
+
+  it('un nombre négatif ne compte jamais dans le total en direct (m100)', () => {
+    expect(ligneTotalCarte({ ...champsDepartementsVides(), '75': '-5' })).toBe(
+      'Total : aucun département saisi.',
+    )
+    expect(ligneTotalCarte({ ...champsDepartementsVides(), '75': '12', '77': '-3' })).toBe(
+      'Total : 12 FIJ, 1 dép. sur 8',
+    )
+    // L'envoi reste refusé, avec la borne.
+    expect(erreurValeurFij('-3', false)).toBe('Entre 0 et 9 999.')
+  })
 })
 
 describe('chiffres par département', () => {

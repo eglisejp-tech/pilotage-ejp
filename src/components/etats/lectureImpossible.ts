@@ -17,10 +17,12 @@ export const LECTURE_IMPOSSIBLE_RECOURS =
   'La connexion a échoué. Réessayez, et si le problème revient, prévenez EJP Tech.'
 
 /**
- * Une lecture abandonne après 10 s (DELAI_MAX_REQUETE) : un échec affiché moins de 15 s après un
- * « Réessayer » est celui du nouvel essai.
+ * Durée la plus longue d'un nouvel essai : une lecture abandonne après 10 s (DELAI_MAX_REQUETE),
+ * et un échec qui n'est pas un délai dépassé est relancé une fois, 1 s plus tard (`relancer`,
+ * src/lib/requetes.ts) : 10 s, plus 1 s, plus 10 s. Avec une marge, un échec affiché moins de
+ * 25 s après un « Réessayer » est celui du nouvel essai.
  */
-const FENETRE_REESSAI_MS = 15_000
+const FENETRE_REESSAI_MS = 25_000
 
 let dernierReessai: { instant: number; adresse: string } | null = null
 
@@ -45,10 +47,12 @@ function reessaiRecent(): boolean {
 /**
  * Vrai quand l'échec affiché suit un « Réessayer » : l'écran d'erreur apparaît juste après un
  * nouvel essai sur la même page (l'écran est passé par « Chargement »), ou il est resté affiché
- * pendant un nouvel essai (`enCours` repasse à faux sans que la lecture ait réussi).
+ * pendant un nouvel essai (`enCours` repasse à faux sans que la lecture ait réussi). `probleme` :
+ * faux pour un état vide ordinaire (« Aucun point »), qui ne lit ni ne consomme le « Réessayer »
+ * noté : il revient au seul écran de lecture impossible qui suit.
  */
-export function useEchecRepete(enCours = false): boolean {
-  const [repete, setRepete] = useState(reessaiRecent)
+export function useEchecRepete(enCours = false, probleme = true): boolean {
+  const [repete, setRepete] = useState(() => probleme && reessaiRecent())
   const [enCoursPrecedent, setEnCoursPrecedent] = useState(enCours)
   if (enCoursPrecedent !== enCours) {
     setEnCoursPrecedent(enCours)
@@ -58,7 +62,7 @@ export function useEchecRepete(enCours = false): boolean {
   useEffect(() => {
     if (repete) oublierReessai()
   }, [repete])
-  return repete
+  return probleme && repete
 }
 
 /**

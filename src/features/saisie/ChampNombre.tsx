@@ -43,8 +43,8 @@ interface Props {
  * Champ numérique des saisies (maquette 08) : un vrai champ entre « moins » et « plus », de
  * grandes cibles de 64 px. Le texte est gardé tel quel (champ vide possible), jamais réécrit : un
  * texte qui n'est pas un nombre entier (« 12,5 », « 12a ») reste visible, et la consigne
- * `MESSAGE_NOMBRE_ENTIER` s'affiche sous le champ dès la frappe, annoncée aux lecteurs d'écran
- * (m100). « Ajouter un » au plafond, « Retirer un » à 0 et les deux sur un texte à corriger sont
+ * `MESSAGE_NOMBRE_ENTIER` s'affiche sous le champ dès la frappe, annoncée une fois aux lecteurs
+ * d'écran (m100). « Ajouter un » au plafond, « Retirer un » à 0 et les deux sur un texte à corriger sont
  * inactifs (`aria-disabled` : le focus reste sur le bouton, qui se dit indisponible). Le libellé
  * reste un `<label>` ; l'aide, si elle existe, est son voisin. Les
  * boutons « moins » et « plus » portent le libellé du champ dans leur nom accessible (« Ajouter
@@ -93,11 +93,22 @@ export function ChampNombre({
   const peutRetirer = peutAjuster(valeur, -1, max)
   const peutAjouter = peutAjuster(valeur, 1, max)
   // Le nombre domine la page (maquette 08 : 112 px, graisse 900). Au-delà de 3 chiffres il se
-  // réduit, pour que 4 chiffres tiennent entre les deux boutons à 390 px.
-  const tailleGrand = valeur.length > 3 ? 'text-[84px]' : 'text-[112px]'
+  // réduit, pour que 4 chiffres tiennent entre les deux boutons à 390 px, puis « 1 000 ». Un texte
+  // à corriger (« 12,5 », « 1250,5 ») se réduit davantage : il tient entre les boutons à 360 px.
+  const longueur = valeur.trim().length
+  const tailleGrand = aReprendre
+    ? longueur > 4
+      ? 'text-[40px]'
+      : 'text-[56px]'
+    : longueur > 4
+      ? 'text-[64px]'
+      : longueur > 3
+        ? 'text-[84px]'
+        : 'text-[112px]'
 
   const champ = (
-    <div className="relative min-w-0">
+    // Entre les boutons, une marge : la bordure d'erreur ne les touche jamais.
+    <div className={cn('relative min-w-0', grand && 'px-1.5')}>
       <input
         id={id}
         type="text"
@@ -122,10 +133,6 @@ export function ChampNombre({
           {suffixe}
         </span>
       ) : null}
-      {/* La consigne apparaît pendant la frappe : cette région, hors du flux, l'annonce. */}
-      <span aria-live="polite" className="sr-only">
-        {aReprendre ? MESSAGE_NOMBRE_ENTIER : ''}
-      </span>
     </div>
   )
 
@@ -193,8 +200,19 @@ export function ChampNombre({
             {dejaSaisi}
           </p>
         ) : null}
-        {message ? (
-          <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        {/* La consigne de format apparaît pendant la frappe : son paragraphe, sous le champ et
+            relié à lui, est dans une région annoncée, toujours présente (vide, elle ne prend
+            aucune place). Une erreur reçue à l'envoi n'y est pas : le focus va au champ, qui la
+            lit avec lui. */}
+        <div aria-live="polite" className="-mt-1.5">
+          {aReprendre ? (
+            <p id={idErreur} className={cn('mt-1.5', classeMessage)}>
+              {MESSAGE_NOMBRE_ENTIER}
+            </p>
+          ) : null}
+        </div>
+        {!aReprendre && message ? (
+          <p id={idErreur} className={classeMessage}>
             {message}
           </p>
         ) : null}
@@ -202,3 +220,5 @@ export function ChampNombre({
     </div>
   )
 }
+
+const classeMessage = 'text-[15px] leading-normal text-alerte'

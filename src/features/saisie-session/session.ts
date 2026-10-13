@@ -2,7 +2,7 @@
 // ligne calculée, phrase de complétude, lignes de « Choisir la session » et adresses. Fonctions
 // pures : les nombres viennent des vues (`v_session_completude`, `v_participation_courante`).
 
-import { lireChamp, normaliserChamp } from '@/features/saisie/chiffres'
+import { lireChamp, nombreACompter, normaliserChamp } from '@/features/saisie/chiffres'
 import type { ChampsSession } from '@/features/saisie-session/schemas'
 import type { TypeSession } from '@/lib/base'
 import {
@@ -58,16 +58,17 @@ export function adresseSaisirUneSession(sessionsASaisir: readonly string[]): str
 /**
  * « Comptés dans le total de l'église : 11. » : présents moins déjà comptés par leur ministère
  * principal (BRIEF, règle 5). Null tant que les présents manquent ou que la saisie est impossible
- * (déjà comptés au-delà des présents, ou un texte qui n'est pas un nombre entier) : la ligne ne
- * montre jamais un nombre faux.
+ * (déjà comptés au-delà des présents, un nombre négatif, ou un texte qui n'est pas un nombre
+ * entier) : la ligne ne montre jamais un nombre faux.
  */
 export function comptesDansTotal(champs: ChampsSession): number | null {
-  const presents = lireChamp(champs.presents)
-  const dejaComptes = lireChamp(champs.dejaComptes)
-  if (presents.etat !== 'nombre' || dejaComptes.etat === 'format') return null
-  const deja = dejaComptes.etat === 'nombre' ? dejaComptes.valeur : 0
-  if (deja > presents.valeur) return null
-  return presents.valeur - deja
+  const presents = nombreACompter(champs.presents)
+  if (presents === null) return null
+  // Vide : aucun déjà compté. Un texte à corriger ou un négatif : pas de total.
+  const deja =
+    lireChamp(champs.dejaComptes).etat === 'vide' ? 0 : nombreACompter(champs.dejaComptes)
+  if (deja === null || deja > presents) return null
+  return presents - deja
 }
 
 /**

@@ -120,56 +120,57 @@ function Ecran({ titre, profil, ministere, creation, controleur }: PropsEcran) {
     if (!pleinePage && (etaitPleinePage || envoi > 0) && focusPerdu()) titreRef.current?.focus()
   }, [pleinePage, envoi])
 
-  if (pleinePage && controleur !== null) {
-    return (
-      <>
-        <PanneauOuvertIndicateurs controleur={controleur} />
+  // Le panneau est toujours rendu à la même place de l'arbre, quelle que soit la largeur : passer
+  // le palier de 600 px (téléphone tourné, fenêtre redimensionnée) garde le formulaire et la
+  // saisie. En page entière, seule la page autour disparaît.
+  return (
+    <section aria-labelledby={pleinePage ? undefined : idTitre} className="flex flex-col">
+      {pleinePage ? null : (
+        <>
+          <Link
+            to="/indicateurs"
+            className="inline-flex min-h-cible items-center self-start text-[15px] underline underline-offset-4"
+          >
+            {textes.ministere.retour}
+          </Link>
+          <h1 id={idTitre} ref={titreRef} tabIndex={-1} className={classeTitre}>
+            {titreAffiche}
+          </h1>
+          <div className="mt-2 border-t-2 border-encre" />
+          {ministere.etat === 'erreur' ? (
+            <div className="mt-6">
+              <ErreurDePage
+                message={textes.erreur}
+                libelleBouton={textes.reessayer}
+                onReessayer={ministere.reessayer}
+              />
+            </div>
+          ) : null}
+          {ministere.etat === 'chargement' ? <ChargementBloc /> : null}
+          {ministere.etat === 'introuvable' ? (
+            <EtatVide
+              situation="aucun_resultat"
+              action={{ libelle: textes.revenir, vers: '/indicateurs' }}
+            >
+              {textes.introuvable}
+            </EtatVide>
+          ) : null}
+          {ministere.etat === 'pret' ? (
+            <Donnees
+              donnees={ministere.donnees}
+              profil={profil}
+              creation={creation}
+              controleur={controleur}
+            />
+          ) : null}
+        </>
+      )}
+      {controleur !== null ? <PanneauOuvertIndicateurs controleur={controleur} /> : null}
+      {pleinePage && controleur !== null ? (
         <div className="[&_p]:mt-4">
           <MessageReussite message={controleur.reussite} envoi={controleur.envoi} />
         </div>
-      </>
-    )
-  }
-
-  return (
-    <section aria-labelledby={idTitre} className="flex flex-col">
-      <Link
-        to="/indicateurs"
-        className="inline-flex min-h-cible items-center self-start text-[15px] underline underline-offset-4"
-      >
-        {textes.ministere.retour}
-      </Link>
-      <h1 id={idTitre} ref={titreRef} tabIndex={-1} className={classeTitre}>
-        {titreAffiche}
-      </h1>
-      <div className="mt-2 border-t-2 border-encre" />
-      {ministere.etat === 'erreur' ? (
-        <div className="mt-6">
-          <ErreurDePage
-            message={textes.erreur}
-            libelleBouton={textes.reessayer}
-            onReessayer={ministere.reessayer}
-          />
-        </div>
       ) : null}
-      {ministere.etat === 'chargement' ? <ChargementBloc /> : null}
-      {ministere.etat === 'introuvable' ? (
-        <EtatVide
-          situation="aucun_resultat"
-          action={{ libelle: textes.revenir, vers: '/indicateurs' }}
-        >
-          {textes.introuvable}
-        </EtatVide>
-      ) : null}
-      {ministere.etat === 'pret' ? (
-        <Donnees
-          donnees={ministere.donnees}
-          profil={profil}
-          creation={creation}
-          controleur={controleur}
-        />
-      ) : null}
-      {controleur !== null ? <PanneauOuvertIndicateurs controleur={controleur} /> : null}
     </section>
   )
 }

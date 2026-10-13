@@ -8,19 +8,25 @@ export const MESSAGE_QR_EN_ECHEC = "Le QR code n'a pas pu s'afficher. Réessayez
 type Proprietes = {
   /** Image du QR code (adresse data:), absente tant que l'enrôlement n'a pas répondu. */
   qrCode?: string
-  /** L'enrôlement a échoué : le message et « Réessayer » remplacent « Chargement ». */
+  /** L'enrôlement a échoué (connexion) : le message et « Réessayer » remplacent « Chargement ». */
   enEchec?: boolean
   onReessayer?: () => void
+  /**
+   * L'enrôlement est refusé pour une raison qu'un nouvel essai ne change pas tout de suite (trop
+   * de tentatives, compte désactivé, connexion expirée) : ce message, sans « Réessayer ».
+   */
+  refus?: string
 }
 
 /**
  * Encadré du QR code (maquette 17). Pendant sa préparation, « Chargement » apparaît après
  * 300 ms, sans animation, avec aria-busy (docs/reference/maquettes/LISEZMOI.md, « États »). Un
- * échec se dit dans le cadre même (role="alert"), avec « Réessayer » : l'écran n'oblige plus à
- * saisir un code pour relancer la préparation. Au clic, le focus reste sur le cadre, que le bouton
- * quitte pendant le nouvel essai.
+ * échec de connexion se dit dans le cadre même (role="alert"), avec « Réessayer » : l'écran
+ * n'oblige plus à saisir un code pour relancer la préparation. Au clic, le focus reste sur le
+ * cadre, que le bouton quitte pendant le nouvel essai. Un refus précis se dit au même endroit,
+ * sans bouton : réessayer tout de suite ne servirait à rien, ou aggraverait une limite.
  */
-export function QrCodeActivation({ qrCode, enEchec = false, onReessayer }: Proprietes) {
+export function QrCodeActivation({ qrCode, enEchec = false, onReessayer, refus }: Proprietes) {
   const [chargementVisible, setChargementVisible] = useState(false)
   const cadre = useRef<HTMLDivElement>(null)
 
@@ -34,7 +40,7 @@ export function QrCodeActivation({ qrCode, enEchec = false, onReessayer }: Propr
     <div
       ref={cadre}
       tabIndex={-1}
-      aria-busy={qrCode || enEchec ? undefined : true}
+      aria-busy={qrCode || enEchec || refus ? undefined : true}
       className="flex justify-center border border-filet bg-papier p-4 outline-hidden"
     >
       {qrCode ? (
@@ -45,6 +51,12 @@ export function QrCodeActivation({ qrCode, enEchec = false, onReessayer }: Propr
           height={200}
           className="box-content block size-50 bg-papier p-3"
         />
+      ) : refus ? (
+        <div className="flex min-h-56 w-full flex-col items-center justify-center text-center">
+          <p role="alert" className="text-[15px] leading-normal text-alerte">
+            {refus}
+          </p>
+        </div>
       ) : enEchec ? (
         <div className="flex min-h-56 w-full flex-col items-center justify-center gap-4 text-center">
           <p role="alert" className="text-[15px] leading-normal text-alerte">

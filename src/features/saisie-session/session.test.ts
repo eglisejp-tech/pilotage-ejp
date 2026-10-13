@@ -51,6 +51,18 @@ describe('présents moins déjà comptés (BRIEF, règle 5)', () => {
       "Comptés dans le total de l'église : à corriger.",
     )
   })
+
+  it('un nombre négatif ne donne jamais un total : « à corriger » (m100)', () => {
+    // 5 présents et « -4 » déjà comptés donneraient 9, plus que les présents.
+    expect(comptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBeNull()
+    expect(comptesDansTotal({ presents: '-3', dejaComptes: '' })).toBeNull()
+    expect(ligneComptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
+    expect(ligneComptesDansTotal({ presents: '-3', dejaComptes: '' })).toBe(
+      "Comptés dans le total de l'église : à corriger.",
+    )
+  })
 })
 
 describe('schemaParticipation, partagé entre le formulaire et l’appel', () => {

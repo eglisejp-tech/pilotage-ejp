@@ -35,7 +35,8 @@ const OPTIONS_MOTIF = MOTIFS_RETRAIT.map((motif) => ({
  * Fenêtres « Retirer » et « Retirer pour confidentialité » (7.2). Elles disent, avant de
  * confirmer, en une phrase, la conséquence puis « C'est définitif. » (m232) : les saisies restent
  * sur la fiche, ou le nom et la définition seront masqués ; un calcul qui en dépend est retiré
- * avec l'indicateur (lu avant l'ouverture du bouton). « Ce qui change » et « Ce qui ne change pas »
+ * avec l'indicateur (lu avant l'ouverture du bouton). Un indicateur saisi dit aussi comment
+ * reprendre ce chiffre plus tard (décidé, T35). « Ce qui change » et « Ce qui ne change pas »
  * suivent. Fenêtre modale : le focus y reste, Échap annule, le refus de la base s'affiche sous les
  * boutons et la fenêtre reste ouverte.
  */
@@ -126,6 +127,10 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
           {phraseCalculs !== null ? (
             <p className="font-semibold text-encre">{phraseCalculs}</p>
           ) : null}
+          {/* Décidé (T35) : la fenêtre dit comment reprendre ce chiffre plus tard. */}
+          {!confidentialite && ligne.calcul === null && !ligne.jamaisSaisi ? (
+            <p>{TEXTES_PANNEAUX.retrait.reprendre}</p>
+          ) : null}
         </div>
         {!pret ? (
           <EtatLectureTermes
@@ -168,7 +173,9 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
             }
           />
           {refus !== null ? <ErreurEnvoi message={refus} /> : null}
-          <div className="flex flex-col-reverse gap-2 min-[480px]:flex-row min-[480px]:justify-end">
+          {/* Les boutons restent au bas de la fenêtre quand elle défile (téléphone de 360 x 640,
+              sept motifs) : la personne n'a pas à chercher « Retirer » ni « Annuler ». */}
+          <div className="sticky bottom-0 -mx-6 -mt-3 -mb-6 flex flex-col-reverse gap-2 bg-papier px-6 pt-3 pb-6 min-[480px]:flex-row min-[480px]:justify-end">
             <button
               type="button"
               onClick={() => {

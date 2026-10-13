@@ -8,8 +8,18 @@ import type { FermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { FenetreFermerSansEnregistrer } from '@/features/saisie/FenetreFermerSansEnregistrer'
 import { GardeNavigationSaisie } from '@/features/saisie/GardeNavigationSaisie'
 import type { NavigationRetenue } from '@/features/saisie/GardeNavigationSaisie'
-import { aChange, GESTES_AVANT_CHANGEMENT, noterReferences } from '@/features/saisie/modifications'
-import type { References } from '@/features/saisie/modifications'
+import {
+  aChange,
+  CHANGEMENTS,
+  GESTES_AVANT_CHANGEMENT,
+  noterChangement,
+  noterChangementsDepuis,
+  noterClic,
+  noterReferences,
+  nouveauSuivi,
+  releverValeurs,
+} from '@/features/saisie/modifications'
+import type { SuiviSaisie } from '@/features/saisie/modifications'
 import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 
@@ -50,7 +60,7 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
   useTitrePage(titre, { annoncer: !enPanneau })
   const routeurDeDonnees = useContext(UNSAFE_DataRouterContext) !== null
   const cadre = useRef<HTMLElement>(null)
-  const references = useRef<References>(new WeakMap())
+  const suivi = useRef<SuiviSaisie>(nouveauSuivi())
   // La personne a choisi de fermer : la navigation qui suit ne se retient plus.
   const fermeturePermise = useRef(false)
   const [question, setQuestion] = useState<Question | null>(null)
@@ -67,21 +77,56 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
   // Le cadre est le même élément aux deux largeurs : l'écoute des gestes s'installe une fois.
   const zone = useCallback(() => cadre.current, [])
 
-  // Chaque champ est noté juste avant le premier geste qui pourrait le changer.
+  // Les changements faits par la personne (modifications.ts) : chaque champ est noté dès son
+  // entrée dans le cadre et avant chaque geste ; un `input`, un `change` ou une valeur changée
+  // pendant un geste le marque comme changé. `generation` écarte les relevés d'avant un
+  // enregistrement ou un nouveau départ du formulaire.
+  const generation = useRef(0)
   useEffect(() => {
     const racine = zone()
     if (!racine) return
-    const noter = () => noterReferences(racine, references.current)
-    for (const geste of GESTES_AVANT_CHANGEMENT) racine.addEventListener(geste, noter, true)
+    let monte = true
+    noterReferences(racine, suivi.current)
+    const observateur = new MutationObserver(() => noterReferences(racine, suivi.current))
+    observateur.observe(racine, { childList: true, subtree: true })
+    const releverPuisComparer = () => {
+      const releve = releverValeurs(racine)
+      const numero = generation.current
+      // Le formulaire réagit au geste dans la même tâche : la tâche suivante voit le résultat.
+      window.setTimeout(() => {
+        if (monte && numero === generation.current) {
+          noterChangementsDepuis(racine, releve, suivi.current)
+        }
+      }, 0)
+    }
+    const avantGeste = () => {
+      noterReferences(racine, suivi.current)
+      releverPuisComparer()
+    }
+    const surClic = (evenement: Event) => {
+      noterClic(racine, evenement.target, suivi.current)
+      releverPuisComparer()
+    }
+    const surChangement = (evenement: Event) =>
+      noterChangement(racine, evenement.target, suivi.current)
+    for (const geste of GESTES_AVANT_CHANGEMENT) racine.addEventListener(geste, avantGeste, true)
+    racine.addEventListener('click', surClic, true)
+    for (const nom of CHANGEMENTS) racine.addEventListener(nom, surChangement, true)
     return () => {
-      for (const geste of GESTES_AVANT_CHANGEMENT) racine.removeEventListener(geste, noter, true)
+      monte = false
+      observateur.disconnect()
+      for (const geste of GESTES_AVANT_CHANGEMENT) {
+        racine.removeEventListener(geste, avantGeste, true)
+      }
+      racine.removeEventListener('click', surClic, true)
+      for (const nom of CHANGEMENTS) racine.removeEventListener(nom, surChangement, true)
     }
   }, [zone])
 
   const saisieModifiee = useCallback(() => {
     if (fermeturePermise.current) return false
     const racine = zone()
-    return racine !== null && aChange(racine, references.current)
+    return racine !== null && aChange(racine, suivi.current)
   }, [zone])
 
   const poser = useCallback((attente: Question) => {
@@ -102,12 +147,16 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
     ({ continuer, quitter }: NavigationRetenue) => poser({ fermer: quitter, continuer }),
     [poser],
   )
-  const enregistree = useCallback(() => {
-    references.current = new WeakMap()
-  }, [])
+  // Après un enregistrement, ou quand le formulaire se remplit de nouveau : rien n'est à perdre.
+  const repartir = useCallback(() => {
+    generation.current += 1
+    suivi.current = nouveauSuivi()
+    const racine = zone()
+    if (racine) noterReferences(racine, suivi.current)
+  }, [zone])
   const fermeture = useMemo<FermetureSaisie>(
-    () => ({ demander, enregistree }),
-    [demander, enregistree],
+    () => ({ demander, enregistree: repartir, repartir }),
+    [demander, repartir],
   )
   const demanderFermeture = () => demander(onFermer)
   usePiegeFocus(cadre, enPanneau, demanderFermeture)

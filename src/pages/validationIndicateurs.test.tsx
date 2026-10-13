@@ -217,6 +217,16 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(valider).toHaveAttribute('aria-busy', 'true')
     await userEvent.click(valider)
     expect(faux.rpc).toHaveBeenCalledTimes(1)
+    // Pendant la validation, les autres décisions de la ligne se disent inactives et n'ouvrent rien.
+    const ligne = valider.closest('article')
+    if (ligne === null) throw new Error('ligne introuvable')
+    for (const nom of [/^Refuser «\s*Demandes reçues\s*» de Kumi$/, /^Masquer le texte$/]) {
+      const autre = within(ligne).getByRole('button', { name: nom })
+      expect(autre).toHaveAttribute('aria-disabled', 'true')
+      await userEvent.click(autre)
+    }
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
     repondre?.()
     expect(await screen.findByText('Indicateur validé.')).toBeInTheDocument()
   })

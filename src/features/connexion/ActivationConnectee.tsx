@@ -3,6 +3,7 @@ import type { Compte } from '@/data/compte'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { ANNONCE_DOUBLE_AUTHENTIFICATION } from '@/features/connexion/reussiteEnAttente'
 import { EcranActivation } from '@/features/connexion/EcranActivation'
+import { messagesConnexion } from '@/features/connexion/messages'
 import { preparerActivation, seDeconnecter, verifierCode } from '@/features/session/actions'
 import type { Activation } from '@/features/session/actions'
 
@@ -19,13 +20,18 @@ export function ActivationConnectee({ compte }: Proprietes) {
   const [enCours, setEnCours] = useState(false)
   const [erreur, setErreur] = useState<string>()
   const [qrEnEchec, setQrEnEchec] = useState(false)
+  const [qrRefus, setQrRefus] = useState<string>()
   const lancee = useRef(false)
 
   const preparer = useCallback(async () => {
     setQrEnEchec(false)
+    setQrRefus(undefined)
     const resultat = await preparerActivation()
-    if ('erreur' in resultat) setQrEnEchec(true)
-    else setActivation(resultat)
+    if (!('erreur' in resultat)) setActivation(resultat)
+    // Connexion perdue : un nouvel essai peut réussir, le cadre propose « Réessayer ». Tout autre
+    // refus (trop de tentatives, compte désactivé, connexion expirée) se dit tel que traduit.
+    else if (resultat.erreur === messagesConnexion.echecReseau) setQrEnEchec(true)
+    else setQrRefus(resultat.erreur)
   }, [])
 
   // Un seul enrôlement, même quand React rejoue les effets en développement.
@@ -59,6 +65,7 @@ export function ActivationConnectee({ compte }: Proprietes) {
       cle={activation?.cle}
       qrEnEchec={qrEnEchec}
       onReessayerQr={() => void preparer()}
+      qrRefus={qrRefus}
       onVerifyCode={(code) => void verifier(code)}
       onSignOut={() => void seDeconnecter()}
       enCours={enCours}

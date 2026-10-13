@@ -30,7 +30,8 @@ const classeAction =
  */
 export function EtatVide({ situation, children, suite, action, peutAgir = true }: Props) {
   const probleme = situation === 'probleme_passager'
-  const repete = useEchecRepete()
+  // Seul un problème passager lit (et consomme) le « Réessayer » qui vient d'être fait (m250).
+  const repete = useEchecRepete(false, probleme)
   const phrase = probleme ? texteLecture(children, repete) : children
   return (
     <div

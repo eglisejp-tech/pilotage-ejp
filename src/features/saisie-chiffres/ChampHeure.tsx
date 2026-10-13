@@ -128,15 +128,21 @@ export function ChampHeure({
           {dejaSaisi}
         </p>
       ) : null}
-      {message ? (
+      {/* La consigne de format apparaît pendant la frappe : son paragraphe, relié aux champs, est
+          dans une région annoncée, toujours présente (vide, elle ne prend aucune place). Une
+          erreur reçue à l'envoi n'y est pas : le focus va au champ, qui la lit avec lui. */}
+      <div aria-live="polite" className="-mt-1.5">
+        {aReprendre ? (
+          <p id={idErreur} className="mt-1.5 text-[15px] leading-normal text-alerte">
+            {MESSAGE_NOMBRE_ENTIER}
+          </p>
+        ) : null}
+      </div>
+      {!aReprendre && message ? (
         <p id={idErreur} className="text-[15px] leading-normal text-alerte">
           {message}
         </p>
       ) : null}
-      {/* La consigne apparaît pendant la frappe : cette région, hors du flux, l'annonce. */}
-      <span aria-live="polite" className="sr-only">
-        {aReprendre ? MESSAGE_NOMBRE_ENTIER : ''}
-      </span>
     </div>
   )
 }

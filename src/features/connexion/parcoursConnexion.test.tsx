@@ -1,3 +1,4 @@
+import { AuthApiError } from '@supabase/supabase-js'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -5,6 +6,7 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
+import { messagesConnexion } from '@/features/connexion/messages'
 import { effacerAnnonceSuivante } from '@/features/connexion/reussiteEnAttente'
 import {
   definirMotDePasseAChoisir,
@@ -86,6 +88,29 @@ describe('chaîne de connexion', () => {
     expect(faux.auth.mfa.enroll).toHaveBeenCalledTimes(2)
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
+
+  it.each([
+    ['trop de tentatives', 429, 'over_request_rate_limit', messagesConnexion.tropDeTentatives],
+    ['compte désactivé', 403, 'user_banned', messagesConnexion.compteDesactive],
+    ['connexion expirée', 403, 'session_not_found', messagesConnexion.connexionExpiree],
+  ])(
+    'QR code refusé (%s) : le message précis dans le cadre, sans « Réessayer » (m044)',
+    async (_cas, statut, code, message) => {
+      const faux = installer(ministere([]))
+      faux.auth.mfa.enroll.mockResolvedValueOnce({
+        data: null,
+        error: new AuthApiError('refus', statut, code),
+      } as never)
+      afficher('/double-authentification')
+
+      const alerte = await screen.findByRole('alert')
+      expect(alerte).toHaveTextContent(message)
+      expect(screen.queryByText("Le QR code n'a pas pu s'afficher. Réessayez.")).toBeNull()
+      expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull()
+      expect(screen.getAllByRole('alert')).toHaveLength(1)
+      expect(faux.auth.mfa.enroll).toHaveBeenCalledTimes(1)
+    },
+  )
 
   it('premier code accepté : « Double authentification activée. » sur l’écran suivant (m045)', async () => {
     const faux = installer(ministere([], false))

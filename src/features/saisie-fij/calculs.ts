@@ -4,7 +4,7 @@
 // n'est pas un nombre entier (« 12,5 ») ne compte pas non plus : son champ le dit, et le
 // formulaire ne part pas tant qu'il reste (m100).
 
-import { lireChamp, valeurDuChamp } from '@/features/saisie/chiffres'
+import { lireChamp, nombreACompter, valeurDuChamp } from '@/features/saisie/chiffres'
 import {
   DEPARTEMENTS_FIJ,
   NOMBRE_DEPARTEMENTS,
@@ -33,13 +33,16 @@ export function champsStatistiquesVides(): ChampsStatistiques {
   ) as ChampsStatistiques
 }
 
-/** Somme des champs remplis et nombre de départements qui ont une valeur. */
+/**
+ * Somme des champs remplis et nombre de départements qui ont une valeur. Un texte à corriger ou un
+ * nombre négatif (que l'envoi refuse) ne compte pas : le total en direct n'est jamais faux (m100).
+ */
 export function totalDepartements(champs: ChampsDepartements): { total: number; nombre: number } {
   return DEPARTEMENTS_FIJ.reduce(
     (cumul, { code }) => {
-      const lecture = lireChamp(champs[code])
-      if (lecture.etat !== 'nombre') return cumul
-      return { total: cumul.total + lecture.valeur, nombre: cumul.nombre + 1 }
+      const valeur = nombreACompter(champs[code])
+      if (valeur === null) return cumul
+      return { total: cumul.total + valeur, nombre: cumul.nombre + 1 }
     },
     { total: 0, nombre: 0 },
   )

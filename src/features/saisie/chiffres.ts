@@ -49,6 +49,16 @@ export function valeurDuChamp(texte: string): number | null {
 }
 
 /**
+ * Nombre qu'un calcul en direct peut compter (total d'une carte, « Comptés dans le total ») : un
+ * entier de 0 ou plus. Un champ vide, un texte à corriger ou un nombre négatif (que l'envoi
+ * refuse) donne null : une ligne calculée ne montre jamais un nombre faux (m100).
+ */
+export function nombreACompter(texte: string): number | null {
+  const valeur = valeurDuChamp(texte)
+  return valeur !== null && valeur >= 0 ? valeur : null
+}
+
+/**
  * Forme comparable d'un champ (« 05 », « 5 » et « 5 » avec une espace sont la même saisie) : sert
  * à reconnaître un second envoi identique. Un texte à corriger reste tel quel.
  */

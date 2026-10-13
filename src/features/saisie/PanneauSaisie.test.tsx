@@ -1,11 +1,12 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import type { ReactNode } from 'react'
 import { createMemoryRouter, Link, useNavigate } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
-import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
+import { useFermetureSaisie, useRepartirSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { simulerLargeur } from '@/test/largeur'
@@ -129,6 +130,8 @@ describe('PanneauSaisie quand la largeur passe le palier de 600 px', () => {
       expect(screen.queryByRole('dialog') !== null).toBe(apres >= 600)
       expect(screen.getByLabelText('STARs au service')).toBe(champ)
       expect(champ).toHaveValue('12')
+      // Le focus reste sur le champ : le clavier du téléphone ne se ferme pas.
+      expect(champ).toHaveFocus()
       await utilisateur.click(screen.getByRole('button', { name: 'Retour' }))
       expect(onFermer).not.toHaveBeenCalled()
       expect(screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })).toBeVisible()
@@ -285,6 +288,197 @@ describe('PanneauSaisie : fermer une saisie modifiée (m265)', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Retour' }))
     expect(question()).toBeNull()
     expect(onFermer).toHaveBeenCalledTimes(1)
+  })
+})
+
+/** Un choix qui arrive après l'ouverture, comme une lecture lente (les termes d'un calcul). */
+function ChoixTardif({ onAnnuler }: { onAnnuler: () => void }) {
+  const annuler = useFermetureSaisie(onAnnuler)
+  const [pret, setPret] = useState(false)
+  useEffect(() => {
+    const minuterie = window.setTimeout(() => setPret(true), 10)
+    return () => window.clearTimeout(minuterie)
+  }, [])
+  return (
+    <>
+      {pret ? (
+        <>
+          <label htmlFor="haut">Chiffre du haut</label>
+          <select id="haut" defaultValue="">
+            <option value="">Choisir</option>
+            <option value="publications">Publications</option>
+          </select>
+        </>
+      ) : null}
+      <button type="button" onClick={annuler}>
+        Annuler
+      </button>
+    </>
+  )
+}
+
+/** Un champ que le formulaire remplit seul, une fois sa lecture arrivée. */
+function RemplissageTardif({ onAnnuler }: { onAnnuler: () => void }) {
+  const annuler = useFermetureSaisie(onAnnuler)
+  const [valeur, setValeur] = useState('')
+  const [lire, setLire] = useState(false)
+  useEffect(() => {
+    if (!lire) return
+    const minuterie = window.setTimeout(() => setValeur('Bilan de septembre'), 20)
+    return () => window.clearTimeout(minuterie)
+  }, [lire])
+  return (
+    <>
+      <label htmlFor="objet">Objet</label>
+      <input id="objet" value={valeur} onChange={(e) => setValeur(e.target.value)} />
+      <button type="button" onClick={() => setLire(true)}>
+        Lire la dernière réunion
+      </button>
+      <button type="button" onClick={annuler}>
+        Annuler
+      </button>
+    </>
+  )
+}
+
+/** Un nombre changé par ses boutons, sans événement `input` sur le champ. */
+function Compteur({ onAnnuler }: { onAnnuler: () => void }) {
+  const annuler = useFermetureSaisie(onAnnuler)
+  const [valeur, setValeur] = useState('3')
+  return (
+    <>
+      <label htmlFor="presents">Présents</label>
+      <input id="presents" value={valeur} onChange={(e) => setValeur(e.target.value)} />
+      <button type="button" onClick={() => setValeur(String(Number(valeur) + 1))}>
+        Ajouter un
+      </button>
+      <button type="button" onClick={() => setValeur(String(Number(valeur) - 1))}>
+        Retirer un
+      </button>
+      <button type="button" onClick={annuler}>
+        Annuler
+      </button>
+    </>
+  )
+}
+
+/** Un choix qui remplit tout le formulaire, comme « Semaine » des chiffres FIJ. */
+function ChoixSemaine({ onAnnuler }: { onAnnuler: () => void }) {
+  const annuler = useFermetureSaisie(onAnnuler)
+  const repartir = useRepartirSaisie()
+  const [semaine, setSemaine] = useState('11')
+  const [valeur, setValeur] = useState('7')
+  return (
+    <>
+      <label htmlFor="semaine">Semaine</label>
+      <select
+        id="semaine"
+        value={semaine}
+        onChange={(evenement) => {
+          repartir()
+          setSemaine(evenement.target.value)
+          setValeur(evenement.target.value === '4' ? '9' : '7')
+        }}
+      >
+        <option value="11">Semaine du 11 oct.</option>
+        <option value="4">Semaine du 4 oct.</option>
+      </select>
+      <label htmlFor="baptemes">Baptêmes</label>
+      <input id="baptemes" value={valeur} onChange={(e) => setValeur(e.target.value)} />
+      <button type="button" onClick={annuler}>
+        Annuler
+      </button>
+    </>
+  )
+}
+
+describe('PanneauSaisie : ce qui compte comme une saisie changée (m265)', () => {
+  function ouvrir(Formulaire: (props: { onAnnuler: () => void }) => ReactNode, largeur = 834) {
+    simulerLargeur(largeur)
+    const utilisateur = userEvent.setup()
+    const onFermer = vi.fn()
+    render(
+      <PanneauSaisie titre="Ajouter un calcul" onFermer={onFermer}>
+        <Formulaire onAnnuler={onFermer} />
+      </PanneauSaisie>,
+    )
+    return { utilisateur, onFermer }
+  }
+  const question = () => screen.queryByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+
+  it.each([834, 390])(
+    'à %s px, un choix arrivé après l’ouverture puis changé sans geste (outil, assistant) : la question',
+    async (largeur) => {
+      const { utilisateur, onFermer } = ouvrir(ChoixTardif, largeur)
+      const choix = await screen.findByLabelText<HTMLSelectElement>('Chiffre du haut')
+      // Comme Playwright selectOption : la valeur change, puis `input` et `change`, sans geste.
+      choix.value = 'publications'
+      fireEvent.input(choix)
+      fireEvent.change(choix)
+      await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+      expect(question()).not.toBeNull()
+      expect(onFermer).not.toHaveBeenCalled()
+    },
+  )
+
+  it('un champ que le formulaire remplit seul après un geste ne compte pas', async () => {
+    const { utilisateur, onFermer } = ouvrir(RemplissageTardif)
+    await utilisateur.click(screen.getByLabelText('Objet'))
+    await utilisateur.click(screen.getByRole('button', { name: 'Lire la dernière réunion' }))
+    await waitFor(() => expect(screen.getByLabelText('Objet')).toHaveValue('Bilan de septembre'))
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(question()).toBeNull()
+    expect(onFermer).toHaveBeenCalledTimes(1)
+  })
+
+  it('« Ajouter un » change le nombre sans `input` : la question ; revenu au départ : rien', async () => {
+    const { utilisateur, onFermer } = ouvrir(Compteur)
+    await utilisateur.click(screen.getByRole('button', { name: 'Ajouter un' }))
+    expect(screen.getByLabelText('Présents')).toHaveValue('4')
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(question()).not.toBeNull()
+    await utilisateur.click(screen.getByRole('button', { name: 'Continuer la saisie' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Retirer un' }))
+    expect(screen.getByLabelText('Présents')).toHaveValue('3')
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(question()).toBeNull()
+    expect(onFermer).toHaveBeenCalledTimes(1)
+  })
+
+  it('un bouton radio changé puis remis sur le premier choix ne compte pas', async () => {
+    simulerLargeur(834)
+    const utilisateur = userEvent.setup()
+    const onFermer = vi.fn()
+    render(
+      <PanneauSaisie titre="Ajouter un indicateur" onFermer={onFermer}>
+        <label>
+          <input type="radio" name="rythme" defaultChecked /> Chaque mois
+        </label>
+        <label>
+          <input type="radio" name="rythme" /> À ce jour
+        </label>
+      </PanneauSaisie>,
+    )
+    await utilisateur.click(screen.getByRole('radio', { name: 'À ce jour' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Retour' }))
+    expect(question()).not.toBeNull()
+    await utilisateur.click(screen.getByRole('button', { name: 'Continuer la saisie' }))
+    await utilisateur.click(screen.getByRole('radio', { name: 'Chaque mois' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Retour' }))
+    expect(question()).toBeNull()
+    expect(onFermer).toHaveBeenCalledTimes(1)
+  })
+
+  it('une autre semaine remplit les champs : rien n’est saisi ; un chiffre tapé ensuite compte', async () => {
+    const { utilisateur, onFermer } = ouvrir(ChoixSemaine)
+    await utilisateur.selectOptions(screen.getByLabelText('Semaine'), '4')
+    expect(screen.getByLabelText('Baptêmes')).toHaveValue('9')
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(question()).toBeNull()
+    expect(onFermer).toHaveBeenCalledTimes(1)
+    await utilisateur.type(screen.getByLabelText('Baptêmes'), '0')
+    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    expect(question()).not.toBeNull()
   })
 })
 

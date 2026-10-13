@@ -168,7 +168,8 @@ export function FormulaireReunion({
         message={dejaEnvoye && inchange > 0 ? TEXTES_REUNION.dejaEnregistree : null}
         essai={inchange}
       />
-      <ResultatEnvoi refus={refus} reussite={reussite} envoi={envoi} />
+      {/* « Déjà enregistrée » remplace la réussite : un seul message sous le bouton. */}
+      <ResultatEnvoi refus={refus} reussite={inchange > 0 ? null : reussite} envoi={envoi} />
       <LienSignalement ecran="saisie_reunion" />
     </form>
   )

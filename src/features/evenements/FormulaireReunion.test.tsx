@@ -114,6 +114,8 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
       'Cette réunion est déjà enregistrée. Changez une information pour la corriger.',
     )
     expect(phrase.closest('[role="status"]')).not.toBeNull()
+    // Elle remplace la réussite : un seul message sous le bouton.
+    expect(screen.queryByText('Réunion enregistrée.')).toBeNull()
     await userEvent.type(screen.getByLabelText('Objet (facultatif)'), 'Bilan')
     expect(bouton()).not.toHaveAttribute('aria-disabled')
     expect(screen.queryByText(/déjà enregistrée/)).toBeNull()

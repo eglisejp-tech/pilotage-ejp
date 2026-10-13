@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { Mock } from 'vitest'
 import {
   ID_COMMUNICATION,
@@ -18,6 +18,7 @@ import type { EcrituresIndicateurs } from '@/features/indicateurs/configuration/
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import { VueIndicateursMinistere } from '@/features/indicateurs/configuration/VueIndicateursMinistere'
 import type { TypeCompte } from '@/lib/base'
+import { simulerLargeur } from '@/test/largeur'
 
 // Les panneaux et les fenêtres de la configuration d'un ministère (lot L3b), avec de fausses
 // écritures : ce que chacun montre avant l'envoi, ce qu'il envoie, ce que la base peut refuser.
@@ -893,13 +894,18 @@ describe('fenêtre « Retirer »', () => {
     const utilisateur = afficher(ID_COMMUNICATION, ecritures)
     await utilisateur.click(bouton('Retirer « Publications »'))
     const fenetre = await screen.findByRole('alertdialog', { name: 'Retirer « Publications » ?' })
-    // m232 : la conséquence, puis « C'est définitif. », sans autre phrase.
+    // m232 : la conséquence, puis « C'est définitif. ». La phrase décidée (T35) dit ensuite
+    // comment reprendre ce chiffre.
     expect(
       within(fenetre).getByText(
         "Il ne sera plus proposé à la saisie. Ses saisies restent sur la fiche. C'est définitif.",
       ),
     ).toBeVisible()
-    expect(within(fenetre).queryByText(/Pour reprendre ce chiffre/)).toBeNull()
+    expect(
+      within(fenetre).getByText(
+        'Pour reprendre ce chiffre plus tard, ajoutez un nouvel indicateur : sa courbe repart de zéro.',
+      ),
+    ).toBeVisible()
     expect(within(fenetre).getByText('Ses saisies : rien ne se supprime.')).toBeVisible()
     expect(within(fenetre).getAllByRole('radio')).toHaveLength(7)
     await utilisateur.click(within(fenetre).getByRole('button', { name: "Retirer l'indicateur" }))
@@ -1069,4 +1075,51 @@ describe('fenêtre « Retirer pour confidentialité »', () => {
     terminer?.()
     expect(await screen.findByText('Indicateur retiré pour confidentialité.')).toBeVisible()
   })
+})
+
+describe('passage du palier de 600 px pendant une saisie', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    [390, 834],
+    [834, 390],
+  ])(
+    'de %s à %s px : le panneau reste le même, la saisie et le focus sont gardés',
+    async (avant, apres) => {
+      simulerLargeur(avant)
+      const donnees = construireMinistere(ID_COMMUNICATION, lecturesExemple())
+      if (donnees === null) throw new Error('ministère d’exemple absent')
+      const ecritures = ecrituresDe()
+      const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+      const ecran = () => (
+        <QueryClientProvider client={client}>
+          <MemoryRouter>
+            <VueIndicateursMinistere
+              titre="Indicateurs d'un ministère"
+              profil="admin_eglise"
+              ministere={{ etat: 'pret', donnees }}
+              creation={creation}
+              ecritures={ecritures}
+            />
+          </MemoryRouter>
+        </QueryClientProvider>
+      )
+      const { rerender } = render(ecran())
+      const utilisateur = userEvent.setup()
+      await utilisateur.click(bouton('Ajouter un indicateur'))
+      const champ = await screen.findByLabelText('Ce que vous comptez')
+      await utilisateur.type(champ, 'Tournages')
+      // Téléphone tourné ou fenêtre redimensionnée : le panneau change de forme, pas de contenu.
+      simulerLargeur(apres)
+      rerender(ecran())
+      expect(screen.queryByRole('dialog') !== null).toBe(apres >= 600)
+      expect(screen.getByLabelText('Ce que vous comptez')).toBe(champ)
+      expect(champ).toHaveValue('Tournages')
+      expect(champ).toHaveFocus()
+      await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+      expect(screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })).toBeVisible()
+    },
+  )
 })

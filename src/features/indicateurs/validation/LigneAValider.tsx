@@ -123,6 +123,7 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
                 masquer={actions.masquer}
                 surMasque={() => surFait(TEXTES_MODERATION.reussiteMasque)}
                 decritPar={idTitre}
+                inactif={enCours}
               />
             </div>
           ) : null}

@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import type { LigneStatistiqueFij } from '@/data/fij'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { useRepartirSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import {
   champsStatistiques,
@@ -64,7 +65,12 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
   const signature = `${dimanche}|${valeurs.map((v) => `${v.rubrique}:${v.departement}:${v.valeur}`).join(',')}`
   const effacees = valeursEffacees(champs, statistiques, dimanche)
 
+  const repartir = useRepartirSaisie()
+
+  // Une autre semaine remplit tous les champs avec ce qui est déjà enregistré : rien n'est encore
+  // saisi, fermer le panneau ne demande rien (m265).
   const choisirSemaine = (jour: DateIso) => {
+    repartir()
     setDimanche(jour)
     setChamps(champsStatistiques(statistiques, jour))
     setErreurs({})

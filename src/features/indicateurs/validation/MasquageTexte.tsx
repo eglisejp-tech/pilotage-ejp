@@ -18,10 +18,15 @@ interface Props {
   surMasque: () => void
   /** Identifiant du titre de la ligne : le lecteur d'écran sait de quelle ligne il s'agit. */
   decritPar: string
+  /**
+   * Une décision part pour cette ligne (« Validation en cours ») : le bouton se dit inactif
+   * (`aria-disabled`, jamais grisé ni retiré du clavier) et n'ouvre pas la fenêtre.
+   */
+  inactif?: boolean
 }
 
 const boutonSecondaire =
-  'inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
+  'inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond aria-disabled:cursor-wait'
 
 /**
  * « Masquer le texte » sous un « Pourquoi » ou un motif de refus (EJP Tech seulement ;
@@ -37,6 +42,7 @@ export function MasquageTexte({
   masquer,
   surMasque,
   decritPar,
+  inactif = false,
 }: Props) {
   const [fenetre, setFenetre] = useState(false)
   return (
@@ -45,7 +51,10 @@ export function MasquageTexte({
         type="button"
         aria-describedby={decritPar}
         aria-haspopup="dialog"
-        onClick={() => setFenetre(true)}
+        aria-disabled={inactif ? true : undefined}
+        onClick={() => {
+          if (!inactif) setFenetre(true)
+        }}
         className={boutonSecondaire}
       >
         {TEXTES_MODERATION.boutonMasquer}

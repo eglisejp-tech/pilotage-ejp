@@ -136,6 +136,13 @@ export const TEXTES_PANNEAUX = {
       "Il ne sera plus proposé à la saisie. Il n'a aucune saisie : il disparaîtra de la fiche. C'est définitif.",
     calcul:
       "Il ne s'affichera plus sur la fiche. Les deux chiffres qu'il utilise et leurs saisies restent sur la fiche. C'est définitif.",
+    /**
+     * Décidé le 6 octobre 2026 (T35, configuration-indicateurs.md, section 2) : « La fenêtre
+     * « Retirer » le dit avant de confirmer. » Le texte proposé de m232 ne la reprend pas, sans
+     * décider de l'abandonner : elle reste jusqu'à la décision de la personne responsable.
+     */
+    reprendre:
+      'Pour reprendre ce chiffre plus tard, ajoutez un nouvel indicateur : sa courbe repart de zéro.',
     change: "L'indicateur n'est plus proposé à la saisie.",
     resteIdentique: 'Ses saisies : rien ne se supprime.',
     lectureCalculs: 'Lecture des calculs liés.',

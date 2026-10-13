@@ -56,6 +56,7 @@ function ecranSimule({ ecran, etat, compteMinistere, lien, signaler }: Simulatio
           cle={etat.chargement ? undefined : cleExemple}
           qrEnEchec={etat.qrEnEchec}
           onReessayerQr={() => signaler('onReessayerQr, nouvelle préparation du QR code.')}
+          qrRefus={etat.qrRefus}
           onVerifyCode={verifierCode}
           onSignOut={seDeconnecter}
           enCours={etat.enCours}

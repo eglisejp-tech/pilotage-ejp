@@ -81,11 +81,12 @@ describe('ChampNombre', () => {
       expect(champ).toHaveAccessibleDescription(
         'Saisissez un nombre entier, sans virgule ni lettre.',
       )
-      // La consigne est aussi dans une région annoncée : elle arrive pendant la frappe.
-      const annonces = document.querySelectorAll('[aria-live="polite"]')
-      expect([...annonces].map((region) => region.textContent)).toContain(
-        'Saisissez un nombre entier, sans virgule ni lettre.',
-      )
+      // Une seule consigne : celle qu'on voit sous le champ, qui est aussi dans la région annoncée
+      // (elle arrive pendant la frappe). Un lecteur d'écran ne la lit pas deux fois.
+      const consignes = screen.getAllByText('Saisissez un nombre entier, sans virgule ni lettre.')
+      expect(consignes).toHaveLength(1)
+      expect(consignes[0]?.closest('[aria-live="polite"]')).not.toBeNull()
+      expect(champ.getAttribute('aria-describedby')?.split(' ')).toContain(consignes[0]?.id)
       // Les boutons plus et moins n'agissent pas sur un texte à corriger.
       const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
       expect(plus).toHaveAttribute('aria-disabled', 'true')
@@ -191,6 +192,26 @@ describe('ChampNombre', () => {
     expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[112px]')
     rerender(<ChampNombre {...proprietes('1200')} />)
     expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[84px]')
+    rerender(<ChampNombre {...proprietes('1 000')} />)
+    expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[64px]')
+  })
+
+  it('un texte à corriger se réduit pour tenir entre les boutons, à 360 px comme à 390 px', () => {
+    const { rerender } = render(<ChampNombre {...proprietes('12,5')} />)
+    const champ = () => screen.getByLabelText('STARs au service ce dimanche')
+    expect(champ()).toHaveClass('text-[56px]')
+    rerender(<ChampNombre {...proprietes('1250,5')} />)
+    expect(champ()).toHaveClass('text-[40px]')
+    // La bordure d'erreur ne touche pas les boutons : une marge entre le champ et chacun d'eux.
+    expect(champ().parentElement).toHaveClass('px-1.5')
+  })
+
+  it('une erreur reçue à l’envoi est lue avec le champ, pas annoncée par une région', () => {
+    render(<ChampNombre {...proprietes('12000')} erreur="Entre 0 et 9 999." />)
+    expect(screen.getByText('Entre 0 et 9 999.').closest('[aria-live]')).toBeNull()
+    expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveAccessibleDescription(
+      'Entre 0 et 9 999.',
+    )
   })
 
   it('« moins » est un carré bordé, « plus » est plein (maquette 08)', () => {

@@ -8,6 +8,11 @@ export interface FermetureSaisie {
   demander: (fermer: () => void) => void
   /** Une saisie vient d'être enregistrée : ce qui est dans les champs n'est plus à perdre. */
   enregistree: () => void
+  /**
+   * Le formulaire repart de zéro (une autre semaine choisie remplit tous les champs) : ce qu'il
+   * va montrer devient le point de départ, rien n'est encore saisi.
+   */
+  repartir: () => void
 }
 
 export const ContexteFermetureSaisie = createContext<FermetureSaisie | null>(null)
@@ -25,6 +30,12 @@ export function useFermetureSaisie(fermer: () => void): () => void {
 export function useSaisieEnregistree(): () => void {
   const contexte = useContext(ContexteFermetureSaisie)
   return contexte?.enregistree ?? rien
+}
+
+/** Pour un formulaire qui se remplit de nouveau (autre semaine) : rien n'est encore saisi. */
+export function useRepartirSaisie(): () => void {
+  const contexte = useContext(ContexteFermetureSaisie)
+  return contexte?.repartir ?? rien
 }
 
 function rien() {}

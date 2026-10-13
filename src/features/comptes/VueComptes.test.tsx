@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ErreurCompte } from '@/data/comptes'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { donneesExemple } from '@/features/comptes/apercu/exemples'
@@ -9,6 +9,7 @@ import { construireComptes } from '@/features/comptes/construireComptes'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import { VueComptes } from '@/features/comptes/VueComptes'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
+import { simulerLargeur } from '@/test/largeur'
 
 function donnees(): EtatBloc<DonneesComptes> {
   const exemple = donneesExemple()
@@ -185,4 +186,41 @@ describe('VueComptes (écran 13)', () => {
       'Cette adresse a déjà un compte. Choisissez une autre adresse.',
     )
   })
+})
+
+describe('VueComptes : passage du palier de 600 px pendant une saisie', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it.each([
+    [390, 834],
+    [834, 390],
+  ])(
+    'de %s à %s px : le panneau reste le même, la saisie et le focus sont gardés',
+    async (avant, apres) => {
+      simulerLargeur(avant)
+      const etat = donnees()
+      const actions = actionsFausses()
+      const ecran = () => (
+        <MemoryRouter>
+          <VueComptes titre="Ministères et comptes" donnees={etat} actions={actions} />
+        </MemoryRouter>
+      )
+      const { rerender } = render(ecran())
+      const utilisateur = userEvent.setup()
+      await utilisateur.click(bouton('Ajouter un ministère'))
+      const champ = screen.getByRole('textbox', { name: 'Nom du ministère' })
+      await utilisateur.type(champ, 'Louange')
+      // Téléphone tourné ou fenêtre redimensionnée : le panneau change de forme, pas de contenu.
+      simulerLargeur(apres)
+      rerender(ecran())
+      expect(screen.queryByRole('dialog') !== null).toBe(apres >= 600)
+      expect(screen.getByRole('textbox', { name: 'Nom du ministère' })).toBe(champ)
+      expect(champ).toHaveValue('Louange')
+      expect(champ).toHaveFocus()
+      await utilisateur.click(bouton('Retour'))
+      expect(screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })).toBeVisible()
+    },
+  )
 })
