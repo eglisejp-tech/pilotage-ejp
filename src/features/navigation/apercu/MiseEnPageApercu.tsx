@@ -10,7 +10,11 @@ import { ONGLETS } from '@/features/navigation/profils'
 export function MiseEnPageApercu() {
   const { pathname } = useLocation()
   const [parametres] = useSearchParams()
-  const profil = lireProfilApercu(parametres.get('profil'))
+  // L'écran des indicateurs est celui de l'administration de l'église, pas du berger.
+  const profil = lireProfilApercu(
+    parametres.get('profil'),
+    pathname.startsWith('/apercu/indicateurs') ? 'admin_eglise' : 'berger',
+  )
   // L'aperçu tient lieu d'accueil : le premier onglet y mène et s'affiche actif.
   const ici = `${pathname}?profil=${profil}`
   const onglets = ONGLETS[profil].map((onglet, rang) =>

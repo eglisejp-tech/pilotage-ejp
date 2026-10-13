@@ -21,7 +21,18 @@ export interface LigneConfiguration {
   libelle: string
   definition: string
   nature: NatureIndicateur
+  unite: UniteIndicateur
+  /** Domaine sensible : saisi chaque mois, jamais source d'un calcul. */
+  sensible: boolean
   calcul: CalculIndicateur | null
+  /** Une suggestion de la coordination : son nom est le même dans tous les ministères. */
+  suggestion: boolean
+  /**
+   * « Corriger » est proposé (L3b) : jamais une suggestion, et un indicateur saisi seulement tant
+   * que rien n'est saisi. Un calcul se propose toujours : la base contrôle les saisies de ses
+   * sources et dit si le calcul a déjà des valeurs.
+   */
+  corrigeable: boolean
   /** Ajout d'un ministère qui attend EJP Tech. */
   enAttente: boolean
   /** Mentions qui commencent par une majuscule : « Ajouté par Kumi le 12 oct. », « En euros »... */
@@ -135,12 +146,19 @@ export function construireSections(
   const ligne = (indicateur: IndicateurConfiguration): LigneConfiguration => {
     const usageIndicateur = usage.get(indicateur.id)
     const enAttente = indicateur.etat === 'en_attente'
+    const suggestion =
+      indicateur.modele_code !== null && catalogue.suggestions.has(indicateur.modele_code)
+    const jamaisSaisi = indicateur.calcul === null && estJamaisSaisi(usageIndicateur)
     return {
       id: indicateur.id,
       libelle: indicateur.libelle,
       definition: indicateur.definition,
       nature: indicateur.nature,
+      unite: indicateur.unite,
+      sensible: indicateur.sensible,
       calcul: indicateur.calcul,
+      suggestion,
+      corrigeable: !suggestion && (indicateur.calcul !== null || jamaisSaisi),
       enAttente,
       mentions: mentionsDe(indicateur, nomMinistere, catalogue, parId),
       aValider: enAttente
@@ -148,7 +166,7 @@ export function construireSections(
         : null,
       usage: indicateur.calcul === null ? texteUsage(usageIndicateur, indicateur.nature) : null,
       peuSaisi: indicateur.calcul === null && estPeuSaisi(usageIndicateur),
-      jamaisSaisi: indicateur.calcul === null && estJamaisSaisi(usageIndicateur),
+      jamaisSaisi,
     }
   }
   const saisis = trierIndicateurs(suivis.filter((indicateur) => indicateur.calcul === null))

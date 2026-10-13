@@ -154,6 +154,15 @@ export const TEXTES_AIDE = {
     'Les ministères qui saisissent leurs STARs présents à cette session. Gardez cochés ceux qui y participent.',
   'sessions.saisies':
     'Les ministères attendus qui ont saisi leurs présents. « 6 sur 8 » : 2 ministères restent à saisir.',
+
+  // Panneaux de la configuration des indicateurs (lot L3b, statut Proposé) : indicateurs.domaine sur
+  // la case « Domaine sensible » du panneau d'ajout, indicateurs.calcul sur « Chiffre du haut » du
+  // panneau de calcul. Les conséquences d'un choix (« Saisi chaque mois, mois en cours compris. »)
+  // restent des textes visibles sous le champ.
+  'indicateurs.domaine':
+    'Santé, accompagnement ou enfants : seuls le ministère, le berger, le conseil et EJP Tech voient ses valeurs.',
+  'indicateurs.calcul':
+    'Le haut est divisé par le bas. Exemple : 16 résolues (haut) sur 20 demandes (bas) donnent 80 %.',
 } as const
 
 /**

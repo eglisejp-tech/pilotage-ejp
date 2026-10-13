@@ -22,7 +22,7 @@ const textes = TEXTES_CONFIGURATION.ministere
  * Une ligne d'indicateur de `/indicateurs/:id` (7.2) : libellé, définition, mentions
  * (« En euros », « Ajouté par Kumi le 12 oct. »), « À valider par EJP Tech depuis 2 jours » avec
  * le lien « Voir dans À valider », et l'usage (« Saisi 4 mois sur 5, dernier le 2 oct. »), jamais
- * une valeur. Les actions (L3b) viennent de l'emplacement `ActionsLigne`.
+ * une valeur. Les actions (corriger, remplacer, retirer : L3b) viennent de `ActionsLigne`.
  */
 export function LigneConfiguration({ ligne, ministereId, ministereNom, profil, aideUsage }: Props) {
   const usage = ligne.usage ?? (ligne.calcul !== null ? textes.calculSansSaisie : null)
@@ -68,10 +68,7 @@ export function LigneConfiguration({ ligne, ministereId, ministereNom, profil, a
         <ActionsLigne
           ministereId={ministereId}
           ministereNom={ministereNom}
-          indicateurId={ligne.id}
-          libelle={ligne.libelle}
-          estCalcul={ligne.calcul !== null}
-          enAttente={ligne.enAttente}
+          ligne={ligne}
           profil={profil}
         />
       </div>

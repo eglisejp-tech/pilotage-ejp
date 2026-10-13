@@ -447,7 +447,8 @@ export type FonctionsIndicateurs = {
     Returns: 'corrige' | 'envoye'
   }
   retirer_indicateur: {
-    Args: { p_indicateur_id: string; p_motif: MotifRetraitChoisi }
+    /** `confidentialite` masque aussi le libellé et la définition (administration, EJP Tech). */
+    Args: { p_indicateur_id: string; p_motif: MotifRetraitChoisi | 'confidentialite' }
     /** Nombre de calculs retirés avec lui. */
     Returns: number
   }

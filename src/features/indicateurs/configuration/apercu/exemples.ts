@@ -10,6 +10,7 @@ import type {
   LigneUsage,
   MinistereConfiguration,
 } from '@/data/indicateursConfiguration'
+import type { LigneTerme } from '@/data/indicateursEcriture'
 import type { LecturesConfiguration } from '@/features/indicateurs/configuration/construire'
 
 export const ID_COMMUNICATION = '10000000-0000-4000-8000-000000000001'
@@ -285,4 +286,24 @@ export function apresCreation(
       changements: [ligneJournal, ...lectures.changements],
     },
   }
+}
+
+/**
+ * Termes du calcul d'exemple de Communication (L3b) : « Taux de demandes traitées » est le taux de
+ * « Visuels livrés » (haut) sur « Demandes reçues » (bas). Retirer l'une des deux sources retire le
+ * calcul avec elle, comme la base.
+ */
+export function termesExemple(lectures: LecturesConfiguration): LigneTerme[] {
+  const trouver = (libelle: string) =>
+    lectures.indicateurs.find(
+      (ligne) => ligne.ministere_id === ID_COMMUNICATION && ligne.libelle === libelle,
+    )?.id
+  const calcul = trouver('Taux de demandes traitées')
+  const haut = trouver('Visuels livrés')
+  const bas = trouver('Demandes reçues')
+  if (calcul === undefined || haut === undefined || bas === undefined) return []
+  return [
+    { calcul_id: calcul, source_id: haut, role: 'haut' },
+    { calcul_id: calcul, source_id: bas, role: 'bas' },
+  ]
 }

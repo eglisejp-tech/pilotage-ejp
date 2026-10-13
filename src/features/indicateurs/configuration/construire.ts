@@ -26,12 +26,14 @@ import {
   phrasesEglise,
   texteIndicateursMinistere,
 } from '@/features/indicateurs/configuration/phrases'
+import type { SourceCalcul } from '@/features/indicateurs/configuration/panneaux/apercu'
 import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
 import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
-import { estPeuSaisi } from '@/features/indicateurs/configuration/usage'
+import { estJamaisSaisi, estPeuSaisi } from '@/features/indicateurs/configuration/usage'
 import type { TypeCompte } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
+import { trierIndicateurs } from '@/lib/metier/indicateurs'
 import { comparerNoms } from '@/lib/metier/texte'
 
 /** Tout ce que lisent les deux écrans. */
@@ -176,6 +178,8 @@ export interface ConfigurationMinistere {
   prevus: EtatPrevus
   /** Tous les modèles du catalogue : le choix de « Choisir dans la liste de la coordination ». */
   modeles: ModeleCatalogue[]
+  /** Indicateurs saisis, actifs, sans domaine sensible : les sources possibles d'un calcul (L3b). */
+  sources: SourceCalcul[]
   sections: SectionConfiguration[]
   retires: LigneRetiree[]
   /** Aucun indicateur suivi : « Aucun indicateur pour Protocole. Il saisit les chiffres communs. » */
@@ -224,6 +228,18 @@ export function construireMinistere(
       ministeresSansPrevu(lectures.creations).has(ministere.id),
     ),
     modeles,
+    sources: trierIndicateurs(
+      suivis.filter(
+        (indicateur) =>
+          indicateur.calcul === null && !indicateur.sensible && indicateur.etat === 'actif',
+      ),
+    ).map(({ id, libelle, nature, unite }) => ({
+      id,
+      libelle,
+      nature,
+      unite,
+      jamaisSaisi: estJamaisSaisi(usage.get(id)),
+    })),
     sections: construireSections(siens, usage, ministere.nom, { suggestions }),
     retires: construireRetires(siens),
     sansIndicateur: suivis.length === 0,

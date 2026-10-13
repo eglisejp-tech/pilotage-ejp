@@ -1,5 +1,6 @@
 import { useParams } from 'react-router'
 import { estIdentifiantMinistere } from '@/features/fiche/useFiche'
+import { useEcrituresReelles } from '@/features/indicateurs/configuration/panneaux/useEcrituresReelles'
 import { useCreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import { useConfigurationMinistere } from '@/features/indicateurs/configuration/useLecturesConfiguration'
 import { VueIndicateursMinistere } from '@/features/indicateurs/configuration/VueIndicateursMinistere'
@@ -35,12 +36,14 @@ function ContenuIndicateursMinistere({ id, titre, profil }: PropsContenu) {
   const identifiantValide = estIdentifiantMinistere(id)
   const ministere = useConfigurationMinistere(id ?? '', identifiantValide)
   const creation = useCreationPrevus()
+  const ecritures = useEcrituresReelles()
   return (
     <VueIndicateursMinistere
       titre={titre}
       profil={profil}
       ministere={identifiantValide ? ministere : { etat: 'introuvable' }}
       creation={creation}
+      ecritures={ecritures}
     />
   )
 }

@@ -8,13 +8,15 @@ import {
   ID_KUMI,
   ID_PROTOCOLE,
   lecturesExemple,
+  termesExemple,
 } from '@/features/indicateurs/configuration/apercu/exemples'
+import type { EtatSimule } from '@/features/indicateurs/configuration/apercu/simulation'
+import { useEcrituresSimulees } from '@/features/indicateurs/configuration/apercu/useEcrituresSimulees'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import {
   construireConfiguration,
   construireMinistere,
 } from '@/features/indicateurs/configuration/construire'
-import type { LecturesConfiguration } from '@/features/indicateurs/configuration/construire'
 import {
   reussiteAucunPrevu,
   reussiteCreationPrevus,
@@ -39,10 +41,15 @@ const MINISTERES_PAR_VUE: Readonly<Record<string, string>> = {
   protocole: ID_PROTOCOLE,
 }
 
+function etatInitial(): EtatSimule {
+  const lectures = lecturesExemple()
+  return { lectures, termes: termesExemple(lectures), compteur: 0 }
+}
+
 /** Création simulée : les mêmes messages que la base et que l'écran, aucun appel au serveur. */
 function useCreationSimulee(
-  setLectures: (appliquer: (lectures: LecturesConfiguration) => LecturesConfiguration) => void,
-  lectures: LecturesConfiguration,
+  courant: { current: EtatSimule },
+  ecrire: (etat: EtatSimule) => void,
   envoi: string | null,
 ): CreationPrevus {
   const [enCours, setEnCours] = useState<string | null>(null)
@@ -66,8 +73,13 @@ function useCreationSimulee(
         setReussite(null)
         setRefus(REFUS_EXEMPLE)
       } else {
-        const resultat = apresCreation(lectures, ministere.id, modele, new Date().toISOString())
-        setLectures(() => resultat.lectures)
+        const resultat = apresCreation(
+          courant.current.lectures,
+          ministere.id,
+          modele,
+          new Date().toISOString(),
+        )
+        ecrire({ ...courant.current, lectures: resultat.lectures })
         setReussite(
           modele === MODELE_AUCUN
             ? reussiteAucunPrevu(ministere.nom)
@@ -78,7 +90,7 @@ function useCreationSimulee(
       occupe.current = false
       setEnCours(null)
     },
-    [envoi, lectures, setLectures],
+    [courant, ecrire, envoi],
   )
   return { creer, enCours, dernier, reussite, envoi: numero, refus }
 }
@@ -86,8 +98,9 @@ function useCreationSimulee(
 const reessayer = () => undefined
 
 /**
- * Aperçu de développement de la configuration des indicateurs (lot L3a), sans base : les vrais
- * écrans, avec des données d'exemple et des créations simulées. Adresse : /apercu/indicateurs.
+ * Aperçu de développement de la configuration des indicateurs (lots L3a et L3b), sans base : les
+ * vrais écrans, avec des données d'exemple et des écritures simulées (créer les prévus, ajouter,
+ * calculer, corriger, remplacer, retirer). Adresse : /apercu/indicateurs.
  * - `?profil=admin_eglise` (défaut) ou `admin_plateforme` ; tout autre profil : « Page non
  *   disponible » (l'écran est réservé à ces deux profils) ;
  * - `vue=liste` (défaut), `liste-vide` (aucun ministère), `liste-chargement`, `liste-probleme` ;
@@ -102,8 +115,16 @@ export function ApercuIndicateurs() {
   const profil = parametres.get('profil')
   const vue = parametres.get('vue') ?? 'liste'
   const envoi = parametres.get('envoi')
-  const [lectures, setLectures] = useState(lecturesExemple)
-  const creation = useCreationSimulee(setLectures, lectures, envoi)
+  const [etat, setEtat] = useState<EtatSimule>(etatInitial)
+  // Les écritures se suivent sans attendre le rendu : la référence garde l'état le plus récent.
+  const courant = useRef(etat)
+  const ecrire = useCallback((suivant: EtatSimule) => {
+    courant.current = suivant
+    setEtat(suivant)
+  }, [])
+  const lectures = etat.lectures
+  const creation = useCreationSimulee(courant, ecrire, envoi)
+  const ecritures = useEcrituresSimulees(courant, ecrire, envoi)
   if (profil !== null && profil !== 'admin_eglise' && profil !== 'admin_plateforme') {
     return <PageNonDisponible />
   }
@@ -124,6 +145,7 @@ export function ApercuIndicateurs() {
         profil={profilLecteur}
         ministere={ministere}
         creation={creation}
+        ecritures={ecritures}
       />
     )
   }

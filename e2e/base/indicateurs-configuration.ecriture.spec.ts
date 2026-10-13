@@ -1,9 +1,8 @@
-import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { fichierSession } from '../comptes.ts'
-import { verifierAdresseLocale } from '../installer-comptes.ts'
 import { appeler, compter, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
+import { ministereDEssai } from './outils-ministere.ts'
 
 // Création des indicateurs prévus (lot L3a, configuration-indicateurs.md, 7.1 et 7.2) qui écrit
 // dans la base locale : projet « ecritures » (en série, à 1440 px, après les projets de lecture).
@@ -32,30 +31,6 @@ const MINISTERE_JEUNESSE = '10000000-0000-4000-8000-000000000004'
 let kumi = ''
 let essaiPrevus = ''
 let essaiSansPrevu = ''
-
-/** Identifiant d'un ministère d'essai, créé s'il n'existe pas (clé secrète de la pile locale). */
-async function ministereDEssai(nom: string): Promise<string> {
-  const url = process.env.VITE_SUPABASE_URL
-  const cleSecrete = process.env.E2E_CLE_SECRETE_LOCALE
-  if (!url || !cleSecrete) {
-    throw new Error('VITE_SUPABASE_URL et E2E_CLE_SECRETE_LOCALE manquent : voir le job « e2e ».')
-  }
-  verifierAdresseLocale(url)
-  const admin = createClient(url, cleSecrete, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  })
-  const { data: existant, error: erreurLecture } = await admin
-    .from('ministere')
-    .select('id')
-    .eq('nom', nom)
-    .maybeSingle()
-  if (erreurLecture)
-    throw new Error(`Lecture du ministère d'essai impossible (${erreurLecture.code}).`)
-  if (existant) return (existant as { id: string }).id
-  const { data, error } = await admin.from('ministere').insert({ nom }).select('id').single()
-  if (error) throw new Error(`Création du ministère d'essai impossible (${error.code}).`)
-  return (data as { id: string }).id
-}
 
 test.beforeAll(async () => {
   kumi = await ministereDEssai('Kumi')
