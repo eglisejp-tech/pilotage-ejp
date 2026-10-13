@@ -84,7 +84,8 @@ create temp view matrice_t56 (profil, objet, action, aal, attendu, requete) as
     from (values (1, 'ministère a'), (2, 'ministère b'), (3, 'berger'), (4, 'conseil'),
                  (5, 'administration'), (6, 'EJP Tech')) as p(rang, profil)
    cross join (values
-     ('intervenant', 'lire les déclarations de A', array['1', '0', '0', '0', '0', '1'],
+     -- Les lignes de A seulement (requête filtrée) : B ne les lit pas.
+     ('intervenant', 'lire', array['1', '0', '0', '0', '0', '1'],
       'select 1 from public.intervenant where compte = (select a from ctx)'),
      ('intervenant', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501'],
       'insert into public.intervenant (compte, session_auth, prenom, motif) select a, gen_random_uuid(), ''Zoé'', ''connexion'' from ctx'),
@@ -100,7 +101,9 @@ create temp view matrice_t56 (profil, objet, action, aal, attendu, requete) as
       'update public.journal_intervenant set intervenant_id = intervenant_id'),
      ('journal_intervenant', 'supprimer', array['42501', '42501', '42501', '42501', '42501', '42501'],
       'delete from public.journal_intervenant'),
-     ('passage', 'lire', array['0', '0', '0', '0', '0', '1'],
+     -- Chaque ministère lit les jours de sa déclaration courante (A n'en a aucun, B un) ; EJP
+     -- Tech lit tout.
+     ('passage', 'lire', array['0', '1', '0', '0', '0', '1'],
       'select 1 from public.passage'),
      -- B a déjà son jour d'utilisation (noté par sa déclaration) : un second ajout simple heurte
      -- la clé primaire.
