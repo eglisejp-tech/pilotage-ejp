@@ -27,15 +27,13 @@ describe('BandeauAvancement', () => {
     const { container } = afficher()
     const region = screen.getByRole('region', { name: "Avancement de l'outil" })
     expect(region.querySelector('[role="status"]')).toBeNull()
-    expect(region).toHaveTextContent('6 étapes sur 8 en ligne.')
-    expect(region).toHaveTextContent(
-      'Prochaine : Mes indicateurs et validation, prévue vendredi 16 oct.',
-    )
+    expect(region).toHaveTextContent('7 étapes sur 8 en ligne.')
+    expect(region).toHaveTextContent("Prochaine : Qui utilise l'outil, prévue mercredi 14 oct.")
     const cases = container.querySelectorAll('[data-statut]')
     expect(cases).toHaveLength(8)
     expect(cases[0]?.parentElement).toHaveAttribute('aria-hidden', 'true')
-    expect(container.querySelectorAll('[data-statut="en-ligne"]')).toHaveLength(6)
-    expect(container.querySelectorAll('[data-statut="en-partie"]')).toHaveLength(2)
+    expect(container.querySelectorAll('[data-statut="en-ligne"]')).toHaveLength(7)
+    expect(container.querySelectorAll('[data-statut="en-partie"]')).toHaveLength(1)
   })
 
   it("nomme ses boutons, avec le suffixe réservé aux lecteurs d'écran", () => {
@@ -70,14 +68,14 @@ describe('BandeauAvancement', () => {
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
     expect(panneau).not.toHaveAttribute('hidden')
     expect(panneau).toHaveTextContent(
-      'Point du 8 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+      'Point du 13 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
     )
     const etapes = screen.getAllByRole('listitem')
     expect(etapes).toHaveLength(8)
-    expect(etapes[5]).toHaveAttribute('aria-current', 'step')
+    expect(etapes[6]).toHaveAttribute('aria-current', 'step')
     expect(etapes[0]).toHaveTextContent('■ En ligne')
-    expect(etapes[5]).toHaveTextContent('En partie : 4 parties sur 5 en ligne.')
-    expect(screen.getAllByText('■ En ligne')).toHaveLength(6)
+    expect(etapes[6]).toHaveTextContent('En partie : 3 parties sur 5 en ligne.')
+    expect(screen.getAllByText('■ En ligne')).toHaveLength(7)
   })
 
   it('se ferme avec Échap et rend le focus au bouton', async () => {

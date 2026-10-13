@@ -48,34 +48,9 @@ export function classeSansLargeurMinimale(fichier: string, ancre: RegExp): boole
   return classes !== undefined && !LARGEUR_MINIMALE.test(classes)
 }
 
-/** Le lien du nom d'un ministère dans la liste des indicateurs : `to={ligne.href} className="..."`. */
-const LIEN_LIGNE = /to=\{ligne\.href\}\s+className="([^"]*)"/
-
-function lienIndicateursEnFaute(): boolean {
-  return (
-    classeSansLargeurMinimale(
-      'src/features/indicateurs/configuration/TableauIndicateurs.tsx',
-      LIEN_LIGNE,
-    ) ||
-    classeSansLargeurMinimale(
-      'src/features/indicateurs/configuration/ListeIndicateursTelephone.tsx',
-      LIEN_LIGNE,
-    )
-  )
-}
-
-// A-02 : le lien du nom d'un ministère court (« Kumi » dans les aperçus, « FIJ » dans le jeu
-// d'exemple de la base) est plus étroit que 44 px dans la liste des indicateurs (tableau et liste du
-// téléphone) : `min-h-cible` fixe la hauteur, pas la largeur. Écran du lot L3b, à corriger après sa
-// fusion (A-03 et A-04, corrigées par le lot F3, n'ont plus d'entrée : ces écrans sont stricts).
-const A02 = { ligne: 'A-02', tantQue: lienIndicateursEnFaute } as const
-
-export const FAUTES_CONNUES: Readonly<Record<string, FauteConnue>> = {
-  'indicateurs liste': { ...A02, cibles: ['a « Kumi »'] },
-  'indicateurs liste ejp-tech': { ...A02, cibles: ['a « Kumi »'] },
-  'admin_eglise | /indicateurs': { ...A02, cibles: ['a « FIJ »'] },
-  'admin_plateforme | /indicateurs': { ...A02, cibles: ['a « FIJ »'] },
-}
+// Aucune faute connue : A-02 (liste des indicateurs) est corrigée à la livraison du 13 octobre 2026,
+// après A-03 et A-04 (lot F3). Tous les écrans sont joués sans masque.
+export const FAUTES_CONNUES: Readonly<Record<string, FauteConnue>> = {}
 
 /** Sépare les lignes de cibles que la faute connue de l'écran explique de celles qui restent. */
 export function separerCiblesConnues(

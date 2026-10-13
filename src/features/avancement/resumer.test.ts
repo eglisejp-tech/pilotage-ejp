@@ -24,14 +24,14 @@ describe('statutDe', () => {
 })
 
 describe('resumer', () => {
-  it('compte 6 étapes sur 8, prochaine : Mes indicateurs et validation', () => {
+  it("compte 7 étapes sur 8, prochaine : Qui utilise l'outil", () => {
     const resume = resumer(ETAPES)
-    expect(resume.enLigne).toBe(6)
+    expect(resume.enLigne).toBe(7)
     expect(resume.total).toBe(8)
-    expect(resume.prochaine?.numero).toBe(6)
+    expect(resume.prochaine?.numero).toBe(7)
     expect(resume.prochaine?.partie).toEqual({
-      quoi: 'Mes indicateurs et validation',
-      date: '2026-10-16',
+      quoi: "Qui utilise l'outil",
+      date: '2026-10-14',
     })
   })
 
@@ -57,9 +57,9 @@ describe('textes', () => {
       'Prochaine : Sessions, prévue vendredi 9 oct.',
     )
     expect(notePanneau(MISE_A_JOUR)).toBe(
-      'Point du 8 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+      'Point du 13 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
     )
-    expect(enPartie(ETAPES[5] as Etape)).toBe('En partie : 4 parties sur 5 en ligne.')
+    expect(enPartie(ETAPES[6] as Etape)).toBe('En partie : 3 parties sur 5 en ligne.')
     for (const e of ETAPES) {
       expect(JSON.stringify(e)).not.toMatch(new RegExp('[\u2013\u2014]'))
     }

@@ -29,7 +29,7 @@ export function ListeIndicateursTelephone({ lignes, creation, idTitre }: Props) 
         >
           <Link
             to={ligne.href}
-            className="-my-3 inline-flex min-h-cible items-center self-start font-semibold underline decoration-encre-3 underline-offset-4"
+            className="-my-3 inline-flex min-h-cible min-w-cible items-center self-start font-semibold underline decoration-encre-3 underline-offset-4"
           >
             {ligne.nom}
           </Link>
