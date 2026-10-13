@@ -14,14 +14,18 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * l'étape 4 (lot I) : chiffres sensibles (K56, P42, P45 à P47, P50, et P52 : valeurs exactes pour
  * le berger, le conseil et EJP Tech), signalements (T39) et envoi des emails par le Gmail gratuit
  * d'EJP Tech (T40), selon docs/conformite/. Mise à jour du 8 octobre 2026 : acceptation des
- * conditions par compte (T53), phrase proposée dans « Données traitées », à valider.
+ * conditions par compte (T53), phrase proposée dans « Données traitées », à valider. Mise à jour
+ * du 12 octobre 2026 : prénom déclaré sur un compte partagé (T56, décidé par la personne
+ * responsable), dans « Données traitées », « Qui voit les données », « Durées de conservation »
+ * (export final compris) et « Vos droits ». La version des conditions change (VERSION_CONDITIONS).
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 8 octobre 2026.
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 12 octobre
+        2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
         <PartieTexte titre="Responsable du traitement">
@@ -63,6 +67,12 @@ export function PageConfidentialite() {
               seul la lit.
             </li>
             <li>
+              Le prénom que chaque personne indique quand elle utilise le compte partagé d'un
+              ministère, avec l'heure de chaque connexion, les jours d'utilisation et les actions
+              faites ensuite. EJP Tech seul le lit, pour suivre l'utilisation de l'outil et savoir
+              qui a fait quoi en cas de problème. Il ne sert pas à évaluer les personnes.
+            </li>
+            <li>
               Les signalements (« Signaler une difficulté ») : un court message qu'un ministère
               adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech
               les lisent.
@@ -79,6 +89,12 @@ export function PageConfidentialite() {
             l'église et les points qui le concernent ; le berger et le conseil voient l'ensemble,
             sauf les signalements ; EJP Tech voit l'ensemble en lecture, pour administrer l'outil,
             et relit les champs libres.
+          </p>
+          <p>
+            Pendant la vie de l'outil, le prénom indiqué à la connexion n'est lu que par EJP Tech :
+            ni l'administration de l'église, ni le berger, ni le conseil, ni les ministères. Les
+            prénoms qui restent à l'arrêt de l'outil figurent dans l'export final remis à la
+            coordination.
           </p>
         </PartieTexte>
         <PartieTexte titre="Chiffres sensibles">
@@ -146,6 +162,12 @@ export function PageConfidentialite() {
               compte, jamais affichés, supprimés avec lui.
             </li>
             <li>
+              <strong className="text-encre">Prénoms indiqués à la connexion</strong> : 12 mois,
+              puis remplacés par « [prénom effacé] ». Ils restent dans les sauvegardes 4 semaines au
+              plus. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la
+              coordination.
+            </li>
+            <li>
               <strong className="text-encre">Journaux techniques (adresses IP)</strong> : selon les
               durées de Supabase et de Netlify, au plus 1 an, la durée maximale recommandée par la
               CNIL pour ces journaux.
@@ -185,6 +207,10 @@ export function PageConfidentialite() {
           <p>
             Une saisie ne se modifie pas : une correction s'ajoute comme une nouvelle saisie. Un
             texte qui contient une information personnelle est masqué.
+          </p>
+          <p>
+            Vous pouvez demander à EJP Tech d'effacer votre prénom : il est remplacé par « [prénom
+            effacé] » partout. À la connexion, une initiale ou un surnom suffit.
           </p>
           <p>
             Si la réponse ne vous convient pas, vous pouvez adresser une réclamation à la CNIL, sur

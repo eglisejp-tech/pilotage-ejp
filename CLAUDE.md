@@ -23,14 +23,14 @@ Outil web temporaire de prise d'information pour le berger et le conseil de l'EJ
 
 ## Règles métier à ne jamais casser
 
-- Mesures, carte des FIJ, participations, événements et leurs états, réunions, points, mentions, suivis de point, journal et modération, ainsi que `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique`, `evenement_mention`, `signalement`, `signalement_suivi`, `ventilation_sensible` et `precision_sensible` : **ajout seulement**. Pas d'`UPDATE`, pas de `DELETE` (seule exception pour un texte : `masquer_texte`). La base impose `saisi_le` et `saisi_par`.
+- Mesures, carte des FIJ, participations, événements et leurs états, réunions, points, mentions, suivis de point, journal et modération, ainsi que `indicateur_terme`, `demande_indicateur`, `validation`, `fij_statistique`, `evenement_mention`, `signalement`, `signalement_suivi`, `ventilation_sensible`, `precision_sensible`, `intervenant`, `journal_intervenant` et `passage` : **ajout seulement**. Pas d'`UPDATE`, pas de `DELETE` (seule exception pour un texte : `masquer_texte` ; pour un prénom déclaré : l'effacement par `effacer_prenom` et `effacer_prenoms_anciens`, T56). La base impose `saisi_le` et `saisi_par`.
 - Le pourcentage FIJ se **calcule** (somme en FIJ ÷ somme actifs, sur les ministères qui ont les deux valeurs), il ne se saisit pas.
 - Tout total agrégé s'affiche avec sa **complétude** (« 6 sur 8 »).
-- Un STAR n'est compté qu'une fois : total d'une session = somme de (présents moins déjà comptés par leur ministère principal). Aucun nom, aucune liste de personnes.
+- Un STAR n'est compté qu'une fois : total d'une session = somme de (présents moins déjà comptés par leur ministère principal). Aucun nom, aucune liste de personnes pour ce comptage.
 - « Marquer traité » : ministère créateur ou mentionné (commentaire obligatoire, 10 à 280 caractères), berger et conseil (commentaire facultatif), par `marquer_traite`. Un point traité ne se rouvre pas.
 - Toute date métier se calcule à l'heure de Paris (`private.aujourdhui()`, `private.dimanche_reference()`, vue `v_semaine`). Jamais `current_date` ni la date du navigateur.
 - Cinq profils (ministère, berger, conseil, administration de l'église, EJP Tech), chacun avec sa navigation. Un ministère ne voit que sa fiche, la vue de l'église, les points qu'il a créés ou qui le mentionnent, les événements qui le mentionnent et ses signalements ; exception : Coordination lit les totaux d'événements de l'église.
-- Aucune donnée personnelle. Rappel une fois par formulaire, sous le premier champ libre (exception voulue par la personne responsable, T30 : le champ « Pourquoi cet indicateur ? » n'a pas de rappel). 280 caractères au plus. Le journal ne recopie jamais un texte libre ni un email.
+- Aucune donnée personnelle, sauf le prénom déclaré sur un compte partagé (T56), lu par EJP Tech seul, sans rappel sous ce champ. Rappel une fois par formulaire, sous le premier champ libre (exception voulue par la personne responsable, T30 : le champ « Pourquoi cet indicateur ? » n'a pas de rappel). 280 caractères au plus. Le journal ne recopie jamais un texte libre, un email ni un prénom.
 
 ## Sécurité
 

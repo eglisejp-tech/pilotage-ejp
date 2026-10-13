@@ -1,6 +1,7 @@
 import { isAuthApiError } from '@supabase/supabase-js'
 import { lireMonCompte } from '@/data/compte'
 import { lireConditionsAcceptees } from '@/data/conditions'
+import { lireMaDeclaration, noterPassage } from '@/data/personnes'
 import { deduireEtat } from '@/features/session/etat'
 import type { EtatSession } from '@/features/session/etat'
 import { noterTransition } from '@/features/session/motif'
@@ -20,6 +21,21 @@ const SESSION_PERDUE = new Set([
 
 function sessionPerdue(erreur: unknown): boolean {
   return isAuthApiError(erreur) && erreur.code !== undefined && SESSION_PERDUE.has(erreur.code)
+}
+
+/** Message de la console quand le jour d'utilisation n'est pas noté (T56). */
+export const MESSAGE_PASSAGE_NON_NOTE = "Jour d'utilisation non noté."
+
+/**
+ * Un jour d'utilisation non noté ne bloque pas l'outil, mais ne passe pas inaperçu : un message
+ * fixe et le code de l'erreur dans la console, sans prénom ni autre donnée de la personne.
+ */
+function signalerPassageNonNote(erreur: unknown): void {
+  const code =
+    typeof erreur === 'object' && erreur !== null && 'code' in erreur
+      ? String(erreur.code)
+      : 'inconnu'
+  console.warn(MESSAGE_PASSAGE_NON_NOTE, code)
 }
 
 /** Lit la session, son niveau, la ligne `compte` et, si besoin, le facteur vérifié. */
@@ -51,13 +67,27 @@ export async function chargerEtatSession(): Promise<EtatSession> {
         ? await lireConditionsAcceptees(session.user.id, VERSION_CONDITIONS)
         : false
 
-    return deduireEtat({
+    // Personne qui utilise un compte de ministère sur cet appareil (T56) : lue après les
+    // conditions, pour un compte de ministère seulement.
+    const declaration =
+      compte?.actif && compte.type === 'ministere' && conditionsAcceptees
+        ? await lireMaDeclaration()
+        : null
+
+    const etat = deduireEtat({
       utilisateur: { id: session.user.id, email: session.user.email ?? null },
       niveau: { actuel: niveau.currentLevel, suivant: niveau.nextLevel },
       compte,
       facteurVerifie,
       conditionsAcceptees,
+      declaration,
     })
+    // Jour d'utilisation (une ligne par jour, la base ignore les suivantes). Sans attendre : un
+    // échec ne bloque jamais l'outil, mais il se voit dans la console.
+    if (etat.statut === 'connecte' && declaration !== null) {
+      noterPassage(declaration.id).catch(signalerPassageNonNote)
+    }
+    return etat
   } catch (erreur) {
     // Session révoquée ailleurs (double authentification réinitialisée, compte supprimé) :
     // on l'oublie sur cet appareil, et la connexion s'affiche.

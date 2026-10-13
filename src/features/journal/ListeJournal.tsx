@@ -42,6 +42,10 @@ export function ListeJournal({ lignes }: Props) {
               <span className="block min-w-0 font-semibold break-words">
                 <span className="sr-only">{TEXTES_JOURNAL.motsDeLigne.compte} : </span>
                 {ligne.compte}
+                {/* Journal technique (T56) : la personne, en graisse normale, après le compte. */}
+                {ligne.personne === undefined ? null : (
+                  <span className="font-normal text-encre-2"> ({ligne.personne})</span>
+                )}
               </span>
               <span className="block min-w-0 break-words">
                 <span className="sr-only">{TEXTES_JOURNAL.motsDeLigne.action} : </span>

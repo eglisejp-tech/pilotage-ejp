@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { lireIndicateursCommuns, lireSemaine } from '@/data/eglise'
 import { lireComptesJournal, lireJournal } from '@/data/journal'
 import { lireMinisteres } from '@/data/ministeres'
+import { lirePrenomsDuJournal } from '@/data/personnes'
 import {
   COMMUNS_EXEMPLE,
   COMPTES_EXEMPLE,
@@ -26,6 +27,8 @@ vi.mock(import('@/data/journal'), async (importOriginal) => ({
   lireComptesJournal: vi.fn(),
 }))
 vi.mock('@/data/ministeres', () => ({ lireMinisteres: vi.fn() }))
+vi.mock('@/data/personnes', () => ({ lirePrenomsDuJournal: vi.fn() }))
+const prenoms = vi.mocked(lirePrenomsDuJournal)
 const semaine = vi.mocked(lireSemaine)
 const communs = vi.mocked(lireIndicateursCommuns)
 const journal = vi.mocked(lireJournal)
@@ -67,6 +70,30 @@ function lire(profil: TypeCompte, filtres = SANS_FILTRE) {
     initialProps: { filtresCourants: filtres },
   })
 }
+
+describe('useJournal : Journal technique (T56)', () => {
+  it('EJP Tech lit la personne déclarée des lignes lues ; les autres profils ne la lisent jamais', async () => {
+    prenoms.mockImplementation((ids) =>
+      Promise.resolve(new Map(ids.map((id) => [id, id % 2 === 0 ? 'Marie D.' : null] as const))),
+    )
+    const tech = lire('admin_plateforme')
+    await waitFor(() => expect(tech.result.current.etat).toBe('pret'))
+    if (tech.result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    const lignes = tech.result.current.donnees.lignes
+    expect(prenoms).toHaveBeenCalledTimes(1)
+    expect(lignes.some((l) => l.personne === 'Marie D.')).toBe(true)
+    expect(lignes.some((l) => l.personne === 'personne non déclarée')).toBe(true)
+
+    prenoms.mockClear()
+    const berger = lire('berger')
+    await waitFor(() => expect(berger.result.current.etat).toBe('pret'))
+    if (berger.result.current.etat !== 'pret') throw new Error('attendu : prêt')
+    expect(prenoms).not.toHaveBeenCalled()
+    expect(
+      berger.result.current.donnees.lignes.some((l) => l.compte.includes('(') || l.personne),
+    ).toBe(false)
+  })
+})
 
 describe('useJournal', () => {
   it('chargement, puis 50 lignes sur 30 jours avec le jour de Paris de v_semaine', async () => {

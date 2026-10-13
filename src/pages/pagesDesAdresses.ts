@@ -8,6 +8,7 @@ import { PageMaFiche } from '@/pages/PageMaFiche'
 import { PageMesIndicateurs } from '@/pages/PageMesIndicateurs'
 import { PageMinisteres } from '@/pages/PageMinisteres'
 import { PageModeration } from '@/pages/PageModeration'
+import { PagePersonnes } from '@/pages/PagePersonnes'
 import { PagePoints } from '@/pages/PagePoints'
 import { PageSaisieDimanche } from '@/pages/PageSaisieDimanche'
 import { PageSaisieEvenement } from '@/pages/PageSaisieEvenement'
@@ -50,4 +51,5 @@ export const PAGES_DES_ADRESSES: Readonly<Record<string, ComponentType<Propriete
   '/indicateurs': PageIndicateurs,
   '/indicateurs/:id': PageIndicateursMinistere,
   '/moderation': PageModeration,
+  '/personnes': PagePersonnes,
 }
