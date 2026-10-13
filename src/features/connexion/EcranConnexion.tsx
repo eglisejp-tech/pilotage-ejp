@@ -23,6 +23,8 @@ export type ProprietesEcranConnexion = {
   enCours?: 'google' | 'mot-de-passe'
   /** Message du bandeau (messagesConnexion), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /** Confirmation sous le titre, sans alerte (« Compte déconnecté. », m060). */
+  information?: string
   lienMotDePasseOublie?: string
   lienConfidentialite?: string
   lienConditions?: string
@@ -34,6 +36,7 @@ export function EcranConnexion({
   onSubmit,
   enCours,
   erreur,
+  information,
   lienMotDePasseOublie = adressesConnexion.motDePasseOublie,
   lienConfidentialite = adressesConnexion.confidentialite,
   lienConditions = adressesConnexion.conditions,
@@ -64,6 +67,15 @@ export function EcranConnexion({
       <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Pilotage EJP">
         Connectez-vous avec l'adresse de votre ministère ou votre adresse personnelle.
       </TitreConnexion>
+
+      {information ? (
+        <p
+          role="status"
+          className="border border-bien bg-papier px-3.5 py-3 text-[15px] leading-normal font-semibold text-bien"
+        >
+          {information}
+        </p>
+      ) : null}
 
       <BoutonGoogle onClick={onGoogle} enCours={enCours === 'google'} occupe={occupe} />
 

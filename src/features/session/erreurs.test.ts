@@ -39,12 +39,28 @@ describe('traduireErreur', () => {
     )
   })
 
-  it('réseau ou erreur inconnue : « La connexion a échoué »', () => {
+  it('réseau sans réponse : « La connexion a échoué »', () => {
     expect(traduireErreur(new AuthRetryableFetchError('Failed to fetch', 0), 'connexion')).toBe(
       messagesConnexion.echecReseau,
     )
     expect(traduireErreur(new TypeError('Failed to fetch'), 'code')).toBe(
       messagesConnexion.echecReseau,
+    )
+  })
+
+  it('panne du serveur Auth (5xx, code inconnu) : réessayer plus tard, puis EJP Tech (m019)', () => {
+    const panne =
+      "La connexion n'a pas abouti. Réessayez dans quelques minutes, et si le problème revient, prévenez EJP Tech."
+    expect(traduireErreur(new AuthRetryableFetchError('Bad Gateway', 502), 'connexion')).toBe(panne)
+    expect(traduireErreur(api('unexpected_failure', 500), 'connexion')).toBe(panne)
+    expect(traduireErreur(api('request_timeout', 504), 'code')).toBe(panne)
+    expect(traduireErreur(api('provider_disabled', 400), 'connexion')).toBe(panne)
+    expect(traduireErreur(api('un_code_nouveau', 422), 'mot-de-passe')).toBe(panne)
+  })
+
+  it('compte désactivé testé avant tout autre refus, contact EJP Tech (m015, T59)', () => {
+    expect(traduireErreur(api('user_banned', 403), 'lien-email')).toBe(
+      'Ce compte est désactivé. Contactez EJP Tech.',
     )
   })
 })
@@ -60,7 +76,20 @@ describe('erreurDeRetourGoogle', () => {
     expect(erreurDeRetourGoogle('', '#error=server_error&error_description=User+is+banned')).toBe(
       messagesConnexion.compteDesactive,
     )
-    expect(erreurDeRetourGoogle('?error=server_error', '')).toBe(messagesConnexion.echecReseau)
+  })
+
+  it('fenêtre de Google fermée ou refusée, retour non reconnu : proposer l’email (m014)', () => {
+    const interrompu =
+      "La connexion avec Google n'a pas abouti. Réessayez, ou connectez-vous avec votre email."
+    expect(erreurDeRetourGoogle('?error=access_denied', '')).toBe(interrompu)
+    expect(erreurDeRetourGoogle('?error=server_error', '')).toBe(interrompu)
+    expect(erreurDeRetourGoogle('', '#error=temporarily_unavailable')).toBe(interrompu)
+  })
+
+  it('adresse sans compte actif : contact EJP Tech (m013, T59)', () => {
+    expect(erreurDeRetourGoogle('?error_code=signup_disabled', '')).toBe(
+      'Aucun compte actif pour cette adresse. Ouvrez votre invitation ou demandez un compte à EJP Tech.',
+    )
   })
 
   it("rien sans paramètre d'erreur", () => {

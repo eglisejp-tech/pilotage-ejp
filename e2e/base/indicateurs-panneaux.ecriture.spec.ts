@@ -144,7 +144,10 @@ test.describe('administration de l’église', () => {
     await panneau.getByLabel("Ce qu'on compte exactement").fill('Demandes reçues, encore une fois.')
     await panneau.getByRole('radio', { name: /Chaque mois/ }).check()
     await panneau.getByRole('button', { name: "Ajouter l'indicateur" }).click()
-    await expect(panneau.getByRole('alert')).toHaveText('Cette fiche a déjà « Demandes essai ».')
+    // Le refus de la base, traduit (m233).
+    await expect(panneau.getByRole('alert')).toHaveText(
+      'Cette fiche a déjà un indicateur « Demandes essai ». Choisissez un autre nom.',
+    )
     expect(await indicateursDe(page)).toHaveLength(2)
     await panneau.getByRole('button', { name: 'Annuler' }).click()
   })

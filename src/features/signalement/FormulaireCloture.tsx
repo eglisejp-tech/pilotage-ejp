@@ -64,7 +64,7 @@ export function FormulaireCloture({
       await cloturer({ signalementId, commentaire: valeurs.commentaire })
       surClos()
     } catch (erreur) {
-      const lu = lireRefusSignalement(erreur)
+      const lu = lireRefusSignalement(erreur, 'cloture')
       if (estDejaClos(lu)) surDejaClos(MESSAGES_BASE_SIGNALEMENT.dejaClos)
       else if (lu.ou === 'champ')
         setError('commentaire', { message: lu.message }, { shouldFocus: true })

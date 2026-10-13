@@ -240,9 +240,34 @@ describe('refus de la base', () => {
     })
   })
 
-  it('tout le reste est un problème de connexion', () => {
-    expect(lireRefusValidation(new Error('réseau'))).toEqual({ ou: 'connexion' })
-    expect(lireRefusValidation({ code: 'PGRST000', message: 'x' })).toEqual({ ou: 'connexion' })
-    expect(lireRefusValidation(null)).toEqual({ ou: 'connexion' })
+  it('une erreur sans réponse (réseau, délai) est un problème de connexion', () => {
+    expect(lireRefusValidation(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+    expect(lireRefusValidation({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
+      ou: 'connexion',
+    })
+    expect(lireRefusValidation({ code: '', message: 'TimeoutError: x' })).toEqual({
+      ou: 'connexion',
+    })
+  })
+
+  it('un refus inattendu prend le repli, sous les boutons (m270)', () => {
+    const repli = {
+      ou: 'bouton',
+      message:
+        "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    }
+    expect(lireRefusValidation({ code: 'PGRST000', message: 'x' })).toEqual(repli)
+    expect(lireRefusValidation({ code: 'P0001', message: 'Un refus inconnu.' })).toEqual(repli)
+    expect(lireRefusValidation(null)).toEqual(repli)
+  })
+
+  it('connexion expirée et compte désactivé : leurs phrases, sous les boutons (m271, m272)', () => {
+    expect(
+      lireRefusValidation({ code: '42501', message: 'Double authentification requise.' }),
+    ).toEqual({ ou: 'bouton', message: 'Votre connexion a expiré. Reconnectez-vous.' })
+    expect(lireRefusValidation({ code: '42501', message: 'Compte inactif ou inconnu.' })).toEqual({
+      ou: 'bouton',
+      message: 'Ce compte est désactivé. Contactez EJP Tech.',
+    })
   })
 })

@@ -1,24 +1,19 @@
-import { z } from 'zod'
+import { phraseErreur } from '@/data/messagesBase'
 import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 
-// Lecture d'un refus de la base après « Déclarer », « Enregistrer » ou « Supprimer » : une erreur
-// de saisie (P0001) se dit telle quelle (« Une session Bâtir l'Église est déjà déclarée le
-// samedi 10 octobre. »), un refus de droit (42501) dit que la session n'est pas accessible, et
-// tout le reste est un problème de connexion (les valeurs restent dans le formulaire).
+// Lecture d'un refus après « Déclarer », « Enregistrer » ou « Supprimer », par la table de
+// traduction de `src/data/messagesBase.ts` : un refus de la base prend sa phrase (« Une session
+// Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date. », m210) ; un refus
+// de droit (42501) dit que la session n'est pas accessible ; une connexion expirée, un compte
+// désactivé ou un refus inattendu ont chacun leur phrase. Seule une erreur sans réponse prend la
+// phrase de connexion du formulaire (les valeurs restent dans le formulaire).
 
-function lireErreur(erreur: unknown): { code: string; message: string } | null {
-  if (typeof erreur !== 'object' || erreur === null) return null
-  const { code, message } = erreur as { code?: unknown; message?: unknown }
-  if (typeof code !== 'string' || typeof message !== 'string') return null
-  return { code, message }
-}
-
-/** Phrase d'un refus, avec la phrase de connexion propre au formulaire qui l'a reçu. */
+/**
+ * Phrase d'un refus, avec la phrase de connexion propre au formulaire qui l'a reçu. La suppression
+ * (phrase de connexion `erreurConnexionSuppression`) est une action sans formulaire : son repli
+ * ne parle pas de saisie gardée.
+ */
 export function lireRefusSession(erreur: unknown, connexion: string): string {
-  if (erreur instanceof z.ZodError) return erreur.issues[0]?.message ?? connexion
-  const lue = lireErreur(erreur)
-  if (!lue) return connexion
-  if (lue.code === 'P0001') return lue.message
-  if (lue.code === '42501') return TEXTES_SESSIONS.erreurAcces
-  return connexion
+  const formulaire = connexion !== TEXTES_SESSIONS.erreurConnexionSuppression
+  return phraseErreur(erreur, { connexion, acces: TEXTES_SESSIONS.erreurAcces }, { formulaire })
 }

@@ -225,20 +225,25 @@ describe('refus de la base', () => {
     { indicateur_id: 'b', valeur: 3, categories: { malaise: 2 } },
   ]
 
+  // Le champ vient de la table de traduction (`lireEchecEnvoi`) : l'écran ne compare plus les
+  // textes de la base.
   it('un refus sur le texte va sous la seule précision envoyée', () => {
-    expect(placerErreurBase("N'écrivez aucun nom ni information personnelle.", lignes)).toEqual({
+    expect(placerErreurBase('texte', lignes)).toEqual({ indicateurId: 'a', partie: 'precision' })
+    expect(placerErreurBase('precision', lignes)).toEqual({
       indicateurId: 'a',
       partie: 'precision',
     })
-    expect(
-      placerErreurBase('La somme des catégories (9) dépasse le total du mois (7).', lignes),
-    ).toEqual({ indicateurId: 'b', partie: 'repartition' })
+    expect(placerErreurBase('repartition', lignes)).toEqual({
+      indicateurId: 'b',
+      partie: 'repartition',
+    })
   })
 
   it('sinon, sous le bouton', () => {
     expect(placerErreurBase(null, lignes)).toEqual({ indicateurId: null, partie: 'bouton' })
+    expect(placerErreurBase('date', lignes)).toEqual({ indicateurId: null, partie: 'bouton' })
     expect(
-      placerErreurBase("N'écrivez aucun nom ni information personnelle.", [
+      placerErreurBase('texte', [
         ...lignes,
         { indicateur_id: 'c', valeur: 1, precision: 'Une autre précision du mois.' },
       ]),

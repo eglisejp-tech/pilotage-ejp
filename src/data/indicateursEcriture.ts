@@ -6,6 +6,7 @@
 // `security invoker` et ouvertes à `authenticated` seulement ; aucun texte libre ne va au journal.
 
 import { z } from 'zod'
+import { traduireMessageBase } from '@/data/messagesBase'
 import type {
   LigneTable,
   LimitesIndicateurs,
@@ -16,18 +17,23 @@ import type {
 import { longueurEnCaracteres } from '@/lib/metier/texte'
 import { supabase } from '@/lib/supabase'
 
-/** Messages de la base (5.8, 6.1) : le même texte avant et après l'appel. */
+/**
+ * Messages des contrôles (5.8, 6.1) : le même texte avant l'appel et après, quand la table de
+ * traduction (`src/data/messagesBase.ts`) dit le refus de la base. `libelle`, `definition`,
+ * `sorte` et `distincts` sont proposés (m233) : les mots des champs, sans « libellé » ni
+ * « sorte ».
+ */
 export const MESSAGES_ECRITURE = {
-  libelle: 'Donnez un libellé de 2 à 60 caractères.',
-  definition: "Expliquez ce qu'on compte en 10 à 140 caractères.",
+  libelle: 'Donnez un nom de 2 à 60 caractères.',
+  definition: 'Expliquez ce qui est compté, en 10 à 140 caractères.',
   rythme: 'Choisissez le rythme : chaque dimanche, chaque mois ou à ce jour.',
-  sorte: 'Choisissez la sorte de nombre.',
+  sorte: 'Choisissez le type de nombre.',
   sensibleMois: 'Un indicateur sensible se saisit chaque mois.',
   sensibleCompte: "Un indicateur sensible est un compte, jusqu'à 9 999.",
   type: 'Choisissez un taux ou une moyenne.',
   haut: 'Choisissez le chiffre du haut.',
   bas: 'Choisissez le chiffre du bas.',
-  distincts: 'Un calcul se fait sur des chiffres distincts.',
+  distincts: 'Choisissez deux chiffres différents du même ministère.',
   partTaux: 'Seul un taux peut être une part.',
   motif: 'Choisissez le motif du retrait.',
 } as const
@@ -230,7 +236,8 @@ export async function retirerIndicateur(
 
 /**
  * Contrôles d'un libellé pendant la frappe (`verifier_libelle`) : ce que la base refuserait, et le
- * doublon éventuel. Un appel en POST : la fonction est volatile.
+ * doublon éventuel. Un appel en POST : la fonction est volatile. Chaque message prend la phrase de
+ * la table de traduction, la même que celle du refus à l'envoi (m233).
  */
 export async function verifierLibelle(
   libelle: string,
@@ -243,7 +250,7 @@ export async function verifierLibelle(
     p_ministere_id: schemaIdentifiant.parse(ministereId),
   })
   if (error) throw error
-  return data
+  return data.map((ligne) => ({ ...ligne, message: traduireMessageBase(ligne.message) }))
 }
 
 /** Limites d'une fiche (`limites_indicateurs`) : lignes suivies et plafond, ajouts et plafond. */

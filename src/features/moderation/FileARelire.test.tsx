@@ -153,9 +153,10 @@ describe('file « Champs libres à relire »', () => {
       screen.getByRole('radio', { name: 'Coordonnées (téléphone, adresse, email)' }),
     )
     await userEvent.click(screen.getByRole('button', { name: 'Masquer définitivement' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Texte introuvable, vide ou déjà masqué.',
-    )
+    // Le refus de la base, traduit (m220), jamais son texte brut.
+    const alerte = await screen.findByRole('alert')
+    expect(alerte).toHaveTextContent('Ce texte est déjà masqué ou vide. Rechargez la page.')
+    expect(alerte).not.toHaveTextContent('Texte introuvable')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(
       screen.getByRole('radio', { name: 'Coordonnées (téléphone, adresse, email)' }),

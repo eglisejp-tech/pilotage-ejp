@@ -117,7 +117,7 @@ describe('VueSessions (écran 14)', () => {
     expect(actions.declarer).not.toHaveBeenCalled()
   })
 
-  it('dit sous le bouton le refus de la base et garde les valeurs', async () => {
+  it('dit sous le bouton le refus de la base, traduit, et garde les valeurs (m210)', async () => {
     const actions = actionsFausses()
     actions.declarer.mockRejectedValueOnce({
       code: 'P0001',
@@ -128,7 +128,7 @@ describe('VueSessions (écran 14)', () => {
     await userEvent.click(within(colonne).getByRole('checkbox', { name: 'Social' }))
     await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
     expect(await within(colonne).findByRole('alert')).toHaveTextContent(
-      "Une session Bâtir l'Église est déjà déclarée le samedi 10 octobre.",
+      "Une session Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date.",
     )
     expect(within(colonne).getByText('7 sur 8')).toBeInTheDocument()
   })
@@ -171,8 +171,9 @@ describe('VueSessions (écran 14)', () => {
       name: 'Supprimer Anti-Dispersion du 10 oct. ?',
     })
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer la session' }))
+    // Le refus de la base, traduit (m210).
     expect(await within(fenetre).findByRole('alert')).toHaveTextContent(
-      'Des ministères ont déjà saisi : la session ne peut plus être supprimée.',
+      'Des ministères ont déjà saisi cette session. Elle reste dans la liste.',
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer la session' }))
     await waitFor(() => expect(actions.supprimer).toHaveBeenCalledTimes(2))

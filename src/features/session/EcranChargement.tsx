@@ -1,18 +1,12 @@
-import { useEffect, useState } from 'react'
-
-const DELAI_AFFICHAGE = 300
+import { useMotChargement } from '@/components/etats/useMotChargement'
 
 /**
  * Chargement de la session : rien pendant 300 ms, puis « Chargement », sans animation, avec
- * aria-busy (docs/reference/maquettes/LISEZMOI.md, « États »).
+ * aria-busy (docs/reference/maquettes/LISEZMOI.md, « États ») ; après 4 s, « Chargement plus long
+ * que d'habitude », dans la même zone (m248), avant l'écran d'erreur à 10 s.
  */
 export function EcranChargement() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
-    const minuterie = setTimeout(() => setVisible(true), DELAI_AFFICHAGE)
-    return () => clearTimeout(minuterie)
-  }, [])
+  const mot = useMotChargement()
 
   return (
     <main
@@ -20,7 +14,7 @@ export function EcranChargement() {
       aria-busy="true"
       className="flex min-h-dvh items-center justify-center bg-fond text-encre-3"
     >
-      {visible ? <p>Chargement</p> : null}
+      <div role="status">{mot === null ? null : <p>{mot}</p>}</div>
     </main>
   )
 }

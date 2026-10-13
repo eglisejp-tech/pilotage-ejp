@@ -7,7 +7,7 @@ import { ministeresAMentionner } from '@/features/evenements/mentions'
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { AjoutEvenement } from '@/features/evenements/schemas'
-import { useApresEcriture } from '@/features/evenements/useApresEcriture'
+import { creerPuisRelire, useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
 
 /**
@@ -27,10 +27,8 @@ export function SaisieAjoutEvenement({
   const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
   const ministeres = useQuery({ queryKey: ['ministeres', 'liste'], queryFn: lireMinisteres })
 
-  const envoyer = async (evenement: AjoutEvenement) => {
-    await ajouterEvenement(evenement)
-    apresEcriture()
-  }
+  const envoyer = (evenement: AjoutEvenement) =>
+    creerPuisRelire(() => ajouterEvenement(evenement), apresEcriture)
 
   let contenu: ContenuPanneauEvenement
   if (semaine.data && ministeres.data) {

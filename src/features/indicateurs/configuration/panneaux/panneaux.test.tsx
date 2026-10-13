@@ -165,9 +165,10 @@ describe('panneau « Ajouter un indicateur »', () => {
   it('envoyé vide : chaque champ dit ce qui manque, rien n’est envoyé, le focus va au premier', async () => {
     const { utilisateur, panneau, ecritures } = await ouvrir()
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
-    expect(within(panneau).getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
+    // Les mêmes phrases que la table de traduction (m233).
+    expect(within(panneau).getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
     expect(
-      within(panneau).getByText("Expliquez ce qu'on compte en 10 à 140 caractères."),
+      within(panneau).getByText('Expliquez ce qui est compté, en 10 à 140 caractères.'),
     ).toBeVisible()
     expect(
       within(panneau).getByText(
@@ -392,15 +393,18 @@ describe('panneau « Ajouter un indicateur »', () => {
     )
     await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    // Le refus de la base, traduit par la table (m233).
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      'Cette fiche a déjà « Tournages ».',
+      'Cette fiche a déjà un indicateur « Tournages ». Choisissez un autre nom.',
     )
     expect(within(panneau).getByLabelText('Ce que vous comptez')).toHaveValue('Tournages')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
   it('une connexion perdue le dit sans effacer le formulaire', async () => {
-    const ecritures = ecrituresDe({ ajouter: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const ecritures = ecrituresDe({
+      ajouter: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    })
     const { utilisateur, panneau } = await ouvrir(ecritures)
     await utilisateur.type(within(panneau).getByLabelText('Ce que vous comptez'), 'Tournages')
     await utilisateur.type(
@@ -961,7 +965,9 @@ describe('fenêtre « Retirer »', () => {
   })
 
   it('une connexion perdue le dit', async () => {
-    const ecritures = ecrituresDe({ retirer: vi.fn(() => Promise.reject(new Error('réseau'))) })
+    const ecritures = ecrituresDe({
+      retirer: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
+    })
     const utilisateur = afficher(ID_COMMUNICATION, ecritures)
     await utilisateur.click(bouton('Retirer « Publications »'))
     const fenetre = await screen.findByRole('alertdialog')

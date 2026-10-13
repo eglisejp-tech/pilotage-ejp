@@ -60,8 +60,12 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
     "Cette invitation a déjà été acceptée. La personne choisit « Mot de passe oublié » sur l'écran de connexion.",
   invitation_trop_recente:
     'Une invitation vient de partir vers cette adresse. Attendez une minute, puis réessayez.',
-  conflit: "Une autre modification vient d'avoir lieu. Rechargez la page, puis réessayez.",
+  /** Proposé (m191) : la liste se relit seule ; recharger ferait perdre la saisie du panneau. */
+  conflit: "Une autre modification vient d'avoir lieu. Vérifiez la liste, puis réessayez.",
   invitation_non_envoyee: "L'invitation n'a pas pu partir. Réessayez dans quelques minutes.",
+  /** Proposé (m194) : « Refaire l'activation » interrompue, le compte reste bloqué. */
+  activation_incomplete:
+    "« Refaire l'activation » n'a pas abouti. Relancez-la avant de prévenir la personne.",
   erreur_interne: "L'action n'a pas pu se terminer. Réessayez dans quelques minutes.",
 }
 

@@ -100,8 +100,9 @@ test.describe('Sessions (administration), aperçu', () => {
     await formulaire.locator('label').filter({ hasText: 'Anti-Dispersion' }).click()
     await formulaire.getByRole('checkbox', { name: 'Social' }).uncheck()
     await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
+    // Le refus de la base, traduit (m210).
     await expect(formulaire.getByRole('alert')).toHaveText(
-      'Une session Anti-Dispersion est déjà déclarée le samedi 10 octobre.',
+      'Une session Anti-Dispersion existe déjà le samedi 10 octobre. Choisissez une autre date.',
     )
     await expect(formulaire.getByText('7 sur 8')).toBeVisible()
   })

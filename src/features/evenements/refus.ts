@@ -1,11 +1,15 @@
+import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { MESSAGES_BASE, TEXTES_REUNION } from '@/features/evenements/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
-// Lecture d'un refus de la base après un envoi (docs/conception/contrat-etape-4.md, section 7) :
-// une erreur de saisie (P0001) s'affiche telle quelle, un refus de droit (42501) dit seulement
-// que l'élément n'est pas accessible, et tout le reste est un problème de connexion (valeurs
-// gardées, LISEZMOI « Erreur de formulaire »). Les refus de date vont sous le champ date, avec le
-// lien « Signaler une difficulté » (T37, T39) ; une ligne identique va sous le bouton, sans lien.
+// Lecture d'un refus de la base après un envoi (contrat de l'étape 4, section 7), par la table de
+// traduction de `src/data/messagesBase.ts` : un refus de la base prend sa phrase, sous le champ
+// date quand il porte sur la date (avec le lien « Signaler une difficulté », T37, T39), sinon sous
+// le bouton ; un refus de droit (42501) dit seulement que l'élément n'est pas accessible ; une
+// connexion expirée, un compte désactivé ou un refus inattendu ont chacun leur phrase. Seule une
+// erreur sans réponse est un problème de connexion (valeurs gardées, LISEZMOI « Erreur de
+// formulaire ») ; après 10 s sans réponse à un ajout, l'événement est peut-être enregistré : la
+// phrase dit de vérifier la liste avant de réessayer (m259).
 
 export type Refus =
   /** Sous le champ date : texte de aides-contextuelles.md, section 7, suivi du lien. */
@@ -15,37 +19,32 @@ export type Refus =
   /** Erreur de formulaire de LISEZMOI (connexion), sous le bouton. */
   | { ou: 'connexion' }
 
-/** Ce que l'on lit d'une erreur PostgREST : son code SQL et son message. */
-function lireErreur(erreur: unknown): { code: string; message: string } | null {
-  if (typeof erreur !== 'object' || erreur === null) return null
-  const { code, message } = erreur as { code?: unknown; message?: unknown }
-  if (typeof code !== 'string' || typeof message !== 'string') return null
-  return { code, message }
-}
-
 /**
- * Place et texte d'un refus de la base, pour le formulaire qui l'a reçu. Pour la réunion, un refus
- * de droit (42501) vient de la politique d'ajout de `reunion` (date du jour ou à venir) : le jour
- * a changé depuis l'ouverture du panneau, c'est donc une date passée, dite sous le champ date.
+ * Place et texte d'un refus de la base, pour le formulaire qui l'a reçu : `ajout` (un nouvel
+ * événement), `evenement` (sa mise à jour) ou `reunion`. Pour la réunion, un refus de droit
+ * (42501) vient de la politique d'ajout de `reunion` (date du jour ou à venir) : le jour a changé
+ * depuis l'ouverture du panneau, c'est donc une date passée, dite sous le champ date.
  */
-export function lireRefus(erreur: unknown, saisie: 'evenement' | 'reunion' = 'evenement'): Refus {
-  const lue = lireErreur(erreur)
-  if (!lue) return { ou: 'connexion' }
-  if (lue.code === '42501') {
-    return saisie === 'reunion'
-      ? { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
-      : { ou: 'bouton', message: MESSAGES_BASE.acces }
-  }
-  if (lue.code !== 'P0001') return { ou: 'connexion' }
-  switch (lue.message) {
-    case MESSAGES_BASE.datePasseeAjout:
-      return { ou: 'date', message: TEXTES_SIGNALEMENT.dateRefuseeAjout }
-    case MESSAGES_BASE.datePasseeMiseAJour:
-      return { ou: 'date', message: TEXTES_SIGNALEMENT.dateRefuseeMiseAJour }
-    case MESSAGES_BASE.ligneIdentique:
-      return { ou: 'bouton', message: TEXTES_SIGNALEMENT.ligneIdentique }
-    default:
-      return { ou: 'bouton', message: lue.message }
+export function lireRefus(
+  erreur: unknown,
+  saisie: 'ajout' | 'evenement' | 'reunion' = 'evenement',
+): Refus {
+  const lue = lireErreurBase(erreur)
+  switch (lue.genre) {
+    case 'reseau':
+      return { ou: 'connexion' }
+    case 'delai':
+      return saisie === 'ajout'
+        ? { ou: 'bouton', message: MESSAGES_COMMUNS.peutEtreFait }
+        : { ou: 'connexion' }
+    case 'acces':
+      return saisie === 'reunion'
+        ? { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
+        : { ou: 'bouton', message: MESSAGES_BASE.acces }
+    case 'message':
+      return lue.champ === 'date'
+        ? { ou: 'date', message: lue.message }
+        : { ou: 'bouton', message: lue.message }
   }
 }
 

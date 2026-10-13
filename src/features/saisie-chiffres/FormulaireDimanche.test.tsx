@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import { z } from 'zod'
 import { etatApercuDimanche } from '@/features/saisie-chiffres/apercu/etatsApercu'
 import { FormulaireDimanche } from '@/features/saisie-chiffres/FormulaireDimanche'
 
@@ -206,5 +207,54 @@ describe('FormulaireDimanche (maquette 08)', () => {
     const lien = screen.getByRole('link', { name: 'Signaler une difficulté' })
     expect(lien).toHaveAttribute('href', '/signaler?ecran=saisie_dimanche')
     expect(document.body.textContent).not.toMatch(TIRETS)
+  })
+
+  it('le matin, tous les chiffres vides : « Saisissez au moins un chiffre. », rien ne part (m066)', async () => {
+    const utilisateur = userEvent.setup()
+    const enregistrer = afficher('matin')
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saisissez au moins un chiffre.')
+    expect(screen.queryByText(/La connexion a échoué/)).toBeNull()
+    expect(enregistrer).not.toHaveBeenCalled()
+  })
+
+  it('un refus de la couche data (Zod) n’est pas une coupure : sa consigne s’affiche (m066)', async () => {
+    const utilisateur = userEvent.setup()
+    const erreur = z
+      .object({ lignes: z.array(z.number()).min(1, 'Saisissez au moins un chiffre.') })
+      .safeParse({ lignes: [] }).error
+    afficher(
+      null,
+      vi.fn(() => Promise.reject(erreur)),
+    )
+    await utilisateur.type(service(), '8')
+    await utilisateur.click(enregistrerLesChiffres())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saisissez au moins un chiffre.')
+    expect(screen.queryByText(/La connexion a échoué/)).toBeNull()
+  })
+
+  it('la base refuse « Dont en FIJ » au-dessus des actifs : la phrase sous ce champ (m068)', async () => {
+    const utilisateur = userEvent.setup()
+    afficher(
+      null,
+      vi.fn(() =>
+        Promise.reject({
+          code: 'P0001',
+          message: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+        }),
+      ),
+    )
+    await utilisateur.type(service(), '8')
+    await utilisateur.click(enregistrerLesChiffres())
+    const phrase = await screen.findByText(
+      "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres.",
+    )
+    const enFij = screen.getByLabelText('Dont en FIJ', { exact: true })
+    expect(phrase.id).not.toBe('')
+    expect(enFij.getAttribute('aria-describedby')).toContain(phrase.id)
+    expect(enFij).toHaveAttribute('aria-invalid', 'true')
+    expect(
+      screen.queryByText('Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'),
+    ).toBeNull()
   })
 })

@@ -119,19 +119,23 @@ describe('reinitialiser-2fa', () => {
     expect(appels).toEqual(['rpc:serveur_controler_cible', 'mot_de_passe'])
   })
 
-  it('échec de la suppression des sessions : les facteurs restent', async () => {
+  // Après le mot de passe, le compte est bloqué tant que l'action n'est pas relancée : un code à
+  // part le dit à l'administration (m194).
+  it('échec de la suppression des sessions : les facteurs restent, activation à relancer', async () => {
     const { appelant, appels } = clientFactice({ 'rpc:serveur_revoquer_sessions': 'interne' })
     await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
       statut: 500,
+      code: 'activation_incomplete',
     })
     expect(appels).not.toContain('liste_facteurs')
     expect(appels.some((appel) => appel.startsWith('suppression_facteur'))).toBe(false)
   })
 
-  it('échec sur un facteur : sessions déjà supprimées, pas de journal', async () => {
+  it('échec sur un facteur : sessions déjà supprimées, pas de journal, activation à relancer', async () => {
     const { appelant, appels } = clientFactice({ 'suppression_facteur:f1': '' })
     await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
       statut: 500,
+      code: 'activation_incomplete',
     })
     expect(appels.indexOf('rpc:serveur_revoquer_sessions')).toBeLessThan(
       appels.indexOf('suppression_facteur:f1'),
@@ -140,13 +144,30 @@ describe('reinitialiser-2fa', () => {
     expect(appels).not.toContain('rpc:serveur_reinitialiser_2fa')
   })
 
-  it('échec de la liste des facteurs : pas de journal', async () => {
+  it('échec de la liste des facteurs : pas de journal, activation à relancer', async () => {
     const { appelant, appels } = clientFactice({ liste_facteurs: '' })
     await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
       statut: 500,
+      code: 'activation_incomplete',
     })
     expect(appels).toContain('rpc:serveur_revoquer_sessions')
     expect(appels).not.toContain('rpc:serveur_reinitialiser_2fa')
+  })
+
+  it('échec du journal (dernière étape) : activation à relancer', async () => {
+    const { appelant } = clientFactice({ 'rpc:serveur_reinitialiser_2fa': 'interne' })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 500,
+      code: 'activation_incomplete',
+    })
+  })
+
+  it('un refus explicite en cours de route garde son code (session de l’appelant révoquée)', async () => {
+    const { appelant } = clientFactice({ 'rpc:serveur_revoquer_sessions': 'session_revoquee' })
+    await expect(reinitialiserDoubleAuthentification(demande, appelant)).rejects.toMatchObject({
+      statut: 401,
+      code: 'session_revoquee',
+    })
   })
 })
 

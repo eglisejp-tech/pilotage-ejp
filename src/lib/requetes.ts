@@ -1,6 +1,12 @@
 import { QueryClient } from '@tanstack/react-query'
 
 /**
+ * Au-delà, un chargement encore en cours le dit (« Chargement plus long que d'habitude », m248),
+ * dans la même zone, avant l'échec à 10 s (`DELAI_MAX_REQUETE` de `src/lib/supabase.ts`).
+ */
+export const DELAI_CHARGEMENT_LONG = 4_000
+
+/**
  * Vrai si l'erreur vient du délai maximal de `fetchAvecDelai` (10 s). Les lectures de `src/data/`
  * lèvent l'erreur de postgrest-js, dont le message commence par le nom de l'erreur d'origine
  * (« TimeoutError: ... ») ; une erreur JavaScript directe porte ce nom dans `name`.

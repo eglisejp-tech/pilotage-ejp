@@ -73,7 +73,8 @@ export function FormulaireAjoutEvenement({
       setReussite(TEXTES_EVENEMENT.reussiteAjout)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
-      const lu = lireRefus(erreur, 'evenement')
+      // Un ajout : après 10 s sans réponse, l'événement est peut-être enregistré (m259).
+      const lu = lireRefus(erreur, 'ajout')
       if (lu.ou === 'date') setError('date', { message: lu.message }, { shouldFocus: true })
       else setRefus(lu)
     }

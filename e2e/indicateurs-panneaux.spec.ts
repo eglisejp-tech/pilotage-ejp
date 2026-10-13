@@ -57,8 +57,11 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await ouvrir(page)
     await bouton(page, 'Ajouter un indicateur').click()
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
-    await expect(page.getByText("Expliquez ce qu'on compte en 10 à 140 caractères.")).toBeVisible()
+    // Les mêmes phrases que la table de traduction (m233).
+    await expect(page.getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
+    await expect(
+      page.getByText('Expliquez ce qui est compté, en 10 à 140 caractères.'),
+    ).toBeVisible()
     await expect(
       page.getByText('Choisissez le rythme : chaque dimanche, chaque mois ou à ce jour.'),
     ).toBeVisible()
@@ -72,9 +75,11 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await ouvrir(page)
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Publications', 'Publications mises en ligne.', /Chaque mois/)
-    await expect(page.getByText('Cette fiche a déjà « Publications ».').first()).toBeVisible()
+    // Pendant la frappe et après l'envoi, la même phrase de la table de traduction (m233).
+    const doublon = 'Cette fiche a déjà un indicateur « Publications ». Choisissez un autre nom.'
+    await expect(page.getByText(doublon).first()).toBeVisible()
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByRole('alert')).toHaveText('Cette fiche a déjà « Publications ».')
+    await expect(page.getByRole('alert')).toHaveText(doublon)
     await expect(page.getByLabel('Ce que vous comptez')).toHaveValue('Publications')
   })
 
@@ -396,7 +401,7 @@ test.describe('accessibilité et petits écrans', () => {
     await expect(titre(page, 'Ajouter un indicateur')).toBeVisible()
     await apres('ajout')
     await bouton(page, "Ajouter l'indicateur").click()
-    await expect(page.getByText('Donnez un libellé de 2 à 60 caractères.')).toBeVisible()
+    await expect(page.getByText('Donnez un nom de 2 à 60 caractères.')).toBeVisible()
     await apres('ajout-erreurs')
     await page.getByRole('checkbox', { name: /Domaine sensible/ }).check()
     await apres('ajout-sensible')

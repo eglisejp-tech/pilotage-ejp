@@ -185,8 +185,9 @@ test.describe('administration de l’église', () => {
       .getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
       .selectOption({ label: 'Kumi' })
     await page.getByRole('button', { name: /^Créer ces \d+ indicateurs$/ }).click()
+    // Le refus de la base, traduit (m228).
     await expect(page.getByRole('alert')).toHaveText(
-      /^La fiche a déjà « .+ » : retirez-le avant de créer les indicateurs prévus\.$/,
+      /^La fiche a déjà « .+ »\. Retirez-le, puis créez les indicateurs prévus\.$/,
     )
     // Tout ou rien : aucun indicateur de plus, aucune ligne de journal de plus, le bloc reste.
     expect(await indicateursDe(page, MINISTERE_JEUNESSE)).toHaveLength(avant)

@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 import { creerIndicateursPrevus } from '@/data/indicateursConfiguration'
+import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { invaliderApresEcriture } from '@/features/indicateurs/configuration/cles'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import {
@@ -9,27 +10,24 @@ import {
   TEXTES_CONFIGURATION,
 } from '@/features/indicateurs/configuration/textes'
 
-/** Refus de droit commun à toutes les fonctions de l'API (42501), message d'un objet absent. */
-const REFUS_ACCES = "Cet élément n'existe pas ou vous n'y avez pas accès."
-
-/** Refus de `private.exige_aal2()` (42501 aussi) : la session n'a plus la double authentification. */
-const REFUS_DOUBLE_AUTHENTIFICATION = 'Double authentification requise.'
-
 /**
- * Texte d'un refus de la base à montrer tel quel (erreur `P0001` : « La fiche a déjà « X » :
- * retirez-le avant de créer les indicateurs prévus. »), ou `null` pour un problème de connexion
- * (l'écran dit « La connexion a échoué. Réessayez. »). Un refus de droit (42501) dit seulement que
- * l'élément n'est pas accessible, sauf « Double authentification requise. », que la personne doit
- * lire pour refaire sa double authentification.
+ * Phrase d'un refus, par la table de traduction de `src/data/messagesBase.ts` (m228) : « La fiche
+ * a déjà « X ». Retirez-le, puis créez les indicateurs prévus. », la connexion expirée (m271), un
+ * refus de droit (42501) qui dit seulement que l'élément n'est pas accessible, ou le repli d'une
+ * action. `null` : un problème de connexion (l'écran dit « La connexion a échoué. Réessayez. »).
+ * `formulaire` faux : une action sans formulaire (création des prévus, fenêtre de retrait).
  */
-export function messageDeRefusPrevus(erreur: unknown): string | null {
-  if (typeof erreur !== 'object' || erreur === null) return null
-  const { code, message } = erreur as { code?: unknown; message?: unknown }
-  if (code === '42501') {
-    return message === REFUS_DOUBLE_AUTHENTIFICATION ? message : REFUS_ACCES
+export function messageDeRefusPrevus(erreur: unknown, formulaire = false): string | null {
+  const lue = lireErreurBase(erreur, { formulaire })
+  switch (lue.genre) {
+    case 'reseau':
+    case 'delai':
+      return null
+    case 'acces':
+      return MESSAGES_COMMUNS.acces
+    case 'message':
+      return lue.message
   }
-  if (code !== 'P0001' || typeof message !== 'string') return null
-  return message
 }
 
 /** Ce que reçoit l'écran pour la création des prévus. */

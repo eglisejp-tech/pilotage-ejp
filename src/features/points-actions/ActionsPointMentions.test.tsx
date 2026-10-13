@@ -206,6 +206,31 @@ describe('la fenêtre « Modifier les mentions »', () => {
     await waitFor(() => expect(invalider).toHaveBeenCalled())
   })
 
+  it.each([
+    'Ce ministère est déjà mentionné sur ce point.',
+    "Ce ministère n'est pas mentionné sur ce point.",
+  ])(
+    'mentions changées par un autre compte (« %s ») : fermer met la page à jour (m157)',
+    async (message) => {
+      modifierMentions.mockRejectedValue({ code: 'P0001', message })
+      const { invalider } = afficher(compteMinistere(CREATEUR))
+      const fenetre = await ouvrir()
+      await userEvent.click(await within(fenetre).findByRole('checkbox', { name: 'Social' }))
+      await userEvent.click(
+        within(fenetre).getByRole('button', { name: 'Enregistrer les mentions' }),
+      )
+      const alerte = await within(fenetre).findByRole('alert')
+      expect(alerte).toHaveTextContent(
+        'Les mentions de ce point viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',
+      )
+      expect(alerte).not.toHaveTextContent(message)
+      // La phrase dit vrai : fermer la fenêtre relit la page.
+      expect(invalider).not.toHaveBeenCalled()
+      await userEvent.click(within(fenetre).getByRole('button', { name: 'Annuler' }))
+      await waitFor(() => expect(invalider).toHaveBeenCalled())
+    },
+  )
+
   it('une connexion perdue garde les cases et le dit', async () => {
     modifierMentions.mockRejectedValue({ message: 'FetchError: Failed to fetch', code: '' })
     const { invalider } = afficher(compteMinistere(CREATEUR))

@@ -142,6 +142,7 @@ describe('codes d’erreur traduits en français', () => {
     'invitation_trop_recente',
     'conflit',
     'invitation_non_envoyee',
+    'activation_incomplete',
     'erreur_interne',
   ]
 
@@ -152,9 +153,23 @@ describe('codes d’erreur traduits en français', () => {
     expect((erreur as ErreurCompte).code).toBe(code)
     const message = (erreur as ErreurCompte).message
     expect(message).toBe(MESSAGES_ERREURS_COMPTES[code])
-    expect(message).toMatch(/^[A-ZÀ-Ü].*\.$/u)
+    expect(message).toMatch(/^[A-ZÀ-Ü«].*\.$/u)
     expect(message).not.toContain(code)
     expect(message).not.toMatch(TIRETS)
+  })
+
+  it('conflit : vérifier la liste, sans recharger la page (m191)', () => {
+    expect(MESSAGES_ERREURS_COMPTES.conflit).toBe(
+      "Une autre modification vient d'avoir lieu. Vérifiez la liste, puis réessayez.",
+    )
+  })
+
+  it('« Refaire l’activation » interrompue : le dire, et la relancer (m194)', async () => {
+    installer(refus(500, { erreur: 'activation_incomplete' }))
+    const erreur = await reinitialiserDoubleAuthentification(COMPTE).catch((e: unknown) => e)
+    expect((erreur as ErreurCompte).message).toBe(
+      "« Refaire l'activation » n'a pas abouti. Relancez-la avant de prévenir la personne.",
+    )
   })
 
   it('adresse déjà utilisée et nom déjà pris : des phrases précises', () => {

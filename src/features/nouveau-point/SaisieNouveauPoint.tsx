@@ -4,7 +4,7 @@ import { lireSemaine } from '@/data/eglise'
 import { lireMinisteres } from '@/data/ministeres'
 import { enEchec } from '@/features/evenements/lectures'
 import { ministeresAMentionner } from '@/features/evenements/mentions'
-import { useApresEcriture } from '@/features/evenements/useApresEcriture'
+import { creerPuisRelire, useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
 import { PanneauNouveauPoint } from '@/features/nouveau-point/PanneauNouveauPoint'
 import type { ContenuPanneauNouveauPoint } from '@/features/nouveau-point/PanneauNouveauPoint'
@@ -32,10 +32,7 @@ export function SaisieNouveauPoint({
   })
   const ministeres = useQuery({ queryKey: ['ministeres', 'liste'], queryFn: lireMinisteres })
 
-  const envoyer = async (point: NouveauPoint) => {
-    await creerPoint(point)
-    apresEcriture()
-  }
+  const envoyer = (point: NouveauPoint) => creerPuisRelire(() => creerPoint(point), apresEcriture)
 
   let contenu: ContenuPanneauNouveauPoint
   if (semaine.data && ministeres.data) {

@@ -166,7 +166,8 @@ test.describe('Communication envoie ses suggestions', () => {
     await page.getByRole('button', { name: 'Ajouter un indicateur' }).click()
     const panneau = page.getByRole('dialog', { name: 'Ajouter un indicateur' })
     await expect(panneau.getByText(/^Votre ministère a déjà 3 indicateurs à lui\./)).toBeVisible()
-    await expect(panneau.getByText(/Demandez à l'administration de l'église/)).toBeVisible()
+    // Contact : EJP Tech (T59).
+    await expect(panneau.getByText(/Demandez à EJP Tech/)).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
     await panneau.getByRole('button', { name: 'Fermer' }).click()
 

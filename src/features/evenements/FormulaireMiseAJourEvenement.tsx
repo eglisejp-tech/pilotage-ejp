@@ -12,6 +12,7 @@ import { schemaMiseAJourEvenement } from '@/features/evenements/schemas'
 import type { MiseAJourEvenement, ValeursMiseAJourEvenement } from '@/features/evenements/schemas'
 import { ligneMentions, ligneReport, TEXTES_EVENEMENT } from '@/features/evenements/textes'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
+import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import type { StatutEvenement } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
@@ -44,9 +45,10 @@ const ID_REPORT = 'evenement-date-report'
  * (`v_evenement.a_confirmer`), jamais recalculée ici : après un envoi, la ligne se retire jusqu'à
  * la relecture de l'événement. Une nouvelle date passée est refusée sous le champ date, avec le
  * lien « Signaler une difficulté » ; la date actuelle, même passée, reste permise (T37). Une
- * ligne identique part à la base, qui la refuse : son message s'affiche sous le bouton, sans
- * lien. Après une réussite, le bouton reste inactif jusqu'à la prochaine modification. Deux
- * aides : statut et report.
+ * ligne identique ne part pas : « Ce statut et cette date sont déjà enregistrés. » se dit sous le
+ * bouton, sans lien, avant l'envoi (m134) ; la base, qui la refuse aussi, dit la même phrase par
+ * la table de traduction. Après une réussite, le bouton reste inactif jusqu'à la prochaine
+ * modification, et un nouvel appui dit la même phrase. Deux aides : statut et report.
  */
 export function FormulaireMiseAJourEvenement({
   aujourdhui,
@@ -92,9 +94,17 @@ export function FormulaireMiseAJourEvenement({
       ? ligneReport(actuel.date, date)
       : null
 
+  // Ce statut et cette date sont déjà les derniers enregistrés : la base refuserait la ligne
+  // identique. La phrase le dit avant l'envoi, sans aller-retour (m134).
+  const dejaEnregistre: Refus = { ou: 'bouton', message: TEXTES_SIGNALEMENT.ligneIdentique }
+
   const soumettre = handleSubmit(async (miseAJour) => {
     setRefus(null)
     setReussite(null)
+    if (miseAJour.date === actuel.date && miseAJour.statut === actuel.statut) {
+      setRefus(dejaEnregistre)
+      return
+    }
     try {
       await envoyer(miseAJour)
       setEnregistre({ date: miseAJour.date, statut: miseAJour.statut })
@@ -115,6 +125,11 @@ export function FormulaireMiseAJourEvenement({
       onSubmit={(evenement) => {
         if (isSubmitting || dejaEnvoye) {
           evenement.preventDefault()
+          // Un second appui après une réussite n'envoie rien, et le dit (m134).
+          if (dejaEnvoye && !isSubmitting) {
+            setReussite(null)
+            setRefus(dejaEnregistre)
+          }
           return
         }
         void soumettre(evenement)

@@ -23,11 +23,11 @@ const espaces = (texte: string) => texte.replaceAll(' ', ' ')
 describe('« Pourquoi cet indicateur ? » : 10 à 280 caractères après espaces retirés', () => {
   const pourquoi = (texte: string) => schemaFormulaireSuggestion.safeParse({ pourquoi: texte })
 
-  it('refuse moins de 10 caractères, avec le message de la base', () => {
+  it('refuse moins de 10 caractères, avec la phrase de la table de traduction (m233)', () => {
     const court = pourquoi('Neuf cara')
     expect(court.success).toBe(false)
     if (!court.success) {
-      expect(court.error.issues[0]?.message).toBe('Expliquez pourquoi en 10 caractères au moins.')
+      expect(court.error.issues[0]?.message).toBe('Expliquez pourquoi (10 caractères au moins).')
     }
     expect(pourquoi('Dix caract').success).toBe(true)
   })
@@ -39,11 +39,13 @@ describe('« Pourquoi cet indicateur ? » : 10 à 280 caractères après espaces
     expect(pourquoi('').success).toBe(false)
   })
 
-  it('accepte 280 caractères et refuse 281, avec le message de la base', () => {
+  it('accepte 280 caractères et refuse 281, avec la phrase de la table de traduction (m233)', () => {
     expect(pourquoi('a'.repeat(280)).success).toBe(true)
     const long = pourquoi('a'.repeat(281))
     expect(long.success).toBe(false)
-    if (!long.success) expect(long.error.issues[0]?.message).toBe('280 caractères au plus.')
+    if (!long.success) {
+      expect(long.error.issues[0]?.message).toBe('Raccourcissez ce texte : 280 caractères au plus.')
+    }
   })
 
   it('compte un caractère par émoji, comme char_length de la base', () => {
@@ -184,14 +186,16 @@ describe('phrases de l’écran', () => {
     expect(texteRetrait(null, null)).toBe('Retiré.')
   })
 
-  it('les limites disent ce qu’il faut faire, avec les plafonds de la base', () => {
+  it('les limites disent ce qu’il faut faire, avec les plafonds de la base, contact EJP Tech (T59)', () => {
     const limites = { ajouts: 3, ajouts_max: 3, lignes: 12, lignes_max: 30 }
-    expect(explicationLimiteAjouts(limites)).toMatch(
-      /^Votre ministère a déjà 3 indicateurs à lui\./,
+    expect(explicationLimiteAjouts(limites)).toBe(
+      "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
     )
-    expect(explicationLimiteAjouts(limites)).toContain("Demandez à l'administration de l'église")
     expect(explicationLimiteLignes(limites)).toBe(
-      "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
+      "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
+    )
+    expect(`${explicationLimiteAjouts(limites)} ${explicationLimiteLignes(limites)}`).not.toMatch(
+      /administration/,
     )
   })
 })
@@ -352,22 +356,42 @@ describe('refus de la base après « Envoyer pour validation »', () => {
     )
   })
 
-  it('la limite, le doublon et la suggestion inconnue se disent sous le bouton', () => {
-    for (const message of [
-      'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
-      "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
-      'Votre fiche a déjà « Demandes reçues ».',
-      "Cette suggestion n'existe pas.",
-    ]) {
-      expect(lireRefusSuggestion({ code: 'P0001', message })).toEqual({ ou: 'bouton', message })
+  it('la limite, le doublon et la suggestion inconnue se disent sous le bouton, traduits (m233, T59)', () => {
+    const limites = { ajouts: 3, ajouts_max: 3, lignes: 30, lignes_max: 30 }
+    for (const [message, phrase] of [
+      [
+        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+        // Le même texte que le contrôle avant l'envoi (guide, 10.9) : le ministère ne retire pas
+        // lui-même un ajout au lot 1 (P53), il le demande à EJP Tech.
+        explicationLimiteAjouts(limites),
+      ],
+      [
+        "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
+        explicationLimiteLignes(limites),
+      ],
+      ['Votre fiche a déjà « Demandes reçues ».', 'Votre fiche a déjà « Demandes reçues ».'],
+      [
+        "Cette suggestion n'existe pas.",
+        'Cet indicateur prévu est introuvable. Rechargez la page.',
+      ],
+    ] as const) {
+      expect(lireRefusSuggestion({ code: 'P0001', message })).toEqual({
+        ou: 'bouton',
+        message: phrase,
+      })
     }
   })
 
-  it('un refus de droit et un problème de connexion', () => {
+  it('un refus de droit, une connexion perdue, un refus inattendu', () => {
     expect(lireRefusSuggestion({ code: '42501', message: 'x' })).toEqual({
       ou: 'bouton',
       message: "Cet élément n'existe pas ou vous n'y avez pas accès.",
     })
-    expect(lireRefusSuggestion(new Error('réseau'))).toEqual({ ou: 'connexion' })
+    expect(lireRefusSuggestion(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+    expect(lireRefusSuggestion({ code: '23505', message: 'duplicate key' })).toEqual({
+      ou: 'bouton',
+      message:
+        "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+    })
   })
 })

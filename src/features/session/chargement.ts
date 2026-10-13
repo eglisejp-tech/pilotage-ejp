@@ -74,9 +74,11 @@ export const DELAI_MAX_SESSION = 10_000
 
 function avecDelaiMaximal<T>(promesse: Promise<T>): Promise<T> {
   let minuterie: ReturnType<typeof setTimeout> | undefined
+  // Une erreur nommée TimeoutError, comme le délai de fetchAvecDelai : l'écran d'erreur dit alors
+  // « La réponse met trop de temps » (m252, `estDelaiDepasse`).
   const delai = new Promise<never>((_, refuser) => {
     minuterie = setTimeout(
-      () => refuser(new Error('Lecture de la session trop longue.')),
+      () => refuser(new DOMException('Lecture de la session trop longue.', 'TimeoutError')),
       DELAI_MAX_SESSION,
     )
   })

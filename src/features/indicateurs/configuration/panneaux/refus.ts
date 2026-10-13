@@ -1,16 +1,17 @@
-import { z } from 'zod'
+import type { z } from 'zod'
+import { TEXTES_PANNEAUX } from '@/features/indicateurs/configuration/panneaux/textes'
 import { messageDeRefusPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 
 /**
- * Phrase d'un refus d'écriture. Une erreur de saisie de la base (`P0001`) se lit telle quelle ;
- * un refus de droit dit seulement que l'élément n'est pas accessible (sauf la double
- * authentification, que la personne doit lire) ; une demande refusée par un schéma avant tout
- * appel (jamais atteinte depuis un formulaire qui valide d'abord) dit de vérifier les champs ;
- * tout le reste est un problème de connexion, dit par `connexion`.
+ * Phrase d'un refus d'écriture, par la table de traduction de `src/data/messagesBase.ts` (m233) :
+ * un refus de la base ou d'un schéma prend sa phrase ; un refus de droit dit seulement que
+ * l'élément n'est pas accessible ; une connexion expirée, un compte désactivé ou un refus
+ * inattendu ont chacun leur phrase. Seule une erreur sans réponse prend `connexion`. La fenêtre de
+ * retrait (`connexionFenetre`) est une action sans formulaire : son repli ne parle pas de saisie.
  */
 export function lireRefusEcriture(erreur: unknown, connexion: string): string {
-  if (erreur instanceof z.ZodError) return erreur.issues[0]?.message ?? connexion
-  return messageDeRefusPrevus(erreur) ?? connexion
+  const formulaire = connexion !== TEXTES_PANNEAUX.connexionFenetre
+  return messageDeRefusPrevus(erreur, formulaire) ?? connexion
 }
 
 /** Les erreurs sans celle d'un champ qu'on vient de modifier. */

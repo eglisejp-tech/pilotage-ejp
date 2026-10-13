@@ -1,15 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import type { ChampChiffre as Champ, ChampsDimanche } from '@/features/saisie-chiffres/champs'
 import { ChampChiffre } from '@/features/saisie-chiffres/ChampChiffre'
 import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
 import type { DimanchePropose } from '@/features/saisie-chiffres/choixPeriode'
 import {
+  idChamp,
   preparerDimanche,
   premierChampEnErreur,
   sansErreur,
 } from '@/features/saisie-chiffres/envoi'
 import type { ErreursFormulaire } from '@/features/saisie-chiffres/envoi'
+import { focaliserChamp } from '@/features/saisie-chiffres/focus'
 import { FormulaireChiffres } from '@/features/saisie-chiffres/FormulaireChiffres'
 import { ListePeriodes } from '@/features/saisie-chiffres/ListePeriodes'
 import type { SaisieDimanche } from '@/features/saisie-chiffres/schemas'
@@ -21,6 +23,7 @@ import {
 import { lireValeur, valeurDepart } from '@/features/saisie-chiffres/valeurs'
 import type { ValeurChamp } from '@/features/saisie-chiffres/valeurs'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
+import type { EtatEnvoi } from '@/features/saisie-session/useEnvoiSaisie'
 import type { DateIso } from '@/lib/metier/dates'
 import { pourcentageFij } from '@/lib/metier/pourcentage'
 
@@ -58,9 +61,20 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
   const tous = [...champs.communs, ...champs.propres]
   const [valeurs, setValeurs] = useState<Record<string, ValeurChamp>>(() => valeursDeDepart(tous))
   const [erreurs, setErreurs] = useState<ErreursFormulaire>({})
+  // Tous les chiffres vides (le dimanche matin, rien n'est obligatoire) : rien ne part (m066).
+  const [aucun, setAucun] = useState(false)
   const envoi = useEnvoiSaisie()
   const preparation = preparerDimanche(tous, valeurs)
   const signature = `${dimanche}|${JSON.stringify(preparation.lignes)}`
+  // Un refus de la base sur « Dont en FIJ » (m068) se dit sous ce champ, et disparaît dès que la
+  // personne change ce champ ou les actifs.
+  const champFij = champs.communs.find((element) => element.code === 'en_fij')
+  const [echecVu, setEchecVu] = useState<EtatEnvoi['echec']>(null)
+  const echec = envoi.echec === echecVu ? null : envoi.echec
+  const refusFij = champFij !== undefined && echec?.champ === 'en_fij' ? echec.message : null
+  useEffect(() => {
+    if (refusFij !== null && champFij) focaliserChamp(idChamp(champFij.id))
+  }, [refusFij, champFij])
   // Pas de pourcentage absurde quand « Dont en FIJ » dépasse les actifs : le message d'erreur
   // suffit, la note reste vide.
   const enFij = lu(tous, valeurs, 'en_fij')
@@ -70,18 +84,28 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
       ? null
       : notePourcentageActifs(pourcentageFij(enFij, actifs))
 
-  const changer = (id: string) => (valeur: ValeurChamp) => {
-    setValeurs((precedentes) => ({ ...precedentes, [id]: valeur }))
-    setErreurs((precedentes) => ({ ...precedentes, [id]: {} }))
+  const changer = (element: Champ) => (valeur: ValeurChamp) => {
+    setValeurs((precedentes) => ({ ...precedentes, [element.id]: valeur }))
+    setErreurs((precedentes) => ({ ...precedentes, [element.id]: {} }))
+    setAucun(false)
+    if (refusFij !== null && (element.code === 'en_fij' || element.code === 'actifs')) {
+      setEchecVu(envoi.echec)
+    }
   }
 
   const soumettre = () => {
     setErreurs(preparation.erreurs)
     if (!sansErreur(preparation.erreurs)) {
+      setAucun(false)
       const premier = premierChampEnErreur(tous, preparation.erreurs)
       if (premier) document.getElementById(premier)?.focus()
       return
     }
+    if (preparation.lignes.length === 0) {
+      setAucun(true)
+      return
+    }
+    setAucun(false)
     void envoi.envoyer(() => enregistrer(preparation.lignes), reussiteDimanche(dimanche), signature)
   }
 
@@ -90,8 +114,11 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
       key={element.id}
       champ={element}
       valeur={valeurs[element.id] ?? valeurDepart(element)}
-      onChange={changer(element.id)}
-      erreur={erreurs[element.id]?.valeur}
+      onChange={changer(element)}
+      erreur={
+        erreurs[element.id]?.valeur ??
+        (element.id === champFij?.id ? (refusFij ?? undefined) : undefined)
+      }
       noteDirecte={noteDirecte}
     />
   )
@@ -117,8 +144,8 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
         envoi={envoi}
         dejaEnvoye={envoi.dejaEnvoye(signature)}
         doublon={envoi.doublonRefuse(signature)}
-        erreurFormulaire={null}
-        erreurSousLeBouton
+        erreurFormulaire={aucun ? TEXTES_CHIFFRES.aucunChiffre : null}
+        erreurSousLeBouton={echec !== null && refusFij === null}
         ecran="saisie_dimanche"
         correction={tous.some((element) => element.deja !== null)}
         onSubmit={soumettre}

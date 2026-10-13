@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { RefObject } from 'react'
 import { schemaAjout, schemaCalcul, schemaCorrection } from '@/data/indicateursEcriture'
+import { traduireMessageBase } from '@/data/messagesBase'
 import {
   ajouterCalculSimule,
   ajouterSimule,
@@ -81,8 +82,14 @@ export function useEcrituresSimulees(
         await appliquer(etat)
         return calculs
       },
+      // Comme `verifierLibelle` : chaque message prend la phrase de la table de traduction (m233).
       verifier: (libelle, _nature, ministereId) =>
-        Promise.resolve(verifierSimule(courant.current, ministereId, libelle)),
+        Promise.resolve(
+          verifierSimule(courant.current, ministereId, libelle).map((ligne) => ({
+            ...ligne,
+            message: traduireMessageBase(ligne.message),
+          })),
+        ),
       limites: (ministereId) => Promise.resolve(limitesSimulees(courant.current, ministereId)),
       termes: (filtre) =>
         Promise.resolve(

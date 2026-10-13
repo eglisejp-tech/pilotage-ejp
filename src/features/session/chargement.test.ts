@@ -6,6 +6,7 @@ import {
   DELAI_MAX_SESSION,
 } from '@/features/session/chargement'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
+import { estDelaiDepasse } from '@/lib/requetes'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
@@ -41,6 +42,8 @@ describe('chargerEtatSessionSuivi', () => {
     const verification = expect(lecture).rejects.toThrow('Lecture de la session trop longue.')
     await vi.advanceTimersByTimeAsync(DELAI_MAX_SESSION)
     await verification
+    // Reconnue comme un délai dépassé : l'écran d'erreur le dit (m252).
+    expect(estDelaiDepasse(await lecture.catch((erreur: unknown) => erreur))).toBe(true)
   })
 })
 

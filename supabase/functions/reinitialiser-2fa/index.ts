@@ -8,6 +8,9 @@
 //   4. sessions supprimées de nouveau et journal double_auth_reinitialisee.
 // Chaque étape se refait sans dommage : en cas d'échec, l'administration relance l'action. Le
 // compte refait « Mot de passe oublié » puis l'activation. Le compte de l'appelant est refusé.
+// Une panne après l'étape 1 laisse un compte bloqué (mot de passe déjà remplacé, facteurs peut-être
+// encore là) : elle rend le code `activation_incomplete`, qui dit de relancer l'action avant de
+// prévenir la personne (m194). Un refus explicite (session de l'appelant révoquée...) garde le sien.
 import type { Appelant } from '../_shared/appelant.ts'
 import { appelerBase } from '../_shared/base.ts'
 import { consigner, ErreurFonction } from '../_shared/http.ts'
@@ -42,6 +45,22 @@ export async function reinitialiserDoubleAuthentification(
     throw new ErreurFonction(500, 'erreur_interne')
   }
 
+  try {
+    await couperPuisJournaliser(cible, parametres, appelant)
+  } catch (erreur) {
+    // Le mot de passe est déjà remplacé : une panne ici laisse le compte bloqué (m194).
+    if (erreur instanceof ErreurFonction && erreur.statut !== 500) throw erreur
+    if (!(erreur instanceof ErreurFonction)) consigner(FONCTION, 'apres_mot_de_passe')
+    throw new ErreurFonction(500, 'activation_incomplete')
+  }
+}
+
+/** Étapes 2 à 4, une fois le mot de passe remplacé. */
+async function couperPuisJournaliser(
+  cible: string,
+  parametres: { p_user_id: string },
+  appelant: Appelant,
+): Promise<void> {
   // 2. Sessions supprimées avant de toucher aux facteurs.
   await appelerBase(appelant, FONCTION, 'serveur_revoquer_sessions', parametres)
 

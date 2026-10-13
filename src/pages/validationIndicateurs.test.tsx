@@ -283,7 +283,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
 
   it('une connexion perdue garde le motif dans la fenêtre', async () => {
     const faux = connecte('admin_plateforme')
-    faux.rpc.mockRejectedValueOnce(new Error('réseau'))
+    faux.rpc.mockRejectedValueOnce(new TypeError('Failed to fetch'))
     afficher('/indicateurs')
     await bloc()
     await userEvent.click(
@@ -461,8 +461,9 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    // Le refus de la base, traduit (m220).
     expect(
-      await within(fenetre).findByText('Texte introuvable, vide ou déjà masqué.'),
+      await within(fenetre).findByText('Ce texte est déjà masqué ou vide. Rechargez la page.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })

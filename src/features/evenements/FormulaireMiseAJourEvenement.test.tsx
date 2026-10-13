@@ -178,21 +178,45 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     expect(champDate()).toHaveFocus()
   })
 
-  it('ligne identique : la base la refuse, son message sous le bouton, sans lien', async () => {
-    const envoyer = vi.fn(() =>
-      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.ligneIdentique }),
-    )
+  it('ligne identique : dite avant l’envoi, sous le bouton, sans lien (m134)', async () => {
+    const envoyer = vi.fn(() => Promise.resolve())
     afficher(undefined, envoyer)
     await userEvent.click(bouton())
     const alerte = await screen.findByRole('alert')
     expect(alerte).toHaveTextContent(
-      "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
     )
     expect(within(alerte).queryByRole('link')).toBeNull()
-    expect(envoyer).toHaveBeenCalledWith({ date: '2026-10-10', statut: 'preparation' })
+    expect(envoyer).not.toHaveBeenCalled()
     expect(screen.queryByText('Événement mis à jour.')).toBeNull()
     // Aucune erreur sous le champ date.
     expect(champDate()).not.toHaveAttribute('aria-invalid')
+  })
+
+  it('ligne identique refusée par la base (lecture en retard) : la même phrase, traduite', async () => {
+    const envoyer = vi.fn(() =>
+      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.ligneIdentique }),
+    )
+    afficher(undefined, envoyer)
+    await changerDate('2026-10-17')
+    await userEvent.click(bouton())
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
+    )
+    expect(screen.queryByText(/Rien n'a changé/)).toBeNull()
+  })
+
+  it('un second appui après une réussite n’envoie rien, et le dit (m134)', async () => {
+    const envoyer = vi.fn(() => Promise.resolve())
+    afficher(undefined, envoyer)
+    await changerDate('2026-10-17')
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    await userEvent.click(bouton())
+    expect(envoyer).toHaveBeenCalledTimes(1)
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
+    )
   })
 
   it('connexion perdue : erreur de formulaire, valeurs gardées', async () => {

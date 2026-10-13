@@ -66,7 +66,7 @@ function sensiblesDeDepart(champs: readonly Champ[]): Record<string, SaisieSensi
  * d'un sensible, « Précision (facultatif) » et, s'il a des catégories, la grille « Répartition
  * (facultatif) », reprises du total le plus récent (P46, P47). Seuls les chiffres qui changent
  * partent, tout le mois en un appel : tout ou rien. Un refus de la base sur une précision
- * s'affiche sous ce champ, tel quel ; les valeurs restent.
+ * s'affiche sous ce champ, avec la phrase de la table de traduction ; les valeurs restent.
  */
 export function FormulaireMois({ mois, champs, proposes, rattrapage, enregistrer }: Props) {
   const [valeurs, setValeurs] = useState<Record<string, ValeurChamp>>(() =>
@@ -85,7 +85,7 @@ export function FormulaireMois({ mois, champs, proposes, rattrapage, enregistrer
   const [echecVu, setEchecVu] = useState<EtatEnvoi['echec']>(null)
   const echec = envoi.echec === echecVu ? null : envoi.echec
   const place = echec
-    ? placerErreurBase(echec.message, envoyees)
+    ? placerErreurBase(echec.champ, envoyees)
     : ({ indicateurId: null, partie: 'bouton' } as const)
 
   // Après un refus de la base sous un champ, le focus y va : le champ référence l'erreur par
