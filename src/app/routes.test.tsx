@@ -230,6 +230,7 @@ describe('routes', () => {
         'Indicateurs',
         'Sessions',
         'Journal technique',
+        'Personnes',
       ],
     ],
   ])(
@@ -867,6 +868,18 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
       )
     },
   )
+
+  it('admin_plateforme : l’onglet « Personnes » est l’onglet courant sur /personnes (T56)', async () => {
+    connecte('admin_plateforme')
+    afficher('/personnes')
+    expect(await screen.findByRole('heading', { level: 1, name: 'Personnes' })).toBeInTheDocument()
+    await waitFor(() =>
+      expect(within(navigation()[0]!).getByRole('link', { name: 'Personnes' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      ),
+    )
+  })
 })
 
 // Lot L1 : la vraie page /comptes (retirée des amorces de C0), branchée sur ses lectures.

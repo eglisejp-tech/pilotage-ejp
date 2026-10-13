@@ -27,7 +27,10 @@ export function PageChoixMotDePasse() {
   }
 
   const compte =
-    etat.statut === 'activation' || etat.statut === 'conditions' || etat.statut === 'connecte'
+    etat.statut === 'activation' ||
+    etat.statut === 'conditions' ||
+    etat.statut === 'declaration' ||
+    etat.statut === 'connecte'
       ? etat
       : null
 

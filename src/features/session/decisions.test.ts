@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { Compte } from '@/data/compte'
-import { destination, retourValide } from '@/features/session/decisions'
+import {
+  adresseChangement,
+  changementDemande,
+  destination,
+  retourValide,
+} from '@/features/session/decisions'
 import type { ContexteGarde, Zone } from '@/features/session/decisions'
 import type { EtatSession } from '@/features/session/etat'
 import type { TypeCompte } from '@/lib/base'
@@ -140,6 +145,62 @@ describe('destination : conditions à accepter (T53)', () => {
     )
     expect(destination(anonyme, 'conditions', contexte())).toBe('/connexion')
     expect(destination(activation, 'conditions', contexte())).toBe('/double-authentification')
+  })
+})
+
+describe('destination : « Qui utilise l’outil ? » (T56)', () => {
+  const declaration: EtatSession = {
+    statut: 'declaration',
+    compte: compte('ministere'),
+    email: null,
+    declaration: null,
+  }
+
+  it("après les conditions et avant l'application : toute autre zone renvoie à l'écran", () => {
+    expect(destination(declaration, 'declaration', contexte())).toBeNull()
+    expect(
+      destination(declaration, 'application', contexte({ adresse: '/points?vue=traites' })),
+    ).toBe('/qui-utilise?retour=%2Fpoints%3Fvue%3Dtraites')
+    expect(destination(declaration, 'application', contexte({ adresse: '/' }))).toBe('/qui-utilise')
+    expect(destination(declaration, 'conditions', contexte({ retour: '/journal' }))).toBe(
+      '/qui-utilise?retour=%2Fjournal',
+    )
+    expect(destination(declaration, 'double-authentification', contexte())).toBe('/qui-utilise')
+  })
+
+  it("l'ordre : conditions, puis déclaration, puis application", () => {
+    const conditions: EtatSession = {
+      statut: 'conditions',
+      compte: compte('ministere'),
+      email: null,
+    }
+    expect(destination(conditions, 'declaration', contexte())).toBe('/conditions-a-accepter')
+    expect(destination(declaration, 'conditions', contexte())).toBe('/qui-utilise')
+  })
+
+  it('un mot de passe à choisir passe avant la déclaration', () => {
+    const enAttente = contexte({ motDePasseAChoisir: true })
+    expect(destination(declaration, 'mot-de-passe', enAttente)).toBeNull()
+    expect(destination(declaration, 'declaration', enAttente)).toBe('/acces/mot-de-passe')
+  })
+
+  it("après la déclaration : retour à l'adresse demandée, sinon l'accueil", () => {
+    expect(destination(connecte('ministere'), 'declaration', contexte())).toBe('/')
+    expect(destination(connecte('ministere'), 'declaration', contexte({ retour: '/points' }))).toBe(
+      '/points',
+    )
+  })
+
+  it('« Ce n’est pas moi » : un ministère connecté revoit l’écran, les autres profils non', () => {
+    const adresse = adresseChangement('/journal')
+    expect(adresse).toBe('/qui-utilise?changer=1&retour=%2Fjournal')
+    expect(changementDemande(adresse)).toBe(true)
+    expect(changementDemande('/qui-utilise')).toBe(false)
+    expect(adresseChangement('/')).toBe('/qui-utilise?changer=1')
+    expect(destination(connecte('ministere'), 'declaration', contexte({ adresse }))).toBeNull()
+    expect(
+      destination(connecte('berger'), 'declaration', contexte({ adresse, retour: '/journal' })),
+    ).toBe('/journal')
   })
 })
 

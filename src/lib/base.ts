@@ -15,6 +15,7 @@ import type { FonctionsFij, TablesFij, VuesFij } from './base/fij'
 import type { FonctionsIndicateurs, TablesIndicateurs, VuesIndicateurs } from './base/indicateurs'
 import type { FonctionsJournal, TablesJournal, VuesJournal } from './base/journal'
 import type { FonctionsModeration, TablesModeration, VuesModeration } from './base/moderation'
+import type { FonctionsPersonnes, TablesPersonnes, VuesPersonnes } from './base/personnes'
 import type { FonctionsPoints, TablesPoints, VuesPoints } from './base/points'
 import type {
   FonctionsSignalements,
@@ -31,6 +32,7 @@ export type * from './base/fij'
 export type * from './base/indicateurs'
 export type * from './base/journal'
 export type * from './base/moderation'
+export type * from './base/personnes'
 export type * from './base/points'
 export type * from './base/signalements'
 
@@ -46,7 +48,8 @@ export type Database = {
       TablesPoints &
       TablesComptes &
       TablesJournal &
-      TablesModeration
+      TablesModeration &
+      TablesPersonnes
     Views: VuesCommunes &
       VuesIndicateurs &
       VuesFiche &
@@ -56,7 +59,8 @@ export type Database = {
       VuesPoints &
       VuesComptes &
       VuesJournal &
-      VuesModeration
+      VuesModeration &
+      VuesPersonnes
     Functions: FonctionsIndicateurs &
       FonctionsFiche &
       FonctionsFij &
@@ -66,7 +70,8 @@ export type Database = {
       FonctionsPoints &
       FonctionsComptes &
       FonctionsJournal &
-      FonctionsModeration
+      FonctionsModeration &
+      FonctionsPersonnes
     Enums: EnumsCommuns
     CompositeTypes: Aucun
   }

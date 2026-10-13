@@ -6,8 +6,9 @@ import { z } from 'zod'
  * Version courante des conditions d'utilisation et de la politique de confidentialité (T53),
  * au format AAAA-MM-JJ. À changer À LA MAIN, dans ce seul fichier, quand les conditions ou la
  * page Confidentialité changent sur le fond : chaque compte doit alors les accepter de nouveau.
- * Une faute de frappe corrigée ne change pas la version. 2026-10-13 : EJP Tech crée, désactive et
- * réactive les comptes et refait l'activation (T60), les conditions changent sur le fond.
+ * Une faute de frappe corrigée ne change pas la version. 2026-10-12 : prénom déclaré sur un compte
+ * partagé (T56), la page Confidentialité change sur le fond. 2026-10-13 : EJP Tech crée, désactive
+ * et réactive les comptes et refait l'activation (T60), les conditions changent sur le fond.
  */
 export const VERSION_CONDITIONS = '2026-10-13'
 

@@ -1,8 +1,11 @@
 import { Link } from 'react-router'
+import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
+import type { Personne } from '@/features/declaration/PersonneDeclaree'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import { MenuTelephone } from '@/features/navigation/MenuTelephone'
 import { NavigationOnglets } from '@/features/navigation/NavigationOnglets'
 import type { Onglet } from '@/features/navigation/profils'
+import { cn } from '@/lib/utils'
 
 export type ProprietesEnTete = {
   /** Libellé du compte connecté, toujours visible : un email de ministère est partagé. */
@@ -12,11 +15,14 @@ export type ProprietesEnTete = {
   accueil: string
   onSignOut: () => void
   deconnexionEnCours?: boolean
+  /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
+  personne?: Personne
 }
 
 /**
- * Au-delà de cinq onglets, la ligne ne tient plus, même à 1440 px : EJP Tech, avec ses huit
- * onglets (T60), garde le menu à toutes les largeurs. Les autres profils n'en ont pas plus de cinq.
+ * Au-delà de cinq onglets, la ligne ne tient plus, même à 1440 px : EJP Tech, avec ses neuf
+ * onglets (T60, et « Personnes » de T56), garde le menu à toutes les largeurs. Les autres profils
+ * n'en ont pas plus de cinq.
  */
 const ONGLETS_EN_LIGNE_MAX = 5
 
@@ -26,14 +32,17 @@ const ONGLETS_EN_LIGNE_MAX = 5
  * En dessous, ou au-delà de cinq onglets : voir MenuTelephone.
  */
 export function EnTete(proprietes: ProprietesEnTete) {
-  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours } = proprietes
+  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours, personne } = proprietes
   const menuPartout = onglets.length > ONGLETS_EN_LIGNE_MAX
   return (
     <header className="border-b border-filet bg-papier">
       {/* Les onglets prennent toute la hauteur : le soulignement de l'onglet actif touche le
           filet du bas, même quand le compte passe sur deux lignes (1024 à 1279 px). */}
       <div
-        className={`mx-auto box-content hidden max-w-contenu items-stretch justify-between gap-8 px-marge ${menuPartout ? '' : 'lg:flex'}`}
+        className={cn(
+          'mx-auto box-content hidden max-w-contenu items-stretch justify-between gap-8 px-marge',
+          !menuPartout && 'lg:flex',
+        )}
       >
         <div className="flex shrink-0 items-baseline gap-4 self-center">
           <Link
@@ -45,11 +54,20 @@ export function EnTete(proprietes: ProprietesEnTete) {
           <span className="hidden text-sm text-encre-3 xl:inline">Église des Jeunes Prodiges</span>
         </div>
         <NavigationOnglets onglets={onglets} />
-        <div className="flex shrink-0 flex-col items-end self-center py-2 text-sm xl:flex-row xl:items-center xl:gap-4 xl:py-0">
+        {/* Avec « Vous : Marie D. » et « Ce n'est pas moi » (T56), le compte reste sur plusieurs
+            lignes à toutes les largeurs : sur une seule, la ligne déborde de 1280 à 1440 px, et
+            plus loin avec un long prénom. */}
+        <div
+          className={cn(
+            'flex shrink-0 flex-col items-end self-center py-2 text-sm',
+            personne ? 'max-w-72' : 'xl:flex-row xl:items-center xl:gap-4 xl:py-0',
+          )}
+        >
           <p className="font-semibold">
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}
           </p>
+          {personne ? <PersonneDeclaree {...personne} /> : null}
           <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
         </div>
       </div>

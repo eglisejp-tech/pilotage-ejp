@@ -72,6 +72,7 @@ const PAGES_PAR_PROFIL: Record<Profil, string[]> = {
     `/indicateurs/${SOCIAL}`,
     '/sessions',
     '/journal-technique',
+    '/personnes',
   ],
 }
 

@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import type { KeyboardEvent } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
+import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
+import type { Personne } from '@/features/declaration/PersonneDeclaree'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import type { Onglet } from '@/features/navigation/profils'
 import { cn } from '@/lib/utils'
@@ -11,6 +13,8 @@ type Proprietes = {
   accueil: string
   onSignOut: () => void
   deconnexionEnCours?: boolean
+  /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
+  personne?: Personne
   /**
    * Menu à toutes les largeurs (plus de cinq onglets : EJP Tech, T60). À partir de 1024 px, la
    * ligne et le menu s'alignent sur le contenu de la page.
@@ -32,6 +36,7 @@ export function MenuTelephone({
   accueil,
   onSignOut,
   deconnexionEnCours,
+  personne,
   partout = false,
 }: Proprietes) {
   const aligne = partout ? 'lg:mx-auto lg:box-content lg:max-w-contenu lg:px-marge' : ''
@@ -63,9 +68,11 @@ export function MenuTelephone({
           >
             Pilotage EJP
           </Link>
-          <p className="mt-0.5 text-sm text-encre-2">
+          <p className="mt-0.5 text-sm wrap-anywhere text-encre-2">
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}
+            {/* La personne déclarée sur cet appareil (T56) se lit sans ouvrir le menu. */}
+            {personne ? `, ${personne.prenom}` : null}
           </p>
         </div>
         <button
@@ -117,6 +124,7 @@ export function MenuTelephone({
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}
           </p>
+          {personne ? <PersonneDeclaree {...personne} surChangement={fermer} /> : null}
           <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
           <Link
             to="/confidentialite"

@@ -1,7 +1,7 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import { VERSION_CONDITIONS } from '../../src/lib/metier/conditions.ts'
-import { COMPTE_CONDITIONS, seConnecter } from '../comptes.ts'
+import { COMPTE_CONDITIONS, declarerPrenom, PRENOM_TEST, seConnecter } from '../comptes.ts'
 import { lire } from './outils-evenements.ts'
 
 // Acceptation des conditions (T53) avec la base locale : projet « ecritures » (en série, 1440 px).
@@ -28,7 +28,7 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await expect(page).toHaveURL(/\/conditions-a-accepter$/)
   await expect(page.getByRole('heading', { level: 1, name: TITRE })).toBeVisible()
   await expect(page.getByText(COMPTE_CONDITIONS.libelle)).toBeVisible()
-  await expect(page.getByText('Conditions du 8 octobre 2026')).toBeVisible()
+  await expect(page.getByText('Conditions du 12 octobre 2026')).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
   await page.goto('/points')
   await expect(page).toHaveURL(/\/conditions-a-accepter\?retour=%2Fpoints$/)
@@ -60,10 +60,12 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await expect(page.getByText('Cochez la case pour continuer.')).toBeVisible()
   expect(await lireMesAcceptations(page)).toEqual([])
 
-  // Avec la case : retour à l'adresse demandée avant l'écran (« Mes points »), et une ligne
-  // d'acceptation pour ce compte.
+  // Avec la case : un compte de ministère dit ensuite qui utilise l'outil (T56), puis retour à
+  // l'adresse demandée avant l'écran (« Mes points »), et une ligne d'acceptation pour ce compte.
   await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
   await bouton.click()
+  await expect(page).toHaveURL(/\/qui-utilise\?retour=%2Fpoints$/)
+  await declarerPrenom(page, PRENOM_TEST)
   await expect(page).toHaveURL((url) => url.pathname === '/points')
   await expect(page).toHaveTitle('Mes points, Pilotage EJP')
   const lignes = await lireMesAcceptations(page)

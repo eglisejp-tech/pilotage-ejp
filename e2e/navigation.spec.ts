@@ -29,7 +29,8 @@ const PROFILS = [
   {
     profil: 'admin_plateforme',
     libelle: 'EJP Tech, compte 1',
-    // T60 : huit onglets ; la ligne ne tient pas, le menu sert à toutes les largeurs.
+    // T60 : huit onglets, puis « Personnes » (T56) ; la ligne ne tient pas, le menu sert à toutes
+    // les largeurs.
     onglets: [
       'Modération',
       'Cette semaine',
@@ -39,6 +40,7 @@ const PROFILS = [
       'Indicateurs',
       'Sessions',
       'Journal technique',
+      'Personnes',
     ],
   },
 ] as const
@@ -129,7 +131,7 @@ test.describe('en-tête et menu (aperçu)', () => {
     expect(nav && compte && compte.x).toBeGreaterThan((nav?.x ?? 0) + (nav?.width ?? 0))
   })
 
-  test('EJP Tech et ses huit onglets (T60) : le menu à toutes les largeurs, aligné sur la page', async ({
+  test('EJP Tech et ses neuf onglets (T60, T56) : le menu à toutes les largeurs, aligné sur la page', async ({
     page,
   }) => {
     await ouvrir(page, 'admin_plateforme')
@@ -140,7 +142,7 @@ test.describe('en-tête et menu (aperçu)', () => {
     expect(cadre?.width).toBeGreaterThanOrEqual(44)
     await bouton.click()
     const navigation = page.getByRole('navigation', { name: 'Navigation principale' })
-    await expect(navigation.getByRole('link')).toHaveCount(8)
+    await expect(navigation.getByRole('link')).toHaveCount(9)
     await page.keyboard.press('Escape')
     await expect(page.getByRole('navigation')).toHaveCount(0)
     await expect(bouton).toBeFocused()

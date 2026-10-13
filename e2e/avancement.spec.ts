@@ -13,6 +13,9 @@ test.describe("bandeau d'avancement", () => {
     const bandeau = page.getByRole('region', { name: "Avancement de l'outil" })
     await expect(bandeau).toBeVisible()
     await expect(bandeau).toContainText('7 étapes sur 8 en ligne.')
+    await expect(bandeau).toContainText(
+      'Prochaine : Textes et messages revus, prévue vendredi 16 oct.',
+    )
 
     const voir = bandeau.getByRole('button', { name: 'Voir les étapes' })
     await voir.click()

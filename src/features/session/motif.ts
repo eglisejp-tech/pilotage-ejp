@@ -23,7 +23,9 @@ export function noterTransition(precedent: Statut | undefined, suivant: Statut) 
   }
   if (!deconnexionVolontaire) {
     if (precedent === 'code' || precedent === 'activation') motif = 'connexion-expiree'
-    if (precedent === 'connecte' || precedent === 'conditions') motif = 'session-expiree'
+    if (precedent === 'connecte' || precedent === 'conditions' || precedent === 'declaration') {
+      motif = 'session-expiree'
+    }
   }
   deconnexionVolontaire = false
 }
