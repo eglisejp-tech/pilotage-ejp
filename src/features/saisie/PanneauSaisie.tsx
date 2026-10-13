@@ -49,8 +49,7 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
   // En fenêtre, le titre est lu quand le focus y entre : seule la page entière s'annonce (m254).
   useTitrePage(titre, { annoncer: !enPanneau })
   const routeurDeDonnees = useContext(UNSAFE_DataRouterContext) !== null
-  const panneau = useRef<HTMLDivElement>(null)
-  const page = useRef<HTMLElement>(null)
+  const cadre = useRef<HTMLElement>(null)
   const references = useRef<References>(new WeakMap())
   // La personne a choisi de fermer : la navigation qui suit ne se retient plus.
   const fermeturePermise = useRef(false)
@@ -65,7 +64,8 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
     ouvreur.current = null
   }, [questionPosee])
 
-  const zone = useCallback(() => (enPanneau ? panneau.current : page.current), [enPanneau])
+  // Le cadre est le même élément aux deux largeurs : l'écoute des gestes s'installe une fois.
+  const zone = useCallback(() => cadre.current, [])
 
   // Chaque champ est noté juste avant le premier geste qui pourrait le changer.
   useEffect(() => {
@@ -110,7 +110,7 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
     [demander, enregistree],
   )
   const demanderFermeture = () => demander(onFermer)
-  usePiegeFocus(panneau, enPanneau, demanderFermeture)
+  usePiegeFocus(cadre, enPanneau, demanderFermeture)
 
   const confirmation =
     question !== null ? (
@@ -154,44 +154,36 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
     </>
   )
 
-  if (!enPanneau) {
-    return (
-      <ContexteFermetureSaisie.Provider value={fermeture}>
+  // Un seul cadre aux deux largeurs, à la même place dans l'arbre : passer de la page entière au
+  // panneau (téléphone tourné, fenêtre redimensionnée) garde le formulaire monté et la saisie.
+  return (
+    <ContexteFermetureSaisie.Provider value={fermeture}>
+      <div className={enPanneau ? 'fixed inset-0 z-40 flex justify-end' : 'contents'}>
+        {enPanneau ? (
+          <div
+            key="fond"
+            aria-hidden="true"
+            onClick={demanderFermeture}
+            className="absolute inset-0 bg-encre/50"
+          />
+        ) : null}
         <section
-          ref={page}
+          key="cadre"
+          ref={cadre}
+          role={enPanneau ? 'dialog' : undefined}
+          aria-modal={enPanneau ? true : undefined}
           aria-labelledby={idTitre}
+          tabIndex={enPanneau ? -1 : undefined}
           data-colonne
           inert={questionPosee}
-          className="flex flex-col gap-5"
+          className={
+            enPanneau
+              ? 'relative flex h-full w-full max-w-[460px] flex-col gap-5 overflow-y-auto border-l border-filet bg-papier px-6 py-6 outline-hidden'
+              : 'flex flex-col gap-5'
+          }
         >
           {contenu}
         </section>
-        {confirmation}
-        {garde}
-      </ContexteFermetureSaisie.Provider>
-    )
-  }
-
-  return (
-    <ContexteFermetureSaisie.Provider value={fermeture}>
-      <div className="fixed inset-0 z-40 flex justify-end">
-        <div
-          aria-hidden="true"
-          onClick={demanderFermeture}
-          className="absolute inset-0 bg-encre/50"
-        />
-        <div
-          ref={panneau}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={idTitre}
-          tabIndex={-1}
-          data-colonne
-          inert={questionPosee}
-          className="relative flex h-full w-full max-w-[460px] flex-col gap-5 overflow-y-auto border-l border-filet bg-papier px-6 py-6 outline-hidden"
-        >
-          {contenu}
-        </div>
         {confirmation}
       </div>
       {garde}

@@ -64,6 +64,10 @@ test.describe('Communication', () => {
       page.getByText("Cette date est passée. Choisissez aujourd'hui ou une date à venir."),
     ).toBeVisible()
     await page.getByRole('link', { name: 'Signaler une difficulté' }).first().click()
+    // La saisie a changé : quitter le formulaire pose d'abord la question (m265).
+    const question = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+    await expect(question).toBeVisible()
+    await question.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
 
     await expect(page).toHaveURL((url) => url.pathname === '/signaler')
     await expect(page.getByText('Écran concerné : Ajouter un événement')).toBeVisible()

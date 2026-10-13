@@ -110,6 +110,32 @@ describe('PanneauSaisie à partir de 600 px', () => {
   })
 })
 
+describe('PanneauSaisie quand la largeur passe le palier de 600 px', () => {
+  it.each([
+    [390, 834],
+    [834, 390],
+  ])(
+    'de %s à %s px : le même champ, la saisie gardée, et la question avant de fermer',
+    async (avant, apres) => {
+      simulerLargeur(avant)
+      const utilisateur = userEvent.setup()
+      const onFermer = vi.fn()
+      const { rerender } = render(<Panneau onFermer={onFermer} />)
+      const champ = screen.getByLabelText('STARs au service')
+      await utilisateur.type(champ, '12')
+      // Téléphone tourné ou fenêtre redimensionnée : le cadre change de forme, pas de contenu.
+      simulerLargeur(apres)
+      rerender(<Panneau onFermer={onFermer} />)
+      expect(screen.queryByRole('dialog') !== null).toBe(apres >= 600)
+      expect(screen.getByLabelText('STARs au service')).toBe(champ)
+      expect(champ).toHaveValue('12')
+      await utilisateur.click(screen.getByRole('button', { name: 'Retour' }))
+      expect(onFermer).not.toHaveBeenCalled()
+      expect(screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })).toBeVisible()
+    },
+  )
+})
+
 describe('PanneauSaisie sous 600 px', () => {
   it.each([360, 390, 599])('à %s px : une page entière, pas une fenêtre modale', (largeur) => {
     simulerLargeur(largeur)
