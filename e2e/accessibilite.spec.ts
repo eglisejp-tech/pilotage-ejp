@@ -1,0 +1,523 @@
+import { expect, test } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import { auditerAxe, decrireFautes } from './outils/axe.ts'
+import {
+  LARGEUR_MINIMALE,
+  ciblesTropPetites,
+  debordementHorizontal,
+  decrireRapportClavier,
+  parcourirAuClavier,
+  problemesEchapDesAides,
+  problemesEchapDuMenu,
+  problemesDeStructure,
+  problemesPiegeDuFocus,
+} from './outils/controles.ts'
+import { ciblesHorsFautesConnues } from './outils/fautes-connues.ts'
+
+// Audit transversal de l'étape 7 (plan, section 3.3, lot F2) sur TOUS les aperçus de
+// développement et sur les pages publiques : aucune faute axe (WCAG 2.1 A et AA), aucun
+// défilement horizontal à 360 px et à 200 % de zoom, cibles de 44 px, Tab jusqu'à chaque
+// action (l'action principale comprise), anneau de focus visible, Échap qui ferme les bulles
+// d'aide et le menu, piège du focus des panneaux. Trois formats par les projets Playwright :
+// 1440, 834 et 390 px. Les panneaux des aperçus ont une fermeture sans effet : que Échap ferme
+// vraiment un panneau se vérifie sur les pages réelles, dans e2e/base/accessibilite.spec.ts.
+// Le test qui échoue reste dans la suite jusqu'à sa correction (lot F3).
+
+type Ecran = {
+  nom: string
+  adresse: string
+  /** Zones de l'aperçu qui ne sont pas l'écran audité (barres de choix d'aperçu). */
+  exclure?: string[]
+}
+
+const BARRES_CETTE_SEMAINE = [
+  'nav[aria-label="Profil de l\'aperçu"]',
+  'nav[aria-label="État de l\'aperçu"]',
+]
+
+const PROFILS = ['berger', 'conseil', 'ministere', 'admin_eglise', 'admin_plateforme'] as const
+
+// Écrans de connexion : chaque écran avec chacun de ses états simulés (src/features/connexion/
+// apercu/scenarios.ts). « outils=non » retire la barre de réglages de l'aperçu.
+const ETATS_CONNEXION: Record<string, string[]> = {
+  connexion: [
+    'normal',
+    'en-cours',
+    'en-cours-google',
+    'erreur-identifiants',
+    'erreur-google',
+    'erreur-desactive',
+    'erreur-expiree',
+    'erreur-session',
+    'erreur-tentatives',
+  ],
+  activation: ['normal', 'chargement', 'en-cours', 'erreur-code'],
+  code: ['normal', 'en-cours', 'erreur-code', 'erreur-tentatives', 'erreur-expiree'],
+  'acces-invitation': ['normal', 'en-cours', 'lien-invalide', 'erreur-reseau'],
+  'acces-recuperation': ['normal', 'en-cours', 'lien-invalide', 'erreur-reseau'],
+  'choisir-mot-de-passe': ['normal', 'en-cours', 'erreur-reseau'],
+  'nouveau-mot-de-passe': ['normal', 'en-cours', 'erreur-reseau'],
+  'mot-de-passe-oublie': ['normal', 'en-cours', 'envoye', 'erreur-tentatives'],
+  'compte-desactive': ['normal'],
+}
+
+const CONNEXION: Ecran[] = [
+  ...Object.entries(ETATS_CONNEXION).flatMap(([ecran, etats]) =>
+    etats.map((etat) => ({
+      nom: `connexion ${ecran} ${etat}`,
+      adresse: `/apercu/connexion?outils=non&ecran=${ecran}&etat=${etat}`,
+    })),
+  ),
+  {
+    nom: 'connexion activation compte personnel',
+    adresse: '/apercu/connexion?outils=non&ecran=activation&compte=personnel',
+  },
+]
+
+const PUBLICS: Ecran[] = [
+  { nom: 'public connexion', adresse: '/connexion' },
+  { nom: 'public confidentialité', adresse: '/confidentialite' },
+  { nom: 'public conditions', adresse: '/conditions' },
+  { nom: 'public compte désactivé', adresse: '/compte-desactive' },
+  { nom: 'public lien sans jeton', adresse: '/acces?type=invite' },
+]
+
+const CETTE_SEMAINE: Ecran[] = [
+  ...PROFILS.flatMap((profil) =>
+    ['semaine', 'premier-dimanche', 'session-jamais-tenue', 'chargement', 'erreur'].map((etat) => ({
+      nom: `cette-semaine ${profil} ${etat}`,
+      adresse: `/apercu/cette-semaine?profil=${profil}&etat=${etat}`,
+      exclure: BARRES_CETTE_SEMAINE,
+    })),
+  ),
+  {
+    nom: 'cette-semaine berger anti-dispersion',
+    adresse: '/apercu/cette-semaine?profil=berger&session=anti-dispersion',
+    exclure: BARRES_CETTE_SEMAINE,
+  },
+]
+
+const NAVIGATION: Ecran[] = PROFILS.map((profil) => ({
+  nom: `navigation ${profil}`,
+  adresse: `/apercu/navigation?profil=${profil}`,
+}))
+
+const FICHE: Ecran[] = [
+  ...(['berger', 'conseil', 'admin_plateforme', 'ministere', 'admin_eglise'] as const).map(
+    (profil) => ({ nom: `fiche ${profil}`, adresse: `/apercu/fiche?ecran=fiche&profil=${profil}` }),
+  ),
+  ...['fiche-vide', 'fiche-erreur-bloc', 'fiche-erreur-points', 'fiche-erreur-details'].map(
+    (ecran) => ({ nom: `fiche ${ecran}`, adresse: `/apercu/fiche?ecran=${ecran}&profil=berger` }),
+  ),
+  {
+    nom: 'fiche fiche-vide ministere',
+    adresse: '/apercu/fiche?ecran=fiche-vide&profil=ministere',
+  },
+  { nom: 'fiche chargement', adresse: '/apercu/fiche?ecran=chargement' },
+  { nom: 'fiche erreur', adresse: '/apercu/fiche?ecran=erreur' },
+  { nom: 'fiche introuvable', adresse: '/apercu/fiche?ecran=introuvable' },
+  { nom: 'ministères berger', adresse: '/apercu/fiche?ecran=ministeres&profil=berger' },
+  {
+    nom: 'ministères admin_plateforme',
+    adresse: '/apercu/fiche?ecran=ministeres&profil=admin_plateforme',
+  },
+  { nom: 'ministères vide', adresse: '/apercu/fiche?ecran=ministeres-vide&profil=conseil' },
+  { nom: 'ministères erreur', adresse: '/apercu/fiche?ecran=ministeres-erreur&profil=berger' },
+]
+
+// Lot E3 : saisie du dimanche (maquette 08) et « Chiffres du mois », chacune dans ses états
+// (src/features/saisie-chiffres/apercu/etatsApercu.ts).
+const SAISIES: Ecran[] = [
+  ...['correction', 'matin', 'matin-vide', 'refuse', 'chargement', 'erreur', 'coupure'].map(
+    (etat) => ({
+      nom: `saisies dimanche ${etat}`,
+      adresse: `/apercu/saisies?profil=ministere&ecran=dimanche&etat=${etat}`,
+    }),
+  ),
+  { nom: 'saisies dimanche', adresse: '/apercu/saisies?profil=ministere' },
+  ...[
+    'correction',
+    'masquee',
+    'sans-categories',
+    'sans-indicateur',
+    'refuse',
+    'chargement',
+    'erreur',
+    'coupure',
+    'refus-precision',
+  ].map((etat) => ({
+    nom: `saisies mois ${etat}`,
+    adresse: `/apercu/saisies?profil=ministere&ecran=mois&etat=${etat}`,
+  })),
+  { nom: 'saisies mois', adresse: '/apercu/saisies?profil=ministere&ecran=mois' },
+  { nom: 'saisies page non disponible (berger)', adresse: '/apercu/saisies?profil=berger' },
+]
+
+// Lot E8 : « Signaler une difficulté » (ministère) et bloc « Signalements » (EJP Tech).
+const SIGNALEMENTS: Ecran[] = [
+  ...['formulaire', 'premier-usage', 'liste-probleme', 'lien-long'].map((vue) => ({
+    nom: `signalements ministère ${vue}`,
+    adresse: `/apercu/signalements?profil=ministere&ecran=saisie_evenement&vue=${vue}`,
+  })),
+  ...[
+    'bloc',
+    'bloc-lien-long',
+    'bloc-sans-ouvert',
+    'bloc-vide',
+    'bloc-chargement',
+    'bloc-probleme',
+  ].map((vue) => ({
+    nom: `signalements ejp-tech ${vue}`,
+    adresse: `/apercu/signalements?profil=admin_plateforme&vue=${vue}`,
+  })),
+  { nom: 'signalements berger', adresse: '/apercu/signalements?profil=berger' },
+]
+
+// Lot E6 : calendrier de la fiche, prochaine réunion, événements à confirmer.
+const CALENDRIER: Ecran[] = [
+  ['fiche', 'berger'],
+  ['fiche', 'ministere'],
+  ['fiche-alerte', 'berger'],
+  ['fiche-alerte', 'ministere'],
+  ['fiche-alerte', 'admin_plateforme'],
+  ['fiche-vide', 'berger'],
+  ['fiche-vide', 'ministere'],
+  ['fiche-erreur', 'berger'],
+  ['fiche-chargement', 'berger'],
+  ['a-confirmer', 'berger'],
+  ['a-confirmer-un', 'conseil'],
+  ['a-confirmer-vide', 'berger'],
+  ['a-confirmer-erreur', 'berger'],
+].map(([ecran, profil]) => ({
+  nom: `calendrier ${ecran} ${profil}`,
+  adresse: `/apercu/calendrier?ecran=${ecran}&profil=${profil}`,
+}))
+
+const SAISIES_E4: Ecran[] = [
+  ['session', 'ministere', null],
+  ['session', 'ministere', 'correction'],
+  ['choix-session', 'ministere', null],
+  ['choix-session', 'ministere', 'vide'],
+  ['choix-session', 'ministere', 'toutes-saisies'],
+  ['carte-fij', 'ministere', null],
+  ['carte-fij', 'ministere', 'premier-usage'],
+  ['chiffres-departement', 'ministere', null],
+  ['chiffres-departement', 'ministere', 'premier-usage'],
+  ['bloc-departements', 'berger', null],
+  ['bloc-departements', 'berger', 'semaine-vide'],
+  ['bloc-departements', 'ministere', 'premier-usage'],
+  ['bloc-departements', 'admin_plateforme', 'premier-usage'],
+  ['bloc-departements', 'berger', 'erreur'],
+].map(([ecran, profil, etat]) => ({
+  nom: `saisies-e4 ${[ecran, profil, etat].filter(Boolean).join(' ')}`,
+  adresse: `/apercu/saisies-e4?ecran=${ecran}&profil=${profil}${etat ? `&etat=${etat}` : ''}`,
+}))
+
+const EVENEMENTS: Ecran[] = [
+  ...[
+    'ajout',
+    'sans-mention',
+    'mise-a-jour',
+    'a-confirmer',
+    'pas-porteur',
+    'introuvable',
+    'probleme',
+    'reunion',
+    'reunion-modifier',
+    'reunion-probleme',
+  ].map((ecran) => ({
+    nom: `evenements ${ecran}`,
+    adresse: `/apercu/evenements?profil=ministere&ecran=${ecran}`,
+  })),
+  {
+    nom: 'evenements chargement',
+    adresse: '/apercu/evenements?profil=ministere&ecran=chargement',
+  },
+  {
+    nom: 'evenements ajout envoi en échec',
+    adresse: '/apercu/evenements?profil=ministere&ecran=ajout&envoi=echec',
+  },
+  { nom: 'evenements page non disponible', adresse: '/apercu/evenements?profil=berger' },
+]
+
+// Bandeau d'avancement (aperçu de la mise en page).
+const AVANCEMENT: Ecran[] = [
+  { nom: 'avancement berger', adresse: '/apercu/avancement?profil=berger' },
+  { nom: 'avancement ministère', adresse: '/apercu/avancement?profil=ministere' },
+]
+
+// Lot L1 : écran 13, « Ministères et comptes » (administration de l'église), et la page non
+// disponible des autres profils.
+const COMPTES: Ecran[] = [
+  ...['donnees', 'premier-usage', 'chargement', 'probleme'].map((vue) => ({
+    nom: `comptes ${vue}`,
+    adresse: `/apercu/comptes?profil=admin_eglise&vue=${vue}`,
+  })),
+  {
+    nom: 'comptes envoi en échec',
+    adresse: '/apercu/comptes?profil=admin_eglise&envoi=echec',
+  },
+  { nom: 'comptes page non disponible', adresse: '/apercu/comptes?profil=berger' },
+]
+
+// Lot L2 : écran 14, « Sessions ».
+const SESSIONS: Ecran[] = [
+  ...['donnees', 'vide', 'chargement', 'probleme'].map((vue) => ({
+    nom: `sessions ${vue}`,
+    adresse: `/apercu/sessions?profil=admin_eglise&vue=${vue}`,
+  })),
+  { nom: 'sessions page non disponible', adresse: '/apercu/sessions?profil=berger' },
+]
+
+// Lot L6 : écran « Modération » (EJP Tech), avec ses vues.
+const MODERATION: Ecran[] = [
+  ...['ecran', 'sans-indicateur', 'file-vide', 'file-chargement', 'file-probleme', 'lien-long'].map(
+    (vue) => ({
+      nom: `moderation ${vue}`,
+      adresse: `/apercu/moderation?profil=admin_plateforme&vue=${vue}`,
+    }),
+  ),
+  { nom: 'moderation page non disponible', adresse: '/apercu/moderation?profil=berger' },
+]
+
+// Lot L3a : configuration des indicateurs (liste, écran d'un ministère, états).
+const INDICATEURS: Ecran[] = [
+  ...[
+    'liste',
+    'liste-vide',
+    'liste-chargement',
+    'liste-probleme',
+    'communication',
+    'kumi',
+    'eagles',
+    'jeunesse',
+    'protocole',
+    'introuvable',
+    'chargement',
+    'probleme',
+  ].map((vue) => ({
+    nom: `indicateurs ${vue}`,
+    adresse: `/apercu/indicateurs?profil=admin_eglise&vue=${vue}`,
+  })),
+  { nom: 'indicateurs liste ejp-tech', adresse: '/apercu/indicateurs?profil=admin_plateforme' },
+  {
+    nom: 'indicateurs kumi envoi en échec',
+    adresse: '/apercu/indicateurs?profil=admin_eglise&vue=kumi&envoi=echec',
+  },
+  { nom: 'indicateurs page non disponible', adresse: '/apercu/indicateurs?profil=berger' },
+]
+
+// Lot P2 : « Nouveau point d'attention » (maquette 10).
+const NOUVEAU_POINT: Ecran[] = [
+  ...['formulaire', 'sans-mention', 'chargement', 'probleme'].map((ecran) => ({
+    nom: `nouveau-point ${ecran}`,
+    adresse: `/apercu/nouveau-point?profil=ministere&ecran=${ecran}`,
+  })),
+  {
+    nom: 'nouveau-point formulaire envoi en échec',
+    adresse: '/apercu/nouveau-point?profil=ministere&ecran=formulaire&envoi=echec',
+  },
+  { nom: 'nouveau-point page non disponible', adresse: '/apercu/nouveau-point?profil=berger' },
+]
+
+// Lot P1 : boutons « Changer le statut » et « Marquer traité » d'un point.
+const POINTS_ACTIONS: Ecran[] = [
+  'profil=ministere&lien=createur',
+  'profil=ministere&lien=mentionne',
+  'profil=ministere&lien=aucun',
+  'profil=ministere&statut=en_cours',
+  'profil=ministere&statut=attente_decision',
+  'profil=ministere&statut=traite',
+  'profil=ministere&mentions=aucune',
+  'profil=ministere&mentions=desactive',
+  'profil=ministere&ministeres=probleme',
+  'profil=ministere&ministeres=lent',
+  'profil=ministere&envoi=echec',
+  'profil=ministere&envoi=refus',
+  'profil=berger',
+  'profil=berger&titre=masque',
+  'profil=conseil',
+  'profil=admin_eglise',
+  'profil=admin_plateforme',
+].map((requete) => ({
+  nom: `points-actions ${requete.replaceAll('&', ' ')}`,
+  adresse: `/apercu/points-actions?${requete}`,
+}))
+
+// Lot P3 : écran 05 « Points d'attention » et « Mes points ».
+const POINTS: Ecran[] = [
+  ...(['berger', 'conseil', 'ministere'] as const).flatMap((profil) =>
+    ['liste', 'vide', 'chargement', 'erreur'].map((etat) => ({
+      nom: `points ${profil} ${etat}`,
+      adresse: `/apercu/points?profil=${profil}&etat=${etat}`,
+    })),
+  ),
+  { nom: 'points berger traités', adresse: '/apercu/points?profil=berger&vue=traites' },
+  { nom: 'points berger tous', adresse: '/apercu/points?profil=berger&vue=tous' },
+  { nom: 'points page non disponible', adresse: '/apercu/points?profil=admin_eglise' },
+]
+
+// Lot L5 : écran 06 « Journal », « Mon journal » et « Journal technique ».
+const JOURNAL: Ecran[] = [
+  ...PROFILS.map((profil) => ({
+    nom: `journal ${profil} liste`,
+    adresse: `/apercu/journal?profil=${profil}`,
+  })),
+  ...['vide', 'chargement', 'erreur', 'relecture'].map((etat) => ({
+    nom: `journal berger ${etat}`,
+    adresse: `/apercu/journal?profil=berger&etat=${etat}`,
+  })),
+]
+
+// Acceptation des conditions (T53), ajoutée aux écrans de connexion simulés.
+const ACCEPTATION: Ecran[] = ['normal', 'en-cours', 'erreur-reseau'].map((etat) => ({
+  nom: `connexion acceptation ${etat}`,
+  adresse: `/apercu/connexion?outils=non&ecran=acceptation&etat=${etat}`,
+}))
+
+const ECRANS: Ecran[] = [
+  ...CONNEXION,
+  ...ACCEPTATION,
+  ...PUBLICS,
+  ...CETTE_SEMAINE,
+  ...NAVIGATION,
+  ...AVANCEMENT,
+  ...FICHE,
+  ...SAISIES,
+  ...SAISIES_E4,
+  ...EVENEMENTS,
+  ...SIGNALEMENTS,
+  ...CALENDRIER,
+  ...COMPTES,
+  ...SESSIONS,
+  ...MODERATION,
+  ...INDICATEURS,
+  ...NOUVEAU_POINT,
+  ...POINTS_ACTIONS,
+  ...POINTS,
+  ...JOURNAL,
+]
+
+// Dans la CI, un job par format (1440, 834 et 390 px) a 30 minutes, et ses parcours durent déjà 14 à
+// 17 minutes : l'audit des 246 écrans à chaque format n'y tient pas (environ 30 minutes sur un
+// poste, pour les trois formats). La CI joue donc un écran représentatif par famille, à chaque
+// format. La passe complète (tous les écrans, trois formats) se joue à la main, sans `CI`, ou
+// avec `AUDIT_COMPLET=1` : `npx playwright test e2e/accessibilite.spec.ts`.
+const AUDIT_COMPLET = !process.env.CI || process.env.AUDIT_COMPLET === '1'
+
+const ECRANS_CI = new Set([
+  'connexion connexion normal',
+  'connexion code normal',
+  'connexion activation normal',
+  'connexion acces-invitation lien-invalide',
+  'public confidentialité',
+  'cette-semaine ministere semaine',
+  'cette-semaine berger semaine',
+  'cette-semaine berger chargement',
+  'cette-semaine admin_plateforme erreur',
+  'navigation ministere',
+  'navigation berger',
+  'fiche berger',
+  'fiche ministere',
+  'fiche fiche-vide ministere',
+  'ministères berger',
+  'saisies dimanche',
+  'saisies dimanche correction',
+  'saisies mois correction',
+  'saisies-e4 session ministere',
+  'saisies-e4 choix-session ministere',
+  'saisies-e4 carte-fij ministere',
+  'saisies-e4 chiffres-departement ministere',
+  'saisies-e4 bloc-departements berger',
+  'evenements ajout',
+  'evenements reunion',
+  'signalements ministère formulaire',
+  'signalements ejp-tech bloc',
+  'calendrier fiche-alerte ministere',
+  'calendrier a-confirmer berger',
+  'connexion acceptation normal',
+  'avancement berger',
+  'comptes donnees',
+  'sessions donnees',
+  'moderation ecran',
+  'indicateurs liste',
+  'indicateurs kumi',
+  'nouveau-point formulaire',
+  'points-actions profil=ministere lien=createur',
+  'points berger liste',
+  'points ministere liste',
+  'journal berger liste',
+  'journal admin_plateforme liste',
+])
+
+async function ouvrir(page: Page, ecran: Ecran) {
+  // Les aperçus n'appellent aucun serveur : leurs écrans sont prêts au chargement, et les écrans
+  // de chargement (`aria-busy`) sont audités tels quels.
+  await page.goto(ecran.adresse)
+  await expect(page.locator('main, h1').first()).toBeVisible()
+  await page.evaluate(() => document.fonts.ready)
+}
+
+test('le catalogue ne contient pas deux fois le même écran', () => {
+  const noms = ECRANS.map((ecran) => ecran.nom)
+  expect(new Set(noms).size).toBe(noms.length)
+  const adresses = ECRANS.map((ecran) => ecran.adresse)
+  expect(new Set(adresses).size).toBe(adresses.length)
+})
+
+test('chaque écran représentatif de la CI existe dans le catalogue', () => {
+  const noms = new Set(ECRANS.map((ecran) => ecran.nom))
+  expect([...ECRANS_CI].filter((nom) => !noms.has(nom))).toEqual([])
+})
+
+for (const ecran of ECRANS) {
+  // Un seul test par écran et par format : un chargement sert tous les contrôles (la CI a 30
+  // minutes pour tout le job « e2e »). Les contrôles sont mous (`expect.soft`) : une faute n'en
+  // cache pas une autre, et chaque ligne dit quoi corriger. Le clavier passe en dernier, car il
+  // ouvre des bulles et le menu. Une faute décrite dans l'audit (e2e/outils/fautes-connues.ts)
+  // retire seulement ses propres lignes du contrôle des cibles : le reste de l'écran reste strict.
+  test(ecran.nom, async ({ page }, testInfo) => {
+    // Le premier chargement d'un aperçu compile ses modules : 90 s laissent de la marge.
+    test.setTimeout(90_000)
+    test.skip(
+      !AUDIT_COMPLET && !ECRANS_CI.has(ecran.nom),
+      'dans la CI, un écran représentatif par famille, à chaque format (AUDIT_COMPLET=1 pour tout)',
+    )
+    await ouvrir(page, ecran)
+    expect
+      .soft(decrireFautes(await auditerAxe(page, ecran.exclure)), 'axe : WCAG 2.1 A et AA')
+      .toEqual([])
+    expect
+      .soft(await problemesDeStructure(page, ecran.exclure), 'structure : titre, langue, main')
+      .toEqual([])
+    expect
+      .soft(
+        ciblesHorsFautesConnues(ecran.nom, await ciblesTropPetites(page, ecran.exclure)),
+        'cibles de 44 px',
+      )
+      .toEqual([])
+    expect
+      .soft(
+        [
+          ...decrireRapportClavier(await parcourirAuClavier(page, ecran.exclure)),
+          ...(await problemesPiegeDuFocus(page)),
+          ...(await problemesEchapDesAides(page)),
+          ...(await problemesEchapDuMenu(page)),
+        ],
+        'clavier : Tab atteint tout, focus visible, piège, Échap',
+      )
+      .toEqual([])
+
+    // Les largeurs sont fixées ici : un seul projet suffit, pas trois. 720 px de large : un
+    // écran de 1440 px à 200 % de zoom (WCAG 1.4.4).
+    if (testInfo.project.name !== 'ordinateur') return
+    const debords: string[] = []
+    for (const largeur of [LARGEUR_MINIMALE, 720]) {
+      await page.setViewportSize({ width: largeur, height: 800 })
+      await ouvrir(page, ecran)
+      const debord = await debordementHorizontal(page)
+      if (debord > 0) debords.push(`${largeur} px : ${debord} px en trop à droite`)
+    }
+    expect.soft(debords, 'défilement horizontal à 360 px et à 200 % de zoom').toEqual([])
+  })
+}

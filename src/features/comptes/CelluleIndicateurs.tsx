@@ -21,7 +21,7 @@ export function CelluleIndicateurs({ ligne }: Props) {
       <Link
         to={`/indicateurs/${ligne.ministereId}`}
         aria-label={nom}
-        className="-my-3 inline-flex min-h-cible items-center underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
+        className="-my-3 inline-flex min-h-cible min-w-cible items-center underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
       >
         {visible}
       </Link>

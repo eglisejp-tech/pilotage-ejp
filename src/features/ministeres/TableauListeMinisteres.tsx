@@ -54,7 +54,7 @@ export function TableauListeMinisteres({ ministeres, idTitre }: Props) {
             <th scope="row" className={cn(cellule, 'text-left font-normal')}>
               <Link
                 to={ministere.href}
-                className="-my-3 inline-flex min-h-cible items-center font-semibold underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
+                className="-my-3 inline-flex min-h-cible min-w-cible items-center font-semibold underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
               >
                 {ministere.nom}
               </Link>

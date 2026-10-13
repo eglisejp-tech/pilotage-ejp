@@ -47,6 +47,19 @@ describe('BandeauAvancement', () => {
     expect(screen.getByRole('button', { name: "Fermer le bandeau d'avancement" })).toBeVisible()
   })
 
+  it('donne à ses deux boutons une cible de 44 px au moins, même quand le texte est court', () => {
+    // Faute A-03 : à 390 px, « Voir » ne mesurait que 26 px de large. jsdom ne mesure rien, on
+    // contrôle la classe ; la mesure réelle est faite par l'audit (e2e/accessibilite.spec.ts).
+    afficher()
+    for (const nom of ['Voir les étapes', "Fermer le bandeau d'avancement"]) {
+      expect(screen.getByRole('button', { name: nom })).toHaveClass(
+        'min-h-cible',
+        'min-w-cible',
+        'justify-center',
+      )
+    }
+  })
+
   it("ouvre le panneau des 8 étapes, avec l'étape suivante marquée", async () => {
     afficher()
     const bouton = screen.getByRole('button', { name: 'Voir les étapes' })
