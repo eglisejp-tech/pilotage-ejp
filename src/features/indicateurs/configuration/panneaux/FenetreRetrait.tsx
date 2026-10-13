@@ -174,8 +174,10 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
           />
           {refus !== null ? <ErreurEnvoi message={refus} /> : null}
           {/* Les boutons restent au bas de la fenêtre quand elle défile (téléphone de 360 x 640,
-              sept motifs) : la personne n'a pas à chercher « Retirer » ni « Annuler ». */}
-          <div className="sticky bottom-0 -mx-6 -mt-3 -mb-6 flex flex-col-reverse gap-2 bg-papier px-6 pt-3 pb-6 min-[480px]:flex-row min-[480px]:justify-end">
+              sept motifs) : la personne n'a pas à chercher « Retirer » ni « Annuler ». Un élément
+              collant respecte la marge intérieure de la fenêtre : « -bottom-6 » le laisse à sa
+              place tant que rien ne défile, au lieu de le remonter sur le texte. */}
+          <div className="sticky -bottom-6 -mx-6 -mt-3 -mb-6 flex flex-col-reverse gap-2 bg-papier px-6 pt-3 pb-6 min-[480px]:flex-row min-[480px]:justify-end">
             <button
               type="button"
               onClick={() => {
