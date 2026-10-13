@@ -60,6 +60,12 @@ describe('onglet « Personnes » (T56)', () => {
     )
   })
 
+  it('une version illisible (que la base refuse depuis T61) ne casse pas l’onglet', () => {
+    expect(conditionsDe('2026-13-01', '2026-10-13T07:00:00+00:00', '2026-10-12')).toBe(
+      'Conditions du 2026-13-01 acceptées le 13 oct., 9 h.',
+    )
+  })
+
   it('un prénom déjà effacé n’a pas de bouton', () => {
     const efface = personnesActives(PERSONNES_EXEMPLE)[1]?.personnes[1]
     expect(efface?.efface).toBe(true)

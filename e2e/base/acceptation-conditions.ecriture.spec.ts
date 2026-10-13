@@ -8,8 +8,9 @@ import {
   fichierSession,
   PRENOM_TEST,
   seConnecter,
+  texteVersionConditions,
 } from '../comptes.ts'
-import { jetonAcces, lire } from './outils-evenements.ts'
+import { appeler, jetonAcces, lire } from './outils-evenements.ts'
 
 // Acceptation des conditions (T53), par personne sur un compte partagé de ministère (T61), avec
 // la base locale : projet « ecritures » (en série, 1440 px). Le script d'installation
@@ -17,13 +18,14 @@ import { jetonAcces, lire } from './outils-evenements.ts'
 // Prodiges Junior. Sur ce compte, la personne dit d'abord son prénom, puis voit l'écran à son
 // nom, ne peut pas continuer sans cocher la case, accepte, arrive sur la page demandée, et n'est
 // plus interrogée à sa connexion suivante. Une deuxième personne du même compte, sur un autre
-// appareil, ne profite pas de cette acceptation : elle accepte à son tour. EJP Tech lit qui a
-// accepté quelle version ; le compte n'écrit rien dans l'acceptation par compte.
+// appareil, ne profite pas de cette acceptation : elle accepte à son tour. EJP Tech seul lit qui a
+// accepté quelle version (la session d'un ministère demande seulement oui ou non) ; le compte
+// n'écrit rien dans l'acceptation par compte.
 
 test.describe.configure({ mode: 'serial' })
 
 const TITRE = "Conditions d'utilisation"
-const DATE_VERSION = 'Conditions du 13 octobre 2026'
+const DATE_VERSION = texteVersionConditions(VERSION_CONDITIONS)
 
 /** « Léa Kqz » : trois lettres tirées au hasard, sans chiffre (la base refuse les chiffres). */
 function prenomUnique(): string {
@@ -32,12 +34,15 @@ function prenomUnique(): string {
 }
 const SECONDE_PERSONNE = prenomUnique()
 
-/** Les acceptations que la session de la page lit : celles de la personne déclarée seulement. */
-const lireMesAcceptations = (page: Page) =>
-  lire<{ version: string; saisi_par: string; intervenant_id: number }>(
-    page,
-    'acceptation_personne?select=version,saisi_par,intervenant_id',
-  )
+/** La question de l'écran, posée par la session de la page : sa personne a-t-elle accepté ? */
+async function personneAAccepte(page: Page): Promise<boolean> {
+  const reponse = await appeler(page, 'conditions_acceptees', { p_version: VERSION_CONDITIONS })
+  expect(reponse.status()).toBe(200)
+  return (await reponse.json()) as boolean
+}
+
+/** Les lignes de la table que la session de la page lit : aucune, EJP Tech seul les lit. */
+const lignesLisibles = (page: Page) => lire<unknown>(page, 'acceptation_personne?select=id')
 
 /** Identifiant du compte de la page, lu dans son jeton. */
 async function idDuCompte(page: Page): Promise<string> {
@@ -73,14 +78,11 @@ test("une personne qui n'a pas accepté dit son prénom, voit l'écran à son no
   await expect(page.getByText(COMPTE_CONDITIONS.libelle)).toBeVisible()
   await expect(page.getByText(DATE_VERSION)).toBeVisible()
   await expect(
-    page.getByText(
-      "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
-    ),
+    page.getByText(`Chaque personne du compte accepte elle-même. Vous : ${PRENOM_TEST}`),
   ).toBeVisible()
-  await expect(page.getByText(`Vous : ${PRENOM_TEST}`)).toBeVisible()
   await expect(page.getByRole('link', { name: "Ce n'est pas moi" })).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
-  expect(await lireMesAcceptations(page)).toEqual([])
+  expect(await personneAAccepte(page)).toBe(false)
 
   // Accessibilité et 360 px.
   const resultat = await new AxeBuilder({ page })
@@ -106,17 +108,16 @@ test("une personne qui n'a pas accepté dit son prénom, voit l'écran à son no
   const bouton = page.getByRole('button', { name: 'Accepter et continuer' })
   await bouton.click()
   await expect(page.getByText('Cochez la case pour continuer.')).toBeVisible()
-  expect(await lireMesAcceptations(page)).toEqual([])
+  expect(await personneAAccepte(page)).toBe(false)
 
-  // Avec la case : retour à l'adresse demandée (« Mes points »), une ligne pour cette personne,
-  // saisie par le compte, et aucune acceptation par compte.
+  // Avec la case : retour à l'adresse demandée (« Mes points »). La réponse est oui ; la session
+  // ne lit aucune ligne de la table (EJP Tech seul, vérifié plus bas) et n'écrit rien dans
+  // l'acceptation par compte.
   await cocherEtAccepter(page)
   await expect(page).toHaveURL((url) => url.pathname === '/points')
   await expect(page).toHaveTitle('Mes points, Pilotage EJP')
-  const lignes = await lireMesAcceptations(page)
-  expect(lignes).toHaveLength(1)
-  expect(lignes[0]?.version).toBe(VERSION_CONDITIONS)
-  expect(lignes[0]?.saisi_par).toBe(await idDuCompte(page))
+  expect(await personneAAccepte(page)).toBe(true)
+  expect(await lignesLisibles(page)).toEqual([])
   expect(await lire(page, 'acceptation_conditions?select=version')).toEqual([])
 
   // À la connexion suivante, le prénom est redemandé (à chaque connexion, champ vide) ; la même
@@ -129,7 +130,7 @@ test("une personne qui n'a pas accepté dit son prénom, voit l'écran à son no
   await declarerPrenom(page, PRENOM_TEST)
   await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
   await expect(page).toHaveURL((url) => url.pathname === '/')
-  expect(await lireMesAcceptations(page)).toHaveLength(1)
+  expect(await personneAAccepte(page)).toBe(true)
 })
 
 test('une deuxième personne du même compte, sur un autre appareil, accepte à son tour ; EJP Tech lit les deux', async ({
@@ -143,12 +144,11 @@ test('une deuxième personne du même compte, sur un autre appareil, accepte à 
   // L'acceptation de la première personne ne vaut pas pour elle.
   await expect(page).toHaveURL(/\/conditions-a-accepter$/)
   await expect(page.getByText(`Vous : ${SECONDE_PERSONNE}`)).toBeVisible()
-  expect(await lireMesAcceptations(page)).toEqual([])
+  expect(await personneAAccepte(page)).toBe(false)
   await cocherEtAccepter(page)
   await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
-  const lignes = await lireMesAcceptations(page)
-  expect(lignes).toHaveLength(1)
-  expect(lignes[0]?.version).toBe(VERSION_CONDITIONS)
+  expect(await personneAAccepte(page)).toBe(true)
+  expect(await lignesLisibles(page)).toEqual([])
   const compte = await idDuCompte(page)
   await ailleurs.close()
 
@@ -165,6 +165,21 @@ test('une deuxième personne du même compte, sur un autre appareil, accepte à 
     expect(personnes.find((p) => p.prenom === prenom)?.version_acceptee, prenom).toBe(
       VERSION_CONDITIONS,
     )
+  }
+  // EJP Tech lit aussi les lignes : une par personne, attachée à sa déclaration, saisie par le
+  // compte.
+  const declarations = await lire<{ id: number }>(
+    pageTech,
+    `intervenant?select=id&compte=eq.${compte}`,
+  )
+  const lignes = await lire<{ version: string; saisi_par: string }>(
+    pageTech,
+    `acceptation_personne?select=version,saisi_par&intervenant_id=in.(${declarations.map((d) => d.id).join(',')})`,
+  )
+  expect(lignes).toHaveLength(2)
+  for (const ligne of lignes) {
+    expect(ligne.version).toBe(VERSION_CONDITIONS)
+    expect(ligne.saisi_par).toBe(compte)
   }
   const actives = pageTech.getByRole('region', { name: 'Actives sur 30 jours' })
   await expect(actives.getByText(SECONDE_PERSONNE, { exact: true })).toBeVisible()

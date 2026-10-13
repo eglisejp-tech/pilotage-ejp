@@ -203,8 +203,9 @@ archivage du dépôt du code.
     La phrase correspondante de la page Confidentialité est proposée, à valider par la personne
     responsable. Depuis T61 (décidé le 13 octobre 2026), sur le compte partagé d'un ministère,
     chaque personne déclarée accepte elle-même : la ligne est attachée à sa déclaration (fiche 7),
-    jamais à un prénom écrit à part ; la session ne lit que celles de sa propre personne, EJP Tech
-    les lit toutes ; l'effacement du prénom laisse l'acceptation, sous « [prénom effacé] ».
+    jamais à un prénom écrit à part ; EJP Tech seul lit ces lignes, la session demande seulement
+    si sa propre personne a accepté (oui ou non, sans date) ; l'effacement du prénom laisse
+    l'acceptation, sous « [prénom effacé] ».
 - **Données sensibles** : un compte dans l'outil d'une église peut révéler une appartenance
   religieuse (article 9). L'article 9.2.d permet ce traitement à quatre conditions :
 
@@ -512,7 +513,7 @@ archivage du dépôt du code.
   pour évaluer les personnes.
 - **Personnes concernées** : les personnes qui utilisent un compte de ministère.
 - **Catégories de données** : prénom déclaré, date et heure, motif (connexion, rappel du jour à la
-  première ouverture de chaque journée, T63, « Ce n'est pas moi »), identifiant technique de la
+  première ouverture de chaque journée, T63, « Ce n'est pas moi » ou autre prénom au rappel), identifiant technique de la
   session de connexion, lien vers les lignes du journal écrites pendant cette session, jours
   d'utilisation, et, depuis T61, la date à laquelle la personne accepte chaque version des
   conditions (fiche 1).

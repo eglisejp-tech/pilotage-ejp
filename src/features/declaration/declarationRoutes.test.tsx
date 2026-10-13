@@ -109,7 +109,7 @@ describe('« Qui utilise l’outil ? » (T56)', () => {
     )
   })
 
-  it('nouvelle journée : la personne peut changer le prénom proposé', async () => {
+  it('nouvelle journée : la personne peut changer le prénom proposé (une autre personne : changement)', async () => {
     const faux = installer('ministere', {
       declaration: { id: 4, prenom: 'Marie', du_jour: false },
     })
@@ -121,7 +121,7 @@ describe('« Qui utilise l’outil ? » (T56)', () => {
     await waitFor(() =>
       expect(faux.rpc).toHaveBeenCalledWith('declarer_intervenant', {
         p_prenom: 'Paul',
-        p_motif: 'rappel',
+        p_motif: 'changement',
       }),
     )
   })
@@ -198,7 +198,7 @@ describe('conditions par personne (T61)', () => {
     const routeur = afficher('/points')
     expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
     expect(routeur.state.location.pathname).toBe('/qui-utilise')
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.questions).not.toHaveBeenCalled()
     expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
   })
 
@@ -211,17 +211,18 @@ describe('conditions par personne (T61)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: conditions })).toBeInTheDocument()
     expect(routeur.state.location.pathname).toBe('/conditions-a-accepter')
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument()
-    expect(
-      screen.getByText(
-        "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByText('Vous : Paul')).toBeInTheDocument()
+    expect(screen.getByText('Vous : Paul').closest('p')).toHaveTextContent(
+      'Chaque personne du compte accepte elle-même. Vous : Paul',
+    )
     expect(screen.getByRole('link', { name: "Ce n'est pas moi" })).toHaveAttribute(
       'href',
       '/qui-utilise?changer=1&retour=%2Fjournal',
     )
-    expect(faux.from).toHaveBeenCalledWith('acceptation_personne')
+    // La base répond oui ou non pour Paul ; aucune table d'acceptation n'est lue.
+    expect(faux.questions).toHaveBeenCalledWith('conditions_acceptees', {
+      p_version: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) as unknown,
+    })
+    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
     expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
 
     await userEvent.click(screen.getByRole('checkbox'))
@@ -267,7 +268,7 @@ describe('conditions par personne (T61)', () => {
     })
     const routeur = afficher('/journal')
     expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.questions).not.toHaveBeenCalled()
     // Un seul appui confirme le prénom proposé.
     await userEvent.click(screen.getByRole('button', { name: 'Continuer' }))
     await waitFor(() =>
@@ -314,6 +315,71 @@ describe('conditions par personne (T61)', () => {
     expect(screen.queryByText(/^Vous :/)).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: "Ce n'est pas moi" })).not.toBeInTheDocument()
     expect(faux.from).toHaveBeenCalledWith('acceptation_conditions')
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.questions).not.toHaveBeenCalled()
+  })
+
+  it('« Ce n’est pas moi » depuis l’outil : la nouvelle personne dit son prénom, accepte, puis retrouve sa page', async () => {
+    const faux = installer('ministere', {
+      declaration: { id: 4, prenom: 'Marie' },
+      prenomsAyantAccepte: ['Marie'],
+      lignes: { v_semaine: [] },
+    })
+    const routeur = afficher('/qui-utilise?changer=1&retour=%2Fjournal')
+    expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Votre prénom' }), 'Léa')
+    await userEvent.click(screen.getByRole('button', { name: 'Continuer' }))
+    // Léa n'a pas accepté : les conditions à son nom, la page quittée gardée.
+    expect(await screen.findByRole('heading', { level: 1, name: conditions })).toBeInTheDocument()
+    await waitFor(() => expect(routeur.state.location.pathname).toBe('/conditions-a-accepter'))
+    expect(routeur.state.location.search).toBe('?retour=%2Fjournal')
+    expect(await screen.findByText('Vous : Léa')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', {
+        p_version: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/) as unknown,
+      }),
+    )
+    await waitFor(() => expect(routeur.state.location.pathname).toBe('/journal'))
+  })
+
+  it('deux onglets : « Ce n’est pas moi » dans l’autre, rien n’est accepté au nom de la mauvaise personne', async () => {
+    const faux = installer('ministere', {
+      declaration: { id: 4, prenom: 'Marie' },
+      prenomsAyantAccepte: [],
+    })
+    afficher('/conditions-a-accepter?retour=%2Fjournal')
+    expect(await screen.findByText('Vous : Marie')).toBeInTheDocument()
+    // Dans un autre onglet de la même session, Paul se déclare.
+    faux.declarerAilleurs('Paul')
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    // L'écran se relit au nom de Paul, sans rien écrire.
+    expect(await screen.findByText('Vous : Paul')).toBeInTheDocument()
+    expect(faux.rpc).not.toHaveBeenCalledWith('accepter_conditions', expect.anything())
+    expect(screen.getByRole('button', { name: 'Accepter et continuer' })).toBeEnabled()
+  })
+
+  it('refus de la base (prénom effacé entre-temps) : la session relue, le prénom est redemandé', async () => {
+    const faux = installer('ministere', {
+      declaration: { id: 4, prenom: 'Marie' },
+      prenomsAyantAccepte: [],
+    })
+    const routeur = afficher('/conditions-a-accepter?retour=%2Fjournal')
+    expect(await screen.findByText('Vous : Marie')).toBeInTheDocument()
+    faux.rpc.mockImplementationOnce(() => {
+      // EJP Tech a effacé le prénom : la base refuse, et la déclaration ne vaut plus.
+      faux.declarerAilleurs('[prénom effacé]')
+      return Promise.resolve({
+        data: null,
+        error: { message: "Indiquez d'abord votre prénom.", code: '42501' },
+      })
+    })
+    await userEvent.click(screen.getByRole('checkbox'))
+    await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
+    expect(await screen.findByRole('heading', { level: 1, name: titre })).toBeInTheDocument()
+    expect(routeur.state.location.pathname).toBe('/qui-utilise')
+    expect(screen.getByRole('textbox', { name: 'Votre prénom' })).toHaveValue('')
   })
 })

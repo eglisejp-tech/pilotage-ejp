@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef } from 'react'
 import { useForm } from 'react-hook-form'
+import { Link } from 'react-router'
 import { schemaAcceptation } from '@/features/acceptation/schemas'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
 import { BoutonLien } from '@/features/connexion/BoutonLien'
@@ -8,13 +9,12 @@ import { BoutonPrincipal } from '@/features/connexion/BoutonPrincipal'
 import { ColonneConnexion } from '@/features/connexion/ColonneConnexion'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
 import type { Personne } from '@/features/declaration/PersonneDeclaree'
+import { TEXTES_EN_TETE_PERSONNE } from '@/features/declaration/textes'
 import { dateDeVersionConditions } from '@/lib/metier/dateConditions'
 
-/** Phrase d'un compte partagé (T61), au-dessus de « Vous : Marie ». */
-export const PHRASE_ACCEPTATION_PERSONNE =
-  "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions."
+/** Phrase d'un compte partagé (T61), suivie de « Vous : Marie » dans le même paragraphe. */
+export const PHRASE_ACCEPTATION_PERSONNE = 'Chaque personne du compte accepte elle-même.'
 
 export type ProprietesEcranAcceptation = {
   /** Libellé du compte connecté (« Ministère Communication »), jamais le nom d'une personne. */
@@ -79,14 +79,22 @@ export function EcranAcceptation({
         confidentialité.
       </TitreConnexion>
 
-      <p className="text-sm text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
       {personne ? (
-        <div className="flex flex-col gap-1">
-          <p className="text-[15px] leading-normal">{PHRASE_ACCEPTATION_PERSONNE}</p>
-          <PersonneDeclaree prenom={personne.prenom} lienChangement={personne.lienChangement} />
+        // Un seul paragraphe (« Vous : Marie D. » sur sa propre ligne), puis « Ce n'est pas moi »
+        // dessiné comme les liens de lecture : la sortie de la mauvaise personne se voit autant
+        // qu'eux.
+        <div className="flex flex-col">
+          <p className="text-[15px] leading-normal wrap-anywhere">
+            {PHRASE_ACCEPTATION_PERSONNE}{' '}
+            <span className="block">{TEXTES_EN_TETE_PERSONNE.vous(personne.prenom)}</span>
+          </p>
+          <Link to={personne.lienChangement} className={lienTexte}>
+            {TEXTES_EN_TETE_PERSONNE.pasMoi}
+          </Link>
         </div>
       ) : null}
 
+      {/* La version, en petit sous les liens de lecture : ce que la case accepte. */}
       <div className="flex flex-col">
         <a href="/conditions" target="_blank" rel="noopener noreferrer" className={lienTexte}>
           Lire les conditions d'utilisation (nouvel onglet)
@@ -94,6 +102,7 @@ export function EcranAcceptation({
         <a href="/confidentialite" target="_blank" rel="noopener noreferrer" className={lienTexte}>
           Lire la politique de confidentialité (nouvel onglet)
         </a>
+        <p className="text-sm text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
       </div>
 
       <form noValidate onSubmit={envoyer} className="flex flex-col gap-6">

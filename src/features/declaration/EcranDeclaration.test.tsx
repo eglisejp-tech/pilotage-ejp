@@ -35,7 +35,7 @@ describe('EcranDeclaration (T56)', () => {
     expect(champ()).toHaveValue('')
     expect(champ()).toHaveAttribute('autocomplete', 'given-name')
     expect(champ()).toHaveAccessibleDescription(
-      /Vous pouvez ajouter l'initiale de votre nom : «\sMarie\sD\.\s».*EJP Tech le voit, pour suivre l'utilisation de l'outil\./,
+      /Exemple\s: Marie\sD\. \(initiale du nom facultative\)\..*EJP Tech le voit, pour suivre l'utilisation de l'outil\./,
     )
     const lien = screen.getByRole('link', { name: 'Confidentialité (nouvel onglet)' })
     expect(lien).toHaveAttribute('href', '/confidentialite')
@@ -100,7 +100,18 @@ describe('EcranDeclaration (T56)', () => {
   it('« Ce n’est pas moi » : « Annuler » ramène à l’outil', async () => {
     const onCancel = vi.fn()
     const { utilisateur } = afficher({ onCancel })
-    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    const annuler = screen.getByRole('button', { name: 'Annuler' })
+    // Bouton secondaire juste sous « Continuer », avant les sorties du pied de colonne ; il
+    // n'envoie pas le formulaire.
+    expect(annuler).toHaveAttribute('type', 'button')
+    expect(
+      bouton().compareDocumentPosition(annuler) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      annuler.compareDocumentPosition(screen.getByRole('button', { name: 'Se déconnecter' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    await utilisateur.click(annuler)
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 

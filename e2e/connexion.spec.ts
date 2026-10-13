@@ -1,6 +1,8 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
+import { VERSION_CONDITIONS } from '../src/lib/metier/conditions.ts'
+import { texteVersionConditions } from './comptes.ts'
 
 // Écrans de connexion (maquettes 16, 17, 18 et écrans dérivés), sur l'aperçu de développement :
 // aucun appel au serveur à cette étape. Les parcours réels avec Supabase arrivent à l'étape 2.
@@ -133,7 +135,7 @@ test.describe('écrans de connexion (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, 'ecran=acceptation', "Conditions d'utilisation")
-    await expect(page.getByText('Conditions du 13 octobre 2026')).toBeVisible()
+    await expect(page.getByText(texteVersionConditions(VERSION_CONDITIONS))).toBeVisible()
     // Compte de ministère : la personne déclarée accepte elle-même (T61).
     await expect(page.getByText('Vous : Marie D.')).toBeVisible()
     await expect(page.getByRole('link', { name: "Ce n'est pas moi" })).toBeVisible()

@@ -57,33 +57,36 @@ describe('lireConditionsAcceptees', () => {
   })
 })
 
-// Compte de ministère (T61) : la base ne rend que les lignes de la personne déclarée sur la session.
+// Compte de ministère (T61) : la base répond oui ou non pour la personne déclarée sur la session,
+// sans rendre aucune ligne (la table est réservée à EJP Tech).
 describe('lireConditionsAccepteesParLaPersonne', () => {
-  it('lit les acceptations de la personne pour la version demandée', async () => {
-    const faux = installer({ acceptation_personne: { data: [{ id: 3 }], error: null } })
+  it('pose la question à la base pour la version demandée, sans lire de table', async () => {
+    const faux = installer({}, { data: true, error: null })
     expect(await lireConditionsAccepteesParLaPersonne('2026-10-12')).toBe(true)
-    expect(appelsDe(faux.de('acceptation_personne')[0])).toEqual([
-      'select("id")',
-      'eq("version", "2026-10-12")',
-      'limit(1)',
-    ])
+    expect(faux.rpc).toHaveBeenCalledWith('conditions_acceptees', { p_version: '2026-10-12' })
+    expect(faux.de('acceptation_personne')).toHaveLength(0)
     expect(faux.de('acceptation_conditions')).toHaveLength(0)
   })
 
-  it('aucune ligne (nouvelle personne, ou nouvelle version) : faux', async () => {
-    installer({ acceptation_personne: { data: [], error: null } })
+  it('la personne n’a pas accepté (nouvelle personne, ou nouvelle version) : faux', async () => {
+    installer({}, { data: false, error: null })
     expect(await lireConditionsAccepteesParLaPersonne('2026-10-12')).toBe(false)
   })
 
-  it('une erreur de lecture remonte', async () => {
-    installer({ acceptation_personne: { data: null, error: new Error('refus') } })
+  it('une erreur de la base remonte', async () => {
+    installer({}, { data: null, error: new Error('refus') })
     await expect(lireConditionsAccepteesParLaPersonne('2026-10-12')).rejects.toThrow('refus')
+  })
+
+  it('une réponse qui n’est pas oui ou non est refusée', async () => {
+    installer({}, { data: [{ id: 3 }], error: null })
+    await expect(lireConditionsAccepteesParLaPersonne('2026-10-12')).rejects.toThrow()
   })
 
   it('refuse une version mal formée avant tout appel', async () => {
     const faux = installer()
     await expect(lireConditionsAccepteesParLaPersonne('12 octobre')).rejects.toThrow()
-    expect(faux.de('acceptation_personne')).toHaveLength(0)
+    expect(faux.rpc).not.toHaveBeenCalled()
   })
 })
 

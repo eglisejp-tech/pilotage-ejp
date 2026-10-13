@@ -51,7 +51,7 @@ function connecte(type: TypeCompte, enEchec: string[] = []) {
     void args
     return Promise.resolve({ data: 6, error: null })
   })
-  courant.client = { ...faux.client, rpc }
+  courant.client = faux.clientAvecRpc(rpc)
   return { ...faux, rpc }
 }
 

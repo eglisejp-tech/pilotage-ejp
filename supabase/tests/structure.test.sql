@@ -339,6 +339,7 @@ $$, $$ values
   ('ajouter_suggestion', 3, false, true, false),
   ('changer_statut_point', 2, false, true, false),
   ('clore_signalement', 2, false, true, false),
+  ('conditions_acceptees', 1, false, true, false),
   ('corriger_indicateur', 3, false, true, false),
   ('creer_calcul', 7, false, true, false),
   ('creer_indicateur', 9, false, true, false),
@@ -372,7 +373,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 40 fonctions de public : 30 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 41 fonctions de public : 31 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -394,6 +395,7 @@ $$, $$ values
   ('changer_statut_point', 2, true, true, false),
   ('clore_signalement', 2, true, true, false),
   ('communs_de_fiche', 0, true, true, false),
+  ('conditions_acceptees', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
   ('controler_appelant', 1, false, false, false),
   ('controler_categorie_sensible', 0, true, false, false),
@@ -416,7 +418,7 @@ $$, $$ values
   ('creer_indicateurs_prevus', 2, true, true, false),
   ('creer_point', 6, true, true, false),
   ('date_en_lettres', 1, false, false, false),
-  ('declarations_de_ma_personne', 0, true, true, false),
+  ('declarations_de_ma_personne', 0, true, false, false),
   ('declarer_intervenant', 2, true, true, false),
   ('declarer_session', 4, true, true, false),
   ('defaire_mention', 3, true, false, false),
@@ -515,7 +517,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 135 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 136 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

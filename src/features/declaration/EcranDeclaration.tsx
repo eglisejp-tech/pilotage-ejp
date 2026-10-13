@@ -85,13 +85,26 @@ export function EcranDeclaration({
             {erreur}
           </BandeauErreur>
         ) : null}
-        <BoutonPrincipal enCours={enCours} libelleEnCours={TEXTES_DECLARATION.enCours}>
-          {TEXTES_DECLARATION.continuer}
-        </BoutonPrincipal>
+        {/* « Annuler » (après « Ce n'est pas moi ») : le retour, en bouton secondaire sous
+            « Continuer », distinct des sorties du pied de colonne. */}
+        <div className="flex flex-col gap-3">
+          <BoutonPrincipal enCours={enCours} libelleEnCours={TEXTES_DECLARATION.enCours}>
+            {TEXTES_DECLARATION.continuer}
+          </BoutonPrincipal>
+          {onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="min-h-cible w-full border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
+            >
+              {TEXTES_DECLARATION.annuler}
+            </button>
+          ) : null}
+        </div>
       </form>
 
-      <div className="flex flex-col">
-        {onCancel ? <BoutonLien onClick={onCancel}>{TEXTES_DECLARATION.annuler}</BoutonLien> : null}
+      {/* Les deux sorties secondaires sur une ligne quand la largeur le permet. */}
+      <div className="flex flex-wrap items-center gap-x-6">
         <BoutonLien onClick={onSignOut}>{TEXTES_DECLARATION.seDeconnecter}</BoutonLien>
         <a
           href="/confidentialite"

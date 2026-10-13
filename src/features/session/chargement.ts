@@ -71,8 +71,8 @@ export async function chargerEtatSession(): Promise<EtatSession> {
     const declaration = enAal2 && ministere ? await lireMaDeclaration() : null
 
     // Acceptation de la version courante : par le compte (T53) ; sur un compte de ministère, par
-    // la personne déclarée, lue seulement quand sa déclaration est valable (sinon le prénom est
-    // demandé d'abord).
+    // la personne déclarée (la base répond oui ou non), demandée seulement quand sa déclaration
+    // est valable (sinon le prénom est demandé d'abord).
     const conditionsAcceptees = !enAal2
       ? false
       : ministere

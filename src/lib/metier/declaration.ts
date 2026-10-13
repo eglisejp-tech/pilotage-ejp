@@ -72,11 +72,27 @@ export function prenomPropose(changement: boolean, declaration: Declaration | nu
   return declaration.prenom
 }
 
-/** Motif d'une déclaration : « Ce n'est pas moi », rappel du jour (T63), ou connexion. */
+/**
+ * Deux prénoms désignent-ils la même personne ? Majuscules ignorées, comme la base (une personne
+ * est un prénom sur un compte, T61) : « marie » et « Marie » oui, « Marie D. » et « Marie » non.
+ */
+export function memePrenom(a: string, b: string): boolean {
+  return a.toLowerCase() === b.toLowerCase()
+}
+
+/**
+ * Motif d'une déclaration : « Ce n'est pas moi », connexion, ou rappel du jour (T63). Au rappel,
+ * un autre prénom que celui proposé (majuscules ignorées, comme la base) est une autre personne :
+ * « changement », comme « Ce n'est pas moi ». Le prénom confirmé, ou redonné après un effacement,
+ * reste un rappel.
+ */
 export function motifDeclaration(
   changement: boolean,
   declaration: Declaration | null,
+  prenom: string,
 ): MotifDeclaration {
   if (changement) return 'changement'
-  return declaration === null ? 'connexion' : 'rappel'
+  if (declaration === null) return 'connexion'
+  const propose = prenomPropose(false, declaration)
+  return propose !== '' && !memePrenom(propose, prenom) ? 'changement' : 'rappel'
 }

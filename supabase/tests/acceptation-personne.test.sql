@@ -1,11 +1,13 @@
--- Acceptation des conditions par personne sur un compte partagé (décision T61) : ce que la
--- session d'un compte de ministère lit pour savoir si la personne déclarée a accepté la version
--- courante (la question de l'écran), et ce qu'écrit accepter_conditions. Rappel du jour (T63) :
--- v_ma_declaration dit si la déclaration de la session est du jour de Paris.
+-- Acceptation des conditions par personne sur un compte partagé (décision T61) : la question de
+-- l'écran (conditions_acceptees : la personne déclarée sur la session a-t-elle accepté cette
+-- version ? oui ou non, sans lire la table, réservée à EJP Tech), et ce qu'écrit
+-- accepter_conditions. Rappel du jour (T63) : v_ma_declaration dit si la déclaration de la session
+-- est du jour de Paris.
 --
--- - sans prénom déclaré sur la session, refus ; aal1 refusé ; version mal formée refusée ;
+-- - sans prénom déclaré sur la session, refus ; aal1 refusé ; version mal formée, impossible ou à
+--   venir refusée ; session fermée refusée ;
 -- - Marie accepte : une ligne attachée à sa déclaration, saisie par le compte, rien dans
---   acceptation_conditions ; idempotente ;
+--   acceptation_conditions ; idempotente ; sa session ne lit pas la ligne, la réponse est oui ;
 -- - Paul, deuxième personne du même compte, sur un autre appareil : il n'a pas accepté, il
 --   accepte lui-même ; il ne lit pas l'acceptation de Marie ;
 -- - Marie sur un troisième appareil (« marie », majuscules ignorées) : déjà acceptée, un appel de
@@ -18,11 +20,13 @@
 -- - une Marie d'un autre ministère ne lit rien de A ;
 -- - EJP Tech lit qui a accepté quelle version (v_personnes) ;
 -- - effacement : l'acceptation reste, attachée à « [prénom effacé] » ; une déclaration effacée
---   n'accepte rien ; Marie qui revient accepte de nouveau ;
+--   n'accepte rien ; Marie qui revient accepte de nouveau ; au bout de 12 mois, une personne
+--   encore active dont l'acceptation portait sur une déclaration effacée accepte de nouveau
+--   (risque accepté par T61) ;
 -- - aucune ligne de journal.
 begin;
 
-select plan(55);
+select plan(72);
 
 -- Sessions de connexion des comptes du test : tests.se_connecter les pose dans le jeton.
 create temp table sessions_t61 (compte uuid primary key, session uuid not null);
@@ -71,11 +75,12 @@ update ctx set a = tests.creer_compte('personnes-t61-a@exemple.test', 'ministere
                journal_avant = (select count(*)::integer from public.journal);
 grant select on ctx to authenticated, anon;
 
--- La question de l'écran : la session du compte lit-elle une acceptation de cette version ?
+-- La question de l'écran : la personne déclarée sur la session du compte a-t-elle accepté cette
+-- version ? 1 pour oui, 0 pour non (conditions_acceptees).
 create function pg_temp.acceptee(p_compte uuid, p_version text) returns integer
 language sql as $$
   select tests.compter(p_compte, 'aal2',
-    format('select 1 from public.acceptation_personne where version = %L', p_version))
+    format('select 1 where public.conditions_acceptees(%L)', p_version))
 $$;
 
 -- Nombre d'acceptations d'une version sur le compte A, par prénom déclaré (majuscules ignorées).
@@ -100,6 +105,16 @@ select throws_ok($$ select public.accepter_conditions('2026-01-01') $$,
   'un compte de ministère sans prénom déclaré sur sa session n''accepte rien');
 select throws_ok($$ select public.accepter_conditions('1er janvier 2026') $$,
   'P0001', 'Version des conditions inconnue.', 'une version mal formée est refusée');
+select throws_ok($$ select public.conditions_acceptees('1er janvier 2026') $$,
+  'P0001', 'Version des conditions inconnue.', 'la question refuse aussi une version mal formée');
+select tests.deconnecter();
+select is(tests.lire((select a from ctx), 'aal2', 'select public.conditions_acceptees(''2026-01-01'') as r'),
+  '[{"r": false}]'::jsonb, 'sans prénom déclaré, la réponse est non');
+select tests.se_connecter((select a from ctx), 'aal1');
+select throws_ok($$ select public.conditions_acceptees('2026-01-01') $$,
+  '42501', 'Double authentification requise.', 'aal1 : conditions_acceptees refusée');
+select tests.deconnecter();
+select tests.se_connecter((select a from ctx), 'aal2');
 
 -- 2. Marie, sur le premier appareil, déclare puis accepte.
 select lives_ok($$ select public.declarer_intervenant('Marie', 'connexion') $$, 'session 1 : Marie déclare');
@@ -107,6 +122,16 @@ select tests.deconnecter();
 select is(pg_temp.acceptee((select a from ctx), '2026-01-01'), 0,
   'Marie n''a pas encore accepté : l''écran des conditions le lui demande');
 select tests.se_connecter((select a from ctx), 'aal2');
+-- Une version qui n'est pas une vraie date, ou qui est à venir (jour de Paris), est refusée :
+-- elle fausserait la ligne « Conditions » de l'onglet Personnes.
+select throws_ok($$ select public.accepter_conditions('2026-13-01') $$,
+  'P0001', 'Version des conditions inconnue.', 'un 13e mois est refusé');
+select throws_ok($$ select public.accepter_conditions('2026-02-30') $$,
+  'P0001', 'Version des conditions inconnue.', 'un 30 février est refusé');
+select throws_ok($$ select public.accepter_conditions('9999-12-31') $$,
+  'P0001', 'Version des conditions inconnue.', 'une version lointaine est refusée');
+select throws_ok(format('select public.accepter_conditions(%L)', to_char(private.aujourdhui() + 1, 'YYYY-MM-DD')),
+  'P0001', 'Version des conditions inconnue.', 'la version de demain (jour de Paris) est refusée');
 select lives_ok($$ select public.accepter_conditions('2026-01-01') $$, 'Marie accepte');
 select lives_ok($$ select public.accepter_conditions('2026-01-01') $$, 'un second appel ne fait rien, sans erreur');
 select tests.deconnecter();
@@ -116,7 +141,9 @@ select results_eq($$
    where i.compte = (select a from ctx)
 $$, $$ values ('Marie'::text, '2026-01-01'::text, true, true) $$,
   'une seule ligne, attachée à la déclaration de Marie, saisie par le compte (auteur et heure imposés)');
-select is(pg_temp.acceptee((select a from ctx), '2026-01-01'), 1, 'la session de Marie lit son acceptation');
+select is(pg_temp.acceptee((select a from ctx), '2026-01-01'), 1, 'pour Marie, la réponse est oui');
+select is(tests.compter((select a from ctx), 'aal2', 'select 1 from public.acceptation_personne'), 0,
+  'la session de Marie ne lit aucune ligne de la table, pas même la sienne (EJP Tech seul)');
 select is((select count(*)::integer from public.acceptation_conditions where compte = (select a from ctx)), 0,
   'rien dans acceptation_conditions : un compte de ministère n''accepte plus par compte');
 
@@ -218,6 +245,14 @@ select lives_ok($$ select public.accepter_conditions('2026-02-01') $$, 'Léa acc
 select tests.deconnecter();
 select is(pg_temp.lignes('Léa', '2026-02-01'), 1, 'l''acceptation de Léa est attachée à sa propre déclaration');
 
+-- Session fermée (« Se déconnecter », ou révoquée par EJP Tech) : son jeton reste valable jusqu'à
+-- une heure, mais elle n'accepte plus rien, comme declarer_intervenant.
+delete from auth.sessions where id = (select s1 from ctx);
+select tests.se_connecter((select a from ctx), 'aal2');
+select throws_ok($$ select public.accepter_conditions('2026-01-01') $$,
+  '42501', 'Session inconnue : reconnectez-vous.', 'une session fermée n''accepte rien');
+select tests.deconnecter();
+
 -- 8. Comptes non partagés : acceptation par compte, inchangée (T53).
 do $$
 declare
@@ -244,6 +279,14 @@ select is(tests.compter((select berger from ctx), 'aal2', 'select 1 from public.
   'le berger ne lit aucune acceptation par personne');
 select is(tests.compter((select admin from ctx), 'aal2', 'select 1 from public.acceptation_personne'), 0,
   'l''administration de l''église ne lit aucune acceptation par personne');
+select is(pg_temp.acceptee((select berger from ctx), '2026-02-01'), 1,
+  'pour le berger, la question porte sur son compte : oui pour la version acceptée');
+select is(pg_temp.acceptee((select berger from ctx), '2026-01-01'), 0,
+  'pour le berger, non pour une version qu''il n''a pas acceptée');
+select tests.se_connecter((select berger from ctx), 'aal2');
+select throws_ok($$ select public.accepter_conditions('2026-13-01') $$,
+  'P0001', 'Version des conditions inconnue.', 'un compte non partagé n''accepte pas non plus une date impossible');
+select tests.deconnecter();
 
 -- 9. Une Marie d'un autre ministère ne lit rien de A.
 select pg_temp.changer_session(b, sb) from ctx;
@@ -298,6 +341,31 @@ select throws_ok($$ select public.accepter_conditions('2026-02-01') $$,
   '42501', 'Indiquez d''abord votre prénom.',
   'une session dont la déclaration est effacée n''accepte rien');
 select tests.deconnecter();
+
+-- Au bout de 12 mois (effacer_prenoms_anciens, chaque mois) : Zoé, encore active sur le compte B,
+-- a accepté sous une déclaration de plus de 12 mois. Cette déclaration effacée, Zoé accepte de
+-- nouveau, au plus une fois par an (risque accepté par T61) ; la preuve reste, sous
+-- « [prénom effacé] ». Déclaration et acceptation anciennes écrites par le propriétaire.
+insert into public.intervenant (compte, session_auth, prenom, motif, declare_le)
+select b, gen_random_uuid(), 'Zoé', 'connexion', now() - interval '13 months' from ctx;
+insert into public.acceptation_personne (intervenant_id, version, saisi_par)
+select i.id, '2026-02-01', i.compte from public.intervenant i
+ where i.compte = (select b from ctx) and i.prenom = 'Zoé';
+select tests.se_connecter((select b from ctx), 'aal2');
+select lives_ok($$ select public.declarer_intervenant('Zoé', 'changement') $$,
+  'B : Zoé déclare aujourd''hui, sur la session de la Marie de B');
+select tests.deconnecter();
+select is(pg_temp.acceptee((select b from ctx), '2026-02-01'), 1,
+  'Zoé a accepté il y a plus de 12 mois : l''écran ne revient pas');
+select tests.se_connecter((select tech from ctx), 'aal2');
+select lives_ok($$ select public.effacer_prenoms_anciens() $$, 'EJP Tech efface les prénoms de plus de 12 mois');
+select tests.deconnecter();
+select is(pg_temp.acceptee((select b from ctx), '2026-02-01'), 0,
+  'la déclaration ancienne effacée, Zoé accepte de nouveau');
+select is((select count(*)::integer from public.acceptation_personne ap
+             join public.intervenant i on i.id = ap.intervenant_id
+            where i.compte = (select b from ctx) and i.prenom = '[prénom effacé]'), 1,
+  'son acceptation ancienne reste, sous « [prénom effacé] »');
 
 -- 12. Aucune ligne de journal (l'administration lit le journal).
 select is((select count(*)::integer from public.journal), (select journal_avant from ctx),

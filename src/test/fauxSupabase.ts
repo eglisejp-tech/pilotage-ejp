@@ -21,6 +21,12 @@ export type ScenarioSession = {
    */
   conditionsAcceptees?: boolean
   /**
+   * Compte de ministère (T61) : les prénoms qui ont accepté la version courante. Donnée, elle
+   * remplace `conditionsAcceptees` : `conditions_acceptees` répond pour le prénom déclaré sur la
+   * session (majuscules ignorées, comme la base), et `accepter_conditions` l'ajoute.
+   */
+  prenomsAyantAccepte?: string[]
+  /**
    * Dernière déclaration de la session (T56, `v_ma_declaration`), lue pour un compte de
    * ministère : « Marie », déclarée aujourd'hui, par défaut ; null : aucune déclaration.
    * `du_jour` (T63) : faite aujourd'hui, jour de Paris ; vrai si absent.
@@ -87,9 +93,21 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
   let declaration =
     scenario.declaration === undefined ? { id: 1, prenom: 'Marie' } : scenario.declaration
 
+  // Personnes qui ont accepté la version courante (T61), quand le test les donne.
+  const ontAccepte =
+    scenario.prenomsAyantAccepte === undefined
+      ? null
+      : new Set(scenario.prenomsAyantAccepte.map((prenom) => prenom.toLowerCase()))
+
+  /** Réponse de `conditions_acceptees` pour la personne déclarée sur la session. */
+  function personneAAccepte(): boolean {
+    if (ontAccepte === null) return scenario.conditionsAcceptees ?? true
+    return declaration !== null && ontAccepte.has(declaration.prenom.toLowerCase())
+  }
+
   function lignesDe(table: string): unknown[] {
     if (table === 'compte') return scenario.compte ? [scenario.compte] : []
-    if (table === 'acceptation_conditions' || table === 'acceptation_personne') {
+    if (table === 'acceptation_conditions') {
       return (scenario.conditionsAcceptees ?? true) ? [{ id: 'acceptation-1' }] : []
     }
     if (table === 'v_ma_declaration') {
@@ -148,16 +166,11 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
   }
 
   const from = vi.fn((table: string) => {
-    // L'acceptation des conditions est lue par la session en aal2 (T53, par personne pour un
-    // ministère, T61), la déclaration et le jour d'utilisation d'un compte de ministère aussi
-    // (T56) : `tables` ne note que les lectures de données, que les tests comparent ; `from` garde
-    // la trace de celles-ci.
-    const lecturesDeSession = [
-      'acceptation_conditions',
-      'acceptation_personne',
-      'v_ma_declaration',
-      'passage',
-    ]
+    // L'acceptation des conditions est lue par la session en aal2 (T53 ; par personne pour un
+    // ministère, T61, par `conditions_acceptees`), la déclaration et le jour d'utilisation d'un
+    // compte de ministère aussi (T56) : `tables` ne note que les lectures de données, que les
+    // tests comparent ; `from` garde la trace de celles-ci.
+    const lecturesDeSession = ['acceptation_conditions', 'v_ma_declaration', 'passage']
     if (!lecturesDeSession.includes(table)) {
       tables.push(table)
     }
@@ -205,8 +218,56 @@ export function fauxSupabase(scenario: ScenarioSession = {}) {
       const { p_prenom: prenom } = args as { p_prenom: string }
       declaration = { id: (declaration?.id ?? 0) + 1, prenom, du_jour: true }
     }
+    if (nom === 'accepter_conditions' && ontAccepte !== null && declaration !== null) {
+      ontAccepte.add(declaration.prenom.toLowerCase())
+    }
     return Promise.resolve({ data: null, error: null })
   })
 
-  return { client: { from, auth, rpc }, tables, selections, filtres, auth, from, eq, rpc }
+  /**
+   * Question de la session d'un compte de ministère (T61), notée à part comme les autres lectures
+   * de session : `rpc` ne garde que les écritures, que les tests comparent.
+   */
+  const questions = vi.fn<(nom: string, args?: unknown) => Promise<Reponse>>(() =>
+    Promise.resolve(
+      scenario.enEchec?.includes('conditions_acceptees')
+        ? { data: null, error: { message: 'Lecture refusée (test).', code: 'PGRST000' } }
+        : { data: personneAAccepte(), error: null },
+    ),
+  )
+  const appeler = (nom: string, args?: unknown) =>
+    nom === 'conditions_acceptees' ? questions(nom, args) : rpc(nom, args)
+
+  /** Une autre déclaration sur la même session (un deuxième onglet, « Ce n'est pas moi »). */
+  function declarerAilleurs(prenom: string) {
+    declaration = { id: (declaration?.id ?? 0) + 1, prenom, du_jour: true }
+  }
+
+  /**
+   * Client pour un test qui répond lui-même aux fonctions de la base : ses appels passent par
+   * `autreRpc`, sauf la question de la session (`conditions_acceptees`, T61), qui reste celle du
+   * faux.
+   */
+  function clientAvecRpc(autreRpc: (nom: string, args: unknown) => unknown) {
+    return {
+      from,
+      auth,
+      rpc: (nom: string, args?: unknown) =>
+        nom === 'conditions_acceptees' ? questions(nom, args) : autreRpc(nom, args),
+    }
+  }
+
+  return {
+    clientAvecRpc,
+    client: { from, auth, rpc: appeler },
+    tables,
+    selections,
+    filtres,
+    auth,
+    from,
+    eq,
+    rpc,
+    questions,
+    declarerAilleurs,
+  }
 }

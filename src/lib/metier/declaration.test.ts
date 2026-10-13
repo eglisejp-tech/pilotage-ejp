@@ -96,10 +96,26 @@ describe('prenomPropose (T63)', () => {
 })
 
 describe('motifDeclaration', () => {
+  const hier = { id: 1, prenom: 'Marie', duJour: false }
+
   it('« Ce n’est pas moi » : changement ; sinon connexion ou rappel du jour', () => {
-    const hier = { id: 1, prenom: 'Marie', duJour: false }
-    expect(motifDeclaration(true, hier)).toBe('changement')
-    expect(motifDeclaration(false, null)).toBe('connexion')
-    expect(motifDeclaration(false, hier)).toBe('rappel')
+    expect(motifDeclaration(true, hier, 'Paul')).toBe('changement')
+    expect(motifDeclaration(false, null, 'Marie')).toBe('connexion')
+    expect(motifDeclaration(false, hier, 'Marie')).toBe('rappel')
+  })
+
+  it('rappel du jour : le prénom proposé confirmé, majuscules ignorées, reste un rappel', () => {
+    expect(motifDeclaration(false, hier, 'marie')).toBe('rappel')
+  })
+
+  it('rappel du jour : un autre prénom que celui proposé est une autre personne (changement)', () => {
+    expect(motifDeclaration(false, hier, 'Paul')).toBe('changement')
+    expect(motifDeclaration(false, hier, 'Marie D.')).toBe('changement')
+  })
+
+  it('prénom effacé : rien n’était proposé, le prénom redonné est un rappel', () => {
+    expect(motifDeclaration(false, { id: 2, prenom: PRENOM_EFFACE, duJour: true }, 'Marie')).toBe(
+      'rappel',
+    )
   })
 })

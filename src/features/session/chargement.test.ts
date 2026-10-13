@@ -208,34 +208,50 @@ describe('chargerEtatSession : « Qui utilise l’outil ? »', () => {
       declaration: { id: 7, prenom: 'Marie', du_jour: false },
     })
     expect((await chargerEtatSession()).statut).toBe('declaration')
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.questions).not.toHaveBeenCalled()
   })
 
-  it('le prénom d’abord : sans déclaration, l’acceptation n’est pas lue (T61)', async () => {
+  it('le prénom d’abord : sans déclaration, l’acceptation n’est pas demandée (T61)', async () => {
     const faux = installer({ ...session, conditionsAcceptees: false, declaration: null })
     expect((await chargerEtatSession()).statut).toBe('declaration')
     expect(faux.from).toHaveBeenCalledWith('v_ma_declaration')
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.questions).not.toHaveBeenCalled()
     expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
   })
 
-  it('prénom donné : l’acceptation de cette personne, filtrée sur la version (T61)', async () => {
+  it('prénom donné : la base dit si cette personne a accepté la version courante (T61)', async () => {
     const faux = installer({
       ...session,
       conditionsAcceptees: false,
       declaration: { id: 9, prenom: 'Paul' },
     })
     expect(await chargerEtatSession()).toMatchObject({ statut: 'conditions', prenom: 'Paul' })
-    expect(faux.from).toHaveBeenCalledWith('acceptation_personne')
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
-    expect(faux.filtres).toContainEqual({
-      table: 'acceptation_personne',
-      operateur: 'eq',
-      colonne: 'version',
-      valeur: VERSION_CONDITIONS,
+    expect(faux.questions).toHaveBeenCalledWith('conditions_acceptees', {
+      p_version: VERSION_CONDITIONS,
     })
+    // Ni la table de la personne (EJP Tech seul), ni celle des comptes non partagés.
+    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.from).not.toHaveBeenCalledWith('acceptation_conditions')
     // Pas de jour d'utilisation avant l'outil : la déclaration l'a déjà noté.
     expect(faux.from).not.toHaveBeenCalledWith('passage')
+  })
+
+  it('la personne déclarée a déjà accepté, sur cet appareil ou un autre : l’outil (T61)', async () => {
+    installer({
+      ...session,
+      prenomsAyantAccepte: ['marie'],
+      declaration: { id: 9, prenom: 'Marie' },
+    })
+    expect(await chargerEtatSession()).toMatchObject({ statut: 'connecte', prenom: 'Marie' })
+  })
+
+  it('la question échoue : l’erreur remonte, l’écran d’erreur s’affiche', async () => {
+    installer({
+      ...session,
+      declaration: { id: 9, prenom: 'Paul' },
+      enEchec: ['conditions_acceptees'],
+    })
+    await expect(chargerEtatSession()).rejects.toMatchObject({ code: 'PGRST000' })
   })
 
   it('les autres profils : jamais lue, jamais demandée', async () => {
@@ -253,6 +269,7 @@ describe('chargerEtatSession : « Qui utilise l’outil ? »', () => {
     expect(faux.from).not.toHaveBeenCalledWith('v_ma_declaration')
     expect(faux.from).not.toHaveBeenCalledWith('passage')
     // Leur acceptation reste par compte (T53).
-    expect(faux.from).not.toHaveBeenCalledWith('acceptation_personne')
+    expect(faux.from).toHaveBeenCalledWith('acceptation_conditions')
+    expect(faux.questions).not.toHaveBeenCalled()
   })
 })

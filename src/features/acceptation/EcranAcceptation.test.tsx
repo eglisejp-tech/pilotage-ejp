@@ -35,6 +35,15 @@ describe('EcranAcceptation (T53)', () => {
     ).toBeVisible()
     expect(screen.getByText('Ministère Communication')).toBeInTheDocument()
     expect(screen.getByText('Conditions du 8 octobre 2026')).toBeInTheDocument()
+    // La version, en petit sous les liens de lecture, juste avant la case qu'elle précise.
+    const version = screen.getByText('Conditions du 8 octobre 2026')
+    const apres = Node.DOCUMENT_POSITION_FOLLOWING
+    expect(
+      screen
+        .getByRole('link', { name: 'Lire la politique de confidentialité (nouvel onglet)' })
+        .compareDocumentPosition(version) & apres,
+    ).toBe(apres)
+    expect(version.compareDocumentPosition(caseACocher()) & apres).toBe(apres)
     expect(caseACocher()).not.toBeChecked()
     expect(screen.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
     expect(screen.queryByRole('button', { name: /refuser/i })).not.toBeInTheDocument()
@@ -93,7 +102,8 @@ describe('EcranAcceptation (T53)', () => {
   it('compte non partagé : ni prénom, ni « Ce n’est pas moi »', () => {
     afficher()
     expect(screen.queryByText(/^Vous :/)).not.toBeInTheDocument()
-    expect(screen.queryByText(/chaque personne/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/chaque personne/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: "Ce n'est pas moi" })).not.toBeInTheDocument()
   })
 
   it('compte de ministère : la personne déclarée accepte elle-même, avec « Ce n’est pas moi » (T61)', () => {
@@ -108,16 +118,15 @@ describe('EcranAcceptation (T53)', () => {
         />
       </MemoryRouter>,
     )
-    expect(
-      screen.getByText(
-        "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
-      ),
-    ).toBeVisible()
+    // Une seule phrase pour le partage et la personne, puis la sortie de la mauvaise personne.
     expect(screen.getByText('Vous : Marie D.')).toBeVisible()
-    expect(screen.getByRole('link', { name: "Ce n'est pas moi" })).toHaveAttribute(
-      'href',
-      '/qui-utilise?changer=1',
+    expect(screen.getByText('Vous : Marie D.').closest('p')).toHaveTextContent(
+      'Chaque personne du compte accepte elle-même. Vous : Marie D.',
     )
+    const lien = screen.getByRole('link', { name: "Ce n'est pas moi" })
+    expect(lien).toHaveAttribute('href', '/qui-utilise?changer=1')
+    // Dessiné comme les liens de lecture (bleu nuit, souligné), pas en gris.
+    expect(lien).toHaveClass('text-nuit', 'underline')
     // La case garde le texte décidé (T53).
     expect(caseACocher()).not.toBeChecked()
   })

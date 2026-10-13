@@ -49,6 +49,14 @@ test.describe('« Qui utilise l’outil ? » (aperçu)', () => {
     ).toHaveAttribute('href', '/confidentialite')
     await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Annuler' })).toHaveCount(0)
+    // L'exemple tient sur une ligne dès 390 px ; les deux sorties partagent une ligne.
+    const aide = await page.getByText(/^Exemple/).boundingBox()
+    expect(aide?.height ?? 0).toBeLessThan(30)
+    const deconnexion = await page.getByRole('button', { name: 'Se déconnecter' }).boundingBox()
+    const confidentialite = await page
+      .getByRole('link', { name: 'Confidentialité (nouvel onglet)' })
+      .boundingBox()
+    expect(confidentialite?.y).toBe(deconnexion?.y)
     await auditer(page)
     await sansDebordementA360(page)
   })
@@ -80,7 +88,17 @@ test.describe('« Qui utilise l’outil ? » (aperçu)', () => {
 
   test('« Ce n’est pas moi » : « Annuler » en plus ; erreur d’enregistrement', async ({ page }) => {
     await ouvrir(page, '/apercu/qui-utilise?changer=1')
-    await expect(page.getByRole('button', { name: 'Annuler' })).toBeVisible()
+    const annuler = page.getByRole('button', { name: 'Annuler' })
+    await expect(annuler).toBeVisible()
+    // Bouton secondaire juste sous « Continuer », de la même largeur, cible de 44 px.
+    const continuer = await page.getByRole('button', { name: 'Continuer' }).boundingBox()
+    const boite = await annuler.boundingBox()
+    expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
+    expect(boite?.width).toBe(continuer?.width)
+    expect((boite?.y ?? 0) - ((continuer?.y ?? 0) + (continuer?.height ?? 0))).toBeLessThanOrEqual(
+      16,
+    )
+    await auditer(page)
     await ouvrir(page, '/apercu/qui-utilise?etat=erreur')
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await auditer(page)
@@ -111,17 +129,35 @@ test.describe('conditions acceptées par la personne déclarée (T61, aperçu)',
       page.getByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
     ).toBeVisible()
     await expect(
-      page.getByText(
-        "Ce compte est partagé : chaque personne qui l'utilise accepte elle-même les conditions.",
-      ),
+      page.getByText('Chaque personne du compte accepte elle-même. Vous : Marie D.'),
     ).toBeVisible()
-    await expect(page.getByText('Vous : Marie D.')).toBeVisible()
     const lien = page.getByRole('link', { name: "Ce n'est pas moi" })
     await expect(lien).toHaveAttribute('href', '/apercu/qui-utilise?changer=1')
     const boite = await lien.boundingBox()
     expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
+    // Même couleur que les liens de lecture (bleu nuit) : la sortie se voit autant qu'eux.
+    const couleurLecture = await page
+      .getByRole('link', { name: "Lire les conditions d'utilisation (nouvel onglet)" })
+      .evaluate((element) => getComputedStyle(element).color)
+    expect(await lien.evaluate((element) => getComputedStyle(element).color)).toBe(couleurLecture)
+    // La version, en petit sous les liens de lecture, au-dessus de la case.
+    const version = await page.getByText(/^Conditions du /).boundingBox()
+    const lecture = await page
+      .getByRole('link', { name: 'Lire la politique de confidentialité (nouvel onglet)' })
+      .boundingBox()
+    const caseAcceptation = await page.getByRole('checkbox').boundingBox()
+    expect(version?.y ?? 0).toBeGreaterThan(lecture?.y ?? 0)
+    expect(caseAcceptation?.y ?? 0).toBeGreaterThan(version?.y ?? 0)
     await auditer(page)
     await sansDebordementA360(page)
+  })
+
+  test('erreur d’enregistrement et envoi en cours sur l’écran des conditions', async ({ page }) => {
+    await ouvrir(page, '/apercu/connexion?ecran=acceptation&etat=erreur-reseau&outils=non')
+    await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await auditer(page)
+    await ouvrir(page, '/apercu/connexion?ecran=acceptation&etat=en-cours&outils=non')
+    await expect(page.getByRole('button', { name: /Enregistrement en cours/ })).toBeVisible()
   })
 })
 
@@ -270,20 +306,39 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
 })
 
 test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
-  test.setTimeout(90_000)
+  test.setTimeout(120_000)
   const largeur = page.viewportSize()?.width ?? 0
-  const ecrans = [
+  // Un envoi sans rien remplir : le message sous le champ, ou sous la case.
+  const envoyerVide = (bouton: string) => async () => {
+    await page.getByRole('button', { name: bouton }).click()
+    await expect(page.locator('[aria-invalid="true"]')).toHaveCount(1)
+  }
+  const ecrans: [string, string, (() => Promise<void>)?][] = [
     ['qui-utilise', '/apercu/qui-utilise'],
     ['qui-utilise-changement', '/apercu/qui-utilise?changer=1'],
     ['qui-utilise-rappel', '/apercu/qui-utilise?etat=rappel'],
+    ['qui-utilise-champ-vide', '/apercu/qui-utilise', envoyerVide('Continuer')],
+    ['qui-utilise-erreur', '/apercu/qui-utilise?etat=erreur'],
+    ['qui-utilise-envoi', '/apercu/qui-utilise?etat=envoi'],
     ['conditions-personne', '/apercu/connexion?ecran=acceptation&outils=non'],
+    [
+      'conditions-personne-case-vide',
+      '/apercu/connexion?ecran=acceptation&outils=non',
+      envoyerVide('Accepter et continuer'),
+    ],
+    [
+      'conditions-personne-erreur',
+      '/apercu/connexion?ecran=acceptation&etat=erreur-reseau&outils=non',
+    ],
+    ['conditions-personne-envoi', '/apercu/connexion?ecran=acceptation&etat=en-cours&outils=non'],
     ['conditions-compte', '/apercu/connexion?ecran=acceptation&compte=personnel&outils=non'],
     ['en-tete-ministere', '/apercu/navigation?profil=ministere&vous=Marie%20D.'],
     ['personnes', '/apercu/personnes?profil=admin_plateforme'],
     ['journal-technique', '/apercu/journal?profil=admin_plateforme'],
-  ] as const
-  for (const [nom, adresse] of ecrans) {
+  ]
+  for (const [nom, adresse, action] of ecrans) {
     await ouvrir(page, adresse)
+    if (action) await action()
     await page.screenshot({
       path: `test-results/captures/personnes-${nom}-${largeur}.png`,
       fullPage: true,

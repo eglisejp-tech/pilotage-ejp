@@ -38,7 +38,7 @@ export function PageDeclaration() {
     setErreur(undefined)
     setEnCours(true)
     try {
-      await declarerIntervenant(prenom, motifDeclaration(changement, precedente))
+      await declarerIntervenant(prenom, motifDeclaration(changement, precedente, prenom))
       await rafraichirSession()
       if (changement) void navigate(retour, { replace: true })
     } catch {

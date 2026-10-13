@@ -117,7 +117,39 @@ export const COMPTE_SANS_FACTEUR = {
   libelle: 'Ministère EJP Formation',
 }
 
+/**
+ * Session enregistrée d'un profil par le projet « connexion » (connexion.setup.ts). Un compte de
+ * ministère y a déclaré « Essai » au début du job. Depuis T63, le prénom est redemandé à la
+ * première ouverture de chaque nouvelle journée (jour de Paris) : un job qui passe minuit à Paris
+ * (22 h UTC en heure d'été, 23 h UTC en hiver) verrait les parcours de ministère suivants s'arrêter
+ * sur « Qui utilise l'outil ? ». Relancer alors le job : il refait ses connexions.
+ */
 export const fichierSession = (profil: CompteTest['profil']) => `${DOSSIER_AUTH}/${profil}.json`
+
+const MOIS = [
+  'janvier',
+  'février',
+  'mars',
+  'avril',
+  'mai',
+  'juin',
+  'juillet',
+  'août',
+  'septembre',
+  'octobre',
+  'novembre',
+  'décembre',
+]
+
+/**
+ * « Conditions du 13 octobre 2026 » : la date de la version courante telle que l'écran l'écrit
+ * (src/lib/metier/dateConditions.ts, que les parcours ne peuvent pas importer), pour qu'un
+ * changement de VERSION_CONDITIONS ne touche qu'un fichier.
+ */
+export function texteVersionConditions(version: string): string {
+  const [annee, mois, jour] = version.split('-').map(Number)
+  return `Conditions du ${jour === 1 ? '1er' : String(jour)} ${MOIS[(mois ?? 1) - 1] ?? ''} ${String(annee)}`
+}
 
 /** Secret TOTP écrit par le script d'installation (jamais affiché). */
 export function secretDe(email: string): string {
@@ -213,12 +245,12 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   const chemins: string[] = []
   page.on('request', (requete) => {
     const url = new URL(requete.url())
-    // L'acceptation des conditions est lue par la session en aal2 (T53, par personne sur un compte
-    // de ministère, T61), comme la ligne de compte ; un compte de ministère lit aussi sa
-    // déclaration et note son jour d'utilisation (T56).
+    // L'acceptation des conditions est lue par la session en aal2 (T53 ; par personne sur un compte
+    // de ministère, T61, par la question conditions_acceptees), comme la ligne de compte ; un
+    // compte de ministère lit aussi sa déclaration et note son jour d'utilisation (T56).
     const lecturesDeSession = [
       '/rest/v1/acceptation_conditions',
-      '/rest/v1/acceptation_personne',
+      '/rest/v1/rpc/conditions_acceptees',
       '/rest/v1/v_ma_declaration',
       '/rest/v1/passage',
     ]

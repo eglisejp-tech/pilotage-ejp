@@ -35,6 +35,19 @@ export interface PersonneAffichee {
 }
 
 /**
+ * La date d'une version (« 13 octobre 2026 »), ou la version telle que la base la rend si elle
+ * n'est pas une date lisible : une ligne inattendue ne casse jamais l'onglet. La base refuse
+ * depuis T61 une version qui n'est pas une vraie date.
+ */
+function dateDeVersionLisible(version: string): string {
+  try {
+    return dateDeVersionConditions(version)
+  } catch {
+    return version
+  }
+}
+
+/**
  * Les conditions qu'une personne a acceptées (T61) : la dernière version et son heure, en disant
  * quand ce n'est pas la version en cours ; ou rien encore.
  */
@@ -44,7 +57,7 @@ export function conditionsDe(
   versionCourante: string = VERSION_CONDITIONS,
 ): string {
   if (versionAcceptee === null || accepteeLe === null) return TEXTES_PERSONNES.conditionsAucune
-  const version = dateDeVersionConditions(versionAcceptee)
+  const version = dateDeVersionLisible(versionAcceptee)
   const quand = formaterHorodatage(accepteeLe)
   return versionAcceptee >= versionCourante
     ? TEXTES_PERSONNES.conditionsAcceptees(version, quand)
@@ -119,7 +132,7 @@ export function personnesSansActivite(personnes: readonly Personne[]): CompteAff
 
 /**
  * Prénoms (un par compte) qui ont au moins une déclaration de plus de 12 mois pas encore effacée :
- * une personne déclarée chaque semaine depuis un an compte pour un, pas pour 52.
+ * une personne déclarée chaque jour depuis un an (T63) compte pour un, pas pour 365.
  */
 export function nombreAEffacer(personnes: readonly Personne[]): number {
   return personnes.filter((p) => p.declarations_anciennes > 0).length
