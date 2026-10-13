@@ -85,7 +85,7 @@ export const TEXTES_FICHE = {
     phrase:
       'Du moins récent au plus récent. Les ministères sans saisie récente sont en premier. Ouvrez un ministère pour voir sa fiche.',
     /** Premier usage. Proposé (E2). */
-    aucun: "Aucun ministère actif. L'administration de l'église crée les ministères.",
+    aucun: 'Aucun ministère actif. EJP Tech crée les ministères.',
     colonneMinistere: 'Ministère',
     colonneMiseAJour: 'Mise à jour',
     colonneEvenement: 'Prochain événement',

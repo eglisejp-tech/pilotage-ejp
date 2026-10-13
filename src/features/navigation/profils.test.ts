@@ -115,10 +115,15 @@ describe('navigation par profil', () => {
       'Indicateurs',
       'Journal',
     ])
+    // T60 : huit onglets, dans l'ordre de la décision.
     expect(ONGLETS.admin_plateforme.map((o) => o.libelle)).toEqual([
       'Modération',
-      'Indicateurs',
       'Cette semaine',
+      'Ministères',
+      "Points d'attention",
+      'Ministères et comptes',
+      'Indicateurs',
+      'Sessions',
       'Journal technique',
     ])
     expect(accueil('admin_plateforme')).toBe('/moderation')
@@ -146,7 +151,7 @@ describe('navigation par profil', () => {
       expect(profilAutorise(chemin, 'admin_plateforme'), chemin).toBe(true)
       expect(profilAutorise(chemin, 'berger'), chemin).toBe(true)
     }
-    for (const chemin of ['/journal', '/ma-fiche', '/comptes', '/sessions']) {
+    for (const chemin of ['/journal', '/ma-fiche']) {
       expect(profilAutorise(chemin, 'admin_plateforme'), chemin).toBe(false)
     }
     expect(profilAutorise('/moderation', 'berger')).toBe(false)
@@ -193,8 +198,9 @@ const ADRESSES_ETAPES_5_6: [
   ['/points', '/points', 5, ['ministere', 'berger', 'conseil', 'admin_plateforme']],
   ['/journal', '/journal', 6, ['ministere', 'berger', 'conseil', 'admin_eglise']],
   ['/journal-technique', '/journal-technique', 6, ['admin_plateforme']],
-  ['/comptes', '/comptes', 6, ['admin_eglise']],
-  ['/sessions', '/sessions', 6, ['admin_eglise']],
+  // T60 : EJP Tech gère, l'administration lit ; les sessions sont aux deux.
+  ['/comptes', '/comptes', 6, ['admin_eglise', 'admin_plateforme']],
+  ['/sessions', '/sessions', 6, ['admin_eglise', 'admin_plateforme']],
   ['/indicateurs', '/indicateurs', 6, ['admin_eglise', 'admin_plateforme']],
   ['/indicateurs/:id', '/indicateurs/m1', 6, ['admin_eglise', 'admin_plateforme']],
   ['/ma-fiche/indicateurs', '/ma-fiche/indicateurs', 6, ['ministere']],
@@ -232,12 +238,12 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     }
   })
 
-  it('« Indicateurs » suit « Sessions » (administration) et « Modération » (EJP Tech)', () => {
+  it('« Indicateurs » suit « Sessions » (administration) et « Ministères et comptes » (EJP Tech)', () => {
     const chemins = (profil: TypeCompte) => ONGLETS[profil].map((onglet) => onglet.chemin)
     const eglise = chemins('admin_eglise')
     expect(eglise.indexOf('/indicateurs')).toBe(eglise.indexOf('/sessions') + 1)
     const tech = chemins('admin_plateforme')
-    expect(tech.indexOf('/indicateurs')).toBe(tech.indexOf('/moderation') + 1)
+    expect(tech.indexOf('/indicateurs')).toBe(tech.indexOf('/comptes') + 1)
     for (const profil of ['ministere', 'berger', 'conseil'] as const) {
       expect(chemins(profil), profil).not.toContain('/indicateurs')
     }

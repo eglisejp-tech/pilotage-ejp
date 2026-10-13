@@ -15,6 +15,8 @@ export const TEXTES_CONFIGURATION = {
     colonneChangement: 'Dernier changement',
     /** Aucun ministère actif (7.1). */
     aucunMinistere: "Aucun ministère. Créez d'abord les ministères dans Ministères et comptes.",
+    /** Proposé, administration en lecture (T60) : EJP Tech crée les ministères. */
+    aucunMinistereLecture: 'Aucun ministère. EJP Tech crée les ministères.',
     actionMinisteres: 'Ouvrir Ministères et comptes',
     /** Colonne « Prévus ». */
     creer: 'Créer',
@@ -58,6 +60,11 @@ export const TEXTES_CONFIGURATION = {
   /** Ministère inconnu ou désactivé, aucune requête de plus. */
   introuvable: "Ce ministère n'existe pas ou n'est plus actif.",
   revenir: 'Revenir aux indicateurs',
+  /**
+   * Sous le titre des deux écrans, pour l'administration de l'église, qui les lit sans aucun
+   * bouton (décision T60, Proposé).
+   */
+  lecture: 'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
 } as const
 
 /** État vide d'un ministère sans indicateur suivi (7.2, LISEZMOI « États »). */

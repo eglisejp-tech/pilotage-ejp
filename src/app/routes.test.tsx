@@ -165,7 +165,7 @@ describe('routes', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
     await waitFor(() =>
-      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-08' }),
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-13' }),
     )
   })
 
@@ -221,7 +221,16 @@ describe('routes', () => {
     [
       'admin_plateforme',
       'Modération',
-      ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
+      [
+        'Modération',
+        'Cette semaine',
+        'Ministères',
+        "Points d'attention",
+        'Ministères et comptes',
+        'Indicateurs',
+        'Sessions',
+        'Journal technique',
+      ],
     ],
   ])(
     '%s en aal2 : son accueil, ses onglets seulement, son libellé',
@@ -915,48 +924,107 @@ describe('/comptes, écran 13 (lot L1)', () => {
       'v_etat_comptes',
     ])
     expect(invoke).not.toHaveBeenCalled()
+    // T60 : l'administration lit, sans aucun bouton d'action ; EJP Tech gère.
+    expect(
+      screen.getByText(
+        'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^(Ajouter|Désactiver|Refaire)/ })).toBeNull()
   })
-})
 
-// Lot L2 : la vraie page /sessions (retirée des amorces de C0), branchée sur ses lectures.
-describe('/sessions, écran 14 (lot L2)', () => {
-  it('admin_eglise en aal2 : titre, onglet courant, ses trois lectures et aucune écriture', async () => {
+  it('admin_plateforme en aal2 (T60) : l’onglet courant, les boutons, aucun sur sa propre ligne', async () => {
     const faux = installer({
-      ...scenarioDe('admin_eglise'),
+      ...scenarioDe('admin_plateforme'),
       lignes: {
-        v_session_completude: [
+        v_etat_comptes: [
           {
-            session_id: 's-1',
-            type: 'batir',
-            date: '2026-10-03',
-            intitule: null,
-            a_eu_lieu: true,
-            nb_attendus: 8,
-            nb_saisis: 6,
-            manquants: ['Social', 'Intégration'],
+            user_id: 'u-com',
+            type: 'ministere',
+            libelle: 'Ministère Communication',
+            ministere_id: 'm-communication',
+            email: 'communication@exemple.test',
+            desactive_le: null,
+            etat: 'activee',
+          },
+          {
+            user_id: 'u-admin_plateforme',
+            type: 'admin_plateforme',
+            libelle: 'EJP Tech, compte 1',
+            ministere_id: null,
+            email: 'admin_plateforme@exemple.test',
+            desactive_le: null,
+            etat: 'activee',
           },
         ],
         ministere: [
           { id: 'm-communication', code: null, nom: 'Communication', desactive_le: null },
         ],
-        v_semaine: [
-          { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
-        ],
+        indicateur: [],
       },
     })
-    afficher('/sessions')
-    expect(await screen.findByRole('heading', { level: 1, name: 'Sessions' })).toBeInTheDocument()
-    const liste = await screen.findByRole('region', { name: 'Sessions déclarées' })
-    await waitFor(() => expect(liste).toHaveTextContent('Manquent : Intégration et Social'))
-    expect(within(navigation()[0]!).getByRole('link', { name: 'Sessions' })).toHaveAttribute(
-      'aria-current',
-      'page',
-    )
-    expect([...new Set(faux.tables)].sort()).toEqual([
-      'compte',
-      'ministere',
-      'v_semaine',
-      'v_session_completude',
-    ])
+    const invoke = vi.fn()
+    courant.client = { ...faux.client, functions: { invoke } }
+    afficher('/comptes')
+    const ministeres = await screen.findByRole('region', { name: 'Ministères' })
+    await waitFor(() => expect(ministeres).toHaveTextContent('communication@exemple.test'))
+    expect(
+      within(navigation()[0]!).getByRole('link', { name: 'Ministères et comptes' }),
+    ).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('button', { name: 'Ajouter un ministère' })).toBeInTheDocument()
+    expect(
+      within(ministeres).getByRole('button', { name: 'Désactiver Communication' }),
+    ).toBeInTheDocument()
+    const ejpTech = screen.getByRole('region', { name: 'EJP Tech' })
+    expect(within(ejpTech).getByText('Votre compte')).toBeInTheDocument()
+    expect(within(ejpTech).queryByRole('button', { name: /EJP Tech, compte 1$/ })).toBeNull()
+    expect(invoke).not.toHaveBeenCalled()
   })
+})
+
+// Lot L2 : la vraie page /sessions (retirée des amorces de C0), branchée sur ses lectures.
+// T60 : l'administration de l'église et EJP Tech gèrent les sessions.
+describe('/sessions, écran 14 (lot L2)', () => {
+  it.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])(
+    '%s en aal2 : titre, onglet courant, ses trois lectures et aucune écriture',
+    async (profil) => {
+      const faux = installer({
+        ...scenarioDe(profil),
+        lignes: {
+          v_session_completude: [
+            {
+              session_id: 's-1',
+              type: 'batir',
+              date: '2026-10-03',
+              intitule: null,
+              a_eu_lieu: true,
+              nb_attendus: 8,
+              nb_saisis: 6,
+              manquants: ['Social', 'Intégration'],
+            },
+          ],
+          ministere: [
+            { id: 'm-communication', code: null, nom: 'Communication', desactive_le: null },
+          ],
+          v_semaine: [
+            { aujourdhui: '2026-10-07', dimanche: '2026-10-04', lundi: '2026-09-28', numero: 40 },
+          ],
+        },
+      })
+      afficher('/sessions')
+      expect(await screen.findByRole('heading', { level: 1, name: 'Sessions' })).toBeInTheDocument()
+      const liste = await screen.findByRole('region', { name: 'Sessions déclarées' })
+      await waitFor(() => expect(liste).toHaveTextContent('Manquent : Intégration et Social'))
+      expect(within(navigation()[0]!).getByRole('link', { name: 'Sessions' })).toHaveAttribute(
+        'aria-current',
+        'page',
+      )
+      expect([...new Set(faux.tables)].sort()).toEqual([
+        'compte',
+        'ministere',
+        'v_semaine',
+        'v_session_completude',
+      ])
+    },
+  )
 })

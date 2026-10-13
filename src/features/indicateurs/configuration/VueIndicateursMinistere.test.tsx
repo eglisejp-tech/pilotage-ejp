@@ -27,10 +27,11 @@ function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   }
 }
 
+// EJP Tech configure seul (T60) : il est le profil par défaut ; l'administration lit (plus bas).
 function afficherMinistere(
   id: string,
   creation = creationDe(),
-  profil: TypeCompte = 'admin_eglise',
+  profil: TypeCompte = 'admin_plateforme',
 ) {
   const donnees = construireMinistere(id, lecturesExemple())
   if (donnees === null) throw new Error('ministère d’exemple absent')
@@ -40,7 +41,7 @@ function afficherMinistere(
 function afficherEtat(
   ministere: ResultatConfigurationMinistere,
   creation = creationDe(),
-  profil: TypeCompte = 'admin_eglise',
+  profil: TypeCompte = 'admin_plateforme',
 ) {
   render(
     <MemoryRouter>
@@ -315,5 +316,37 @@ describe('VueIndicateursMinistere : états vides', () => {
     afficherEtat({ etat: 'erreur', reessayer })
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
     expect(reessayer).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('VueIndicateursMinistere : administration de l’église, en lecture (T60)', () => {
+  it('la phrase qui dit qu’EJP Tech gère, les indicateurs, aucun bouton', () => {
+    afficherMinistere(ID_COMMUNICATION, creationDe(), 'admin_eglise')
+    expect(
+      screen.getByText(
+        'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Chaque mois' })).toBeInTheDocument()
+    expect(screen.queryAllByRole('button', { name: /Ajouter|Corriger|Remplacer|Retirer/ })).toEqual(
+      [],
+    )
+    // « Voir la fiche » reste à EJP Tech (les valeurs, T29).
+    expect(screen.queryByRole('link', { name: 'Voir la fiche' })).toBeNull()
+  })
+
+  it('prévus à créer : ni bloc, ni choix, ni bouton ; un ministère sans indicateur le dit', () => {
+    const creation = afficherMinistere(ID_KUMI, creationDe(), 'admin_eglise')
+    expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    expect(
+      screen.getByText('Aucun indicateur pour Kumi. Il saisit les chiffres communs.'),
+    ).toBeInTheDocument()
+    expect(creation.creer).not.toHaveBeenCalled()
+  })
+
+  it('nom non reconnu : aucun choix de modèle', () => {
+    afficherMinistere(ID_JEUNESSE, creationDe(), 'admin_eglise')
+    expect(screen.queryByRole('combobox')).toBeNull()
   })
 })

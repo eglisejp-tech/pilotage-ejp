@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { Page, PlaywrightWorkerArgs } from '@playwright/test'
 import { generate } from 'otplib'
 import {
   AVEC_BASE,
@@ -14,17 +14,18 @@ import { verifierAdresseLocale } from './installer-comptes.ts'
 
 // Écran 13, « Ministères et comptes » (lot L1), avec la base locale, Auth, Mailpit et les Edge
 // Functions de comptes : projet « ecritures » (en série, à 1440 px, après les projets de
-// lecture). L'administration crée un ministère « Tech » (T48 : l'alias « +ministere » d'une
-// adresse d'EJP Tech), lit l'invitation dans la boîte locale, la relance, désactive puis réactive
-// le ministère, le compte active son code (par l'API, comme e2e/installer-comptes.ts), puis
-// l'administration refait l'activation. À la fin (test.afterAll, même après un échec), le
-// ministère d'essai est désactivé : il ne compte plus dans les totaux des parcours suivants. Les
-// quatre autres profils reçoivent la page non disponible, sans requête de données ni appel de
-// fonction.
+// lecture). EJP Tech, qui gère seul les comptes (décision T60), crée un ministère « Tech » (T48 :
+// l'alias « +ministere » d'une adresse d'EJP Tech), lit l'invitation dans la boîte locale, la
+// relance, désactive puis réactive le ministère, le compte active son code (par l'API, comme
+// e2e/installer-comptes.ts), puis EJP Tech refait l'activation. À la fin (test.afterAll, même
+// après un échec), le ministère d'essai est désactivé : il ne compte plus dans les totaux des
+// parcours suivants. L'administration de l'église lit l'écran sans aucun bouton, et une Edge
+// Function lui répond 403 ; les trois autres profils reçoivent la page non disponible, sans
+// requête de données ni appel de fonction.
 //
 // Sans base (E2E_BASE absent), tout est ignoré. En local, sans edge runtime ou sans Mailpit, le
-// parcours de l'administration est ignoré avec sa raison ; en CI (le job « e2e » démarre l'edge
-// runtime), il échoue.
+// parcours d'EJP Tech est ignoré avec sa raison ; en CI (le job « e2e » démarre l'edge runtime),
+// il échoue.
 
 // Le suffixe s'écrit en lettres : 5 chiffres de suite ressemblent à une donnée personnelle.
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
@@ -60,7 +61,7 @@ async function messagesPour(page: Page, email: string): Promise<MessageMailpit[]
   return corps.messages ?? []
 }
 
-/** Ligne du compte d'essai dans v_etat_comptes, lue par l'administration. */
+/** Ligne du compte d'essai dans v_etat_comptes, lue par EJP Tech. */
 async function compteDuTest(page: Page) {
   const [ligne] = await lire<{ user_id: string; etat: string; ministere_id: string }>(
     page,
@@ -79,36 +80,42 @@ async function ouvrirComptes(page: Page) {
   await expect(page.getByRole('region', { name: 'Ministères', exact: true })).toBeVisible()
 }
 
-test.describe("l'administration gère le compte d'un nouveau ministère", () => {
-  test.use({ storageState: fichierSession('admin_eglise') })
+/**
+ * Edge runtime et boîte locale prêts ; sinon la raison. En CI, ce parcours doit tourner : un
+ * service absent fait échouer, jamais ignorer en silence.
+ */
+async function exigerServices(playwright: PlaywrightWorkerArgs['playwright']) {
+  const request = await playwright.request.newContext()
+  const fonction = await request
+    .fetch(`${adresseBase()}/functions/v1/creer-compte`, { method: 'OPTIONS' })
+    .catch(() => null)
+  const boite = await request.get(`${adresseMailpit()}/api/v1/messages`).catch(() => null)
+  const fonctionsPretes = fonction !== null && fonction.status() === 204
+  const boitePrete = boite !== null && boite.ok()
+  await request.dispose()
+  const raison = !fonctionsPretes
+    ? "Edge runtime arrêté : ce parcours demande npx supabase start avec l'edge runtime."
+    : !boitePrete
+      ? 'Boîte locale (Mailpit) injoignable.'
+      : null
+  if (raison === null) return
+  if (process.env.CI) throw new Error(`${raison} Le job « e2e » doit démarrer ce service.`)
+  test.skip(true, raison)
+}
+
+test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
+  test.use({ storageState: fichierSession('admin_plateforme') })
 
   test.beforeAll(async ({ playwright }) => {
-    const request = await playwright.request.newContext()
-    const fonction = await request
-      .fetch(`${adresseBase()}/functions/v1/creer-compte`, { method: 'OPTIONS' })
-      .catch(() => null)
-    const boite = await request.get(`${adresseMailpit()}/api/v1/messages`).catch(() => null)
-    const fonctionsPretes = fonction !== null && fonction.status() === 204
-    const boitePrete = boite !== null && boite.ok()
-    await request.dispose()
-    const raison = !fonctionsPretes
-      ? "Edge runtime arrêté : ce parcours demande npx supabase start avec l'edge runtime."
-      : !boitePrete
-        ? 'Boîte locale (Mailpit) injoignable.'
-        : null
-    if (raison === null) return
-    // En CI, ce parcours doit tourner : un service absent fait échouer, jamais ignorer en silence.
-    if (process.env.CI) throw new Error(`${raison} Le job « e2e » doit démarrer ce service.`)
-    test.skip(true, raison)
+    await exigerServices(playwright)
   })
 
   // Nettoyage, même si un test du parcours a échoué (les suivants sont alors sautés) : le
-  // ministère d'essai encore actif est désactivé par desactiver-compte, avec la session de
-  // l'administration, pour qu'il ne compte pas dans les totaux et la complétude des parcours
-  // suivants.
+  // ministère d'essai encore actif est désactivé par desactiver-compte, avec la session d'EJP
+  // Tech, pour qu'il ne compte pas dans les totaux et la complétude des parcours suivants.
   test.afterAll(async ({ browser }, infos) => {
     const contexte = await browser.newContext({
-      storageState: fichierSession('admin_eglise'),
+      storageState: fichierSession('admin_plateforme'),
       baseURL: infos.project.use.baseURL,
     })
     try {
@@ -149,7 +156,7 @@ test.describe("l'administration gère le compte d'un nouveau ministère", () => 
       `ministere?select=nom,desactive_le&id=eq.${compte.ministere_id}`,
     )
     expect(ministere).toEqual({ nom: NOM, desactive_le: null })
-    // Journal : le ministère et le compte, au nom de l'administration, jamais l'adresse.
+    // Journal : le ministère et le compte, au nom d'EJP Tech, jamais l'adresse.
     const journal = await lire<{ action: string; detail: unknown }>(
       page,
       `journal?select=action,detail&cible_id=in.(${compte.ministere_id},${compte.user_id})`,
@@ -200,7 +207,7 @@ test.describe("l'administration gère le compte d'un nouveau ministère", () => 
     expect((await compteDuTest(page)).etat).toBe('invitation_envoyee')
   })
 
-  test('le compte active son code, puis l’administration refait l’activation', async ({ page }) => {
+  test('le compte active son code, puis EJP Tech refait l’activation', async ({ page }) => {
     await ouvrirComptes(page)
     const { user_id: id } = await compteDuTest(page)
 
@@ -258,12 +265,51 @@ test.describe("l'administration gère le compte d'un nouveau ministère", () => 
   })
 })
 
-const AUTRES_PROFILS: CompteTest['profil'][] = [
-  'ministere',
-  'berger',
-  'conseil',
-  'admin_plateforme',
-]
+// L'administration de l'église lit l'écran 13 sans aucun bouton (T60), et les Edge Functions de
+// comptes lui répondent 403 : la base et les fonctions décident, pas seulement l'écran.
+test.describe("l'administration de l'église lit les comptes, sans les gérer (T60)", () => {
+  test.use({ storageState: fichierSession('admin_eglise') })
+
+  test.beforeAll(async ({ playwright }) => {
+    await exigerServices(playwright)
+  })
+
+  test('/comptes en lecture, puis creer-compte et relancer-invitation refusés (403)', async ({
+    page,
+  }) => {
+    await ouvrirComptes(page)
+    await expect(
+      page.getByText(
+        'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
+      ),
+    ).toBeVisible()
+    await expect(page.getByRole('main').getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(
+      0,
+    )
+    const entetes = {
+      apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
+      Authorization: `Bearer ${await jetonAcces(page)}`,
+      'Content-Type': 'application/json',
+    }
+    const creation = await page.request.post(`${adresseBase()}/functions/v1/creer-compte`, {
+      headers: entetes,
+      data: { type: 'conseil', email: `essai-refus-${SUFFIXE}@exemple.test` },
+    })
+    expect(creation.status()).toBe(403)
+    expect(await creation.json()).toEqual({ erreur: 'acces_refuse' })
+    const [conseil] = await lire<{ user_id: string }>(
+      page,
+      'v_etat_comptes?select=user_id&type=eq.conseil&limit=1',
+    )
+    const relance = await page.request.post(`${adresseBase()}/functions/v1/relancer-invitation`, {
+      headers: entetes,
+      data: { user_id: conseil?.user_id },
+    })
+    expect(relance.status()).toBe(403)
+  })
+})
+
+const AUTRES_PROFILS: CompteTest['profil'][] = ['ministere', 'berger', 'conseil']
 
 for (const profil of AUTRES_PROFILS) {
   test.describe(`profil ${profil}`, () => {

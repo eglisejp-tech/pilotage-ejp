@@ -19,10 +19,13 @@ interface Props {
   vide: { texte: string; suite: string }
   /** Sous le tableau (lien vers l'écran Indicateurs). */
   note?: ReactNode
-  onAction: (ligne: LigneCompte, action: ActionLigne) => void
+  /** Null en lecture (administration de l'église, T60) : aucun bouton de ligne. */
+  onAction: ((ligne: LigneCompte, action: ActionLigne) => void) | null
   enCours: { cle: string; action: ActionLigne } | null
   /** Résultat de la dernière action de ligne (sous les boutons de la ligne concernée). */
   resultat: ResultatAction | null
+  /** Compte connecté : sa ligne n'a pas de bouton (T60). */
+  moi?: string | null
 }
 
 /**
@@ -39,6 +42,7 @@ export function SectionComptes({
   onAction,
   enCours,
   resultat,
+  moi,
 }: Props) {
   const idTitre = useId()
   const tableau = useLargeurMin(600)
@@ -57,6 +61,7 @@ export function SectionComptes({
           onAction={onAction}
           enCours={enCours}
           resultat={resultat}
+          moi={moi}
         />
       ) : (
         <ListeComptesTelephone
@@ -65,6 +70,7 @@ export function SectionComptes({
           onAction={onAction}
           enCours={enCours}
           resultat={resultat}
+          moi={moi}
         />
       )}
       {note && lignes.length > 0 ? <p className="mt-3 text-sm text-encre-3">{note}</p> : null}

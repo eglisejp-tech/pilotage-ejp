@@ -16,7 +16,8 @@ import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import { VueComptes } from '@/features/comptes/VueComptes'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
-import { lireProfilApercu } from '@/features/navigation/apercu/exemples'
+import { LIBELLES_EXEMPLE, lireProfilApercu } from '@/features/navigation/apercu/exemples'
+import { gereLOutil } from '@/lib/metier/droits'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 
@@ -25,7 +26,8 @@ const reessayer = () => undefined
 /**
  * Aperçu de développement de l'écran 13 (lot L1), sans base : le vrai écran, des données
  * d'exemple, des actions simulées qui changent la page comme les Edge Functions la changeraient.
- * Adresse : /apercu/comptes?profil=admin_eglise.
+ * Adresse : /apercu/comptes?profil=admin_plateforme (EJP Tech, qui gère : décision T60) ou
+ * ?profil=admin_eglise (la même page en lecture, sans aucun bouton).
  * - `vue=donnees` (défaut), `premier-usage` (aucun ministère, aucun compte), `chargement`,
  *   `probleme` (erreur de page) ;
  * - `refus=<code>` : chaque action est refusée avec ce code (`invitation_trop_recente`...) ;
@@ -36,7 +38,7 @@ const reessayer = () => undefined
 export function ApercuComptes() {
   const [parametres] = useSearchParams()
   const profil = lireProfilApercu(parametres.get('profil'))
-  if (profil !== 'admin_eglise') return <PageNonDisponible />
+  if (profil !== 'admin_eglise' && profil !== 'admin_plateforme') return <PageNonDisponible />
   const vue = lireVueApercuComptes(parametres.get('vue'))
   return (
     <EcranApercu
@@ -44,6 +46,7 @@ export function ApercuComptes() {
       vue={vue}
       refus={lireRefusApercu(parametres.get('refus'))}
       echec={parametres.get('envoi') === 'echec'}
+      lectureSeule={!gereLOutil(profil)}
     />
   )
 }
@@ -52,9 +55,10 @@ interface Props {
   vue: ReturnType<typeof lireVueApercuComptes>
   refus: ReturnType<typeof lireRefusApercu>
   echec: boolean
+  lectureSeule: boolean
 }
 
-function EcranApercu({ vue, refus, echec }: Props) {
+function EcranApercu({ vue, refus, echec, lectureSeule }: Props) {
   useTitrePage(TEXTES_COMPTES.titre)
   const [donnees, setDonnees] = useState<DonneesApercu>(() =>
     vue === 'premier-usage' ? donneesPremierUsage() : donneesExemple(),
@@ -92,5 +96,17 @@ function EcranApercu({ vue, refus, echec }: Props) {
       ),
     }
   }
-  return <VueComptes titre={TEXTES_COMPTES.titre} donnees={etat} actions={actions} />
+  // Le compte qui lit l'aperçu de la gestion : « EJP Tech, compte 1 », dont la ligne n'a pas de bouton.
+  const moi =
+    donnees.comptes.find((c) => c.ligne.libelle === LIBELLES_EXEMPLE.admin_plateforme)?.ligne
+      .user_id ?? null
+  return (
+    <VueComptes
+      titre={TEXTES_COMPTES.titre}
+      donnees={etat}
+      actions={actions}
+      lectureSeule={lectureSeule}
+      moi={lectureSeule ? null : moi}
+    />
+  )
 }

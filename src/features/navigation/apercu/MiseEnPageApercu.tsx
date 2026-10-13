@@ -10,10 +10,10 @@ import { ONGLETS } from '@/features/navigation/profils'
 export function MiseEnPageApercu() {
   const { pathname } = useLocation()
   const [parametres] = useSearchParams()
-  // L'écran des indicateurs est celui de l'administration de l'église, pas du berger.
+  // L'écran des indicateurs est celui d'EJP Tech, qui les configure (T60), pas du berger.
   const profil = lireProfilApercu(
     parametres.get('profil'),
-    pathname.startsWith('/apercu/indicateurs') ? 'admin_eglise' : 'berger',
+    pathname.startsWith('/apercu/indicateurs') ? 'admin_plateforme' : 'berger',
   )
   // L'aperçu tient lieu d'accueil : le premier onglet y mène et s'affiche actif.
   const ici = `${pathname}?profil=${profil}`

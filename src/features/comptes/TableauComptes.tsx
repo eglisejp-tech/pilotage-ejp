@@ -15,10 +15,13 @@ interface Props {
   /** « ministeres » : colonnes Ministère, Email de connexion, Indicateurs ; sinon Compte, Email personnel. */
   variante: 'ministeres' | 'personnes'
   idTitre: string
-  onAction: (ligne: LigneCompte, action: ActionLigne) => void
+  /** Null en lecture (administration de l'église, T60) : ni boutons ni colonne d'actions. */
+  onAction: ((ligne: LigneCompte, action: ActionLigne) => void) | null
   enCours: { cle: string; action: ActionLigne } | null
   /** Résultat de la dernière action de ligne, affiché sous les boutons de sa ligne. */
   resultat: ResultatAction | null
+  /** Compte connecté : sa ligne n'a pas de bouton (T60). */
+  moi?: string | null
 }
 
 const entete = 'pt-1 pr-5 pb-1 text-left align-middle font-normal'
@@ -29,7 +32,15 @@ const cellule = 'py-2.5 pr-5 align-middle'
  * l'adresse a sa colonne ; de 600 à 1023 px, elle passe sous le nom pour que les boutons tiennent.
  * La colonne « Indicateurs » n'existe que pour les ministères.
  */
-export function TableauComptes({ lignes, variante, idTitre, onAction, enCours, resultat }: Props) {
+export function TableauComptes({
+  lignes,
+  variante,
+  idTitre,
+  onAction,
+  enCours,
+  resultat,
+  moi,
+}: Props) {
   const ordinateur = useLargeurMin(1024)
   const ministeres = variante === 'ministeres'
   return (
@@ -70,9 +81,11 @@ export function TableauComptes({ lignes, variante, idTitre, onAction, enCours, r
               />
             </span>
           </th>
-          <th scope="col" className={cn(entete, 'pr-0')}>
-            <span className="sr-only">{TEXTES_COMPTES.colonneActions}</span>
-          </th>
+          {onAction !== null ? (
+            <th scope="col" className={cn(entete, 'pr-0')}>
+              <span className="sr-only">{TEXTES_COMPTES.colonneActions}</span>
+            </th>
+          ) : null}
         </tr>
       </thead>
       <tbody>
@@ -101,14 +114,17 @@ export function TableauComptes({ lignes, variante, idTitre, onAction, enCours, r
             <td className={cellule}>
               <EtatDoubleAuthentification etat={ligne.etat} desactiveLe={ligne.desactiveLe} />
             </td>
-            <td className={cn(cellule, 'pr-0')}>
-              <BoutonsLigne
-                ligne={ligne}
-                onAction={onAction}
-                enCours={enCours?.cle === ligne.cle ? enCours.action : null}
-              />
-              <ResultatLigne resultat={resultat?.cle === ligne.cle ? resultat : null} />
-            </td>
+            {onAction !== null ? (
+              <td className={cn(cellule, 'pr-0')}>
+                <BoutonsLigne
+                  ligne={ligne}
+                  onAction={onAction}
+                  enCours={enCours?.cle === ligne.cle ? enCours.action : null}
+                  moi={moi}
+                />
+                <ResultatLigne resultat={resultat?.cle === ligne.cle ? resultat : null} />
+              </td>
+            ) : null}
           </tr>
         ))}
       </tbody>

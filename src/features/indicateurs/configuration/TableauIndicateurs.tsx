@@ -11,7 +11,8 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   lignes: LigneMinistereConfiguration[]
-  creation: CreationPrevus
+  /** Null en lecture (administration de l'église, T60) : ni « Créer » ni « Choisir ». */
+  creation: CreationPrevus | null
   idTitre: string
 }
 
@@ -84,7 +85,7 @@ export function TableauIndicateurs({ lignes, creation, idTitre }: Props) {
                 {ligne.dernierChangement ?? textes.aucunChangement}
               </td>
             </tr>
-            {creation.dernier === ligne.id && creation.refus !== null ? (
+            {creation !== null && creation.dernier === ligne.id && creation.refus !== null ? (
               <tr>
                 <td colSpan={5} className="pb-3">
                   <RefusCreation refus={creation.refus} />

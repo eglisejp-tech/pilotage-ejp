@@ -19,6 +19,13 @@ interface Props {
   titre: string
   donnees: EtatBloc<DonneesComptes>
   actions: ActionsComptes
+  /**
+   * Administration de l'église (décision T60) : l'écran se lit, sans aucun bouton d'action ; la
+   * phrase sous le titre dit qu'EJP Tech gère les ministères et les comptes.
+   */
+  lectureSeule?: boolean
+  /** Compte connecté (EJP Tech) : sa ligne n'a aucun bouton, la base refuserait. */
+  moi?: string | null
 }
 
 /** Le focus n'est plus nulle part : son élément a disparu (bouton remplacé, panneau fermé). */
@@ -28,16 +35,18 @@ function focusPerdu(): boolean {
 }
 
 /**
- * Écran 13, « Ministères et comptes » (administration de l'église ; maquette 13, BRIEF section 9) :
- * titre, phrase et « Ajouter un ministère », puis les sections Ministères, Berger et conseil,
- * EJP Tech et Listes. Les panneaux d'ajout s'ouvrent en page entière sous 600 px, en panneau de
- * 460 px au-delà ; désactiver et refaire l'activation passent par une fenêtre de confirmation.
- * La réussite d'une création s'affiche en haut de la page ; le résultat d'une action de ligne,
- * sous les boutons de sa ligne. Quand le bouton qui avait le focus disparaît, le focus va au
- * premier bouton de la même ligne, ou au titre après une création.
+ * Écran 13, « Ministères et comptes » (EJP Tech, qui gère, et l'administration de l'église, qui
+ * lit : décision T60 ; maquette 13, BRIEF section 9) : titre, phrase et « Ajouter un ministère »,
+ * puis les sections Ministères, Berger et conseil, EJP Tech et Listes. Les panneaux d'ajout
+ * s'ouvrent en page entière sous 600 px, en panneau de 460 px au-delà ; désactiver et refaire
+ * l'activation passent par une fenêtre de confirmation. La réussite d'une création s'affiche en
+ * haut de la page ; le résultat d'une action de ligne, sous les boutons de sa ligne. Quand le
+ * bouton qui avait le focus disparaît, le focus va au premier bouton de la même ligne, ou au titre
+ * après une création. En lecture seule, ni bouton d'ajout ni bouton de ligne.
  */
-export function VueComptes({ titre, donnees, actions }: Props) {
+export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi = null }: Props) {
   const ecran = useEcranComptes(actions)
+  const onAction = lectureSeule ? null : ecran.surAction
   const enPanneau = useLargeurMin(LARGEUR_PANNEAU)
   const titreRef = useRef<HTMLHeadingElement>(null)
   const contenuRef = useRef<HTMLDivElement>(null)
@@ -88,10 +97,10 @@ export function VueComptes({ titre, donnees, actions }: Props) {
               {titre}
             </h1>
             <p className="max-w-[720px] leading-relaxed text-encre-2">
-              {TEXTES_COMPTES.introduction}
+              {lectureSeule ? TEXTES_COMPTES.introductionLecture : TEXTES_COMPTES.introduction}
             </p>
           </div>
-          {donnees.etat === 'donnees' ? (
+          {donnees.etat === 'donnees' && !lectureSeule ? (
             <BoutonAjout
               principal
               libelle={TEXTES_COMPTES.ajouterMinistere}
@@ -128,67 +137,81 @@ export function VueComptes({ titre, donnees, actions }: Props) {
             }
             lignes={donnees.donnees.ministeres}
             variante="ministeres"
-            vide={{ texte: VIDES_COMPTES.ministeres, suite: VIDES_COMPTES.ministeresSuite }}
+            vide={{
+              texte: VIDES_COMPTES.ministeres,
+              suite: lectureSeule
+                ? VIDES_COMPTES.ministeresSuiteLecture
+                : VIDES_COMPTES.ministeresSuite,
+            }}
             note={
               <>
-                {TEXTES_COMPTES.noteIndicateurs}{' '}
+                {lectureSeule
+                  ? TEXTES_COMPTES.noteIndicateursLecture
+                  : TEXTES_COMPTES.noteIndicateurs}{' '}
                 <Link to="/indicateurs" className="text-nuit underline underline-offset-4">
                   {TEXTES_COMPTES.lienIndicateurs}
                 </Link>
                 .
               </>
             }
-            onAction={ecran.surAction}
+            onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}
+            moi={moi}
           />
           <SectionComptes
             titre={TEXTES_COMPTES.titreBergerConseil}
             complement={
-              <div className="flex w-full flex-col gap-2 min-[600px]:w-auto min-[600px]:flex-row">
-                {donnees.donnees.bergerActif ? null : (
+              lectureSeule ? undefined : (
+                <div className="flex w-full flex-col gap-2 min-[600px]:w-auto min-[600px]:flex-row">
+                  {donnees.donnees.bergerActif ? null : (
+                    <BoutonAjout
+                      libelle={TEXTES_COMPTES.ajouterBerger}
+                      onClick={() => ecran.ouvrirPanneau({ genre: 'berger' })}
+                    />
+                  )}
                   <BoutonAjout
-                    libelle={TEXTES_COMPTES.ajouterBerger}
-                    onClick={() => ecran.ouvrirPanneau({ genre: 'berger' })}
+                    libelle={TEXTES_COMPTES.ajouterConseil}
+                    onClick={() =>
+                      ecran.ouvrirPanneau({
+                        genre: 'conseil',
+                        nomAffiche: donnees.donnees.prochainConseil,
+                      })
+                    }
                   />
-                )}
-                <BoutonAjout
-                  libelle={TEXTES_COMPTES.ajouterConseil}
-                  onClick={() =>
-                    ecran.ouvrirPanneau({
-                      genre: 'conseil',
-                      nomAffiche: donnees.donnees.prochainConseil,
-                    })
-                  }
-                />
-              </div>
+                </div>
+              )
             }
             lignes={donnees.donnees.bergerConseil}
             variante="personnes"
             vide={{ texte: VIDES_COMPTES.bergerConseil, suite: VIDES_COMPTES.bergerConseilSuite }}
-            onAction={ecran.surAction}
+            onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}
+            moi={moi}
           />
           <SectionComptes
             titre={TEXTES_COMPTES.titreEjpTech}
             complement={
-              <BoutonAjout
-                libelle={TEXTES_COMPTES.ajouterEjpTech}
-                onClick={() =>
-                  ecran.ouvrirPanneau({
-                    genre: 'admin_plateforme',
-                    nomAffiche: donnees.donnees.prochainEjpTech,
-                  })
-                }
-              />
+              lectureSeule ? undefined : (
+                <BoutonAjout
+                  libelle={TEXTES_COMPTES.ajouterEjpTech}
+                  onClick={() =>
+                    ecran.ouvrirPanneau({
+                      genre: 'admin_plateforme',
+                      nomAffiche: donnees.donnees.prochainEjpTech,
+                    })
+                  }
+                />
+              )
             }
             lignes={donnees.donnees.ejpTech}
             variante="personnes"
             vide={{ texte: VIDES_COMPTES.ejpTech, suite: VIDES_COMPTES.ejpTechSuite }}
-            onAction={ecran.surAction}
+            onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}
+            moi={moi}
           />
           <ListesEglise />
         </>

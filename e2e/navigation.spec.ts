@@ -29,9 +29,22 @@ const PROFILS = [
   {
     profil: 'admin_plateforme',
     libelle: 'EJP Tech, compte 1',
-    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique'],
+    // T60 : huit onglets ; la ligne ne tient pas, le menu sert à toutes les largeurs.
+    onglets: [
+      'Modération',
+      'Cette semaine',
+      'Ministères',
+      "Points d'attention",
+      'Ministères et comptes',
+      'Indicateurs',
+      'Sessions',
+      'Journal technique',
+    ],
   },
 ] as const
+
+/** EJP Tech a plus de cinq onglets : son en-tête garde le menu à toutes les largeurs (T60). */
+const menuPartout = (profil: string) => profil === 'admin_plateforme'
 
 async function ouvrir(page: Page, profil: string) {
   await page.goto(`/apercu/navigation?profil=${profil}`)
@@ -48,7 +61,7 @@ test.describe('en-tête et menu (aperçu)', () => {
       await ouvrir(page, profil)
       const entete = page.getByRole('banner')
       await expect(entete.getByText(libelle).filter({ visible: true })).toBeVisible()
-      if (!estLarge(page)) {
+      if (!estLarge(page) || menuPartout(profil)) {
         await expect(page.getByRole('navigation')).toHaveCount(0)
         await entete.getByRole('button', { name: 'Ouvrir le menu' }).click()
       }
@@ -116,6 +129,29 @@ test.describe('en-tête et menu (aperçu)', () => {
     expect(nav && compte && compte.x).toBeGreaterThan((nav?.x ?? 0) + (nav?.width ?? 0))
   })
 
+  test('EJP Tech et ses huit onglets (T60) : le menu à toutes les largeurs, aligné sur la page', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'admin_plateforme')
+    const bouton = page.getByRole('button', { name: 'Ouvrir le menu' })
+    await expect(bouton).toBeVisible()
+    await expect(page.getByRole('navigation')).toHaveCount(0)
+    const cadre = await bouton.boundingBox()
+    expect(cadre?.width).toBeGreaterThanOrEqual(44)
+    await bouton.click()
+    const navigation = page.getByRole('navigation', { name: 'Navigation principale' })
+    await expect(navigation.getByRole('link')).toHaveCount(8)
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('navigation')).toHaveCount(0)
+    await expect(bouton).toBeFocused()
+    if (estLarge(page)) {
+      // « Pilotage EJP » commence où commence le titre de la page, pas contre le bord.
+      const marque = await page.getByRole('link', { name: 'Pilotage EJP' }).boundingBox()
+      const titre = await page.getByRole('heading', { level: 1 }).boundingBox()
+      expect(Math.abs((marque?.x ?? 0) - (titre?.x ?? 100))).toBeLessThanOrEqual(2)
+    }
+  })
+
   test("aucune violation d'accessibilité, menu fermé et ouvert", async ({ page }) => {
     for (const { profil } of PROFILS) {
       await ouvrir(page, profil)
@@ -181,6 +217,11 @@ test.describe('en-tête et menu (aperçu)', () => {
       await page.setViewportSize({ width: 1024, height: 768 })
       await ouvrir(page, 'admin_eglise')
       await page.screenshot({ path: 'test-results/captures/entete-admin_eglise-1024.png' })
+      // EJP Tech (T60) à 1024 px : le menu, fermé puis ouvert.
+      await ouvrir(page, 'admin_plateforme')
+      await page.screenshot({ path: 'test-results/captures/entete-admin_plateforme-1024.png' })
+      await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
+      await page.screenshot({ path: 'test-results/captures/menu-admin_plateforme-1024.png' })
     }
   })
 })

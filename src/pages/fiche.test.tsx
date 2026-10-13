@@ -232,11 +232,7 @@ describe('/ministeres', () => {
     installer('conseil', { v_semaine: [SEMAINE], v_tableau_ministeres: [] })
     afficher('/ministeres')
     expect(
-      await screen.findByText(
-        "Aucun ministère actif. L'administration de l'église crée les ministères.",
-        {},
-        ATTENTE,
-      ),
+      await screen.findByText('Aucun ministère actif. EJP Tech crée les ministères.', {}, ATTENTE),
     ).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBeNull()
   })

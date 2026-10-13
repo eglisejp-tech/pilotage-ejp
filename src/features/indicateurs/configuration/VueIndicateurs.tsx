@@ -13,6 +13,7 @@ import { TableauIndicateurs } from '@/features/indicateurs/configuration/Tableau
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import type { TypeCompte } from '@/lib/base'
+import { gereLOutil } from '@/lib/metier/droits'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
 interface Props {
@@ -36,18 +37,21 @@ const textes = TEXTES_CONFIGURATION
  * de l'église, le bloc « À valider », puis le tableau des ministères actifs à partir de 600 px,
  * une liste en dessous. Le refus de la base à un « Créer » s'affiche sous la ligne du ministère
  * concerné. Jamais une valeur d'indicateur. Aucun ministère : l'état vide dit où
- * les créer. Problème passager : bandeau et « Réessayer ».
+ * les créer. Problème passager : bandeau et « Réessayer ». EJP Tech configure seul (décision T60) :
+ * l'administration de l'église lit l'écran sans aucun bouton, avec la phrase qui le dit.
  */
 export function VueIndicateurs({ titre, profil, configuration, creation, blocAValider }: Props) {
   const idTitre = useId()
   const tableau = useLargeurMin(600)
   useTitrePage(titre)
+  const gestion = gereLOutil(profil)
   return (
     <section aria-labelledby={idTitre} className="flex flex-col">
       <h1 id={idTitre} className="font-lecture text-titre leading-tight font-medium">
         {titre}
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
+      {gestion ? null : <p className="mt-4 max-w-prose text-encre-2">{textes.lecture}</p>}
       {configuration.etat === 'erreur' ? (
         <div className="mt-6">
           <ErreurDePage
@@ -64,9 +68,9 @@ export function VueIndicateurs({ titre, profil, configuration, creation, blocAVa
             <EtatVide
               situation="premier_usage"
               action={{ libelle: textes.liste.actionMinisteres, vers: '/comptes' }}
-              peutAgir={profil === 'admin_eglise'}
+              peutAgir={gestion}
             >
-              {textes.liste.aucunMinistere}
+              {gestion ? textes.liste.aucunMinistere : textes.liste.aucunMinistereLecture}
             </EtatVide>
           ) : (
             <div className="mt-4 max-w-prose text-encre-2">
@@ -86,13 +90,13 @@ export function VueIndicateurs({ titre, profil, configuration, creation, blocAVa
               {tableau ? (
                 <TableauIndicateurs
                   lignes={configuration.donnees.lignes}
-                  creation={creation}
+                  creation={gestion ? creation : null}
                   idTitre={idTitre}
                 />
               ) : (
                 <ListeIndicateursTelephone
                   lignes={configuration.donnees.lignes}
-                  creation={creation}
+                  creation={gestion ? creation : null}
                   idTitre={idTitre}
                 />
               )}

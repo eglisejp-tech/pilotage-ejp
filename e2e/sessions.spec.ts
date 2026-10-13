@@ -190,11 +190,20 @@ test.describe('Sessions (administration), aperçu', () => {
   })
 
   test('les autres profils reçoivent la page non disponible', async ({ page }) => {
-    for (const profil of ['ministere', 'berger', 'conseil', 'admin_plateforme']) {
+    for (const profil of ['ministere', 'berger', 'conseil']) {
       await page.goto(`/apercu/sessions?profil=${profil}`)
       await expect(page.getByText(PAGE_NON_DISPONIBLE)).toBeVisible()
       await expect(page.getByRole('button', { name: 'Déclarer la session' })).toHaveCount(0)
     }
+  })
+
+  test('EJP Tech gère aussi les sessions (T60) : liste et déclaration', async ({ page }) => {
+    await page.goto('/apercu/sessions?profil=admin_plateforme')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sessions')
+    await expect(liste(page)).toContainText('6 sur 8')
+    const formulaire = await ouvrirDeclaration(page)
+    await expect(formulaire.getByRole('button', { name: 'Déclarer la session' })).toBeVisible()
+    await expect(bouton(page, "Modifier Bâtir l'Église du 3 oct.")).toBeVisible()
   })
 
   test('aide : la bulle de « Ministères attendus »', async ({ page }) => {

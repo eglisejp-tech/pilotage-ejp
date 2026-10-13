@@ -43,8 +43,8 @@ export function PageConditions() {
         <PartieTexte titre="Accès à l'outil">
           <ul role="list" className={liste}>
             <li>
-              L'outil est réservé aux ministères enregistrés, dont les comptes sont créés par
-              l'administration de l'église. Personne ne peut s'inscrire seul.
+              L'outil est réservé aux ministères enregistrés, dont les comptes sont créés par EJP
+              Tech. Personne ne peut s'inscrire seul.
             </li>
             <li>Chaque ministère a un compte partagé, avec une adresse email commune.</li>
             <li>
@@ -61,16 +61,13 @@ export function PageConditions() {
               personnes autorisées du ministère.
             </li>
             <li>
-              Quand une personne quitte le ministère, le responsable prévient sans délai
-              l'administration de l'église et EJP Tech. Ensuite, dans cet ordre : le responsable
-              change le mot de passe de la boîte mail partagée, l'administration de l'église refait
-              l'activation du compte, puis le responsable choisit un nouveau mot de passe et
-              réactive la double authentification avec les personnes qui restent.
+              Quand une personne quitte le ministère, le responsable prévient sans délai EJP Tech.
+              Ensuite, dans cet ordre : le responsable change le mot de passe de la boîte mail
+              partagée, EJP Tech refait l'activation du compte, puis le responsable choisit un
+              nouveau mot de passe et réactive la double authentification avec les personnes qui
+              restent.
             </li>
-            <li>
-              En cas de perte d'un téléphone, prévenez l'administration de l'église, qui refait
-              l'activation.
-            </li>
+            <li>En cas de perte d'un téléphone, prévenez EJP Tech, qui refait l'activation.</li>
           </ul>
         </PartieTexte>
         <PartieTexte titre="Règles d'usage">
@@ -106,9 +103,9 @@ export function PageConditions() {
         </PartieTexte>
         <PartieTexte titre="Désactivation d'un compte">
           <p>
-            L'administration de l'église peut désactiver un compte, par exemple quand un ministère
-            arrête son activité ou quand ces conditions ne sont pas respectées. Les données du
-            compte sont gardées. L'administration peut le réactiver.
+            EJP Tech peut désactiver un compte, par exemple quand un ministère arrête son activité
+            ou quand ces conditions ne sont pas respectées. Les données du compte sont gardées. EJP
+            Tech peut le réactiver.
           </p>
         </PartieTexte>
         <PartieTexte titre="Disponibilité et fin de l'outil">

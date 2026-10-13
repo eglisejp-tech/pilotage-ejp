@@ -1,6 +1,6 @@
 import { matchPath } from 'react-router'
 import type { TypeCompte } from '@/lib/base'
-import { DECIDEURS, LECTEURS } from '@/lib/metier/droits'
+import { DECIDEURS, GESTIONNAIRES_SESSIONS, LECTEURS, LECTEURS_GESTION } from '@/lib/metier/droits'
 
 // Navigation par profil (BRIEF sections 2 et 9, maquette 00) et table des adresses de
 // l'application. Un profil ne voit jamais les onglets d'un autre ; chaque adresse déclare ses
@@ -39,8 +39,15 @@ export const ONGLETS: Record<TypeCompte, readonly Onglet[]> = {
   // EJP Tech lit aussi « Cette semaine », comme le berger, en lecture seule (T29).
   admin_plateforme: [
     { libelle: 'Modération', chemin: '/moderation' },
-    { libelle: 'Indicateurs', chemin: '/indicateurs' },
     { libelle: 'Cette semaine', chemin: '/' },
+    // T60 : « Ministères » et « Points d'attention » en lecture seule, comme le berger (T29) ;
+    // EJP Tech gère seul les ministères, les comptes et les indicateurs, et les sessions avec
+    // l'administration de l'église.
+    { libelle: 'Ministères', chemin: '/ministeres' },
+    { libelle: "Points d'attention", chemin: '/points' },
+    { libelle: 'Ministères et comptes', chemin: '/comptes' },
+    { libelle: 'Indicateurs', chemin: '/indicateurs' },
+    { libelle: 'Sessions', chemin: '/sessions' },
     { libelle: 'Journal technique', chemin: '/journal-technique' },
   ],
 }
@@ -129,8 +136,10 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
     titre: 'Journal',
     etape: 6,
   },
-  { chemin: '/comptes', profils: ['admin_eglise'], titre: 'Ministères et comptes', etape: 6 },
-  { chemin: '/sessions', profils: ['admin_eglise'], titre: 'Sessions', etape: 6 },
+  // T60 : EJP Tech gère les ministères et les comptes, l'administration les lit ; les sessions
+  // sont aux deux.
+  { chemin: '/comptes', profils: LECTEURS_GESTION, titre: 'Ministères et comptes', etape: 6 },
+  { chemin: '/sessions', profils: GESTIONNAIRES_SESSIONS, titre: 'Sessions', etape: 6 },
   // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2) : l'administration
   // de l'église et EJP Tech seulement. Le ministère règle les siens par /ma-fiche/indicateurs
   // (7.3) ; le berger et le conseil les lisent sur la fiche, sans écran de réglage.

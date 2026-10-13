@@ -11,6 +11,11 @@ interface Props {
   enCours: ActionLigne | null
   /** Sous 600 px : boutons en pleine largeur, l'un sous l'autre (BRIEF, section 9). */
   pleineLargeur?: boolean
+  /**
+   * Compte connecté (EJP Tech, T60) : sa ligne n'a aucun bouton, la base refuse toute action sur
+   * le compte de l'appelant. Elle dit « Votre compte ».
+   */
+  moi?: string | null
 }
 
 /**
@@ -19,7 +24,10 @@ interface Props {
  * lecteur d'écran.
  * Pendant un envoi, le bouton reste dans l'ordre du clavier (`aria-disabled`).
  */
-export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false }: Props) {
+export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, moi }: Props) {
+  if (moi != null && ligne.userId === moi) {
+    return <p className="text-sm text-encre-3">{TEXTES_COMPTES.votreCompte}</p>
+  }
   const actions = actionsDeLaLigne(ligne)
   return (
     <div className={cn('flex gap-2', pleineLargeur ? 'flex-col' : 'flex-wrap justify-end')}>

@@ -26,6 +26,7 @@ import type { ResultatConfigurationMinistere } from '@/features/indicateurs/conf
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
 import type { TypeCompte } from '@/lib/base'
+import { gereLOutil } from '@/lib/metier/droits'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
 interface Props {
@@ -66,6 +67,8 @@ function Donnees({
   const idLigneAide =
     donnees.sections.flatMap((section) => section.lignes).find((ligne) => ligne.usage !== null)
       ?.id ?? null
+  // T60 : seul EJP Tech crée les prévus ; l'administration lit la fiche, sans le bloc des prévus.
+  const gestion = gereLOutil(profil)
   return (
     <>
       {donnees.phrase !== null ? (
@@ -78,8 +81,8 @@ function Donnees({
           <MessageReussite message={controleur.reussite} envoi={controleur.envoi} />
         </div>
       ) : null}
-      <BlocPrevus key={donnees.id} donnees={donnees} creation={creation} />
-      {donnees.sansIndicateur && !resteAChoisirOuCreer(donnees.prevus) ? (
+      {gestion ? <BlocPrevus key={donnees.id} donnees={donnees} creation={creation} /> : null}
+      {donnees.sansIndicateur && (!gestion || !resteAChoisirOuCreer(donnees.prevus)) ? (
         <EtatVide situation="premier_usage">{aucunIndicateurPour(donnees.nom)}</EtatVide>
       ) : null}
       {donnees.sections.map((section) => (
@@ -143,6 +146,9 @@ function Ecran({ titre, profil, ministere, creation, controleur }: PropsEcran) {
         {titreAffiche}
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
+      {gereLOutil(profil) ? null : (
+        <p className="mt-4 max-w-prose text-encre-2">{textes.lecture}</p>
+      )}
       {ministere.etat === 'erreur' ? (
         <div className="mt-6">
           <ErreurDePage

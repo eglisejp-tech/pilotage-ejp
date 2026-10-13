@@ -4,14 +4,14 @@ import type { Page } from '@playwright/test'
 
 // Configuration des indicateurs (lot L3a) sur l'aperçu /apercu/indicateurs, sans base ni écriture :
 // `/indicateurs` (phrases, tableau ou liste, « Créer ») et `/indicateurs/:id` (prévus, sections,
-// retirés), pour l'administration de l'église et EJP Tech. « Créer » est simulé comme la base
-// (tout ou rien, sans doublon). Trois formats par les projets Playwright : 1440, 834 et 390 px.
-// Les parcours avec la base (création réelle, page non disponible sans requête) sont dans
-// e2e/base/indicateurs-configuration*.spec.ts.
+// retirés), pour EJP Tech, qui configure, et l'administration de l'église, qui lit sans aucun
+// bouton (décision T60). « Créer » est simulé comme la base (tout ou rien, sans doublon). Trois
+// formats par les projets Playwright : 1440, 834 et 390 px. Les parcours avec la base (création
+// réelle, page non disponible sans requête) sont dans e2e/base/indicateurs-configuration*.spec.ts.
 
 type Ecran = { vue?: string; profil?: string; envoi?: string }
 
-const adresse = ({ vue = 'liste', profil = 'admin_eglise', envoi }: Ecran) =>
+const adresse = ({ vue = 'liste', profil = 'admin_plateforme', envoi }: Ecran) =>
   `/apercu/indicateurs?vue=${vue}&profil=${profil}${envoi ? `&envoi=${envoi}` : ''}`
 
 async function ouvrir(page: Page, ecran: Ecran = {}) {
@@ -19,7 +19,7 @@ async function ouvrir(page: Page, ecran: Ecran = {}) {
   await page.evaluate(() => document.fonts.ready)
 }
 
-const nomDe = ({ vue = 'liste', profil = 'admin_eglise', envoi }: Ecran) =>
+const nomDe = ({ vue = 'liste', profil = 'admin_plateforme', envoi }: Ecran) =>
   `${vue}-${profil}${envoi ? `-${envoi}` : ''}`
 
 async function auditer(page: Page) {
@@ -37,7 +37,8 @@ const TOUS: Ecran[] = [
   { vue: 'liste-probleme' },
   { vue: 'communication' },
   { vue: 'kumi' },
-  { vue: 'kumi', profil: 'admin_plateforme' },
+  { vue: 'kumi', profil: 'admin_eglise' },
+  { vue: 'communication', profil: 'admin_eglise' },
   { vue: 'eagles' },
   { vue: 'jeunesse' },
   { vue: 'protocole' },
@@ -55,7 +56,8 @@ test.describe('/indicateurs (aperçu)', () => {
   test('titre, phrases, tableau ou liste selon la largeur, un ministère désactivé absent', async ({
     page,
   }) => {
-    await ouvrir(page)
+    // L'administration lit les phrases de l'église, rappel « Prévenez EJP Tech » compris.
+    await ouvrir(page, { profil: 'admin_eglise' })
     await expect(page).toHaveTitle('Indicateurs, Pilotage EJP')
     await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs' })).toBeVisible()
     for (const phrase of PHRASES_ADMIN) await expect(page.getByText(phrase)).toBeVisible()
@@ -136,7 +138,7 @@ test.describe('/indicateurs (aperçu)', () => {
     expect(boiteAlerte!.y - boiteBouton!.y).toBeLessThan(200)
   })
 
-  test('aucun ministère : la phrase et l’action vers Ministères et comptes (administration)', async ({
+  test('aucun ministère : la phrase et l’action vers Ministères et comptes (EJP Tech, T60)', async ({
     page,
   }) => {
     await ouvrir(page, { vue: 'liste-vide' })
@@ -144,7 +146,8 @@ test.describe('/indicateurs (aperçu)', () => {
       page.getByText("Aucun ministère. Créez d'abord les ministères dans Ministères et comptes."),
     ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Ouvrir Ministères et comptes' })).toBeVisible()
-    await ouvrir(page, { vue: 'liste-vide', profil: 'admin_plateforme' })
+    await ouvrir(page, { vue: 'liste-vide', profil: 'admin_eglise' })
+    await expect(page.getByText('Aucun ministère. EJP Tech crée les ministères.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Ouvrir Ministères et comptes' })).toHaveCount(0)
   })
 
@@ -173,6 +176,45 @@ test.describe('/indicateurs (aperçu)', () => {
     await expect(
       page.getByRole('button', { name: /Ajouter|Corriger|Remplacer|Retirer|Valider|Refuser/ }),
     ).toHaveCount(0)
+  })
+})
+
+test.describe('administration de l’église, en lecture (T60, aperçu)', () => {
+  const LECTURE = 'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.'
+
+  test('/indicateurs : la phrase de lecture, l’état des prévus, aucun « Créer » ni « Choisir »', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'admin_eglise' })
+    await expect(page.getByText(LECTURE)).toBeVisible()
+    const kumi = page
+      .getByRole('link', { name: 'Kumi', exact: true })
+      .locator('xpath=ancestor::*[self::tr or self::li][1]')
+    await expect(kumi).toContainText('6 à créer')
+    await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /^Choisir/ })).toHaveCount(0)
+  })
+
+  test('/indicateurs/:id : la phrase de lecture, ni prévus à créer, ni choix, ni bouton', async ({
+    page,
+  }) => {
+    for (const vue of ['kumi', 'jeunesse', 'communication']) {
+      await ouvrir(page, { vue, profil: 'admin_eglise' })
+      await expect(page.getByText(LECTURE)).toBeVisible()
+      await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+      await expect(page.getByRole('combobox')).toHaveCount(0)
+      await expect(
+        page
+          .getByRole('main')
+          .getByRole('button', { name: /Créer|Ajouter|Corriger|Remplacer|Retirer/ }),
+      ).toHaveCount(0)
+    }
+    // Les indicateurs du ministère se lisent toujours.
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText([
+      'Chaque mois',
+      'À ce jour',
+      'Calculs',
+    ])
   })
 })
 

@@ -8,9 +8,10 @@ import { aujourdhuiDeLaBase, appeler, compter, lire } from './outils-evenements.
 // de l'église déclare une session du jour (« Autre rassemblement », au nom suffixé pour ne
 // jamais heurter le jeu d'exemple), corrige ses ministères attendus, un ministère attendu
 // (Communication) la voit dans « Choisir la session », puis l'administration la supprime : la
-// base ne garde rien. Le ministère et le berger reçoivent la page non disponible, sans appel
-// possible aux trois fonctions. À la fin (test.afterAll, même après un échec), la session
-// d'essai est supprimée par la fonction, au nom de l'administration.
+// base ne garde rien. EJP Tech, qui gère aussi les sessions (décision T60), en déclare une par
+// l'écran, puis la supprime. Le ministère et le berger reçoivent la page non disponible, sans
+// appel possible aux trois fonctions. À la fin (test.afterAll, même après un échec), les sessions
+// d'essai sont supprimées par la fonction.
 
 // Le suffixe s'écrit en lettres : 5 chiffres de suite ressemblent à une donnée personnelle.
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
@@ -144,6 +145,51 @@ test.describe("l'administration déclare, modifie et supprime une session", () =
     expect(
       await compter(page, `session_attendu?select=ministere_id&session_id=eq.${session?.id}`),
     ).toBe(0)
+  })
+})
+
+test.describe('EJP Tech déclare et supprime une session (T60)', () => {
+  test.use({ storageState: fichierSession('admin_plateforme') })
+  const NOM_TECH = `Essai sessions tech ${SUFFIXE}`
+  const sessionsDeTech = (page: Page) =>
+    lire<{ id: string }>(page, `session?select=id&intitule=eq.${encodeURIComponent(NOM_TECH)}`)
+
+  test.afterAll(async ({ browser }) => {
+    if (!AVEC_BASE) return
+    const contexte = await browser.newContext({ storageState: fichierSession('admin_plateforme') })
+    try {
+      const page = await contexte.newPage()
+      await page.goto('/sessions')
+      for (const session of await sessionsDeTech(page)) {
+        await appeler(page, 'supprimer_session', { p_session_id: session.id })
+      }
+    } finally {
+      await contexte.close()
+    }
+  })
+
+  test('l’écran Sessions : déclarer, puis supprimer une session sans saisie', async ({ page }) => {
+    await ouvrirSessions(page)
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    const colonne = page.getByRole('complementary', { name: 'Déclarer une session' })
+    await colonne.locator('label').filter({ hasText: 'Autre rassemblement' }).click()
+    await colonne.getByLabel('Date', { exact: true }).fill(aujourdhui)
+    await colonne.getByLabel('Nom du rassemblement').fill(NOM_TECH)
+    await colonne.getByRole('button', { name: 'Déclarer la session' }).click()
+    await expect(reussite(page)).toContainText(`Session ${NOM_TECH} du`)
+    expect(await sessionsDeTech(page)).toHaveLength(1)
+
+    const ligne = page
+      .getByRole('region', { name: 'Sessions déclarées' })
+      .locator('tr')
+      .filter({ hasText: NOM_TECH })
+    await ligne.getByRole('button', { name: /^Supprimer / }).click()
+    await page
+      .getByRole('alertdialog')
+      .getByRole('button', { name: 'Supprimer la session' })
+      .click()
+    await expect(ligne).toHaveCount(0)
+    expect(await sessionsDeTech(page)).toHaveLength(0)
   })
 })
 

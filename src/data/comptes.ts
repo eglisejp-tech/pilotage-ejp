@@ -45,7 +45,7 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
   session_revoquee: 'Votre session a expiré. Reconnectez-vous.',
   double_authentification_requise:
     'Reconnectez-vous avec votre code de double authentification, puis réessayez.',
-  acces_refuse: "Seule l'administration de l'église gère les comptes.",
+  acces_refuse: 'Seul EJP Tech gère les comptes.',
   type_interdit: 'Ce type de compte ne se crée pas sur cet écran.',
   ministere_inconnu: "Ce ministère n'existe plus ou il est désactivé. Rechargez la page.",
   compte_inconnu: 'Ce compte est introuvable. Rechargez la page.',
