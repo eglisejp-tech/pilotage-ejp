@@ -78,10 +78,11 @@ language sql stable security definer set search_path = '' as $$
 $$;
 
 -- Lecture : la session d'un compte de ministère actif, pour sa personne ; EJP Tech, tout. Aucune
--- politique d'ajout : la fonction écrit.
+-- politique d'ajout : la fonction écrit. La sous-requête, sans lien avec la ligne, n'est
+-- calculée qu'une fois par lecture.
 create policy lecture on public.acceptation_personne for select to authenticated using (
   ((select private.mon_type()) = 'ministere'
-   and intervenant_id = any ((select private.declarations_de_ma_personne())))
+   and intervenant_id in (select unnest(private.declarations_de_ma_personne())))
   or (select private.mon_type()) = 'admin_plateforme');
 
 create policy double_authentification on public.acceptation_personne as restrictive for all to authenticated

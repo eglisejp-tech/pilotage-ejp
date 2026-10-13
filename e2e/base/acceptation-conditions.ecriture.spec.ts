@@ -119,10 +119,14 @@ test("une personne qui n'a pas accepté dit son prénom, voit l'écran à son no
   expect(lignes[0]?.saisi_par).toBe(await idDuCompte(page))
   expect(await lire(page, 'acceptation_conditions?select=version')).toEqual([])
 
-  // À la connexion suivante, la même personne a déjà accepté : son prénom, puis l'accueil.
+  // À la connexion suivante, le prénom est redemandé (à chaque connexion, champ vide) ; la même
+  // personne a déjà accepté : l'accueil, sans l'écran des conditions.
   await page.getByRole('banner').getByRole('button', { name: 'Se déconnecter' }).click()
   await expect(page).toHaveURL(/\/connexion/)
-  await seConnecter(page, COMPTE_CONDITIONS.email)
+  await seConnecter(page, COMPTE_CONDITIONS.email, { prenom: null })
+  await expect(page).toHaveURL(/\/qui-utilise$/)
+  await expect(page.getByLabel('Votre prénom')).toHaveValue('')
+  await declarerPrenom(page, PRENOM_TEST)
   await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
   await expect(page).toHaveURL((url) => url.pathname === '/')
   expect(await lireMesAcceptations(page)).toHaveLength(1)
