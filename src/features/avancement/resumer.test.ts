@@ -49,6 +49,19 @@ describe('resumer', () => {
     expect(ETAPES.map((e) => e.numero)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
     expect(premierePrevue(ETAPES[0] as Etape)).toBeUndefined()
   })
+
+  it('livraison du 14 octobre : gestion par EJP Tech (étape 6), conditions par personne (étape 7)', () => {
+    expect(MISE_A_JOUR).toBe('2026-10-14')
+    const [six, sept] = [ETAPES[5] as Etape, ETAPES[6] as Etape]
+    expect(six.livre.at(-1)).toEqual({ quoi: 'Gestion par EJP Tech', date: '2026-10-14' })
+    expect(statutDe(six)).toBe('en-ligne')
+    expect(sept.livre.at(-1)).toEqual({
+      quoi: 'Conditions acceptées par chaque personne',
+      date: '2026-10-14',
+    })
+    expect(sept.livre).toHaveLength(5)
+    expect(sept.prevu).toEqual([{ quoi: 'Textes et messages revus', date: '2026-10-16' }])
+  })
 })
 
 describe('textes', () => {
@@ -57,9 +70,9 @@ describe('textes', () => {
       'Prochaine : Sessions, prévue vendredi 9 oct.',
     )
     expect(notePanneau(MISE_A_JOUR)).toBe(
-      'Point du 13 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+      'Point du 14 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
     )
-    expect(enPartie(ETAPES[6] as Etape)).toBe('En partie : 4 parties sur 5 en ligne.')
+    expect(enPartie(ETAPES[6] as Etape)).toBe('En partie : 5 parties sur 6 en ligne.')
     for (const e of ETAPES) {
       expect(JSON.stringify(e)).not.toMatch(new RegExp('[\u2013\u2014]'))
     }

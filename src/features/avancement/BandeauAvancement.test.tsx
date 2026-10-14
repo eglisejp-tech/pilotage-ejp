@@ -70,13 +70,15 @@ describe('BandeauAvancement', () => {
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
     expect(panneau).not.toHaveAttribute('hidden')
     expect(panneau).toHaveTextContent(
-      'Point du 13 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+      'Point du 14 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
     )
     const etapes = screen.getAllByRole('listitem')
     expect(etapes).toHaveLength(8)
     expect(etapes[6]).toHaveAttribute('aria-current', 'step')
     expect(etapes[0]).toHaveTextContent('■ En ligne')
-    expect(etapes[6]).toHaveTextContent('En partie : 4 parties sur 5 en ligne.')
+    // Étape 6 : la gestion par EJP Tech la complète, elle reste en ligne.
+    expect(etapes[5]).toHaveTextContent('■ En ligne')
+    expect(etapes[6]).toHaveTextContent('En partie : 5 parties sur 6 en ligne.')
     expect(screen.getAllByText('■ En ligne')).toHaveLength(7)
   })
 

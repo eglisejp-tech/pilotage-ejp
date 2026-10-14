@@ -19,7 +19,15 @@ test.describe("bandeau d'avancement", () => {
 
     const voir = bandeau.getByRole('button', { name: 'Voir les étapes' })
     await voir.click()
-    await expect(bandeau.getByRole('listitem')).toHaveCount(8)
+    const etapes = bandeau.getByRole('listitem')
+    await expect(etapes).toHaveCount(8)
+    await expect(bandeau).toContainText(
+      'Point du 14 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+    )
+    // Étape courante : la 7, avec ses 5 parties en ligne sur 6 (livraison du 14 octobre).
+    await expect(etapes.nth(6)).toHaveAttribute('aria-current', 'step')
+    await expect(etapes.nth(6)).toContainText('En partie : 5 parties sur 6 en ligne.')
+    await expect(etapes.nth(5)).toContainText('■ En ligne')
     await expect(bandeau.getByRole('button', { name: 'Masquer les étapes' })).toBeVisible()
     await page.keyboard.press('Escape')
     await expect(voir).toHaveAttribute('aria-expanded', 'false')

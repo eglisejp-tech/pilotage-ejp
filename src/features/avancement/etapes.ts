@@ -17,7 +17,7 @@ export type Etape = {
 }
 
 /** Jour de la dernière livraison. Quand il change, le bandeau fermé réapparaît une fois. */
-export const MISE_A_JOUR: DateIso = '2026-10-13'
+export const MISE_A_JOUR: DateIso = '2026-10-14'
 
 export const ETAPES: readonly Etape[] = [
   {
@@ -65,6 +65,7 @@ export const ETAPES: readonly Etape[] = [
       { quoi: 'Sessions', date: '2026-10-08' },
       { quoi: 'Journal et modération', date: '2026-10-08' },
       { quoi: 'Mes indicateurs et validation', date: '2026-10-13' },
+      { quoi: 'Gestion par EJP Tech', date: '2026-10-14' },
     ],
     prevu: [],
   },
@@ -77,6 +78,7 @@ export const ETAPES: readonly Etape[] = [
       { quoi: 'Accessibilité', date: '2026-10-13' },
       { quoi: 'Ma semaine, pour chaque ministère', date: '2026-10-13' },
       { quoi: "Qui utilise l'outil", date: '2026-10-13' },
+      { quoi: 'Conditions acceptées par chaque personne', date: '2026-10-14' },
     ],
     prevu: [{ quoi: 'Textes et messages revus', date: '2026-10-16' }],
   },
