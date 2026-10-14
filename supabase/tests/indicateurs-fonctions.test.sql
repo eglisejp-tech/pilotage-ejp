@@ -2,17 +2,18 @@
 -- configuration-indicateurs.md 4.6, 5.8 et 6.1 ; contrat-etape-4.md, sections 1 et 7 ; Q13).
 -- limites_indicateurs (valeurs, appelants, verrou sur la ligne du ministère) ; creer_calcul
 -- (sources d'un autre ministère, sensibles ou communes refusées, rythmes incompatibles,
--- remplacement, ministère et berger refusés, administration et EJP Tech acceptés) ;
+-- remplacement, ministère, berger et administration refusés, EJP Tech accepté : décision T60) ;
 -- corriger_indicateur (avant et après saisie, doublon, mots refusés, commun, suggestion,
 -- retiré) ; creer_indicateur (domaine sensible, forme d'un sensible, remplacement d'une autre
 -- fiche) ; retirer_indicateur (motifs, saisies gardées, calculs retirés avec leur source,
 -- confidentialité) ; journal sans texte ; mot sensible refusé à la correction d'un indicateur non
 -- sensible ; remplacement d'un calcul d'une autre fiche ou d'une autre sorte ; calculs retirés avec
 -- l'indicateur remplacé ; verrou du ministère dans ajouter_suggestion, creer_indicateur et
--- creer_calcul ; fiche désactivée refusée.
+-- creer_calcul ; fiche désactivée refusée. Depuis la décision T60, EJP Tech configure seul :
+-- l'administration de l'église est refusée à chaque fonction de configuration.
 begin;
 
-select plan(78);
+select plan(84);
 
 create temp table ctx as
 select tests.creer_ministere('Fonctions A') as a_m,
@@ -69,6 +70,10 @@ select throws_ok($$ select * from public.limites_indicateurs((select a_m from ct
 select tests.se_connecter((select berger from ctx), 'aal2');
 select throws_ok($$ select * from public.limites_indicateurs((select a_m from ctx)) $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'le berger ne lit pas les limites');
+select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select * from public.limites_indicateurs((select a_m from ctx)) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.',
+  'l''administration ne lit plus les limites : elle ne configure plus (T60)');
 select tests.deconnecter();
 select is(tests.essai((select a from ctx), 'aal1',
   format('select * from public.limites_indicateurs(%L)', (select a_m from ctx))), '42501',
@@ -76,9 +81,9 @@ select is(tests.essai((select a from ctx), 'aal1',
 -- Verrou : la ligne du ministère est verrouillée par la transaction qui lit ses limites.
 select ok((select m.xmax::text = '0' from public.ministere m where m.id = (select e_m from ctx)),
   'avant l''appel, la ligne du ministère n''est pas verrouillée');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select is((select l.lignes from public.limites_indicateurs((select e_m from ctx)) as l), 0,
-  'l''administration lit les limites d''une fiche vide');
+  'EJP Tech lit les limites d''une fiche vide');
 select tests.deconnecter();
 select ok((select m.xmax::text = (txid_current() % 4294967296)::text from public.ministere m where m.id = (select e_m from ctx)),
   'limites_indicateurs verrouille la ligne du ministère jusqu''à la fin de la transaction');
@@ -91,6 +96,9 @@ select tests.se_connecter((select berger from ctx), 'aal2');
 select throws_ok($$ select public.creer_calcul('Part d''essai', 'Part d''essai des fonctions.', 'taux', (select h from ctx), (select bs from ctx), null) $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'le berger ne crée pas de calcul');
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.creer_calcul('Part d''essai', 'Part d''essai des fonctions.', 'taux', (select h from ctx), (select bs from ctx), null) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'l''administration ne crée plus de calcul (T60)');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.creer_calcul('Part d''essai', 'Part d''essai des fonctions.', 'taux', (select h from ctx), (select aut from ctx), null) $$,
   'P0001', 'Ces deux chiffres ne se calculent pas ensemble.', 'une source d''un autre ministère est refusée');
 select throws_ok($$ select public.creer_calcul('Part d''essai', 'Part d''essai des fonctions.', 'taux', (select h from ctx), (select sens from ctx), null) $$,
@@ -105,7 +113,7 @@ select throws_ok($$ select public.creer_calcul('Part d''essai', 'Part d''essai d
   'P0001', 'Ces deux chiffres ne se calculent pas ensemble.', 'deux rythmes incompatibles sont refusés');
 select lives_ok($$ select public.creer_calcul('Taux d''essai des fonctions', 'Part d''essai des fonctions, calculée.', 'taux',
                                               (select h from ctx), (select bs from ctx), null) $$,
-  'l''administration crée un taux');
+  'EJP Tech crée un taux');
 select tests.deconnecter();
 update ctx set c1 = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.calcul is not null);
 select results_eq($$ select i.calcul, i.nature, i.unite, i.origine, i.etat,
@@ -138,15 +146,18 @@ select tests.se_connecter((select berger from ctx), 'aal2');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai corrigé', 'Définition corrigée de l''essai.') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'le berger ne corrige pas');
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai corrigé', 'Définition corrigée de l''essai.') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'l''administration ne corrige plus (T60)');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select is(public.corriger_indicateur((select vie from ctx), 'Essai fonctions vierge corrigé', 'Définition corrigée de l''essai des fonctions.'),
-  'corrige', 'avant toute saisie, l''administration corrige le libellé et la définition');
+  'corrige', 'avant toute saisie, EJP Tech corrige le libellé et la définition');
 select tests.deconnecter();
 select results_eq($$ select i.libelle, i.definition, i.texte_par from public.indicateur i where i.id = (select vie from ctx) $$,
-  $$ select 'Essai fonctions vierge corrigé'::text, 'Définition corrigée de l''essai des fonctions.'::text, admin from ctx $$,
-  'les textes changent, au nom de l''administration');
+  $$ select 'Essai fonctions vierge corrigé'::text, 'Définition corrigée de l''essai des fonctions.'::text, tech from ctx $$,
+  'les textes changent, au nom d''EJP Tech');
 select results_eq($$ select j.detail from public.journal j where j.action = 'indicateur_corrige' and j.cible_id = (select vie from ctx) $$,
   $$ values ('{"champs": ["libelle", "definition"]}'::jsonb) $$, 'la ligne de journal nomme les champs, jamais les textes');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai fonctions vierge corrigé', 'Définition corrigée de l''essai des fonctions.') $$,
   'P0001', 'Rien n''a changé : ce libellé et cette définition sont déjà enregistrés.', 'une correction sans changement est refusée');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Enfants hospitalisés', 'Définition corrigée de l''essai des fonctions.') $$,
@@ -174,7 +185,7 @@ select tests.se_connecter((select a from ctx), 'aal2');
 select lives_ok($$ insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
                    select vie, a_m, (private.mois_courant() - interval '1 month')::date, 3 from ctx $$,
   'le ministère saisit l''indicateur corrigé');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Essai fonctions vierge recorrigé', 'Définition corrigée de l''essai des fonctions.') $$,
   'P0001', 'Ce chiffre a déjà des valeurs : remplacez-le pour en changer le sens.', 'après une saisie, la correction est refusée');
 
@@ -182,7 +193,7 @@ select throws_ok($$ select public.corriger_indicateur((select vie from ctx), 'Es
 select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Enfants accueillis', 'Enfants accueillis pendant le culte.',
                                                    'mois', 'nombre', false, false, null) $$,
   'P0001', 'Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n''est pas le cas.',
-  'un mot du domaine sensible bloque l''administration sans case ni confirmation');
+  'un mot du domaine sensible bloque EJP Tech sans case ni confirmation');
 select lives_ok($$ select public.creer_indicateur((select a_m from ctx), 'Enfants accueillis', 'Enfants accueillis pendant le culte.',
                                                   'mois', 'nombre', false, true, null) $$,
   'confirmé « pas un domaine sensible », l''indicateur est créé');
@@ -211,10 +222,14 @@ select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai ministère', 'Compte écrit par le ministère.',
                                                    'mois', 'nombre', false, false, null, 'Pourquoi d''un compte écrit.') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un ministère n''écrit pas son propre compte (lot 2)');
+select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai administration', 'Indicateur proposé par l''administration.',
+                                                   'mois', 'nombre', false, false, null) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'l''administration ne crée plus d''indicateur (T60)');
 select tests.deconnecter();
 select results_eq($$ select i.sensible, i.etat, i.origine from public.indicateur i
                       where i.ministere_id = (select a_m from ctx) and i.libelle = 'Enfants orientés' $$,
-  $$ values (true, 'actif'::text, 'eglise'::text) $$, 'un sensible créé par l''administration est actif dès sa création');
+  $$ values (true, 'actif'::text, 'eglise'::text) $$, 'un sensible créé par EJP Tech est actif dès sa création');
 
 -- Le remplacement d'une source retire les calculs qui en dépendent, et le journal en donne le nombre.
 insert into public.indicateur (libelle, definition, nature, ministere_id)
@@ -224,13 +239,13 @@ alter table ctx add column r uuid, add column rb uuid;
 update ctx set
   r = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.libelle = 'Essai fonctions racine'),
   rb = (select i.id from public.indicateur i where i.ministere_id = ctx.a_m and i.libelle = 'Essai fonctions socle');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.creer_calcul('Taux de remplacement d''essai', 'Calcul d''essai du remplacement d''une source.', 'taux',
                                               (select r from ctx), (select rb from ctx), null) $$,
-  'l''administration crée un calcul sur une racine et un socle');
+  'EJP Tech crée un calcul sur une racine et un socle');
 select lives_ok($$ select public.creer_indicateur((select a_m from ctx), 'Essai fonctions racine neuve', 'Nouvelle racine d''essai, qui remplace l''ancienne.',
                                                   'mois', 'nombre', false, false, (select r from ctx)) $$,
-  'l''administration remplace la racine');
+  'EJP Tech remplace la racine');
 select tests.deconnecter();
 select results_eq($$ select c.etat, c.retrait_motif from public.indicateur c
                       where c.ministere_id = (select a_m from ctx) and c.libelle = 'Taux de remplacement d''essai' $$,
@@ -245,17 +260,20 @@ select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$ select public.retirer_indicateur((select vie from ctx), 'plus_suivi') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un ministère ne retire pas (lot 1)');
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.retirer_indicateur((select vie from ctx), 'plus_suivi') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'l''administration ne retire plus (T60)');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.retirer_indicateur((select vie from ctx), 'remplace') $$,
   'P0001', 'Choisissez le motif du retrait.', 'un motif posé par la base ne se choisit pas');
 select throws_ok($$ select public.retirer_indicateur((select service from ctx), 'plus_suivi') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'un chiffre commun ne se retire pas');
-select is(public.retirer_indicateur((select sai from ctx), 'plus_suivi'), 0, 'l''administration retire un indicateur saisi');
+select is(public.retirer_indicateur((select sai from ctx), 'plus_suivi'), 0, 'EJP Tech retire un indicateur saisi');
 select throws_ok($$ select public.retirer_indicateur((select sai from ctx), 'erreur') $$,
   'P0001', 'Cet indicateur est déjà retiré.', 'un indicateur retiré ne se retire pas deux fois');
 select tests.se_connecter((select tech from ctx), 'aal2');
 select is(public.retirer_indicateur((select h from ctx), 'doublon'), 1, 'EJP Tech retire une source : son calcul part avec elle');
-select tests.se_connecter((select admin from ctx), 'aal2');
-select is(public.retirer_indicateur((select dim from ctx), 'confidentialite'), 0, 'l''administration retire un indicateur pour confidentialité');
+select tests.se_connecter((select tech from ctx), 'aal2');
+select is(public.retirer_indicateur((select dim from ctx), 'confidentialite'), 0, 'EJP Tech retire un indicateur pour confidentialité');
 select tests.deconnecter();
 select results_eq($$ select i.etat, i.retrait_motif, (select count(*)::int from public.mesure m where m.indicateur_id = i.id)
                       from public.indicateur i where i.id = (select sai from ctx) $$,
@@ -303,14 +321,18 @@ update verrous set
   bas = (select i.id from public.indicateur i where i.ministere_id = verrous.m_cal and i.libelle = 'Essai verrou bas');
 update public.ministere set desactive_le = now() where id = (select m_off from verrous);
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.ajouter_suggestion((select m_sug from verrous), 'essai_fn_sug') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.',
+  'l''administration n''ajoute plus de suggestion sur une fiche (T60)');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select ok(public.ajouter_suggestion((select m_sug from verrous), 'essai_fn_sug') is not null,
-  'l''administration ajoute une suggestion sur une fiche');
+  'EJP Tech ajoute une suggestion sur une fiche');
 select ok(public.creer_indicateur((select m_ind from verrous), 'Essai verrou indicateur', 'Indicateur d''essai du verrou de la fiche.',
                                   'mois', 'nombre', false, false, null) is not null,
-  'l''administration crée un indicateur sur une fiche');
+  'EJP Tech crée un indicateur sur une fiche');
 select ok(public.creer_calcul('Taux de verrou d''essai', 'Calcul d''essai du verrou de la fiche.', 'taux',
                               (select haut from verrous), (select bas from verrous), null) is not null,
-  'l''administration crée un calcul sur une fiche');
+  'EJP Tech crée un calcul sur une fiche');
 select throws_ok($$ select public.ajouter_suggestion((select m_off from verrous), 'essai_fn_sug') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'une fiche désactivée n''accepte aucune suggestion');
 select tests.deconnecter();

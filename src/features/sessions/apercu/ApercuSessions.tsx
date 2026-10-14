@@ -19,6 +19,7 @@ import type { DonneesApercu, VueApercuSessions } from '@/features/sessions/aperc
 import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 import type { ActionsSessions, DonneesSessions } from '@/features/sessions/types'
 import { VueSessions } from '@/features/sessions/VueSessions'
+import { GESTIONNAIRES_SESSIONS } from '@/lib/metier/droits'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const reessayer = () => undefined
@@ -26,7 +27,8 @@ const reessayer = () => undefined
 /**
  * Aperçu de développement de l'écran 14 (lot L2), sans base : le vrai écran, des données
  * d'exemple, des actions simulées qui changent la page comme les fonctions de la base la
- * changeraient. Adresse : /apercu/sessions?profil=admin_eglise.
+ * changeraient. Adresse : /apercu/sessions?profil=admin_eglise (ou admin_plateforme : EJP Tech
+ * gère aussi les sessions, décision T60).
  * - `vue=donnees` (défaut), `vide` (aucune session), `chargement`, `probleme` (erreur de page) ;
  * - `envoi=echec` : la réponse n'arrive pas (« La connexion a échoué... ») ;
  * - `lecture=echec` : les ministères attendus ne se lisent pas à l'ouverture de « Modifier » ;
@@ -36,7 +38,7 @@ const reessayer = () => undefined
 export function ApercuSessions() {
   const [parametres] = useSearchParams()
   const profil = lireProfilApercu(parametres.get('profil'))
-  if (profil !== 'admin_eglise') return <PageNonDisponible />
+  if (!GESTIONNAIRES_SESSIONS.includes(profil)) return <PageNonDisponible />
   return (
     <EcranApercu
       key={parametres.toString()}

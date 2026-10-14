@@ -34,7 +34,8 @@ update ctx set des_m = tests.creer_ministere('Essai communs, ministère désacti
 update ctx set des = tests.creer_compte('communs-desactive@exemple.test', 'ministere', des_m);
 grant select on ctx, essai to authenticated, anon;
 
-select tests.se_connecter((select admin from ctx), 'aal2');
+-- EJP Tech crée les fiches (décision T60 : il configure seul les indicateurs).
+select tests.se_connecter((select tech from ctx), 'aal2');
 select count(public.creer_indicateurs_prevus(e.ministere, e.modele)) from essai e;
 select public.creer_indicateurs_prevus((select des_m from ctx), 'mcad');
 select tests.deconnecter();

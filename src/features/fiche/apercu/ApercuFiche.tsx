@@ -78,7 +78,12 @@ export function ApercuFiche() {
         />
       )
     case 'ministeres-vide':
-      return <VueMinisteres liste={{ etat: 'donnees', donnees: [] }} />
+      return (
+        <VueMinisteres
+          liste={{ etat: 'donnees', donnees: [] }}
+          gestion={profil === 'admin_plateforme'}
+        />
+      )
     case 'ministeres-erreur':
       return <VueMinisteres liste={{ etat: 'erreur', reessayer }} />
     case 'chargement':

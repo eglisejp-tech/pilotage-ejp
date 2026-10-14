@@ -85,7 +85,9 @@ test.describe('saisie d’une session (aperçu, maquette 09)', () => {
   test('« Choisir la session » : en attente de l’administration, sans action', async ({ page }) => {
     await ouvrir(page, { ecran: 'choix-session', etat: 'vide' })
     await expect(page.getByText('Aucune session à saisir.')).toBeVisible()
-    await expect(page.getByText("L'administration de l'église déclare les sessions.")).toBeVisible()
+    await expect(
+      page.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
+    ).toBeVisible()
   })
 })
 

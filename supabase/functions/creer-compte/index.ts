@@ -1,4 +1,4 @@
-// creer-compte (BRIEF, section 8, « Les Edge Functions ») : l'administration de l'église, en
+// creer-compte (BRIEF, section 8, « Les Edge Functions ») : EJP Tech (T60), en
 // aal2, crée un compte de ministère (nouveau ministère ou ministère existant sans compte actif),
 // du berger, du conseil ou d'EJP Tech ; jamais d'administration de l'église.
 // Ordre : contrôles en base, invitation dans Auth, puis ministère, compte et journal en une

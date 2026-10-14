@@ -99,7 +99,7 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas.":
     { champ: 'nom' },
   // Variante d'un ministère : verifier_libelle la rend sans la lever (m234, hors de ce lot).
-  "Ce chiffre semble toucher la santé, l'accompagnement ou les enfants. Un domaine sensible se demande à l'administration de l'église. EJP Tech vérifiera votre ajout.":
+  "Ce chiffre semble toucher la santé, l'accompagnement ou les enfants. Un domaine sensible se demande à EJP Tech, qui vérifiera votre ajout.":
     { champ: 'nom' },
 
   // Chiffres du dimanche et du mois (controler_mesure_le, verifier_fij_actifs, saisir_chiffres_mois).
@@ -256,8 +256,8 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     texte:
       "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
   },
-  "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.":
-    { texte: "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un." },
+  // Le texte de la base nomme EJP Tech depuis T60 (20261013130000_gestion_ejp_tech.sql).
+  "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.": {},
   'Cette fiche compte déjà 30 indicateurs. Retirez-en un pour en ajouter un autre.': {},
   'Choisissez le rythme : chaque dimanche, chaque mois ou à ce jour.': {},
   'Choisissez un taux ou une moyenne.': {},
@@ -368,7 +368,7 @@ const REFUS_DE_DROIT: Readonly<
   'Seul EJP Tech peut masquer un texte.': 'acces',
   'Seul EJP Tech peut relire un texte.': 'acces',
   'Seul un compte de ministère peut ajouter un événement.': 'acces',
-  "Seule l'administration de l'église déclare une session.": 'acces',
+  "Seules l'administration de l'église et EJP Tech déclarent une session.": 'acces',
   'Seul un compte de ministère indique un prénom.': 'acces',
   'Seul EJP Tech efface un prénom.': 'acces',
   'Seul un compte de ministère peut créer un point.': {},

@@ -60,7 +60,7 @@ export function ApercuSaisiesE4() {
               SESSION_EXEMPLE.intitule,
               SESSION_EXEMPLE.date,
             )}
-            surtitre="Session déclarée par l'administration"
+            surtitre={TEXTES_SESSION.surtitre}
             onFermer={fermer}
           >
             <FormulaireSession

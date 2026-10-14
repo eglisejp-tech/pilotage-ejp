@@ -60,13 +60,17 @@ const PAGES_PAR_PROFIL: Record<Profil, string[]> = {
     `/indicateurs/${SOCIAL}`,
     '/journal',
   ],
+  // T60 : EJP Tech gère les comptes, les indicateurs et les sessions, et lit les points.
   admin_plateforme: [
     '/moderation',
     '/',
     '/ministeres',
     `/ministeres/${SOCIAL}`,
+    '/points',
+    '/comptes',
     '/indicateurs',
     `/indicateurs/${SOCIAL}`,
+    '/sessions',
     '/journal-technique',
     '/personnes',
   ],

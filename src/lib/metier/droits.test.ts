@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import type { TypeCompte } from '@/lib/base'
-import { DECIDEURS, enLectureSeule, estDecideur, LECTEURS, litTout } from './droits'
+import {
+  DECIDEURS,
+  enLectureSeule,
+  estDecideur,
+  GESTIONNAIRES_SESSIONS,
+  gereLOutil,
+  LECTEURS,
+  LECTEURS_GESTION,
+  litTout,
+} from './droits'
 
 const PROFILS: TypeCompte[] = ['ministere', 'berger', 'conseil', 'admin_eglise', 'admin_plateforme']
 
@@ -33,5 +42,11 @@ describe('droits par profil (miroir de private.lit_tout et private.est_decideur,
     // Décider suppose de lire tout : aucun profil ne décide sans lire.
     for (const type of PROFILS) if (estDecideur(type)) expect(litTout(type), type).toBe(true)
     expect(PROFILS.filter(enLectureSeule)).toEqual(['admin_plateforme'])
+  })
+
+  it('gestion (T60) : EJP Tech seul gère ; l’administration lit ; les sessions sont aux deux', () => {
+    expect(PROFILS.filter(gereLOutil)).toEqual(['admin_plateforme'])
+    expect(LECTEURS_GESTION).toEqual(['admin_eglise', 'admin_plateforme'])
+    expect(GESTIONNAIRES_SESSIONS).toEqual(['admin_eglise', 'admin_plateforme'])
   })
 })

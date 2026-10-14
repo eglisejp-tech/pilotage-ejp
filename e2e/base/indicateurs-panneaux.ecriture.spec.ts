@@ -8,13 +8,15 @@ import { ministereDEssai } from './outils-ministere.ts'
 // écrivent dans la base locale : projet « ecritures » (en série, à 1440 px, après les projets de
 // lecture). Un ministère créé par le test (clé secrète locale, comme `installer-comptes.ts` : jamais
 // une base distante) que nul autre parcours ne lit :
-// - l'administration ajoute deux indicateurs du mois, puis un calcul sur les deux ;
+// - EJP Tech, qui configure seul (décision T60), ajoute deux indicateurs du mois, puis un calcul
+//   sur les deux ;
 // - elle corrige l'un des deux (rien n'est saisi), puis le retire : le calcul part avec lui, ses
 //   textes restent, une seule ligne de journal sans texte ;
 // - elle ajoute un indicateur « sensible après coup » et le retire pour confidentialité : libellé et
 //   définition masqués en base, une seule ligne de journal sans texte ;
 // - EJP Tech voit « Voir la fiche » et remplace un indicateur : l'ancien est retiré (motif
 //   « Remplacé »), le nouveau le cite ;
+// - l'administration de l'église lit l'écran sans aucun bouton, et la base refuse ses appels ;
 // - le ministère, le berger et le conseil reçoivent la page non disponible, sans requête, et la base
 //   refuse leurs appels directs (relus avec la clé secrète locale : rien n'a changé).
 //
@@ -104,8 +106,8 @@ async function ajouterUnIndicateur(
   await expect(page.getByText(libelle, { exact: true })).toBeVisible()
 }
 
-test.describe('administration de l’église', () => {
-  test.use({ storageState: fichierSession('admin_eglise') })
+test.describe('EJP Tech, qui configure seul (T60)', () => {
+  test.use({ storageState: fichierSession('admin_plateforme') })
 
   test('deux indicateurs du mois, ajoutés sans valeur ni texte au journal', async ({ page }) => {
     await ouvrirLeMinistere(page)
@@ -290,15 +292,6 @@ test.describe('administration de l’église', () => {
     expect(JSON.stringify(retires)).not.toMatch(/interventions/i)
   })
 
-  test('« Voir la fiche » n’est pas proposé à l’administration', async ({ page }) => {
-    await ouvrirLeMinistere(page)
-    await expect(page.getByRole('link', { name: 'Voir la fiche' })).toHaveCount(0)
-  })
-})
-
-test.describe('EJP Tech', () => {
-  test.use({ storageState: fichierSession('admin_plateforme') })
-
   test('« Voir la fiche » mène à la fiche du ministère', async ({ page }) => {
     await ouvrirLeMinistere(page)
     await page.getByRole('link', { name: 'Voir la fiche' }).click()
@@ -327,6 +320,52 @@ test.describe('EJP Tech', () => {
     const nouveau = parLibelle(lignes, 'Résolues essai bis')
     expect(ancien).toMatchObject({ etat: 'retire', retrait_motif: 'remplace' })
     expect(nouveau).toMatchObject({ etat: 'actif', nature: 'dimanche', remplace_id: ancien?.id })
+  })
+})
+
+// T60 : l'administration de l'église lit l'écran du ministère, sans aucun bouton, et la base
+// refuse ses appels directs aux fonctions de configuration.
+test.describe('administration de l’église, en lecture', () => {
+  test.use({ storageState: fichierSession('admin_eglise') })
+
+  test('l’écran du ministère : la phrase de lecture, ni « Voir la fiche » ni bouton', async ({
+    page,
+  }) => {
+    await ouvrirLeMinistere(page)
+    await expect(
+      page.getByText(
+        'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+      ),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Voir la fiche' })).toHaveCount(0)
+    await expect(
+      page.getByRole('main').getByRole('button', { name: /Ajouter|Corriger|Remplacer|Retirer/ }),
+    ).toHaveCount(0)
+  })
+
+  test('la base refuse ses appels directs, rien n’est écrit', async ({ page }) => {
+    await page.goto('/')
+    const avant = await indicateursDe(page)
+    const cible = avant.find((ligne) => ligne.etat === 'actif')
+    if (cible === undefined) throw new Error('Le ministère d’essai n’a aucun indicateur actif.')
+    const ajout = await appeler(page, 'creer_indicateur', {
+      p_ministere_id: ministere,
+      p_libelle: 'Tentative de l’administration',
+      p_definition: 'Tentative directe depuis le profil de l’administration.',
+      p_nature: 'mois',
+      p_unite: 'nombre',
+      p_sensible: false,
+      p_pas_sensible: false,
+      p_remplace_id: null,
+    })
+    expect(ajout.status()).toBe(403)
+    const retrait = await appeler(page, 'retirer_indicateur', {
+      p_indicateur_id: cible.id,
+      p_motif: 'plus_suivi',
+    })
+    expect(retrait.status()).toBe(403)
+    const apres = await indicateursDe(page)
+    expect(apres).toEqual(avant)
   })
 })
 

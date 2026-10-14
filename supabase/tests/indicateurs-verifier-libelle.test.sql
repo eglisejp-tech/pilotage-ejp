@@ -1,13 +1,13 @@
 -- verifier_libelle (lot B3 ; docs/plan-etape-4.md, section 4, « B3 » ; configuration-indicateurs.md
 -- 6.1 à 6.4 ; contrat-etape-4.md, sections 4 et 7). Contrôle de l'appelant : un ministère
 -- n'interroge que sa fiche (42501 sinon, il n'apprend rien d'une autre), le berger et le conseil
--- sont refusés, l'administration et EJP Tech interrogent toute fiche, rien hors aal2. Puis les
--- familles de private.verifier_texte vues par verifier_libelle (bloquantes ou non selon le
--- profil), « cumul » écarté pour un « à ce jour », « doublon » sur la fiche et avec les chiffres
--- communs, et les voisins acceptés.
+-- sont refusés, l'administration aussi depuis la décision T60 (elle ne configure plus), EJP Tech
+-- interroge toute fiche, rien hors aal2. Puis les familles de private.verifier_texte vues par
+-- verifier_libelle (bloquantes ou non selon le profil), « cumul » écarté pour un « à ce jour »,
+-- « doublon » sur la fiche et avec les chiffres communs, et les voisins acceptés.
 begin;
 
-select plan(30);
+select plan(31);
 
 create temp table ctx as
 select tests.creer_ministere('Libellé A') as a_m,
@@ -44,6 +44,9 @@ select tests.se_connecter((select conseil from ctx), 'aal2');
 select throws_ok($$ select * from public.verifier_libelle('Visuels', 'mois', (select a_m from ctx)) $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'le conseil est refusé');
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select * from public.verifier_libelle('Visuels', 'mois', (select a_m from ctx)) $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'l''administration est refusée (T60)');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select * from public.verifier_libelle('Visuels', 'mois', gen_random_uuid()) $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'une fiche inconnue donne le message d''un objet absent');
 select tests.deconnecter();
@@ -53,68 +56,68 @@ select is(tests.compter((select tech from ctx), 'aal2',
 select is(tests.compter((select a from ctx), 'aal2',
   format('select * from public.verifier_libelle(%L, %L, %L)', 'Visuels', 'mois', (select a_m from ctx))), 0,
   'le ministère interroge sa fiche');
-select is(tests.essai((select admin from ctx), 'aal1',
+select is(tests.essai((select tech from ctx), 'aal1',
   format('select * from public.verifier_libelle(%L, %L, %L)', 'Visuels', 'mois', (select a_m from ctx))), '42501',
   'hors double authentification, verifier_libelle est refusée');
 
--- 2. Familles refusées (vues par l'administration)
-select is(pg_temp.familles((select admin from ctx), 'Contact jean@exemple.test'),
+-- 2. Familles refusées (vues par EJP Tech)
+select is(pg_temp.familles((select tech from ctx), 'Contact jean@exemple.test'),
   '[{"famille": "donnees_personnelles", "bloquant": true}]'::jsonb, '« @ » : données personnelles');
-select is(pg_temp.familles((select admin from ctx), 'Inscrits via http'),
+select is(pg_temp.familles((select tech from ctx), 'Inscrits via http'),
   '[{"famille": "donnees_personnelles", "bloquant": true}]'::jsonb, '« http » : données personnelles');
-select is(pg_temp.familles((select admin from ctx), 'Appels 06 12 34 56'),
+select is(pg_temp.familles((select tech from ctx), 'Appels 06 12 34 56'),
   '[{"famille": "donnees_personnelles", "bloquant": true}]'::jsonb, 'cinq chiffres de suite, espaces retirés : données personnelles');
-select is(pg_temp.familles((select admin from ctx), 'Visites de Mme Durand'),
+select is(pg_temp.familles((select tech from ctx), 'Visites de Mme Durand'),
   '[{"famille": "donnees_personnelles", "bloquant": true}]'::jsonb, 'civilité suivie d''un nom : données personnelles');
-select is(pg_temp.familles((select admin from ctx), '[Essai] présents'),
+select is(pg_temp.familles((select tech from ctx), '[Essai] présents'),
   '[{"famille": "crochets", "bloquant": true}]'::jsonb, 'crochets réservés à la modération');
-select is(pg_temp.familles((select admin from ctx), 'Taux de présence'),
+select is(pg_temp.familles((select tech from ctx), 'Taux de présence'),
   '[{"famille": "calcul", "bloquant": true}]'::jsonb, '« taux » : un calcul');
-select is(pg_temp.familles((select admin from ctx), 'Présents en %'),
+select is(pg_temp.familles((select tech from ctx), 'Présents en %'),
   '[{"famille": "calcul", "bloquant": true}]'::jsonb, '« % » : un calcul');
-select is(pg_temp.familles((select admin from ctx), 'Vues cumulées YouTube'),
+select is(pg_temp.familles((select tech from ctx), 'Vues cumulées YouTube'),
   '[{"famille": "cumul", "bloquant": true}]'::jsonb, '« cumulées » : un cumul, pour un chiffre du mois');
-select is(pg_temp.familles((select admin from ctx), 'Vues cumulées YouTube', 'a_ce_jour'),
+select is(pg_temp.familles((select tech from ctx), 'Vues cumulées YouTube', 'a_ce_jour'),
   '[]'::jsonb, 'un « à ce jour » accepte « cumulées »');
-select is(pg_temp.familles((select admin from ctx), 'Visuels du mois'),
+select is(pg_temp.familles((select tech from ctx), 'Visuels du mois'),
   '[{"famille": "periode", "bloquant": true}]'::jsonb, '« du mois » : la période s''écrit par le rythme');
-select is(pg_temp.familles((select admin from ctx), 'Enfants accueillis'),
-  '[{"famille": "sensible", "bloquant": true}]'::jsonb, 'domaine sensible : bloquant pour l''administration');
+select is(pg_temp.familles((select tech from ctx), 'Enfants accueillis'),
+  '[{"famille": "sensible", "bloquant": true}]'::jsonb, 'domaine sensible : bloquant pour EJP Tech');
 select is(pg_temp.familles((select a from ctx), 'Enfants accueillis'),
   '[{"famille": "sensible", "bloquant": false}]'::jsonb, 'domaine sensible : simple indice pour un ministère');
-select is(pg_temp.familles((select admin from ctx), 'Taux de Mme Durand'),
+select is(pg_temp.familles((select tech from ctx), 'Taux de Mme Durand'),
   '[{"famille": "calcul", "bloquant": true}, {"famille": "donnees_personnelles", "bloquant": true}]'::jsonb,
   'deux familles trouvées, deux lignes');
 
 -- 3. Doublons
-select is(tests.lire((select admin from ctx), 'aal2',
+select is(tests.lire((select tech from ctx), 'aal2',
   format('select famille, message, bloquant from public.verifier_libelle(%L, %L, %L)', 'Essai libellé pris', 'mois', (select a_m from ctx))),
   '[{"famille": "doublon", "message": "Cette fiche a déjà « Essai libellé pris ».", "bloquant": true}]'::jsonb,
-  'un libellé déjà sur la fiche : doublon, pour l''administration');
+  'un libellé déjà sur la fiche : doublon, pour EJP Tech');
 select is(tests.lire((select a from ctx), 'aal2',
   format('select message from public.verifier_libelle(%L, %L, %L)', 'Nombre de essai libelle pris', 'mois', (select a_m from ctx))),
   '[{"message": "Votre fiche a déjà « Essai libellé pris »."}]'::jsonb,
   'un libellé normalisé déjà sur la fiche : doublon, pour le ministère');
-select is(tests.lire((select admin from ctx), 'aal2',
+select is(tests.lire((select tech from ctx), 'aal2',
   format('select famille, message from public.verifier_libelle(%L, %L, %L)', 'Stars au service', 'dimanche', (select a_m from ctx))),
   '[{"famille": "doublon", "message": "Cette fiche a déjà « STARs au service »."}]'::jsonb,
   'le libellé d''un chiffre commun : doublon');
-select is(tests.compter((select admin from ctx), 'aal2',
+select is(tests.compter((select tech from ctx), 'aal2',
   format('select * from public.verifier_libelle(%L, %L, %L)', 'Essai libellé pris', 'mois', (select b_m from ctx))), 0,
   'le même libellé sur une autre fiche n''est pas un doublon');
-select is(tests.lire((select admin from ctx), 'aal2',
+select is(tests.lire((select tech from ctx), 'aal2',
   format('select message from public.verifier_libelle(%L, %L, %L)', 'Contact jean@exemple.test', 'mois', (select a_m from ctx))),
   '[{"message": "N''écrivez aucun nom ni information personnelle."}]'::jsonb,
   'le message de la famille est celui de verifier_texte');
 
 -- 4. Voisins acceptés
-select is(pg_temp.familles((select admin from ctx), 'Moyens techniques'), '[]'::jsonb,
+select is(pg_temp.familles((select tech from ctx), 'Moyens techniques'), '[]'::jsonb,
   '« Moyens techniques » n''est pas une moyenne');
-select is(pg_temp.familles((select admin from ctx), 'Prière des Stars'), '[]'::jsonb,
+select is(pg_temp.familles((select tech from ctx), 'Prière des Stars'), '[]'::jsonb,
   '« Prière des Stars » est un nom connu, ni un nom de personne ni un chiffre commun');
-select is(pg_temp.familles((select admin from ctx), 'Femmes accueillies'), '[]'::jsonb,
+select is(pg_temp.familles((select tech from ctx), 'Femmes accueillies'), '[]'::jsonb,
   '« Femmes » n''est pas une civilité');
-select is(pg_temp.familles((select admin from ctx), 'Billets 2026'), '[]'::jsonb,
+select is(pg_temp.familles((select tech from ctx), 'Billets 2026'), '[]'::jsonb,
   'quatre chiffres de suite sont acceptés');
 
 select * from finish();

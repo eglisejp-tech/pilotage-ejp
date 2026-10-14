@@ -1,12 +1,12 @@
-// reinitialiser-2fa (BRIEF, section 8, « Les Edge Functions », et P10) : l'administration de
-// l'église, en aal2, coupe l'accès d'un compte partagé puis lui fait refaire l'activation.
+// reinitialiser-2fa (BRIEF, section 8, « Les Edge Functions », et P10) : EJP Tech (T60),
+// en aal2, coupe l'accès d'un compte partagé puis lui fait refaire l'activation.
 // Ordre choisi pour qu'aucun échec ne laisse un compte sans facteur avec une session ou un mot
 // de passe encore connus de la personne partie :
 //   1. mot de passe remplacé par une valeur aléatoire que personne ne voit ;
 //   2. sessions supprimées (plus de session aal1 d'où enrôler un facteur) ;
 //   3. facteurs supprimés ;
 //   4. sessions supprimées de nouveau et journal double_auth_reinitialisee.
-// Chaque étape se refait sans dommage : en cas d'échec, l'administration relance l'action. Le
+// Chaque étape se refait sans dommage : en cas d'échec, EJP Tech relance l'action. Le
 // compte refait « Mot de passe oublié » puis l'activation. Le compte de l'appelant est refusé.
 // Une panne après l'étape 1 laisse un compte bloqué (mot de passe déjà remplacé, facteurs peut-être
 // encore là) : elle rend le code `activation_incomplete`, qui dit de relancer l'action avant de

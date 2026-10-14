@@ -6,12 +6,14 @@ import { useConfigurationMinistere } from '@/features/indicateurs/configuration/
 import { VueIndicateursMinistere } from '@/features/indicateurs/configuration/VueIndicateursMinistere'
 import { useCompteConnecte } from '@/features/session/contexte'
 import type { TypeCompte } from '@/lib/base'
+import { gereLOutil } from '@/lib/metier/droits'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 import type { ProprietesPage } from '@/pages/proprietesPage'
 
 /**
  * `/indicateurs/:id` (lot L3a ; configuration-indicateurs.md, 7.2) : les indicateurs d'un
- * ministère et ses prévus à créer, pour l'administration de l'église et EJP Tech. Un identifiant
+ * ministère et ses prévus à créer, pour EJP Tech, qui configure, et l'administration de l'église,
+ * qui lit sans aucun bouton (décision T60 : aucune écriture ne lui est branchée). Un identifiant
  * mal formé donne « Ce ministère n'existe pas ou n'est plus actif. », sans requête. Les autres
  * profils reçoivent la page non disponible, sans requête.
  */
@@ -43,7 +45,7 @@ function ContenuIndicateursMinistere({ id, titre, profil }: PropsContenu) {
       profil={profil}
       ministere={identifiantValide ? ministere : { etat: 'introuvable' }}
       creation={creation}
-      ecritures={ecritures}
+      ecritures={gereLOutil(profil) ? ecritures : undefined}
     />
   )
 }

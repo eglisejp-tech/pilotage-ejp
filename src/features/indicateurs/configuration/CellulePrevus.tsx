@@ -9,7 +9,11 @@ import type { CreationPrevus } from '@/features/indicateurs/configuration/useCre
 
 interface Props {
   ligne: LigneMinistereConfiguration
-  creation: CreationPrevus
+  /**
+   * Null en lecture (administration de l'église, décision T60) : l'état seul, sans « Créer » ni
+   * « Choisir ».
+   */
+  creation: CreationPrevus | null
 }
 
 const textes = TEXTES_CONFIGURATION.liste
@@ -25,6 +29,11 @@ export function CellulePrevus({ ligne, creation }: Props) {
   const { prevus } = ligne
   if (prevus.genre === 'crees') return <>{textes.crees}</>
   if (prevus.genre === 'aucun') return <>{textes.aucunPrevu}</>
+  if (creation === null) {
+    return (
+      <>{prevus.genre === 'a_choisir' ? textes.aChoisir : texteACreer(prevus.manquants.length)}</>
+    )
+  }
   if (prevus.genre === 'a_choisir') {
     return (
       <span className="flex flex-wrap items-center gap-x-3">

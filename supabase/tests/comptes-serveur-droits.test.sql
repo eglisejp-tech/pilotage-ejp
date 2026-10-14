@@ -2,11 +2,12 @@
 -- comptes_relance_reactivation, comptes_revocation_sessions, comptes_session_appelant) : aucune
 -- n'est exécutable par anon ni par authenticated ; chaque fonction public, contrôles préalables
 -- compris, est refusée à l'anonyme, à un compte connecté en aal1 et en aal2, et, au nom de
--- service_role, à un appelant qui n'est pas l'administration de l'église. Puis la session de
+-- service_role, à un appelant qui n'est pas EJP Tech (décision T60 : un ministère, le berger, le
+-- conseil, et l'administration de l'église, qui ne gère plus les comptes). Puis la session de
 -- l'appelant (décision T15) : absente, inconnue, d'un autre compte ou en aal1, elle est refusée.
 begin;
 
-select plan(52);
+select plan(82);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction).
 do $$
@@ -25,18 +26,29 @@ begin
   end loop;
 end $$;
 
--- Comptes et sessions : sa (administration, aal2), s1 (administration, aal1), sc (conseil, aal2).
+-- Comptes et sessions : sa (EJP Tech, aal2), s1 (EJP Tech, aal1), sc (conseil, aal2),
+-- se (administration de l'église, aal2), sm (ministère, aal2), sb (berger, aal2).
 create temp table ctx as
-select tests.creer_compte('essai-matrice-admin@exemple.test', 'admin_eglise') as admin,
+select tests.creer_compte('essai-matrice-tech@exemple.test', 'admin_plateforme') as tech,
        tests.creer_compte('essai-matrice-conseil@exemple.test', 'conseil') as conseil,
+       tests.creer_compte('essai-matrice-eglise@exemple.test', 'admin_eglise') as eglise,
        tests.creer_compte('essai-matrice-cible@exemple.test', 'conseil') as cible,
+       tests.creer_compte('essai-matrice-ministere@exemple.test', 'ministere',
+                          tests.creer_ministere('Essai Matrice Ministère')) as ministere,
+       tests.creer_compte('essai-matrice-berger@exemple.test', 'berger') as berger,
        gen_random_uuid() as sa,
        gen_random_uuid() as s1,
-       gen_random_uuid() as sc;
+       gen_random_uuid() as sc,
+       gen_random_uuid() as se,
+       gen_random_uuid() as sm,
+       gen_random_uuid() as sb;
 insert into auth.sessions (id, user_id, aal)
-select sa, admin, 'aal2'::auth.aal_level from ctx
-union all select s1, admin, 'aal1'::auth.aal_level from ctx
-union all select sc, conseil, 'aal2'::auth.aal_level from ctx;
+select sa, tech, 'aal2'::auth.aal_level from ctx
+union all select s1, tech, 'aal1'::auth.aal_level from ctx
+union all select sc, conseil, 'aal2'::auth.aal_level from ctx
+union all select se, eglise, 'aal2'::auth.aal_level from ctx
+union all select sm, ministere, 'aal2'::auth.aal_level from ctx
+union all select sb, berger, 'aal2'::auth.aal_level from ctx;
 
 -- Un appel par fonction public : %1$L est l'appelant, %2$L le compte visé, %3$L la session de
 -- l'appelant. Les valeurs sont écrites en littéraux, pour que seul le droit soit en jeu.
@@ -76,20 +88,20 @@ $$, 'les parties internes executer_* ne sont exécutables par personne, service_
 
 -- Anonyme
 select tests.anonyme();
-select throws_ok(format(a.modele, c.admin, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
+select throws_ok(format(a.modele, c.tech, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
                  'anon : ' || a.nom || ' refusée')
   from appels a cross join ctx c order by a.nom;
 select tests.deconnecter();
 
--- Administration connectée en aal1, puis en aal2 : jamais d'appel direct
-select tests.se_connecter((select admin from ctx), 'aal1');
-select throws_ok(format(a.modele, c.admin, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
+-- EJP Tech connecté en aal1, puis en aal2 : jamais d'appel direct
+select tests.se_connecter((select tech from ctx), 'aal1');
+select throws_ok(format(a.modele, c.tech, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
                  'authenticated aal1 : ' || a.nom || ' refusée')
   from appels a cross join ctx c order by a.nom;
 select tests.deconnecter();
 
-select tests.se_connecter((select admin from ctx), 'aal2');
-select throws_ok(format(a.modele, c.admin, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
+select tests.se_connecter((select tech from ctx), 'aal2');
+select throws_ok(format(a.modele, c.tech, c.cible, c.sa), '42501', 'permission denied for function ' || a.nom,
                  'authenticated aal2 : ' || a.nom || ' refusée')
   from appels a cross join ctx c order by a.nom;
 select tests.deconnecter();
@@ -100,22 +112,37 @@ select throws_ok(format(a.modele, c.conseil, c.cible, c.sc), '42501', 'appelant_
                  'service_role, appelant du conseil : ' || a.nom || ' refusée')
   from appels a cross join ctx c order by a.nom;
 
+-- Clé secrète, appelant de l'administration de l'église (avec sa session aal2) : refusé aussi,
+-- EJP Tech gère seul les comptes (décision T60).
+select throws_ok(format(a.modele, c.eglise, c.cible, c.se), '42501', 'appelant_non_autorise',
+                 'service_role, appelant de l''administration de l''église : ' || a.nom || ' refusée')
+  from appels a cross join ctx c order by a.nom;
+
+-- Clé secrète, appelant d'un ministère ou du berger (avec sa session aal2) : refusé aussi
+-- (contrat commun des Edge Functions, BRIEF section 8).
+select throws_ok(format(a.modele, c.ministere, c.cible, c.sm), '42501', 'appelant_non_autorise',
+                 'service_role, appelant d''un ministère : ' || a.nom || ' refusée')
+  from appels a cross join ctx c order by a.nom;
+select throws_ok(format(a.modele, c.berger, c.cible, c.sb), '42501', 'appelant_non_autorise',
+                 'service_role, appelant du berger : ' || a.nom || ' refusée')
+  from appels a cross join ctx c order by a.nom;
+
 -- Session de l'appelant (décision T15)
-select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), null, (select cible from ctx)) $$,
+select throws_ok($$ select public.serveur_controler_cible((select tech from ctx), null, (select cible from ctx)) $$,
   '42501', 'session_revoquee', 'sans session : refusé');
-select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), gen_random_uuid(),
+select throws_ok($$ select public.serveur_controler_cible((select tech from ctx), gen_random_uuid(),
                                                          (select cible from ctx)) $$,
   '42501', 'session_revoquee', 'session inconnue ou supprimée : refusé');
-select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), (select sc from ctx),
+select throws_ok($$ select public.serveur_controler_cible((select tech from ctx), (select sc from ctx),
                                                          (select cible from ctx)) $$,
   '42501', 'session_revoquee', 'session d''un autre compte : refusé');
-select throws_ok($$ select public.serveur_controler_cible((select admin from ctx), (select s1 from ctx),
+select throws_ok($$ select public.serveur_controler_cible((select tech from ctx), (select s1 from ctx),
                                                          (select cible from ctx)) $$,
-  '42501', 'session_revoquee', 'session de l''administration en aal1 : refusé');
-select lives_ok($$ select public.serveur_controler_cible((select admin from ctx), (select sa from ctx),
+  '42501', 'session_revoquee', 'session d''EJP Tech en aal1 : refusé');
+select lives_ok($$ select public.serveur_controler_cible((select tech from ctx), (select sa from ctx),
                                                         (select cible from ctx)) $$,
-  'session aal2 de l''administration : accepté');
-select throws_ok($$ select public.serveur_desactiver_compte((select admin from ctx), (select s1 from ctx),
+  'session aal2 d''EJP Tech : accepté');
+select throws_ok($$ select public.serveur_desactiver_compte((select tech from ctx), (select s1 from ctx),
                                                            (select cible from ctx)) $$,
   '42501', 'session_revoquee', 'désactivation refusée avec une session aal1');
 reset role;
@@ -127,9 +154,9 @@ select ok((select c.desactive_le is null from public.compte c where c.user_id = 
 -- supprime les sessions du compte visé, sans ligne de journal.
 insert into auth.sessions (id, user_id) values (gen_random_uuid(), (select cible from ctx));
 set local role service_role;
-select lives_ok($$ select public.serveur_revoquer_sessions((select admin from ctx), (select sa from ctx),
+select lives_ok($$ select public.serveur_revoquer_sessions((select tech from ctx), (select sa from ctx),
                                                           (select cible from ctx)) $$,
-  'serveur_revoquer_sessions acceptée pour l''administration');
+  'serveur_revoquer_sessions acceptée pour EJP Tech');
 reset role;
 select ok(not exists (select 1 from auth.sessions s where s.user_id = (select cible from ctx))
           and exists (select 1 from auth.sessions s where s.id = (select sa from ctx))

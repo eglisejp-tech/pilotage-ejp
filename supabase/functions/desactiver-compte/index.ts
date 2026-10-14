@@ -1,4 +1,4 @@
-// desactiver-compte (BRIEF, section 8, « Les Edge Functions ») : l'administration de l'église, en
+// desactiver-compte (BRIEF, section 8, « Les Edge Functions ») : EJP Tech (T60), en
 // aal2, bannit un compte dans Auth, puis la base pose desactive_le sur le compte (et sur son
 // ministère), supprime ses sessions et écrit le journal. Toutes les données sont gardées ; le
 // compte de l'appelant est refusé.

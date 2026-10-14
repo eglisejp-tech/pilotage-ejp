@@ -234,12 +234,10 @@ describe('lireErreurBase : le code décide d’abord', () => {
     })
   })
 
-  it('le contact est EJP Tech, jamais l’administration de l’église (T59)', () => {
+  it('le contact est EJP Tech, jamais l’administration de l’église (T59, T60)', () => {
     expect(
       lireErreurBase(
-        refus(
-          "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
-        ),
+        refus("Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un."),
       ),
     ).toMatchObject({
       message: "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
@@ -316,7 +314,7 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
       explicationLimiteAjouts(limites),
     ],
     [
-      "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
+      "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
       explicationLimiteLignes(limites),
     ],
     [

@@ -1,4 +1,4 @@
-// reactiver-compte (BRIEF, section 8, « Les Edge Functions ») : l'administration de l'église, en
+// reactiver-compte (BRIEF, section 8, « Les Edge Functions ») : EJP Tech (T60), en
 // aal2, lève le bannissement dans Auth, puis la base remet desactive_le à null sur le compte et,
 // pour un compte de ministère, sur son ministère (la période d'arrêt compte alors comme active),
 // et écrit le journal compte_reactive. Un compte qui n'est pas désactivé est refusé.

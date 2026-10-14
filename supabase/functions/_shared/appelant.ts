@@ -1,14 +1,15 @@
 // Contrôle de l'appelant, avant toute action (BRIEF, section 8, « Contrat commun ») :
 // JWT vérifié par @supabase/server (signature, expiration, audience), niveau aal2, puis compte
-// actif de l'administration de l'église. La clé secrète n'est lue que par @supabase/server, dans
-// l'environnement fourni par Supabase (SUPABASE_SECRET_KEYS) : jamais dans le code ni les logs.
+// actif d'EJP Tech, qui gère seul les comptes (T60). La clé secrète n'est lue que par
+// @supabase/server, dans l'environnement fourni par Supabase (SUPABASE_SECRET_KEYS) : jamais dans
+// le code ni les logs.
 import { createSupabaseContext } from '@supabase/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { z } from 'zod'
 import { consigner, ErreurFonction } from './http.ts'
 
 export interface Appelant {
-  // auth.users.id de l'administration qui appelle : il signe la ligne de journal.
+  // auth.users.id du compte EJP Tech qui appelle : il signe la ligne de journal.
   id: string
   // Revendication session_id du JWT vérifié : la base exige que cette session existe encore,
   // à l'appelant et en aal2 (décision T15).
@@ -58,7 +59,11 @@ export async function verifierAppelant(requete: Request, fonction: string): Prom
     throw new ErreurFonction(500, 'erreur_interne')
   }
   const compte = ligneCompte.safeParse(data)
-  if (!compte.success || compte.data.type !== 'admin_eglise' || compte.data.desactive_le !== null) {
+  if (
+    !compte.success ||
+    compte.data.type !== 'admin_plateforme' ||
+    compte.data.desactive_le !== null
+  ) {
     throw new ErreurFonction(403, 'acces_refuse')
   }
   return { id: revendications.sub, session: String(revendications['session_id']), admin }

@@ -25,8 +25,9 @@ function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   }
 }
 
+// EJP Tech configure seul (T60) : il est le profil par défaut des essais de gestion.
 function afficher(
-  profil: TypeCompte = 'admin_eglise',
+  profil: TypeCompte = 'admin_plateforme',
   creation: CreationPrevus = creationDe(),
   lectures = lecturesExemple(),
 ) {
@@ -109,7 +110,7 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
   })
 
   it('pendant la création, le bouton reste actif pour le clavier mais dit qu’il travaille', () => {
-    afficher('admin_eglise', creationDe({ enCours: ID_KUMI }))
+    afficher('admin_plateforme', creationDe({ enCours: ID_KUMI }))
     // Le texte visible le dit (m227), et le nom accessible est ce texte.
     const bouton = screen.getByRole('button', { name: 'Création en cours' })
     const kumi = screen.getByRole('link', { name: 'Kumi' }).closest('tr')!
@@ -153,7 +154,7 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
   })
 
   it('le message de réussite est annoncé, le refus de la base s’affiche tel quel', () => {
-    afficher('admin_eglise', creationDe({ reussite: '6 indicateurs prévus créés.', envoi: 1 }))
+    afficher('admin_plateforme', creationDe({ reussite: '6 indicateurs prévus créés.', envoi: 1 }))
     expect(
       screen.getByText('6 indicateurs prévus créés.', { selector: '[role="status"] p' }),
     ).toBeInTheDocument()
@@ -163,7 +164,7 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
     'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
 
   it('refus de la base : annoncé, avec son texte, dans la ligne du ministère concerné', () => {
-    afficher('admin_eglise', creationDe({ dernier: ID_KUMI, refus: REFUS }))
+    afficher('admin_plateforme', creationDe({ dernier: ID_KUMI, refus: REFUS }))
     const alerte = screen.getByRole('alert')
     expect(alerte).toHaveTextContent('La fiche a déjà « Activités réalisées »')
     // Sous la ligne de Kumi : le bouton « Créer » précède le refus, et le ministère suivant le suit.
@@ -179,7 +180,7 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
 
   it('refus de la base, sous 600 px : sous le ministère concerné dans la liste', () => {
     simulerLargeur(390)
-    afficher('admin_eglise', creationDe({ dernier: ID_KUMI, refus: REFUS }))
+    afficher('admin_plateforme', creationDe({ dernier: ID_KUMI, refus: REFUS }))
     const kumi = screen.getByRole('link', { name: 'Kumi' }).closest('li')!
     expect(within(kumi).getByRole('alert')).toHaveTextContent(REFUS)
     expect(screen.getAllByRole('alert')).toHaveLength(1)
@@ -187,11 +188,47 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
 
   it('refus pour un ministère absent de la liste : affiché au-dessus, jamais perdu', () => {
     afficher(
-      'admin_eglise',
+      'admin_plateforme',
       creationDe({ dernier: '10000000-0000-4000-8000-0000000000ff', refus: REFUS }),
     )
     expect(screen.getByRole('alert')).toHaveTextContent(REFUS)
     expect(screen.queryByRole('table')?.contains(screen.getByRole('alert'))).toBe(false)
+  })
+})
+
+describe('VueIndicateurs : administration de l’église, en lecture (T60)', () => {
+  it('la phrase qui dit qu’EJP Tech gère, et aucun bouton ni lien d’action', () => {
+    const creation = afficher('admin_eglise')
+    expect(
+      screen.getByText(
+        'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+      ),
+    ).toBeInTheDocument()
+    const ligne = (nom: string) => screen.getByRole('link', { name: nom }).closest('tr')!
+    // L'état de la colonne « Prévus » reste lisible, sans « Créer » ni « Choisir ».
+    expect(within(ligne('Kumi')).getByText('6 à créer')).toBeInTheDocument()
+    expect(within(ligne('Jeunesse')).getByText('À choisir')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: /^Choisir/ })).toBeNull()
+    // Chaque nom ouvre encore l'écran du ministère, en lecture.
+    expect(screen.getByRole('link', { name: 'Kumi' })).toHaveAttribute(
+      'href',
+      `/indicateurs/${ID_KUMI}`,
+    )
+    expect(creation.creer).not.toHaveBeenCalled()
+  })
+
+  it('sous 600 px aussi, aucun bouton', () => {
+    simulerLargeur(390)
+    afficher('admin_eglise')
+    const kumi = screen.getByRole('link', { name: 'Kumi' }).closest('li')!
+    expect(within(kumi).getByText('6 à créer')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+  })
+
+  it('EJP Tech, qui gère, ne lit pas cette phrase', () => {
+    afficher('admin_plateforme')
+    expect(screen.queryByText(/Adressez-lui vos demandes/)).toBeNull()
   })
 })
 
@@ -240,8 +277,8 @@ describe('VueIndicateurs : états', () => {
     expect(reessayer).toHaveBeenCalledTimes(1)
   })
 
-  it('aucun ministère : l’état vide dit où les créer, avec l’action pour l’administration seulement', () => {
-    afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_eglise')
+  it('aucun ministère : l’état vide dit où les créer, avec l’action pour EJP Tech, qui les crée (T60)', () => {
+    afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_plateforme')
     expect(
       screen.getByText("Aucun ministère. Créez d'abord les ministères dans Ministères et comptes."),
     ).toBeInTheDocument()
@@ -251,9 +288,9 @@ describe('VueIndicateurs : états', () => {
     )
   })
 
-  it('aucun ministère, vu par EJP Tech : la phrase, sans l’action qu’il ne peut pas faire', () => {
-    afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_plateforme')
-    expect(screen.getByText(/^Aucun ministère\./)).toBeInTheDocument()
+  it('aucun ministère, vu par l’administration : la phrase de lecture, sans action', () => {
+    afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_eglise')
+    expect(screen.getByText('Aucun ministère. EJP Tech crée les ministères.')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Ouvrir Ministères et comptes' })).toBeNull()
   })
 })

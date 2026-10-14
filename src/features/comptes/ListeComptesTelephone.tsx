@@ -10,10 +10,13 @@ import type { LigneCompte } from '@/features/comptes/types'
 interface Props {
   lignes: LigneCompte[]
   idTitre: string
-  onAction: (ligne: LigneCompte, action: ActionLigne) => void
+  /** Null en lecture (administration de l'église, T60) : aucun bouton. */
+  onAction: ((ligne: LigneCompte, action: ActionLigne) => void) | null
   enCours: { cle: string; action: ActionLigne } | null
   /** Résultat de la dernière action de ligne, affiché sous les boutons de son bloc. */
   resultat: ResultatAction | null
+  /** Compte connecté : son bloc n'a pas de bouton (T60). */
+  moi?: string | null
 }
 
 /**
@@ -21,7 +24,14 @@ interface Props {
  * email, indicateurs pour un ministère, état), puis ses boutons en pleine largeur, l'un sous
  * l'autre.
  */
-export function ListeComptesTelephone({ lignes, idTitre, onAction, enCours, resultat }: Props) {
+export function ListeComptesTelephone({
+  lignes,
+  idTitre,
+  onAction,
+  enCours,
+  resultat,
+  moi,
+}: Props) {
   return (
     <ul aria-labelledby={idTitre}>
       {lignes.map((ligne) => (
@@ -40,15 +50,21 @@ export function ListeComptesTelephone({ lignes, idTitre, onAction, enCours, resu
             </span>
           ) : null}
           <EtatDoubleAuthentification etat={ligne.etat} desactiveLe={ligne.desactiveLe} />
-          <div className="mt-1.5">
-            <BoutonsLigne
-              ligne={ligne}
-              onAction={onAction}
-              enCours={enCours?.cle === ligne.cle ? enCours.action : null}
-              pleineLargeur
-            />
-            <ResultatLigne resultat={resultat?.cle === ligne.cle ? resultat : null} pleineLargeur />
-          </div>
+          {onAction !== null ? (
+            <div className="mt-1.5">
+              <BoutonsLigne
+                ligne={ligne}
+                onAction={onAction}
+                enCours={enCours?.cle === ligne.cle ? enCours.action : null}
+                pleineLargeur
+                moi={moi}
+              />
+              <ResultatLigne
+                resultat={resultat?.cle === ligne.cle ? resultat : null}
+                pleineLargeur
+              />
+            </div>
+          ) : null}
         </li>
       ))}
     </ul>

@@ -129,12 +129,16 @@ export function donneesExemple(): DonneesApercu {
   }
 }
 
-/** Premier usage : aucun ministère, seulement le compte de l'administration. */
+/**
+ * Premier usage : aucun ministère, seulement les comptes créés à l'installation, celui de
+ * l'administration et le premier compte d'EJP Tech, qui crée tous les autres (T60).
+ */
 export function donneesPremierUsage(): DonneesApercu {
   return {
     ministeres: [],
     comptes: [
       compte(21, 'admin_eglise', "Administration de l'église", 'administration@exemple.test'),
+      compte(31, 'admin_plateforme', 'EJP Tech, compte 1', 'ejptech1@exemple.test'),
     ],
     indicateurs: [],
   }

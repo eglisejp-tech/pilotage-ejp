@@ -80,6 +80,10 @@ describe('VueComptes (écran 13)', () => {
     expect(screen.getByRole('region', { name: 'EJP Tech' })).toHaveTextContent(
       "Aucun compte EJP Tech pour l'instant.",
     )
+    // EJP Tech, qui gère (T60), n'est pas renvoyé vers lui-même.
+    expect(screen.getByRole('region', { name: 'EJP Tech' })).not.toHaveTextContent(
+      'Le premier compte EJP Tech',
+    )
     expect(bouton('Ajouter le compte du berger')).toBeInTheDocument()
   })
 
@@ -105,7 +109,7 @@ describe('VueComptes (écran 13)', () => {
 
   it('le bouton cliqué disparaît : le focus va au premier bouton de la même ligne', async () => {
     render(
-      <MemoryRouter initialEntries={['/apercu/comptes?profil=admin_eglise']}>
+      <MemoryRouter initialEntries={['/apercu/comptes?profil=admin_plateforme']}>
         <ApercuComptes />
       </MemoryRouter>,
     )
@@ -170,6 +174,33 @@ describe('VueComptes (écran 13)', () => {
       ),
     ).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ajouter un ministère' })).toBeNull()
+  })
+
+  it('la ligne du compte connecté (EJP Tech) n’a aucun bouton : « Votre compte » (T60)', () => {
+    const exemple = donnees()
+    const moi = exemple.etat === 'donnees' ? (exemple.donnees.ejpTech[0]?.userId ?? null) : null
+    render(
+      <MemoryRouter>
+        <VueComptes
+          titre="Ministères et comptes"
+          donnees={exemple}
+          actions={actionsFausses()}
+          moi={moi}
+        />
+      </MemoryRouter>,
+    )
+    const section = screen.getByRole('region', { name: 'EJP Tech' })
+    expect(within(section).getByText('Votre compte')).toBeInTheDocument()
+    expect(within(section).queryByRole('button', { name: /EJP Tech, compte 1$/ })).toBeNull()
+    // Les autres lignes gardent leurs boutons.
+    expect(bouton('Désactiver Communication')).toBeInTheDocument()
+  })
+
+  it('« Listes » : EJP Tech, qui gère, ne se demande rien à lui-même (T60)', () => {
+    afficher(donnees())
+    const listes = screen.getByRole('region', { name: 'Listes' })
+    expect(within(listes).getByText("Liste commune à toute l'église.")).toBeInTheDocument()
+    expect(within(listes).queryByText(/faites une demande à EJP Tech/)).toBeNull()
   })
 
   it('adresse déjà utilisée : sous le champ, le panneau reste ouvert', async () => {

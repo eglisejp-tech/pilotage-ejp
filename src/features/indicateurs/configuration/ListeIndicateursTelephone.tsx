@@ -8,7 +8,8 @@ import type { CreationPrevus } from '@/features/indicateurs/configuration/useCre
 
 interface Props {
   lignes: LigneMinistereConfiguration[]
-  creation: CreationPrevus
+  /** Null en lecture (administration de l'église, T60) : ni « Créer » ni « Choisir ». */
+  creation: CreationPrevus | null
   idTitre: string
 }
 
@@ -47,7 +48,9 @@ export function ListeIndicateursTelephone({ lignes, creation, idTitre }: Props) 
             <dt className="text-note text-encre-3">{textes.colonneChangement}</dt>
             <dd className="text-encre-2">{ligne.dernierChangement ?? textes.aucunChangement}</dd>
           </dl>
-          {creation.dernier === ligne.id ? <RefusCreation refus={creation.refus} /> : null}
+          {creation !== null && creation.dernier === ligne.id ? (
+            <RefusCreation refus={creation.refus} />
+          ) : null}
         </li>
       ))}
     </ul>

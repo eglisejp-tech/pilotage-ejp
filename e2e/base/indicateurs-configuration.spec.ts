@@ -11,8 +11,9 @@ import { compter, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 // trois ministères d'essai : « pour 8 ministères » n'est plus vrai). Jeu d'exemple (seed/40) :
 // les prévus sont créés pour Communication, Intégration, Coordination, Social, FIJ, Prodiges Junior
 // et EJP Formation ; Jeunesse n'a aucun prévu et son nom n'est pas dans la liste de la coordination.
-// Seuls l'administration de l'église et EJP Tech ont la page ; les autres profils reçoivent la page
-// non disponible, sans aucune requête de données. Jamais une valeur d'indicateur n'est lue.
+// Seuls l'administration de l'église (en lecture, sans bouton : T60) et EJP Tech ont la page ; les
+// autres profils reçoivent la page non disponible, sans aucune requête de données. Jamais une
+// valeur d'indicateur n'est lue.
 
 const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
 const MINISTERE_JEUNESSE = '10000000-0000-4000-8000-000000000004'
@@ -66,7 +67,10 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
       }
       const jeunesse = ligneDe(page, 'Jeunesse')
       await expect(jeunesse).toContainText('À choisir')
-      await expect(jeunesse.getByRole('link', { name: 'Choisir pour Jeunesse' })).toBeVisible()
+      // T60 : EJP Tech choisit ; l'administration lit l'état, sans lien d'action.
+      await expect(jeunesse.getByRole('link', { name: 'Choisir pour Jeunesse' })).toHaveCount(
+        profil === 'admin_plateforme' ? 1 : 0,
+      )
       // La configuration ne lit que des définitions, l'usage, le catalogue et le journal.
       for (const chemin of LECTURES_DE_VALEURS) expect(requetes, chemin).not.toContain(chemin)
       expect(requetes).toContain('/rest/v1/v_catalogue')
@@ -119,12 +123,22 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
       ).toBeVisible()
       await attendreLaFinDuChargement(page)
       const choix = page.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+      await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
+      if (profil === 'admin_eglise') {
+        // T60 : l'administration lit l'écran, sans le choix de la liste ni aucun bouton.
+        await expect(choix).toHaveCount(0)
+        await expect(
+          page.getByText(
+            'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+          ),
+        ).toBeVisible()
+        return
+      }
       await expect(choix).toBeVisible()
       const options = await choix.locator('option').allTextContents()
       expect(options[0]).toBe('Choisissez un ministère de la liste')
       expect(options.at(-1)).toBe('Aucun prévu')
       expect(options).toContain('Kumi')
-      await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
     })
 
     test('/indicateurs/:id d’un identifiant inconnu : la phrase, sans erreur de page', async ({

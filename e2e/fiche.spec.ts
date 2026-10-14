@@ -45,6 +45,7 @@ const TOUS: Ecran[] = [
   { ecran: 'ministeres', profil: 'berger' },
   { ecran: 'ministeres', profil: 'admin_plateforme' },
   { ecran: 'ministeres-vide', profil: 'conseil' },
+  { ecran: 'ministeres-vide', profil: 'admin_plateforme' },
   { ecran: 'ministeres-erreur', profil: 'berger' },
 ]
 
@@ -218,7 +219,12 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
     )
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'conseil' })
     await expect(
-      page.getByText("Aucun ministère actif. L'administration de l'église crée les ministères."),
+      page.getByText('Aucun ministère actif. EJP Tech crée les ministères.'),
+    ).toBeVisible()
+    // EJP Tech, qui crée les ministères (T60), n'est pas renvoyé vers lui-même.
+    await ouvrir(page, { ecran: 'ministeres-vide', profil: 'admin_plateforme' })
+    await expect(
+      page.getByText('Aucun ministère actif. Créez-les dans Ministères et comptes.'),
     ).toBeVisible()
   })
 })
@@ -264,6 +270,8 @@ test.describe('accessibilité', () => {
   })
 
   test('à 360 px, aucun défilement horizontal', async ({ page }) => {
+    // Une page par écran de TOUS (18 depuis T60) : plus de temps que les 30 s par défaut.
+    test.setTimeout(60_000)
     await page.setViewportSize({ width: 360, height: 800 })
     for (const ecran of TOUS) {
       await ouvrir(page, ecran)
@@ -276,6 +284,7 @@ test.describe('accessibilité', () => {
 })
 
 test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+  test.setTimeout(60_000)
   const largeur = page.viewportSize()?.width ?? 0
   for (const ecran of TOUS) {
     await ouvrir(page, ecran)

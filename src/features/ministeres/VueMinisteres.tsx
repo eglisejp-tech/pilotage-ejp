@@ -11,6 +11,8 @@ import { ErreurDePage } from '@/pages/ErreurDePage'
 
 interface Props {
   liste: EtatBloc<LigneListeMinistere[]>
+  /** EJP Tech, qui crée les ministères (T60) : l'état vide ne le renvoie pas vers lui-même. */
+  gestion?: boolean
 }
 
 const textes = TEXTES_FICHE.liste
@@ -21,7 +23,7 @@ const textes = TEXTES_FICHE.liste
  * ministère actif, la phrase dit qui les crée. Problème passager : bandeau et « Réessayer ».
  * Aucune action de saisie, pour aucun profil.
  */
-export function VueMinisteres({ liste }: Props) {
+export function VueMinisteres({ liste, gestion = false }: Props) {
   const idTitre = useId()
   const tableau = useLargeurMin(600)
   return (
@@ -42,7 +44,9 @@ export function VueMinisteres({ liste }: Props) {
       {liste.etat === 'chargement' ? <ChargementBloc /> : null}
       {liste.etat === 'donnees' ? (
         liste.donnees.length === 0 ? (
-          <EtatVide situation="premier_usage">{textes.aucun}</EtatVide>
+          <EtatVide situation="premier_usage">
+            {gestion ? textes.aucunGestion : textes.aucun}
+          </EtatVide>
         ) : (
           <>
             <p className="mt-4 max-w-prose text-encre-2">{textes.phrase}</p>

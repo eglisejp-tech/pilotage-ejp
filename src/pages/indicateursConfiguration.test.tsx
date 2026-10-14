@@ -94,6 +94,38 @@ describe.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])('/indicateurs, %
     }
   })
 
+  it('un identifiant mal formé : « Ce ministère n’existe pas », aucune lecture de plus', async () => {
+    const faux = connecte(profil)
+    afficher('/indicateurs/pas-un-identifiant')
+    expect(
+      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
+    ).toBeInTheDocument()
+    expect(faux.tables).toEqual(['compte'])
+  })
+
+  it('un identifiant bien formé mais inconnu : la même phrase, et le retour aux indicateurs', async () => {
+    connecte(profil)
+    afficher(`/indicateurs/${ID_INCONNU}`)
+    expect(
+      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Revenir aux indicateurs' })).toBeInTheDocument()
+  })
+
+  it('une lecture qui échoue : bandeau « La connexion a échoué. Réessayez. »', async () => {
+    connecte(profil, ['v_catalogue'])
+    afficher('/indicateurs')
+    expect(await screen.findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
+      'La connexion a échoué. Réessayez.',
+    )
+    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+  })
+})
+
+// EJP Tech configure seul les indicateurs (décision T60).
+describe('/indicateurs, admin_plateforme : la configuration', () => {
+  const profil: TypeCompte = 'admin_plateforme'
+
   it('« Créer » appelle creer_indicateurs_prevus avec le modèle du ministère, puis dit « 6 indicateurs prévus créés. »', async () => {
     const faux = connecte(profil)
     afficher('/indicateurs')
@@ -139,32 +171,32 @@ describe.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])('/indicateurs, %
     ).toBeInTheDocument()
     expect(screen.queryByRole('alert')).toBeNull()
   })
+})
 
-  it('un identifiant mal formé : « Ce ministère n’existe pas », aucune lecture de plus', async () => {
-    const faux = connecte(profil)
-    afficher('/indicateurs/pas-un-identifiant')
-    expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
-    ).toBeInTheDocument()
-    expect(faux.tables).toEqual(['compte'])
-  })
+// L'administration de l'église lit les deux écrans, sans aucun bouton (décision T60).
+describe('/indicateurs, admin_eglise : la lecture seule', () => {
+  const LECTURE = 'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.'
 
-  it('un identifiant bien formé mais inconnu : la même phrase, et le retour aux indicateurs', async () => {
-    connecte(profil)
-    afficher(`/indicateurs/${ID_INCONNU}`)
-    expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Revenir aux indicateurs' })).toBeInTheDocument()
-  })
-
-  it('une lecture qui échoue : bandeau « La connexion a échoué. Réessayez. »', async () => {
-    connecte(profil, ['v_catalogue'])
+  it('la liste : la phrase de lecture, aucun « Créer », aucun appel', async () => {
+    const faux = connecte('admin_eglise')
     afficher('/indicateurs')
-    expect(await screen.findByRole('alert', {}, { timeout: 5000 })).toHaveTextContent(
-      'La connexion a échoué. Réessayez.',
-    )
-    expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    const tableau = await screen.findByRole('table', { name: 'Indicateurs' })
+    expect(screen.getByText(LECTURE)).toBeInTheDocument()
+    expect(within(tableau).getByText('6 à créer')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    expect(faux.rpc).not.toHaveBeenCalled()
+  })
+
+  it('un ministère : la phrase de lecture, ni bloc des prévus ni bouton d’ajout', async () => {
+    const faux = connecte('admin_eglise')
+    afficher(`/indicateurs/${ID_KUMI}`)
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Indicateurs de Kumi' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(LECTURE)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Créer|Ajouter/ })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(faux.rpc).not.toHaveBeenCalled()
   })
 })
 

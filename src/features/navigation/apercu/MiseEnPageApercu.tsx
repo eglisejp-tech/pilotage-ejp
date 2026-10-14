@@ -10,15 +10,25 @@ import { ONGLETS } from '@/features/navigation/profils'
 export function MiseEnPageApercu() {
   const { pathname } = useLocation()
   const [parametres] = useSearchParams()
-  // L'écran des indicateurs est celui de l'administration de l'église, pas du berger.
+  // L'écran des indicateurs est celui d'EJP Tech, qui les configure (T60), pas du berger.
   const profil = lireProfilApercu(
     parametres.get('profil'),
-    pathname.startsWith('/apercu/indicateurs') ? 'admin_eglise' : 'berger',
+    pathname.startsWith('/apercu/indicateurs') ? 'admin_plateforme' : 'berger',
   )
-  // L'aperçu tient lieu d'accueil : le premier onglet y mène et s'affiche actif.
+  // L'aperçu d'un écran qui a son onglet (/apercu/comptes pour /comptes) montre cet onglet
+  // actif, comme l'application ; sinon l'aperçu tient lieu d'accueil : le premier onglet y mène
+  // et s'affiche actif.
   const ici = `${pathname}?profil=${profil}`
+  const rangActif = Math.max(
+    0,
+    ONGLETS[profil].findIndex(
+      ({ chemin }) =>
+        chemin !== '/' &&
+        (pathname === `/apercu${chemin}` || pathname.startsWith(`/apercu${chemin}/`)),
+    ),
+  )
   const onglets = ONGLETS[profil].map((onglet, rang) =>
-    rang === 0 ? { ...onglet, chemin: ici } : onglet,
+    rang === rangActif ? { ...onglet, chemin: ici } : onglet,
   )
   // ?vous=Marie%20D. : la personne déclarée sur l'appareil (T56), pour un ministère seulement.
   const vous = profil === 'ministere' ? parametres.get('vous') : null

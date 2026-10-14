@@ -11,7 +11,8 @@ import type { Page } from '@playwright/test'
 
 type Ecran = { vue?: string; profil?: string; envoi?: string }
 
-const adresse = ({ vue = 'communication', profil = 'admin_eglise', envoi }: Ecran) =>
+// EJP Tech configure seul les indicateurs (T60) : il est le profil des panneaux.
+const adresse = ({ vue = 'communication', profil = 'admin_plateforme', envoi }: Ecran) =>
   `/apercu/indicateurs?vue=${vue}&profil=${profil}${envoi ? `&envoi=${envoi}` : ''}`
 
 async function ouvrir(page: Page, ecran: Ecran = {}) {
@@ -371,7 +372,7 @@ test.describe('retirer pour confidentialité', () => {
 })
 
 test.describe('profils', () => {
-  test('EJP Tech a « Voir la fiche » ; l’administration de l’église ne l’a pas', async ({
+  test('EJP Tech a « Voir la fiche » et les panneaux ; l’administration de l’église lit seulement (T60)', async ({
     page,
   }) => {
     await ouvrir(page, { profil: 'admin_plateforme' })
@@ -382,6 +383,9 @@ test.describe('profils', () => {
     await expect(bouton(page, 'Ajouter un indicateur')).toBeVisible()
     await ouvrir(page, { profil: 'admin_eglise' })
     await expect(page.getByRole('link', { name: 'Voir la fiche' })).toHaveCount(0)
+    await expect(bouton(page, 'Ajouter un indicateur')).toHaveCount(0)
+    await expect(bouton(page, 'Ajouter un calcul')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /^(Corriger|Remplacer|Retirer)/ })).toHaveCount(0)
   })
 
   test('un ministère sans indicateur peut en recevoir un', async ({ page }) => {

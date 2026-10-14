@@ -164,7 +164,7 @@ archivage du dépôt du code.
 - **Indicateurs sensibles protégés** (voir la fiche 2 et la note d'analyse) : valeurs exactes pour le
   seul ministère qui saisit, le berger, le conseil et EJP Tech (P52, 7 octobre 2026) ; aucune valeur
   pour l'administration ni les autres ministères.
-- **Inscription fermée** : seuls les comptes créés par l'administration de l'église se connectent.
+- **Inscription fermée** : seuls les comptes créés par EJP Tech (T60) se connectent.
 - **Aucun traceur** ni cookie publicitaire, aucun appel à un autre service au chargement des pages.
 - **Secrets hors du navigateur** : le navigateur n'utilise que la clé publique. La clé secrète, le
   secret Google et le mot de passe d'envoi des emails restent dans le tableau de bord du
@@ -209,15 +209,16 @@ archivage du dépôt du code.
   | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
   | Activités légitimes d'une association à but religieux                   | L'outil sert à organiser les ministères de l'église                                                                                                          |
   | Garanties appropriées                                                   | Double authentification, accès par profil, hébergement de la base dans l'Union européenne, prestataires sous contrat (sauf Google : conditions grand public) |
-  | Seulement les membres, anciens membres ou personnes en contact régulier | Les comptes sont créés par l'administration pour les ministères, le berger, le conseil et EJP Tech                                                           |
+  | Seulement les membres, anciens membres ou personnes en contact régulier | Les comptes sont créés par EJP Tech (T60) pour les ministères, le berger, le conseil et EJP Tech                                                             |
   | Pas de communication à l'extérieur sans consentement                    | Aucune donnée n'est communiquée hors de l'église. Les prestataires agissent pour le compte de l'église                                                       |
 
   À confirmer par la coordination : chaque titulaire de compte est membre de l'église ou en contact
   régulier avec elle.
 
 - **Destinataires** :
-  - l'administration de l'église crée, désactive et réactive les comptes, et refait l'activation de
-    la double authentification ;
+  - EJP Tech crée, désactive et réactive les comptes, et refait l'activation de la double
+    authentification (T60, 13 octobre 2026) ; l'administration de l'église lit la liste des comptes
+    et leur état, sans rien changer ;
   - EJP Tech crée le premier compte de l'administration (une seule fois), et change une adresse ou
     supprime un facteur de double authentification sur demande écrite, depuis le tableau de bord de
     Supabase ;
@@ -234,7 +235,7 @@ archivage du dépôt du code.
   (T52). Sessions : 14 jours d'inactivité, 30 jours au plus (proposition P11) **non appliqués tant
   que l'offre est gratuite** (risque accepté, T52) ; ils le seront au passage en Pro.
 - **Mesures propres** :
-  - inscription désactivée ; comptes créés par l'administration seule, par une fonction du serveur ;
+  - inscription désactivée ; comptes créés par EJP Tech seul (T60), par une fonction du serveur ;
   - lien d'invitation valable 24 heures, qui mène à une page demandant un clic (un antivirus qui
     ouvre le lien ne le consomme pas) ;
   - mot de passe de 12 caractères au moins ; protection contre les mots de passe divulgués en
@@ -242,7 +243,7 @@ archivage du dépôt du code.
   - double authentification imposée par la base ; jamais proposée à la désactivation ;
   - un compte ou un ministère désactivé perd tous ses droits tout de suite ;
   - départ d'une personne d'un compte partagé : le ministère prévient sans délai, change le mot de
-    passe de la boîte partagée, l'administration refait l'activation, le ministère choisit un nouveau
+    passe de la boîte partagée, EJP Tech refait l'activation, le ministère choisit un nouveau
     mot de passe ;
   - « Se déconnecter » ne ferme que la session de l'appareil, pour ne pas couper les autres
     personnes d'un compte partagé ;
@@ -434,7 +435,7 @@ archivage du dépôt du code.
 ## Fiche 5. Emails de service : invitation et nouveau mot de passe
 
 - **Finalité** : envoyer deux emails seulement :
-  - l'invitation, quand l'administration crée un compte (« Votre accès à Pilotage EJP ») ;
+  - l'invitation, quand EJP Tech crée un compte (« Votre accès à Pilotage EJP ») ;
   - le lien de nouveau mot de passe, quand une personne le demande (« Nouveau mot de passe pour
     Pilotage EJP »).
 - **Base légale** : intérêt légitime de l'association (article 6.1.f) ; ces emails sont nécessaires

@@ -7,7 +7,7 @@
 -- limite de 30 lignes par fiche (31e refusée, remplacement accepté à 30).
 begin;
 
-select plan(37);
+select plan(38);
 
 create temp table ctx as
 select tests.creer_ministere('Catalogue A') as a_m,
@@ -78,12 +78,17 @@ select tests.se_connecter((select berger from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'essai catalogue') $$,
   '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.', 'le berger ne crée pas de prévus');
 select tests.se_connecter((select admin from ctx), 'aal2');
+select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'essai catalogue') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.',
+  'l''administration ne crée plus de prévus : elle lit seulement (T60)');
+-- EJP Tech configure seul les indicateurs (décision T60).
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'essai inconnu') $$,
   'P0001', 'Ce modèle n''existe pas dans le catalogue.', 'un modèle absent du catalogue est refusé');
 select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'suggestion') $$,
   'P0001', 'Ce modèle n''existe pas dans le catalogue.', 'les suggestions ne sont pas un modèle');
 select is(public.creer_indicateurs_prevus((select a_m from ctx), 'essai catalogue'), 6,
-  'l''administration crée les six prévus du modèle');
+  'EJP Tech crée les six prévus du modèle');
 select is(public.creer_indicateurs_prevus((select a_m from ctx), 'essai catalogue'), 0,
   'un second appel ne crée aucun doublon');
 select tests.deconnecter();
@@ -105,7 +110,7 @@ select results_eq($$ select t.ordre, t.role, s.modele_code from public.indicateu
   'le calcul prévu reçoit ses termes, sources de la même fiche');
 select results_eq($$ select j.compte, j.cible, j.cible_id, j.detail from public.journal j
                       where j.action = 'indicateurs_prevus_crees' and j.ministere_id = (select a_m from ctx) $$,
-  $$ select admin, 'ministere'::text, a_m, '{"modele": "essai catalogue", "nombre": 6}'::jsonb from ctx $$,
+  $$ select tech, 'ministere'::text, a_m, '{"modele": "essai catalogue", "nombre": 6}'::jsonb from ctx $$,
   'une seule ligne de journal : le code du modèle et le nombre, sans texte');
 select is(tests.lire((select a from ctx), 'aal2',
   format('select code from public.v_suggestions where ministere_id = %L and code like %L', (select a_m from ctx), 'essai_cat%')),
@@ -121,7 +126,7 @@ select lives_ok($$ insert into public.mesure (indicateur_id, ministere_id, date_
 select tests.deconnecter();
 
 -- 4. « aucun » : une ligne de journal la première fois, rien ensuite
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select is(public.creer_indicateurs_prevus((select c_m from ctx), 'aucun'), 0, '« aucun » ne crée aucun indicateur');
 select is(public.creer_indicateurs_prevus((select c_m from ctx), 'aucun'), 0, '« aucun » une seconde fois non plus');
 select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'aucun') $$,
@@ -136,7 +141,7 @@ select is((select count(*)::int from public.indicateur i where i.ministere_id = 
   'la fiche sans prévu reste vide');
 
 -- 5. Tout ou rien
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select b_m from ctx), 'essai conflit') $$,
   'P0001', 'Deux indicateurs prévus portent le même nom, « Essai conflit un » : le catalogue est à corriger.',
   'deux prévus au même libellé normalisé : l''appel échoue, avec un message');
@@ -146,7 +151,7 @@ select is((select count(*)::int from public.indicateur i where i.ministere_id = 
   'tout ou rien : ni indicateur ni ligne de journal après l''échec');
 insert into public.indicateur (libelle, definition, nature, ministere_id)
 select 'Essai existant pris', 'Indicateur d''essai dont le nom est pris.', 'mois', b_m from ctx;
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select b_m from ctx), 'essai existant') $$,
   'P0001', 'La fiche a déjà « Essai existant pris » : retirez-le avant de créer les indicateurs prévus.',
   'un prévu dont le nom est déjà sur la fiche est refusé, avec le nom en cause');
@@ -160,31 +165,31 @@ select tests.deconnecter();
 insert into public.indicateur (libelle, definition, nature, ministere_id, ordre)
 select 'Essai ligne ' || n, 'Indicateur d''essai pour la limite de la fiche.', 'mois', c.d_m, n
 from ctx c cross join generate_series(1, 25) as n;
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select throws_ok($$ select public.creer_indicateurs_prevus((select d_m from ctx), 'essai catalogue') $$,
   'P0001', 'Avec les indicateurs prévus, la fiche compterait 31 indicateurs : 30 au plus.',
   'des prévus qui porteraient la fiche à 31 lignes sont refusés');
 select tests.deconnecter();
 update public.indicateur set etat = 'retire', retrait_motif = 'plus_suivi'
  where ministere_id = (select d_m from ctx) and libelle = 'Essai ligne 25';
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select is(public.creer_indicateurs_prevus((select d_m from ctx), 'essai catalogue'), 6,
   'des prévus qui portent la fiche à 30 lignes sont acceptés');
-select is(tests.lire((select admin from ctx), 'aal2',
+select is(tests.lire((select tech from ctx), 'aal2',
   format('select ajouts, ajouts_max, lignes, lignes_max from public.limites_indicateurs(%L)', (select d_m from ctx))),
   '[{"ajouts": 0, "ajouts_max": 3, "lignes": 30, "lignes_max": 30}]'::jsonb,
   'limites_indicateurs compte 30 lignes sur 30, retirés non compris');
 select throws_ok($$ select public.creer_indicateur((select d_m from ctx), 'Essai trente et un',
                      'Indicateur d''essai de trop sur la fiche.', 'mois', 'nombre', false, false, null) $$,
   'P0001', 'Cette fiche compte déjà 30 indicateurs. Retirez-en un pour en ajouter un autre.',
-  'la 31e ligne est refusée à l''administration');
+  'la 31e ligne est refusée à EJP Tech');
 select tests.se_connecter((select d from ctx), 'aal2');
 select throws_ok($$ select public.ajouter_suggestion((select d_m from ctx), 'essai_cat_sug', 'Pourquoi d''essai pour la limite.') $$,
-  'P0001', 'Votre fiche compte déjà 30 indicateurs. Demandez à l''administration de l''église d''en retirer un.',
+  'P0001', 'Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d''en retirer un.',
   'la 31e ligne est refusée au ministère');
 select tests.deconnecter();
 update ctx set ancien = (select i.id from public.indicateur i where i.ministere_id = ctx.d_m and i.libelle = 'Essai ligne 1');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.creer_indicateur((select d_m from ctx), 'Essai ligne 1',
                     'Indicateur d''essai remplacé, saisi chaque dimanche.', 'dimanche', 'nombre', false, false, (select ancien from ctx)) $$,
   'à 30 lignes, un remplacement passe, sous le même nom');
@@ -199,7 +204,7 @@ select lives_ok($$ set constraints all immediate $$,
 set constraints all deferred;
 select results_eq($$ select j.compte, j.detail from public.journal j
                       where j.action = 'indicateur_cree' and j.cible_id = (select nouveau from ctx) $$,
-  $$ select admin, jsonb_build_object('nature', 'dimanche', 'unite', 'nombre', 'origine', 'eglise', 'remplace', ancien) from ctx $$,
+  $$ select tech, jsonb_build_object('nature', 'dimanche', 'unite', 'nombre', 'origine', 'eglise', 'remplace', ancien) from ctx $$,
   'la ligne de journal du remplaçant nomme l''indicateur remplacé, sans texte');
 
 select * from finish();

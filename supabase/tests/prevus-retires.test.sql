@@ -8,14 +8,15 @@ select plan(5);
 create temp table ctx as
 select tests.creer_ministere('Prévus retirés A') as a_m,
        tests.creer_ministere('Prévus retirés B') as b_m,
-       tests.compte('Administration de l''église') as admin;
+       -- EJP Tech configure les indicateurs (décision T60).
+       tests.compte('EJP Tech, compte 1') as tech;
 grant select on ctx to authenticated;
 
 insert into private.indicateur_prevu (code, modele, libelle, definition, nature, unite, sensible, calcul, ordre) values
   ('essai_ret_un', 'essai retires', 'Essai retirés un', 'Premier prévu d''essai des retraits.', 'mois', 'nombre', false, null, 1),
   ('essai_ret_deux', 'essai retires', 'Essai retirés deux', 'Second prévu d''essai des retraits.', 'mois', 'nombre', false, null, 2);
 
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 
 select is(public.creer_indicateurs_prevus((select a_m from ctx), 'essai retires'), 2,
   'les deux prévus du modèle sont créés sur la fiche A');

@@ -15,6 +15,11 @@ type Proprietes = {
   deconnexionEnCours?: boolean
   /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
   personne?: Personne
+  /**
+   * Menu à toutes les largeurs (plus de cinq onglets : EJP Tech, T60). À partir de 1024 px, la
+   * ligne et le menu s'alignent sur le contenu de la page.
+   */
+  partout?: boolean
 }
 
 const ID_MENU = 'menu-principal'
@@ -32,7 +37,9 @@ export function MenuTelephone({
   onSignOut,
   deconnexionEnCours,
   personne,
+  partout = false,
 }: Proprietes) {
+  const aligne = partout ? 'lg:mx-auto lg:box-content lg:max-w-contenu lg:px-marge' : ''
   const { pathname } = useLocation()
   // Le menu reste ouvert tant que la page ne change pas : un changement d'adresse le ferme.
   const [ouvertSur, setOuvertSur] = useState<string | null>(null)
@@ -51,8 +58,8 @@ export function MenuTelephone({
   }
 
   return (
-    <div className="lg:hidden" onKeyDown={surTouche}>
-      <div className="flex items-center justify-between gap-4 px-5 py-3.5">
+    <div className={partout ? undefined : 'lg:hidden'} onKeyDown={surTouche}>
+      <div className={cn('flex items-center justify-between gap-4 px-5 py-3.5', aligne)}>
         <div className="min-w-0">
           {/* Cible de 44 px ; les marges négatives gardent la hauteur de ligne dessinée. */}
           <Link
@@ -82,7 +89,11 @@ export function MenuTelephone({
         </button>
       </div>
 
-      <div id={ID_MENU} hidden={!ouvert} className="border-t border-filet px-5 pt-2 pb-4">
+      <div
+        id={ID_MENU}
+        hidden={!ouvert}
+        className={cn('border-t border-filet px-5 pt-2 pb-4', aligne)}
+      >
         <nav aria-label="Navigation principale">
           <ul role="list">
             {onglets.map(({ libelle, chemin }) => (

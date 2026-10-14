@@ -10,14 +10,15 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
 /**
  * Page « Conditions d'utilisation » : texte statique, lisible sans connexion, à côté de la page
  * Confidentialité. Ajoutée au BRIEF et validée par EJP Tech et la coordination le 5 octobre 2026
- * (docs/decisions.md, T17).
+ * (docs/decisions.md, T17). Mise à jour le 13 octobre 2026 (T60 : EJP Tech gère les comptes), la
+ * même date que `VERSION_CONDITIONS`.
  */
 export function PageConditions() {
   useTitrePage("Conditions d'utilisation")
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Conditions d'utilisation" taille="moyenne">
-        Les règles d'utilisation de l'outil. Mise à jour le 5 octobre 2026.
+        Les règles d'utilisation de l'outil. Mise à jour le 13 octobre 2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
         <PartieTexte titre="Objet">
@@ -43,8 +44,8 @@ export function PageConditions() {
         <PartieTexte titre="Accès à l'outil">
           <ul role="list" className={liste}>
             <li>
-              L'outil est réservé aux ministères enregistrés, dont les comptes sont créés par
-              l'administration de l'église. Personne ne peut s'inscrire seul.
+              L'outil est réservé aux ministères enregistrés, dont les comptes sont créés par EJP
+              Tech. Personne ne peut s'inscrire seul.
             </li>
             <li>Chaque ministère a un compte partagé, avec une adresse email commune.</li>
             <li>
@@ -61,16 +62,13 @@ export function PageConditions() {
               personnes autorisées du ministère.
             </li>
             <li>
-              Quand une personne quitte le ministère, le responsable prévient sans délai
-              l'administration de l'église et EJP Tech. Ensuite, dans cet ordre : le responsable
-              change le mot de passe de la boîte mail partagée, l'administration de l'église refait
-              l'activation du compte, puis le responsable choisit un nouveau mot de passe et
-              réactive la double authentification avec les personnes qui restent.
+              Quand une personne quitte le ministère, le responsable prévient sans délai EJP Tech.
+              Ensuite, dans cet ordre : le responsable change le mot de passe de la boîte mail
+              partagée, EJP Tech refait l'activation du compte, puis le responsable choisit un
+              nouveau mot de passe et réactive la double authentification avec les personnes qui
+              restent.
             </li>
-            <li>
-              En cas de perte d'un téléphone, prévenez l'administration de l'église, qui refait
-              l'activation.
-            </li>
+            <li>En cas de perte d'un téléphone, prévenez EJP Tech, qui refait l'activation.</li>
           </ul>
         </PartieTexte>
         <PartieTexte titre="Règles d'usage">
@@ -106,9 +104,9 @@ export function PageConditions() {
         </PartieTexte>
         <PartieTexte titre="Désactivation d'un compte">
           <p>
-            L'administration de l'église peut désactiver un compte, par exemple quand un ministère
-            arrête son activité ou quand ces conditions ne sont pas respectées. Les données du
-            compte sont gardées. L'administration peut le réactiver.
+            EJP Tech peut désactiver un compte, par exemple quand un ministère arrête son activité
+            ou quand ces conditions ne sont pas respectées. Les données du compte sont gardées. EJP
+            Tech peut le réactiver.
           </p>
         </PartieTexte>
         <PartieTexte titre="Disponibilité et fin de l'outil">

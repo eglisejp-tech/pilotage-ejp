@@ -20,17 +20,30 @@ export type ProprietesEnTete = {
 }
 
 /**
+ * Au-delà de cinq onglets, la ligne ne tient plus, même à 1440 px : EJP Tech, avec ses neuf
+ * onglets (T60, et « Personnes » de T56), garde le menu à toutes les largeurs. Les autres profils
+ * n'en ont pas plus de cinq.
+ */
+const ONGLETS_EN_LIGNE_MAX = 5
+
+/**
  * En-tête de l'application, en deux formats (BRIEF_DESIGN section 7). À partir de 1024 px :
  * « Pilotage EJP » à gauche, les onglets au centre, le compte et « Se déconnecter » à droite.
- * En dessous : voir MenuTelephone.
+ * En dessous, ou au-delà de cinq onglets : voir MenuTelephone.
  */
 export function EnTete(proprietes: ProprietesEnTete) {
   const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours, personne } = proprietes
+  const menuPartout = onglets.length > ONGLETS_EN_LIGNE_MAX
   return (
     <header className="border-b border-filet bg-papier">
       {/* Les onglets prennent toute la hauteur : le soulignement de l'onglet actif touche le
           filet du bas, même quand le compte passe sur deux lignes (1024 à 1279 px). */}
-      <div className="mx-auto box-content hidden max-w-contenu items-stretch justify-between gap-8 px-marge lg:flex">
+      <div
+        className={cn(
+          'mx-auto box-content hidden max-w-contenu items-stretch justify-between gap-8 px-marge',
+          !menuPartout && 'lg:flex',
+        )}
+      >
         <div className="flex shrink-0 items-baseline gap-4 self-center">
           <Link
             to={accueil}
@@ -58,7 +71,7 @@ export function EnTete(proprietes: ProprietesEnTete) {
           <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
         </div>
       </div>
-      <MenuTelephone {...proprietes} />
+      <MenuTelephone {...proprietes} partout={menuPartout} />
     </header>
   )
 }

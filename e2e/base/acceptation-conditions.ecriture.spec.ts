@@ -28,7 +28,7 @@ test("un compte qui n'a pas accepté voit l'écran, accepte, puis n'est plus int
   await expect(page).toHaveURL(/\/conditions-a-accepter$/)
   await expect(page.getByRole('heading', { level: 1, name: TITRE })).toBeVisible()
   await expect(page.getByText(COMPTE_CONDITIONS.libelle)).toBeVisible()
-  await expect(page.getByText('Conditions du 12 octobre 2026')).toBeVisible()
+  await expect(page.getByText('Conditions du 13 octobre 2026')).toBeVisible()
   await expect(page.getByRole('navigation')).toHaveCount(0)
   await page.goto('/points')
   await expect(page).toHaveURL(/\/conditions-a-accepter\?retour=%2Fpoints$/)

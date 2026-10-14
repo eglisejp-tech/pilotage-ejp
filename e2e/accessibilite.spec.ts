@@ -246,17 +246,18 @@ const AVANCEMENT: Ecran[] = [
   { nom: 'avancement ministère', adresse: '/apercu/avancement?profil=ministere' },
 ]
 
-// Lot L1 : écran 13, « Ministères et comptes » (administration de l'église), et la page non
-// disponible des autres profils.
+// Lot L1 : écran 13, « Ministères et comptes » (EJP Tech, qui gère, T60), sa lecture par
+// l'administration de l'église, et la page non disponible des autres profils.
 const COMPTES: Ecran[] = [
   ...['donnees', 'premier-usage', 'chargement', 'probleme'].map((vue) => ({
     nom: `comptes ${vue}`,
-    adresse: `/apercu/comptes?profil=admin_eglise&vue=${vue}`,
+    adresse: `/apercu/comptes?profil=admin_plateforme&vue=${vue}`,
   })),
   {
     nom: 'comptes envoi en échec',
-    adresse: '/apercu/comptes?profil=admin_eglise&envoi=echec',
+    adresse: '/apercu/comptes?profil=admin_plateforme&envoi=echec',
   },
+  { nom: 'comptes en lecture', adresse: '/apercu/comptes?profil=admin_eglise' },
   { nom: 'comptes page non disponible', adresse: '/apercu/comptes?profil=berger' },
 ]
 
@@ -266,6 +267,7 @@ const SESSIONS: Ecran[] = [
     nom: `sessions ${vue}`,
     adresse: `/apercu/sessions?profil=admin_eglise&vue=${vue}`,
   })),
+  { nom: 'sessions ejp-tech', adresse: '/apercu/sessions?profil=admin_plateforme' },
   { nom: 'sessions page non disponible', adresse: '/apercu/sessions?profil=berger' },
 ]
 
@@ -301,8 +303,12 @@ const INDICATEURS: Ecran[] = [
   })),
   { nom: 'indicateurs liste ejp-tech', adresse: '/apercu/indicateurs?profil=admin_plateforme' },
   {
+    nom: 'indicateurs kumi ejp-tech',
+    adresse: '/apercu/indicateurs?profil=admin_plateforme&vue=kumi',
+  },
+  {
     nom: 'indicateurs kumi envoi en échec',
-    adresse: '/apercu/indicateurs?profil=admin_eglise&vue=kumi&envoi=echec',
+    adresse: '/apercu/indicateurs?profil=admin_plateforme&vue=kumi&envoi=echec',
   },
   { nom: 'indicateurs page non disponible', adresse: '/apercu/indicateurs?profil=berger' },
 ]

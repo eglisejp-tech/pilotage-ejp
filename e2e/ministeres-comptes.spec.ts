@@ -5,12 +5,14 @@ import type { Page } from '@playwright/test'
 // Écran 13, « Ministères et comptes » (lot L1), sur l'aperçu de développement : le vrai écran,
 // des données d'exemple, des actions simulées comme les Edge Functions (aucune base, aucune
 // écriture). Trois formats par les projets Playwright : 1440, 834 et 390 px. Le parcours avec la
-// base locale et les fonctions est dans comptes.ecriture.spec.ts.
+// base locale et les fonctions est dans comptes.ecriture.spec.ts. Décision T60 : EJP Tech gère
+// (« EJP Tech, compte 1 » lit l'aperçu de la gestion) ; l'administration de l'église lit le même
+// écran, sans aucun bouton.
 
 const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
 
-async function ouvrir(page: Page, requete = '') {
-  await page.goto(`/apercu/comptes?profil=admin_eglise${requete ? `&${requete}` : ''}`)
+async function ouvrir(page: Page, requete = '', profil = 'admin_plateforme') {
+  await page.goto(`/apercu/comptes?profil=${profil}${requete ? `&${requete}` : ''}`)
   await page.evaluate(() => document.fonts.ready)
 }
 
@@ -29,7 +31,7 @@ async function auditer(page: Page) {
   expect(resultat.violations).toEqual([])
 }
 
-test.describe('Ministères et comptes (administration), aperçu', () => {
+test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
   test('titre, trois sections, états des comptes, sans le compte de l’administration', async ({
     page,
   }) => {
@@ -56,6 +58,9 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await expect(bouton(page, "Relancer l'invitation Conseil, compte 3")).toBeVisible()
     await expect(bouton(page, 'Ajouter le compte du berger')).toHaveCount(0)
     await expect(section(page, 'EJP Tech')).toContainText('ejptech1@exemple.test')
+    // Le compte connecté n'a aucun bouton : la base refuse une action sur son propre compte.
+    await expect(section(page, 'EJP Tech').getByText('Votre compte')).toBeVisible()
+    await expect(bouton(page, 'Désactiver EJP Tech, compte 1')).toHaveCount(0)
     await expect(page.getByRole('main')).not.toContainText('administration@exemple.test')
     await expect(section(page, 'Listes')).toContainText('En attente de validation')
   })
@@ -237,13 +242,72 @@ test.describe('Ministères et comptes (administration), aperçu', () => {
     await expect(bouton(page, 'Réessayer')).toBeVisible()
   })
 
-  for (const profil of ['ministere', 'berger', 'conseil', 'admin_plateforme']) {
+  for (const profil of ['ministere', 'berger', 'conseil']) {
     test(`profil ${profil} : page non disponible, aucun compte`, async ({ page }) => {
       await page.goto(`/apercu/comptes?profil=${profil}`)
       await expect(page.getByRole('heading', { level: 1 })).toHaveText(PAGE_NON_DISPONIBLE)
       await expect(page.getByRole('main')).not.toContainText('@exemple.test')
     })
   }
+})
+
+test.describe('Ministères et comptes (administration de l’église, en lecture, T60), aperçu', () => {
+  test('la phrase qui dit qu’EJP Tech gère, les comptes et leurs états, aucun bouton', async ({
+    page,
+  }) => {
+    await ouvrir(page, '', 'admin_eglise')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ministères et comptes')
+    await expect(
+      page.getByText(
+        'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
+      ),
+    ).toBeVisible()
+    const ministeres = section(page, 'Ministères')
+    await expect(ministeres).toContainText('communication@exemple.test')
+    await expect(ministeres).toContainText('Désactivé le 2 oct.')
+    await expect(section(page, 'Berger et conseil')).toContainText('Invitation envoyée')
+    await expect(section(page, 'EJP Tech')).toContainText('ejptech1@exemple.test')
+    // Aucun bouton d'action dans le contenu : seulement les aides.
+    const boutons = page.getByRole('main').getByRole('button')
+    const noms = await boutons.evaluateAll((elements) =>
+      elements.map((element) => element.getAttribute('aria-label') ?? element.textContent ?? ''),
+    )
+    expect(noms.filter((nom) => !nom.startsWith('Aide'))).toEqual([])
+    await expect(
+      page.getByText('Pour lire les indicateurs de chaque ministère, ouvrez'),
+    ).toBeVisible()
+    await auditer(page)
+  })
+
+  test('« Ministères et comptes » est l’onglet courant, pour les deux profils', async ({
+    page,
+  }) => {
+    for (const profil of ['admin_eglise', 'admin_plateforme']) {
+      await ouvrir(page, '', profil)
+      const menu = page.getByRole('button', { name: 'Ouvrir le menu' })
+      if (await menu.isVisible()) await menu.click()
+      await expect(
+        page
+          .getByRole('navigation', { name: 'Navigation principale' })
+          .getByRole('link', { name: 'Ministères et comptes' }),
+      ).toHaveAttribute('aria-current', 'page')
+    }
+  })
+
+  test('premier usage : qui agit, sans bouton', async ({ page }) => {
+    await ouvrir(page, 'vue=premier-usage', 'admin_eglise')
+    await expect(section(page, 'Ministères')).toContainText('EJP Tech ajoute les ministères.')
+    await expect(page.getByRole('button', { name: /^Ajouter/ })).toHaveCount(0)
+  })
+
+  test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+    const largeur = page.viewportSize()?.width ?? 0
+    await ouvrir(page, '', 'admin_eglise')
+    await page.screenshot({
+      path: `test-results/captures/comptes-lecture-${largeur}.png`,
+      fullPage: true,
+    })
+  })
 })
 
 test.describe('Ministères et comptes : accessibilité et tailles (aperçu)', () => {

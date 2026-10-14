@@ -140,7 +140,7 @@ export const MOTIFS_RETRAIT: ReadonlyArray<{ code: MotifRetraitChoisi; libelle: 
   { code: 'erreur', libelle: 'Créé par erreur' },
   { code: 'se_calcule', libelle: "Se calcule à partir d'autres chiffres" },
   { code: 'deja_commun', libelle: 'Déjà compté par un chiffre commun' },
-  { code: 'domaine_sensible', libelle: "Domaine sensible : à créer par l'administration" },
+  { code: 'domaine_sensible', libelle: 'Domaine sensible : à créer par EJP Tech' },
   { code: 'hors_regles', libelle: "Hors des règles de l'outil" },
 ]
 

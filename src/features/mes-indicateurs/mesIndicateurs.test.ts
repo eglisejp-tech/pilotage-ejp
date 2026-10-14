@@ -366,7 +366,7 @@ describe('refus de la base après « Envoyer pour validation »', () => {
         explicationLimiteAjouts(limites),
       ],
       [
-        "Votre fiche compte déjà 30 indicateurs. Demandez à l'administration de l'église d'en retirer un.",
+        "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
         explicationLimiteLignes(limites),
       ],
       ['Votre fiche a déjà « Demandes reçues ».', 'Votre fiche a déjà « Demandes reçues ».'],

@@ -1,7 +1,8 @@
-// Ministères et comptes (écran 13, lot L1) : lectures de l'administration de l'église et appels
-// des cinq Edge Functions de comptes (BRIEF, section 8, « Les Edge Functions »). Une fonction par
-// requête. Les lectures passent par la RLS : `v_etat_comptes` ne rend des lignes qu'à
-// l'administration en aal2. Les écritures ne passent jamais par une table : chaque action appelle
+// Ministères et comptes (écran 13, lot L1) : lectures de l'administration de l'église et d'EJP
+// Tech, puis appels des cinq Edge Functions de comptes, par EJP Tech seul (T60 ; BRIEF, section 8,
+// « Les Edge Functions »). Une fonction par requête. Les lectures passent par la RLS :
+// `v_etat_comptes` ne rend des lignes qu'à l'administration et à EJP Tech, en aal2. Les
+// écritures ne passent jamais par une table : chaque action appelle
 // sa fonction par `functions.invoke`, avec le jeton de la session (la clé secrète reste dans la
 // fonction). Chaque demande est validée par les schémas partagés avec les fonctions
 // (`supabase/functions/_shared/schemas.ts`) avant tout appel, et chaque code d'erreur de la
@@ -45,7 +46,7 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
   session_revoquee: 'Votre session a expiré. Reconnectez-vous.',
   double_authentification_requise:
     'Reconnectez-vous avec votre code de double authentification, puis réessayez.',
-  acces_refuse: "Seule l'administration de l'église gère les comptes.",
+  acces_refuse: 'Seul EJP Tech gère les comptes.',
   type_interdit: 'Ce type de compte ne se crée pas sur cet écran.',
   ministere_inconnu: "Ce ministère n'existe plus ou il est désactivé. Rechargez la page.",
   compte_inconnu: 'Ce compte est introuvable. Rechargez la page.',

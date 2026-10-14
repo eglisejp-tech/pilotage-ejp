@@ -3,6 +3,7 @@
 // textes en dur. Les textes marqués « Proposé » ne sont pas dans le texte de conception : ils
 // attendent la validation de la personne responsable.
 
+import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
 import { accorder, nombre } from '@/lib/metier/texte'
 
 export const TEXTES_CONFIGURATION = {
@@ -15,6 +16,8 @@ export const TEXTES_CONFIGURATION = {
     colonneChangement: 'Dernier changement',
     /** Aucun ministère actif (7.1). */
     aucunMinistere: "Aucun ministère. Créez d'abord les ministères dans Ministères et comptes.",
+    /** Proposé, administration en lecture (T60) : EJP Tech crée les ministères. */
+    aucunMinistereLecture: 'Aucun ministère. EJP Tech crée les ministères.',
     actionMinisteres: 'Ouvrir Ministères et comptes',
     /** Colonne « Prévus ». */
     creer: 'Créer',
@@ -60,6 +63,11 @@ export const TEXTES_CONFIGURATION = {
   /** Ministère inconnu ou désactivé, aucune requête de plus. */
   introuvable: "Ce ministère n'existe pas ou n'est plus actif.",
   revenir: 'Revenir aux indicateurs',
+  /**
+   * Sous le titre des deux écrans, pour l'administration de l'église, qui les lit sans aucun
+   * bouton (décision T60, Proposé).
+   */
+  lecture: 'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
 } as const
 
 /** État vide d'un ministère sans indicateur suivi (7.2, LISEZMOI « États »). */
@@ -99,4 +107,17 @@ export function reussiteCreationPrevus(n: number, nomMinistere: string): string 
 /** Proposé : la réponse « Aucun prévu » est enregistrée. */
 export function reussiteAucunPrevu(nomMinistere: string): string {
   return `Noté : aucun indicateur prévu pour ${nomMinistere}.`
+}
+
+/**
+ * En lecture (administration de l'église, T60), à la place du bloc « Prévus par la coordination »
+ * de `/indicateurs/:id` : ce qui reste à créer ou à choisir, sans bouton, comme la colonne
+ * « Prévus » de la liste. Null quand rien ne reste. Proposé.
+ */
+export function prevusEnLecture(etat: EtatPrevus): string | null {
+  if (etat.genre === 'a_creer') return introPrevus(etat.modele.nom, etat.manquants.length)
+  if (etat.genre === 'a_choisir') {
+    return 'Prévus par la coordination : la liste de ce ministère reste à choisir.'
+  }
+  return null
 }

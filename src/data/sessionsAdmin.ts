@@ -1,7 +1,7 @@
 // Sessions de l'écran 14 (lot L2) : une fonction par requête. Les lectures passent par la RLS
 // (tous les profils de l'application lisent `session`), les écritures par les trois fonctions de
-// l'API, réservées à l'administration de l'église. Le total et la complétude viennent de
-// `v_session_completude` : rien n'est recompté ici.
+// l'API, réservées à l'administration de l'église et à EJP Tech (T60). Le total et la complétude
+// viennent de `v_session_completude` : rien n'est recompté ici.
 
 import {
   schemaDeclaration,

@@ -64,8 +64,11 @@ export const TEXTES_VIDES = {
     titre: 'Dernière session',
     /** Aucune session passée, tous types confondus. LISEZMOI, « Premier dimanche ». */
     aucuneSession: 'Aucune session déclarée.',
-    /** Sous « Aucune session déclarée. » : qui fera apparaître la suite (écran 14). Proposé. */
-    quiDeclare: "L'administration de l'église déclare les sessions.",
+    /**
+     * Sous « Aucune session déclarée. » : qui fera apparaître la suite (écran 14). Proposé ;
+     * l'administration et EJP Tech depuis T60.
+     */
+    quiDeclare: "L'administration de l'église ou EJP Tech déclare les sessions.",
     /** `?session=` d'un type qui n'a encore aucune session passée. Proposé. */
     aucuneSessionDuType: {
       batir: "Aucune session Bâtir l'Église pour l'instant.",

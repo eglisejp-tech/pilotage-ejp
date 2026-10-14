@@ -166,11 +166,13 @@ describe('servir', () => {
     }
   })
 
-  it('refuse un appelant qui n’est pas une administration active', async () => {
+  it('refuse un appelant qui n’est pas un compte EJP Tech actif (T60)', async () => {
     for (const ligne of [
       [],
       [{ type: 'conseil', desactive_le: null }],
-      [{ type: 'admin_eglise', desactive_le: '2026-09-30T10:00:00Z' }],
+      // L'administration de l'église ne gère plus les comptes (T60).
+      [{ type: 'admin_eglise', desactive_le: null }],
+      [{ type: 'admin_plateforme', desactive_le: '2026-09-30T10:00:00Z' }],
     ]) {
       vi.stubGlobal(
         'fetch',
@@ -197,7 +199,7 @@ describe('servir', () => {
     vi.stubGlobal(
       'fetch',
       async () =>
-        new Response(JSON.stringify([{ type: 'admin_eglise', desactive_le: null }]), {
+        new Response(JSON.stringify([{ type: 'admin_plateforme', desactive_le: null }]), {
           status: 200,
           headers: { 'Content-Type': 'application/json' },
         }),

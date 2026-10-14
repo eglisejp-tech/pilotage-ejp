@@ -31,9 +31,10 @@ const FONCTIONS = [
   'reactiver-compte',
 ] as const
 
-let admin: CompteDeTest
-let sessionAdmin: Session
-let jetonAdminAal1: string
+// EJP Tech gère seul les comptes (décision T60) : c'est l'appelant des essais.
+let tech: CompteDeTest
+let sessionTech: Session
+let jetonTechAal1: string
 
 function attendreErreur(reponse: Reponse, statut: number, code: string, secrets: string[] = []) {
   expect(reponse.statut).toBe(statut)
@@ -62,10 +63,10 @@ async function compte(userId: string) {
 }
 
 beforeAll(async () => {
-  admin = await creerCompteDeTest('admin_eglise', { libelle: "Administration de l'église" })
-  const premierFacteur = await connecter(admin)
-  jetonAdminAal1 = premierFacteur.jeton
-  sessionAdmin = await activerDoubleAuthentification(premierFacteur)
+  tech = await creerCompteDeTest('admin_plateforme')
+  const premierFacteur = await connecter(tech)
+  jetonTechAal1 = premierFacteur.jeton
+  sessionTech = await activerDoubleAuthentification(premierFacteur)
 })
 
 describe("contrôle de l'appelant", () => {
@@ -87,7 +88,7 @@ describe("contrôle de l'appelant", () => {
 
   it('refuse sans JWT, avec un JWT illisible, modifié ou une clé à sa place (401)', async () => {
     // verify_jwt = false : c'est la fonction qui répond, avec son corps et ses en-têtes CORS.
-    const [entete, charge, signature] = sessionAdmin.jeton.split('.')
+    const [entete, charge, signature] = sessionTech.jeton.split('.')
     const revendications = JSON.parse(Buffer.from(charge ?? '', 'base64url').toString('utf8'))
     const modifie = [
       entete,
@@ -100,45 +101,79 @@ describe("contrôle de l'appelant", () => {
     for (const fonction of FONCTIONS) {
       for (const jeton of [undefined, 'abc.def.ghi', modifie, clePublique]) {
         const reponse = await appeler(fonction, { user_id: randomUUID() }, { jeton })
-        attendreErreur(reponse, 401, 'non_authentifie', [sessionAdmin.jeton])
+        attendreErreur(reponse, 401, 'non_authentifie', [sessionTech.jeton])
         expect(reponse.enTetes.get('access-control-allow-origin')).toBe('*')
       }
     }
   })
 
-  it('refuse un JWT aal1, même de l’administration (403)', async () => {
+  it('refuse un JWT aal1, même d’EJP Tech (403)', async () => {
     const email = adresseDeTest('essai-refus-aal1')
     for (const fonction of FONCTIONS) {
-      const corps = fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: admin.id }
+      const corps = fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: tech.id }
       attendreErreur(
-        await appeler(fonction, corps, { jeton: jetonAdminAal1 }),
+        await appeler(fonction, corps, { jeton: jetonTechAal1 }),
         403,
         'double_authentification_requise',
-        [jetonAdminAal1, email],
+        [jetonTechAal1, email],
       )
     }
     expect(await utilisateurParEmail(email)).toBeUndefined()
   })
 
-  it('refuse un compte qui n’est pas l’administration (403)', async () => {
-    const conseil = await connecterEnAal2(await creerCompteDeTest('conseil'))
-    const email = adresseDeTest('essai-refus-conseil')
-    for (const fonction of FONCTIONS) {
-      const corps = fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: admin.id }
-      attendreErreur(
-        await appeler(fonction, corps, { jeton: conseil.jeton }),
-        403,
-        'acces_refuse',
-        [conseil.jeton, email],
-      )
+  it('refuse un compte qui n’est pas EJP Tech : ministère, berger, conseil, administration (403, T60)', async () => {
+    // Un seul berger actif (index unique) : celui du jeu d'exemple est mis de côté pendant
+    // l'essai, puis rendu tel quel.
+    const secret = clientSecret()
+    const { data: bergers, error: erreurBergers } = await secret
+      .from('compte')
+      .select('user_id')
+      .eq('type', 'berger')
+      .is('desactive_le', null)
+    expect(erreurBergers).toBeNull()
+    const anciensBergers = (bergers ?? []).map((ligne) => String(ligne.user_id))
+    const poserDesactivation = async (ids: string[], date: string | null) => {
+      if (ids.length === 0) return
+      const { error } = await secret
+        .from('compte')
+        .update({ desactive_le: date })
+        .in('user_id', ids)
+      expect(error).toBeNull()
     }
-    expect(await utilisateurParEmail(email)).toBeUndefined()
+    await poserDesactivation(anciensBergers, new Date().toISOString())
+    const ministere = await creerMinistereDeTest()
+    const berger = await creerCompteDeTest('berger', { libelle: 'Berger' })
+    try {
+      const autres = [
+        await connecterEnAal2(await creerCompteDeTest('ministere', { ministereId: ministere.id })),
+        await connecterEnAal2(berger),
+        await connecterEnAal2(await creerCompteDeTest('conseil')),
+        await connecterEnAal2(
+          await creerCompteDeTest('admin_eglise', { libelle: "Administration de l'église" }),
+        ),
+      ]
+      const email = adresseDeTest('essai-refus-conseil')
+      for (const autre of autres) {
+        for (const fonction of FONCTIONS) {
+          const corps =
+            fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: tech.id }
+          attendreErreur(
+            await appeler(fonction, corps, { jeton: autre.jeton }),
+            403,
+            'acces_refuse',
+            [autre.jeton, email],
+          )
+        }
+      }
+      expect(await utilisateurParEmail(email)).toBeUndefined()
+    } finally {
+      await poserDesactivation([berger.id], new Date().toISOString())
+      await poserDesactivation(anciensBergers, null)
+    }
   })
 
-  it('refuse une administration désactivée (403)', async () => {
-    const ancienne = await creerCompteDeTest('admin_eglise', {
-      libelle: "Administration de l'église",
-    })
+  it('refuse un compte EJP Tech désactivé (403)', async () => {
+    const ancienne = await creerCompteDeTest('admin_plateforme')
     const session = await connecterEnAal2(ancienne)
     const { error } = await clientSecret()
       .from('compte')
@@ -147,16 +182,14 @@ describe("contrôle de l'appelant", () => {
     expect(error).toBeNull()
     const email = adresseDeTest('essai-refus-desactivee')
     for (const fonction of FONCTIONS) {
-      const corps = fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: admin.id }
+      const corps = fonction === 'creer-compte' ? { type: 'conseil', email } : { user_id: tech.id }
       attendreErreur(await appeler(fonction, corps, { jeton: session.jeton }), 403, 'acces_refuse')
     }
     expect(await utilisateurParEmail(email)).toBeUndefined()
   })
 
   it('refuse un jeton encore valide dont la session a été supprimée (401, décision T15)', async () => {
-    const autre = await creerCompteDeTest('admin_eglise', {
-      libelle: "Administration de l'église",
-    })
+    const autre = await creerCompteDeTest('admin_plateforme')
     const session = await connecterEnAal2(autre)
     // Session vivante : les contrôles de la base passent (compte inconnu, mais appelant accepté).
     attendreErreur(
@@ -184,7 +217,7 @@ describe("contrôle de l'appelant", () => {
   it('refuse une autre méthode que POST (405)', async () => {
     for (const fonction of FONCTIONS) {
       attendreErreur(
-        await appeler(fonction, null, { jeton: sessionAdmin.jeton, methode: 'GET' }),
+        await appeler(fonction, null, { jeton: sessionTech.jeton, methode: 'GET' }),
         405,
         'methode_non_autorisee',
       )
@@ -194,7 +227,7 @@ describe("contrôle de l'appelant", () => {
 
 describe('validation de la demande', () => {
   it('refuse un corps illisible ou hors schéma (400)', async () => {
-    const jeton = sessionAdmin.jeton
+    const jeton = sessionTech.jeton
     const invalides: Array<[string, unknown]> = [
       ['creer-compte', '{"type": "conseil",'],
       ['creer-compte', { type: 'admin_eglise', email: adresseDeTest('essai-admin') }],
@@ -223,7 +256,7 @@ describe('creer-compte', () => {
   it('crée un compte du conseil : invitation, ligne compte, journal au nom de l’appelant', async () => {
     const email = adresseDeTest('essai-conseil')
     attendreSucces(
-      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionAdmin.jeton }),
+      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionTech.jeton }),
     )
     const utilisateur = await utilisateurParEmail(email)
     expect(utilisateur).toBeDefined()
@@ -232,10 +265,10 @@ describe('creer-compte', () => {
     const ligne = await compte(utilisateur!.id)
     expect(ligne).toMatchObject({ type: 'conseil', ministere_id: null, desactive_le: null })
     expect(ligne?.libelle).toMatch(/^Conseil, compte [0-9]+$/)
-    expect(await lignesJournal(sessionAdmin, utilisateur!.id)).toEqual([
+    expect(await lignesJournal(sessionTech, utilisateur!.id)).toEqual([
       {
         action: 'compte_cree',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: null,
         cible: 'compte',
         cible_id: utilisateur!.id,
@@ -245,12 +278,12 @@ describe('creer-compte', () => {
 
     // La même adresse ne reçoit pas de deuxième compte.
     attendreErreur(
-      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionAdmin.jeton }),
+      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionTech.jeton }),
       409,
       'adresse_deja_utilisee',
       [email],
     )
-    expect(await lignesJournal(sessionAdmin, utilisateur!.id)).toHaveLength(1)
+    expect(await lignesJournal(sessionTech, utilisateur!.id)).toHaveLength(1)
   })
 
   it('crée un compte EJP Tech avec le libellé imposé', async () => {
@@ -259,7 +292,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'admin_plateforme', email },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
     )
     const utilisateur = await utilisateurParEmail(email)
@@ -275,7 +308,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'ministere', email, ministere: { nom, description: 'Ministère d’essai' } },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
     )
     const utilisateur = await utilisateurParEmail(email)
@@ -287,20 +320,20 @@ describe('creer-compte', () => {
       .eq('id', ligne!.ministere_id!)
       .single()
     expect(ministere).toMatchObject({ nom, description: 'Ministère d’essai', desactive_le: null })
-    expect(await lignesJournal(sessionAdmin, ligne!.ministere_id!)).toEqual([
+    expect(await lignesJournal(sessionTech, ligne!.ministere_id!)).toEqual([
       {
         action: 'ministere_cree',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: ligne!.ministere_id,
         cible: 'ministere',
         cible_id: ligne!.ministere_id,
         detail: {},
       },
     ])
-    expect(await lignesJournal(sessionAdmin, utilisateur!.id)).toEqual([
+    expect(await lignesJournal(sessionTech, utilisateur!.id)).toEqual([
       {
         action: 'compte_cree',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: ligne!.ministere_id,
         cible: 'compte',
         cible_id: utilisateur!.id,
@@ -313,7 +346,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'ministere', email: autreEmail, ministere: { nom: nom.toUpperCase() } },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
       409,
       'nom_ministere_deja_pris',
@@ -329,7 +362,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'ministere', email, ministere: { id: ministere.id } },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
     )
     const utilisateur = await utilisateurParEmail(email)
@@ -343,7 +376,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'ministere', email: autreEmail, ministere: { id: ministere.id } },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
       409,
       'ministere_a_deja_un_compte',
@@ -353,7 +386,7 @@ describe('creer-compte', () => {
       await appeler(
         'creer-compte',
         { type: 'ministere', email: autreEmail, ministere: { id: randomUUID() } },
-        { jeton: sessionAdmin.jeton },
+        { jeton: sessionTech.jeton },
       ),
       400,
       'ministere_inconnu',
@@ -369,7 +402,7 @@ describe('creer-compte', () => {
     if (!bergers || bergers.length === 0) await creerCompteDeTest('berger', { libelle: 'Berger' })
     const email = adresseDeTest('essai-berger')
     attendreErreur(
-      await appeler('creer-compte', { type: 'berger', email }, { jeton: sessionAdmin.jeton }),
+      await appeler('creer-compte', { type: 'berger', email }, { jeton: sessionTech.jeton }),
       409,
       'berger_deja_actif',
     )
@@ -390,12 +423,12 @@ describe('desactiver-compte', () => {
 
   it('refuse le compte de l’appelant et un compte inconnu', async () => {
     attendreErreur(
-      await appeler('desactiver-compte', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('desactiver-compte', { user_id: tech.id }, { jeton: sessionTech.jeton }),
       403,
       'propre_compte',
     )
     attendreErreur(
-      await appeler('desactiver-compte', { user_id: randomUUID() }, { jeton: sessionAdmin.jeton }),
+      await appeler('desactiver-compte', { user_id: randomUUID() }, { jeton: sessionTech.jeton }),
       400,
       'compte_inconnu',
     )
@@ -403,7 +436,7 @@ describe('desactiver-compte', () => {
 
   it('bannit, désactive le compte et son ministère, supprime les sessions, écrit le journal', async () => {
     attendreSucces(
-      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionTech.jeton }),
     )
     // Données gardées, dates posées.
     const ligne = await compte(cible.id)
@@ -421,11 +454,11 @@ describe('desactiver-compte', () => {
     const { error: erreurRafraichissement } = await sessionCible.client.auth.refreshSession()
     expect(erreurRafraichissement).not.toBeNull()
     await expect(connecter(cible)).rejects.toThrow()
-    // Une seule ligne de journal, au nom de l'administration.
-    expect(await lignesJournal(sessionAdmin, cible.id)).toEqual([
+    // Une seule ligne de journal, au nom d'EJP Tech.
+    expect(await lignesJournal(sessionTech, cible.id)).toEqual([
       {
         action: 'compte_desactive',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: ministereId,
         cible: 'compte',
         cible_id: cible.id,
@@ -436,16 +469,16 @@ describe('desactiver-compte', () => {
 
   it('refuse un compte déjà désactivé, sans nouvelle ligne de journal', async () => {
     attendreErreur(
-      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionTech.jeton }),
       409,
       'compte_desactive',
     )
     attendreErreur(
-      await appeler('reinitialiser-2fa', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reinitialiser-2fa', { user_id: cible.id }, { jeton: sessionTech.jeton }),
       409,
       'compte_desactive',
     )
-    expect(await lignesJournal(sessionAdmin, cible.id)).toHaveLength(1)
+    expect(await lignesJournal(sessionTech, cible.id)).toHaveLength(1)
     const { data } = await clientSecret().auth.admin.getUserById(cible.id)
     expect(Date.parse(data.user?.banned_until ?? '')).toBeGreaterThan(Date.now())
   })
@@ -462,7 +495,7 @@ describe('reinitialiser-2fa', () => {
 
   it('refuse le compte de l’appelant', async () => {
     attendreErreur(
-      await appeler('reinitialiser-2fa', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reinitialiser-2fa', { user_id: tech.id }, { jeton: sessionTech.jeton }),
       403,
       'propre_compte',
     )
@@ -474,7 +507,7 @@ describe('reinitialiser-2fa', () => {
     expect(avant.data?.factors.length).toBeGreaterThan(0)
 
     attendreSucces(
-      await appeler('reinitialiser-2fa', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reinitialiser-2fa', { user_id: cible.id }, { jeton: sessionTech.jeton }),
     )
 
     const apres = await secret.auth.admin.mfa.listFactors({ userId: cible.id })
@@ -484,12 +517,12 @@ describe('reinitialiser-2fa', () => {
     await expect(connecter(cible)).rejects.toThrow()
     const { error: erreurRafraichissement } = await sessionCible.client.auth.refreshSession()
     expect(erreurRafraichissement).not.toBeNull()
-    // Le compte reste actif ; une seule ligne de journal, au nom de l'administration.
+    // Le compte reste actif ; une seule ligne de journal, au nom d'EJP Tech.
     expect((await compte(cible.id))?.desactive_le).toBeNull()
-    expect(await lignesJournal(sessionAdmin, cible.id)).toEqual([
+    expect(await lignesJournal(sessionTech, cible.id)).toEqual([
       {
         action: 'double_auth_reinitialisee',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: null,
         cible: 'compte',
         cible_id: cible.id,
@@ -503,7 +536,7 @@ describe('relancer-invitation', () => {
   it('renvoie l’invitation d’une adresse pas encore confirmée et écrit le journal', async () => {
     const email = adresseDeTest('essai-relance')
     attendreSucces(
-      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionAdmin.jeton }),
+      await appeler('creer-compte', { type: 'conseil', email }, { jeton: sessionTech.jeton }),
     )
     const invite = await utilisateurParEmail(email)
     expect(invite).toBeDefined()
@@ -514,7 +547,7 @@ describe('relancer-invitation', () => {
     const reponse = await appeler(
       'relancer-invitation',
       { user_id: invite!.id },
-      { jeton: sessionAdmin.jeton },
+      { jeton: sessionTech.jeton },
     )
     attendreSucces(reponse)
     expect(sansFuite(reponse, [email])).toBe(true)
@@ -523,11 +556,11 @@ describe('relancer-invitation', () => {
     expect(Date.parse(apres.data.user?.invited_at ?? '')).toBeGreaterThanOrEqual(
       Date.parse(avant.data.user?.invited_at ?? ''),
     )
-    const lignes = await lignesJournal(sessionAdmin, invite!.id)
+    const lignes = await lignesJournal(sessionTech, invite!.id)
     expect(lignes.filter((ligne) => ligne.action === 'invitation_relancee')).toEqual([
       {
         action: 'invitation_relancee',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: null,
         cible: 'compte',
         cible_id: invite!.id,
@@ -539,23 +572,19 @@ describe('relancer-invitation', () => {
   it('refuse une adresse déjà confirmée, le compte de l’appelant et un compte inconnu', async () => {
     const confirme = await creerCompteDeTest('conseil')
     attendreErreur(
-      await appeler('relancer-invitation', { user_id: confirme.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('relancer-invitation', { user_id: confirme.id }, { jeton: sessionTech.jeton }),
       409,
       'invitation_deja_acceptee',
       [confirme.email],
     )
-    expect(await lignesJournal(sessionAdmin, confirme.id)).toEqual([])
+    expect(await lignesJournal(sessionTech, confirme.id)).toEqual([])
     attendreErreur(
-      await appeler('relancer-invitation', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('relancer-invitation', { user_id: tech.id }, { jeton: sessionTech.jeton }),
       403,
       'propre_compte',
     )
     attendreErreur(
-      await appeler(
-        'relancer-invitation',
-        { user_id: randomUUID() },
-        { jeton: sessionAdmin.jeton },
-      ),
+      await appeler('relancer-invitation', { user_id: randomUUID() }, { jeton: sessionTech.jeton }),
       400,
       'compte_inconnu',
     )
@@ -566,33 +595,33 @@ describe('reactiver-compte', () => {
   it('refuse un compte actif et le compte de l’appelant', async () => {
     const actif = await creerCompteDeTest('conseil')
     attendreErreur(
-      await appeler('reactiver-compte', { user_id: actif.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reactiver-compte', { user_id: actif.id }, { jeton: sessionTech.jeton }),
       409,
       'compte_actif',
     )
     attendreErreur(
-      await appeler('reactiver-compte', { user_id: admin.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reactiver-compte', { user_id: tech.id }, { jeton: sessionTech.jeton }),
       403,
       'propre_compte',
     )
     attendreErreur(
-      await appeler('reactiver-compte', { user_id: randomUUID() }, { jeton: sessionAdmin.jeton }),
+      await appeler('reactiver-compte', { user_id: randomUUID() }, { jeton: sessionTech.jeton }),
       400,
       'compte_inconnu',
     )
-    expect(await lignesJournal(sessionAdmin, actif.id)).toEqual([])
+    expect(await lignesJournal(sessionTech, actif.id)).toEqual([])
   })
 
   it('lève le bannissement, réactive le compte et son ministère, écrit le journal', async () => {
     const ministere = await creerMinistereDeTest()
     const cible = await creerCompteDeTest('ministere', { ministereId: ministere.id })
     attendreSucces(
-      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('desactiver-compte', { user_id: cible.id }, { jeton: sessionTech.jeton }),
     )
     await expect(connecter(cible)).rejects.toThrow()
 
     attendreSucces(
-      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionTech.jeton }),
     )
     expect((await compte(cible.id))?.desactive_le).toBeNull()
     const { data: ligneMinistere } = await clientSecret()
@@ -606,10 +635,10 @@ describe('reactiver-compte', () => {
     expect(!banni || Date.parse(banni) <= Date.now()).toBe(true)
     // Le compte se connecte de nouveau (puis refera son code TOTP s'il en a un).
     await expect(connecter(cible)).resolves.toBeDefined()
-    expect(await lignesJournal(sessionAdmin, cible.id)).toEqual([
+    expect(await lignesJournal(sessionTech, cible.id)).toEqual([
       {
         action: 'compte_desactive',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: ministere.id,
         cible: 'compte',
         cible_id: cible.id,
@@ -617,7 +646,7 @@ describe('reactiver-compte', () => {
       },
       {
         action: 'compte_reactive',
-        compte: admin.id,
+        compte: tech.id,
         ministere_id: ministere.id,
         cible: 'compte',
         cible_id: cible.id,
@@ -627,10 +656,52 @@ describe('reactiver-compte', () => {
 
     // Déjà réactivé : refusé, sans nouvelle ligne.
     attendreErreur(
-      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionAdmin.jeton }),
+      await appeler('reactiver-compte', { user_id: cible.id }, { jeton: sessionTech.jeton }),
       409,
       'compte_actif',
     )
-    expect(await lignesJournal(sessionAdmin, cible.id)).toHaveLength(2)
+    expect(await lignesJournal(sessionTech, cible.id)).toHaveLength(2)
+  })
+})
+
+// T60 : le compte de l'administration de l'église se gère au tableau de bord, sur demande écrite
+// de la coordination ; aucune Edge Function ne le vise (migration 20261013130500).
+describe('compte de l’administration de l’église', () => {
+  it('ni désactivé, ni réinitialisé, ni relancé, ni réactivé par EJP Tech (400), rien ne change', async () => {
+    const administration = await creerCompteDeTest('admin_eglise', {
+      libelle: "Administration de l'église",
+    })
+    for (const fonction of ['desactiver-compte', 'reinitialiser-2fa', 'relancer-invitation']) {
+      attendreErreur(
+        await appeler(fonction, { user_id: administration.id }, { jeton: sessionTech.jeton }),
+        400,
+        'type_interdit',
+        [administration.email],
+      )
+    }
+    // Toujours actif, pas banni, son mot de passe sert encore.
+    expect((await compte(administration.id))?.desactive_le).toBeNull()
+    const { data } = await clientSecret().auth.admin.getUserById(administration.id)
+    const banni = data.user?.banned_until
+    expect(!banni || Date.parse(banni) <= Date.now()).toBe(true)
+    await expect(connecter(administration)).resolves.toBeDefined()
+
+    // Désactivé au tableau de bord : la réactivation est refusée aussi.
+    const { error } = await clientSecret()
+      .from('compte')
+      .update({ desactive_le: new Date().toISOString() })
+      .eq('user_id', administration.id)
+    expect(error).toBeNull()
+    attendreErreur(
+      await appeler(
+        'reactiver-compte',
+        { user_id: administration.id },
+        { jeton: sessionTech.jeton },
+      ),
+      400,
+      'type_interdit',
+    )
+    expect((await compte(administration.id))?.desactive_le).not.toBeNull()
+    expect(await lignesJournal(sessionTech, administration.id)).toEqual([])
   })
 })

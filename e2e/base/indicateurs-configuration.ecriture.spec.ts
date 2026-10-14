@@ -8,14 +8,15 @@ import { ministereDEssai } from './outils-ministere.ts'
 // dans la base locale : projet « ecritures » (en série, à 1440 px, après les projets de lecture).
 // Trois ministères créés par le test (clé secrète locale, comme `installer-comptes.ts` : jamais
 // une base distante), qu'aucun autre parcours ne lit :
-// - « Kumi », dont le nom est celui d'un modèle de la coordination : l'administration clique
-//   « Créer » dans le tableau ; tous les prévus du modèle sont créés d'un coup, sans doublon, avec
-//   une seule ligne de journal ;
+// - « Kumi », dont le nom est celui d'un modèle de la coordination : EJP Tech, qui configure seul
+//   (décision T60), clique « Créer » dans le tableau ; tous les prévus du modèle sont créés d'un
+//   coup, sans doublon, avec une seule ligne de journal ;
 // - « Essai prévus », dont le nom n'est pas reconnu : EJP Tech choisit « Entretien » dans la liste
 //   de la coordination sur l'écran du ministère ;
-// - « Essai sans prévu » : l'administration enregistre « Aucun prévu », une seule fois.
+// - « Essai sans prévu » : EJP Tech enregistre « Aucun prévu », une seule fois.
 // Puis le refus d'un doublon (Jeunesse a déjà « Activités réalisées ») : tout ou rien, aucune
-// ligne de journal. Le ministère et le berger n'ont aucun droit sur la fonction.
+// ligne de journal. L'administration de l'église lit les écrans sans aucun bouton ; elle, le
+// ministère et le berger n'ont aucun droit sur la fonction.
 //
 // Ce parcours ne se rejoue pas sur la même base : les trois ministères d'essai et leurs
 // indicateurs y restent (« Kumi » doit être vide au départ, les lectures comptent 8 ministères).
@@ -73,8 +74,8 @@ const ligneDe = (page: Page, nom: string) =>
     .getByRole('link', { name: nom, exact: true })
     .locator('xpath=ancestor::*[self::tr or self::li][1]')
 
-test.describe('administration de l’église', () => {
-  test.use({ storageState: fichierSession('admin_eglise') })
+test.describe('EJP Tech, qui configure (T60)', () => {
+  test.use({ storageState: fichierSession('admin_plateforme') })
 
   test('Kumi : « Créer » dans le tableau crée tous les prévus du modèle, une seule ligne de journal', async ({
     page,
@@ -194,10 +195,6 @@ test.describe('administration de l’église', () => {
     expect(await journalPrevus(page, MINISTERE_JEUNESSE)).toHaveLength(journalAvant.length)
     await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toBeVisible()
   })
-})
-
-test.describe('EJP Tech', () => {
-  test.use({ storageState: fichierSession('admin_plateforme') })
 
   test('« Essai prévus » : nom non reconnu, EJP Tech choisit « Entretien » dans la liste, puis crée', async ({
     page,
@@ -237,19 +234,34 @@ test.describe('EJP Tech', () => {
     await attendreLaFinDuChargement(page)
     await expect(ligneDe(page, 'Essai prévus')).toContainText('Créés')
   })
+})
 
-  test('EJP Tech lit Kumi créé par l’administration : « Créés », sans bouton « Créer »', async ({
+test.describe('administration de l’église, en lecture (T60)', () => {
+  test.use({ storageState: fichierSession('admin_eglise') })
+
+  test('lit Kumi créé par EJP Tech : « Créés », la phrase de lecture, aucun bouton', async ({
     page,
   }) => {
     await page.goto('/indicateurs')
     await attendreLaFinDuChargement(page)
+    await expect(
+      page.getByText(
+        'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+      ),
+    ).toBeVisible()
     await expect(ligneDe(page, 'Kumi')).toContainText('Créés')
-    await expect(ligneDe(page, 'Kumi').getByRole('button')).toHaveCount(0)
+    await expect(page.getByRole('main').getByRole('button', { name: /^Créer/ })).toHaveCount(0)
+    await page.goto(`/indicateurs/${kumi}`)
+    await attendreLaFinDuChargement(page)
+    await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs de Kumi' })).toBeVisible()
+    await expect(
+      page.getByRole('main').getByRole('button', { name: /Ajouter|Corriger|Remplacer|Retirer/ }),
+    ).toHaveCount(0)
   })
 })
 
-test.describe('le ministère et le berger', () => {
-  for (const profil of ['ministere', 'berger'] as const) {
+test.describe('le ministère, le berger et l’administration de l’église', () => {
+  for (const profil of ['ministere', 'berger', 'admin_eglise'] as const) {
     test.describe(profil, () => {
       test.use({ storageState: fichierSession(profil) })
 

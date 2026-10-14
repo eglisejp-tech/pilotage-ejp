@@ -7,7 +7,8 @@
 -- (écritures). Aucune écriture directe sur les deux tables : les GRANT n'accordent que select.
 -- Profils (cinq comptes) : un ministère attendu, le berger, le conseil, l'administration de
 -- l'église et EJP Tech du jeu d'exemple. Tous lisent les sessions (le berger, le conseil et EJP Tech
--- par private.lit_tout) ; seule l'administration déclare, modifie et supprime ; en aal1, tout est
+-- par private.lit_tout) ; l'administration et EJP Tech (décision T60) déclarent, modifient et
+-- suppriment ; en aal1, tout est
 -- refusé ou vide (politique restrictive aal2 et private.exige_aal2). La dérivation ajoute la ligne
 -- aal1 de chaque ligne acceptée en aal2 et la ligne de l'anonyme. Les écritures directes, refusées
 -- par les GRANT, sont écrites aussi en aal1 (42501 : le refus des GRANT passe avant la RLS).
@@ -71,11 +72,11 @@ create temp view matrice_l2_aal2 (profil, objet, action, aal, attendu, requete) 
       'update public.session_attendu set ministere_id = (select b_m from ctx) where session_id = (select s1 from ctx)'),
      ('session_attendu', 'supprimer', array['42501', '42501', '42501', '42501', '42501'],
       'delete from public.session_attendu where session_id = (select s1 from ctx)'),
-     ('declarer_session', 'appeler', array['42501', '42501', '42501', 'ok', '42501'],
+     ('declarer_session', 'appeler', array['42501', '42501', '42501', 'ok', 'ok'],
       'select public.declarer_session(''anti_dispersion'', ''2030-03-09'', null, array[(select a_m from ctx)])'),
-     ('modifier_session', 'appeler', array['42501', '42501', '42501', 'ok', '42501'],
+     ('modifier_session', 'appeler', array['42501', '42501', '42501', 'ok', 'ok'],
       'select public.modifier_session((select s1 from ctx), array[(select a_m from ctx)])'),
-     ('supprimer_session', 'appeler', array['42501', '42501', '42501', 'ok', '42501'],
+     ('supprimer_session', 'appeler', array['42501', '42501', '42501', 'ok', 'ok'],
       'select public.supprimer_session((select s1 from ctx))')
    ) as m(objet, action, attendu, requete);
 create temp view matrice_l2 (profil, objet, action, aal, attendu, requete) as
@@ -91,9 +92,9 @@ create temp view profil_l2 (profil, compte) as
   union all select 'EJP Tech', c.tech from ctx c;
 grant select on matrice_l2_aal2, matrice_l2, profil_l2 to authenticated, anon;
 
--- Le plan compte les 9 tests fixes et, par tests.nombre_essais, les essais de la matrice (lignes
+-- Le plan compte les 11 tests fixes et, par tests.nombre_essais, les essais de la matrice (lignes
 -- dérivées comprises).
-select plan(9
+select plan(11
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_l2',
                         'select profil, compte from profil_l2', true));
 
@@ -151,6 +152,18 @@ select throws_ok($$ select public.supprimer_session((select s2 from ctx)) $$,
 select lives_ok($$ select public.supprimer_session((select s1 from ctx)) $$,
   'une session sans saisie se supprime');
 select tests.deconnecter();
+
+-- EJP Tech déclare aussi une session (décision T60) : la ligne de journal porte son compte.
+select tests.se_connecter((select tech from ctx), 'aal2');
+select lives_ok($$
+  select public.declarer_session('autre', '2030-04-06', 'Matrice L2 EJP Tech', array[(select a_m from ctx)])
+$$, 'EJP Tech déclare une session');
+select tests.deconnecter();
+select is((select j.compte from public.journal j
+             join public.session s on s.id = j.cible_id
+            where j.action = 'session_declaree' and s.intitule = 'Matrice L2 EJP Tech'),
+          (select tech from ctx),
+          'la déclaration d''EJP Tech est journalisée à son compte');
 
 select * from finish();
 rollback;

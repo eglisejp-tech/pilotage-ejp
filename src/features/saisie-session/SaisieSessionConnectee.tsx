@@ -29,7 +29,7 @@ export function SaisieSessionConnectee({ sessionId, ministereId, titre, onFermer
   return (
     <PanneauSaisie
       titre={session ? titreSession(session.type, session.intitule, session.date) : titre}
-      surtitre="Session déclarée par l'administration"
+      surtitre={TEXTES_SESSION.surtitre}
       onFermer={onFermer}
     >
       {etat.etat === 'chargement' ? <ChargementSaisie /> : null}

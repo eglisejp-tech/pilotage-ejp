@@ -153,7 +153,7 @@ test.describe('Cette semaine, aperçu', () => {
       'Aucun point ouvert.',
     )
     await expect(page.getByRole('region', { name: 'Dernière session' })).toContainText(
-      "Aucune session déclarée.L'administration de l'église déclare les sessions.",
+      "Aucune session déclarée.L'administration de l'église ou EJP Tech déclare les sessions.",
     )
     const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
     await expect(carte).toContainText("La carte s'affichera quand FIJ aura saisi ses chiffres.")

@@ -14,6 +14,9 @@ export const TEXTES_COMPTES = {
   titre: 'Ministères et comptes',
   introduction:
     "Les comptes sont créés ici, personne ne peut s'inscrire seul. Chacun se connecte avec Google ou un mot de passe, puis un code de double authentification. Désactiver un compte garde tout son historique.",
+  /** Administration de l'église, en lecture (décision T60) : la phrase remplace l'introduction. */
+  introductionLecture:
+    'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
 
   chargement: 'Chargement',
   erreur: 'La connexion a échoué. Réessayez.',
@@ -36,6 +39,8 @@ export const TEXTES_COMPTES = {
 
   /** Sous le tableau des ministères (configuration-indicateurs.md, 7.1). */
   noteIndicateurs: 'Pour ajouter ou retirer un indicateur propre, ouvrez',
+  /** En lecture (administration, T60) : l'écran Indicateurs se lit sans rien changer. */
+  noteIndicateursLecture: 'Pour lire les indicateurs de chaque ministère, ouvrez',
   lienIndicateurs: "l'écran Indicateurs",
   /** Le ministère FIJ saisit aussi ses chiffres par département (BRIEF, colonne de 13). */
   fijParDepartement: 'et FIJ par département',
@@ -43,6 +48,8 @@ export const TEXTES_COMPTES = {
   // Listes (maquette 13)
   statutsEvenement: "Statuts d'événement",
   noteStatuts: "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
+  /** Pour EJP Tech, qui gère l'écran (T60, Proposé) : il ne se demande rien à lui-même. */
+  noteStatutsGestion: "Liste commune à toute l'église.",
 
   // Pas de compte pour un ministère actif (FIJ, Coordination en production)
   pasDeCompte: 'Pas encore de compte',
@@ -59,6 +66,8 @@ export const TEXTES_COMPTES = {
   reactiver: 'Réactiver',
   annuler: 'Annuler',
   enCours: 'Envoi en cours',
+  /** À la place des boutons, sur la ligne du compte connecté (T60, Proposé). */
+  votreCompte: 'Votre compte',
 
   // Panneaux
   panneauMinistere: 'Ajouter un ministère',
@@ -116,10 +125,18 @@ export function libelleIndicateurs(nombreIndicateurs: number): string {
 export const VIDES_COMPTES = {
   ministeres: 'Aucun ministère pour le moment.',
   ministeresSuite: 'Ajoutez le premier : son email partagé reçoit une invitation.',
+  /** En lecture (administration, T60). */
+  ministeresSuiteLecture: 'EJP Tech ajoute les ministères.',
   bergerConseil: "Aucun compte pour le berger ni pour le conseil pour l'instant.",
   bergerConseilSuite: 'Chaque compte reçoit une invitation à son email personnel.',
   ejpTech: "Aucun compte EJP Tech pour l'instant.",
-  ejpTechSuite: "EJP Tech demande son compte à l'administration de l'église.",
+  /**
+   * En lecture (administration, T60) : EJP Tech crée les comptes ; son premier compte se crée à
+   * l'installation.
+   */
+  ejpTechSuite: "Le premier compte EJP Tech se crée à l'installation de l'outil.",
+  /** Pour EJP Tech, qui gère (T60) : ce que fait l'ajout, sans le renvoyer vers lui-même. */
+  ejpTechSuiteGestion: 'Chaque compte reçoit une invitation à son email personnel.',
 } as const
 
 /** Messages de réussite, affichés 6 secondes (Proposé). */

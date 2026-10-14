@@ -200,7 +200,7 @@ describe('ChoixSession', () => {
     )
     expect(screen.getByText('Aucune session à saisir.')).toBeInTheDocument()
     expect(
-      screen.getByText("L'administration de l'église déclare les sessions."),
+      screen.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
     ).toBeInTheDocument()
     expect(screen.queryByRole('link')).toBeNull()
   })

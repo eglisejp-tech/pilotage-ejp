@@ -93,7 +93,18 @@ export const COMPTES_PROFILS: CompteTest[] = [
     email: 'ejptech1@exemple.test',
     libelle: 'EJP Tech, compte 1',
     accueil: { chemin: '/moderation', titre: 'Modération' },
-    onglets: ['Modération', 'Indicateurs', 'Cette semaine', 'Journal technique', 'Personnes'],
+    // T60 : huit onglets, puis « Personnes » (T56), dans le menu à toutes les largeurs.
+    onglets: [
+      'Modération',
+      'Cette semaine',
+      'Ministères',
+      "Points d'attention",
+      'Ministères et comptes',
+      'Indicateurs',
+      'Sessions',
+      'Journal technique',
+      'Personnes',
+    ],
     adresseInterdite: '/ma-fiche',
   },
 ]
@@ -215,7 +226,10 @@ export function suivreRequetesDeDonnees(page: Page): string[] {
   return chemins
 }
 
-/** Ouvre le menu sous 1024 px ; à partir de 1024 px, les onglets sont déjà dans l'en-tête. */
+/**
+ * Ouvre le menu sous 1024 px ; à partir de 1024 px, les onglets sont déjà dans l'en-tête, sauf
+ * pour EJP Tech, dont les neuf onglets restent dans le menu à toutes les largeurs (T60).
+ */
 export async function ouvrirMenuSiBesoin(page: Page) {
   const bouton = page.getByRole('button', { name: 'Ouvrir le menu' })
   if (await bouton.isVisible()) await bouton.click()

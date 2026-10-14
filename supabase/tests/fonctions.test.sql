@@ -315,7 +315,7 @@ $$, $$ select admin, null::uuid, '{"type": "batir", "date": "2027-10-09", "atten
 select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$
   select public.declarer_session('batir', '2027-10-23', null, array[(select a_m from ctx)])
-$$, '42501', 'Seule l''administration de l''église déclare une session.', 'un ministère ne déclare pas de session');
+$$, '42501', 'Seules l''administration de l''église et EJP Tech déclarent une session.', 'un ministère ne déclare pas de session');
 select throws_ok($$ select public.modifier_session((select s1 from ctx), array[(select a_m from ctx)]) $$,
   '42501', 'Cette session n''existe pas ou vous n''y avez pas accès.', 'un ministère ne modifie pas une session');
 select throws_ok($$ select public.supprimer_session((select s1 from ctx)) $$,

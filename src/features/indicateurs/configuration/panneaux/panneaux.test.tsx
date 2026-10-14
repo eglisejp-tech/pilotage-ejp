@@ -52,7 +52,8 @@ function ecrituresDe(surcharge: Partial<EcrituresIndicateurs> = {}): FausseEcrit
 function afficher(
   ministereId: string,
   ecritures: EcrituresIndicateurs | null = ecrituresDe(),
-  profil: TypeCompte = 'admin_eglise',
+  // EJP Tech configure seul les indicateurs (T60) : il est le profil des essais d'écriture.
+  profil: TypeCompte = 'admin_plateforme',
 ) {
   const donnees = construireMinistere(ministereId, lecturesExemple())
   if (donnees === null) throw new Error('ministère d’exemple absent')
@@ -76,11 +77,20 @@ function afficher(
 const bouton = (nom: string) => screen.getByRole('button', { name: nom })
 
 describe('actions du ministère', () => {
-  it('l’administration ajoute un indicateur ou un calcul, sans « Voir la fiche »', () => {
-    afficher(ID_COMMUNICATION)
-    expect(bouton('Ajouter un indicateur')).toBeInTheDocument()
-    expect(bouton('Ajouter un calcul')).toBeInTheDocument()
+  it('l’administration, même avec les écritures, lit sans aucun bouton ni « Voir la fiche » (T60)', () => {
+    const ecritures = ecrituresDe()
+    afficher(ID_COMMUNICATION, ecritures, 'admin_eglise')
+    expect(
+      screen.getByText(
+        'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryAllByRole('button')).toEqual(
+      screen.queryAllByRole('button', { name: /^Aide/ }),
+    )
     expect(screen.queryByRole('link', { name: 'Voir la fiche' })).not.toBeInTheDocument()
+    expect(ecritures.semaine).not.toHaveBeenCalled()
+    expect(ecritures.limites).not.toHaveBeenCalled()
   })
 
   it('EJP Tech a en plus « Voir la fiche », qui mène à la fiche du ministère', () => {
@@ -1141,7 +1151,7 @@ describe('passage du palier de 600 px pendant une saisie', () => {
           <MemoryRouter>
             <VueIndicateursMinistere
               titre="Indicateurs d'un ministère"
-              profil="admin_eglise"
+              profil="admin_plateforme"
               ministere={{ etat: 'pret', donnees }}
               creation={creation}
               ecritures={ecritures}

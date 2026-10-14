@@ -1,4 +1,4 @@
--- Part d'un calcul créé par l'administration (lot B4 ; décision P49 : « posée à la création d'un
+-- Part d'un calcul créé par EJP Tech (T60 ; lot B4 ; décision P49 : « posée à la création d'un
 -- calcul, jamais modifiée ensuite » ; docs/plan-etape-4.md, section 4, « B4 »).
 -- creer_calcul reçoit un 7e paramètre p_part : vrai pour un taux qui est une part, faux, ou null
 -- (la valeur du calcul remplacé, sinon faux). Une moyenne n'est jamais une part. Un calcul
@@ -12,7 +12,8 @@ select plan(21);
 create temp table ctx as
 select tests.creer_ministere('Part A') as a_m,
        tests.compte('Berger') as berger,
-       tests.compte('Administration de l''église') as admin;
+       -- EJP Tech configure les indicateurs (décision T60).
+       tests.compte('EJP Tech, compte 1') as tech;
 alter table ctx add column a uuid, add column h uuid, add column bs uuid;
 update ctx set a = tests.creer_compte('part-a@exemple.test', 'ministere', a_m);
 grant select on ctx to authenticated;
@@ -45,7 +46,7 @@ select is(has_function_privilege('authenticated', 'public.creer_calcul(text, tex
 select is(has_function_privilege('anon', 'private.creer_calcul(text, text, text, uuid, uuid, uuid, boolean)', 'execute'), false,
   'l''anonyme n''exécute pas la partie private');
 
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 
 -- Sans p_part : un taux n'est pas une part.
 select lives_ok($$ select public.creer_calcul('Taux d''essai simple', 'Taux d''essai créé sans choix de part.', 'taux',
@@ -56,7 +57,7 @@ select is(pg_temp.part_de('Taux d''essai simple'), false, 'sans p_part, un taux 
 -- p_part vrai : une part. Une moyenne marquée part est refusée.
 select lives_ok($$ select public.creer_calcul('Part d''essai créée', 'Part d''essai créée par l''administration.', 'taux',
                                               (select h from ctx), (select bs from ctx), null, true) $$,
-  'l''administration crée une part');
+  'EJP Tech crée une part');
 select is(pg_temp.part_de('Part d''essai créée'), true, 'la part créée porte le drapeau part');
 select throws_ok($$ select public.creer_calcul('Moyenne d''essai part', 'Moyenne d''essai marquée part.', 'moyenne',
                                                (select h from ctx), (select bs from ctx), null, true) $$,
@@ -67,7 +68,7 @@ select lives_ok($$ select public.creer_calcul('Part d''essai remplacée', 'Part 
                                               (select h from ctx), (select bs from ctx),
                                               (select i.id from public.indicateur i
                                                 where i.ministere_id = (select a_m from ctx) and i.libelle = 'Part d''essai créée')) $$,
-  'l''administration remplace une part par un taux, sans choix de part');
+  'EJP Tech remplace une part par un taux, sans choix de part');
 select tests.deconnecter();
 select results_eq($$
   select a.etat, a.retrait_motif, n.part, n.libelle
@@ -75,7 +76,7 @@ select results_eq($$
    where a.ministere_id = (select a_m from ctx) and a.libelle = 'Part d''essai créée'
 $$, $$ values ('retire'::text, 'remplace'::text, true, 'Part d''essai remplacée'::text) $$,
   'l''ancienne part est retirée (remplacée) et son remplaçant est une part');
-select tests.se_connecter((select admin from ctx), 'aal2');
+select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.creer_calcul('Taux d''essai sans part', 'Taux d''essai qui remplace une part, sans protection.', 'taux',
                                               (select h from ctx), (select bs from ctx),
                                               (select i.id from public.indicateur i
@@ -87,7 +88,7 @@ select is(pg_temp.part_de('Taux d''essai sans part'), false, 'le choix explicite
 -- Une moyenne qui remplace une part n'est pas une part (le défaut ne casse pas la contrainte).
 select lives_ok($$ select public.creer_calcul('Part d''essai à remplacer', 'Part d''essai remplacée ensuite par une moyenne.', 'taux',
                                               (select h from ctx), (select bs from ctx), null, true) $$,
-  'l''administration crée une seconde part');
+  'EJP Tech crée une seconde part');
 select lives_ok($$ select public.creer_calcul('Moyenne d''essai neuve', 'Moyenne d''essai qui remplace une part.', 'moyenne',
                                               (select h from ctx), (select bs from ctx),
                                               (select i.id from public.indicateur i

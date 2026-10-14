@@ -27,6 +27,7 @@ import { VueIndicateurs } from '@/features/indicateurs/configuration/VueIndicate
 import { VueIndicateursMinistere } from '@/features/indicateurs/configuration/VueIndicateursMinistere'
 import type { ResultatConfigurationMinistere } from '@/features/indicateurs/configuration/useLecturesConfiguration'
 import type { TypeCompte } from '@/lib/base'
+import { gereLOutil } from '@/lib/metier/droits'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const ATTENTE_SIMULEE_MS = 150
@@ -101,8 +102,9 @@ const reessayer = () => undefined
  * Aperçu de développement de la configuration des indicateurs (lots L3a et L3b), sans base : les
  * vrais écrans, avec des données d'exemple et des écritures simulées (créer les prévus, ajouter,
  * calculer, corriger, remplacer, retirer). Adresse : /apercu/indicateurs.
- * - `?profil=admin_eglise` (défaut) ou `admin_plateforme` ; tout autre profil : « Page non
- *   disponible » (l'écran est réservé à ces deux profils) ;
+ * - `?profil=admin_plateforme` (défaut : EJP Tech configure, T60) ou `admin_eglise` (lecture, sans
+ *   aucun bouton) ; tout autre profil : « Page non disponible » (l'écran est réservé à ces deux
+ *   profils) ;
  * - `vue=liste` (défaut), `liste-vide` (aucun ministère), `liste-chargement`, `liste-probleme` ;
  * - `vue=communication`, `kumi` (6 prévus à créer), `eagles` (prévus créés), `jeunesse` (nom non
  *   reconnu : à choisir), `protocole` (« Aucun prévu », sans indicateur), `introuvable`,
@@ -128,7 +130,7 @@ export function ApercuIndicateurs() {
   if (profil !== null && profil !== 'admin_eglise' && profil !== 'admin_plateforme') {
     return <PageNonDisponible />
   }
-  const profilLecteur: TypeCompte = profil ?? 'admin_eglise'
+  const profilLecteur: TypeCompte = profil ?? 'admin_plateforme'
 
   const idMinistere = MINISTERES_PAR_VUE[vue]
   if (idMinistere !== undefined || ['introuvable', 'chargement', 'probleme'].includes(vue)) {
@@ -145,7 +147,7 @@ export function ApercuIndicateurs() {
         profil={profilLecteur}
         ministere={ministere}
         creation={creation}
-        ecritures={ecritures}
+        ecritures={gereLOutil(profilLecteur) ? ecritures : undefined}
       />
     )
   }
