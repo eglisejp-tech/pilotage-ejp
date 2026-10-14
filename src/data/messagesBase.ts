@@ -386,8 +386,10 @@ const REFUS_DE_DROIT: Readonly<
   'Un indicateur retiré ne change plus.': REPLI,
   "Une catégorie qui sert dans une répartition ne s'efface pas.": REPLI,
   'Une suggestion garde le texte du catalogue.': REPLI,
-  // Jour d'utilisation noté sans déclaration (forcer_passage, T56) : l'appel est silencieux.
-  "Indiquez d'abord votre prénom.": REPLI,
+  // Conditions acceptées sans déclaration valable sur la session (accepter_conditions, T61) : la
+  // phrase telle quelle, et la session relue mène à « Qui utilise l'outil ? ». Le même texte,
+  // pour un jour d'utilisation noté sans déclaration (forcer_passage, T56), reste silencieux.
+  "Indiquez d'abord votre prénom.": {},
   // Fonctions serveur des comptes, appelées par les Edge Functions seules.
   appelant_non_autorise: REPLI,
   session_revoquee: REPLI,

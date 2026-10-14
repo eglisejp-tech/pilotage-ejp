@@ -1,12 +1,19 @@
 import { expect, test } from '@playwright/test'
 import type { Browser, Page } from '@playwright/test'
-import { COMPTE_CONDITIONS, declarerPrenom, fichierSession, seConnecter } from '../comptes.ts'
+import {
+  accepterConditionsSiDemande,
+  COMPTE_CONDITIONS,
+  declarerPrenom,
+  fichierSession,
+  seConnecter,
+} from '../comptes.ts'
 import { ajouter, aujourdhuiDeLaBase, jetonAcces, lire, plusJours } from './outils-evenements.ts'
 
 // « Qui utilise l'outil ? » (T56) avec la base locale : projet « ecritures » (en série, 1440 px).
 // Le compte partagé de Prodiges Junior (installé par le parcours des conditions, qui passe avant)
-// se connecte dans un premier navigateur et déclare « Marie D. », note son jour d'utilisation
-// comme l'écran (upsert de PostgREST), puis déclare sa prochaine réunion. EJP Tech lit
+// se connecte dans un premier navigateur et déclare « Marie D. », qui accepte elle-même les
+// conditions (T61), note son jour d'utilisation comme l'écran (upsert de PostgREST), puis
+// déclare sa prochaine réunion. EJP Tech lit
 // « Ministère Prodiges Junior (Marie D.) » dans le Journal technique et Marie D. dans
 // « Personnes », avec un jour d'utilisation au moins. Le berger et l'administration de l'église
 // ne lisent aucun prénom. Une seconde connexion du même compte, dans un autre navigateur, déclare
@@ -25,13 +32,12 @@ function prenomUnique(): string {
 }
 const SECOND_PRENOM = prenomUnique()
 
-/** Connexion du compte partagé, jusqu'à l'écran de déclaration (les conditions acceptées s'il le faut). */
+/**
+ * Connexion du compte partagé, jusqu'à l'écran de déclaration : un compte de ministère dit qui
+ * l'utilise avant les conditions, qui s'acceptent par personne (T61).
+ */
 async function connecterJusquALaDeclaration(page: Page) {
   await seConnecter(page, COMPTE.email, { prenom: null })
-  if (new URL(page.url()).pathname === '/conditions-a-accepter') {
-    await page.getByRole('checkbox', { name: /J'accepte les conditions d'utilisation/ }).check()
-    await page.getByRole('button', { name: 'Accepter et continuer' }).click()
-  }
   await expect(page).toHaveURL(/\/qui-utilise/)
   await expect(page.getByRole('heading', { level: 1, name: TITRE })).toBeVisible()
 }
@@ -82,6 +88,8 @@ test('un compte de ministère déclare « Marie D. », saisit, et EJP Tech seul 
   await page.getByRole('button', { name: 'Continuer' }).click()
   await expect(page.getByText('Écrivez seulement votre prénom, en lettres.')).toBeVisible()
   await declarerPrenom(page, 'Marie D.')
+  // Marie D. accepte elle-même les conditions (T61), si elle ne l'a pas déjà fait.
+  await accepterConditionsSiDemande(page)
   await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
   await expect(page.getByRole('banner')).toContainText('Vous : Marie D.')
 
@@ -165,6 +173,10 @@ test('une seconde connexion du même compte, ailleurs, déclare un autre prénom
   expect(await lire(page, 'v_ma_declaration?select=prenom')).toEqual([])
   expect(await lire(page, 'intervenant?select=prenom')).toEqual([])
   await declarerPrenom(page, SECOND_PRENOM)
+  // Une nouvelle personne : les conditions à son nom, qu'elle accepte (T61).
+  await expect(page).toHaveURL(/\/conditions-a-accepter/)
+  await expect(page.getByText(`Vous : ${SECOND_PRENOM}`)).toBeVisible()
+  expect(await accepterConditionsSiDemande(page)).toBe(true)
   await expect(page.getByRole('banner')).toContainText(`Vous : ${SECOND_PRENOM}`)
   await ailleurs.close()
 

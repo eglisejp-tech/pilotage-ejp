@@ -58,7 +58,7 @@ function connecte(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}) {
     void args
     return Promise.resolve({ data: '43000000-0000-4000-8000-000000000099', error: null })
   })
-  courant.client = { ...faux.client, rpc }
+  courant.client = faux.clientAvecRpc(rpc)
   return { ...faux, rpc }
 }
 

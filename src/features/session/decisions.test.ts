@@ -168,14 +168,33 @@ describe('destination : « Qui utilise l’outil ? » (T56)', () => {
     expect(destination(declaration, 'double-authentification', contexte())).toBe('/qui-utilise')
   })
 
-  it("l'ordre : conditions, puis déclaration, puis application", () => {
+  it('chaque état garde son écran : déclaration, puis conditions de la personne (T61), puis application', () => {
     const conditions: EtatSession = {
       statut: 'conditions',
       compte: compte('ministere'),
       email: null,
+      prenom: 'Marie',
     }
     expect(destination(conditions, 'declaration', contexte())).toBe('/conditions-a-accepter')
     expect(destination(declaration, 'conditions', contexte())).toBe('/qui-utilise')
+  })
+
+  it('« Ce n’est pas moi » sur l’écran des conditions d’une personne : l’écran de déclaration (T61)', () => {
+    const conditions: EtatSession = {
+      statut: 'conditions',
+      compte: compte('ministere'),
+      email: null,
+      prenom: 'Marie',
+    }
+    const adresse = adresseChangement('/points')
+    expect(destination(conditions, 'declaration', contexte({ adresse }))).toBeNull()
+    // Toute autre adresse ramène aux conditions, avec la page à retrouver.
+    expect(destination(conditions, 'application', contexte({ adresse: '/points' }))).toBe(
+      '/conditions-a-accepter?retour=%2Fpoints',
+    )
+    // Un compte non partagé n'a pas de prénom : pas de « Ce n'est pas moi ».
+    const berger: EtatSession = { statut: 'conditions', compte: compte('berger'), email: null }
+    expect(destination(berger, 'declaration', contexte({ adresse }))).toBe('/conditions-a-accepter')
   })
 
   it('un mot de passe à choisir passe avant la déclaration', () => {

@@ -8,7 +8,8 @@
 --   session sans déclaration laisse la ligne sans lien ; après « Ce n'est pas moi », la ligne
 --   suivante va au nouveau prénom ; une Edge Function (p_session) est attribuée à la déclaration
 --   de sa session ;
--- - v_ma_declaration rend l'âge de la déclaration (rappel des 7 jours) ;
+-- - v_ma_declaration rend l'âge de la déclaration (colonne gardée, plus lue depuis T63 : le rappel
+--   du jour se lit dans du_jour, acceptation-personne.test.sql) ;
 -- - effacer_prenom : EJP Tech seul, toutes les déclarations du même prénom sur le compte, une
 --   seule fois, puis inaltérable ; effacer_prenoms_anciens : plus de 12 mois seulement ;
 -- - le prénom n'entre jamais dans le journal.
@@ -228,7 +229,7 @@ select a, s4, 'Victor', 'connexion', now() - interval '8 days' from ctx;
 select pg_temp.changer_session(a, s4) from ctx;
 select ok((tests.lire((select a from ctx), 'aal2', 'select age_secondes from public.v_ma_declaration')
              -> 0 ->> 'age_secondes')::integer >= 7 * 86400,
-  'une déclaration de 8 jours a un âge d''au moins 7 jours (rappel)');
+  'une déclaration de 8 jours a un âge d''au moins 7 jours (colonne gardée, plus lue depuis T63)');
 
 -- Jour d'utilisation noté par l'écran (upsert de PostgREST : on conflict do nothing), deux fois
 -- le même jour : une seule ligne. Victor (écrit par le propriétaire) n'en avait aucune.

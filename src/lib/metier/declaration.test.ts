@@ -1,15 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
   declarationNecessaire,
-  DUREE_DECLARATION_JOURS,
   MESSAGES_PRENOM,
   motifDeclaration,
   nettoyerPrenom,
   PRENOM_EFFACE,
+  prenomPropose,
   schemaPrenom,
 } from '@/lib/metier/declaration'
-
-const JOUR = 24 * 60 * 60
 
 function erreurDe(valeur: string): string | undefined {
   const resultat = schemaPrenom.safeParse(valeur)
@@ -60,38 +58,64 @@ describe('schemaPrenom (T56, mêmes cas que la base)', () => {
   )
 })
 
-describe('declarationNecessaire (rappel des 7 jours)', () => {
-  it('sans déclaration sur cette session : oui', () => {
+// Rappel du jour (T63) : le jour de Paris vient de la base (`du_jour`), jamais du navigateur.
+describe('declarationNecessaire (connexion et rappel du jour)', () => {
+  it('sans déclaration sur cette session (nouvelle connexion) : oui', () => {
     expect(declarationNecessaire(null)).toBe(true)
   })
 
-  it('déclaration récente : non', () => {
-    expect(declarationNecessaire({ id: 1, prenom: 'Marie', ageSecondes: 60 })).toBe(false)
-    expect(
-      declarationNecessaire({
-        id: 1,
-        prenom: 'Marie',
-        ageSecondes: DUREE_DECLARATION_JOURS * JOUR - 1,
-      }),
-    ).toBe(false)
+  it('déclaration faite aujourd’hui : non', () => {
+    expect(declarationNecessaire({ id: 1, prenom: 'Marie', duJour: true })).toBe(false)
   })
 
-  it('déclaration de 7 jours ou plus : oui', () => {
-    expect(DUREE_DECLARATION_JOURS).toBe(7)
-    expect(declarationNecessaire({ id: 1, prenom: 'Marie', ageSecondes: 7 * JOUR })).toBe(true)
-    expect(declarationNecessaire({ id: 1, prenom: 'Marie', ageSecondes: 30 * JOUR })).toBe(true)
+  it('déclaration d’un jour précédent, même d’hier soir : oui', () => {
+    expect(declarationNecessaire({ id: 1, prenom: 'Marie', duJour: false })).toBe(true)
   })
 
-  it('prénom effacé par EJP Tech : oui', () => {
-    expect(declarationNecessaire({ id: 1, prenom: PRENOM_EFFACE, ageSecondes: 60 })).toBe(true)
+  it('prénom effacé par EJP Tech : oui, même aujourd’hui', () => {
+    expect(declarationNecessaire({ id: 1, prenom: PRENOM_EFFACE, duJour: true })).toBe(true)
+  })
+})
+
+describe('prenomPropose (T63)', () => {
+  it('rappel du jour : le prénom de la dernière déclaration de cette connexion', () => {
+    expect(prenomPropose(false, { id: 1, prenom: 'Marie D.', duJour: false })).toBe('Marie D.')
+  })
+
+  it('nouvelle connexion : champ vide', () => {
+    expect(prenomPropose(false, null)).toBe('')
+  })
+
+  it('« Ce n’est pas moi » : champ vide', () => {
+    expect(prenomPropose(true, { id: 1, prenom: 'Marie', duJour: true })).toBe('')
+  })
+
+  it('prénom effacé : champ vide, jamais le marqueur', () => {
+    expect(prenomPropose(false, { id: 1, prenom: PRENOM_EFFACE, duJour: false })).toBe('')
   })
 })
 
 describe('motifDeclaration', () => {
-  it('« Ce n’est pas moi » : changement ; sinon connexion ou rappel', () => {
-    const recente = { id: 1, prenom: 'Marie', ageSecondes: 60 }
-    expect(motifDeclaration(true, recente)).toBe('changement')
-    expect(motifDeclaration(false, null)).toBe('connexion')
-    expect(motifDeclaration(false, { ...recente, ageSecondes: 8 * JOUR })).toBe('rappel')
+  const hier = { id: 1, prenom: 'Marie', duJour: false }
+
+  it('« Ce n’est pas moi » : changement ; sinon connexion ou rappel du jour', () => {
+    expect(motifDeclaration(true, hier, 'Paul')).toBe('changement')
+    expect(motifDeclaration(false, null, 'Marie')).toBe('connexion')
+    expect(motifDeclaration(false, hier, 'Marie')).toBe('rappel')
+  })
+
+  it('rappel du jour : le prénom proposé confirmé, majuscules ignorées, reste un rappel', () => {
+    expect(motifDeclaration(false, hier, 'marie')).toBe('rappel')
+  })
+
+  it('rappel du jour : un autre prénom que celui proposé est une autre personne (changement)', () => {
+    expect(motifDeclaration(false, hier, 'Paul')).toBe('changement')
+    expect(motifDeclaration(false, hier, 'Marie D.')).toBe('changement')
+  })
+
+  it('prénom effacé : rien n’était proposé, le prénom redonné est un rappel', () => {
+    expect(motifDeclaration(false, { id: 2, prenom: PRENOM_EFFACE, duJour: true }, 'Marie')).toBe(
+      'rappel',
+    )
   })
 })

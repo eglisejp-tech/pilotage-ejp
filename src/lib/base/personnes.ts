@@ -6,7 +6,7 @@
 
 import type { Aucun, TableEnLecture, Vue } from './communs'
 
-/** Première déclaration de la session, rappel des 7 jours, ou « Ce n'est pas moi ». */
+/** Première déclaration de la session, rappel du jour (T63), ou « Ce n'est pas moi ». */
 export type MotifIntervenant = 'connexion' | 'rappel' | 'changement'
 
 export type TablesPersonnes = {
@@ -35,13 +35,18 @@ export type TablesPersonnes = {
 }
 
 export type VuesPersonnes = {
-  /** La dernière déclaration de la session qui lit, et son âge selon l'horloge du serveur. */
+  /**
+   * La dernière déclaration de la session qui lit. `du_jour` (T63, migration
+   * 20261013140000_acceptation_par_personne.sql) : faite aujourd'hui, jour de Paris ; sinon le
+   * prénom est redemandé. `age_secondes` ne sert plus (c'était le rappel des 7 jours de T56).
+   */
   v_ma_declaration: Vue<{
     id: number
     prenom: string
     motif: MotifIntervenant
     declare_le: string
     age_secondes: number
+    du_jour: boolean
   }>
   /** Une ligne par compte et par prénom (EJP Tech seul). Compteurs sur 30 jours de Paris. */
   v_personnes: Vue<{
@@ -56,6 +61,10 @@ export type VuesPersonnes = {
     derniere_activite: string
     /** Déclarations de plus de 12 mois dont le prénom n'est pas encore effacé. */
     declarations_anciennes: number
+    /** Dernière version des conditions acceptée par la personne (T61) ; null : aucune. */
+    version_acceptee: string | null
+    /** Heure de cette acceptation ; null avec la version. */
+    acceptee_le: string | null
   }>
   /**
    * Prénom des lignes de journal des comptes de ministère depuis la première déclaration (EJP

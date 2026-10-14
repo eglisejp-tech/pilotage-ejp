@@ -62,7 +62,7 @@ function connecte(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}, enEc
   const rpc = vi.fn<(nom: string, args: unknown) => Promise<{ data: string; error: null }>>(() =>
     Promise.resolve({ data: POINT, error: null }),
   )
-  courant.client = { ...faux.client, rpc }
+  courant.client = faux.clientAvecRpc(rpc)
   return { ...faux, rpc }
 }
 

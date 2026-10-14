@@ -201,7 +201,11 @@ archivage du dépôt du code.
     du compte, jamais soumise à consentement. La ligne est ajoutée une seule fois par version,
     sans journal ; seuls le compte lui-même (pour savoir s'il doit accepter) et EJP Tech la lisent.
     La phrase correspondante de la page Confidentialité est proposée, à valider par la personne
-    responsable.
+    responsable. Depuis T61 (décidé le 13 octobre 2026), sur le compte partagé d'un ministère,
+    chaque personne déclarée accepte elle-même : la ligne est attachée à sa déclaration (fiche 7),
+    jamais à un prénom écrit à part ; EJP Tech seul lit ces lignes, la session demande seulement
+    si sa propre personne a accepté (oui ou non, sans date) ; l'effacement du prénom laisse
+    l'acceptation, sous « [prénom effacé] ».
 - **Données sensibles** : un compte dans l'outil d'une église peut révéler une appartenance
   religieuse (article 9). L'article 9.2.d permet ce traitement à quatre conditions :
 
@@ -509,9 +513,11 @@ archivage du dépôt du code.
   suffit), lu par EJP Tech seul, gardé 12 mois, effacé tout de suite sur demande, jamais utilisé
   pour évaluer les personnes.
 - **Personnes concernées** : les personnes qui utilisent un compte de ministère.
-- **Catégories de données** : prénom déclaré, date et heure, motif (connexion, rappel au bout de 7
-  jours, « Ce n'est pas moi »), identifiant technique de la session de connexion, lien vers les
-  lignes du journal écrites pendant cette session, jours d'utilisation.
+- **Catégories de données** : prénom déclaré, date et heure, motif (connexion, rappel du jour à la
+  première ouverture de chaque journée, T63, « Ce n'est pas moi » ou autre prénom au rappel), identifiant technique de la
+  session de connexion, lien vers les lignes du journal écrites pendant cette session, jours
+  d'utilisation, et, depuis T61, la date à laquelle la personne accepte chaque version des
+  conditions (fiche 1).
 - **Données sensibles** : aucune, au-delà de l'appartenance possible à l'église (fiche 1).
 - **Destinataires** : pendant la vie de l'outil, EJP Tech seul, dans l'onglet « Personnes » et
   dans le Journal technique. Ni l'administration de l'église, ni le berger, ni le conseil, ni les
@@ -591,5 +597,9 @@ par compte (T53).
 
 Ajout du 12 octobre 2026 (sans changer la version du document) : fiche 7, prénom déclaré sur un
 compte partagé (T56) ; fiche 4 (EJP Tech lit le prénom lié à une ligne) et durées de conservation.
+
+Ajout du 13 octobre 2026 (sans changer la version du document) : fiches 1 et 7, conditions
+acceptées par chaque personne d'un compte partagé (T61) ; fiche 7, prénom redemandé chaque jour
+(T63).
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

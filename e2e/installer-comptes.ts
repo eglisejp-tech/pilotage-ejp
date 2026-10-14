@@ -8,6 +8,7 @@ import {
   COMPTES_JEU_EXEMPLE,
   enregistrerSecrets,
   MOT_DE_PASSE_TEST,
+  PRENOM_TEST,
 } from './comptes.ts'
 
 // Installation des comptes de test (BRIEF section 8, « Tests obligatoires »), lancée par
@@ -109,8 +110,23 @@ export default async function installerComptes() {
     secrets[email] = facteur.totp.secret
     // La session est en aal2 : le compte accepte la version courante des conditions (T53), par la
     // fonction publique, comme l'écran d'acceptation. Les parcours existants ne voient pas cet
-    // écran ; un seul compte reste sans acceptation, pour son parcours.
+    // écran ; un seul compte reste sans acceptation, pour son parcours. Un compte de ministère
+    // accepte par personne (T61) : la personne des parcours (PRENOM_TEST) déclare son prénom
+    // d'abord, puis accepte ; elle n'est plus interrogée quand elle redonne ce prénom.
     if (email !== COMPTE_CONDITIONS.email) {
+      const { data: compte, error: erreurCompte } = await client
+        .from('compte')
+        .select('type')
+        .eq('user_id', id)
+        .single<{ type: string }>()
+      if (erreurCompte) throw new Error(`Type du compte illisible pour ${email}.`)
+      if (compte.type === 'ministere') {
+        const { error: erreurDeclaration } = await client.rpc('declarer_intervenant', {
+          p_prenom: PRENOM_TEST,
+          p_motif: 'connexion',
+        })
+        if (erreurDeclaration) throw new Error(`Déclaration du prénom refusée pour ${email}.`)
+      }
       const { error: erreurAcceptation } = await client.rpc('accepter_conditions', {
         p_version: VERSION_CONDITIONS,
       })

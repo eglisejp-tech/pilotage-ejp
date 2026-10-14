@@ -35,7 +35,7 @@ describe('EcranDeclaration (T56)', () => {
     expect(champ()).toHaveValue('')
     expect(champ()).toHaveAttribute('autocomplete', 'given-name')
     expect(champ()).toHaveAccessibleDescription(
-      /Vous pouvez ajouter l'initiale de votre nom : «\sMarie\sD\.\s».*EJP Tech le voit, pour suivre l'utilisation de l'outil\./,
+      /Exemple\s: Marie\sD\. \(initiale du nom facultative\)\..*EJP Tech le voit, pour suivre l'utilisation de l'outil\./,
     )
     const lien = screen.getByRole('link', { name: 'Confidentialité (nouvel onglet)' })
     expect(lien).toHaveAttribute('href', '/confidentialite')
@@ -100,7 +100,18 @@ describe('EcranDeclaration (T56)', () => {
   it('« Ce n’est pas moi » : « Annuler » ramène à l’outil', async () => {
     const onCancel = vi.fn()
     const { utilisateur } = afficher({ onCancel })
-    await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
+    const annuler = screen.getByRole('button', { name: 'Annuler' })
+    // Bouton secondaire juste sous « Continuer », avant les sorties du pied de colonne ; il
+    // n'envoie pas le formulaire.
+    expect(annuler).toHaveAttribute('type', 'button')
+    expect(
+      bouton().compareDocumentPosition(annuler) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    expect(
+      annuler.compareDocumentPosition(screen.getByRole('button', { name: 'Se déconnecter' })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy()
+    await utilisateur.click(annuler)
     expect(onCancel).toHaveBeenCalledTimes(1)
   })
 
@@ -108,5 +119,33 @@ describe('EcranDeclaration (T56)', () => {
     const { onSignOut, utilisateur } = afficher()
     await utilisateur.click(screen.getByRole('button', { name: 'Se déconnecter' }))
     expect(onSignOut).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Rappel du jour (T63) : le prénom de la dernière déclaration de cette connexion est proposé.
+describe('EcranDeclaration : rappel du jour (T63)', () => {
+  it('le prénom est déjà écrit : un seul appui sur « Continuer » le confirme', async () => {
+    const { onDeclare, utilisateur } = afficher({ prenomPropose: 'Marie D.' })
+    expect(
+      screen.getByText('Ce compte est partagé. Confirmez votre prénom, ou changez-le.'),
+    ).toBeInTheDocument()
+    expect(champ()).toHaveValue('Marie D.')
+    await utilisateur.click(bouton())
+    await vi.waitFor(() => expect(onDeclare).toHaveBeenCalledTimes(1))
+    expect(onDeclare).toHaveBeenCalledWith('Marie D.')
+  })
+
+  it('la personne peut le changer', async () => {
+    const { onDeclare, utilisateur } = afficher({ prenomPropose: 'Marie D.' })
+    await utilisateur.clear(champ())
+    await utilisateur.type(champ(), 'Paul')
+    await utilisateur.click(bouton())
+    await vi.waitFor(() => expect(onDeclare).toHaveBeenCalledWith('Paul'))
+  })
+
+  it('sans prénom proposé (nouvelle connexion) : le champ part vide, la phrase de départ', () => {
+    afficher({ prenomPropose: '' })
+    expect(champ()).toHaveValue('')
+    expect(screen.getByText('Ce compte est partagé. Indiquez votre prénom.')).toBeInTheDocument()
   })
 })

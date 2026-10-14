@@ -18,6 +18,11 @@ const schemaDeclaration = z.object({ prenom: schemaPrenom })
 export type ProprietesEcranDeclaration = {
   /** Libellé du compte connecté (« Ministère Communication »). */
   libelleCompte: string
+  /**
+   * Rappel du jour (T63) : le prénom de la dernière déclaration de cette connexion, déjà écrit
+   * dans le champ ; « Continuer » le confirme. Vide ou absent : le champ part vide.
+   */
+  prenomPropose?: string
   /** Prénom nettoyé et valide. */
   onDeclare: (prenom: string) => void
   onSignOut: () => void
@@ -40,12 +45,14 @@ export type ProprietesEcranDeclaration = {
 
 /**
  * Écran « Qui utilise l'outil ? » (décision T56, sans maquette : il suit les écrans 16 à 18 et
- * l'écran des conditions). Un compte de ministère est partagé : la personne indique son prénom
- * après la connexion, tous les 7 jours, et après « Ce n'est pas moi ». Le bouton n'est jamais
- * grisé ; « Se déconnecter » reste l'autre sortie.
+ * l'écran des conditions). Un compte de ministère est partagé : la personne indique son prénom à
+ * chaque connexion, à la première ouverture de chaque nouvelle journée (T63 : le prénom de la
+ * veille est proposé) et après « Ce n'est pas moi ». Le bouton n'est jamais grisé ; « Se
+ * déconnecter » reste l'autre sortie.
  */
 export function EcranDeclaration({
   libelleCompte,
+  prenomPropose = '',
   onDeclare,
   onSignOut,
   onCancel,
@@ -62,7 +69,7 @@ export function EcranDeclaration({
     formState: { errors },
   } = useForm({
     resolver: zodResolver(schemaDeclaration),
-    defaultValues: { prenom: '' },
+    defaultValues: { prenom: prenomPropose },
   })
   const bandeau = useRef<HTMLDivElement>(null)
 
@@ -83,7 +90,7 @@ export function EcranDeclaration({
     <ColonneConnexion>
       {annonce}
       <TitreConnexion surtitre={libelleCompte} titre={TEXTES_DECLARATION.titre} taille="moyenne">
-        {TEXTES_DECLARATION.phrase}
+        {prenomPropose ? TEXTES_DECLARATION.phraseRappel : TEXTES_DECLARATION.phrase}
       </TitreConnexion>
 
       <form
@@ -98,13 +105,26 @@ export function EcranDeclaration({
             {erreur}
           </BandeauErreur>
         ) : null}
-        <BoutonPrincipal enCours={enCours} libelleEnCours={TEXTES_DECLARATION.enCours}>
-          {TEXTES_DECLARATION.continuer}
-        </BoutonPrincipal>
+        {/* « Annuler » (après « Ce n'est pas moi ») : le retour, en bouton secondaire sous
+            « Continuer », distinct des sorties du pied de colonne. */}
+        <div className="flex flex-col gap-3">
+          <BoutonPrincipal enCours={enCours} libelleEnCours={TEXTES_DECLARATION.enCours}>
+            {TEXTES_DECLARATION.continuer}
+          </BoutonPrincipal>
+          {onCancel ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              className="min-h-cible w-full border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
+            >
+              {TEXTES_DECLARATION.annuler}
+            </button>
+          ) : null}
+        </div>
       </form>
 
-      <div className="flex flex-col">
-        {onCancel ? <BoutonLien onClick={onCancel}>{TEXTES_DECLARATION.annuler}</BoutonLien> : null}
+      {/* Les deux sorties secondaires sur une ligne quand la largeur le permet. */}
+      <div className="flex flex-wrap items-center gap-x-6">
         <BoutonLien onClick={onSignOut}>{TEXTES_DECLARATION.seDeconnecter}</BoutonLien>
         <a
           href="/confidentialite"

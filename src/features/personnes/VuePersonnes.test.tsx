@@ -34,6 +34,20 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
     ).toBeInTheDocument()
   })
 
+  it('qui a accepté quelle version des conditions (T61), prénom effacé compris', () => {
+    apercu()
+    const actives = screen.getByRole('region', { name: 'Actives sur 30 jours' })
+    expect(
+      within(actives).getByText(/^Conditions du 12 octobre 2026 acceptées le 12 oct\., 9 h 30\./),
+    ).toBeInTheDocument()
+    expect(within(actives).getByText('Conditions pas encore acceptées.')).toBeInTheDocument()
+    expect(
+      within(actives).getByText(/^Conditions du 8 octobre 2026 acceptées le 8 oct\., 11 h\./),
+    ).toBeInTheDocument()
+    const sansActivite = screen.getByRole('region', { name: 'Sans activité depuis 30 jours' })
+    expect(within(sansActivite).getByText('Conditions pas encore acceptées.')).toBeInTheDocument()
+  })
+
   it('« Afficher 50 de plus » ajoute les connexions suivantes', async () => {
     apercu()
     await userEvent.click(screen.getByRole('button', { name: 'Afficher 50 de plus' }))
@@ -151,6 +165,7 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
                       jours: 1,
                       actions: 0,
                       derniereActivite: '11 oct., 11 h',
+                      conditions: 'Conditions pas encore acceptées.',
                     },
                   ],
                 },

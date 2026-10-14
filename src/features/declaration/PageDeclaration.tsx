@@ -10,13 +10,16 @@ import { seDeconnecter } from '@/features/session/actions'
 import { useEtatVerifie } from '@/features/session/contexte'
 import { retourValide } from '@/features/session/decisions'
 import { rafraichirSession } from '@/features/session/useEtatSession'
-import { motifDeclaration } from '@/lib/metier/declaration'
+import { motifDeclaration, prenomPropose } from '@/lib/metier/declaration'
 
 /**
- * /qui-utilise : l'écran de déclaration relié à la base (T56). Après la connexion ou le rappel des
- * 7 jours, la session est relue et la garde ouvre l'adresse demandée. Après « Ce n'est pas moi »
- * (`?changer=1`), la page revient elle-même à la page quittée. Quand l'écran suit le choix du
- * mot de passe ou l'activation de la double authentification, il en dit la réussite (m037, m045).
+ * /qui-utilise : l'écran de déclaration relié à la base (T56). Après la connexion ou le rappel du
+ * jour (T63, le prénom de la veille déjà proposé), la session est relue et la garde ouvre
+ * l'adresse demandée (les conditions d'abord, si la personne ne les a pas acceptées, T61). Après
+ * « Ce n'est pas moi » (`?changer=1`), depuis l'outil ou depuis l'écran des conditions, la page
+ * revient elle-même à la page quittée, et la garde montre les conditions à la nouvelle personne
+ * qui ne les a pas encore acceptées. Quand l'écran suit le choix du mot de passe ou l'activation
+ * de la double authentification, il en dit la réussite (m037, m045).
  */
 export function PageDeclaration() {
   const etat = useEtatVerifie()
@@ -27,19 +30,21 @@ export function PageDeclaration() {
   /** Refus du prénom par la base (T56) : sous le champ, comme le contrôle avant l'envoi. */
   const [erreurPrenom, setErreurPrenom] = useState<string>()
 
-  // La garde de la zone ne laisse passer que ces deux états.
-  if (etat.statut !== 'declaration' && etat.statut !== 'connecte') return null
-  const changement = etat.statut === 'connecte'
+  // La garde de la zone ne laisse passer que ces trois états.
+  if (etat.statut !== 'declaration' && etat.statut !== 'connecte' && etat.statut !== 'conditions') {
+    return null
+  }
+  const changement = etat.statut !== 'declaration'
   const { compte } = etat
   const retour = retourValide(parametres.get('retour'), compte.type) ?? accueil(compte.type)
+  const precedente = etat.statut === 'declaration' ? etat.declaration : null
 
   async function declarer(prenom: string) {
     setErreur(undefined)
     setErreurPrenom(undefined)
     setEnCours(true)
     try {
-      const precedente = etat.statut === 'declaration' ? etat.declaration : null
-      await declarerIntervenant(prenom, motifDeclaration(changement, precedente))
+      await declarerIntervenant(prenom, motifDeclaration(changement, precedente, prenom))
       await rafraichirSession()
       if (changement) void navigate(retour, { replace: true })
     } catch (echec) {
@@ -55,6 +60,7 @@ export function PageDeclaration() {
   return (
     <EcranDeclaration
       libelleCompte={compte.libelle}
+      prenomPropose={prenomPropose(changement, precedente)}
       onDeclare={(prenom) => void declarer(prenom)}
       onSignOut={() => void seDeconnecter()}
       onCancel={changement ? () => void navigate(retour, { replace: true }) : undefined}

@@ -73,7 +73,7 @@ function connecte(type: TypeCompte, options: Options = {}) {
         : { data: '00000000-0000-4000-8000-0000000000e1', error: null },
     )
   })
-  courant.client = { ...faux.client, rpc }
+  courant.client = faux.clientAvecRpc(rpc)
   return { ...faux, rpc }
 }
 

@@ -1,11 +1,12 @@
 import { isAuthApiError } from '@supabase/supabase-js'
 import { lireMonCompte } from '@/data/compte'
-import { lireConditionsAcceptees } from '@/data/conditions'
+import { lireConditionsAcceptees, lireConditionsAccepteesParLaPersonne } from '@/data/conditions'
 import { lireMaDeclaration, noterPassage } from '@/data/personnes'
 import { deduireEtat } from '@/features/session/etat'
 import type { EtatSession } from '@/features/session/etat'
 import { noterTransition } from '@/features/session/motif'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
+import { declarationNecessaire } from '@/lib/metier/declaration'
 import { clientRequetes, CLE_SESSION } from '@/lib/requetes'
 import { supabase } from '@/lib/supabase'
 
@@ -61,18 +62,24 @@ export async function chargerEtatSession(): Promise<EtatSession> {
       facteurVerifie = facteurs.totp[0]?.id ?? null
     }
 
-    // Acceptation des conditions (T53) : lisible en aal2 seulement ; avant, elle ne sert à rien.
-    const conditionsAcceptees =
-      compte?.actif && niveau.currentLevel === 'aal2'
-        ? await lireConditionsAcceptees(session.user.id, VERSION_CONDITIONS)
-        : false
+    // Lisibles en aal2 seulement ; avant, elles ne servent à rien.
+    const enAal2 = Boolean(compte?.actif) && niveau.currentLevel === 'aal2'
+    const ministere = compte?.type === 'ministere'
 
-    // Personne qui utilise un compte de ministère sur cet appareil (T56) : lue après les
-    // conditions, pour un compte de ministère seulement.
-    const declaration =
-      compte?.actif && compte.type === 'ministere' && conditionsAcceptees
-        ? await lireMaDeclaration()
-        : null
+    // Personne qui utilise un compte de ministère sur cet appareil (T56) : lue d'abord, car ses
+    // conditions s'acceptent par personne (T61).
+    const declaration = enAal2 && ministere ? await lireMaDeclaration() : null
+
+    // Acceptation de la version courante : par le compte (T53) ; sur un compte de ministère, par
+    // la personne déclarée (la base répond oui ou non), demandée seulement quand sa déclaration
+    // est valable (sinon le prénom est demandé d'abord).
+    const conditionsAcceptees = !enAal2
+      ? false
+      : ministere
+        ? declaration !== null &&
+          !declarationNecessaire(declaration) &&
+          (await lireConditionsAccepteesParLaPersonne(VERSION_CONDITIONS))
+        : await lireConditionsAcceptees(session.user.id, VERSION_CONDITIONS)
 
     const etat = deduireEtat({
       utilisateur: { id: session.user.id, email: session.user.email ?? null },

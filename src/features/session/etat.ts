@@ -14,17 +14,22 @@ export type EtatSession =
   | { statut: 'activation'; compte: Compte; email: string | null }
   /** aal1 avec un facteur vérifié : écran 18, sur ce facteur. */
   | { statut: 'code'; compte: Compte; email: string | null; facteurId: string }
-  /** aal2, mais la version courante des conditions n'est pas acceptée (T53) : écran d'acceptation. */
-  | { statut: 'conditions'; compte: Compte; email: string | null }
   /**
-   * Compte de ministère en aal2, conditions acceptées, sans déclaration valable sur cette session
-   * (aucune, 7 jours ou plus, ou prénom effacé) : écran « Qui utilise l'outil ? » (T56).
+   * aal2, mais la version courante des conditions n'est pas acceptée : écran d'acceptation. Par
+   * compte (T53) ; sur un compte de ministère, par la personne déclarée sur cet appareil (T61),
+   * dont `prenom` porte le nom (« Vous : Marie », « Ce n'est pas moi »).
+   */
+  | { statut: 'conditions'; compte: Compte; email: string | null; prenom?: string }
+  /**
+   * Compte de ministère en aal2 sans déclaration valable sur cette session (aucune, d'un jour
+   * précédent, ou prénom effacé) : écran « Qui utilise l'outil ? » (T56, T63), avant les
+   * conditions de la personne (T61).
    */
   | {
       statut: 'declaration'
       compte: Compte
       email: string | null
-      /** La déclaration précédente de la session (rappel), ou null. */
+      /** La déclaration précédente de la session (rappel du jour : son prénom est proposé), ou null. */
       declaration: Declaration | null
     }
   /**
@@ -41,11 +46,14 @@ export type ElementsSession = {
   compte: Compte | null
   /** Premier facteur TOTP vérifié (mfa.listFactors), lu seulement quand il sert. */
   facteurVerifie: string | null
-  /** Le compte a accepté la version courante des conditions (lu seulement en aal2). */
+  /**
+   * La version courante des conditions est acceptée (lu seulement en aal2) : par le compte, ou,
+   * pour un compte de ministère, par la personne déclarée sur cette session (T61).
+   */
   conditionsAcceptees: boolean
   /**
-   * Dernière déclaration de la session (T56), lue seulement pour un compte de ministère en aal2
-   * qui a accepté les conditions ; null sinon.
+   * Dernière déclaration de la session (T56), lue seulement pour un compte de ministère en aal2 ;
+   * null sinon.
    */
   declaration: Declaration | null
 }
@@ -63,11 +71,19 @@ export function deduireEtat({
   if (!compte || !compte.actif) return { statut: 'desactive' }
   const { email } = utilisateur
   if (niveau.actuel === 'aal2') {
-    if (!conditionsAcceptees) return { statut: 'conditions', compte, email }
-    // Seul un compte de ministère est partagé : lui seul dit qui l'utilise (T56).
-    if (compte.type !== 'ministere') return { statut: 'connecte', compte, email }
+    // Compte non partagé : les conditions du compte (T53), puis l'application.
+    if (compte.type !== 'ministere') {
+      return conditionsAcceptees
+        ? { statut: 'connecte', compte, email }
+        : { statut: 'conditions', compte, email }
+    }
+    // Compte de ministère, partagé : qui l'utilise (T56), puis les conditions de cette personne
+    // (T61), puis l'application.
     if (declaration === null || declarationNecessaire(declaration)) {
       return { statut: 'declaration', compte, email, declaration }
+    }
+    if (!conditionsAcceptees) {
+      return { statut: 'conditions', compte, email, prenom: declaration.prenom }
     }
     return { statut: 'connecte', compte, email, prenom: declaration.prenom }
   }

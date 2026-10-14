@@ -11,6 +11,7 @@ import { lecturesExemple } from '@/features/cette-semaine/lecturesExemple'
 import { accueil, ADRESSES_APPLICATION, titrePour } from '@/features/navigation/profils'
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
+import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
 import { clientRequetes } from '@/lib/requetes'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
@@ -166,7 +167,9 @@ describe('routes', () => {
     await userEvent.click(screen.getByRole('checkbox'))
     await userEvent.click(screen.getByRole('button', { name: 'Accepter et continuer' }))
     await waitFor(() =>
-      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', { p_version: '2026-10-13' }),
+      expect(faux.rpc).toHaveBeenCalledWith('accepter_conditions', {
+        p_version: VERSION_CONDITIONS,
+      }),
     )
   })
 

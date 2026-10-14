@@ -18,12 +18,11 @@ function elements(partiel: Partial<ElementsSession> = {}): ElementsSession {
     compte,
     facteurVerifie: null,
     conditionsAcceptees: true,
-    declaration: { id: 1, prenom: 'Marie', ageSecondes: 60 },
+    declaration: { id: 1, prenom: 'Marie', duJour: true },
     ...partiel,
   }
 }
 
-const JOUR = 24 * 60 * 60
 const aal2 = { niveau: { actuel: 'aal2', suivant: 'aal2' } }
 
 // Tableau « Routage selon le niveau » (BRIEF section 8, règle 7), ligne par ligne.
@@ -56,10 +55,19 @@ describe('deduireEtat', () => {
 
   it("aal2 sans acceptation de la version courante (jamais acceptée, ou ancienne version) : conditions, avant l'application", () => {
     const aal2 = { niveau: { actuel: 'aal2', suivant: 'aal2' } }
-    expect(deduireEtat(elements({ ...aal2, conditionsAcceptees: false }))).toEqual({
+    // Compte non partagé : par compte (T53), sans prénom.
+    const berger: Compte = { ...compte, type: 'berger', ministereId: null, libelle: 'Berger' }
+    expect(
+      deduireEtat(
+        elements({ ...aal2, compte: berger, conditionsAcceptees: false, declaration: null }),
+      ),
+    ).toStrictEqual({ statut: 'conditions', compte: berger, email: 'communication@exemple.test' })
+    // Compte de ministère : par la personne déclarée sur cet appareil (T61), nommée à l'écran.
+    expect(deduireEtat(elements({ ...aal2, conditionsAcceptees: false }))).toStrictEqual({
       statut: 'conditions',
       compte,
       email: 'communication@exemple.test',
+      prenom: 'Marie',
     })
   })
 
@@ -92,7 +100,8 @@ describe('deduireEtat', () => {
   })
 })
 
-// Déclaration de la personne (T56) : comptes de ministère seulement, après les conditions.
+// Déclaration de la personne (T56) : comptes de ministère seulement, avant les conditions de la
+// personne (T61).
 describe('deduireEtat : « Qui utilise l’outil ? »', () => {
   it('ministère sans déclaration sur cette session : déclaration', () => {
     expect(deduireEtat(elements({ ...aal2, declaration: null }))).toStrictEqual({
@@ -103,25 +112,41 @@ describe('deduireEtat : « Qui utilise l’outil ? »', () => {
     })
   })
 
-  it('déclaration de 7 jours ou plus : déclaration (rappel), avec la précédente', () => {
-    const ancienne = { id: 3, prenom: 'Marie', ageSecondes: 7 * JOUR }
-    expect(deduireEtat(elements({ ...aal2, declaration: ancienne }))).toMatchObject({
+  it('déclaration d’un jour précédent : déclaration (rappel du jour, T63), avec la précédente', () => {
+    const hier = { id: 3, prenom: 'Marie', duJour: false }
+    expect(deduireEtat(elements({ ...aal2, declaration: hier }))).toMatchObject({
       statut: 'declaration',
-      declaration: ancienne,
+      declaration: hier,
     })
-    const recente = { id: 3, prenom: 'Marie', ageSecondes: 7 * JOUR - 1 }
-    expect(deduireEtat(elements({ ...aal2, declaration: recente })).statut).toBe('connecte')
+    const aujourdhui = { id: 3, prenom: 'Marie', duJour: true }
+    expect(deduireEtat(elements({ ...aal2, declaration: aujourdhui })).statut).toBe('connecte')
   })
 
   it('prénom effacé par EJP Tech : déclaration', () => {
-    const effacee = { id: 3, prenom: '[prénom effacé]', ageSecondes: 60 }
+    const effacee = { id: 3, prenom: '[prénom effacé]', duJour: true }
     expect(deduireEtat(elements({ ...aal2, declaration: effacee })).statut).toBe('declaration')
   })
 
-  it('les conditions passent avant la déclaration', () => {
+  it('la déclaration passe avant les conditions de la personne (T61) : un seul passage', () => {
+    // Rien n'est fait : le prénom d'abord, puis les conditions de cette personne.
     expect(
       deduireEtat(elements({ ...aal2, conditionsAcceptees: false, declaration: null })).statut,
-    ).toBe('conditions')
+    ).toBe('declaration')
+    // Rappel du jour et nouvelle version (T63) : le prénom d'abord, puis les conditions.
+    const hier = { id: 3, prenom: 'Marie', duJour: false }
+    expect(
+      deduireEtat(elements({ ...aal2, conditionsAcceptees: false, declaration: hier })).statut,
+    ).toBe('declaration')
+    // Prénom donné, conditions pas encore acceptées par cette personne : les conditions.
+    const recente = { id: 4, prenom: 'Paul', duJour: true }
+    expect(
+      deduireEtat(elements({ ...aal2, conditionsAcceptees: false, declaration: recente })),
+    ).toStrictEqual({
+      statut: 'conditions',
+      compte,
+      email: 'communication@exemple.test',
+      prenom: 'Paul',
+    })
   })
 
   it('en aal1, le code ou l’activation passent avant', () => {
