@@ -104,7 +104,10 @@ export const DECISIONS_EXEMPLE: readonly DecisionRecente[] = [
   },
 ]
 
-/** Deux retraits faits par des ministères (T62) : une demande à valider, un ajout validé masqué. */
+/**
+ * Deux retraits faits par des ministères (T62) : une demande à valider, avec le « Pourquoi » de la
+ * demande (elle a quitté la file : il se masque ici), et un ajout validé au motif masqué.
+ */
 export const RETRAITS_EXEMPLE: readonly RetraitRecent[] = [
   {
     retrait_id: '00000000-0000-4000-8000-0000000000d1',
@@ -113,6 +116,10 @@ export const RETRAITS_EXEMPLE: readonly RetraitRecent[] = [
     etat_avant: 'en_attente',
     motif: 'Nous suivons déjà ces projets dans « Activités réalisées ».',
     saisi_le: '2026-10-09T17:30:00+02:00',
+    demande: {
+      id: '00000000-0000-4000-8000-0000000000e1',
+      pourquoi: 'Voir combien de projets restent ouverts chaque mois.',
+    },
   },
   {
     retrait_id: '00000000-0000-4000-8000-0000000000d2',
@@ -121,5 +128,6 @@ export const RETRAITS_EXEMPLE: readonly RetraitRecent[] = [
     etat_avant: 'actif',
     motif: '[texte masqué par EJP Tech]',
     saisi_le: '2026-10-02T12:15:00+02:00',
+    demande: null,
   },
 ]

@@ -1,6 +1,6 @@
 # Libellés et définitions des indicateurs à valider
 
-- **Date** : 6 octobre 2026, révisé le 7 octobre 2026 (valeurs exactes des indicateurs sensibles pour le berger et le conseil)
+- **Date** : 6 octobre 2026, révisé le 7 octobre 2026 (valeurs exactes des indicateurs sensibles pour le berger et le conseil), complété le 20 octobre 2026 (chiffre d'affaires de Merch à la semaine, T64, à valider)
 - **Statut** : validé pour EJP Tech par la personne responsable le 6 octobre 2026 ; à valider par la coordination et les ministères avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
@@ -576,17 +576,20 @@ Quatre de ces indicateurs sont sensibles : voir « Les indicateurs sensibles » 
 
 ### Ce que le ministère saisit
 
-| Indicateur tel qu'il apparaîtra   | Ce qu'on compte exactement                                                                                | Quand       | Unité  | Sensible | Votre réponse |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------- | ------ | -------- | ------------- |
-| Chiffre d'affaires                | Montant des ventes du mois, à l'euro près, tous lieux confondus. La comptabilité de l'église fait foi.    | Chaque mois | Euros  | non      |               |
-| Articles vendus                   | Articles vendus dans le mois, au culte, aux événements et ailleurs, toutes tailles confondues.            | Chaque mois | Nombre | non      |               |
-| Commandes                         | Ventes enregistrées dans le mois. Une vente compte pour une commande, quel que soit le nombre d'articles. | Chaque mois | Nombre | non      |               |
-| Articles vendus : vêtements       | Vêtements vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                           | Chaque mois | Nombre | non      |               |
-| Articles vendus : accessoires     | Accessoires vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                         | Chaque mois | Nombre | non      |               |
-| Articles vendus : autres articles | Autres articles vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                     | Chaque mois | Nombre | non      |               |
-| Coût d'achat des articles vendus  | Prix d'achat ou de fabrication des articles vendus dans le mois, à l'euro près.                           | Chaque mois | Euros  | non      |               |
-| Stock disponible                  | Articles du merch en réserve le jour de la saisie, toutes tailles confondues.                             | À ce jour   | Nombre | non      |               |
-| Produits en stock critique        | Produits dont le stock est sous le seuil de réassort fixé par Merch, le jour de la saisie.                | À ce jour   | Nombre | non      |               |
+| Indicateur tel qu'il apparaîtra   | Ce qu'on compte exactement                                                                                                    | Quand           | Unité  | Sensible | Votre réponse |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | -------- | ------------- |
+| Chiffre d'affaires                | Montant des ventes du mois, à l'euro près, tous lieux confondus. La comptabilité de l'église fait foi.                        | Chaque mois     | Euros  | non      |               |
+| Articles vendus                   | Articles vendus dans le mois, au culte, aux événements et ailleurs, toutes tailles confondues.                                | Chaque mois     | Nombre | non      |               |
+| Commandes                         | Ventes enregistrées dans le mois. Une vente compte pour une commande, quel que soit le nombre d'articles.                     | Chaque mois     | Nombre | non      |               |
+| Articles vendus : vêtements       | Vêtements vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                               | Chaque mois     | Nombre | non      |               |
+| Articles vendus : accessoires     | Accessoires vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                             | Chaque mois     | Nombre | non      |               |
+| Articles vendus : autres articles | Autres articles vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                         | Chaque mois     | Nombre | non      |               |
+| Coût d'achat des articles vendus  | Prix d'achat ou de fabrication des articles vendus dans le mois, à l'euro près.                                               | Chaque mois     | Euros  | non      |               |
+| Stock disponible                  | Articles du merch en réserve le jour de la saisie, toutes tailles confondues.                                                 | À ce jour       | Nombre | non      |               |
+| Produits en stock critique        | Produits dont le stock est sous le seuil de réassort fixé par Merch, le jour de la saisie.                                    | À ce jour       | Nombre | non      |               |
+| Chiffre d'affaires à la semaine   | Montant des ventes dans la semaine du lundi au dimanche, à l'euro près, tous lieux confondus. Si aucune vente, enregistrez 0. | Chaque dimanche | Euros  | non      |               |
+
+Ajout du 13 octobre 2026 (T64) : le document des KPI de Merch dit désormais « CA Hebdomadaires & Mensuels ». Le chiffre d'affaires à la semaine s'ajoute à celui du mois ; son libellé et sa définition sont proposés. Question de la relecture : ce chiffre compte-t-il les ventes de toute la semaine, du lundi au dimanche, ou seulement celles du dimanche ?
 
 ### Ce que l'outil calcule
 
@@ -1044,7 +1047,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | MCAD             | 16              | 0              | 5                 | 0                      | 0          |
 | MPI              | 9               | 0              | 3                 | 0                      | 1          |
 | Santé            | 7               | 4              | 1                 | 0                      | 0          |
-| Merch            | 9               | 0              | 3                 | 0                      | 2          |
+| Merch            | 10              | 0              | 3                 | 0                      | 2          |
 | Production       | 7               | 0              | 0                 | 0                      | 0          |
 | Prodiges Musique | 6               | 0              | 1                 | 0                      | 1          |
 | Kumi             | 11              | 1              | 1                 | 0                      | 0          |
@@ -1058,7 +1061,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | MDS              | 8               | 0              | 0                 | 1                      | 1          |
 | Prodiges Junior  | 4               | 2              | 1                 | 0                      | 0          |
 | Prodiges Academy | 0               | 0              | 0                 | 0                      | 0          |
-| **Total**        | **161**         | **11**         | **41**            | **7**                  | **12**     |
+| **Total**        | **162**         | **11**         | **41**            | **7**                  | **12**     |
 
 À ces totaux s'ajoutent :
 
@@ -1066,8 +1069,8 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 - les **4 rubriques par département** de Coordo FIJ, saisies chaque semaine pour 8 départements (32 valeurs par semaine) ;
 - 2 points d'attention de départ (Production et Entretien) et 3 valeurs de départ de Production.
 
-Au total : **161 chiffres saisis** (dont 11 sensibles), **41 chiffres calculés** et **7 comptages d'événements** par l'outil, **12 graphiques**. Sur les 48 chiffres calculés ou comptés, 29 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
+Au total : **162 chiffres saisis** (dont 11 sensibles ; 161 avant l'ajout du chiffre d'affaires de Merch à la semaine, T64), **41 chiffres calculés** et **7 comptages d'événements** par l'outil, **12 graphiques**. Sur les 48 chiffres calculés ou comptés, 29 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
 
 ## Sources et contrôle
 
-Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 161 chiffres saisis, 41 calculs, 7 comptages d'événements, 12 graphiques.
+Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 162 chiffres saisis (depuis T64), 41 calculs, 7 comptages d'événements, 12 graphiques.

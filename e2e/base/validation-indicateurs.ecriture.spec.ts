@@ -435,7 +435,8 @@ test.describe('Communication lit la suite', () => {
     await expect(page.getByText(/^Retirés \(1\)$/)).toBeVisible()
     await expect(page.locator('details[open] summary', { hasText: 'Retirés' })).toHaveCount(1)
     await expect(
-      page.getByText(new RegExp(`Refusé le .* : «\\s*${MOTIF_REFUS}\\s*»\\.`)),
+      // Le motif finit déjà sa phrase : aucun point de plus après les guillemets.
+      page.getByText(new RegExp(`Refusé le .* : «\\s*${MOTIF_REFUS}\\s*»$`)),
     ).toBeVisible()
   })
 
@@ -514,9 +515,7 @@ test.describe('T62 : Communication retire sa demande avec un motif', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.getByText(/^Retirés \(2\)$/)).toBeVisible()
     await expect(
-      page.getByText(
-        new RegExp(`^Demande retirée par vous le .* : «\\s*${MOTIF_RETRAIT}\\s*»\\.$`),
-      ),
+      page.getByText(new RegExp(`^Demande retirée par vous le .* : «\\s*${MOTIF_RETRAIT}\\s*»$`)),
     ).toBeVisible()
     await expect(page.getByText(/^À valider par EJP Tech depuis/)).toHaveCount(0)
     await expect(page.getByText(/Vous pouvez en ajouter 2 autres\./)).toBeVisible()
@@ -576,6 +575,12 @@ test.describe('T62 : EJP Tech lit le retrait', () => {
     await expect(
       liste.getByText(new RegExp(`^Demande retirée le .* : «\\s*${MOTIF_RETRAIT}\\s*»$`)),
     ).toBeVisible()
+    // La demande a quitté la file : son « Pourquoi » se lit ici, déjà masqué plus haut dans ce
+    // parcours, donc sans second « Masquer le texte ».
+    await expect(
+      liste.getByText(/^Pourquoi : «\s*\[texte masqué par EJP Tech\]\s*»$/),
+    ).toBeVisible()
+    await expect(liste.getByText(SUGGESTIONS[2].pourquoi)).toHaveCount(0)
     await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
   })
 

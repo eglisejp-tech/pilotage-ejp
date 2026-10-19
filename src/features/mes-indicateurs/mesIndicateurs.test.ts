@@ -14,6 +14,7 @@ import {
   nomBoutonRetrait,
   phraseAjoutsRestants,
   phraseMesIndicateurs,
+  pointApresCitation,
   reussiteRetrait,
   reussiteSuggestion,
   rythmeEnPhrase,
@@ -446,6 +447,17 @@ describe('l’écran construit à partir des lectures', () => {
     expect(vide.sections).toEqual([])
     expect(vide.suggestions).toHaveLength(3)
     expect(vide.limite).toBeNull()
+  })
+})
+
+describe('citation d’un motif en fin de phrase', () => {
+  it('un seul point : aucun après les guillemets quand le motif finit déjà sa phrase', () => {
+    expect(pointApresCitation('Ce chiffre ne nous sert plus.')).toBe('')
+    expect(pointApresCitation('Pourquoi le garder ?')).toBe('')
+    expect(pointApresCitation('Nous verrons plus tard…  ')).toBe('')
+    expect(pointApresCitation('Ce chiffre ne nous sert plus')).toBe('.')
+    // Le texte de masquage finit par un crochet : la phrase prend son point.
+    expect(pointApresCitation('[texte masqué par EJP Tech]')).toBe('.')
   })
 })
 

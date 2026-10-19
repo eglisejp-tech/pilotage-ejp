@@ -257,8 +257,9 @@ archivage du dépôt du code.
 
 - **Finalité** : suivre les chiffres des ministères pour le berger et le conseil : chiffres communs
   (STARs au service, STARs actifs, dont en FIJ), carte des FIJ et statistiques par département,
-  présences aux sessions, indicateurs propres de chaque ministère (vague 1 : 161 indicateurs saisis,
-  dont 11 sensibles). Calculer les totaux de l'église avec leur complétude et montrer l'évolution.
+  présences aux sessions, indicateurs propres de chaque ministère (vague 1 : 162 indicateurs saisis
+  depuis T64, dont 11 sensibles). Calculer les totaux de l'église avec leur complétude et montrer
+  l'évolution.
 - **Base légale** : intérêt légitime de l'association (article 6.1.f). Les chiffres sont des
   comptes agrégés : ils ne désignent personne. Seules les traces (quel compte a saisi, et quand)
   sont des données personnelles quand le compte est celui d'une personne.
@@ -276,7 +277,17 @@ archivage du dépôt du code.
   - texte « Pourquoi cet indicateur ? » (10 à 280 caractères) quand un ministère demande un
     indicateur, et motif d'un refus par EJP Tech. Ce texte n'a pas de rappel sur les données
     personnelles (exception voulue par la personne responsable, T30). Il n'est lu que par le
-    ministère qui l'a écrit et par EJP Tech, et n'est jamais recopié dans le journal ;
+    ministère qui l'a écrit et par EJP Tech, et n'est jamais recopié dans le journal. Quand le
+    ministère retire sa demande avant la décision, EJP Tech lit et peut masquer ce « Pourquoi »
+    dans la liste des retraits des 30 derniers jours ;
+  - motif du retrait d'un ajout par son ministère (T62) : texte de 10 à 280 caractères, avec le
+    rappel sur les données personnelles sous le champ ; l'outil refuse les familles de texte que
+    reconnaît la vérification des textes. Il n'est lu que par le ministère qui l'a écrit et par EJP
+    Tech (ni le berger, ni le conseil, ni l'administration de l'église, ni les autres ministères),
+    n'est jamais recopié dans le journal (qui note l'action seulement), et EJP Tech peut le masquer
+    (« [texte masqué par EJP Tech] »), hors de la file de la Modération, depuis la liste des retraits
+    des 30 derniers jours relue chaque lundi. Ajout seulement : seule la valeur masquée remplace le
+    texte. Durée : celle des autres textes, toute la vie de l'outil ;
   - répartition par catégories des indicateurs sensibles : nombres entiers par catégorie et par mois,
     catégories fixées par la coordination.
 - **Données sensibles** : 11 indicateurs portent sur la santé, l'accompagnement social, l'écoute et
@@ -601,5 +612,9 @@ compte partagé (T56) ; fiche 4 (EJP Tech lit le prénom lié à une ligne) et d
 Ajout du 13 octobre 2026 (sans changer la version du document) : fiches 1 et 7, conditions
 acceptées par chaque personne d'un compte partagé (T61) ; fiche 7, prénom redemandé chaque jour
 (T63).
+
+Ajout du 20 octobre 2026 (sans changer la version du document, Proposé, à valider par la personne
+responsable) : fiche 2, motif du retrait d'un ajout par son ministère et « Pourquoi » d'une demande
+retirée, lus et masqués par EJP Tech (T62) ; 162 indicateurs saisis (T64).
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

@@ -9,6 +9,7 @@ import type {
 } from '@/features/mes-indicateurs/construire'
 import {
   nomBoutonRetrait,
+  pointApresCitation,
   TEXTES_MES_INDICATEURS,
   TEXTES_RETRAIT,
 } from '@/features/mes-indicateurs/textes'
@@ -114,13 +115,17 @@ export function SectionsMesIndicateurs({
   )
 }
 
-/** Un motif en citation, en `--encre-3` quand EJP Tech l'a masqué. */
+/**
+ * Un motif en citation, en `--encre-3` quand EJP Tech l'a masqué. Le point final suit les
+ * guillemets, sauf quand le motif finit déjà sa phrase (« ... plus utile. » et non « ... plus
+ * utile. ». »).
+ */
 function Citation({ motif }: { motif: string }) {
   return (
     <>
       {' : '}«&nbsp;
       <ChampLibre texte={{ texte: motif, masque: motif === TEXTE_MASQUE }} />
-      &nbsp;».
+      &nbsp;»{pointApresCitation(motif)}
     </>
   )
 }

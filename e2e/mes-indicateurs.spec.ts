@@ -105,12 +105,13 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     page,
   }) => {
     await ouvrir(page)
-    const motif = page.getByText(/Refusé le 5 oct\. : «.*Publications\..*»\./)
+    // Un motif qui finit déjà sa phrase : aucun point de plus après les guillemets.
+    const motif = page.getByText(/^Refusé le 5 oct\. : «.*Publications\..*»$/)
     await expect(motif).toBeVisible()
     await expect(page.getByText('Retiré le 3 oct. : doublon.')).toBeVisible()
     // T62 : le retrait fait par le ministère, avec son propre motif.
     await expect(
-      page.getByText(/^Retiré par vous le 9 oct\. : «.*directs assurés\..*»\.$/),
+      page.getByText(/^Retiré par vous le 9 oct\. : «.*directs assurés\..*»$/),
     ).toBeVisible()
     // Le titre est souligné (on voit qu'il s'ouvre et se referme) ; un clic le replie.
     const titre = page.getByText('Retirés (3)')
@@ -311,10 +312,40 @@ test.describe('T62 : retrait d’un ajout par le ministère, aperçu', () => {
     await expect(bouton(page, RETIRER_PROJETS)).toHaveCount(0)
     await expect(page.getByText('Retirés (4)')).toBeVisible()
     await expect(
-      page.getByText(/^Demande retirée par vous le 12 oct\. : «.*ne nous sert plus\..*»\.$/),
+      page.getByText(/^Demande retirée par vous le 12 oct\. : «.*ne nous sert plus\..*»$/),
     ).toBeVisible()
     // Un ajout de moins : la phrase le dit, et la suggestion redevient proposée.
     await expect(page.getByText(/Vous pouvez en ajouter 2 autres\./)).toBeVisible()
+  })
+
+  test('l’annonce garde sous elle l’écart des sections : elle ne colle pas au titre qui suit', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    const annonce = reussite(page).getByText(/^Demande «\s*Projets en cours\s*» retirée\.$/)
+    await expect(annonce).toBeVisible()
+    const basAnnonce = await annonce.evaluate((element) => element.getBoundingClientRect().bottom)
+    const hautTitre = await page
+      .getByRole('heading', { level: 2, name: 'Chaque dimanche' })
+      .evaluate((element) => element.getBoundingClientRect().top)
+    // L'écart des sections de la page (gap-8, 32 px), pas les 12 px d'avant.
+    expect(hautTitre - basAnnonce).toBeGreaterThanOrEqual(30)
+  })
+
+  test('EJP Tech a validé la demande pendant que la fenêtre était ouverte : l’annonce dit « retiré »', async ({
+    page,
+  }) => {
+    await ouvrir(page, { retrait: 'valide' })
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(reussite(page).getByText(/^«\s*Projets en cours\s*» retiré\.$/)).toBeVisible()
+    await expect(
+      page.getByText(/^Retiré par vous le 12 oct\. : «.*ne nous sert plus\..*»$/),
+    ).toBeVisible()
   })
 
   test('« Annuler » et Échap ferment la fenêtre sans rien retirer', async ({ page }) => {

@@ -148,6 +148,12 @@ export interface LigneRetraitMinistere {
   texte: string
   /** Le motif écrit par le ministère, ou le texte de masquage. */
   motif: string
+  /**
+   * Une demande retirée avant la décision : son « Pourquoi » (ou le texte de masquage) et
+   * l'identifiant de la demande, cible de son masquage. Elle a quitté la file : c'est ici qu'EJP
+   * Tech peut encore le masquer. Null pour un ajout validé.
+   */
+  pourquoi: { demandeId: string; texte: string } | null
 }
 
 /** Retraits des ministères des 30 derniers jours, du plus récent au plus ancien (T62). */
@@ -162,6 +168,10 @@ export function construireRetraitsMinisteres(
       libelle: retrait.libelle,
       texte: texteRetraitMinistere(retrait.etat_avant === 'en_attente', retrait.saisi_le),
       motif: retrait.motif,
+      pourquoi:
+        retrait.demande === null
+          ? null
+          : { demandeId: retrait.demande.id, texte: retrait.demande.pourquoi },
     }))
 }
 

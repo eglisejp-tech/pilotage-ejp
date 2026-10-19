@@ -61,6 +61,11 @@ export const TEXTES_A_VALIDER = {
   contexteMasquageRetrait: 'Indicateur retiré par son ministère',
   /** Nom du champ du motif d'un retrait, dans la fenêtre « Masquer le texte ». */
   motifDuRetrait: 'Motif du retrait',
+  /**
+   * Fenêtre « Masquer le texte » du « Pourquoi » d'une demande retirée par son ministère avant la
+   * décision : elle a quitté la file, son « Pourquoi » se masque ici (T62). Proposé.
+   */
+  contexteMasquagePourquoiRetire: 'Demande retirée par son ministère',
   /** Annonces après une décision (m231, Proposé : la fenêtre a déjà dit qui lira le motif). */
   reussiteValide: 'Indicateur validé.',
   reussiteRefus: 'Indicateur refusé.',

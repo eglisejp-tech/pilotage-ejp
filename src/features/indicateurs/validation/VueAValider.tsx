@@ -170,7 +170,10 @@ interface PropsRetraits {
  * « Retirés par les ministères ces 30 derniers jours », repliés (T62) : « Kumi, « Projets en
  * cours » », puis « Demande retirée le 14 oct. : « motif » ». Le motif est un texte libre écrit
  * par le ministère : EJP Tech peut le masquer, comme le « Pourquoi » et le motif d'un refus (ces
- * textes n'entrent pas dans la file de la Modération).
+ * textes n'entrent pas dans la file de la Modération). Une demande retirée avant la décision a
+ * quitté la file : son « Pourquoi » suit, avec son propre « Masquer le texte », pour qu'EJP Tech
+ * puisse encore le lire et le masquer (ce champ n'a pas de rappel sur les données personnelles,
+ * T30). Chaque bouton est décrit par la ligne et par le texte qu'il masque.
  */
 function RetraitsMinisteres({ lignes, actions, surMasque }: PropsRetraits) {
   const prefixe = useId()
@@ -182,14 +185,19 @@ function RetraitsMinisteres({ lignes, actions, surMasque }: PropsRetraits) {
       <ul className="divide-y divide-filet pb-2">
         {lignes.map((ligne) => {
           const idTitre = `${prefixe}-${ligne.id}`
+          const idMotif = `${idTitre}-motif`
+          const idPourquoi = `${idTitre}-pourquoi`
           const masquable = actions !== null && ligne.motif !== TEXTE_MASQUE
+          const pourquoi = ligne.pourquoi
+          const pourquoiMasquable =
+            actions !== null && pourquoi !== null && pourquoi.texte !== TEXTE_MASQUE
           return (
             <li key={ligne.id} className="flex flex-col gap-0.5 py-3">
               <p id={idTitre} className="text-[15px] wrap-anywhere">
                 <span className="font-semibold">{ligne.ministere}</span>
                 {', '}«&nbsp;{ligne.libelle}&nbsp;»
               </p>
-              <p className="text-note wrap-anywhere text-encre-3">
+              <p id={idMotif} className="text-note wrap-anywhere text-encre-3">
                 {ligne.texte}
                 {' : '}«&nbsp;
                 <ChampLibre texte={{ texte: ligne.motif, masque: ligne.motif === TEXTE_MASQUE }} />
@@ -208,7 +216,34 @@ function RetraitsMinisteres({ lignes, actions, surMasque }: PropsRetraits) {
                     }}
                     masquer={actions.masquer}
                     surMasque={() => surMasque(TEXTES_MODERATION.reussiteMasque)}
-                    decritPar={idTitre}
+                    decritPar={`${idTitre} ${idMotif}`}
+                  />
+                </div>
+              ) : null}
+              {pourquoi !== null ? (
+                <p id={idPourquoi} className="mt-2 text-note wrap-anywhere text-encre-3">
+                  {TEXTES_A_VALIDER.pourquoi}
+                  {' : '}«&nbsp;
+                  <ChampLibre
+                    texte={{ texte: pourquoi.texte, masque: pourquoi.texte === TEXTE_MASQUE }}
+                  />
+                  &nbsp;»
+                </p>
+              ) : null}
+              {pourquoiMasquable ? (
+                <div className="mt-1">
+                  <MasquageTexte
+                    contexte={`${TEXTES_A_VALIDER.contexteMasquagePourquoiRetire}, ${ligne.ministere}`}
+                    cible="demande_indicateur"
+                    cibleId={pourquoi.demandeId}
+                    champ={{
+                      code: 'pourquoi',
+                      libelle: TEXTES_A_VALIDER.pourquoi,
+                      texte: pourquoi.texte,
+                    }}
+                    masquer={actions.masquer}
+                    surMasque={() => surMasque(TEXTES_MODERATION.reussiteMasque)}
+                    decritPar={`${idTitre} ${idPourquoi}`}
                   />
                 </div>
               ) : null}

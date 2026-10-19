@@ -176,17 +176,54 @@ describe('décisions des 30 derniers jours (EJP Tech)', () => {
 
 describe('T62 : retrait d’un ajout par son ministère', () => {
   it('appelle retirer_mon_indicateur avec l’indicateur et le motif sans espaces autour', async () => {
-    const faux = installer()
-    await retirerMonIndicateur({
-      indicateurId: INDICATEUR,
-      motif: '  Ce chiffre ne nous sert plus.  ',
+    const faux = installer({
+      retrait_indicateur: { data: { etat_avant: 'en_attente' }, error: null },
     })
+    expect(
+      await retirerMonIndicateur({
+        indicateurId: INDICATEUR,
+        motif: '  Ce chiffre ne nous sert plus.  ',
+      }),
+    ).toBe('en_attente')
     expect(faux.rpc).toHaveBeenCalledWith('retirer_mon_indicateur', {
       p_indicateur_id: INDICATEUR,
       p_motif: 'Ce chiffre ne nous sert plus.',
     })
-    // Jamais d'écriture directe dans `indicateur` ni dans `retrait_indicateur`.
-    expect(faux.from).not.toHaveBeenCalled()
+    // Jamais d'écriture directe dans `indicateur` ni dans `retrait_indicateur` : une seule
+    // lecture, après l'appel, de l'état d'avant le retrait de cet indicateur.
+    expect(faux.requetes.map((requete) => requete.table)).toEqual(['retrait_indicateur'])
+    expect(appelsDe(faux.de('retrait_indicateur')[0])).toEqual([
+      'select("etat_avant")',
+      `eq("indicateur_id", "${INDICATEUR}")`,
+      'maybeSingle()',
+    ])
+  })
+
+  it('rend l’état relu dans la base : une demande validée entre-temps dit « actif »', async () => {
+    installer({ retrait_indicateur: { data: { etat_avant: 'actif' }, error: null } })
+    expect(
+      await retirerMonIndicateur({
+        indicateurId: INDICATEUR,
+        motif: 'Ce chiffre ne nous sert plus.',
+      }),
+    ).toBe('actif')
+  })
+
+  it('une relecture en échec ne fait pas échouer un retrait déjà écrit : null', async () => {
+    installer({ retrait_indicateur: { data: null, error: { message: 'Lecture refusée.' } } })
+    expect(
+      await retirerMonIndicateur({
+        indicateurId: INDICATEUR,
+        motif: 'Ce chiffre ne nous sert plus.',
+      }),
+    ).toBeNull()
+    installer({ retrait_indicateur: () => Promise.reject(new TypeError('Failed to fetch')) })
+    expect(
+      await retirerMonIndicateur({
+        indicateurId: INDICATEUR,
+        motif: 'Ce chiffre ne nous sert plus.',
+      }),
+    ).toBeNull()
   })
 
   it('un motif trop court ou trop long ne part jamais à la base', async () => {
@@ -221,6 +258,7 @@ describe('T62 : retrait d’un ajout par son ministère', () => {
   })
 
   it('EJP Tech lit les retraits des 30 derniers jours, à partir du jour de Paris', async () => {
+    const VALIDE = '00000000-0000-4000-8000-0000000000b2'
     const faux = installer({
       v_semaine: { data: { aujourdhui: '2026-10-12' }, error: null },
       retrait_indicateur: {
@@ -233,11 +271,29 @@ describe('T62 : retrait d’un ajout par son ministère', () => {
             motif: 'Nous le suivons déjà ailleurs.',
             saisi_le: '2026-10-09T17:30:00+02:00',
           },
+          {
+            id: 'r2',
+            indicateur_id: VALIDE,
+            ministere_id: KUMI,
+            etat_avant: 'actif',
+            motif: 'Nous ne le suivons plus.',
+            saisi_le: '2026-10-08T10:00:00+02:00',
+          },
         ],
         error: null,
       },
-      indicateur: { data: [{ id: INDICATEUR, libelle: 'Projets en cours' }], error: null },
+      indicateur: {
+        data: [
+          { id: INDICATEUR, libelle: 'Projets en cours' },
+          { id: VALIDE, libelle: 'Demandes reçues' },
+        ],
+        error: null,
+      },
       ministere: { data: [{ id: KUMI, nom: 'Kumi' }], error: null },
+      demande_indicateur: {
+        data: [{ id: DEMANDE, indicateur_id: INDICATEUR, pourquoi: 'Voir les projets ouverts.' }],
+        error: null,
+      },
     })
     expect(await lireRetraitsRecents()).toEqual([
       {
@@ -247,11 +303,49 @@ describe('T62 : retrait d’un ajout par son ministère', () => {
         etat_avant: 'en_attente',
         motif: 'Nous le suivons déjà ailleurs.',
         saisi_le: '2026-10-09T17:30:00+02:00',
+        // La demande a quitté la file d'EJP Tech : son « Pourquoi » se lit et se masque ici.
+        demande: { id: DEMANDE, pourquoi: 'Voir les projets ouverts.' },
+      },
+      {
+        retrait_id: 'r2',
+        ministere_nom: 'Kumi',
+        libelle: 'Demandes reçues',
+        etat_avant: 'actif',
+        motif: 'Nous ne le suivons plus.',
+        saisi_le: '2026-10-08T10:00:00+02:00',
+        demande: null,
       },
     ])
     const appels = appelsDe(faux.de('retrait_indicateur')[0])
     // Minuit du 12 septembre, heure de Paris : la même borne que les décisions.
     expect(appels[1]).toBe('gte("saisi_le", "2026-09-11T22:00:00.000Z")')
+    // Le « Pourquoi » des seules demandes retirées avant la décision.
+    expect(appelsDe(faux.de('demande_indicateur')[0])).toEqual([
+      'select("id, indicateur_id, pourquoi")',
+      'eq("objet", "ajout")',
+      `in("indicateur_id", ["${INDICATEUR}"])`,
+    ])
+  })
+
+  it('sans demande retirée avant la décision : aucune lecture des demandes', async () => {
+    const faux = installer({
+      v_semaine: { data: { aujourdhui: '2026-10-12' }, error: null },
+      retrait_indicateur: {
+        data: [
+          {
+            id: 'r2',
+            indicateur_id: INDICATEUR,
+            ministere_id: KUMI,
+            etat_avant: 'actif',
+            motif: 'Nous ne le suivons plus.',
+            saisi_le: '2026-10-08T10:00:00+02:00',
+          },
+        ],
+        error: null,
+      },
+    })
+    expect((await lireRetraitsRecents())[0]?.demande).toBeNull()
+    expect(faux.de('demande_indicateur')).toHaveLength(0)
   })
 
   it('sans retrait : aucune autre lecture ; sans jour de Paris : la lecture échoue', async () => {

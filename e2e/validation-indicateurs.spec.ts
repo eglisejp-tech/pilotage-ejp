@@ -299,6 +299,11 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await expect(
       liste.getByText(/^Retiré le 2 oct\. : «\s*\[texte masqué par EJP Tech\]\s*»$/),
     ).toBeVisible()
+    // La demande retirée avant la décision a quitté la file : son « Pourquoi » se lit ici.
+    await expect(
+      liste.getByText(/^Pourquoi : «\s*Voir combien de projets restent ouverts chaque mois\.\s*»$/),
+    ).toBeVisible()
+    await expect(liste.getByText(/^Pourquoi :/)).toHaveCount(1)
   })
 
   test('T62 : « Masquer le texte » sous le motif d’un retrait, jamais sous un motif déjà masqué', async ({
@@ -307,15 +312,36 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await ouvrir(page)
     await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
     const liste = retraits(page)
-    await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
-    await liste.getByRole('button', { name: 'Masquer le texte' }).click()
+    // Le motif de Kumi et le « Pourquoi » de sa demande retirée ; rien sous le motif masqué.
+    const boutons = liste.getByRole('button', { name: 'Masquer le texte' })
+    await expect(boutons).toHaveCount(2)
+    await boutons.first().click()
     const fenetre = page.getByRole('dialog', { name: 'Masquer le texte' })
     await expect(fenetre.getByText('Indicateur retiré par son ministère, Kumi')).toBeVisible()
     await fenetre.getByRole('radio', { name: 'Autre information personnelle' }).check()
     await fenetre.getByRole('button', { name: 'Masquer définitivement' }).click()
     await expect(reussite(page)).toHaveText('Texte masqué.')
-    await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(0)
+    await expect(boutons).toHaveCount(1)
     await expect(liste.getByText('[texte masqué par EJP Tech]')).toHaveCount(2)
+  })
+
+  test('T62 : le « Pourquoi » d’une demande retirée avant la décision se masque dans la liste', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
+    const liste = retraits(page)
+    await liste.getByRole('button', { name: 'Masquer le texte' }).last().click()
+    const fenetre = page.getByRole('dialog', { name: 'Masquer le texte' })
+    await expect(fenetre.getByText('Demande retirée par son ministère, Kumi')).toBeVisible()
+    await expect(fenetre.getByText(/Voir combien de projets restent ouverts/)).toBeVisible()
+    await fenetre.getByRole('radio', { name: 'Autre information personnelle' }).check()
+    await fenetre.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await expect(reussite(page)).toHaveText('Texte masqué.')
+    await expect(
+      liste.getByText(/^Pourquoi : «\s*\[texte masqué par EJP Tech\]\s*»$/),
+    ).toBeVisible()
+    await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
   })
 
   test('T62 : la liste des retraits ne se lit pas : un bandeau et « Réessayer », le reste lisible', async ({

@@ -42,19 +42,37 @@ export async function ajouterSuggestion(brut: SuggestionEnvoyee): Promise<string
   return data
 }
 
+/** L'état d'un ajout juste avant son retrait par le ministère : à valider ou validé (T62). */
+export type EtatAvantRetrait = LigneTable<'retrait_indicateur'>['etat_avant']
+
 /**
  * Retrait d'un ajout par le ministère qui l'a fait (T62) : à valider (« Retirer la demande ») ou
  * validé (« Retirer »), avec un motif de 10 à 280 caractères. Les saisies restent. La base refuse
  * un prévu de la coordination, un ajout d'EJP Tech, la source d'un calcul suivi, un indicateur
  * déjà retiré, et un motif trop court, trop long ou qui contient une donnée personnelle.
+ *
+ * Rend l'état de l'ajout au moment du retrait, relu dans la ligne écrite par la base : EJP Tech a
+ * pu valider la demande pendant que la fenêtre était ouverte, et l'annonce doit dire ce qui s'est
+ * vraiment passé. `null` si cette relecture échoue : le retrait est fait, l'écran garde l'état
+ * qu'il avait affiché.
  */
-export async function retirerMonIndicateur(brut: RetraitEnvoye): Promise<void> {
+export async function retirerMonIndicateur(brut: RetraitEnvoye): Promise<EtatAvantRetrait | null> {
   const retrait = schemaRetrait.parse(brut)
   const { error } = await supabase().rpc('retirer_mon_indicateur', {
     p_indicateur_id: retrait.indicateurId,
     p_motif: retrait.motif,
   })
   if (error) throw error
+  try {
+    const relu = await supabase()
+      .from('retrait_indicateur')
+      .select('etat_avant')
+      .eq('indicateur_id', retrait.indicateurId)
+      .maybeSingle()
+    return relu.error || relu.data === null ? null : relu.data.etat_avant
+  } catch {
+    return null
+  }
 }
 
 /**
@@ -145,21 +163,28 @@ export async function lireDecisionsRecentes(): Promise<DecisionRecente[]> {
 
 /**
  * Un retrait d'un ajout par son ministère, des 30 derniers jours (T62) : le ministère,
- * l'indicateur, son état avant le retrait et le motif écrit (ou le texte de masquage).
+ * l'indicateur, son état avant le retrait et le motif écrit (ou le texte de masquage). Pour une
+ * demande retirée avant la décision, le « Pourquoi » de la demande aussi : elle a quitté la file
+ * d'EJP Tech, c'est le seul endroit où il peut encore le lire et le masquer.
  */
 export interface RetraitRecent {
   retrait_id: string
   ministere_nom: string
   libelle: string
-  etat_avant: LigneTable<'retrait_indicateur'>['etat_avant']
+  etat_avant: EtatAvantRetrait
   motif: string
   saisi_le: string
+  /** La demande d'ajout et son « Pourquoi » (ou le texte de masquage) ; null pour un ajout validé. */
+  demande: { id: string; pourquoi: string } | null
 }
 
 /**
  * Retraits des ministères des 30 derniers jours, du plus récent au plus ancien (EJP Tech : la RLS
  * de `retrait_indicateur` ne rend à un ministère que ses propres lignes, rien aux autres profils).
- * Même borne que les décisions : minuit, heure de Paris, du jour lu dans `v_semaine`.
+ * Même borne que les décisions : minuit, heure de Paris, du jour lu dans `v_semaine`. Les demandes
+ * retirées avant la décision gardent leur « Pourquoi », lu dans `demande_indicateur` (EJP Tech lit
+ * toutes les demandes) : ce champ n'a pas de rappel sur les données personnelles (T30), le masquage
+ * est son seul recours.
  */
 export async function lireRetraitsRecents(): Promise<RetraitRecent[]> {
   const semaine = await lireSemaine()
@@ -174,9 +199,13 @@ export async function lireRetraitsRecents(): Promise<RetraitRecent[]> {
   if (retraits.error) throw retraits.error
   if (retraits.data.length === 0) return []
   const indicateurIds = retraits.data.map((retrait) => retrait.indicateur_id)
-  const [indicateurs, ministeres] = await Promise.all([
+  const demandesRetirees = retraits.data
+    .filter((retrait) => retrait.etat_avant === 'en_attente')
+    .map((retrait) => retrait.indicateur_id)
+  const [indicateurs, ministeres, demandes] = await Promise.all([
     supabase().from('indicateur').select('id, libelle').in('id', indicateurIds),
     supabase().from('ministere').select('id, nom'),
+    lirePourquoiDesDemandes(demandesRetirees),
   ])
   if (indicateurs.error) throw indicateurs.error
   if (ministeres.error) throw ministeres.error
@@ -191,7 +220,32 @@ export async function lireRetraitsRecents(): Promise<RetraitRecent[]> {
     etat_avant: retrait.etat_avant,
     motif: retrait.motif,
     saisi_le: retrait.saisi_le,
+    demande:
+      retrait.etat_avant === 'en_attente' ? (demandes.get(retrait.indicateur_id) ?? null) : null,
   }))
+}
+
+/**
+ * La demande d'ajout de chaque indicateur donné, avec son « Pourquoi », par indicateur. Aucune
+ * lecture sans indicateur.
+ */
+async function lirePourquoiDesDemandes(
+  indicateurIds: readonly string[],
+): Promise<Map<string, { id: string; pourquoi: string }>> {
+  if (indicateurIds.length === 0) return new Map()
+  const { data, error } = await supabase()
+    .from('demande_indicateur')
+    .select('id, indicateur_id, pourquoi')
+    .eq('objet', 'ajout')
+    .in('indicateur_id', indicateurIds)
+  if (error) throw error
+  return new Map(
+    data.flatMap((demande) =>
+      demande.pourquoi === null
+        ? []
+        : [[demande.indicateur_id, { id: demande.id, pourquoi: demande.pourquoi }] as const],
+    ),
+  )
 }
 
 // Lectures du ministère

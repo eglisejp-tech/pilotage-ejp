@@ -3,12 +3,17 @@
 --
 -- 1. Matrice des droits, écrite en données et parcourue par tests.verifier_matrice
 --    (000-outils.test.sql) : retrait_indicateur (lecture, ajout direct, modification,
---    suppression), retirer_mon_indicateur sur une demande à valider et sur un ajout validé,
---    masquer_texte sur le couple (retrait_indicateur, motif), la modération et le journal de ce
---    couple, les lignes indicateur_retire. Profils : le ministère porteur (A), un autre ministère
---    (B), les ministères FIJ et Coordination du jeu d'exemple, le berger, le conseil,
---    l'administration de l'église et EJP Tech, en aal2 ; la dérivation ajoute la ligne aal1 de
---    chacun et celle de l'anonyme.
+--    suppression), retirer_mon_indicateur sur une demande à valider, sur un ajout validé et sur un
+--    chiffre commun, masquer_texte sur le couple (retrait_indicateur, motif), la modération et le
+--    journal de ce couple, les lignes indicateur_retire (journal et v_journal). Profils : le
+--    ministère porteur (A), un autre ministère (B), les ministères FIJ et Coordination du jeu
+--    d'exemple, le berger, le conseil, l'administration de l'église et EJP Tech, en aal2 ; la
+--    dérivation ajoute la ligne aal1 de chaque accès accepté et celle de l'anonyme ; les lignes
+--    aal1 des écritures déjà refusées en aal2, que la dérivation n'écrit pas, sont écrites ici.
+--    Seconde matrice : un compte de ministère désactivé (C), le compte actif d'un ministère
+--    désactivé (D) et un compte EJP Tech désactivé, qui ne lisent ni n'écrivent plus rien de ce
+--    qu'ils avaient écrit ou pouvaient lire (EJP Tech actif lit les mêmes lignes : les zéros ne
+--    viennent pas d'un jeu vide).
 -- 2. Refus : un prévu de la coordination, un ajout d'EJP Tech, l'indicateur d'un autre
 --    ministère, un indicateur déjà retiré, un motif absent, de 9 ou de 281 caractères, avec une
 --    donnée personnelle ou des crochets, un indicateur inconnu, une session aal1 ; rien ne change.
@@ -16,8 +21,9 @@
 --    au nom du ministère, motif sans espaces de bord, journal sans le texte, demande sortie de la
 --    file d'EJP Tech et plus décidable, demande gardée (ajout seulement).
 -- 4. Retrait d'un ajout validé : refusé tant qu'il sert à un calcul (le nom du calcul dans le
---    message, rien ne change) ; une fois le calcul retiré par EJP Tech, les saisies restent, les
---    ajouts du ministère baissent et la suggestion redevient proposée.
+--    message, rien ne change) ; le calcul lui-même, créé par EJP Tech, ne se retire pas par le
+--    ministère ; une fois le calcul retiré par EJP Tech, les saisies restent, les ajouts du
+--    ministère baissent et la suggestion redevient proposée.
 -- 5. Masquage du motif par EJP Tech, journal et v_journal (le libellé, jamais le motif).
 -- 6. Ajout seulement, même pour le propriétaire, sauf le masquage du motif ; code « ministere »
 --    réservé à un ajout de ministère, jamais choisi par EJP Tech.
@@ -26,18 +32,27 @@ begin;
 create temp table ctx as
 select tests.creer_ministere('Retrait T62 porteur') as a_m,
        tests.creer_ministere('Retrait T62 autre') as b_m,
+       tests.creer_ministere('Retrait T62 compte désactivé') as c_m,
+       tests.creer_ministere('Retrait T62 ministère désactivé') as d_m,
        tests.compte('Ministère FIJ') as fij,
        tests.compte('Ministère Coordination') as coo,
        tests.compte('Berger') as berger,
        tests.compte('Conseil, compte 1') as conseil,
        tests.compte('Administration de l''église') as admin,
-       tests.compte('EJP Tech, compte 1') as tech;
-alter table ctx add column a uuid, add column b uuid,
+       tests.compte('EJP Tech, compte 1') as tech,
+       (select i.id from public.indicateur i where i.ministere_id is null and i.code = 'service') as commun;
+alter table ctx add column a uuid, add column b uuid, add column c uuid, add column d uuid,
+  add column tech2 uuid,
   add column i1 uuid, add column i2 uuid, add column i3 uuid, add column i4 uuid, add column i5 uuid,
   add column ib uuid, add column p1 uuid, add column d1 uuid, add column d2 uuid,
-  add column r1 uuid, add column r2 uuid, add column r3 uuid, add column calcul uuid;
+  add column r1 uuid, add column r2 uuid, add column r3 uuid, add column calcul uuid,
+  add column ic1 uuid, add column ic2 uuid, add column id1 uuid, add column id2 uuid,
+  add column rc uuid, add column rd uuid;
 update ctx set a = tests.creer_compte('retrait-t62-a@exemple.test', 'ministere', a_m),
-               b = tests.creer_compte('retrait-t62-b@exemple.test', 'ministere', b_m);
+               b = tests.creer_compte('retrait-t62-b@exemple.test', 'ministere', b_m),
+               c = tests.creer_compte('retrait-t62-c@exemple.test', 'ministere', c_m),
+               d = tests.creer_compte('retrait-t62-d@exemple.test', 'ministere', d_m),
+               tech2 = tests.creer_compte('retrait-t62-tech2@exemple.test', 'admin_plateforme');
 grant select on ctx to authenticated, anon;
 
 -- Catalogue d'essai : cinq suggestions et un modèle d'un prévu.
@@ -103,14 +118,48 @@ begin
 end $$;
 update ctx set r2 = (select r.id from public.retrait_indicateur r where r.indicateur_id = ctx.i4);
 
+-- C et D ajoutent deux suggestions chacun et retirent la première, avant leur désactivation : le
+-- compte de C est désactivé (son ministère reste actif), le ministère de D est désactivé (son
+-- compte reste actif), comme le second compte EJP Tech.
+do $$
+begin
+  perform tests.se_connecter((select c from ctx), 'aal2');
+  perform public.ajouter_suggestion((select c_m from ctx), 'essai_ret_s1', 'Pourquoi d''essai du retrait, pour C.');
+  perform public.ajouter_suggestion((select c_m from ctx), 'essai_ret_s2', 'Pourquoi d''essai du retrait, pour C encore.');
+  perform tests.se_connecter((select d from ctx), 'aal2');
+  perform public.ajouter_suggestion((select d_m from ctx), 'essai_ret_s1', 'Pourquoi d''essai du retrait, pour D.');
+  perform public.ajouter_suggestion((select d_m from ctx), 'essai_ret_s2', 'Pourquoi d''essai du retrait, pour D encore.');
+  perform tests.deconnecter();
+end $$;
+update ctx set
+  ic1 = (select i.id from public.indicateur i where i.ministere_id = ctx.c_m and i.modele_code = 'essai_ret_s1'),
+  ic2 = (select i.id from public.indicateur i where i.ministere_id = ctx.c_m and i.modele_code = 'essai_ret_s2'),
+  id1 = (select i.id from public.indicateur i where i.ministere_id = ctx.d_m and i.modele_code = 'essai_ret_s1'),
+  id2 = (select i.id from public.indicateur i where i.ministere_id = ctx.d_m and i.modele_code = 'essai_ret_s2');
+do $$
+begin
+  perform tests.se_connecter((select c from ctx), 'aal2');
+  perform public.retirer_mon_indicateur((select ic1 from ctx), 'Motif de retrait MARQUEUR-RETRAIT-C, avant désactivation.');
+  perform tests.se_connecter((select d from ctx), 'aal2');
+  perform public.retirer_mon_indicateur((select id1 from ctx), 'Motif de retrait MARQUEUR-RETRAIT-D, avant désactivation.');
+  perform tests.deconnecter();
+end $$;
+update ctx set
+  rc = (select r.id from public.retrait_indicateur r where r.indicateur_id = ctx.ic1),
+  rd = (select r.id from public.retrait_indicateur r where r.indicateur_id = ctx.id1);
+update public.compte set desactive_le = now() where user_id in ((select c from ctx), (select tech2 from ctx));
+update public.ministere set desactive_le = now() where id = (select d_m from ctx);
+
 -- 1. Matrice en aal2. Attendus dans l'ordre des profils : porteur, autre ministère, FIJ,
--- Coordination, berger, conseil, administration, EJP Tech.
+-- Coordination, berger, conseil, administration, EJP Tech. Une écriture refusée en aal2 n'a pas
+-- de ligne aal1 dérivée (000-outils.test.sql) : la seconde partie de la vue l'écrit (42501, le
+-- GRANT ou exige_aal2 refusent avant tout le reste).
 create temp view matrice_retrait (profil, objet, action, aal, attendu, requete) as
-  select p.profil, m.objet, m.action, 'aal2', m.attendu[p.rang], m.requete
-    from (values (1, 'ministère porteur'), (2, 'ministère autre'), (3, 'ministère fij'),
-                 (4, 'ministère coordination'), (5, 'berger'), (6, 'conseil'), (7, 'administration'),
-                 (8, 'EJP Tech')) as p(rang, profil)
-   cross join (values
+  with profils (rang, profil) as (
+    values (1, 'ministère porteur'), (2, 'ministère autre'), (3, 'ministère fij'),
+           (4, 'ministère coordination'), (5, 'berger'), (6, 'conseil'), (7, 'administration'),
+           (8, 'EJP Tech')),
+  lignes (objet, action, attendu, requete) as (values
      ('retrait_indicateur', 'lire', array['2', '0', '0', '0', '0', '0', '0', '2'],
       'select 1 from public.retrait_indicateur where ministere_id = (select a_m from ctx)'),
      ('retrait_indicateur', 'ajouter', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
@@ -125,6 +174,9 @@ create temp view matrice_retrait (profil, objet, action, aal, attendu, requete) 
      ('retirer_mon_indicateur (ajout validé)', 'appeler',
       array['ok', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
       'select public.retirer_mon_indicateur((select i1 from ctx), ''Motif d''''essai de la matrice, validé.'')'),
+     ('retirer_mon_indicateur (chiffre commun)', 'appeler',
+      array['42501', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'select public.retirer_mon_indicateur((select commun from ctx), ''Motif d''''essai de la matrice, commun.'')'),
      ('masquer_texte (retrait_indicateur, motif)', 'appeler',
       array['42501', '42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
       'select public.masquer_texte(''retrait_indicateur'', (select r2 from ctx), ''motif'', ''nom_personne'')'),
@@ -135,25 +187,72 @@ create temp view matrice_retrait (profil, objet, action, aal, attendu, requete) 
      ('v_journal (texte_masque d''un retrait)', 'lire', array['1', '0', '0', '0', '1', '1', '0', '1'],
       'select 1 from public.v_journal where cible = ''retrait_indicateur'' and cible_id = (select r1 from ctx)'),
      ('journal (indicateur_retire par le ministère)', 'lire', array['2', '0', '0', '0', '2', '2', '2', '2'],
-      'select 1 from public.journal where action = ''indicateur_retire'' and ministere_id = (select a_m from ctx)')
-   ) as m(objet, action, attendu, requete);
+      'select 1 from public.journal where action = ''indicateur_retire'' and ministere_id = (select a_m from ctx)'),
+     ('v_journal (indicateur_retire par le ministère)', 'lire', array['2', '0', '0', '0', '2', '2', '2', '2'],
+      'select 1 from public.v_journal where action = ''indicateur_retire'' and ministere_id = (select a_m from ctx)'))
+  select p.profil, l.objet, l.action, 'aal2'::text, l.attendu[p.rang], l.requete
+    from profils p cross join lignes l
+  union all
+  select p.profil, l.objet, l.action, 'aal1'::text, '42501'::text, l.requete
+    from profils p cross join lignes l
+   where l.action <> 'lire' and l.attendu[p.rang] <> 'ok';
 create temp view profil_retrait (profil, compte) as
   select 'ministère porteur', c.a from ctx c union all select 'ministère autre', c.b from ctx c
   union all select 'ministère fij', c.fij from ctx c union all select 'ministère coordination', c.coo from ctx c
   union all select 'berger', c.berger from ctx c union all select 'conseil', c.conseil from ctx c
   union all select 'administration', c.admin from ctx c union all select 'EJP Tech', c.tech from ctx c;
-grant select on matrice_retrait, profil_retrait to authenticated, anon;
+-- Seconde matrice, en aal2, sans dérivation : les comptes désactivés. Attendus dans l'ordre : le
+-- compte désactivé de C, le compte actif du ministère désactivé D, le compte EJP Tech désactivé.
+-- mon_type() et mon_ministere() ne rendent rien pour eux : exige_aal2 refuse tout appel
+-- (« Compte inactif ou inconnu. »), la RLS ne rend aucune ligne.
+create temp view matrice_retrait_desactives (profil, objet, action, aal, attendu, requete) as
+  select p.profil, m.objet, m.action, 'aal2'::text, m.attendu[p.rang], m.requete
+    from (values (1, 'compte de ministère désactivé'), (2, 'ministère désactivé'),
+                 (3, 'EJP Tech désactivé')) as p(rang, profil)
+   cross join (values
+     ('retrait_indicateur (retraits de C et D)', 'lire', array['0', '0', '0'],
+      'select 1 from public.retrait_indicateur where ministere_id in ((select c_m from ctx), (select d_m from ctx))'),
+     ('journal (indicateur_retire de C et D)', 'lire', array['0', '0', '0'],
+      'select 1 from public.journal where action = ''indicateur_retire'' and ministere_id in ((select c_m from ctx), (select d_m from ctx))'),
+     ('retirer_mon_indicateur (demande à valider de C)', 'appeler', array['42501', '42501', '42501'],
+      'select public.retirer_mon_indicateur((select ic2 from ctx), ''Motif d''''essai d''''un compte désactivé.'')'),
+     ('retirer_mon_indicateur (demande à valider de D)', 'appeler', array['42501', '42501', '42501'],
+      'select public.retirer_mon_indicateur((select id2 from ctx), ''Motif d''''essai d''''un ministère désactivé.'')'),
+     ('masquer_texte (retrait_indicateur, motif de C)', 'appeler', array['42501', '42501', '42501'],
+      'select public.masquer_texte(''retrait_indicateur'', (select rc from ctx), ''motif'', ''autre'')')
+   ) as m(objet, action, attendu, requete);
+create temp view profil_retrait_desactives (profil, compte) as
+  select 'compte de ministère désactivé', c.c from ctx c
+  union all select 'ministère désactivé', c.d from ctx c
+  union all select 'EJP Tech désactivé', c.tech2 from ctx c;
+grant select on matrice_retrait, profil_retrait, matrice_retrait_desactives, profil_retrait_desactives
+  to authenticated, anon;
 
--- Le plan compte les 48 tests fixes et, par tests.nombre_essais, les essais de la matrice
+-- Le plan compte les 51 tests fixes et, par tests.nombre_essais, les essais des deux matrices
 -- (lignes dérivées comprises).
-select plan(48
+select plan(51
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_retrait',
-                        'select profil, compte from profil_retrait', true));
+                        'select profil, compte from profil_retrait', true)
+  + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_retrait_desactives',
+                        'select profil, compte from profil_retrait_desactives', false));
 
 select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice_retrait',
   'select profil, compte from profil_retrait',
   true);
+
+select * from tests.verifier_matrice(
+  'select profil, objet, action, aal, attendu, requete from matrice_retrait_desactives',
+  'select profil, compte from profil_retrait_desactives',
+  false);
+-- Les zéros ne viennent pas d'un jeu vide : EJP Tech actif lit les deux retraits et leurs deux
+-- lignes de journal.
+select is(tests.compter((select tech from ctx), 'aal2',
+    'select 1 from public.retrait_indicateur where ministere_id in ((select c_m from ctx), (select d_m from ctx))'),
+  2, 'EJP Tech lit les retraits écrits par C et D avant leur désactivation');
+select is(tests.compter((select tech from ctx), 'aal2',
+    'select 1 from public.journal where action = ''indicateur_retire'' and ministere_id in ((select c_m from ctx), (select d_m from ctx))'),
+  2, 'EJP Tech lit leurs lignes indicateur_retire');
 
 -- 2. Refus
 select tests.se_connecter((select a from ctx), 'aal2');
@@ -244,6 +343,9 @@ select tests.se_connecter((select a from ctx), 'aal2');
 select throws_ok($$ select public.retirer_mon_indicateur((select i1 from ctx), 'Le ministère arrête ce suivi, trop lourd.') $$,
   'P0001', 'Ce chiffre sert au calcul « Essai retrait taux » : demandez à EJP Tech de le retirer.',
   'la source d''un calcul ne se retire pas par le ministère : le message nomme le calcul');
+select throws_ok($$ select public.retirer_mon_indicateur((select calcul from ctx), 'Le ministère ne lit plus ce taux.') $$,
+  'P0001', 'Cet indicateur n''a pas été ajouté par votre ministère. Demandez à EJP Tech de le retirer.',
+  'le calcul de la fiche, créé par EJP Tech, ne se retire pas par le ministère');
 select tests.deconnecter();
 select results_eq($$
   select (select i.etat from public.indicateur i where i.id = c.i1),

@@ -151,6 +151,16 @@ export function debutRefus(jour: string | null): string {
   return jour === null ? 'Refusé' : `Refusé le ${jour}`
 }
 
+/**
+ * Le point qui termine la phrase après la citation d'un motif (refus ou retrait) : aucun quand le
+ * motif finit déjà sa phrase par un point, un point d'exclamation, d'interrogation ou de
+ * suspension, comme le veut la typographie d'une citation en fin de phrase (« ... plus utile. »,
+ * jamais « ... plus utile. ». »).
+ */
+export function pointApresCitation(motif: string): string {
+  return /[.!?…]$/u.test(motif.trimEnd()) ? '' : '.'
+}
+
 /** Motifs de retrait (liste fermée de la base), dits au ministère. */
 const MOTIFS_RETRAIT: Readonly<Record<MotifRetrait, string>> = {
   plus_suivi: "n'est plus suivi",

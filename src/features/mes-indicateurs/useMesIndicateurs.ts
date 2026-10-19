@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import {
   lireLimitesIndicateurs,
@@ -14,6 +14,7 @@ import {
   lireMesRetraits,
   retirerMonIndicateur,
 } from '@/data/validationIndicateurs'
+import type { EtatAvantRetrait } from '@/data/validationIndicateurs'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import { construireMesIndicateurs } from '@/features/mes-indicateurs/construire'
@@ -26,8 +27,11 @@ const NOM_PAR_DEFAUT = 'Votre ministère'
 /** Envoie la suggestion choisie, avec son « Pourquoi » ; un refus de la base est levé tel quel. */
 export type EnvoyerSuggestion = (code: string, formulaire: FormulaireSuggestion) => Promise<void>
 
-/** Retire un ajout du ministère avec son motif (T62) ; un refus de la base est levé tel quel. */
-export type RetirerAjout = (indicateurId: string, motif: string) => Promise<void>
+/**
+ * Retire un ajout du ministère avec son motif (T62) ; un refus de la base est levé tel quel. Rend
+ * l'état de l'ajout au moment du retrait (à valider ou validé), ou null s'il n'a pas pu être relu.
+ */
+export type RetirerAjout = (indicateurId: string, motif: string) => Promise<EtatAvantRetrait | null>
 
 export interface MesIndicateursLus {
   donnees: EtatBloc<DonneesMesIndicateurs>
@@ -63,7 +67,10 @@ export function useMesIndicateurs(ministereId: string): MesIndicateursLus {
     queryFn: () => lireMesRetraits(ministereId),
   })
   // Les calculs suivis de la fiche, lus avec les indicateurs : leurs termes disent quelles sources
-  // ne se retirent pas (configuration-indicateurs.md, 4.2).
+  // ne se retirent pas (configuration-indicateurs.md, 4.2). Quand la liste des calculs change
+  // (EJP Tech en crée ou en retire un, puis la page se relit), les termes déjà lus restent affichés
+  // le temps de la nouvelle lecture : la page ne repasse pas par « Chargement » (liste, focus et
+  // défilement gardés). La base refuse de toute façon le retrait d'une source.
   const calculIds = useMemo(
     () =>
       (indicateurs.data ?? [])
@@ -76,6 +83,7 @@ export function useMesIndicateurs(ministereId: string): MesIndicateursLus {
     queryKey: ['mes-indicateurs', ministereId, 'termes', calculIds],
     queryFn: () => lireTermes(calculIds),
     enabled: indicateurs.data !== undefined,
+    placeholderData: keepPreviousData,
   })
   const suggestions = useQuery({
     queryKey: ['mes-indicateurs', ministereId, 'suggestions'],
@@ -139,7 +147,7 @@ export function useMesIndicateurs(ministereId: string): MesIndicateursLus {
   const retirer = useMemo(
     (): RetirerAjout => async (indicateurId, motif) => {
       try {
-        await retirerMonIndicateur({ indicateurId, motif })
+        return await retirerMonIndicateur({ indicateurId, motif })
       } finally {
         apresEcriture()
       }

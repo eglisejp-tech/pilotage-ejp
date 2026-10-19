@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import type { EtatAvantRetrait } from '@/data/validationIndicateurs'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import {
   ID_MINISTERE_EXEMPLE,
@@ -57,6 +58,7 @@ function apresRetrait(
   courantes: LecturesMesIndicateurs,
   indicateurId: string,
   motif: string,
+  etatAvant: EtatAvantRetrait,
 ): LecturesMesIndicateurs {
   const retire = courantes.indicateurs.find((indicateur) => indicateur.id === indicateurId)
   if (retire === undefined) return courantes
@@ -89,7 +91,7 @@ function apresRetrait(
       ...courantes.retraits,
       {
         indicateur_id: indicateurId,
-        etat_avant: retire.etat === 'en_attente' ? 'en_attente' : 'actif',
+        etat_avant: etatAvant,
         motif: motif.trim(),
         saisi_le: RETRAIT_SIMULE_LE,
       },
@@ -117,7 +119,8 @@ function apresRetrait(
  * - `&envoi=echec` simule une connexion perdue, `&envoi=limite` un refus de limite par la base,
  *   `&envoi=motif` un refus du « Pourquoi » par la base (donnée personnelle) ;
  * - `&retrait=echec` simule une connexion perdue pendant un retrait (T62), `&retrait=motif` un
- *   refus du motif par la base (donnée personnelle), `&retrait=deja` un ajout déjà retiré.
+ *   refus du motif par la base (donnée personnelle), `&retrait=deja` un ajout déjà retiré,
+ *   `&retrait=valide` une demande validée par EJP Tech pendant que la fenêtre était ouverte.
  * Enregistrée seulement en développement.
  */
 export function ApercuMesIndicateurs() {
@@ -213,16 +216,24 @@ export function ApercuMesIndicateurs() {
     }
   }
 
-  /** Retrait simulé (T62) : les mêmes refus que la base, aucun appel au serveur. */
-  const retirer = async (indicateurId: string, motif: string): Promise<void> => {
-    if (occupe.current) return
+  /**
+   * Retrait simulé (T62) : les mêmes refus que la base, aucun appel au serveur. Rend l'état de
+   * l'ajout au moment du retrait, comme la relecture de la base.
+   */
+  const retirer = async (indicateurId: string, motif: string): Promise<EtatAvantRetrait | null> => {
+    if (occupe.current) return null
     occupe.current = true
     try {
       await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
       if (retrait === 'echec') throw new TypeError('Failed to fetch')
       if (retrait === 'motif') throw erreurBase('P0001', MOTIF_EXEMPLE)
       if (retrait === 'deja') throw erreurBase('P0001', DEJA_RETIRE_EXEMPLE)
-      setLectures((courantes) => apresRetrait(courantes, indicateurId, motif))
+      const avant = lectures.indicateurs.find((indicateur) => indicateur.id === indicateurId)
+      // `&retrait=valide` : EJP Tech a validé la demande pendant que la fenêtre était ouverte.
+      const etatAvant: EtatAvantRetrait =
+        retrait !== 'valide' && avant?.etat === 'en_attente' ? 'en_attente' : 'actif'
+      setLectures((courantes) => apresRetrait(courantes, indicateurId, motif, etatAvant))
+      return etatAvant
     } finally {
       occupe.current = false
     }

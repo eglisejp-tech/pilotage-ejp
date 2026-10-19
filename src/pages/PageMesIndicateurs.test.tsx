@@ -176,16 +176,17 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     const resume = screen.getByText('Retirés (3)')
     expect(resume.closest('details')).toHaveAttribute('open')
     expect(resume).toHaveClass('underline')
+    // Le motif finit déjà sa phrase : aucun point de plus après les guillemets.
     expect(
       screen.getByText(
-        /Refusé le 5 oct\. : «\s*Ce chiffre existe déjà sur votre fiche sous le nom Publications\.\s*»\./,
+        /^Refusé le 5 oct\. : «\s*Ce chiffre existe déjà sur votre fiche sous le nom Publications\.\s*»$/,
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Retiré le 3 oct. : doublon.')).toBeInTheDocument()
     // T62 : le retrait fait par le ministère, avec le motif qu'il a écrit.
     expect(
       screen.getByText(
-        /Retiré par vous le 9 oct\. : «\s*Nous comptons déjà ces présences avec les directs assurés\.\s*»\./,
+        /^Retiré par vous le 9 oct\. : «\s*Nous comptons déjà ces présences avec les directs assurés\.\s*»$/,
       ),
     ).toBeInTheDocument()
     // Le ministère peut le replier.
@@ -535,8 +536,24 @@ describe('/ma-fiche/indicateurs, retrait d’un ajout par le ministère (T62)', 
     expect(faux.rpc).not.toHaveBeenCalledWith('retirer_mon_indicateur', expect.anything())
   })
 
+  /** La ligne de retrait que la base relit après l'appel (le faux client rend la première). */
+  function retraitRelu(etatAvant: 'en_attente' | 'actif') {
+    return {
+      retrait_indicateur: [
+        {
+          indicateur_id: PROJETS.id,
+          ministere_id: ID_MINISTERE_EXEMPLE,
+          etat_avant: etatAvant,
+          motif: 'Ce chiffre ne nous sert plus.',
+          saisi_le: '2026-10-12T11:00:00+02:00',
+        },
+        ...RETRAITS_EXEMPLE.map((retrait) => ({ ...retrait, ministere_id: ID_MINISTERE_EXEMPLE })),
+      ],
+    }
+  }
+
   it('« Retirer la demande » appelle retirer_mon_indicateur avec le motif, ferme la fenêtre et l’annonce', async () => {
-    const faux = connecte('ministere')
+    const faux = connecte('ministere', { lignes: retraitRelu('en_attente') })
     afficher('/ma-fiche/indicateurs')
     await ecran()
     await userEvent.click(
@@ -555,6 +572,27 @@ describe('/ma-fiche/indicateurs, retrait d’un ajout par le ministère (T62)', 
       await screen.findByText(/^Demande «\s*Projets en cours\s*» retirée\.$/),
     ).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    // L'état d'avant le retrait est relu dans la ligne écrite par la base, pour cet indicateur.
+    expect(faux.filtres).toContainEqual({
+      table: 'retrait_indicateur',
+      operateur: 'eq',
+      colonne: 'indicateur_id',
+      valeur: PROJETS.id,
+    })
+  })
+
+  it('EJP Tech a validé la demande pendant que la fenêtre était ouverte : l’annonce dit « retiré »', async () => {
+    connecte('ministere', { lignes: retraitRelu('actif') })
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Retirer la demande «\s*Projets en cours/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre ne nous sert plus.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer la demande' }))
+    expect(await screen.findByText(/^«\s*Projets en cours\s*» retiré\.$/)).toBeInTheDocument()
+    expect(screen.queryByText(/^Demande «\s*Projets en cours\s*» retirée\.$/)).toBeNull()
   })
 
   it('un refus de la base : le motif sous le champ, la source d’un calcul sous les boutons', async () => {

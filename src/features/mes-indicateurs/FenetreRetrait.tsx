@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useForm, useWatch } from 'react-hook-form'
+import type { EtatAvantRetrait } from '@/data/validationIndicateurs'
 import { lireRefusRetrait } from '@/features/mes-indicateurs/refus'
 import type { RefusSuggestion } from '@/features/mes-indicateurs/refus'
 import { schemaFormulaireRetrait } from '@/features/mes-indicateurs/schemas'
@@ -24,10 +25,16 @@ interface Props {
   libelle: string
   /** Vrai : un ajout à valider (« Retirer la demande ») ; faux : un ajout validé (« Retirer »). */
   demande: boolean
-  /** L'appel à `retirer_mon_indicateur`. Un refus s'affiche dans la fenêtre, qui reste ouverte. */
-  retirer: (motif: string) => Promise<void>
-  /** Retrait écrit : le parent ferme la fenêtre et annonce la réussite. */
-  onFait: () => void
+  /**
+   * L'appel à `retirer_mon_indicateur`. Un refus s'affiche dans la fenêtre, qui reste ouverte. Rend
+   * l'état de l'ajout au moment du retrait, relu dans la base (null s'il n'a pas pu être relu).
+   */
+  retirer: (motif: string) => Promise<EtatAvantRetrait | null>
+  /**
+   * Retrait écrit : le parent ferme la fenêtre et annonce la réussite, d'après l'état relu (EJP
+   * Tech a pu valider la demande pendant que la fenêtre était ouverte).
+   */
+  onFait: (etatAvant: EtatAvantRetrait | null) => void
   onAnnuler: () => void
 }
 
@@ -75,8 +82,7 @@ export function FenetreRetrait({ libelle, demande, retirer, onFait, onAnnuler }:
   const soumettre = handleSubmit(async (valeurs) => {
     setRefus(null)
     try {
-      await retirer(valeurs.motif)
-      onFait()
+      onFait(await retirer(valeurs.motif))
     } catch (erreur) {
       const lu = lireRefusRetrait(erreur)
       if (lu.ou === 'champ') setError('motif', { message: lu.message }, { shouldFocus: true })

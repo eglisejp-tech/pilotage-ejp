@@ -108,9 +108,15 @@ export function ApercuValidation() {
     return {
       etat: 'donnees',
       donnees: construireRetraitsMinisteres(
-        RETRAITS_EXEMPLE.map((retrait) =>
-          masquees.includes(retrait.retrait_id) ? { ...retrait, motif: TEXTE_MASQUE } : retrait,
-        ),
+        RETRAITS_EXEMPLE.map((retrait) => ({
+          ...retrait,
+          motif: masquees.includes(retrait.retrait_id) ? TEXTE_MASQUE : retrait.motif,
+          // Le « Pourquoi » d'une demande retirée se masque par l'identifiant de la demande.
+          demande:
+            retrait.demande !== null && masquees.includes(retrait.demande.id)
+              ? { ...retrait.demande, pourquoi: TEXTE_MASQUE }
+              : retrait.demande,
+        })),
       ),
     }
   }, [vue, masquees])
