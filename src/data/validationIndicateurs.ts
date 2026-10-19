@@ -10,8 +10,8 @@
 import { lireSemaine } from '@/data/eglise'
 import { schemaDecision } from '@/features/indicateurs/validation/schemas'
 import type { Decision } from '@/features/indicateurs/validation/schemas'
-import { schemaSuggestion } from '@/features/mes-indicateurs/schemas'
-import type { SuggestionEnvoyee } from '@/features/mes-indicateurs/schemas'
+import { schemaRetrait, schemaSuggestion } from '@/features/mes-indicateurs/schemas'
+import type { RetraitEnvoye, SuggestionEnvoyee } from '@/features/mes-indicateurs/schemas'
 import { debutDeJourParis } from '@/features/journal/periodes'
 import type { LigneTable } from '@/lib/base'
 import { ajouterJours } from '@/lib/metier/dates'
@@ -40,6 +40,21 @@ export async function ajouterSuggestion(brut: SuggestionEnvoyee): Promise<string
   })
   if (error) throw error
   return data
+}
+
+/**
+ * Retrait d'un ajout par le ministère qui l'a fait (T62) : à valider (« Retirer la demande ») ou
+ * validé (« Retirer »), avec un motif de 10 à 280 caractères. Les saisies restent. La base refuse
+ * un prévu de la coordination, un ajout d'EJP Tech, la source d'un calcul suivi, un indicateur
+ * déjà retiré, et un motif trop court, trop long ou qui contient une donnée personnelle.
+ */
+export async function retirerMonIndicateur(brut: RetraitEnvoye): Promise<void> {
+  const retrait = schemaRetrait.parse(brut)
+  const { error } = await supabase().rpc('retirer_mon_indicateur', {
+    p_indicateur_id: retrait.indicateurId,
+    p_motif: retrait.motif,
+  })
+  if (error) throw error
 }
 
 /**
@@ -128,7 +143,74 @@ export async function lireDecisionsRecentes(): Promise<DecisionRecente[]> {
   }))
 }
 
+/**
+ * Un retrait d'un ajout par son ministère, des 30 derniers jours (T62) : le ministère,
+ * l'indicateur, son état avant le retrait et le motif écrit (ou le texte de masquage).
+ */
+export interface RetraitRecent {
+  retrait_id: string
+  ministere_nom: string
+  libelle: string
+  etat_avant: LigneTable<'retrait_indicateur'>['etat_avant']
+  motif: string
+  saisi_le: string
+}
+
+/**
+ * Retraits des ministères des 30 derniers jours, du plus récent au plus ancien (EJP Tech : la RLS
+ * de `retrait_indicateur` ne rend à un ministère que ses propres lignes, rien aux autres profils).
+ * Même borne que les décisions : minuit, heure de Paris, du jour lu dans `v_semaine`.
+ */
+export async function lireRetraitsRecents(): Promise<RetraitRecent[]> {
+  const semaine = await lireSemaine()
+  if (semaine === null) throw new Error('Lecture sans donnée.')
+  const depuis = debutDeJourParis(ajouterJours(semaine.aujourdhui, -JOURS_DECISIONS))
+  const retraits = await supabase()
+    .from('retrait_indicateur')
+    .select('id, indicateur_id, ministere_id, etat_avant, motif, saisi_le')
+    .gte('saisi_le', depuis)
+    .order('saisi_le', { ascending: false })
+    .limit(LIMITE_DECISIONS)
+  if (retraits.error) throw retraits.error
+  if (retraits.data.length === 0) return []
+  const indicateurIds = retraits.data.map((retrait) => retrait.indicateur_id)
+  const [indicateurs, ministeres] = await Promise.all([
+    supabase().from('indicateur').select('id, libelle').in('id', indicateurIds),
+    supabase().from('ministere').select('id, nom'),
+  ])
+  if (indicateurs.error) throw indicateurs.error
+  if (ministeres.error) throw ministeres.error
+  const libelles = new Map(
+    indicateurs.data.map((indicateur) => [indicateur.id, indicateur.libelle]),
+  )
+  const noms = new Map(ministeres.data.map((ministere) => [ministere.id, ministere.nom]))
+  return retraits.data.map((retrait) => ({
+    retrait_id: retrait.id,
+    ministere_nom: noms.get(retrait.ministere_id) ?? '',
+    libelle: libelles.get(retrait.indicateur_id) ?? '',
+    etat_avant: retrait.etat_avant,
+    motif: retrait.motif,
+    saisi_le: retrait.saisi_le,
+  }))
+}
+
 // Lectures du ministère
+
+/** Un retrait fait par le ministère : l'indicateur, son état d'avant, le motif et le jour. */
+export type RetraitLu = Pick<
+  LigneTable<'retrait_indicateur'>,
+  'indicateur_id' | 'etat_avant' | 'motif' | 'saisi_le'
+>
+
+/** Les retraits faits par le ministère (T62) : la RLS ne lui rend que les siens. */
+export async function lireMesRetraits(ministereId: string): Promise<RetraitLu[]> {
+  const { data, error } = await supabase()
+    .from('retrait_indicateur')
+    .select('indicateur_id, etat_avant, motif, saisi_le')
+    .eq('ministere_id', ministereId)
+  if (error) throw error
+  return data
+}
 
 /** Un indicateur du ministère, tel que le lit « Mes indicateurs » : sa définition et son état. */
 export type IndicateurDuMinistere = Pick<

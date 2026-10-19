@@ -2,10 +2,12 @@
 -- docs/conception/vague-1-decisions.md, section 4 ; réponse de la personne responsable du
 -- 6 octobre 2026 sur les parts, question 1).
 --
--- 1. Catalogue : nombres par modèle et totaux (161 saisis, 41 calculs, 11 sensibles, 19 parts,
---    unités, 11 suggestions, 21 modèles), 29 calculs de la V1 et 12 calculs étendus, aucun
+-- 1. Catalogue : nombres par modèle et totaux (162 saisis, dont le chiffre d'affaires de Merch à
+--    la semaine ajouté par T64, 41 calculs, 11 sensibles, 19 parts, unités, 11 suggestions,
+--    21 modèles), 29 calculs de la V1 et 12 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
---    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts.
+--    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts ; T64 : le
+--    prévu de Merch à la semaine et les KPI que Merch a retirés de son document, gardés.
 -- 2. Création par EJP Tech (T60) pour un ministère d'essai par modèle : comptes, état actif
 --    (sensibles compris), termes complets, journal, aucune validation ni ajout, MCAD 21 lignes
 --    sur 30, second appel sans doublon, « aucun » pour Protocole, suggestions déjà prévues
@@ -20,7 +22,7 @@
 --    retiré avec saisies.
 begin;
 
-select plan(50);
+select plan(53);
 
 create temp table attendu (modele text primary key, saisis integer, calculs integer, sensibles integer, parts integer,
                            v1 integer);
@@ -34,7 +36,7 @@ insert into attendu values
   ('mcad', 16, 5, 0, 2, 3),
   ('mpi', 9, 3, 0, 2, 3),
   ('sante', 7, 1, 4, 1, 1),
-  ('merch', 9, 3, 0, 0, 1),
+  ('merch', 10, 3, 0, 0, 1),
   ('production', 7, 0, 0, 0, 0),
   ('prodiges musique', 6, 1, 0, 1, 1),
   ('kumi', 11, 1, 1, 1, 1),
@@ -123,8 +125,8 @@ select results_eq($$
          count(*) filter (where p.modele = 'suggestion')::int,
          count(distinct p.modele) filter (where p.modele <> 'suggestion')::int
     from private.indicateur_prevu p
-$$, $$ values (161, 41, 11, 19, 4, 2, 4, 11, 21) $$,
-  '161 indicateurs saisis, 41 calculs, 11 sensibles, 19 parts ; 4 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
+$$, $$ values (162, 41, 11, 19, 5, 2, 4, 11, 21) $$,
+  '162 indicateurs saisis, 41 calculs, 11 sensibles, 19 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
 select results_eq($$
   select count(*) filter (where v1)::int, count(*) filter (where not v1)::int
     from (select p.calcul in ('taux', 'moyenne')
@@ -205,6 +207,32 @@ $$, $$ values
   ('Taux de résolution des demandes', 'mois', 'nombre', false,
    '« Demandes résolues » divisées par « Demandes reçues ». Peut dépasser 100 % (des demandes d''un mois précédent peuvent être closes).') $$,
   'textes, rythmes et unités repris du catalogue (exemples)');
+-- T64 : le chiffre d'affaires de Merch à la semaine, en plus de celui du mois ; les quatre KPI
+-- retirés du document de Merch (« Les garder ») et le coût d'achat, source de la marge, restent.
+select results_eq($$
+  select p.code, p.libelle, p.definition, p.nature, p.unite, p.sensible, p.calcul, p.part, p.sans_somme,
+         p.saisi_dimanche_matin, p.libelle_sessions, p.ordre::int
+    from private.indicateur_prevu p where p.modele = 'merch' and p.nature = 'dimanche'
+$$, $$ values ('merch_chiffre_d_affaires_a_la_semaine'::text, 'Chiffre d''affaires à la semaine'::text,
+               'Montant des ventes dans la semaine du lundi au dimanche, à l''euro près, tous lieux confondus. Si aucune vente, enregistrez 0.'::text,
+               'dimanche'::text, 'euros'::text, false, null::text, false, false, false, false, 13) $$,
+  'T64 : Merch a un seul prévu du dimanche, le chiffre d''affaires à la semaine, en euros, avec la somme de l''année');
+select results_eq($$
+  select p.code from private.indicateur_prevu p
+   where p.modele = 'merch'
+     and p.code in ('merch_chiffre_d_affaires', 'merch_cout_d_achat_des_articles_vendus', 'merch_stock_disponible',
+                    'merch_produits_en_stock_critique', 'merch_marge_estimee', 'merch_evolution_des_ventes')
+   order by p.ordre
+$$, $$ values ('merch_chiffre_d_affaires'::text), ('merch_cout_d_achat_des_articles_vendus'),
+              ('merch_stock_disponible'), ('merch_produits_en_stock_critique'), ('merch_marge_estimee'),
+              ('merch_evolution_des_ventes') $$,
+  'T64 : le chiffre du mois, le coût d''achat et les quatre KPI retirés du document de Merch restent au catalogue');
+select is_empty($$
+  select v.famille from private.indicateur_prevu p
+   cross join lateral (select * from private.verifier_texte(p.libelle, true)
+                       union all select * from private.verifier_texte(p.definition, false)) as v
+   where p.code = 'merch_chiffre_d_affaires_a_la_semaine'
+$$, 'T64 : le libellé et la définition passent le lexique (ni période, ni donnée personnelle)');
 select results_eq($$ select p.code, p.libelle, p.nature from private.indicateur_prevu p where p.modele = 'suggestion' order by p.ordre $$,
   $$ values ('suggestion_evenements_couverts'::text, 'Événements couverts'::text, 'mois'::text),
             ('suggestion_evenements_a_couvrir', 'Événements à couvrir', 'mois'),

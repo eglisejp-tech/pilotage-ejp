@@ -1137,17 +1137,20 @@ fixer par la coordination (P47) ; « Précision » possible (P46).
 
 ### Merch
 
-| Libellé                           | Ce qu'on compte exactement                                                                                | Rythme    | Unité, borne     | Rubrique        | Sensible | Somme |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- | --------- | ---------------- | --------------- | -------- | ----- |
-| Chiffre d'affaires                | Montant des ventes du mois, à l'euro près, tous lieux confondus. La comptabilité de l'église fait foi.    | Mois      | euros, 9 999 999 | aucune          | non      | oui   |
-| Articles vendus                   | Articles vendus dans le mois, au culte, aux événements et ailleurs, toutes tailles confondues.            | Mois      | nombre, 9 999    | aucune          | non      | oui   |
-| Commandes                         | Ventes enregistrées dans le mois. Une vente compte pour une commande, quel que soit le nombre d'articles. | Mois      | nombre, 9 999    | aucune          | non      | oui   |
-| Articles vendus : vêtements       | Vêtements vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                           | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
-| Articles vendus : accessoires     | Accessoires vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                         | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
-| Articles vendus : autres articles | Autres articles vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                     | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
-| Coût d'achat des articles vendus  | Prix d'achat ou de fabrication des articles vendus dans le mois, à l'euro près.                           | Mois      | euros, 9 999 999 | aucune          | non      | oui   |
-| Stock disponible                  | Articles du merch en réserve le jour de la saisie, toutes tailles confondues.                             | À ce jour | nombre, 9 999    | aucune          | non      | non   |
-| Produits en stock critique        | Produits dont le stock est sous le seuil de réassort fixé par Merch, le jour de la saisie.                | À ce jour | nombre, 9 999    | aucune          | non      | non   |
+| Libellé                           | Ce qu'on compte exactement                                                                                                    | Rythme    | Unité, borne     | Rubrique        | Sensible | Somme |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------- | ---------------- | --------------- | -------- | ----- |
+| Chiffre d'affaires                | Montant des ventes du mois, à l'euro près, tous lieux confondus. La comptabilité de l'église fait foi.                        | Mois      | euros, 9 999 999 | aucune          | non      | oui   |
+| Articles vendus                   | Articles vendus dans le mois, au culte, aux événements et ailleurs, toutes tailles confondues.                                | Mois      | nombre, 9 999    | aucune          | non      | oui   |
+| Commandes                         | Ventes enregistrées dans le mois. Une vente compte pour une commande, quel que soit le nombre d'articles.                     | Mois      | nombre, 9 999    | aucune          | non      | oui   |
+| Articles vendus : vêtements       | Vêtements vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                               | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
+| Articles vendus : accessoires     | Accessoires vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                             | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
+| Articles vendus : autres articles | Autres articles vendus dans le mois. Ils sont aussi comptés dans « Articles vendus ».                                         | Mois      | nombre, 9 999    | Articles vendus | non      | oui   |
+| Coût d'achat des articles vendus  | Prix d'achat ou de fabrication des articles vendus dans le mois, à l'euro près.                                               | Mois      | euros, 9 999 999 | aucune          | non      | oui   |
+| Stock disponible                  | Articles du merch en réserve le jour de la saisie, toutes tailles confondues.                                                 | À ce jour | nombre, 9 999    | aucune          | non      | non   |
+| Produits en stock critique        | Produits dont le stock est sous le seuil de réassort fixé par Merch, le jour de la saisie.                                    | À ce jour | nombre, 9 999    | aucune          | non      | non   |
+| Chiffre d'affaires à la semaine   | Montant des ventes dans la semaine du lundi au dimanche, à l'euro près, tous lieux confondus. Si aucune vente, enregistrez 0. | Semaine   | euros, 9 999 999 | aucune          | non      | oui   |
+
+Ajout du 13 octobre 2026 (T64, `docs/decisions.md`) : le document des KPI de la coordination dit désormais « CA Hebdomadaires & Mensuels » pour Merch. Le chiffre d'affaires à la semaine s'ajoute à celui du mois ; libellé et définition proposés, à valider. Les quatre KPI que Merch a retirés de son document (stock disponible, produits en stock critique, marge estimée, évolution des ventes) restent au catalogue (« Les garder »), comme le coût d'achat des articles vendus.
 
 | Calcul               | Type              | Formule (sources)                                              | Lot  |
 | -------------------- | ----------------- | -------------------------------------------------------------- | ---- |

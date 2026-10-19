@@ -8,8 +8,11 @@ import type { CibleMasquable } from '@/lib/base'
 interface Props {
   /** Ce qu'on masque, sous le titre de la fenêtre : « Indicateur à valider, Communication ». */
   contexte: string
-  /** Le « Pourquoi » (cible `demande_indicateur`) ou le motif d'un refus (cible `validation`). */
-  cible: Extract<CibleMasquable, 'demande_indicateur' | 'validation'>
+  /**
+   * Le « Pourquoi » (cible `demande_indicateur`), le motif d'un refus (cible `validation`) ou le
+   * motif du retrait d'un ajout par son ministère (cible `retrait_indicateur`, T62).
+   */
+  cible: Extract<CibleMasquable, 'demande_indicateur' | 'validation' | 'retrait_indicateur'>
   cibleId: string
   champ: ChampMasquable
   /** L'appel à `masquer_texte`. */

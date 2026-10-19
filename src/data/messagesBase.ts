@@ -250,12 +250,9 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     texte: 'Raccourcissez ce texte : 280 caractères au plus.',
     champ: 'texte',
   },
-  // Le même texte que le contrôle avant l'envoi (`explicationLimiteAjouts`, guide 10.9) : au lot 1,
-  // le ministère ne retire pas lui-même un ajout (P53), il le demande à EJP Tech (T59).
-  'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.': {
-    texte:
-      "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
-  },
+  // Le même texte que le contrôle avant l'envoi (`explicationLimiteAjouts`, guide 10.9) : depuis
+  // T62, le ministère retire lui-même un de ses ajouts dans « Mes indicateurs ».
+  'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.': {},
   // Le texte de la base nomme EJP Tech depuis T60 (20261013130000_gestion_ejp_tech.sql).
   "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.": {},
   'Cette fiche compte déjà 30 indicateurs. Retirez-en un pour en ajouter un autre.': {},
@@ -296,6 +293,13 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Une correction du nom ne se décide pas encore dans l'outil.": {},
   'Expliquez le refus (10 caractères au moins).': { champ: 'texte' },
   'Le motif dépasse 280 caractères.': { champ: 'texte' },
+
+  // Retrait d'un ajout par son ministère (retirer_mon_indicateur, T62) : le motif sous son champ,
+  // le reste sous les boutons de la fenêtre. La source d'un calcul : le même texte que la ligne de
+  // « Mes indicateurs », qui le dit à la place du bouton (guide 10.9).
+  'Expliquez pourquoi vous le retirez (10 caractères au moins).': { champ: 'texte' },
+  "Cet indicateur n'a pas été ajouté par votre ministère. Demandez à EJP Tech de le retirer.": {},
+  'Ce chiffre sert au calcul « % » : demandez à EJP Tech de le retirer.': {},
 
   // Garde-fous de la base que l'interface ne déclenche pas (m274) : le repli.
   'Ce rôle ne convient pas à ce calcul.': REPLI,

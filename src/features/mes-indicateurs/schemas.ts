@@ -1,7 +1,10 @@
 import { z } from 'zod'
 import {
+  LONGUEUR_MAX_MOTIF_RETRAIT,
   LONGUEUR_MAX_POURQUOI,
+  LONGUEUR_MIN_MOTIF_RETRAIT,
   LONGUEUR_MIN_POURQUOI,
+  MESSAGES_BASE_RETRAIT,
   MESSAGES_BASE_SUGGESTION,
 } from '@/features/mes-indicateurs/textes'
 import { longueurEnCaracteres } from '@/lib/metier/texte'
@@ -38,3 +41,32 @@ export const schemaSuggestion = z.object({
 })
 
 export type SuggestionEnvoyee = z.output<typeof schemaSuggestion>
+
+// Retrait d'un ajout par son ministère (T62) : la fenêtre « Retirer » et l'appel de
+// `retirer_mon_indicateur` partagent le motif, de 10 à 280 caractères après `btrim`. Ce champ a
+// son rappel sur les données personnelles ; la base refuse les familles de texte avec son message.
+
+/** « Pourquoi le retirer ? » : 10 à 280 caractères après `trim`. */
+const motifRetrait = z
+  .string()
+  .trim()
+  .refine((texte) => longueurEnCaracteres(texte) >= LONGUEUR_MIN_MOTIF_RETRAIT, {
+    error: MESSAGES_BASE_RETRAIT.motifCourt,
+  })
+  .refine((texte) => longueurEnCaracteres(texte) <= LONGUEUR_MAX_MOTIF_RETRAIT, {
+    error: MESSAGES_BASE_RETRAIT.motifLong,
+  })
+
+/** Le formulaire de la fenêtre : le motif seul (l'indicateur est celui de la ligne). */
+export const schemaFormulaireRetrait = z.object({ motif: motifRetrait })
+
+export type ValeursFormulaireRetrait = z.input<typeof schemaFormulaireRetrait>
+export type FormulaireRetrait = z.output<typeof schemaFormulaireRetrait>
+
+/** Ce que reçoit `retirer_mon_indicateur` : l'indicateur et le motif. */
+export const schemaRetrait = z.object({
+  indicateurId: z.uuid(),
+  motif: motifRetrait,
+})
+
+export type RetraitEnvoye = z.output<typeof schemaRetrait>

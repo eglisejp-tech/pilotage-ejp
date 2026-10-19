@@ -1,8 +1,13 @@
 // Données d'exemple de l'aperçu du bloc « À valider » (lot L4) : trois ajouts qui attendent EJP
-// Tech (dont un en retard, un « Pourquoi » masqué et un sans valeur) et trois décisions récentes.
-// Dates fixes : les captures et les tests ne dépendent pas du jour. Aucun nom de personne.
+// Tech (dont un en retard, un « Pourquoi » masqué et un sans valeur), trois décisions récentes et
+// deux retraits faits par des ministères (T62), dont un motif masqué. Dates fixes : les captures
+// et les tests ne dépendent pas du jour. Aucun nom de personne.
 
-import type { AttenteAdministration, DecisionRecente } from '@/data/validationIndicateurs'
+import type {
+  AttenteAdministration,
+  DecisionRecente,
+  RetraitRecent,
+} from '@/data/validationIndicateurs'
 import type { LigneVue } from '@/lib/base'
 
 type Demande = LigneVue<'v_a_valider'>
@@ -96,5 +101,25 @@ export const DECISIONS_EXEMPLE: readonly DecisionRecente[] = [
     decision: 'refuse',
     motif: '[texte masqué par EJP Tech]',
     saisi_le: '2026-09-28T09:00:00+02:00',
+  },
+]
+
+/** Deux retraits faits par des ministères (T62) : une demande à valider, un ajout validé masqué. */
+export const RETRAITS_EXEMPLE: readonly RetraitRecent[] = [
+  {
+    retrait_id: '00000000-0000-4000-8000-0000000000d1',
+    ministere_nom: 'Kumi',
+    libelle: 'Projets en cours',
+    etat_avant: 'en_attente',
+    motif: 'Nous suivons déjà ces projets dans « Activités réalisées ».',
+    saisi_le: '2026-10-09T17:30:00+02:00',
+  },
+  {
+    retrait_id: '00000000-0000-4000-8000-0000000000d2',
+    ministere_nom: 'Eagles',
+    libelle: 'Nouveaux participants',
+    etat_avant: 'actif',
+    motif: '[texte masqué par EJP Tech]',
+    saisi_le: '2026-10-02T12:15:00+02:00',
   },
 ]

@@ -27,9 +27,15 @@ describe('VueMesIndicateurs : passage du palier de 600 px pendant une saisie', (
         donnees: construireMesIndicateurs(lecturesNormales()),
       }
       const envoyer = vi.fn(() => Promise.resolve())
+      const retirer = vi.fn(() => Promise.resolve())
       const ecran = () => (
         <MemoryRouter>
-          <VueMesIndicateurs titre="Mes indicateurs" donnees={donnees} envoyer={envoyer} />
+          <VueMesIndicateurs
+            titre="Mes indicateurs"
+            donnees={donnees}
+            envoyer={envoyer}
+            retirer={retirer}
+          />
         </MemoryRouter>
       )
       const { rerender } = render(ecran())

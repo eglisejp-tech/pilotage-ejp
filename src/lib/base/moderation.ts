@@ -15,10 +15,16 @@ export type CibleTexteARelire =
 
 /**
  * Ce que `masquer_texte` accepte : les cibles de la file, le « Pourquoi » et le motif d'un refus
- * d'indicateur (qui valent relecture, hors file), et les deux textes d'un signalement.
+ * d'indicateur (qui valent relecture, hors file), les deux textes d'un signalement et le motif du
+ * retrait d'un ajout par son ministère (T62, hors file).
  */
 export type CibleMasquable =
-  CibleTexteARelire | 'demande_indicateur' | 'validation' | 'signalement' | 'signalement_suivi'
+  | CibleTexteARelire
+  | 'demande_indicateur'
+  | 'validation'
+  | 'signalement'
+  | 'signalement_suivi'
+  | 'retrait_indicateur'
 
 /** Les quatre motifs de la liste de « Masquer le texte » (BRIEF, « Modération »). */
 export type MotifMasquage = 'nom_personne' | 'coordonnees' | 'situation_personnelle' | 'autre'

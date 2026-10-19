@@ -6,6 +6,9 @@ import {
   lireDecisionsRecentes,
   lireMesIndicateurs,
   lireMesRefus,
+  lireMesRetraits,
+  lireRetraitsRecents,
+  retirerMonIndicateur,
   validerIndicateur,
 } from './validationIndicateurs'
 
@@ -168,6 +171,98 @@ describe('décisions des 30 derniers jours (EJP Tech)', () => {
   it('sans jour de Paris, la lecture échoue : aucune date inventée', async () => {
     installer({ v_semaine: { data: null, error: null } })
     await expect(lireDecisionsRecentes()).rejects.toThrow()
+  })
+})
+
+describe('T62 : retrait d’un ajout par son ministère', () => {
+  it('appelle retirer_mon_indicateur avec l’indicateur et le motif sans espaces autour', async () => {
+    const faux = installer()
+    await retirerMonIndicateur({
+      indicateurId: INDICATEUR,
+      motif: '  Ce chiffre ne nous sert plus.  ',
+    })
+    expect(faux.rpc).toHaveBeenCalledWith('retirer_mon_indicateur', {
+      p_indicateur_id: INDICATEUR,
+      p_motif: 'Ce chiffre ne nous sert plus.',
+    })
+    // Jamais d'écriture directe dans `indicateur` ni dans `retrait_indicateur`.
+    expect(faux.from).not.toHaveBeenCalled()
+  })
+
+  it('un motif trop court ou trop long ne part jamais à la base', async () => {
+    const faux = installer()
+    await expect(
+      retirerMonIndicateur({ indicateurId: INDICATEUR, motif: 'court' }),
+    ).rejects.toThrow()
+    await expect(
+      retirerMonIndicateur({ indicateurId: INDICATEUR, motif: 'a'.repeat(281) }),
+    ).rejects.toThrow()
+    expect(faux.rpc).not.toHaveBeenCalled()
+  })
+
+  it('un refus de la base est relancé tel quel', async () => {
+    const refus = {
+      code: 'P0001',
+      message: 'Ce chiffre sert au calcul « Taux » : demandez à EJP Tech de le retirer.',
+    }
+    installer({}, { data: null, error: refus })
+    await expect(
+      retirerMonIndicateur({ indicateurId: INDICATEUR, motif: 'Ce chiffre ne nous sert plus.' }),
+    ).rejects.toBe(refus)
+  })
+
+  it('le ministère lit ses retraits avec leur motif', async () => {
+    const faux = installer()
+    await lireMesRetraits(COMMUNICATION)
+    expect(appelsDe(faux.de('retrait_indicateur')[0])).toEqual([
+      'select("indicateur_id, etat_avant, motif, saisi_le")',
+      `eq("ministere_id", "${COMMUNICATION}")`,
+    ])
+  })
+
+  it('EJP Tech lit les retraits des 30 derniers jours, à partir du jour de Paris', async () => {
+    const faux = installer({
+      v_semaine: { data: { aujourdhui: '2026-10-12' }, error: null },
+      retrait_indicateur: {
+        data: [
+          {
+            id: 'r1',
+            indicateur_id: INDICATEUR,
+            ministere_id: KUMI,
+            etat_avant: 'en_attente',
+            motif: 'Nous le suivons déjà ailleurs.',
+            saisi_le: '2026-10-09T17:30:00+02:00',
+          },
+        ],
+        error: null,
+      },
+      indicateur: { data: [{ id: INDICATEUR, libelle: 'Projets en cours' }], error: null },
+      ministere: { data: [{ id: KUMI, nom: 'Kumi' }], error: null },
+    })
+    expect(await lireRetraitsRecents()).toEqual([
+      {
+        retrait_id: 'r1',
+        ministere_nom: 'Kumi',
+        libelle: 'Projets en cours',
+        etat_avant: 'en_attente',
+        motif: 'Nous le suivons déjà ailleurs.',
+        saisi_le: '2026-10-09T17:30:00+02:00',
+      },
+    ])
+    const appels = appelsDe(faux.de('retrait_indicateur')[0])
+    // Minuit du 12 septembre, heure de Paris : la même borne que les décisions.
+    expect(appels[1]).toBe('gte("saisi_le", "2026-09-11T22:00:00.000Z")')
+  })
+
+  it('sans retrait : aucune autre lecture ; sans jour de Paris : la lecture échoue', async () => {
+    const faux = installer({
+      v_semaine: { data: { aujourdhui: '2026-10-12' }, error: null },
+      retrait_indicateur: { data: [], error: null },
+    })
+    expect(await lireRetraitsRecents()).toEqual([])
+    expect(faux.de('indicateur')).toHaveLength(0)
+    installer({ v_semaine: { data: null, error: null } })
+    await expect(lireRetraitsRecents()).rejects.toThrow()
   })
 })
 

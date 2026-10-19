@@ -18,6 +18,15 @@ export type RefusSuggestion =
   /** Erreur de formulaire de LISEZMOI (connexion), sous le bouton. */
   | { ou: 'connexion' }
 
+/**
+ * Le même partage pour la fenêtre « Retirer » d'un ajout (T62, `retirer_mon_indicateur`) : un
+ * refus du motif (longueur, données personnelles, crochets) sous le champ ; un ajout déjà retiré,
+ * la source d'un calcul ou un refus de droit sous les boutons, la fenêtre ouverte.
+ */
+export function lireRefusRetrait(erreur: unknown): RefusSuggestion {
+  return lireRefusSuggestion(erreur)
+}
+
 /** Place et texte d'un refus, pour le formulaire qui l'a reçu. */
 export function lireRefusSuggestion(erreur: unknown): RefusSuggestion {
   const lue = lireErreurBase(erreur)
