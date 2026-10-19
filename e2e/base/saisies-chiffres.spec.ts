@@ -8,7 +8,7 @@ import { COMPTES_PROFILS, fichierSession } from '../comptes.ts'
 // seed/40 : « Bénéficiaires (passages) » de Social, le dernier mois fini). Les écritures sont dans
 // saisies-chiffres.ecriture.spec.ts (projet « ecritures »).
 
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 const URL_API = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
 const CLE_PUBLIQUE = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''
 

@@ -9,7 +9,7 @@ import type { Page } from '@playwright/test'
 // (« EJP Tech, compte 1 » lit l'aperçu de la gestion) ; l'administration de l'église lit le même
 // écran, sans aucun bouton.
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 async function ouvrir(page: Page, requete = '', profil = 'admin_plateforme') {
   await page.goto(`/apercu/comptes?profil=${profil}${requete ? `&${requete}` : ''}`)
@@ -288,7 +288,7 @@ test.describe('Ministères et comptes (administration de l’église, en lecture
       if (await menu.isVisible()) await menu.click()
       await expect(
         page
-          .getByRole('navigation', { name: 'Navigation principale' })
+          .getByRole('navigation', { name: 'Menu principal' })
           .getByRole('link', { name: 'Ministères et comptes' }),
       ).toHaveAttribute('aria-current', 'page')
     }

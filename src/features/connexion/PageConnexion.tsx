@@ -8,9 +8,10 @@ import { erreurDeRetourGoogle } from '@/features/session/erreurs'
 import { avecRetour, ADRESSE_CONNEXION } from '@/features/session/decisions'
 import { effacerMotif, lireMotif } from '@/features/session/motif'
 
+// Une seule phrase pour une connexion qui a pris fin (T66, m017).
 const MESSAGES_MOTIF = {
   'connexion-expiree': messagesConnexion.connexionExpiree,
-  'session-expiree': messagesConnexion.sessionExpiree,
+  'session-expiree': messagesConnexion.connexionExpiree,
 } as const
 
 /** /connexion : écran 16 relié à Supabase Auth. La garde envoie ensuite vers le code. */

@@ -163,7 +163,7 @@ test.describe('/indicateurs (aperçu)', () => {
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
       await expect(page.getByRole('table')).toHaveCount(0)

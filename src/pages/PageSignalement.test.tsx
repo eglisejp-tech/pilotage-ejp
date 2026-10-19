@@ -75,7 +75,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 describe('/signaler', () => {
   it('ministère, code inconnu dans l’adresse : « Écran concerné : Autre écran »', async () => {

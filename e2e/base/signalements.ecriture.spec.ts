@@ -22,7 +22,7 @@ import {
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const TEXTE = `Essai E8 ${SUFFIXE} : le formulaire refuse ma date.`
 const COMMENTAIRE = `Essai E8 ${SUFFIXE} : réglé avec le ministère.`
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 test.describe.configure({ mode: 'serial' })
 

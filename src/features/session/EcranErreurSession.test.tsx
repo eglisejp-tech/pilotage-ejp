@@ -15,9 +15,8 @@ describe('EcranErreurSession', () => {
     render(<EcranErreurSession onRetry={vi.fn()} enCours={false} erreur={new TypeError('x')} />)
     expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     expect(screen.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
-    expect(
-      screen.getByText("Vos informations de connexion n'ont pas pu être vérifiées."),
-    ).toBeInTheDocument()
+    // Le bandeau suffit : pas de phrase sous le titre qui le répète (T66, t039).
+    expect(screen.queryByText(/informations de connexion/)).not.toBeInTheDocument()
   })
 
   it('10 s dépassées : la réponse met trop de temps (m252)', () => {

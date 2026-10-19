@@ -208,9 +208,7 @@ for (const profil of ['berger', 'conseil', 'admin_eglise', 'admin_plateforme'] a
 
     test('la page est non disponible, et creer_point est refusé par la base', async ({ page }) => {
       await page.goto('/saisir/point')
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-        "Cette page n'est pas disponible avec votre compte.",
-      )
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page non disponible')
       await expect(bouton(page)).toHaveCount(0)
 
       const reponse = await appeler(page, 'creer_point', {

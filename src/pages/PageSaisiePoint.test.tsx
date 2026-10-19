@@ -144,7 +144,7 @@ describe('/saisir/point (maquette 10)', () => {
       expect(
         await screen.findByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: 'Créer le point' })).toBeNull()

@@ -9,7 +9,7 @@ import { COMPTES_PROFILS, fichierSession, seConnecter } from '../comptes.ts'
 // 32 valeurs par département partent en un envoi et une ligne de journal. Les autres profils,
 // EJP Tech compris, reçoivent la page non disponible.
 
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 const URL_API = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
 const CLE_PUBLIQUE = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? ''
 

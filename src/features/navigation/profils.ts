@@ -96,7 +96,8 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   {
     chemin: '/saisir/session/:id',
     profils: ['ministere'],
-    titre: "Saisie d'une session",
+    // Même nom que le bouton et l'écran du signalement (T66, t052).
+    titre: 'Présence à une session',
     etape: 4,
   },
   { chemin: '/saisir/fij', profils: ['ministere'], titre: 'Carte des FIJ', etape: 4 },

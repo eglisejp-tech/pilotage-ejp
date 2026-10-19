@@ -27,7 +27,7 @@ function afficher(proprietes: Partial<ProprietesEcranCode> = {}) {
 }
 
 const champCode = () => screen.getByLabelText('Code à 6 chiffres')
-const boutonVerifier = () => screen.getByRole('button', { name: 'Vérifier' })
+const boutonVerifier = () => screen.getByRole('button', { name: 'Vérifier le code' })
 
 describe('EcranCode (maquette 18)', () => {
   it('présente un seul champ de code, prêt pour le collage et le remplissage automatique', () => {
@@ -107,7 +107,7 @@ describe('EcranCode (maquette 18)', () => {
     rafraichir({ erreur: messagesConnexion.codeFaux })
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'Ce code ne correspond pas. Attendez le code suivant et réessayez.',
+      "Ce code ne correspond pas. Saisissez le code affiché maintenant dans l'application.",
     )
     expect(champCode()).toHaveValue('')
     // react-hook-form place le focus au tour suivant (setFocus passe par setTimeout).

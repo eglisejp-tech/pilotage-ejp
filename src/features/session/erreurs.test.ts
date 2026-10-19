@@ -34,8 +34,18 @@ describe('traduireErreur', () => {
     expect(traduireErreur(api('session_not_found', 403), 'code')).toBe(
       messagesConnexion.connexionExpiree,
     )
+    expect(traduireErreur(api('session_not_found', 403), 'connexion')).toBe(
+      'Votre connexion a expiré. Reconnectez-vous.',
+    )
+    // Pendant le choix du mot de passe, la personne n'en a pas encore : un nouveau lien (m038).
     expect(traduireErreur(api('session_not_found', 403), 'mot-de-passe')).toBe(
-      messagesConnexion.sessionExpiree,
+      "Votre connexion a expiré. Demandez un nouveau lien depuis l'écran de connexion.",
+    )
+  })
+
+  it("limite d'envoi d'emails : un lien est peut-être déjà parti (T66, m023)", () => {
+    expect(traduireErreur(api('over_email_send_rate_limit', 429), 'lien-email')).toBe(
+      'Un lien vient peut-être déjà de partir. Regardez votre messagerie, ou réessayez dans quelques minutes.',
     )
   })
 

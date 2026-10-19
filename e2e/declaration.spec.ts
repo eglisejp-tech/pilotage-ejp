@@ -293,7 +293,7 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
     if (await bouton.isVisible()) await bouton.click()
     await expect(
       page
-        .getByRole('navigation', { name: 'Navigation principale' })
+        .getByRole('navigation', { name: 'Menu principal' })
         .filter({ visible: true })
         .getByRole('link')
         .last(),

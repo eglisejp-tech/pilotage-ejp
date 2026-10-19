@@ -32,10 +32,12 @@ describe('EcranConnexion (maquette 16)', () => {
     expect(champEmail()).toHaveAttribute('autocomplete', 'username')
     expect(champMotDePasse()).toHaveAttribute('type', 'password')
     expect(champMotDePasse()).toHaveAttribute('autocomplete', 'current-password')
-    expect(screen.getByRole('link', { name: 'recevoir un lien' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Mot de passe oublié' })).toHaveAttribute(
       'href',
       '/connexion/mot-de-passe-oublie',
     )
+    // La double authentification s'annonce sur l'écran suivant (T66, t004).
+    expect(screen.queryByText(/double authentification/)).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Confidentialité' })).toHaveAttribute(
       'href',
       '/confidentialite',
@@ -101,7 +103,7 @@ describe('EcranConnexion (maquette 16)', () => {
     afficher({ erreur: messagesConnexion.identifiantsIncorrects })
     const bandeau = screen.getByRole('alert')
     expect(bandeau).toHaveTextContent(
-      "Email ou mot de passe incorrect. Vérifiez l'un et l'autre, puis réessayez.",
+      "L'email ou le mot de passe ne correspond pas. Vérifiez les deux, puis réessayez.",
     )
     expect(bandeau).toHaveFocus()
   })

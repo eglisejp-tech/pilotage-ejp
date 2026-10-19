@@ -119,7 +119,7 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
       await expect(page.getByRole('main').getByText(/signalement/i)).toHaveCount(0)

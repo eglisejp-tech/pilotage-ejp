@@ -67,7 +67,7 @@ test.describe('en-tête et menu (aperçu)', () => {
         await expect(page.getByRole('navigation')).toHaveCount(0)
         await entete.getByRole('button', { name: 'Ouvrir le menu' }).click()
       }
-      const navigation = page.getByRole('navigation', { name: 'Navigation principale' })
+      const navigation = page.getByRole('navigation', { name: 'Menu principal' })
       await expect(navigation.getByRole('link')).toHaveText([...onglets])
       await expect(navigation.getByRole('link', { name: onglets[0] })).toHaveAttribute(
         'aria-current',
@@ -81,7 +81,7 @@ test.describe('en-tête et menu (aperçu)', () => {
     await ouvrir(page, 'berger')
     if (!estLarge(page)) await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
     const actif = page
-      .getByRole('navigation', { name: 'Navigation principale' })
+      .getByRole('navigation', { name: 'Menu principal' })
       .locator('[aria-current="page"]')
     const ombre = await actif.evaluate((lien) => {
       const cible = lien.querySelector('span') ?? lien
@@ -122,7 +122,7 @@ test.describe('en-tête et menu (aperçu)', () => {
     test.skip(!estLarge(page), 'Format ordinateur seulement.')
     await ouvrir(page, 'admin_eglise')
     await expect(page.getByRole('button', { name: 'Ouvrir le menu' })).toBeHidden()
-    const nav = await page.getByRole('navigation', { name: 'Navigation principale' }).boundingBox()
+    const nav = await page.getByRole('navigation', { name: 'Menu principal' }).boundingBox()
     const compte = await page
       .getByRole('banner')
       .getByText("Administration de l'église")
@@ -141,7 +141,7 @@ test.describe('en-tête et menu (aperçu)', () => {
     const cadre = await bouton.boundingBox()
     expect(cadre?.width).toBeGreaterThanOrEqual(44)
     await bouton.click()
-    const navigation = page.getByRole('navigation', { name: 'Navigation principale' })
+    const navigation = page.getByRole('navigation', { name: 'Menu principal' })
     await expect(navigation.getByRole('link')).toHaveCount(9)
     await page.keyboard.press('Escape')
     await expect(page.getByRole('navigation')).toHaveCount(0)

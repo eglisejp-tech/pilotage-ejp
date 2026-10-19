@@ -129,7 +129,7 @@ afterEach(async () => {
   vi.clearAllMocks()
 })
 
-const navigation = () => screen.getAllByRole('navigation', { name: 'Navigation principale' })
+const navigation = () => screen.getAllByRole('navigation', { name: 'Menu principal' })
 
 /** Boutons et liens d'action qu'EJP Tech ne doit jamais voir (T29, lecture seule). */
 const BOUTONS_D_ACTION =
@@ -221,7 +221,7 @@ describe('routes', () => {
       error: null,
     })
     await userEvent.type(champ, '123456')
-    await userEvent.click(screen.getByRole('button', { name: 'Vérifier' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Vérifier le code' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Journal' })).toBeInTheDocument()
     expect(faux.auth.mfa.challengeAndVerify).toHaveBeenCalledWith({
       factorId: 'f1',
@@ -281,7 +281,7 @@ describe('routes', () => {
       const routeur = afficher(accueil(type))
       // Le titre de l'onglet, pas le h1 : sur « / », le h1 est la phrase de la semaine.
       await waitFor(() => expect(document.title).toBe(`${titre}, Pilotage EJP`))
-      await screen.findAllByRole('navigation', { name: 'Navigation principale' })
+      await screen.findAllByRole('navigation', { name: 'Menu principal' })
       expect(routeur.state.location.pathname).toBe(
         type === 'admin_plateforme' ? '/moderation' : '/',
       )
@@ -308,7 +308,9 @@ describe('routes', () => {
         ).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
-        expect(screen.queryByText(/Cet écran arrive à l'étape/)).not.toBeInTheDocument()
+        expect(
+          screen.queryByText("Cette page n'est pas encore disponible."),
+        ).not.toBeInTheDocument()
       }
     },
   )
@@ -458,10 +460,12 @@ describe('routes', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Elle est réservée à un autre profil.')).toBeInTheDocument()
+    expect(
+      screen.getByText("Cette page n'est pas disponible avec votre compte."),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute('href', '/')
     expect(faux.tables).toEqual(['compte'])
   })
@@ -606,7 +610,8 @@ const ADRESSES_REFUSEES = ADRESSES_APPLICATION.flatMap((adresse) =>
   ),
 )
 
-// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cet écran arrive à l'étape 4. »).
+// Adresses de l'étape 4 dont la page est encore l'amorce de W0 (« Cette page n'est pas encore
+// disponible. »).
 // Le lot qui remplace une page retire son adresse de cette liste et teste sa vraie page.
 const ADRESSES_AMORCES = [
   '/ma-fiche',
@@ -649,10 +654,12 @@ describe("adresses de l'étape 4", () => {
       expect(
         await screen.findByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeInTheDocument()
-      expect(screen.getByText('Elle est réservée à un autre profil.')).toBeInTheDocument()
+      expect(
+        screen.getByText("Cette page n'est pas disponible avec votre compte."),
+      ).toBeInTheDocument()
       expect(faux.tables).toEqual(['compte'])
     },
   )
@@ -678,7 +685,7 @@ describe("adresses de l'étape 4", () => {
     async (motif, profil) => {
       const faux = connecte(profil)
       const routeur = afficher(exempleDe(motif))
-      expect(await screen.findByText("Cet écran arrive à l'étape 4.")).toBeInTheDocument()
+      expect(await screen.findByText("Cette page n'est pas encore disponible.")).toBeInTheDocument()
       expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument()
       expect(routeur.state.location.pathname).toBe(exempleDe(motif))
       expect(faux.tables).toEqual(['compte'])
@@ -691,7 +698,7 @@ describe("adresses de l'étape 4", () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: BOUTONS_D_ACTION })).toBeNull()
@@ -703,7 +710,7 @@ describe("adresses de l'étape 4", () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeInTheDocument()
     expect(faux.tables).toEqual(['compte'])
@@ -823,7 +830,7 @@ describe("adresses de l'étape 4", () => {
       expect(
         await screen.findByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeInTheDocument()
       expect(screen.queryByText('Signalements')).toBeNull()
@@ -888,9 +895,11 @@ describe('adresses des étapes 5 et 6 (lot C0)', () => {
     async (motif, profil, adresse) => {
       const faux = connecte(profil)
       const routeur = afficher(exempleDe(motif))
-      expect(
-        await screen.findByText(`Cet écran arrive à l'étape ${adresse.etape}.`),
-      ).toBeInTheDocument()
+      expect(await screen.findByText("Cette page n'est pas encore disponible.")).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: titrePour(adresse, profil) })).toHaveAttribute(
+        'data-etape',
+        String(adresse.etape),
+      )
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
         titrePour(adresse, profil),
       )

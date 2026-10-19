@@ -7,7 +7,7 @@ import type { Locator, Page } from '@playwright/test'
 // Trois formats par les projets Playwright : 1440, 834 et 390 px. Le parcours avec la base locale
 // (« Choisir la session » du ministère attendu) est dans sessions.ecriture.spec.ts.
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 async function ouvrir(page: Page, requete = '') {
   await page.goto(`/apercu/sessions?profil=admin_eglise${requete ? `&${requete}` : ''}`)

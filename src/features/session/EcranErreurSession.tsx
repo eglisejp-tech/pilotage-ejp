@@ -19,9 +19,8 @@ type Proprietes = {
  * 10 s dépassées : « La réponse met trop de temps » (m252). L'écran reste affiché pendant le
  * nouvel essai : si la connexion échoue encore, le bandeau ajoute le recours (m250). Un mauvais
  * déploiement (adresse ou clé publique absente, clé secrète fournie) ne se règle pas en
- * réessayant : le bandeau dit de prévenir EJP Tech, sans bouton (m253), et sans la phrase sur les
- * informations de connexion : la panne ne vient pas du compte. Le texte technique reste dans la
- * console, en développement seulement.
+ * réessayant : le bandeau dit de prévenir EJP Tech, sans bouton (m253). Le texte technique reste
+ * dans la console, en développement seulement.
  */
 export function EcranErreurSession({ onRetry, enCours, erreur }: Proprietes) {
   useTitrePage('Connexion impossible')
@@ -39,9 +38,8 @@ export function EcranErreurSession({ onRetry, enCours, erreur }: Proprietes) {
 
   return (
     <ColonneConnexion>
-      <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Pilotage EJP">
-        {configuration ? null : "Vos informations de connexion n'ont pas pu être vérifiées."}
-      </TitreConnexion>
+      {/* Le bandeau suffit : la phrase sous le titre disait la même chose (T66, t039). */}
+      <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Pilotage EJP" />
       <BandeauErreur id="session-erreur" ref={bandeau}>
         {configuration
           ? messagesConnexion.indisponible

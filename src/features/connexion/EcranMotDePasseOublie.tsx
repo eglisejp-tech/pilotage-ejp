@@ -60,8 +60,7 @@ export function EcranMotDePasseOublie({
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Mot de passe oublié">
-        Saisissez l'adresse de votre compte. Vous recevrez un lien pour choisir un nouveau mot de
-        passe.
+        Vous recevrez un lien pour choisir un nouveau mot de passe.
       </TitreConnexion>
 
       {envoye ? (

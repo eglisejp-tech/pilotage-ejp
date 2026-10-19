@@ -85,10 +85,9 @@ describe('le journal par les adresses de l’application', () => {
       within(contenu).queryByRole('button', { name: /Enregistrer|Saisir|Ajouter|Modifier/ }),
     ).toBeNull()
     expect(
-      within(screen.getAllByRole('navigation', { name: 'Navigation principale' })[0]!).getByRole(
-        'link',
-        { name: 'Journal technique' },
-      ),
+      within(screen.getAllByRole('navigation', { name: 'Menu principal' })[0]!).getByRole('link', {
+        name: 'Journal technique',
+      }),
     ).toHaveAttribute('aria-current', 'page')
   })
 
@@ -98,7 +97,7 @@ describe('le journal par les adresses de l’application', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeInTheDocument()
     expect(faux.tables).not.toContain('v_journal')
@@ -110,7 +109,7 @@ describe('le journal par les adresses de l’application', () => {
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeInTheDocument()
     expect(faux.tables).not.toContain('v_journal')

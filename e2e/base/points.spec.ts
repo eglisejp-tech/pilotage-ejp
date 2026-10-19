@@ -11,7 +11,7 @@ import { fichierSession, suivreRequetesDeDonnees } from '../comptes.ts'
 // données. Les dates se calculent sur le jour de Paris de la base : aucun test ne compare un jour.
 
 const SOCIAL = '10000000-0000-4000-8000-000000000005'
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 
 const OUVERTS = [
   'Financement de Welcome Prodiges',

@@ -4,7 +4,7 @@ import { formaterJourCourt, formaterJourSemaine } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 
 export const TEXTES = {
-  region: "Avancement de l'outil",
+  region: 'Avancement de Pilotage EJP',
   voir: 'Voir les étapes',
   voirCourt: 'Voir',
   voirSuite: 'les étapes',
@@ -24,7 +24,8 @@ export function phraseProchaine(quoi: string, date: DateIso): string {
 
 export function notePanneau(miseAJour: DateIso): string {
   const jour = formaterJourCourt(miseAJour)
-  return `Point du ${jour}${jour.endsWith('.') ? '' : '.'} Les dates à venir sont celles du plan : elles peuvent bouger.`
+  // T66 (t055) : « point » et « plan » prêtaient à confusion.
+  return `Mis à jour le ${jour}${jour.endsWith('.') ? '' : '.'} Les dates à venir peuvent changer.`
 }
 
 export function prevueLe(date: DateIso): string {

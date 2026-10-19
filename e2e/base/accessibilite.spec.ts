@@ -197,7 +197,7 @@ test.describe('berger : sans réseau et erreur de page', () => {
   async function ouvrirOngletMinisteres(page: Page) {
     await ouvrirMenuSiBesoin(page)
     await page
-      .getByRole('navigation', { name: 'Navigation principale' })
+      .getByRole('navigation', { name: 'Menu principal' })
       .getByRole('link', { name: 'Ministères' })
       .click()
   }

@@ -10,7 +10,7 @@ import { compter, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 // le jeton de la page. Les nombres de lignes viennent de la base, jamais d'une valeur écrite ici :
 // le jeu d'exemple peut grossir sans casser ces parcours.
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const TAILLE_PAGE = 50
 
 /** Actions qu'une ligne de signalement porte (T39) : le berger et le conseil n'en lisent aucune. */

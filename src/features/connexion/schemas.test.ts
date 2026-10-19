@@ -37,7 +37,7 @@ describe('schémas de connexion', () => {
     ])
     expect(schemaNouveauMotDePasse.safeParse({ motDePasse: 'douze caract' }).success).toBe(true)
     expect(messages(schemaNouveauMotDePasse.safeParse({ motDePasse: 'a'.repeat(73) }))).toEqual([
-      'Choisissez un mot de passe de 72 caractères au plus.',
+      'Raccourcissez le mot de passe : 72 caractères au plus.',
     ])
   })
 

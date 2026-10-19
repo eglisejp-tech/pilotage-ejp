@@ -85,10 +85,8 @@ export function EcranAcceptation({
   return (
     <ColonneConnexion>
       {annonce}
-      <TitreConnexion surtitre={libelleCompte} titre="Conditions d'utilisation" taille="moyenne">
-        Avant d'ouvrir l'outil, lisez les conditions d'utilisation et la politique de
-        confidentialité.
-      </TitreConnexion>
+      {/* Les liens et la case suffisent : pas de phrase sous le titre (T66, t037). */}
+      <TitreConnexion surtitre={libelleCompte} titre="Conditions d'utilisation" taille="moyenne" />
       {conditionsChangees ? (
         <p className="border-l-4 border-attention bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre">
           Les conditions ont changé. Lisez-les avant de continuer.

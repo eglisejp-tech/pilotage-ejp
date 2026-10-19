@@ -35,7 +35,7 @@ export const schemaNouveauMotDePasse = z.object({
     )
     .max(
       LONGUEUR_MAX_MOT_DE_PASSE,
-      `Choisissez un mot de passe de ${LONGUEUR_MAX_MOT_DE_PASSE} caractères au plus.`,
+      `Raccourcissez le mot de passe : ${LONGUEUR_MAX_MOT_DE_PASSE} caractères au plus.`,
     ),
 })
 

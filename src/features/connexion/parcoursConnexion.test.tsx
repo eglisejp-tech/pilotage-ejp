@@ -125,7 +125,9 @@ describe('chaîne de connexion', () => {
       screen.getByLabelText("Saisissez le code affiché par l'application."),
       '123456',
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Activer' }))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Activer la double authentification' }),
+    )
 
     expect(
       await screen.findByRole('heading', { level: 1, name: "Conditions d'utilisation" }),
@@ -168,9 +170,7 @@ describe('chaîne de connexion', () => {
       await screen.findByLabelText('Nouveau mot de passe'),
       'une phrase facile à retenir',
     )
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Enregistrer le nouveau mot de passe' }),
-    )
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le mot de passe' }))
 
     expect(
       await screen.findByRole('heading', { level: 1, name: "Qui utilise l'outil ?" }),

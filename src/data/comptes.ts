@@ -42,10 +42,10 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
   connexion: "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
   requete_invalide: 'La demande est incomplète. Vérifiez les champs, puis réessayez.',
   methode_non_autorisee: "La demande n'a pas pu être envoyée. Réessayez.",
-  non_authentifie: 'Votre session a expiré. Reconnectez-vous.',
-  session_revoquee: 'Votre session a expiré. Reconnectez-vous.',
-  double_authentification_requise:
-    'Reconnectez-vous avec votre code de double authentification, puis réessayez.',
+  // Une seule phrase pour une connexion qui a pris fin (T66, m017).
+  non_authentifie: 'Votre connexion a expiré. Reconnectez-vous.',
+  session_revoquee: 'Votre connexion a expiré. Reconnectez-vous.',
+  double_authentification_requise: 'Votre connexion a expiré. Reconnectez-vous.',
   acces_refuse: 'Seul EJP Tech gère les comptes.',
   type_interdit: 'Ce type de compte ne se crée pas sur cet écran.',
   ministere_inconnu: "Ce ministère n'existe plus ou il est désactivé. Rechargez la page.",

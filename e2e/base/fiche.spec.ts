@@ -11,7 +11,7 @@ import { fichierSession, seConnecter, suivreRequetesDeDonnees } from '../comptes
 
 const SOCIAL = '10000000-0000-4000-8000-000000000005'
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 const PRECISION =
   'Plus de passages pendant la collecte de rentrée, tous orientés vers les bonnes permanences.'
 const SENSIBLE = 'Bénéficiaires (passages)'

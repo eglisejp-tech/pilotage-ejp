@@ -16,7 +16,7 @@ import { aujourdhuiDeLaBase, appeler, compter, lire } from './outils-evenements.
 // Le suffixe s'écrit en lettres : 5 chiffres de suite ressemblent à une donnée personnelle.
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const NOM = `Essai sessions ${SUFFIXE}`
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 
 test.describe.configure({ mode: 'serial' })
 test.skip(!AVEC_BASE, 'Parcours avec la base locale seulement (E2E_BASE=1).')

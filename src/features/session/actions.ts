@@ -164,10 +164,16 @@ export async function verifierLien(
     ) {
       return { etat: 'invalide' }
     }
-    return { etat: 'erreur', erreur: traduireErreur(error, 'lien-email') }
+    return { etat: 'erreur', erreur: erreurDuLien(error) }
   } catch (erreur) {
-    return { etat: 'erreur', erreur: traduireErreur(erreur, 'lien-email') }
+    return { etat: 'erreur', erreur: erreurDuLien(erreur) }
   }
+}
+
+/** Sans réponse, le jeton n'est pas consommé : la phrase dit que le lien reste valable (T66, m027). */
+function erreurDuLien(erreur: unknown): string {
+  const message = traduireErreur(erreur, 'lien-email')
+  return message === messagesConnexion.echecReseau ? messagesConnexion.echecReseauLien : message
 }
 
 /** « Choisissez votre mot de passe » ou « Nouveau mot de passe » (updateUser). */
@@ -205,7 +211,11 @@ export async function demanderLien(valeurs: ValeursMotDePasseOublie): Promise<Re
     erreur = exception
   }
   const message = traduireErreur(erreur, 'lien-email')
-  if (message === messagesConnexion.tropDeTentatives || message === messagesConnexion.echecReseau) {
+  if (
+    message === messagesConnexion.tropDeTentatives ||
+    message === messagesConnexion.lienDejaParti ||
+    message === messagesConnexion.echecReseau
+  ) {
     return { erreur: message }
   }
   // Une panne de la passerelle (502 à 504, `AuthRetryableFetchError`) se dit ; un refus 4xx ou une

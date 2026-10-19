@@ -52,7 +52,7 @@ for (const compte of COMPTES_PROFILS) {
       await expect(page).toHaveURL((url) => url.pathname === compte.accueil.chemin)
       await expect(page.getByRole('banner')).toContainText(compte.libelle)
       await ouvrirMenuSiBesoin(page)
-      const navigation = page.getByRole('navigation', { name: 'Navigation principale' })
+      const navigation = page.getByRole('navigation', { name: 'Menu principal' })
       await expect(navigation.getByRole('link')).toHaveText(compte.onglets)
       await expect(navigation.getByRole('link', { name: compte.accueil.titre })).toHaveAttribute(
         'aria-current',
@@ -66,10 +66,12 @@ for (const compte of COMPTES_PROFILS) {
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
-      await expect(page.getByText('Elle est réservée à un autre profil.')).toBeVisible()
+      await expect(
+        page.getByText("Cette page n'est pas disponible avec votre compte."),
+      ).toBeVisible()
       // Seule la ligne du compte connecté est lue, avant l'affichage.
       expect(requetes.filter((chemin) => chemin !== '/rest/v1/compte')).toEqual([])
     })

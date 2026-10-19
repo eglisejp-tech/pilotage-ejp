@@ -2,17 +2,20 @@ import { ColonneConnexion } from '@/features/connexion/ColonneConnexion'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 
-/** Erreur inattendue pendant l'affichage d'un écran : rien d'autre qu'un rechargement. */
+/**
+ * Erreur inattendue pendant l'affichage d'un écran : rien d'autre qu'un rechargement. Mêmes mots
+ * que l'erreur hors du routeur (`ErreurRacine`, T66, t040 à t042) : le bouton dit de recharger.
+ */
 export function ErreurApplication() {
-  useTitrePage('Erreur')
+  useTitrePage('Affichage impossible')
   return (
     <ColonneConnexion>
       <TitreConnexion
         surtitre="Pilotage EJP"
-        titre="L'écran n'a pas pu s'afficher"
+        titre="La page n'a pas pu s'afficher"
         taille="moyenne"
       >
-        Rechargez la page. Si l'erreur revient, prévenez EJP Tech.
+        Si le problème revient, prévenez EJP Tech.
       </TitreConnexion>
       <button
         type="button"

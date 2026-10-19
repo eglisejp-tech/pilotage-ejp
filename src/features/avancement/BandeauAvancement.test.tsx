@@ -25,7 +25,7 @@ afterEach(() => {
 describe('BandeauAvancement', () => {
   it('est une région nommée, sans role status, avec le texte et 8 cases décoratives', () => {
     const { container } = afficher()
-    const region = screen.getByRole('region', { name: "Avancement de l'outil" })
+    const region = screen.getByRole('region', { name: 'Avancement de Pilotage EJP' })
     expect(region.querySelector('[role="status"]')).toBeNull()
     expect(region).toHaveTextContent('7 étapes sur 8 en ligne.')
     expect(region).toHaveTextContent(
@@ -69,17 +69,17 @@ describe('BandeauAvancement', () => {
     expect(bouton).toHaveAccessibleName('Masquer les étapes')
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
     expect(panneau).not.toHaveAttribute('hidden')
-    expect(panneau).toHaveTextContent(
-      'Point du 14 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
-    )
+    expect(panneau).toHaveTextContent('Mis à jour le 14 oct. Les dates à venir peuvent changer.')
     const etapes = screen.getAllByRole('listitem')
     expect(etapes).toHaveLength(8)
     expect(etapes[6]).toHaveAttribute('aria-current', 'step')
-    expect(etapes[0]).toHaveTextContent('■ En ligne')
+    expect(etapes[0]).toHaveTextContent('En ligne')
     // Étape 6 : la gestion par EJP Tech la complète, elle reste en ligne.
-    expect(etapes[5]).toHaveTextContent('■ En ligne')
+    expect(etapes[5]).toHaveTextContent('En ligne')
     expect(etapes[6]).toHaveTextContent('En partie : 5 parties sur 6 en ligne.')
-    expect(screen.getAllByText('■ En ligne')).toHaveLength(7)
+    // Le carré est un dessin caché aux lecteurs d'écran (T66, t056).
+    expect(screen.getAllByText('En ligne')).toHaveLength(7)
+    expect(panneau?.textContent).not.toContain('■')
   })
 
   it('se ferme avec Échap et rend le focus au bouton', async () => {

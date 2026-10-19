@@ -9,7 +9,7 @@ import { EVENEMENT_COORDINATION, lire } from './outils-evenements.ts'
 // le ministère mentionné, un autre ministère, puis le berger, le conseil, l'administration et
 // EJP Tech, qui n'ont ni ces adresses ni aucun bouton de saisie.
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const INTROUVABLE = "Cet événement n'existe pas ou vous n'y avez pas accès."
 
 async function attendreLaFinDuChargement(page: Page) {

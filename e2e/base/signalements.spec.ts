@@ -10,7 +10,7 @@ import { compter, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 // d'EJP Tech. Seuls le ministère auteur et EJP Tech les lisent ; le berger, le conseil et
 // l'administration n'ont ni la page, ni le bloc, ni aucune ligne.
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const TEXTE_OUVERT =
   "Le formulaire refuse la date de notre soirée de louange, alors qu'elle est bien à venir."
 const TEXTE_CLOS = 'Le bouton Envoyer reste grisé après la saisie des STARs au service.'

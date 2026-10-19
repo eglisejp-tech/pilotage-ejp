@@ -48,6 +48,11 @@ const etatsMotDePasse: Record<string, EtatSimule> = {
   normal: etatNormal,
   'en-cours': { libelle: 'Enregistrement en cours', enCours: true },
   'erreur-reseau': erreurReseau,
+  // T66 (m038) : la connexion du lien se perd pendant le choix du mot de passe.
+  'erreur-expiree': {
+    libelle: 'Erreur : connexion expirée',
+    erreur: messagesConnexion.connexionExpireeLien,
+  },
 }
 
 export const clesEcransSimules = [
@@ -88,9 +93,10 @@ export const ecransSimules: Record<
         erreur: messagesConnexion.compteDesactive,
       },
       'erreur-expiree': erreurExpiree,
+      // T66 (m017) : une session ouverte qui prend fin dit la même phrase qu'une connexion expirée.
       'erreur-session': {
-        libelle: 'Erreur : session expirée',
-        erreur: messagesConnexion.sessionExpiree,
+        libelle: 'Erreur : session ouverte terminée',
+        erreur: messagesConnexion.connexionExpiree,
       },
       'erreur-tentatives': erreurTentatives,
     },

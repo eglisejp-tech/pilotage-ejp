@@ -269,7 +269,7 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
       await expect(page.getByRole('main').getByText(/relire|signalement|masquer/i)).toHaveCount(0)

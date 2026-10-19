@@ -31,7 +31,7 @@ import { verifierAdresseLocale } from './installer-comptes.ts'
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const NOM = `Tech essai ${SUFFIXE}`
 const EMAIL = `ejptech1+ministere-${SUFFIXE}@exemple.test`
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const MOT_DE_PASSE = `essai-l1-${SUFFIXE}-Aa1!`
 
 test.describe.configure({ mode: 'serial' })

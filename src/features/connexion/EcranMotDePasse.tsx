@@ -10,18 +10,18 @@ import type { ValeursNouveauMotDePasse } from '@/features/connexion/schemas'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 
+// T66 (t020 à t024) : pas de phrase sous le titre (elle répétait le titre ou annonçait la suite),
+// un même bouton dans les deux variantes.
 const TEXTES = {
   invitation: {
     titre: 'Choisissez votre mot de passe',
-    phrase: 'Il servira à chaque connexion, avec un code de double authentification.',
     libelle: 'Mot de passe',
     bouton: 'Enregistrer le mot de passe',
   },
   recuperation: {
     titre: 'Nouveau mot de passe',
-    phrase: 'Choisissez un nouveau mot de passe pour ce compte.',
     libelle: 'Nouveau mot de passe',
-    bouton: 'Enregistrer le nouveau mot de passe',
+    bouton: 'Enregistrer le mot de passe',
   },
 } as const
 
@@ -75,9 +75,7 @@ export function EcranMotDePasse({
         surtitre={libelleCompte ?? 'Église des Jeunes Prodiges'}
         titre={textes.titre}
         taille="moyenne"
-      >
-        {textes.phrase}
-      </TitreConnexion>
+      />
 
       <form noValidate onSubmit={envoyer} className="flex flex-col gap-6">
         {email ? (
@@ -95,7 +93,7 @@ export function EcranMotDePasse({
           <ChampTexte
             id="nouveau-mot-de-passe"
             libelle={textes.libelle}
-            aide={`${LONGUEUR_MIN_MOT_DE_PASSE} caractères au moins. Une phrase de quelques mots se retient facilement.`}
+            aide={`${LONGUEUR_MIN_MOT_DE_PASSE} caractères au moins, par exemple une courte phrase.`}
             type={visible ? 'text' : 'password'}
             autoComplete="new-password"
             autoCapitalize="none"
@@ -122,13 +120,6 @@ export function EcranMotDePasse({
           {textes.bouton}
         </BoutonPrincipal>
       </form>
-
-      {variante === 'invitation' ? (
-        <p className="text-sm leading-[1.55] text-encre-3">
-          Ensuite, vous activerez la double authentification. Si votre adresse est une adresse
-          Google, vous pourrez aussi vous connecter avec «&nbsp;Continuer avec Google&nbsp;».
-        </p>
-      ) : null}
     </ColonneConnexion>
   )
 }

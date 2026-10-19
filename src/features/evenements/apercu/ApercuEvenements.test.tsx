@@ -25,7 +25,7 @@ describe('aperçu des saisies d’événement et de réunion', () => {
       expect(
         screen.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: /Ajouter|Enregistrer/ })).toBeNull()

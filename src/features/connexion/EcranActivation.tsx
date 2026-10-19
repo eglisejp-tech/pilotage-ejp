@@ -62,8 +62,7 @@ export function EcranActivation({
         titre="Activer la double authentification"
         taille="petite"
       >
-        Obligatoire pour tous les comptes. À chaque connexion, un code à 6 chiffres vous sera
-        demandé en plus.
+        À chaque connexion, vous saisirez aussi un code à 6 chiffres.
       </TitreConnexion>
 
       <ol role="list" className="flex flex-col gap-6">
@@ -75,7 +74,7 @@ export function EcranActivation({
         </li>
 
         <li className="flex flex-col gap-6">
-          <EtapeTitre numero={2}>Scannez ce code avec l'application.</EtapeTitre>
+          <EtapeTitre numero={2}>Scannez ce QR code avec l'application.</EtapeTitre>
           <div className="flex flex-col gap-3">
             <QrCodeActivation
               qrCode={qrCode}
@@ -84,7 +83,7 @@ export function EcranActivation({
               refus={qrRefus}
             />
             <p className="text-sm leading-normal text-encre-2">
-              Vous pouvez aussi scanner ce code avec un deuxième téléphone, en secours.
+              Scannez-le aussi avec un deuxième téléphone, en secours.
             </p>
           </div>
           {cle ? (
@@ -97,9 +96,8 @@ export function EcranActivation({
           ) : null}
           {comptePartage ? (
             <p className="bg-nuit-pale px-4 py-3.5 text-[15px] leading-normal text-encre">
-              <strong className="font-bold">Compte partagé.</strong> Chaque personne autorisée du
-              ministère scanne ce même code maintenant, avec son propre téléphone. Il ne sera plus
-              affiché.
+              <strong className="font-bold">Compte partagé.</strong> Chaque personne du ministère
+              scanne ce QR code maintenant, sur son téléphone. Il ne s'affichera plus.
             </p>
           ) : null}
         </li>
@@ -115,7 +113,7 @@ export function EcranActivation({
                 </label>
               </EtapeTitre>
             }
-            libelleBouton="Activer"
+            libelleBouton="Activer la double authentification"
             libelleEnCours="Activation en cours"
             onVerifyCode={onVerifyCode}
             enCours={enCours}

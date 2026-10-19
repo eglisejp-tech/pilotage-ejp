@@ -38,8 +38,12 @@ describe('EcranActivation (maquette 17)', () => {
       screen.getByRole('img', { name: "QR code d'activation de Pilotage EJP" }),
     ).toHaveAttribute('src', QR_CODE)
     expect(screen.getByText('JBSW Y3DP EHPK 3PXP')).toBeInTheDocument()
+    expect(screen.getByText("Scannez ce QR code avec l'application.")).toBeInTheDocument()
     expect(
-      screen.getByText('Vous pouvez aussi scanner ce code avec un deuxième téléphone, en secours.'),
+      screen.getByText('Scannez-le aussi avec un deuxième téléphone, en secours.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText('À chaque connexion, vous saisirez aussi un code à 6 chiffres.'),
     ).toBeInTheDocument()
     expect(screen.getByText('Ministère Communication')).toBeInTheDocument()
     expect(champCode()).toHaveAttribute('autocomplete', 'one-time-code')
@@ -49,7 +53,7 @@ describe('EcranActivation (maquette 17)', () => {
     afficher()
     expect(screen.getByText('Compte partagé.')).toBeInTheDocument()
     expect(
-      screen.getByText(/Chaque personne autorisée du ministère scanne ce même code/),
+      screen.getByText(/Chaque personne du ministère scanne ce QR code maintenant/),
     ).toBeVisible()
   })
 
@@ -70,14 +74,18 @@ describe('EcranActivation (maquette 17)', () => {
     const { onVerifyCode, utilisateur } = afficher()
     await utilisateur.click(champCode())
     await utilisateur.paste('482913')
-    await utilisateur.click(screen.getByRole('button', { name: 'Activer' }))
+    await utilisateur.click(
+      screen.getByRole('button', { name: 'Activer la double authentification' }),
+    )
     expect(onVerifyCode).toHaveBeenCalledWith('482913')
   })
 
   it('refuse un code incomplet', async () => {
     const { onVerifyCode, utilisateur } = afficher()
     await utilisateur.type(champCode(), '482')
-    await utilisateur.click(screen.getByRole('button', { name: 'Activer' }))
+    await utilisateur.click(
+      screen.getByRole('button', { name: 'Activer la double authentification' }),
+    )
     expect(champCode()).toHaveAccessibleDescription('Saisissez les 6 chiffres du code.')
     expect(onVerifyCode).not.toHaveBeenCalled()
   })

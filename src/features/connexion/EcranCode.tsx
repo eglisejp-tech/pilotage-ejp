@@ -51,7 +51,7 @@ export function EcranCode({
             Code à 6 chiffres
           </label>
         }
-        libelleBouton="Vérifier"
+        libelleBouton="Vérifier le code"
         libelleEnCours="Vérification en cours"
         onVerifyCode={onVerifyCode}
         enCours={enCours}

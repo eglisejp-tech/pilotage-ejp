@@ -244,7 +244,7 @@ export async function seConnecter(
   await saisirMotDePasse(page, email)
   await expect(page.getByRole('heading', { level: 1, name: 'Code de vérification' })).toBeVisible()
   await page.getByLabel('Code à 6 chiffres').fill(await codeTotp(secretDe(email)))
-  await page.getByRole('button', { name: 'Vérifier' }).click()
+  await page.getByRole('button', { name: 'Vérifier le code' }).click()
   await expect(page).not.toHaveURL(/\/double-authentification/)
   if (prenom !== null && new URL(page.url()).pathname === '/qui-utilise') {
     await declarerPrenom(page, prenom)

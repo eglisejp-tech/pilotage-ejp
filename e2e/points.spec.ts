@@ -180,7 +180,7 @@ test.describe('« Mes points » du ministère, EJP Tech et l’administration (a
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeVisible()
     await expect(articles(page)).toHaveCount(0)

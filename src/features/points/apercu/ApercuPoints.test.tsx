@@ -45,7 +45,7 @@ describe('aperçu des points', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeVisible()
     expect(screen.queryByRole('article')).toBeNull()

@@ -169,17 +169,15 @@ test.describe('écrans de connexion (aperçu)', () => {
       )
     })
     await expect(champ).toHaveValue('482913')
-    await page.getByRole('button', { name: 'Vérifier' }).click()
+    await page.getByRole('button', { name: 'Vérifier le code' }).click()
     await expect(page.getByText('Dernière action simulée')).toContainText(
       'onVerifyCode, code 482913.',
     )
   })
 
-  test('connexion : le lien « recevoir un lien » ouvre « Mot de passe oublié »', async ({
-    page,
-  }) => {
+  test('connexion : le lien « Mot de passe oublié » ouvre sa page', async ({ page }) => {
     await ouvrir(page, 'ecran=connexion', 'Pilotage EJP')
-    await page.getByRole('link', { name: 'recevoir un lien' }).click()
+    await page.getByRole('link', { name: 'Mot de passe oublié' }).click()
     await expect(page.getByRole('heading', { level: 1, name: 'Mot de passe oublié' })).toBeVisible()
     await expect(page).toHaveTitle('Mot de passe oublié, Pilotage EJP')
   })

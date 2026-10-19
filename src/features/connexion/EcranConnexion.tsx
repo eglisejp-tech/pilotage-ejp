@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router'
 import { adressesConnexion } from '@/features/connexion/adresses'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
 import { BoutonGoogle } from '@/features/connexion/BoutonGoogle'
@@ -124,18 +123,14 @@ export function EcranConnexion({
         </BoutonPrincipal>
       </form>
 
-      <p className="text-sm leading-[1.55] text-encre-3">
-        Pas de compte&nbsp;? Demandez-en un à EJP Tech. Mot de passe oublié&nbsp;:{' '}
-        {/* Lien dans la phrase : la marge intérieure porte la zone cliquable à 44 px sans
-            changer la hauteur de ligne. */}
-        <Link
-          to={lienMotDePasseOublie}
-          className="-my-3 inline-block py-3 text-nuit underline underline-offset-2"
-        >
-          recevoir un lien
-        </Link>
-        . Un code de double authentification vous sera demandé ensuite.
-      </p>
+      {/* T66 (t002 à t004) : le lien se comprend seul, sur sa ligne ; la double authentification
+          s'annonce sur l'écran suivant. La marge négative compense la cible de 44 px du lien. */}
+      <div className="-mt-3 flex flex-col gap-1">
+        <Lien to={lienMotDePasseOublie}>Mot de passe oublié</Lien>
+        <p className="text-sm leading-[1.55] text-encre-3">
+          Pas de compte&nbsp;? Demandez-en un à EJP Tech.
+        </p>
+      </div>
 
       <div className="flex flex-wrap gap-x-6">
         <Lien to={lienConfidentialite}>Confidentialité</Lien>

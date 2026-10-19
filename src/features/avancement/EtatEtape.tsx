@@ -6,7 +6,13 @@ import { enPartie, prevueLe, prochainePartie } from '@/features/avancement/texte
 export function EtatEtape({ etape }: { etape: Etape }) {
   const statut = statutDe(etape)
   if (statut === 'en-ligne') {
-    return <p className="text-sm font-semibold text-bien">■ En ligne</p>
+    // Le carré est un dessin, que le lecteur d'écran ne lit pas (T66, t056).
+    return (
+      <p className="text-sm font-semibold text-bien">
+        <span aria-hidden="true" className="mr-1.5 inline-block size-[0.6em] bg-current" />
+        En ligne
+      </p>
+    )
   }
   if (statut === 'en-partie') {
     const suite = prochainePartie(etape)

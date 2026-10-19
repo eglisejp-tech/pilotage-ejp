@@ -305,7 +305,7 @@ test.describe('bloc « À valider » (administration de l’église), aperçu', 
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
     }

@@ -10,7 +10,7 @@ type Proprietes = { onglets: readonly Onglet[] }
  */
 export function NavigationOnglets({ onglets }: Proprietes) {
   return (
-    <nav aria-label="Navigation principale" className="flex">
+    <nav aria-label="Menu principal" className="flex">
       <ul role="list" className="flex gap-6 xl:gap-7.5">
         {onglets.map(({ libelle, chemin }) => (
           <li key={chemin} className="flex">

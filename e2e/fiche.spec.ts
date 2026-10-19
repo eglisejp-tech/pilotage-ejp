@@ -161,7 +161,7 @@ test.describe('fiche 12 du ministère (aperçu)', () => {
     await expect(
       page.getByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeVisible()
   })

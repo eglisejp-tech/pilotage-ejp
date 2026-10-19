@@ -61,7 +61,7 @@ describe('PagePoints', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: "Cette page n'est pas disponible avec votre compte.",
+        name: 'Page non disponible',
       }),
     ).toBeVisible()
     expect(hook).not.toHaveBeenCalled()

@@ -44,9 +44,7 @@ describe('aperçu du calendrier et de l’alerte', () => {
 
   it('l’administration de l’église : la page non disponible', () => {
     afficher('?profil=admin_eglise')
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      "Cette page n'est pas disponible avec votre compte.",
-    )
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Page non disponible')
   })
 
   it('a-confirmer : 5 lignes, puis « Voir les 8 événements à confirmer »', () => {

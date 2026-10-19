@@ -87,7 +87,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 describe('/saisir/evenement (ajout, maquette 11)', () => {
   it('ministère : le formulaire, les autres ministères actifs à mentionner, jamais lui-même', async () => {

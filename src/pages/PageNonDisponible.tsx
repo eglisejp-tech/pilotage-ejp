@@ -9,11 +9,14 @@ export function PageNonDisponible() {
   useTitrePage('Page non disponible')
   return (
     <section aria-labelledby="titre-page">
+      {/* T66 (t044, t045) : un titre court, puis la phrase, sans le mot interne « profil ». */}
       <h1 id="titre-page" className="font-lecture text-titre leading-tight font-medium">
-        Cette page n'est pas disponible avec votre compte.
+        Page non disponible
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
-      <p className="mt-6 max-w-prose text-encre-2">Elle est réservée à un autre profil.</p>
+      <p className="mt-6 max-w-prose text-encre-2">
+        Cette page n'est pas disponible avec votre compte.
+      </p>
       <LienAccueil />
     </section>
   )

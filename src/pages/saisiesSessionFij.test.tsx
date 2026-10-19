@@ -16,7 +16,7 @@ import { fauxSupabase } from '@/test/fauxSupabase'
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 /**
  * `clientRequetes` refait une lecture en échec une fois, après une seconde ; le premier rendu des
  * routes peut aussi dépasser une seconde quand toute la suite tourne.

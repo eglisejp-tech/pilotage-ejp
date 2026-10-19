@@ -9,16 +9,17 @@ import { messagesConnexion } from '@/features/connexion/messages'
 import { TitreConnexion } from '@/features/connexion/TitreConnexion'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 
-const PHRASES = {
-  invitation:
-    'Votre compte est prêt. Continuez pour choisir votre mot de passe, puis activer la double authentification.',
-  recuperation: 'Vous avez demandé un nouveau mot de passe. Continuez pour le choisir.',
+// T66 (t015 à t018) : le titre d'onglet dit le lien reçu, le bouton dit la suite ; la phrase de
+// la récupération répétait le bouton.
+const TEXTES = {
+  invitation: { onglet: 'Invitation', phrase: 'Votre compte est prêt.' },
+  recuperation: { onglet: 'Mot de passe oublié', phrase: undefined },
 } as const
 
 export type ProprietesEcranAcces = {
   /** Lien reçu par email : `type=invite` ou `type=recovery` dans l'adresse /acces. */
-  type: keyof typeof PHRASES
-  /** Clic sur « Continuer » (étape 2 : verifyOtp, puis retrait du jeton de l'adresse). Le clic
+  type: keyof typeof TEXTES
+  /** Clic sur « Choisir un mot de passe » (étape 2 : verifyOtp, puis retrait du jeton de l'adresse). Le clic
    * est demandé parce que les antivirus de messagerie ouvrent les liens et consommeraient le
    * jeton à usage unique. */
   onContinue: () => void
@@ -41,7 +42,7 @@ export function EcranAcces({
   lienConnexion = adressesConnexion.connexion,
   lienMotDePasseOublie = adressesConnexion.motDePasseOublie,
 }: ProprietesEcranAcces) {
-  useTitrePage(lienInvalide ? 'Lien plus valable' : 'Accès par lien')
+  useTitrePage(lienInvalide ? 'Lien plus valable' : TEXTES[type].onglet)
   const titre = useRef<HTMLHeadingElement>(null)
   const bandeau = useRef<HTMLDivElement>(null)
 
@@ -68,9 +69,7 @@ export function EcranAcces({
           titre={messagesConnexion.lienInvalide}
           taille="moyenne"
         >
-          {type === 'invitation'
-            ? messagesConnexion.lienInvalideInvitation
-            : messagesConnexion.lienInvalideRecuperation}
+          {type === 'invitation' ? messagesConnexion.lienInvalideInvitation : undefined}
         </TitreConnexion>
         {type === 'invitation' ? (
           <Lien to={lienConnexion}>Revenir à la connexion</Lien>
@@ -84,7 +83,7 @@ export function EcranAcces({
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Église des Jeunes Prodiges" titre="Pilotage EJP">
-        {PHRASES[type]}
+        {TEXTES[type].phrase}
       </TitreConnexion>
       <form onSubmit={continuer} className="flex flex-col gap-6">
         {erreur ? (
@@ -93,7 +92,7 @@ export function EcranAcces({
           </BandeauErreur>
         ) : null}
         <BoutonPrincipal enCours={enCours} libelleEnCours="Vérification du lien">
-          Continuer
+          Choisir un mot de passe
         </BoutonPrincipal>
       </form>
     </ColonneConnexion>

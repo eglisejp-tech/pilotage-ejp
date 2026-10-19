@@ -382,7 +382,7 @@ test.describe('le ministère, le berger et le conseil', () => {
         await expect(
           page.getByRole('heading', {
             level: 1,
-            name: "Cette page n'est pas disponible avec votre compte.",
+            name: 'Page non disponible',
           }),
         ).toBeVisible()
         await expect(

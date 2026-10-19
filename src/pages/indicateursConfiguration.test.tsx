@@ -21,7 +21,7 @@ import { fauxSupabase } from '@/test/fauxSupabase'
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const ID_INCONNU = '10000000-0000-4000-8000-0000000000ff'
 
 function connecte(type: TypeCompte, enEchec: string[] = []) {

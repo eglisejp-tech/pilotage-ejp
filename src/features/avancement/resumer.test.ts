@@ -70,7 +70,7 @@ describe('textes', () => {
       'Prochaine : Sessions, prévue vendredi 9 oct.',
     )
     expect(notePanneau(MISE_A_JOUR)).toBe(
-      'Point du 14 oct. Les dates à venir sont celles du plan : elles peuvent bouger.',
+      'Mis à jour le 14 oct. Les dates à venir peuvent changer.',
     )
     expect(enPartie(ETAPES[6] as Etape)).toBe('En partie : 5 parties sur 6 en ligne.')
     for (const e of ETAPES) {

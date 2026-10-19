@@ -155,9 +155,7 @@ test('un compte de ministère déclare « Marie D. », saisit, et EJP Tech seul 
     expect(await lire(lecteur.page, 'v_personnes?select=prenom'), profil).toEqual([])
     expect(await lire(lecteur.page, 'v_journal_intervenant?select=prenom'), profil).toEqual([])
     await lecteur.page.goto('/personnes')
-    await expect(
-      lecteur.page.getByText("Cette page n'est pas disponible avec votre compte."),
-    ).toBeVisible()
+    await expect(lecteur.page.getByText('Page non disponible')).toBeVisible()
     await lecteur.contexte.close()
   }
 })

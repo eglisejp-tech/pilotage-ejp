@@ -18,7 +18,7 @@ const TITRE_MASQUE = `Essai L6 masque ${SUFFIXE}`
 const DESCRIPTION = `Description du point masque ${SUFFIXE}.`
 const SIGNALEMENT = `Essai L6 ${SUFFIXE} : le bouton reste grisé.`
 const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 test.describe.configure({ mode: 'serial' })
 

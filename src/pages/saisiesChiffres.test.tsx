@@ -22,7 +22,7 @@ import { fauxSupabase } from '@/test/fauxSupabase'
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
-const NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const NON_DISPONIBLE = 'Page non disponible'
 const ATTENTE = { timeout: 4000 }
 const SEMAINE = {
   aujourdhui: '2026-09-29',

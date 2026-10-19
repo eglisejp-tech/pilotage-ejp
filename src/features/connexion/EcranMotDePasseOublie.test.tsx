@@ -38,7 +38,7 @@ describe('EcranMotDePasseOublie', () => {
     afficher({ envoye: true })
     const message = screen.getByRole('status')
     expect(message).toHaveTextContent(
-      'Si un compte existe pour cette adresse, un lien vient de lui être envoyé. Pensez à regarder les courriers indésirables.',
+      "Si un compte existe pour cette adresse, un lien vient d'être envoyé. Regardez aussi les courriers indésirables.",
     )
     expect(message).toHaveFocus()
     expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()

@@ -20,7 +20,7 @@ const { email, onglets } = EJP_TECH
 const phraseSemaine =
   "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
 
-const navigation = (page: Page) => page.getByRole('navigation', { name: 'Navigation principale' })
+const navigation = (page: Page) => page.getByRole('navigation', { name: 'Menu principal' })
 
 /** Boutons et liens d'action qu'EJP Tech ne voit jamais (T29, lecture seule). */
 const ACTIONS =

@@ -234,7 +234,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
       await expect(
         page.getByRole('heading', {
           level: 1,
-          name: "Cette page n'est pas disponible avec votre compte.",
+          name: 'Page non disponible',
         }),
       ).toBeVisible()
     }

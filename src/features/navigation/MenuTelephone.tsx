@@ -94,7 +94,7 @@ export function MenuTelephone({
         hidden={!ouvert}
         className={cn('border-t border-filet px-5 pt-2 pb-4', aligne)}
       >
-        <nav aria-label="Navigation principale">
+        <nav aria-label="Menu principal">
           <ul role="list">
             {onglets.map(({ libelle, chemin }) => (
               <li key={chemin}>

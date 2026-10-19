@@ -192,9 +192,7 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
   for (const profil of ['berger', 'conseil', 'admin_eglise', 'ejp_tech']) {
     test(`profil ${profil} : page non disponible, aucun bouton de création`, async ({ page }) => {
       await page.goto(`/apercu/nouveau-point?profil=${profil}`)
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-        "Cette page n'est pas disponible avec votre compte.",
-      )
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page non disponible')
       await expect(creer(page)).toHaveCount(0)
     })
   }

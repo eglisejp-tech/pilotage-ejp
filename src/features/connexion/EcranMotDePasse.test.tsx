@@ -22,8 +22,10 @@ describe('EcranMotDePasse (invitation et mot de passe oublié)', () => {
     ).toBeInTheDocument()
     expect(champ()).toHaveAttribute('autocomplete', 'new-password')
     expect(champ()).toHaveAccessibleDescription(
-      '12 caractères au moins. Une phrase de quelques mots se retient facilement.',
+      '12 caractères au moins, par exemple une courte phrase.',
     )
+    // Ni phrase sous le titre, ni annonce de la suite (T66, t020 et t024).
+    expect(screen.queryByText(/double authentification/)).not.toBeInTheDocument()
     const identifiant = document.querySelector('input[autocomplete="username"]')
     expect(identifiant).toHaveValue('communication@ejp.exemple')
   })
@@ -34,9 +36,7 @@ describe('EcranMotDePasse (invitation et mot de passe oublié)', () => {
       screen.getByRole('heading', { level: 1, name: 'Nouveau mot de passe' }),
     ).toBeInTheDocument()
     expect(screen.getByLabelText('Nouveau mot de passe')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Enregistrer le nouveau mot de passe' }),
-    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Enregistrer le mot de passe' })).toBeInTheDocument()
   })
 
   it('refuse moins de 12 caractères : message relié au champ, focus sur le champ', async () => {
@@ -46,7 +46,7 @@ describe('EcranMotDePasse (invitation et mot de passe oublié)', () => {
 
     expect(champ()).toHaveAttribute('aria-invalid', 'true')
     expect(champ()).toHaveAccessibleDescription(
-      '12 caractères au moins. Une phrase de quelques mots se retient facilement. Choisissez un mot de passe de 12 caractères au moins.',
+      '12 caractères au moins, par exemple une courte phrase. Choisissez un mot de passe de 12 caractères au moins.',
     )
     expect(champ()).toHaveFocus()
     expect(onSubmit).not.toHaveBeenCalled()

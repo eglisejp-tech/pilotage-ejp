@@ -25,7 +25,7 @@ import { fauxSupabase } from '@/test/fauxSupabase'
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
-const PAGE_NON_DISPONIBLE = "Cette page n'est pas disponible avec votre compte."
+const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const DEMANDE_REFUSEE = '00000000-0000-4000-8000-0000000000d1'
 
 type Options = {
@@ -185,7 +185,7 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
-    const navigation = screen.getAllByRole('navigation', { name: 'Navigation principale' })[0]!
+    const navigation = screen.getAllByRole('navigation', { name: 'Menu principal' })[0]!
     expect(within(navigation).getByRole('link', { name: 'Ma fiche' })).toHaveAttribute(
       'aria-current',
       'page',

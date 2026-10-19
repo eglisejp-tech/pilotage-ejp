@@ -33,11 +33,9 @@ export function traduireErreur(erreur: unknown, contexte: Contexte): string {
 
   // Un compte désactivé se dit avant tout autre refus (guide, 10.11, point 5).
   if (code === 'user_banned') return messagesConnexion.compteDesactive
-  if (
-    code === 'over_request_rate_limit' ||
-    code === 'over_email_send_rate_limit' ||
-    statut === 429
-  ) {
+  // Limite d'envoi d'emails : un lien est peut-être déjà dans la messagerie (T66, m023).
+  if (code === 'over_email_send_rate_limit') return messagesConnexion.lienDejaParti
+  if (code === 'over_request_rate_limit' || statut === 429) {
     return messagesConnexion.tropDeTentatives
   }
   if (code === 'signup_disabled' || code === 'email_address_not_authorized') {
@@ -56,9 +54,10 @@ export function traduireErreur(erreur: unknown, contexte: Contexte): string {
   if (code === 'weak_password') return messagesConnexion.motDePasseFaible
   if (code === 'same_password') return messagesConnexion.memeMotDePasse
   if (code !== undefined && FIN_DE_SESSION.has(code)) {
-    return contexte === 'code'
-      ? messagesConnexion.connexionExpiree
-      : messagesConnexion.sessionExpiree
+    // Pendant le choix du mot de passe, la personne n'en a pas encore : un nouveau lien (m038).
+    return contexte === 'mot-de-passe'
+      ? messagesConnexion.connexionExpireeLien
+      : messagesConnexion.connexionExpiree
   }
   // Le serveur a répondu (un code, ou un statut 5xx) : une panne, que réessayer tout de suite ne
   // règle pas (m019). Sans réponse (statut 0, fetch rejeté) : le réseau.

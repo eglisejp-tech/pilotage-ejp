@@ -204,9 +204,7 @@ test.describe('lecture interrompue', () => {
     // L'écran d'erreur de la session cède la place à l'application. Les autres lectures de la
     // page d'accueil échouent encore (la base factice ne répond qu'au compte) et leur erreur porte
     // le même texte : on contrôle donc l'écran de session, pas l'alerte.
-    await expect(
-      page.getByText("Vos informations de connexion n'ont pas pu être vérifiées"),
-    ).toHaveCount(0)
+    await expect(page).not.toHaveTitle('Connexion impossible, Pilotage EJP')
     await expect(page.getByRole('banner')).toBeVisible()
     // Une seconde lecture du compte est bien partie après le clic.
     expect(lecturesDuCompte).toBeGreaterThan(avantLeClic)
