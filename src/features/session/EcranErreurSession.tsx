@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { texteLecture, useEchecRepete } from '@/components/etats/lectureImpossible'
 import { estErreurConfiguration, phraseLecture } from '@/data/messagesBase'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
@@ -58,7 +59,9 @@ export function EcranErreurSession({ onRetry, enCours, erreur }: Proprietes) {
           }}
           className="min-h-14 w-full bg-lumiere px-4.5 text-[15px] font-semibold text-encre aria-disabled:cursor-wait"
         >
-          {enCours ? 'Nouvel essai en cours' : 'Réessayer'}
+          <LibelleEnvoi enCours={enCours} libelleEnCours="Nouvel essai en cours">
+            Réessayer
+          </LibelleEnvoi>
         </button>
       )}
     </ColonneConnexion>

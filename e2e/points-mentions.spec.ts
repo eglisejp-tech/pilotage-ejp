@@ -42,6 +42,15 @@ async function ouvrirFenetre(page: Page, requete = 'profil=ministere') {
   await boutonDuPoint(page, BOUTON).click()
   const boite = fenetre(page)
   await expect(boite.getByRole('checkbox').first()).toBeVisible()
+  // Les cases arrivent en fondu de 180 ms, avec 4 px de montée (T65) : on mesure une fois arrivées.
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished),
+    ),
+  )
   return boite
 }
 
@@ -196,7 +205,7 @@ test.describe('la fenêtre', () => {
     )
   })
 
-  test('lecture des ministères en échec : « Réessayer » ; lente : « Chargement »', async ({
+  test('lecture des ministères en échec : « Réessayer » ; lente : « Chargement du formulaire » (T65)', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=ministere&ministeres=probleme')
@@ -207,7 +216,7 @@ test.describe('la fenêtre', () => {
 
     await ouvrir(page, 'profil=ministere&ministeres=lent')
     await boutonDuPoint(page, BOUTON).click()
-    await expect(fenetre(page).getByRole('status')).toHaveText('Chargement')
+    await expect(fenetre(page).getByRole('status')).toHaveText('Chargement du formulaire')
     await expect(fenetre(page).getByRole('checkbox')).toHaveCount(0)
   })
 

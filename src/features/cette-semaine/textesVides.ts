@@ -28,8 +28,16 @@ export const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
 
 export const TEXTES_VIDES = {
   page: {
-    /** Après 300 ms sans réponse, à la place du contenu, avec aria-busy. LISEZMOI, « Chargement ». */
-    chargement: 'Chargement',
+    /**
+     * Après 300 ms sans réponse, avec la flamme vivante, à la place du contenu, avec aria-busy.
+     * LISEZMOI, « Chargement » ; T65 : le texte dit ce qui charge (Proposé).
+     */
+    chargement: 'Chargement de Cette semaine',
+    /**
+     * Panneau de saisie qui lit ce qu'il lui faut avant d'afficher le formulaire (événement,
+     * réunion, point, chiffres, carte des FIJ, session), sous son titre déjà affiché (T65).
+     */
+    chargementFormulaire: 'Chargement du formulaire',
     /** Lecture en échec, ou sans réponse après 10 s : bandeau role="alert". LISEZMOI. */
     erreur: 'La connexion a échoué. Réessayez.',
     /** Bouton du bandeau d'erreur. LISEZMOI, « Erreur de page ». */

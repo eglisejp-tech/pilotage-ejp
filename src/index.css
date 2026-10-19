@@ -163,6 +163,194 @@
   }
 }
 
+/*
+ * Animations de chargement (T65, docs/decisions.md) : la flamme du logo d'EJP Tech. Les trois
+ * couleurs sont celles du dégradé et des reflets du logo (public/favicon.svg), seule exception
+ * aux tokens, voulue par T65 : elles vivent ici, en variables, pour que src/styles/tokens.css
+ * reste la copie de la référence et qu'aucun composant n'écrive de couleur. Le reste vient des
+ * tokens (--nuit pour le monogramme, --lumiere pour la lueur) ; la flamme d'un bouton prend la
+ * couleur de son libellé.
+ * Les styles de base sont l'état final, immobile : avec « Réduire les animations », la règle de
+ * tokens.css retire toute animation CSS et le dessin reste entier. Les formes de la flamme
+ * vivante (SMIL) s'arrêtent par pauseAnimations (src/components/etats/useSvgImmobile.ts).
+ */
+:root {
+  --flamme-haut: #e58a2f;
+  --flamme-bas: #d2732b;
+  --flamme-reflet: #f7d29a;
+}
+
+@layer components {
+  /* 2. La flamme vivante : une lueur qui respire et des reflets qui dansent. */
+  .flamme-lueur {
+    opacity: 0.5;
+    transform-origin: 50% 70%;
+    transform-box: fill-box;
+    animation: flamme-respirer 2.4s ease-in-out infinite;
+  }
+  .flamme-reflets {
+    transform-origin: 50% 100%;
+    transform-box: fill-box;
+    animation: flamme-danser 1.8s ease-in-out infinite;
+  }
+
+  /* 3. La petite flamme d'un bloc, de la taille du texte : elle bat doucement. */
+  .flamme-battement {
+    animation: flamme-battre 1.6s ease-in-out infinite;
+  }
+  /* 4. Celle d'un bouton qui envoie, un peu plus vive. */
+  .flamme-battement-bouton {
+    animation: flamme-battre-bouton 1.2s ease-in-out infinite;
+  }
+
+  /*
+   * 1. Ouverture : le monogramme se dessine, puis la flamme s'allume (1,2 s en tout). Le trait
+   * n'est animé que pendant le dessin (`data-ouverture="dessin"`) : quand l'ouverture a déjà joué,
+   * le monogramme est là, entier, et seule la flamme vit.
+   */
+  .ouverture-trace {
+    fill: var(--nuit);
+    stroke: var(--nuit);
+    stroke-width: 2.2;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+  [data-ouverture='dessin'] .ouverture-trace {
+    animation: ouverture-tracer 800ms ease-in-out backwards;
+  }
+  [data-ouverture='dessin'] .ouverture-trace:nth-of-type(2) {
+    animation-delay: 60ms;
+  }
+  [data-ouverture='dessin'] .ouverture-trace:nth-of-type(3) {
+    animation-delay: 120ms;
+  }
+  [data-ouverture='dessin'] .ouverture-trace:nth-of-type(4) {
+    animation-delay: 150ms;
+  }
+  .ouverture-allumage {
+    transform-origin: 50% 100%;
+    transform-box: fill-box;
+    animation: ouverture-allumer 450ms cubic-bezier(0.3, 1.6, 0.5, 1) 750ms backwards;
+  }
+  .ouverture-nom {
+    animation: ouverture-apparaitre 300ms ease 900ms backwards;
+  }
+
+  /*
+   * Le contenu arrive en fondu de 180 ms, avec 4 px de montée, à sa place réservée. L'enveloppe
+   * ne fait pas de boîte : chaque élément du contenu porte le fondu, la mise en page du parent
+   * (flex, grille, écarts) ne change pas.
+   */
+  .arrivee,
+  .arrivee-sections,
+  .arrivee-suite {
+    display: contents;
+  }
+  .arrivee > *,
+  .arrivee-suite > * > :not(header) {
+    animation: arriver 180ms ease-out backwards;
+  }
+  /*
+   * Pages dont le chargement montre déjà les titres de section (Cette semaine, Ma semaine) :
+   * seul ce qui n'était pas là arrive en fondu, les titres ne clignotent pas.
+   */
+  .arrivee-sections :is(header, section > :not(:first-child)) {
+    animation: arriver 180ms ease-out backwards;
+  }
+}
+
+@keyframes flamme-respirer {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes flamme-danser {
+  0%,
+  100% {
+    transform: skewX(0) scaleY(1);
+  }
+  40% {
+    transform: skewX(-3deg) scaleY(1.04);
+  }
+  70% {
+    transform: skewX(2deg) scaleY(0.97);
+  }
+}
+
+@keyframes flamme-battre {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@keyframes flamme-battre-bouton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+@keyframes ouverture-tracer {
+  0% {
+    stroke-dashoffset: 1;
+    fill-opacity: 0;
+  }
+  65% {
+    stroke-dashoffset: 0;
+    fill-opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    fill-opacity: 1;
+  }
+}
+
+@keyframes ouverture-allumer {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ouverture-apparaitre {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes arriver {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

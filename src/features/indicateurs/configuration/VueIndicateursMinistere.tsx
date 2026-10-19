@@ -1,9 +1,11 @@
 import { useEffect, useId, useMemo, useRef } from 'react'
 import { Link } from 'react-router'
+import { Arrivee } from '@/components/etats/Arrivee'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { ActionsMinistere } from '@/features/indicateurs/configuration/ActionsMinistere'
 import { BlocPrevus } from '@/features/indicateurs/configuration/BlocPrevus'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
@@ -107,9 +109,11 @@ function Donnees({
 
 interface PropsEcran extends Props {
   controleur: ControleurPanneaux | null
+  /** Une lecture a précédé la fiche : elle arrive en fondu (T65). */
+  fondu: boolean
 }
 
-function Ecran({ titre, profil, ministere, creation, controleur }: PropsEcran) {
+function Ecran({ titre, profil, ministere, creation, controleur, fondu }: PropsEcran) {
   const idTitre = useId()
   const titreRef = useRef<HTMLHeadingElement>(null)
   const enPanneau = useLargeurMin(LARGEUR_PANNEAU)
@@ -154,23 +158,29 @@ function Ecran({ titre, profil, ministere, creation, controleur }: PropsEcran) {
               />
             </div>
           ) : null}
-          {ministere.etat === 'chargement' ? <ChargementBloc /> : null}
-          {ministere.etat === 'introuvable' ? (
-            <EtatVide
-              situation="aucun_resultat"
-              action={{ libelle: textes.revenir, vers: '/indicateurs' }}
-            >
-              {textes.introuvable}
-            </EtatVide>
+          {ministere.etat === 'chargement' ? (
+            <div className="mt-4">
+              <ChargementPage texte={textes.chargementMinistere} />
+            </div>
           ) : null}
-          {ministere.etat === 'pret' ? (
-            <Donnees
-              donnees={ministere.donnees}
-              profil={profil}
-              creation={creation}
-              controleur={controleur}
-            />
-          ) : null}
+          <Arrivee fondu={fondu}>
+            {ministere.etat === 'introuvable' ? (
+              <EtatVide
+                situation="aucun_resultat"
+                action={{ libelle: textes.revenir, vers: '/indicateurs' }}
+              >
+                {textes.introuvable}
+              </EtatVide>
+            ) : null}
+            {ministere.etat === 'pret' ? (
+              <Donnees
+                donnees={ministere.donnees}
+                profil={profil}
+                creation={creation}
+                controleur={controleur}
+              />
+            ) : null}
+          </Arrivee>
         </>
       )}
       {controleur !== null ? <PanneauOuvertIndicateurs controleur={controleur} /> : null}
@@ -188,7 +198,7 @@ function AvecEcritures({
   donnees,
   ecritures,
   ...proprietes
-}: Props & { donnees: ConfigurationMinistere; ecritures: EcrituresIndicateurs }) {
+}: Props & { donnees: ConfigurationMinistere; ecritures: EcrituresIndicateurs; fondu: boolean }) {
   const { id, nom } = donnees
   const identite = useMemo(() => ({ id, nom }), [id, nom])
   const calculs = useMemo(
@@ -223,10 +233,24 @@ function AvecEcritures({
  */
 export function VueIndicateursMinistere(proprietes: Props) {
   const { ministere, ecritures } = proprietes
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis la fiche arrive en fondu.
+  const { attente, fondu } = useAttenteChargement(ministere.etat === 'chargement')
+  if (attente) {
+    return <Ecran {...proprietes} ministere={EN_CHARGEMENT} controleur={null} fondu={false} />
+  }
   // T60 : les écritures ne servent qu'à EJP Tech ; pour l'administration, l'écran reste en
   // lecture seule même si on les lui passe.
   if (ministere.etat === 'pret' && ecritures !== undefined && gereLOutil(proprietes.profil)) {
-    return <AvecEcritures {...proprietes} donnees={ministere.donnees} ecritures={ecritures} />
+    return (
+      <AvecEcritures
+        {...proprietes}
+        donnees={ministere.donnees}
+        ecritures={ecritures}
+        fondu={fondu}
+      />
+    )
   }
-  return <Ecran {...proprietes} controleur={null} />
+  return <Ecran {...proprietes} controleur={null} fondu={fondu} />
 }
+
+const EN_CHARGEMENT: ResultatConfigurationMinistere = { etat: 'chargement' }

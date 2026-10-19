@@ -1,3 +1,4 @@
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
@@ -47,29 +48,33 @@ function titreDe(contenu: ContenuPanneauEvenement): string {
 export function PanneauEvenement({ contenu, onFermer, surtitre }: Props) {
   return (
     <PanneauSaisie titre={titreDe(contenu)} surtitre={surtitre} onFermer={onFermer}>
-      {contenu.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {contenu.etat === 'probleme' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
-        >
-          {TEXTES_VIDES.page.erreur}
-        </EtatVide>
-      ) : null}
-      {contenu.etat === 'introuvable' ? (
-        <EtatVide situation="aucun_resultat" action={VERS_MA_FICHE}>
-          {TEXTES_EVENEMENT.introuvable}
-        </EtatVide>
-      ) : null}
-      {contenu.etat === 'pas_porteur' ? (
-        <EtatVide situation="pas_pour_ce_profil" action={VERS_MA_FICHE}>
-          {seulPorteur(contenu.nomPorteur)}
-        </EtatVide>
-      ) : null}
-      {contenu.etat === 'ajout' ? <FormulaireAjoutEvenement {...contenu} /> : null}
-      {contenu.etat === 'mise_a_jour' ? (
-        <FormulaireMiseAJourEvenement key={contenu.evenementId} {...contenu} />
-      ) : null}
+      <ApresChargement
+        enChargement={contenu.etat === 'chargement'}
+        indicateur={<ChargementSaisie />}
+      >
+        {contenu.etat === 'probleme' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
+          >
+            {TEXTES_VIDES.page.erreur}
+          </EtatVide>
+        ) : null}
+        {contenu.etat === 'introuvable' ? (
+          <EtatVide situation="aucun_resultat" action={VERS_MA_FICHE}>
+            {TEXTES_EVENEMENT.introuvable}
+          </EtatVide>
+        ) : null}
+        {contenu.etat === 'pas_porteur' ? (
+          <EtatVide situation="pas_pour_ce_profil" action={VERS_MA_FICHE}>
+            {seulPorteur(contenu.nomPorteur)}
+          </EtatVide>
+        ) : null}
+        {contenu.etat === 'ajout' ? <FormulaireAjoutEvenement {...contenu} /> : null}
+        {contenu.etat === 'mise_a_jour' ? (
+          <FormulaireMiseAJourEvenement key={contenu.evenementId} {...contenu} />
+        ) : null}
+      </ApresChargement>
     </PanneauSaisie>
   )
 }

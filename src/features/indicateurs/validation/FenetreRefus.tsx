@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useForm, useWatch } from 'react-hook-form'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { lireRefusValidation } from '@/features/indicateurs/validation/refus'
 import type { RefusValidation } from '@/features/indicateurs/validation/refus'
 import { schemaFormulaireRefus } from '@/features/indicateurs/validation/schemas'
@@ -178,7 +179,12 @@ export function FenetreRefus({
               aria-disabled={isSubmitting ? true : undefined}
               className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
             >
-              {isSubmitting ? TEXTES_FENETRE_REFUS.boutonEnCours : TEXTES_FENETRE_REFUS.bouton}
+              <LibelleEnvoi
+                enCours={isSubmitting}
+                libelleEnCours={TEXTES_FENETRE_REFUS.boutonEnCours}
+              >
+                {TEXTES_FENETRE_REFUS.bouton}
+              </LibelleEnvoi>
             </button>
           </div>
           {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}

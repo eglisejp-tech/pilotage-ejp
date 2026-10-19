@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useMotChargement } from '@/components/etats/useMotChargement'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { BlocActives } from '@/features/personnes/BlocActives'
 import { BlocConnexions } from '@/features/personnes/BlocConnexions'
@@ -24,19 +25,6 @@ type Effacement =
 
 const classeBouton =
   'inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold text-encre hover:bg-fond'
-
-/**
- * « Chargement » n'apparaît qu'après 300 ms (une réponse rapide ne fait rien clignoter), puis
- * « Chargement plus long que d'habitude » après 4 s (m248), par le mot commun des écrans.
- */
-function Chargement() {
-  const mot = useMotChargement(TEXTES_PERSONNES.chargement)
-  return (
-    <p role="status" aria-busy="true" className="py-[18px] text-encre-3">
-      {mot}
-    </p>
-  )
-}
 
 /**
  * Onglet « Personnes » d'EJP Tech (T56) : qui a utilisé chaque compte de ministère, quand, et
@@ -84,44 +72,48 @@ export function VuePersonnes({ titre, resultat, actions }: Props) {
         </p>
       </header>
 
-      {resultat.etat === 'erreur' ? (
-        <ErreurDePage
-          message={TEXTES_PERSONNES.erreur}
-          libelleBouton={TEXTES_PERSONNES.reessayer}
-          onReessayer={resultat.reessayer}
-        />
-      ) : null}
-      {resultat.etat === 'chargement' ? <Chargement /> : null}
-      {resultat.etat === 'pret' ? (
-        <>
-          {resultat.donnees.aEffacer > 0 ? (
-            <div className="flex flex-col gap-3 bg-nuit-pale px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-[15px]">{TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer)}</p>
-              <button
-                type="button"
-                onClick={() =>
-                  setEffacement({
-                    type: 'anciens',
-                    contexte: TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer),
-                    prenoms: resultat.donnees.aEffacer,
-                  })
-                }
-                className={classeBouton}
-              >
-                {TEXTES_PERSONNES.effacerAnciens}
-              </button>
-            </div>
-          ) : null}
-          <BlocActives actives={resultat.donnees.actives} surEffacer={surEffacer} />
-          <BlocSansActivite comptes={resultat.donnees.sansActivite} surEffacer={surEffacer} />
-          <BlocConnexions
-            connexions={resultat.donnees.connexions}
-            aPlus={resultat.donnees.aPlus}
-            plusEnCours={resultat.donnees.plusEnCours}
-            surPlus={actions.afficherPlus}
+      <ApresChargement
+        enChargement={resultat.etat === 'chargement'}
+        indicateur={<ChargementPage texte={TEXTES_PERSONNES.chargement} />}
+      >
+        {resultat.etat === 'erreur' ? (
+          <ErreurDePage
+            message={TEXTES_PERSONNES.erreur}
+            libelleBouton={TEXTES_PERSONNES.reessayer}
+            onReessayer={resultat.reessayer}
           />
-        </>
-      ) : null}
+        ) : null}
+        {resultat.etat === 'pret' ? (
+          <>
+            {resultat.donnees.aEffacer > 0 ? (
+              <div className="flex flex-col gap-3 bg-nuit-pale px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[15px]">{TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer)}</p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEffacement({
+                      type: 'anciens',
+                      contexte: TEXTES_PERSONNES.anciens(resultat.donnees.aEffacer),
+                      prenoms: resultat.donnees.aEffacer,
+                    })
+                  }
+                  className={classeBouton}
+                >
+                  {TEXTES_PERSONNES.effacerAnciens}
+                </button>
+              </div>
+            ) : null}
+            <BlocActives actives={resultat.donnees.actives} surEffacer={surEffacer} />
+            <BlocSansActivite comptes={resultat.donnees.sansActivite} surEffacer={surEffacer} />
+            <BlocConnexions
+              connexions={resultat.donnees.connexions}
+              aPlus={resultat.donnees.aPlus}
+              plusEnCours={resultat.donnees.plusEnCours}
+              surPlus={actions.afficherPlus}
+            />
+          </>
+        ) : null}
+      </ApresChargement>
 
       {effacement !== null ? (
         <FenetreEffacement

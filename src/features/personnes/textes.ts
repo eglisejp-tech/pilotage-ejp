@@ -34,7 +34,7 @@ export const TEXTES_PERSONNES = {
   anciens: (n: number) => `${nombre(n)} ${accorder(n, 'prénom a', 'prénoms ont')} plus de 12 mois.`,
   effacerAnciens: 'Effacer les prénoms de plus de 12 mois',
   effacer: 'Effacer ce prénom',
-  chargement: 'Chargement',
+  chargement: 'Chargement des personnes',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
   reussiteUn: 'Prénom effacé.',

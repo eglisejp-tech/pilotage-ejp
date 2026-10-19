@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
@@ -46,30 +47,34 @@ export function BlocPointsFiche({ bloc, profil, ministereId, nomMinistere }: Pro
         titre={TEXTES_FICHE.titrePoints}
         complement={<span className="text-note text-encre-3">{TEXTES_FICHE.complementPoints}</span>}
       />
-      {bloc.etat === 'chargement' ? <ChargementBloc /> : null}
-      {bloc.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_FICHE.reessayer, surClic: bloc.reessayer }}
-        >
-          {TEXTES_FICHE.erreur}
-        </EtatVide>
-      ) : null}
-      {bloc.etat === 'donnees' ? (
-        bloc.donnees.length === 0 ? (
-          <EtatVide situation="tout_est_fait">
-            {profil === 'ministere'
-              ? TEXTES_FICHE.points.aucunMinistere
-              : TEXTES_FICHE.points.aucun(nomMinistere)}
+      <ApresChargement
+        enChargement={bloc.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_FICHE.chargementPoints} />}
+      >
+        {bloc.etat === 'erreur' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_FICHE.reessayer, surClic: bloc.reessayer }}
+          >
+            {TEXTES_FICHE.erreur}
           </EtatVide>
-        ) : (
-          <div className="flex flex-col divide-y divide-filet">
-            {bloc.donnees.map((point) => (
-              <CartePointFiche key={point.id} point={point} compte={compte} />
-            ))}
-          </div>
-        )
-      ) : null}
+        ) : null}
+        {bloc.etat === 'donnees' ? (
+          bloc.donnees.length === 0 ? (
+            <EtatVide situation="tout_est_fait">
+              {profil === 'ministere'
+                ? TEXTES_FICHE.points.aucunMinistere
+                : TEXTES_FICHE.points.aucun(nomMinistere)}
+            </EtatVide>
+          ) : (
+            <div className="flex flex-col divide-y divide-filet">
+              {bloc.donnees.map((point) => (
+                <CartePointFiche key={point.id} point={point} compte={compte} />
+              ))}
+            </div>
+          )
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

@@ -92,8 +92,8 @@ export const TEXTES_POINTS = {
     suiteMinistere: 'Les points que vous créez, et ceux qui vous mentionnent, apparaîtront ici.',
   },
 
-  /** LISEZMOI, « États » : mêmes textes que « Cette semaine ». */
-  chargement: 'Chargement',
+  /** LISEZMOI, « États » : mêmes textes que « Cette semaine » ; T65, ce qui charge. */
+  chargement: 'Chargement des points',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

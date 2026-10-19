@@ -1,5 +1,7 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router'
+import { Arrivee } from '@/components/etats/Arrivee'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { ChargementPoints } from '@/features/points/ChargementPoints'
 import { ErreurPoints } from '@/features/points/ErreurPoints'
@@ -27,11 +29,17 @@ function PagePointsLue({ titre, profil, compte }: ProprietesLue) {
   useTitrePage(titre)
   const [parametres] = useSearchParams()
   const resultat = usePoints(profil, parametres.get('ministere'))
+  const { attente, fondu } = useAttenteChargement(resultat.etat === 'chargement')
 
+  if (attente) return <ChargementPoints titre={titre} profil={profil} />
   if (resultat.etat === 'erreur')
     return <ErreurPoints titre={titre} onReessayer={resultat.reessayer} />
   if (resultat.etat === 'pret') {
-    return <VuePoints titre={titre} profil={profil} donnees={resultat.donnees} compte={compte} />
+    return (
+      <Arrivee fondu={fondu} mode="suite">
+        <VuePoints titre={titre} profil={profil} donnees={resultat.donnees} compte={compte} />
+      </Arrivee>
+    )
   }
   return <ChargementPoints titre={titre} profil={profil} />
 }
@@ -39,8 +47,9 @@ function PagePointsLue({ titre, profil, compte }: ProprietesLue) {
 /**
  * Écran 05 « Points d'attention » (berger, conseil, EJP Tech en lecture seule) et « Mes points »
  * (ministère), sur `/points` (BRIEF, section 9). L'administration de l'église reçoit la page non
- * disponible, sans aucune lecture. Trois états : le chargement (titre tout de suite, « Chargement »
- * après 300 ms), l'erreur de page avec « Réessayer » (échec ou 10 s sans réponse), puis la vue.
+ * disponible, sans aucune lecture. Trois états : le chargement (titre tout de suite, la flamme et
+ * « Chargement des points » après 300 ms, au moins 600 ms une fois montrés, T65), l'erreur de page
+ * avec « Réessayer » (échec ou 10 s sans réponse), puis la vue, en fondu.
  * Titre de l'onglet : « Points d'attention, Pilotage EJP » ou « Mes points, Pilotage EJP ».
  */
 export function PagePoints({ titre }: ProprietesPage) {

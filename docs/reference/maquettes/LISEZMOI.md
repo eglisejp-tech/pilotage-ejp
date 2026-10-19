@@ -96,6 +96,7 @@ Vues d'un profil déduites d'un autre :
 Le brief fait foi. Ces écarts ne sont pas des défauts de l'application :
 
 - **Toutes les maquettes d'écrans connectés** : le bandeau d'avancement (ligne sous l'en-tête, T50) n'y figure pas ; il est dessiné dans la toile « Pilotage EJP : logo et bandeau ». Il apporte aussi la première animation de l'outil (remplissage des cases, ouverture du panneau), alors que les maquettes disent « Pas d'animation ».
+- **États, ligne « Chargement »** (T65, `docs/decisions.md`) : l'attente n'est plus le seul mot « Chargement » sans animation. Rien pendant 300 ms, puis la flamme d'EJP Tech avec un texte qui dit ce qui charge (« Chargement de Ma semaine »), au moins 600 ms, et le contenu en fondu de 180 ms : l'ouverture de l'outil (le monogramme se dessine, la flamme s'allume), la flamme vivante d'une page, la petite flamme d'un bloc qui se relit et d'un bouton « … en cours » (qui garde sa largeur). Les places du contenu sont réservées en gris immobile. Avec « Réduire les animations », tout est immobile. Le reste de la ligne tient (titres et filets tout de suite, `aria-busy`, erreur de page à 10 s).
 
 - **00** : la planche dit du ministère « Marquer traité ses propres points ». Lis : « Marquer traités ses points et ceux qui le mentionnent, avec un commentaire ».
 - **00, EJP Tech** : la planche montre EJP Tech sans les chiffres, avec deux onglets. EJP Tech lit maintenant tout comme le berger, en lecture seule, et a l'onglet « Cette semaine » entre « Modération » (son accueil) et « Journal technique » (`docs/decisions.md`, T29).

@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
@@ -45,7 +47,9 @@ function focusPerdu(): boolean {
  * « Rien à valider. ». Après une décision, le message est annoncé 6 secondes et le focus revient
  * au titre quand la ligne décidée a disparu.
  */
-export function VueAValider({ decide, lignes, decidees, actions }: Props) {
+export function VueAValider({ decide, lignes: lecture, decidees, actions }: Props) {
+  // T65 : le nombre en attente, la phrase et la liste arrivent ensemble, après la tenue.
+  const lignes = useLectureAffichee(lecture).lecture
   const idTitre = useId()
   const section = useRef<HTMLElement>(null)
   const { hash } = useLocation()
@@ -111,35 +115,39 @@ export function VueAValider({ decide, lignes, decidees, actions }: Props) {
         </div>
       ) : null}
 
-      {lignes.etat === 'chargement' ? <ChargementBloc /> : null}
-      {lignes.etat === 'erreur' ? <BandeauErreur reessayer={lignes.reessayer} /> : null}
-      {liste !== null && liste.length === 0 ? (
-        <EtatVide situation="tout_est_fait">{TEXTES_A_VALIDER.vide}</EtatVide>
-      ) : null}
-      {liste !== null && liste.length > 0 ? (
-        <ul className="divide-y divide-filet">
-          {liste.map((ligne) => (
-            <li key={ligne.id}>
-              <LigneAValider
-                ligne={ligne}
-                actions={actions}
-                surFait={annoncer}
-                surRefus={signalerRefus}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ApresChargement
+        enChargement={lignes.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_A_VALIDER.chargement} />}
+      >
+        {lignes.etat === 'erreur' ? <BandeauErreur reessayer={lignes.reessayer} /> : null}
+        {liste !== null && liste.length === 0 ? (
+          <EtatVide situation="tout_est_fait">{TEXTES_A_VALIDER.vide}</EtatVide>
+        ) : null}
+        {liste !== null && liste.length > 0 ? (
+          <ul className="divide-y divide-filet">
+            {liste.map((ligne) => (
+              <li key={ligne.id}>
+                <LigneAValider
+                  ligne={ligne}
+                  actions={actions}
+                  surFait={annoncer}
+                  surRefus={signalerRefus}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-      {/* Sans la file (chargement, erreur), aucun chiffre ne paraît seul : le bandeau parle. */}
-      {liste !== null && decidees !== null && decidees.etat === 'donnees' ? (
-        decidees.donnees.length > 0 ? (
-          <Decidees lignes={decidees.donnees} actions={actions} surMasque={annoncer} />
-        ) : null
-      ) : null}
-      {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
-        <BandeauErreur reessayer={decidees.reessayer} />
-      ) : null}
+        {/* Sans la file (chargement, erreur), aucun chiffre ne paraît seul : le bandeau parle. */}
+        {liste !== null && decidees !== null && decidees.etat === 'donnees' ? (
+          decidees.donnees.length > 0 ? (
+            <Decidees lignes={decidees.donnees} actions={actions} surMasque={annoncer} />
+          ) : null
+        ) : null}
+        {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
+          <BandeauErreur reessayer={decidees.reessayer} />
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

@@ -40,6 +40,8 @@ export const TEXTES_SESSION = {
   future: "Cette session n'a pas encore eu lieu. Sa saisie ouvrira le jour de la session.",
   autreSession: 'Choisir une autre session',
   titreChoix: 'Choisir la session',
+  /** « Choisir la session » lit les sessions ouvertes au ministère (T65). */
+  chargementChoix: 'Chargement des sessions',
 } as const
 
 /** « Choisir la session » : `/saisir/session/:id` avec ce mot à la place d'un identifiant. */

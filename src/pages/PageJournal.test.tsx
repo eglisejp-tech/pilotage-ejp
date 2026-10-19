@@ -111,14 +111,16 @@ describe('PageJournal', () => {
     expect(document.title).toBe('Journal technique, Pilotage EJP')
   })
 
-  it('chargement : le titre est déjà là, « Chargement » après 300 ms', () => {
+  it('chargement : le titre est déjà là, la flamme et « Chargement du journal » après 300 ms (T65)', () => {
     vi.useFakeTimers()
     connecter('berger')
-    afficher('Journal')
+    const { container } = afficher('Journal')
     expect(screen.getByRole('heading', { level: 1, name: 'Journal' })).toBeInTheDocument()
-    expect(screen.queryByText('Chargement')).toBeNull()
+    expect(screen.queryByText('Chargement du journal')).toBeNull()
     act(() => vi.advanceTimersByTime(300))
-    expect(screen.getByText('Chargement')).toBeInTheDocument()
+    const texte = screen.getByText('Chargement du journal')
+    expect(texte.closest('[role="status"]')).toHaveTextContent(/^Chargement du journal$/)
+    expect(container.querySelector('[data-flamme="vivante"]')).not.toBeNull()
   })
 
   it('erreur : le bandeau et « Réessayer » relance la lecture', async () => {

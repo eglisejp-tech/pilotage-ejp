@@ -106,6 +106,8 @@ export const TEXTES_BLOC_SIGNALEMENTS = {
       : `${nombre(n)} ${accorder(n, 'signalement ouvert', 'signalements ouverts')}`,
   /** Sous les ouverts : les clôtures des 30 derniers jours (jour de Paris, par la base). */
   titreClos: 'Clos ces 30 derniers jours',
+  /** Le bloc se lit à part : la petite flamme et ce texte, dans le bloc (T65). */
+  chargement: 'Chargement des signalements',
   /** « Ajouter un événement, 6 oct. », sous le nom du ministère. */
   ligne: (ecran: EcranSignalement, saisiLe: string) =>
     `${LIBELLES_ECRAN[ecran]}, ${jourDuSignalement(saisiLe)}`,

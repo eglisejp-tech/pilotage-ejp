@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { phraseErreur } from '@/data/messagesBase'
 import { TEXTES_FENETRE_EFFACEMENT } from '@/features/personnes/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
@@ -103,7 +104,12 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
             aria-disabled={enCours ? true : undefined}
             className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
           >
-            {enCours ? TEXTES_FENETRE_EFFACEMENT.boutonEnCours : TEXTES_FENETRE_EFFACEMENT.bouton}
+            <LibelleEnvoi
+              enCours={enCours}
+              libelleEnCours={TEXTES_FENETRE_EFFACEMENT.boutonEnCours}
+            >
+              {TEXTES_FENETRE_EFFACEMENT.bouton}
+            </LibelleEnvoi>
           </button>
         </div>
         {echec !== null ? <ErreurFormulaire message={echec} /> : null}

@@ -231,10 +231,12 @@ test.describe('états (T36)', () => {
     await expect(page.getByRole('button', { name: 'Retirer les filtres' })).toHaveCount(0)
   })
 
-  test('chargement : le titre est déjà là, « Chargement » après 300 ms', async ({ page }) => {
+  test('chargement : le titre est déjà là, « Chargement du journal » après 300 ms (T65)', async ({
+    page,
+  }) => {
     await ouvrir(page, { etat: 'chargement' })
     await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
-    await expect(page.getByText('Chargement', { exact: true })).toBeVisible()
+    await expect(page.getByText('Chargement du journal', { exact: true })).toBeVisible()
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(1)
   })
 

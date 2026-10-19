@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import type { LigneMinistereConfiguration } from '@/features/indicateurs/configuration/construire'
 import {
   nomAccessibleCreer,
@@ -62,7 +63,9 @@ export function CellulePrevus({ ligne, creation }: Props) {
         onClick={() => void creation.creer({ id: ligne.id, nom: ligne.nom }, prevus.modele.code)}
         className={classeBouton}
       >
-        {enCours ? TEXTES_CONFIGURATION.creationEnCours : textes.creer}
+        <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}>
+          {textes.creer}
+        </LibelleEnvoi>
       </button>
     </span>
   )

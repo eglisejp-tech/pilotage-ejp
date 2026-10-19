@@ -1,4 +1,6 @@
 import { useSearchParams } from 'react-router'
+import { Arrivee } from '@/components/etats/Arrivee'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { ChargementCetteSemaine } from '@/features/cette-semaine/ChargementCetteSemaine'
 import { typeSessionDeLAdresse } from '@/features/cette-semaine/lecteur'
@@ -27,14 +29,17 @@ export function PageCetteSemaine({ lecteur }: Proprietes) {
 /**
  * « Cette semaine » de l'église, pour le berger, le conseil, l'administration et EJP Tech.
  * `?session=` choisit le type de la session affichée (T20). Trois états : le chargement (titres
- * tout de suite, « Chargement » après 300 ms), l'erreur de page avec « Réessayer » (échec ou 10 s
- * sans réponse), puis la vue. Titre : « Cette semaine, Pilotage EJP ».
+ * tout de suite, la flamme et « Chargement de Cette semaine » après 300 ms, au moins 600 ms une
+ * fois montrés, T65), l'erreur de page avec « Réessayer » (échec ou 10 s sans réponse), puis la
+ * vue, en fondu. Titre : « Cette semaine, Pilotage EJP ».
  */
 function PageEglise({ lecteur }: Proprietes) {
   useTitrePage('Cette semaine')
   const [parametres] = useSearchParams()
   const resultat = useCetteSemaine(lecteur, typeSessionDeLAdresse(parametres.get('session')))
+  const { attente, fondu } = useAttenteChargement(resultat.enChargement)
 
+  if (attente) return <ChargementCetteSemaine profil={lecteur.profil} />
   if (resultat.erreur) {
     return (
       <>
@@ -47,6 +52,12 @@ function PageEglise({ lecteur }: Proprietes) {
       </>
     )
   }
-  if (resultat.donnees) return <VueCetteSemaine donnees={resultat.donnees} />
+  if (resultat.donnees) {
+    return (
+      <Arrivee fondu={fondu} mode="sections">
+        <VueCetteSemaine donnees={resultat.donnees} />
+      </Arrivee>
+    )
+  }
   return <ChargementCetteSemaine profil={lecteur.profil} />
 }

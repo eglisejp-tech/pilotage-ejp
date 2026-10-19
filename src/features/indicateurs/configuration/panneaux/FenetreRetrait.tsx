@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { MOTIFS_RETRAIT, schemaMotifRetrait } from '@/data/indicateursEcriture'
 import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
 import { calculsQuiPartent } from '@/features/indicateurs/configuration/panneaux/apercu'
@@ -193,11 +194,11 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
               aria-disabled={enCours || !pret ? true : undefined}
               className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
             >
-              {enCours
-                ? TEXTES_PANNEAUX.enCours
-                : confidentialite
+              <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_PANNEAUX.enCours}>
+                {confidentialite
                   ? TEXTES_PANNEAUX.confidentialite.bouton
                   : TEXTES_PANNEAUX.retrait.bouton}
+              </LibelleEnvoi>
             </button>
           </div>
         </form>

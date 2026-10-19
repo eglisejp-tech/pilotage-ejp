@@ -1,4 +1,6 @@
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { TEXTES_VIDES_INDICATEURS } from '@/features/indicateurs/textesVides'
 import { adresseSaisieMois } from '@/features/saisie-chiffres/choixPeriode'
 import { FormulaireMois } from '@/features/saisie-chiffres/FormulaireMois'
@@ -17,49 +19,60 @@ const CONNEXION_ECHOUEE = 'La connexion a échoué. Réessayez.'
  * difficulté » reste en bas dans chaque état.
  */
 export function ContenuSaisieMois({ etat }: { etat: EtatSaisieMois }) {
-  if (etat.etat === 'pret') {
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis la suite arrive en fondu.
+  const { attente, fondu } = useAttenteChargement(etat.etat === 'chargement')
+  if (!attente && etat.etat === 'pret') {
     return (
-      <FormulaireMois
-        key={etat.mois}
-        mois={etat.mois}
-        champs={etat.champs}
-        proposes={etat.proposes}
-        rattrapage={etat.rattrapage}
-        enregistrer={etat.enregistrer}
-      />
+      <Arrivee fondu={fondu}>
+        <FormulaireMois
+          key={etat.mois}
+          mois={etat.mois}
+          champs={etat.champs}
+          proposes={etat.proposes}
+          rattrapage={etat.rattrapage}
+          enregistrer={etat.enregistrer}
+        />
+      </Arrivee>
     )
   }
   return (
     <>
-      {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {etat.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
-        >
-          {CONNEXION_ECHOUEE}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'sans_indicateur' ? (
-        <EtatVide
-          situation="premier_usage"
-          action={{ libelle: TEXTES_VIDES_INDICATEURS.actionRevenirAMaFiche, vers: '/ma-fiche' }}
-        >
-          {TEXTES_VIDES_INDICATEURS.moisSansIndicateur}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'refuse' ? (
-        <EtatVide
-          situation="aucun_resultat"
-          action={{
-            libelle: actionSaisirMois(etat.moisPropose),
-            vers: adresseSaisieMois(etat.moisPropose),
-            remplace: true,
-          }}
-        >
-          {etat.message}
-        </EtatVide>
-      ) : null}
+      {attente ? <ChargementSaisie /> : null}
+      {attente ? null : (
+        <Arrivee fondu={fondu}>
+          {etat.etat === 'erreur' ? (
+            <EtatVide
+              situation="probleme_passager"
+              action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
+            >
+              {CONNEXION_ECHOUEE}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'sans_indicateur' ? (
+            <EtatVide
+              situation="premier_usage"
+              action={{
+                libelle: TEXTES_VIDES_INDICATEURS.actionRevenirAMaFiche,
+                vers: '/ma-fiche',
+              }}
+            >
+              {TEXTES_VIDES_INDICATEURS.moisSansIndicateur}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'refuse' ? (
+            <EtatVide
+              situation="aucun_resultat"
+              action={{
+                libelle: actionSaisirMois(etat.moisPropose),
+                vers: adresseSaisieMois(etat.moisPropose),
+                remplace: true,
+              }}
+            >
+              {etat.message}
+            </EtatVide>
+          ) : null}
+        </Arrivee>
+      )}
       <LienSignalement ecran="saisie_mois" />
     </>
   )

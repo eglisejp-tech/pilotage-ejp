@@ -1,5 +1,6 @@
 import { useId } from 'react'
-import { useMotChargement } from '@/components/etats/useMotChargement'
+import { IndicateurChargement } from '@/components/etats/IndicateurChargement'
+import { PlaceReservee } from '@/components/etats/PlaceReservee'
 import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { GrilleCetteSemaine } from './GrilleCetteSemaine'
 import { voitADecider } from './lecteur'
@@ -12,34 +13,33 @@ interface Props {
   profil: ProfilVue
 }
 
-/** Titre de section et son filet, sans contenu tant que les données arrivent. */
+/** Titre de section et son filet, puis la place réservée au contenu, grise et immobile. */
 function SectionEnAttente({ titre }: { titre: string }) {
   const idTitre = useId()
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
+    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col gap-4">
       <TitreSection id={idTitre} titre={titre} />
+      <PlaceReservee className="h-24" />
     </section>
   )
 }
 
 /**
- * Chargement de « Cette semaine » (LISEZMOI, « États ») : les titres de section et leurs filets
- * tout de suite, à leur place ; après 300 ms, « Chargement » en `--encre-3` à la place de la
- * phrase, avec `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). Pas
- * d'animation. Les 10 s et l'erreur viennent de useCetteSemaine.
+ * Chargement de « Cette semaine » (LISEZMOI, « États » ; T65, moment 2) : les titres de section
+ * et leurs filets tout de suite, à leur place, avec la place de leur contenu en gris immobile ;
+ * après 300 ms, la flamme vivante et « Chargement de Cette semaine » à la place de la phrase,
+ * avec `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). Les 10 s et
+ * l'erreur viennent de useCetteSemaine.
  */
 export function ChargementCetteSemaine({ profil }: Props) {
-  const mot = useMotChargement(TEXTES_VIDES.page.chargement)
   const telephone = !useLargeurMin(600)
 
-  // La zone role="status" existe dès le départ, vide : « Chargement » y entre après 300 ms et
-  // les lecteurs d'écran l'annoncent (une zone ajoutée avec son texte ne l'est pas toujours).
+  // La zone role="status" existe dès le départ, vide : le texte y entre après 300 ms et les
+  // lecteurs d'écran l'annoncent (une zone ajoutée avec son texte ne l'est pas toujours).
   const ouverture = (
-    <header className="min-h-16">
+    <header>
       <h1 className="sr-only">Cette semaine</h1>
-      <p role="status" className="text-encre-3">
-        {mot}
-      </p>
+      <IndicateurChargement texte={TEXTES_VIDES.page.chargement} />
     </header>
   )
 

@@ -16,7 +16,9 @@ export const TEXTES_SESSIONS = {
   titreListe: 'Sessions déclarées',
   /** État vide (T36, « premier usage »). */
   vide: 'Aucune session déclarée. Déclarez la première avec le panneau.',
-  chargement: 'Chargement',
+  chargement: 'Chargement des sessions',
+  /** Panneau d'une session : la liste des ministères attendus se lit à part (T65, bloc). */
+  chargementAttendus: 'Chargement des ministères attendus',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 

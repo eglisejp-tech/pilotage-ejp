@@ -17,6 +17,8 @@ export const TEXTES_ACCUEIL = {
   actions: 'Saisies à faire',
   /** LISEZMOI, « États » (07). */
   aucunPoint: 'Aucun point ouvert pour votre ministère.',
+  /** « Vos points » se lit à part : la petite flamme et ce texte, dans le bloc (T65). */
+  chargementPoints: 'Chargement de vos points',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

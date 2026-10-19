@@ -54,10 +54,10 @@ function ligneDe(element: HTMLElement): HTMLElement {
 }
 
 describe('VueComptes (écran 13)', () => {
-  it('chargement : le titre, puis « Chargement » sans bouton d’ajout', async () => {
+  it('chargement : le titre, puis « Chargement des ministères et des comptes » sans bouton d’ajout', async () => {
     afficher({ etat: 'chargement' })
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Ministères et comptes')
-    expect(await screen.findByText('Chargement')).toBeInTheDocument()
+    expect(await screen.findByText('Chargement des ministères et des comptes')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Ajouter un ministère' })).toBeNull()
   })
 

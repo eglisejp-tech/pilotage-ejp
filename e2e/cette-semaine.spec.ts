@@ -172,14 +172,14 @@ test.describe('Cette semaine, aperçu', () => {
     await expect(session.getByRole('link', { name: 'Voir Anti-Dispersion' })).toBeVisible()
   })
 
-  test('chargement : titres et filets tout de suite, « Chargement » après 300 ms', async ({
+  test('chargement : titres et filets tout de suite, « Chargement de Cette semaine » après 300 ms (T65)', async ({
     page,
   }) => {
     await ouvrir(page, 'berger', 'chargement')
     await expect(page.locator('[aria-busy="true"]')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: 'Les ministères' })).toBeVisible()
     await expect(
-      page.locator('[aria-busy="true"]').getByText('Chargement', { exact: true }),
+      page.locator('[aria-busy="true"]').getByText('Chargement de Cette semaine', { exact: true }),
     ).toBeVisible()
   })
 
@@ -272,7 +272,10 @@ test.describe('Cette semaine, aperçu', () => {
     for (const etat of ['chargement', 'erreur', 'session-jamais-tenue'] as const) {
       await ouvrir(page, 'berger', etat)
       if (etat === 'chargement') {
-        await page.locator('[aria-busy="true"]').getByText('Chargement', { exact: true }).waitFor()
+        await page
+          .locator('[aria-busy="true"]')
+          .getByText('Chargement de Cette semaine', { exact: true })
+          .waitFor()
       }
       await page.screenshot({
         path: `test-results/captures/cette-semaine-berger-${etat}-${largeur}.png`,

@@ -38,7 +38,7 @@ export type ResultatCetteSemaine = {
   reessayer: () => void
 } & (
   | {
-      /** Première lecture, ou nouvel essai après une erreur : « Chargement » après 300 ms. */
+      /** Première lecture, ou nouvel essai après une erreur : la flamme après 300 ms (T65). */
       enChargement: true
       erreur: false
       donnees: null

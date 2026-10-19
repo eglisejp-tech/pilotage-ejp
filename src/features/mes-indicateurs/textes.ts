@@ -31,7 +31,7 @@ export const TEXTES_MES_INDICATEURS = {
   ajouter: 'Ajouter un indicateur',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
-  chargement: 'Chargement',
+  chargement: 'Chargement de vos indicateurs',
   /** État vide : aucun indicateur suivi (LISEZMOI, « États »). */
   aucunIndicateur:
     "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",

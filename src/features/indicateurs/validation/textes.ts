@@ -37,7 +37,7 @@ export const TEXTES_A_VALIDER = {
     'Ces ajouts attendent EJP Tech. Vous les lisez ici : seul EJP Tech les valide ou les refuse.',
   /** État vide : rien n'attend (le titre et l'ancre restent, pour le lien de la Modération). */
   vide: "Rien à valider. Les demandes d'indicateurs des ministères arriveront ici.",
-  chargement: 'Chargement',
+  chargement: 'Chargement des demandes à valider',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
   valider: 'Valider',

@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from 'react'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import type { TexteConfirmation } from '@/features/comptes/textes'
@@ -82,7 +83,9 @@ export function FenetreConfirmation({
             aria-disabled={enCours ? true : undefined}
             className="inline-flex min-h-cible items-center justify-center bg-lumiere px-4.5 text-[15px] font-bold text-encre aria-disabled:cursor-wait"
           >
-            {enCours ? TEXTES_COMPTES.enCours : confirmation.bouton}
+            <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_COMPTES.enCours}>
+              {confirmation.bouton}
+            </LibelleEnvoi>
           </button>
         </div>
         {erreur !== null ? <ErreurFormulaire message={erreur} /> : null}

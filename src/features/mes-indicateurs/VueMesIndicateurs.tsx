@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import type { DonneesMesIndicateurs } from '@/features/mes-indicateurs/construire'
 import {
@@ -42,7 +44,9 @@ function focusPerdu(): boolean {
  * faire. Un envoi réussi ferme le panneau et s'annonce 6 secondes ; le focus revient au titre
  * quand le bouton d'origine n'est plus là.
  */
-export function VueMesIndicateurs({ titre, donnees, envoyer }: Props) {
+export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
+  // T65 : la phrase, le bouton d'ajout et les sections arrivent ensemble, après la tenue.
+  const donnees = useLectureAffichee(lecture).lecture
   useTitrePage(titre)
   const idTitre = useId()
   const titreRef = useRef<HTMLHeadingElement>(null)
@@ -106,21 +110,28 @@ export function VueMesIndicateurs({ titre, donnees, envoyer }: Props) {
             <MessageReussite message={reussite} envoi={envoi} />
           </div>
 
-          {donnees.etat === 'chargement' ? <ChargementBloc /> : null}
-          {donnees.etat === 'erreur' ? (
-            <ErreurDePage
-              message={TEXTES_MES_INDICATEURS.erreur}
-              libelleBouton={TEXTES_MES_INDICATEURS.reessayer}
-              onReessayer={donnees.reessayer}
-            />
-          ) : null}
-          {pret?.vide ? (
-            <EtatVide situation="premier_usage" suite={TEXTES_MES_INDICATEURS.aucunIndicateurSuite}>
-              {TEXTES_MES_INDICATEURS.aucunIndicateur}
-            </EtatVide>
-          ) : null}
-          {pret ? <SectionsMesIndicateurs sections={pret.sections} /> : null}
-          {pret ? <RetiresMesIndicateurs retires={pret.retires} /> : null}
+          <ApresChargement
+            enChargement={donnees.etat === 'chargement'}
+            indicateur={<ChargementPage texte={TEXTES_MES_INDICATEURS.chargement} />}
+          >
+            {donnees.etat === 'erreur' ? (
+              <ErreurDePage
+                message={TEXTES_MES_INDICATEURS.erreur}
+                libelleBouton={TEXTES_MES_INDICATEURS.reessayer}
+                onReessayer={donnees.reessayer}
+              />
+            ) : null}
+            {pret?.vide ? (
+              <EtatVide
+                situation="premier_usage"
+                suite={TEXTES_MES_INDICATEURS.aucunIndicateurSuite}
+              >
+                {TEXTES_MES_INDICATEURS.aucunIndicateur}
+              </EtatVide>
+            ) : null}
+            {pret ? <SectionsMesIndicateurs sections={pret.sections} /> : null}
+            {pret ? <RetiresMesIndicateurs retires={pret.retires} /> : null}
+          </ApresChargement>
         </>
       )}
 

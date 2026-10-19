@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
+import { Arrivee } from '@/components/etats/Arrivee'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { EtatVide } from '@/components/etats/EtatVide'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { designationDeclaration } from '@/features/sessions/construire'
 import type { LigneSession } from '@/features/sessions/construire'
@@ -68,7 +70,11 @@ function Modification({
   onFermer,
 }: Omit<Props, 'panneau'> & { ligne: LigneSession }) {
   const { attendus, relire } = useAttendus(actions.lireAttendus, ligne.id)
-  if (attendus.etat === 'chargement') return <ChargementBloc />
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis le formulaire arrive en fondu.
+  const { attente, fondu } = useAttenteChargement(attendus.etat === 'chargement')
+  if (attente || attendus.etat === 'chargement') {
+    return <ChargementPage texte={TEXTES_SESSIONS.chargementAttendus} />
+  }
   if (attendus.etat === 'erreur') {
     // Lecture impossible : la phrase et « Réessayer » dans le panneau, sans le fermer (m212).
     // Un refus (session inaccessible, 42501) ne change pas à un nouvel essai : pas de bouton.
@@ -85,7 +91,7 @@ function Modification({
   // Un ministère désactivé depuis garde sa ligne, mais l'écran ne le propose plus.
   const proposes = new Set(donnees.ministeres.map((ministere) => ministere.id))
   return (
-    <>
+    <Arrivee fondu={fondu}>
       <p className="leading-normal text-encre-2">{TEXTES_SESSIONS.noteModification}</p>
       <FormulaireSession
         mode="modifier"
@@ -99,7 +105,7 @@ function Modification({
         }}
         onAnnuler={onFermer}
       />
-    </>
+    </Arrivee>
   )
 }
 

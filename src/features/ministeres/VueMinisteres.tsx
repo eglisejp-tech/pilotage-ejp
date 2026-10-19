@@ -1,7 +1,8 @@
 import { useId } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import type { LigneListeMinistere } from '@/features/ministeres/construireListe'
@@ -32,34 +33,42 @@ export function VueMinisteres({ liste, gestion = false }: Props) {
         {textes.titre}
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
-      {liste.etat === 'erreur' ? (
-        <div className="mt-6">
-          <ErreurDePage
-            message={TEXTES_FICHE.erreur}
-            libelleBouton={TEXTES_FICHE.reessayer}
-            onReessayer={liste.reessayer}
-          />
-        </div>
-      ) : null}
-      {liste.etat === 'chargement' ? <ChargementBloc /> : null}
-      {liste.etat === 'donnees' ? (
-        liste.donnees.length === 0 ? (
-          <EtatVide situation="premier_usage">
-            {gestion ? textes.aucunGestion : textes.aucun}
-          </EtatVide>
-        ) : (
-          <>
-            <p className="mt-4 max-w-prose text-encre-2">{textes.phrase}</p>
-            <div className="mt-4">
-              {tableau ? (
-                <TableauListeMinisteres ministeres={liste.donnees} idTitre={idTitre} />
-              ) : (
-                <ListeMinisteresTelephone ministeres={liste.donnees} idTitre={idTitre} />
-              )}
-            </div>
-          </>
-        )
-      ) : null}
+      <ApresChargement
+        enChargement={liste.etat === 'chargement'}
+        indicateur={
+          <div className="mt-4">
+            <ChargementPage texte={textes.chargement} />
+          </div>
+        }
+      >
+        {liste.etat === 'erreur' ? (
+          <div className="mt-6">
+            <ErreurDePage
+              message={TEXTES_FICHE.erreur}
+              libelleBouton={TEXTES_FICHE.reessayer}
+              onReessayer={liste.reessayer}
+            />
+          </div>
+        ) : null}
+        {liste.etat === 'donnees' ? (
+          liste.donnees.length === 0 ? (
+            <EtatVide situation="premier_usage">
+              {gestion ? textes.aucunGestion : textes.aucun}
+            </EtatVide>
+          ) : (
+            <>
+              <p className="mt-4 max-w-prose text-encre-2">{textes.phrase}</p>
+              <div className="mt-4">
+                {tableau ? (
+                  <TableauListeMinisteres ministeres={liste.donnees} idTitre={idTitre} />
+                ) : (
+                  <ListeMinisteresTelephone ministeres={liste.donnees} idTitre={idTitre} />
+                )}
+              </div>
+            </>
+          )
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

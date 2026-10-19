@@ -73,10 +73,15 @@ export const TEXTES_FICHE = {
   /** Problème passager d'un écran ou d'un bloc (LISEZMOI, « États »). */
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
-  chargement: 'Chargement',
+  /** Chargement (T65) : la fiche entière, puis chacun de ses blocs lus à part. */
+  chargement: 'Chargement de la fiche',
+  chargementPoints: 'Chargement des points',
+  chargementDernieresSaisies: 'Chargement des dernières saisies',
+  chargementChiffresParDepartement: 'Chargement des chiffres par département',
 
   liste: {
     titre: 'Ministères',
+    chargement: 'Chargement des ministères',
     /**
      * BRIEF, section 9 : « Du moins récent au plus récent. Ouvrez un ministère pour voir sa
      * fiche. » La phrase du milieu dit où commencent les ministères sans saisie. Proposé (revue

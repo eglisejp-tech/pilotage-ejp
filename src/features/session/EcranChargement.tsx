@@ -1,20 +1,24 @@
-import { useMotChargement } from '@/components/etats/useMotChargement'
+import { OuvertureOutil } from '@/components/etats/OuvertureOutil'
+
+interface Props {
+  /** Première vérification depuis le chargement de l'application : l'ouverture joue (T65). */
+  ouverture?: boolean
+}
 
 /**
- * Chargement de la session : rien pendant 300 ms, puis « Chargement », sans animation, avec
- * aria-busy (docs/reference/maquettes/LISEZMOI.md, « États ») ; après 4 s, « Chargement plus long
- * que d'habitude », dans la même zone (m248), avant l'écran d'erreur à 10 s.
+ * Chargement de la session, plein écran, avec aria-busy : rien pendant 300 ms, puis l'ouverture
+ * de l'outil (T65, moment 1 : le monogramme se dessine, la flamme s'allume, une fois par
+ * chargement de l'application) ou la flamme vivante ; après 4 s, « Chargement plus long que
+ * d'habitude », dans la même zone (m248), avant l'écran d'erreur à 10 s.
  */
-export function EcranChargement() {
-  const mot = useMotChargement()
-
+export function EcranChargement({ ouverture = false }: Props) {
   return (
     <main
       id="contenu"
       aria-busy="true"
-      className="flex min-h-dvh items-center justify-center bg-fond text-encre-3"
+      className="flex min-h-dvh items-center justify-center bg-fond px-4"
     >
-      <div role="status">{mot === null ? null : <p>{mot}</p>}</div>
+      <OuvertureOutil ouverture={ouverture} />
     </main>
   )
 }

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { messageDeRefusPoint } from '@/data/pointsEcriture'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
@@ -116,12 +117,15 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
       </EtatVide>
     )
   } else {
-    contenu = <ChargementSaisie />
+    contenu = null
   }
 
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis les cases arrivent en fondu.
   return (
     <FenetreAction titre={TEXTES_ACTIONS_POINT.mentions.titre} point={titre} onFermer={onFermer}>
-      {contenu}
+      <ApresChargement enChargement={contenu === null} indicateur={<ChargementSaisie />}>
+        {contenu}
+      </ApresChargement>
     </FenetreAction>
   )
 }

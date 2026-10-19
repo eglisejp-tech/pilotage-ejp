@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
@@ -36,47 +37,51 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
           </Link>
         }
       />
-      {bloc.etat === 'chargement' ? <ChargementBloc /> : null}
-      {bloc.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_FICHE.reessayer, surClic: bloc.reessayer }}
-        >
-          {TEXTES_FICHE.erreur}
-        </EtatVide>
-      ) : null}
-      {bloc.etat === 'donnees' ? (
-        bloc.donnees.length === 0 ? (
-          <EtatVide situation="premier_usage">
-            {TEXTES_VIDES_INDICATEURS.aucuneDerniereSaisie}
+      <ApresChargement
+        enChargement={bloc.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_FICHE.chargementDernieresSaisies} />}
+      >
+        {bloc.etat === 'erreur' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_FICHE.reessayer, surClic: bloc.reessayer }}
+          >
+            {TEXTES_FICHE.erreur}
           </EtatVide>
-        ) : (
-          <>
-            <ul className="flex flex-col">
-              {bloc.donnees.map((ligne) => (
-                <li
-                  key={ligne.id}
-                  className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
-                >
-                  <span className="text-sm text-encre-3">{ligne.quand}</span>
-                  <span className="min-w-0 break-words">
-                    {ligne.texte}
-                    {ligne.objet !== null ? (
-                      <>
-                        {' '}
-                        <Libre texte={ligne.objet} />
-                      </>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-note leading-normal text-encre-3">
-              {TEXTES_FICHE.noteDernieresSaisies}
-            </p>
-          </>
-        )
-      ) : null}
+        ) : null}
+        {bloc.etat === 'donnees' ? (
+          bloc.donnees.length === 0 ? (
+            <EtatVide situation="premier_usage">
+              {TEXTES_VIDES_INDICATEURS.aucuneDerniereSaisie}
+            </EtatVide>
+          ) : (
+            <>
+              <ul className="flex flex-col">
+                {bloc.donnees.map((ligne) => (
+                  <li
+                    key={ligne.id}
+                    className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
+                  >
+                    <span className="text-sm text-encre-3">{ligne.quand}</span>
+                    <span className="min-w-0 break-words">
+                      {ligne.texte}
+                      {ligne.objet !== null ? (
+                        <>
+                          {' '}
+                          <Libre texte={ligne.objet} />
+                        </>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-3 text-note leading-normal text-encre-3">
+                {TEXTES_FICHE.noteDernieresSaisies}
+              </p>
+            </>
+          )
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }
