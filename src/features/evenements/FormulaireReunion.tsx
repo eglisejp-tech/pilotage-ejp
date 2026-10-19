@@ -114,7 +114,6 @@ export function FormulaireReunion({
       <ChampDate
         id="reunion-date"
         libelle={TEXTES_REUNION.libelleDate}
-        aide="reunion.date"
         min={aujourdhui}
         dateChoisie={date}
         erreur={errors.date?.message}

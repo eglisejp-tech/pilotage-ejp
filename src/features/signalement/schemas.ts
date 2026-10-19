@@ -3,6 +3,7 @@ import {
   LONGUEUR_MAX_SIGNALEMENT,
   LONGUEUR_MIN_SIGNALEMENT,
   MESSAGES_BASE_SIGNALEMENT,
+  TEXTES_SIGNALEMENT,
 } from '@/features/signalement/textes'
 import type { EcranSignalement } from '@/lib/base'
 
@@ -10,8 +11,9 @@ import type { EcranSignalement } from '@/lib/base'
 // et les appels de `src/data/signalements.ts` (CLAUDE.md : validation Zod partagée). Ils disent ce
 // que la base accepte (B7) : texte de 10 à 280 caractères après `trim`, commentaire vide ou de 10
 // à 280 caractères, ni crochets ni « texte masqué » (T43). Les familles « données personnelles »
-// (« @ », 5 chiffres de suite, civilité suivie d'un nom) restent à la base, qui les refuse avec
-// son message : l'écran le reprend tel quel sous le champ.
+// (« @ », 5 chiffres de suite, civilité suivie d'un nom) restent à la base, qui les refuse : la
+// table de traduction donne la phrase, sous le champ. Les messages avant l'envoi sont ceux de
+// `TEXTES_SIGNALEMENT` (T66).
 
 /** Les codes d'écran, dans l'ordre de `private.ecrans_signalement()` (B7). */
 export const ECRANS_SIGNALEMENT = [
@@ -50,13 +52,13 @@ function texteLibre(messageCourt: string, messageLong: string) {
     .trim()
     .refine((texte) => longueurEnCaracteres(texte) >= LONGUEUR_MIN_SIGNALEMENT, messageCourt)
     .refine((texte) => longueurEnCaracteres(texte) <= LONGUEUR_MAX_SIGNALEMENT, messageLong)
-    .refine((texte) => !contientMarqueurModeration(texte), MESSAGES_BASE_SIGNALEMENT.crochets)
+    .refine((texte) => !contientMarqueurModeration(texte), TEXTES_SIGNALEMENT.erreurCrochets)
 }
 
 /** Ce que reçoit `signaler_difficulte` : un écran de la liste et le texte. */
 export const schemaSignalement = z.object({
-  ecran: z.enum(ECRANS_SIGNALEMENT, { error: MESSAGES_BASE_SIGNALEMENT.ecran }),
-  texte: texteLibre(MESSAGES_BASE_SIGNALEMENT.texteCourt, MESSAGES_BASE_SIGNALEMENT.texteLong),
+  ecran: z.enum(ECRANS_SIGNALEMENT, { error: TEXTES_SIGNALEMENT.erreurEcran }),
+  texte: texteLibre(TEXTES_SIGNALEMENT.erreurChamp, TEXTES_SIGNALEMENT.erreurLong),
 })
 
 /** Valeurs du formulaire (texte brut, écran venu de l'adresse). */

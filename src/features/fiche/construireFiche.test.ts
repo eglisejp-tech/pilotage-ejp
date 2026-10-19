@@ -200,7 +200,7 @@ describe('construireFiche : indicateurs propres', () => {
       moisEnCours: { texte: 'Octobre en cours : pas encore de saisie' },
     })
     expect(ligne(ministere(), 'Collectes organisées').aValider).toBe(
-      'À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir.',
+      "En attente de validation depuis 2 jours. Vos chiffres compteront dès qu'il sera validé.",
     )
   })
 

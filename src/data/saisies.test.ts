@@ -159,7 +159,9 @@ describe('envois', () => {
         mois: '2026-09',
         lignes: [{ indicateur_id: ID, valeur: 7, categories: { malaise: 9 } }],
       }),
-    ).rejects.toThrow('La somme des catégories (9) dépasse le total du mois (7).')
+    ).rejects.toThrow(
+      'Les catégories font 9 pour un total de 7. Corrigez la répartition ou le total.',
+    )
     expect(appelsRpc).toEqual([])
   })
 

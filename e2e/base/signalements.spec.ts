@@ -30,19 +30,18 @@ test.describe('ministère Communication', () => {
     await page.goto('/signaler?ecran=saisie_evenement')
     await expect(page).toHaveTitle('Signaler une difficulté, Pilotage EJP')
     await expect(page.getByText('Écran concerné : Ajouter un événement')).toBeVisible()
-    await expect(page.getByText(/^EJP Tech lit votre signalement\./)).toBeVisible()
+    // Le libellé suffit : plus de phrase sur qui lit (T66, t149).
+    await expect(page.getByText(/lit votre signalement/)).toHaveCount(0)
     await expect(
       page.getByLabel('Quelle difficulté rencontrez-vous ?'),
-    ).toHaveAccessibleDescription(
-      "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech. 0 sur 280",
-    )
+    ).toHaveAccessibleDescription("N'écrivez aucun nom ni information personnelle. 0 sur 280")
     const liste = page.getByRole('region', { name: 'Vos derniers signalements' })
     await expect(liste.getByRole('listitem').filter({ hasText: TEXTE_OUVERT })).toContainText(
       'Ouvert',
     )
     const clos = liste.getByRole('listitem').filter({ hasText: TEXTE_CLOS })
     await expect(clos).toContainText(/Clos le \d{1,2} [a-zéû]+\.?/)
-    await expect(clos).toContainText(`Réponse d'EJP Tech : ${COMMENTAIRE_CLOS}`)
+    await expect(clos).toContainText(`Réponse : ${COMMENTAIRE_CLOS}`)
     // Seules la ligne du compte et la vue des signalements sont lues.
     expect(new Set(requetes)).toEqual(new Set(['/rest/v1/compte', '/rest/v1/v_signalement']))
   })

@@ -12,14 +12,14 @@ interface Props {
 }
 
 /**
- * Sous le bouton d'enregistrement : l'erreur de formulaire (connexion, valeurs gardées), le refus
- * de la base tel quel (« Rien n'a changé : ... », sans lien), ou le message de réussite pendant
- * 6 secondes (`role="status"`, toujours présent pour être annoncé).
+ * Sous le bouton d'enregistrement : l'erreur de formulaire (connexion, valeurs gardées : « Votre
+ * saisie est encore dans le formulaire », T66 t062), le refus de la base traduit (sans lien), ou le
+ * message de réussite pendant 6 secondes (`role="status"`, toujours présent pour être annoncé).
  */
 export function ResultatEnvoi({ refus, reussite, envoi }: Props) {
   return (
     <>
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}
+      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
       {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
       <MessageReussite message={reussite} envoi={envoi} />
     </>

@@ -18,26 +18,22 @@ import { accorder, listeNoms, nombre, terminerPhrase } from '@/lib/metier/texte'
 
 /**
  * Textes des états de la saisie d'une session (« Proposé » : plan de l'étape 4, E4, sur le
- * modèle de T22 ; T36 pour les six situations).
+ * modèle de T22 ; T36 pour les six situations). Revus par T66 (t101 à t107) : ni qui déclare, ni
+ * qui a créé la session ; « Choisissez la session à saisir. » répétait le titre et part.
  */
 export const TEXTES_SESSION = {
   /** En attente des autres : ni l'administration ni EJP Tech n'ont déclaré de session passée. */
   aucuneSession: 'Aucune session à saisir.',
-  /** T60 : l'administration et EJP Tech déclarent les sessions (Proposé). */
-  quiDeclare: "L'administration de l'église ou EJP Tech déclare les sessions.",
-  /**
-   * Surtitre du panneau de saisie (maquette 09 : « Session déclarée par l'administration ») :
-   * depuis T60, EJP Tech déclare aussi les sessions (Proposé).
-   */
-  surtitre: 'Session déclarée',
+  /** Quand la liste se remplira, sans nommer de rôle (T66, t103 ; remplace le texte de T60). */
+  quiDeclare: 'Vous pourrez saisir une session le jour où elle a lieu.',
+  /** Surtitre du panneau de saisie (maquette 09) : le nom de la page (T66, t104). */
+  surtitre: 'Présence à une session',
   /** Tout est fait : chaque session récente a sa saisie. */
-  toutesSaisies:
-    'Toutes les sessions récentes sont saisies. Ouvrez une session pour corriger sa saisie.',
-  choisir: 'Choisissez la session à saisir.',
-  /** Aucun résultat : identifiant inconnu dans l'adresse. */
-  introuvable: "Cette session n'existe pas ou n'est plus proposée.",
+  toutesSaisies: 'Toutes les sessions récentes sont saisies. Ouvrez-en une pour la corriger.',
+  /** Aucun résultat : identifiant inconnu dans l'adresse (le bouton donne l'action). */
+  introuvable: 'Cette session est introuvable.',
   /** En attente : une session future n'accepte aucune saisie (BRIEF, règle 5). */
-  future: "Cette session n'a pas encore eu lieu. Sa saisie ouvrira le jour de la session.",
+  future: "Cette session n'a pas encore eu lieu. Vous pourrez la saisir le jour même.",
   autreSession: 'Choisir une autre session',
   titreChoix: 'Choisir la session',
 } as const
@@ -79,15 +75,18 @@ export function comptesDansTotal(champs: ChampsSession): number | null {
 
 /**
  * La ligne sous les deux champs. Trois cas : un résultat (en gras), une consigne si les présents
- * manquent, et « à corriger » si les déjà comptés dépassent des présents pourtant saisis (la
- * ligne ne dit jamais « saisissez les présents » quand ils sont saisis).
+ * manquent, et le champ à corriger sinon (la ligne ne dit jamais « saisissez les présents » quand
+ * ils sont saisis). T66 (m110) : la ligne nomme le champ à corriger.
  */
 export function ligneComptesDansTotal(champs: ChampsSession): string {
   const comptes = comptesDansTotal(champs)
   if (comptes !== null) return `Comptés dans le total de l'église : ${nombre(comptes)}.`
-  return lireChamp(champs.presents).etat === 'vide'
-    ? "Comptés dans le total de l'église : saisissez d'abord les présents."
-    : "Comptés dans le total de l'église : à corriger."
+  if (lireChamp(champs.presents).etat === 'vide') {
+    return "Comptés dans le total de l'église : saisissez d'abord les présents."
+  }
+  return nombreACompter(champs.presents) === null
+    ? "Comptés dans le total de l'église : corrigez « STARs de votre ministère présents »."
+    : "Comptés dans le total de l'église : corrigez « Dont déjà comptés »."
 }
 
 /**
@@ -196,8 +195,8 @@ export function leJourAHeure(instant: Instant): string {
 }
 
 /**
- * « Déjà saisi : 13 présents, dont 2 déjà comptés, le 27 sept. à 18 h 30. Votre saisie la
- * remplacera dans les totaux. » (comme « Déjà saisi » de la saisie du dimanche, BRIEF section 9).
+ * « Déjà saisi : 13 présents, dont 2 déjà comptés, le 27 sept. à 18 h 30. » (comme « Déjà saisi »
+ * de la saisie du dimanche, BRIEF section 9 ; T66, t110 : sans la mécanique des totaux).
  */
 export function ligneDejaSaisi(saisie: {
   valeur: number
@@ -206,7 +205,7 @@ export function ligneDejaSaisi(saisie: {
 }): string {
   const presents = `${nombre(saisie.valeur)} ${accorder(saisie.valeur, 'présent', 'présents')}`
   const dont = saisie.deja_comptes > 0 ? `, dont ${nombre(saisie.deja_comptes)} déjà comptés` : ''
-  return `Déjà saisi : ${presents}${dont}, ${leJourAHeure(saisie.saisi_le)}. Votre saisie la remplacera dans les totaux.`
+  return `Déjà saisi : ${presents}${dont}, ${leJourAHeure(saisie.saisi_le)}.`
 }
 
 /** « Présence enregistrée pour Bâtir l'Église du 26 sept. » (LISEZMOI, « Réussite »). */
@@ -214,6 +213,9 @@ export function messageReussiteSession(
   type: TypeSession,
   intitule: string | null,
   date: DateIso,
+  correction = false,
 ): string {
-  return terminerPhrase(`Présence enregistrée pour ${sessionDu(type, intitule, date)}`)
+  // Une correction le dit (T66, m073), comme les chiffres du dimanche et du mois.
+  const debut = correction ? 'Correction enregistrée' : 'Présence enregistrée'
+  return terminerPhrase(`${debut} pour ${sessionDu(type, intitule, date)}`)
 }

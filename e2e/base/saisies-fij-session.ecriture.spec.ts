@@ -75,7 +75,10 @@ test.describe('présence à une session, ministère Communication', () => {
     await dejaComptes.fill('3')
     await expect(page.getByText("Comptés dans le total de l'église : 14.")).toBeVisible()
     await page.getByRole('button', { name: 'Enregistrer la présence' }).click()
-    await expect(page.getByRole('status').getByText(/^Présence enregistrée pour /)).toBeVisible()
+    // Première saisie ou correction selon le jeu d'exemple (T66, m073).
+    await expect(
+      page.getByRole('status').getByText(/^(Présence|Correction) enregistrée pour /),
+    ).toBeVisible()
 
     expect(await compter(page, `participation?select=id&session_id=eq.${sessionId}`)).toBe(
       lignesAvant + 1,
@@ -100,7 +103,7 @@ test.describe('présence à une session, ministère Communication', () => {
       .getByLabel('Dont déjà comptés par leur ministère principal', { exact: true })
       .fill('5')
     await page.getByRole('button', { name: 'Enregistrer la présence' }).click()
-    await expect(page.getByText('Ce nombre ne peut pas dépasser les présents.')).toBeVisible()
+    await expect(page.getByText('Saisissez 2 au plus, le nombre de présents.')).toBeVisible()
   })
 
   test('les deux saisies FIJ : la page non disponible pour un autre ministère', async ({
@@ -165,9 +168,7 @@ test.describe('ministère FIJ', () => {
     for (let rang = 0; rang < 32; rang++) await champs.nth(rang).fill(String(rang % 9))
     await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     await expect(
-      page
-        .getByRole('status')
-        .getByText(/^Chiffres par département de la semaine \d+ enregistrés\.$/),
+      page.getByRole('status').getByText(/^Chiffres de la semaine \d+ enregistrés\.$/),
     ).toBeVisible()
     expect(await compter(page, 'fij_statistique?select=id')).toBe(statistiquesAvant + 32)
     expect(await compter(page, 'journal?select=id&action=eq.fij_statistiques_saisies')).toBe(

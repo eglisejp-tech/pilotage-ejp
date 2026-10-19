@@ -35,7 +35,7 @@ describe('états vides des indicateurs', () => {
     expect(TEXTES_VIDES_INDICATEURS.aucunRetire).toBe('Aucun indicateur retiré.')
     expect(TEXTES_VIDES_INDICATEURS.aucuneDerniereSaisie).toBe("Aucune saisie pour l'instant.")
     expect(TEXTES_VIDES_INDICATEURS.moisSansIndicateur).toBe(
-      "Votre ministère n'a pas d'indicateur du mois.",
+      "Votre ministère n'a aucun chiffre à saisir chaque mois.",
     )
     expect(TEXTES_VIDES_INDICATEURS.actionRevenirAMaFiche).toBe('Revenir à ma fiche')
     expect(TEXTES_VIDES_INDICATEURS.actionSaisirLeMois).toBe('Saisir les chiffres du mois')
@@ -67,28 +67,29 @@ describe('états vides des indicateurs', () => {
 })
 
 describe('ajout à valider', () => {
-  it('le ministère sait depuis combien de jours et qu’il peut déjà saisir', () => {
+  // T66 (t080, guide exemple 4) : le ministère n'a rien à demander, le texte ne nomme pas EJP Tech.
+  const suite = "Vos chiffres compteront dès qu'il sera validé."
+
+  it('le ministère sait depuis combien de jours et que ses chiffres compteront', () => {
     expect(texteAjoutAValider('ministere', 2)).toBe(
-      'À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir.',
+      `En attente de validation depuis 2 jours. ${suite}`,
     )
     expect(texteAjoutAValider('ministere', 1)).toBe(
-      'À valider par EJP Tech depuis 1 jour. Vous pouvez déjà le saisir.',
+      `En attente de validation depuis 1 jour. ${suite}`,
     )
     expect(texteAjoutAValider('ministere', 12)).toBe(
-      'À valider par EJP Tech depuis 12 jours. Vous pouvez déjà le saisir.',
+      `En attente de validation depuis 12 jours. ${suite}`,
     )
   })
 
   it('le jour même : « depuis aujourd’hui »', () => {
     expect(texteAjoutAValider('ministere', 0)).toBe(
-      "À valider par EJP Tech depuis aujourd'hui. Vous pouvez déjà le saisir.",
+      `En attente de validation depuis aujourd'hui. ${suite}`,
     )
   })
 
   it('sans durée connue, n’invente aucune durée', () => {
-    expect(texteAjoutAValider('ministere', null)).toBe(
-      'À valider par EJP Tech. Vous pouvez déjà le saisir.',
-    )
+    expect(texteAjoutAValider('ministere', null)).toBe(`En attente de validation. ${suite}`)
   })
 
   it('le berger, le conseil et EJP Tech lisent seulement « à valider »', () => {

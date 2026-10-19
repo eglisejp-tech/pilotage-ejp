@@ -6,7 +6,6 @@ import { valeurDuChamp } from '@/features/saisie/chiffres'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
-import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { erreursSession, PRESENTS_MAX } from '@/features/saisie-session/schemas'
 import type {
   ChampsSession,
@@ -22,6 +21,7 @@ import {
   noteSessionPrecedente,
   phraseCompletudeSession,
   signatureSession,
+  TEXTES_SESSION,
 } from '@/features/saisie-session/session'
 import type { PresencePrecedente } from '@/features/saisie-session/session'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
@@ -54,7 +54,8 @@ interface Props {
  * Formulaire de la saisie d'une session (maquette 09) : tous les STARs présents du ministère, puis
  * ceux déjà comptés par leur ministère principal (0 par défaut), la ligne calculée « Comptés dans
  * le total de l'église : 11. », la complétude de la session et ses manquants. Un nombre de
- * personnes seulement, aucun nom (BRIEF, règle 5). Trois aides au plus, toutes en flux.
+ * personnes seulement, aucun nom (BRIEF, règle 5). Une seule aide, en flux (« STARs de votre
+ * ministère présents », T66).
  */
 export function FormulaireSession({
   session,
@@ -100,7 +101,7 @@ export function FormulaireSession({
           valeur: valeurDuChamp(champs.presents) ?? 0,
           dejaComptes: valeurDuChamp(champs.dejaComptes) ?? 0,
         }),
-      messageReussiteSession(session.type, session.intitule, session.date),
+      messageReussiteSession(session.type, session.intitule, session.date, dejaSaisi !== null),
       signature,
     )
   }
@@ -122,7 +123,6 @@ export function FormulaireSession({
       <ChampNombre
         id="session-deja-comptes"
         libelle="Dont déjà comptés par leur ministère principal"
-        aide="session.dejaComptes"
         valeur={champs.dejaComptes}
         onChange={changer('dejaComptes')}
         max={PRESENTS_MAX}
@@ -142,15 +142,16 @@ export function FormulaireSession({
       {dejaSaisi ? (
         <p className="text-sm leading-normal text-encre-3">{ligneDejaSaisi(dejaSaisi)}</p>
       ) : null}
-      <LigneAvecAide code="session.completude" libelle="Ministères qui ont déjà saisi">
+      {/* « 6 ministères sur 8 » se lit seul, et les champs sont des nombres : ni bulle, ni
+          rappel (T66, t111 et t112). */}
+      <p className="text-[15px] leading-normal">
         {completude.texte}
         {completude.manquants ? (
           <>
             <strong className="font-semibold text-attention">{completude.manquants}</strong>.
           </>
         ) : null}
-      </LigneAvecAide>
-      <p className="text-sm text-encre-3">Un nombre de personnes seulement, jamais de noms.</p>
+      </p>
       <BoutonEnregistrer
         libelle="Enregistrer la présence"
         enCours={envoi.enCours}
@@ -167,7 +168,7 @@ export function FormulaireSession({
           to={adresseSaisieSession()}
           className="inline-flex min-h-cible items-center self-start text-[15px] text-nuit underline underline-offset-4"
         >
-          Changer de session
+          {TEXTES_SESSION.autreSession}
         </Link>
         <LienSignalement ecran="saisie_session" />
       </div>

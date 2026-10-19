@@ -47,10 +47,9 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     afficher()
     expect(screen.queryByRole('textbox')).toBeNull()
     expect(screen.getByText('Soirée de louange')).toBeInTheDocument()
+    // T66 (t138) : la phrase sur les mentions figées quitte la mise à jour.
     expect(
-      screen.getByText(
-        'Ministères mentionnés : Coordination et Intégration. Les mentions se choisissent à la création et ne changent plus.',
-      ),
+      screen.getByText('Ministères mentionnés : Coordination et Intégration.'),
     ).toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).toBeNull()
     expect(champDate()).toHaveValue('2026-10-10')
@@ -71,29 +70,17 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     expect(screen.getByText(/^Aucun ministère mentionné\./)).toBeInTheDocument()
   })
 
-  it('nouvelle date : la ligne « Report : du ... au ... » et son aide, deux aides en tout', async () => {
+  it('nouvelle date : la ligne « Report : du ... au ... », sans bulle (T66, t139)', async () => {
     afficher()
     await changerDate('2026-10-17')
     expect(screen.getByText('Report : du sam. 10 oct. au sam. 17 oct.')).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Aide : Report : du sam. 10 oct. au sam. 17 oct.' }),
-    ).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(1)
   })
 
-  it('la ligne « Report » décrit le champ date et l’aide du report s’ouvre au clavier', async () => {
+  it('la ligne « Report » décrit le champ date', async () => {
     afficher()
-    const utilisateur = await changerDate('2026-10-17')
+    await changerDate('2026-10-17')
     expect(champDate()).toHaveAccessibleDescription('Report : du sam. 10 oct. au sam. 17 oct.')
-    const aide = screen.getByRole('button', {
-      name: 'Aide : Report : du sam. 10 oct. au sam. 17 oct.',
-    })
-    aide.focus()
-    await utilisateur.keyboard('{Enter}')
-    expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await utilisateur.keyboard('{Escape}')
-    expect(aide).toHaveAttribute('aria-expanded', 'false')
-    expect(aide).toHaveFocus()
   })
 
   it('la date choisie s’écrit en toutes lettres sous le champ', async () => {
@@ -126,9 +113,7 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     afficher({ date: '2026-10-08', statut: 'attente_validation', aConfirmer: true })
     const groupe = screen.getByRole('group', { name: 'Statut' })
     expect(within(groupe).getByText(TEXTES_EVENEMENT.aConfirmer)).toBeInTheDocument()
-    expect(groupe).toHaveAccessibleDescription(
-      `${TEXTES_EVENEMENT.aConfirmer} ${TEXTES_EVENEMENT.noteStatut}`,
-    )
+    expect(groupe).toHaveAccessibleDescription(TEXTES_EVENEMENT.aConfirmer)
   })
 
   it('événement qui n’est pas à confirmer : pas de ligne au-dessus du statut', () => {
@@ -225,7 +210,7 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Validé' }))
     await userEvent.click(bouton())
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     expect(champDate()).toHaveValue('2026-10-17')
     expect(screen.getByRole('radio', { name: 'Validé' })).toBeChecked()

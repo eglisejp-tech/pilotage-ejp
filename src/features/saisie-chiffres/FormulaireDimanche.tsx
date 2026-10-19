@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import type { ChampChiffre as Champ, ChampsDimanche } from '@/features/saisie-chiffres/champs'
 import { ChampChiffre } from '@/features/saisie-chiffres/ChampChiffre'
 import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
@@ -54,8 +53,8 @@ function lu(champs: readonly Champ[], valeurs: Record<string, ValeurChamp>, code
  * Saisie du dimanche (maquette 08, BRIEF section 9) : « STARs au service ce dimanche » dans son
  * encadré (moins et plus de 64 px, « Dimanche dernier : 9 »), « STARs actifs » et « Dont en FIJ »
  * côte à côte, préremplis et renvoyés à chaque envoi, « 79 % des actifs » calculé en direct (il ne
- * se saisit jamais), puis les indicateurs du ministère et leur aide de groupe. Tout part en un
- * seul envoi. Quatre aides au plus, toutes en flux.
+ * se saisit jamais), puis « Vos autres chiffres ». Tout part en un seul envoi. Deux aides au
+ * plus, toutes en flux (T66 : « STARs actifs » et « Dont en FIJ »).
  */
 export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregistrer }: Props) {
   const tous = [...champs.communs, ...champs.propres]
@@ -111,7 +110,11 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
       return
     }
     setAucun(false)
-    void envoi.envoyer(() => enregistrer(preparation.lignes), reussiteDimanche(dimanche), signature)
+    void envoi.envoyer(
+      () => enregistrer(preparation.lignes),
+      reussiteDimanche(dimanche, champs.correction),
+      signature,
+    )
   }
 
   const champ = (element: Champ, noteDirecte?: string | null) => (
@@ -152,7 +155,6 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
         erreurFormulaire={aucun ? TEXTES_CHIFFRES.aucunChiffre : null}
         erreurSousLeBouton={echec !== null && refusFij === null}
         ecran="saisie_dimanche"
-        correction={tous.some((element) => element.deja !== null)}
         onSubmit={soumettre}
       >
         {service ? (
@@ -170,10 +172,7 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
         ) : null}
         {champs.propres.length > 0 ? (
           <div className="flex flex-col gap-4">
-            <div className="flex min-h-cible flex-wrap items-center">
-              <p className="text-[15px] font-semibold">{TEXTES_CHIFFRES.groupePropres}</p>
-              <Aide code="dimanche.propres" libelle={TEXTES_CHIFFRES.groupePropres} />
-            </div>
+            <p className="text-[15px] font-semibold">{TEXTES_CHIFFRES.groupePropres}</p>
             {champs.propres.map((element) => champ(element))}
           </div>
         ) : null}

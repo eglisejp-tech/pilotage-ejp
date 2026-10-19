@@ -51,7 +51,7 @@ describe('envoi du dimanche', () => {
   it('les STARs au service sont obligatoires, 0 compris', () => {
     const { champs, valeurs } = dimanche()
     expect(preparerDimanche(champs, valeurs).erreurs['commun-service']).toEqual({
-      valeur: 'Saisissez un nombre.',
+      valeur: 'Saisissez un nombre, 0 si aucun.',
     })
     expect(preparerDimanche(champs, { ...valeurs, 'commun-service': '0' }).lignes[0]).toEqual({
       indicateurId: 'commun-service',
@@ -66,8 +66,9 @@ describe('envoi du dimanche', () => {
       'commun-service': '10',
       'commun-en-fij': '15',
     })
+    // Le nombre exact à ne pas dépasser (T66, t078) : les actifs du formulaire.
     expect(envoi.erreurs['commun-en-fij']).toEqual({
-      valeur: 'Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.',
+      valeur: 'Saisissez 14 au plus, le nombre de STARs actifs.',
     })
     expect(premierChampEnErreur(champs, envoi.erreurs)).toBe('chiffre-commun-en-fij')
   })
@@ -81,7 +82,7 @@ describe('envoi du dimanche', () => {
     expect(avecHeure.lignes).toContainEqual({ indicateurId: 'propre-heure-fin', valeur: 750 })
     const vide = preparerDimanche(champs, { ...valeurs, 'propre-repetitions': '' })
     expect(vide.erreurs['propre-repetitions']).toEqual({
-      valeur: 'La valeur enregistrée (3) reste comptée. Saisissez 0 ou la bonne valeur.',
+      valeur: 'Déjà enregistré : 3. Saisissez 0 ou le bon chiffre.',
     })
   })
 })
@@ -186,7 +187,7 @@ describe('envoi du mois', () => {
       { 'mois-passages': { precision: 'Trop court', repartition: { malaise: '9' } } },
     )
     expect(envoi.erreurs['mois-passages']).toEqual({
-      repartition: 'La somme des catégories (9) dépasse le total du mois (7).',
+      repartition: 'Les catégories font 9 pour un total de 7. Corrigez la répartition ou le total.',
     })
     expect(
       preparerMois(
@@ -213,7 +214,10 @@ describe('envoi du mois', () => {
   it('un total déjà saisi puis vidé bloque l’envoi et le dit', () => {
     const { champs, valeurs, sensibles } = mois(true)
     const envoi = preparerMois(champs, { ...valeurs, 'mois-fonds': '' }, sensibles)
-    expect(envoi.erreurs['mois-fonds']?.valeur).toBe(
+    expect(envoi.erreurs['mois-fonds']?.valeur).toMatch(
+      /^Déjà enregistré : 1\s250\s€\. Saisissez 0 ou le bon chiffre\.$/u,
+    )
+    expect(envoi.erreurs['mois-fonds']?.valeur).not.toBe(
       'La valeur enregistrée (1 250 €) reste comptée. Saisissez 0 ou la bonne valeur.',
     )
   })

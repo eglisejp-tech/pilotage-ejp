@@ -48,7 +48,7 @@ function afficherEmplacement(
 }
 
 describe('BlocChiffresParDepartement', () => {
-  it('total de chaque rubrique avec « 6 dép. sur 8 », une seule aide, la semaine en titre', () => {
+  it('total de chaque rubrique avec « 6 départements sur 8 », une seule aide, la semaine en titre', () => {
     render(
       <BlocChiffresParDepartement
         bloc={{ etat: 'donnees', donnees: donnees() }}
@@ -58,7 +58,7 @@ describe('BlocChiffresParDepartement', () => {
     expect(screen.getByRole('heading', { name: 'Chiffres par département' })).toBeInTheDocument()
     expect(screen.getByText('Semaine 39, du 21 au 27 sept.')).toBeInTheDocument()
     expect(screen.getByText('48')).toBeInTheDocument()
-    expect(screen.getAllByText('6 dép. sur 8')).toHaveLength(4)
+    expect(screen.getAllByText('6 départements sur 8')).toHaveLength(4)
     expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(1)
     expect(screen.getAllByRole('img')).toHaveLength(4)
   })
@@ -97,7 +97,7 @@ describe('BlocChiffresParDepartement', () => {
     expect(
       screen.getByText('Aucun département saisi pour la semaine 39, du 21 au 27 sept.'),
     ).toBeInTheDocument()
-    expect(screen.getAllByText('0 dép. sur 8')).toHaveLength(4)
+    expect(screen.getAllByText('0 département sur 8')).toHaveLength(4)
     expect(screen.queryByRole('table')).toBeNull()
   })
 

@@ -6,8 +6,7 @@ import type { Page } from '@playwright/test'
 // développement : les vrais écrans, données d'exemple, envois simulés comme la base (aucune
 // base, aucune écriture). Trois formats par les projets Playwright : 1440, 834 et 390 px.
 
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
 const VUES_MINISTERE = ['formulaire', 'premier-usage', 'liste-probleme', 'lien-long'] as const
 const VUES_EJP_TECH = [
   'bloc',
@@ -34,15 +33,12 @@ async function auditer(page: Page) {
 }
 
 test.describe('Signaler une difficulté (ministère), aperçu', () => {
-  test('titre, qui lit, écran prérempli, rappel sous le champ, compteur', async ({ page }) => {
+  test('titre, écran prérempli, rappel sous le champ, compteur', async ({ page }) => {
     await ouvrir(page, 'profil=ministere&ecran=saisie_evenement')
     await expect(page).toHaveTitle('Signaler une difficulté, Pilotage EJP')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Signaler une difficulté')
-    await expect(
-      page.getByText(
-        'EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.',
-      ),
-    ).toBeVisible()
+    // Le libellé suffit : plus de phrase sur qui lit (T66, t149).
+    await expect(page.getByText(/lit votre signalement/)).toHaveCount(0)
     await expect(page.getByText('Écran concerné : Ajouter un événement')).toBeVisible()
     await expect(champ(page)).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
     await expect(page.getByText(RAPPEL)).toHaveCount(1)
@@ -65,7 +61,7 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await champ(page).fill('Je ne trouve pas la réunion de jeudi.')
     await envoyer(page)
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      'Signalement envoyé. EJP Tech le lira.',
+      "Signalement envoyé. La réponse s'affichera sur cette page.",
     )
     await expect(champ(page)).toHaveValue('')
     // Il n'y a plus rien à annuler : le bouton dit « Fermer ».
@@ -100,7 +96,7 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await expect(liste.getByRole('listitem')).toHaveCount(2)
     await expect(liste.getByRole('listitem').first()).toContainText('Ouvert')
     await expect(liste.getByRole('listitem').nth(1)).toContainText('Clos le 29 sept.')
-    await expect(liste).toContainText("Réponse d'EJP Tech : Réglé avec le ministère")
+    await expect(liste).toContainText('Réponse : Réglé avec le ministère')
   })
 
   test('premier usage : rien sous le formulaire ; lecture en échec : « Réessayer »', async ({

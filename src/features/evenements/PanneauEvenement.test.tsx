@@ -24,9 +24,7 @@ describe('états du panneau d’événement (T36)', () => {
   it('aucun résultat : la phrase et « Revenir à ma fiche », sans formulaire', () => {
     afficher({ etat: 'introuvable' })
     expect(titre()).toHaveTextContent("Mettre à jour l'événement")
-    expect(
-      screen.getByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Cet événement est introuvable.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
       '/ma-fiche',
@@ -37,7 +35,9 @@ describe('états du panneau d’événement (T36)', () => {
 
   it('pas pour ce profil : un ministère mentionné lit qui met à jour, sans formulaire', () => {
     afficher({ etat: 'pas_porteur', nomPorteur: 'Coordination' })
-    expect(screen.getByText('Seul Coordination met à jour cet événement.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Seul Coordination peut mettre à jour cet événement.'),
+    ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull()

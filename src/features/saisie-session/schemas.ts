@@ -15,13 +15,18 @@ export const schemaIdentifiantSession = z.guid()
 /** Présents d'un ministère à une session : 0 à 999 (BRIEF, section 9). */
 export const PRESENTS_MAX = 999
 
+// T66 (t113, t114, m102, m109) : un champ vide dit que 0 est permis, une borne commence par
+// l'action, et « Dont déjà comptés » donne le nombre exact à ne pas dépasser.
 export const MESSAGES_SESSION = {
-  presentsManquants: 'Saisissez le nombre de STARs présents.',
-  presentsBornes: 'Entre 0 et 999.',
+  presentsManquants: 'Saisissez un nombre, 0 si aucun.',
+  presentsBornes: 'Saisissez un nombre entre 0 et 999.',
   dejaComptesManquants: 'Saisissez un nombre, 0 si aucun.',
-  /** BRIEF, section 9 : sous le champ « Dont déjà comptés ». */
-  dejaComptesTropGrand: 'Ce nombre ne peut pas dépasser les présents.',
 } as const
+
+/** BRIEF, section 9 : sous le champ « Dont déjà comptés » (« Saisissez 12 au plus, ... »). */
+export function messageDejaComptesTropGrand(presents: number): string {
+  return `Saisissez ${presents} au plus, le nombre de présents.`
+}
 
 const entier = (manquant: string) =>
   z
@@ -38,9 +43,13 @@ export const schemaParticipation = z
     valeur: entier(MESSAGES_SESSION.presentsManquants),
     dejaComptes: entier(MESSAGES_SESSION.dejaComptesManquants),
   })
-  .refine((saisie) => saisie.dejaComptes <= saisie.valeur, {
-    message: MESSAGES_SESSION.dejaComptesTropGrand,
-    path: ['dejaComptes'],
+  .superRefine((saisie, contexte) => {
+    if (saisie.dejaComptes <= saisie.valeur) return
+    contexte.addIssue({
+      code: 'custom',
+      message: messageDejaComptesTropGrand(saisie.valeur),
+      path: ['dejaComptes'],
+    })
   })
 
 export type SaisieParticipation = z.infer<typeof schemaParticipation>

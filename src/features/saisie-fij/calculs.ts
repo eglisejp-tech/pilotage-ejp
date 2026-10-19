@@ -48,14 +48,17 @@ export function totalDepartements(champs: ChampsDepartements): { total: number; 
   )
 }
 
-/** « 6 dép. sur 8 » : complétude d'un total par département (BRIEF, règle 13). */
+/**
+ * « 6 départements sur 8 » : complétude d'un total par département (BRIEF, règle 13). En toutes
+ * lettres : un lecteur d'écran lit mal « dép. » (guide, section 7 ; T66, t118 et t123).
+ */
 export function libelleDepartementsSur8(nombreSaisis: number): string {
-  return `${nombre(nombreSaisis)} dép. sur ${nombre(NOMBRE_DEPARTEMENTS)}`
+  return `${nombre(nombreSaisis)} ${nombreSaisis > 1 ? 'départements' : 'département'} sur ${nombre(NOMBRE_DEPARTEMENTS)}`
 }
 
 /**
  * Ligne « Total : 29 FIJ » de la carte, en direct (BRIEF, section 9). Tant qu'un département
- * manque, le total garde sa complétude (« Total : 20 FIJ, 6 dép. sur 8 »).
+ * manque, le total garde sa complétude (« Total : 20 FIJ, 6 départements sur 8 »).
  */
 export function ligneTotalCarte(champs: ChampsDepartements): string {
   const { total, nombre: saisis } = totalDepartements(champs)
@@ -66,7 +69,7 @@ export function ligneTotalCarte(champs: ChampsDepartements): string {
     : `Total : ${fij}, ${libelleDepartementsSur8(saisis)}`
 }
 
-/** Ligne « Total : 58, 6 dép. sur 8 » d'une rubrique, en direct. */
+/** Ligne « Total : 58, 6 départements sur 8 » d'une rubrique, en direct. */
 export function ligneTotalRubrique(champs: ChampsDepartements): string {
   const { total, nombre: saisis } = totalDepartements(champs)
   if (saisis === 0) return 'Total : aucun département saisi.'
@@ -99,8 +102,10 @@ export interface SemaineProposee {
   /** Dimanche de la semaine (du lundi au dimanche). */
   dimanche: DateIso
   /**
-   * « Sem. 39, 21 au 27 sept. », ou « Déjà saisie, sem. 39, 21 au 27 sept. ». L'état est en
-   * tête : un menu natif coupe la fin du texte à 360 px, et c'est l'état qui ne doit pas manquer.
+   * « Semaine 39, du 21 au 27 sept. », ou « Semaine 39 (déjà saisie), du 21 au 27 sept. » (T66,
+   * t120 : sans abréviation, la mention entre parenthèses comme pour les dimanches). La mention
+   * suit le numéro, pas la fin : un menu natif coupe la fin du texte à 360 px (309 px de texte
+   * pour 287 px), et c'est l'état qui ne doit pas manquer.
    */
   libelle: string
   dejaSaisie: boolean
@@ -123,21 +128,21 @@ export function semainesProposees(
       (ligne) => ligne.dimanche === dimanche && ligne.nb_departements > 0,
     )
     const semaine = semaineIso(dimanche)
-    const periode = libellePeriode(semaine.lundi, semaine.dimanche).replace(/^du /, '')
-    const court = `sem. ${semaine.numero}, ${periode}`
+    const etat = dejaSaisie ? ' (déjà saisie)' : ''
     return {
       dimanche,
       dejaSaisie,
-      libelle: dejaSaisie
-        ? `Déjà saisie, ${court}`
-        : `${court.charAt(0).toUpperCase()}${court.slice(1)}`,
+      libelle: `Semaine ${semaine.numero}${etat}, ${libellePeriode(semaine.lundi, semaine.dimanche)}`,
     }
   })
 }
 
-/** Sous un champ préempli puis vidé : l'ancienne valeur reste comptée tant qu'on n'en saisit pas une autre. */
+/**
+ * Sous un champ préempli puis vidé : l'ancienne valeur reste comptée tant qu'on n'en saisit pas
+ * une autre. Même phrase que les chiffres du dimanche et du mois (T66, m077).
+ */
 export function messageValeurEffacee(valeur: number): string {
-  return `La valeur enregistrée (${nombre(valeur)}) reste comptée. Saisissez 0 ou la bonne valeur.`
+  return `Déjà enregistré : ${nombre(valeur)}. Saisissez 0 ou le bon chiffre.`
 }
 
 /**
@@ -190,9 +195,9 @@ export function valeursStatistiques(champs: ChampsStatistiques): ValeurFijStatis
   )
 }
 
-/** « Chiffres par département de la semaine 39 enregistrés. » (proposé, plan E4). */
+/** « Chiffres de la semaine 39 enregistrés. » (plan E4 ; T66, t126 : 40 caractères visés). */
 export function messageReussiteStatistiques(dimanche: DateIso): string {
-  return `Chiffres par département de la semaine ${semaineIso(dimanche).numero} enregistrés.`
+  return `Chiffres de la semaine ${semaineIso(dimanche).numero} enregistrés.`
 }
 
 /** « Carte des FIJ enregistrée. » (proposé, plan E4). */

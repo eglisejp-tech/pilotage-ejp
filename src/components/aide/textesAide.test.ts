@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CODES_A_RETIRER, TEXTES_AIDE, texteAide } from '@/components/aide/textesAide'
+import { TEXTES_AIDE, texteAide } from '@/components/aide/textesAide'
 
 // Règles de rédaction : docs/conception/aides-contextuelles.md, section 2.
 const ENTREES = Object.entries(TEXTES_AIDE)
@@ -22,23 +22,16 @@ function nombreDePhrases(texte: string): number {
 }
 
 describe('catalogue des aides (T38)', () => {
-  // Étapes 5 et 6 (lot C0) : 15 aides proposées, ajoutées à la fin du catalogue (écran 13 et
-  // configuration des indicateurs, 8 ; points d'attention, 5 ; sessions, 2), puis 2 aides du lot L3b
-  // (panneaux de la configuration des indicateurs : domaine sensible, chiffre du haut d'un calcul)
-  // et 1 aide du lot L4 (« Pourquoi cet indicateur ? »).
-  it('compte 28 textes de référence, 3 codes à retirer et 18 aides des étapes 5 et 6 (aides-contextuelles.md, section 6)', () => {
-    expect(ENTREES).toHaveLength(31 + 8 + 5 + 2 + 2 + 1)
-    expect(CODES_A_RETIRER).toHaveLength(3)
-    for (const code of CODES_A_RETIRER) expect(Object.keys(TEXTES_AIDE)).toContain(code)
+  // T66 (19 octobre 2026) : une bulle définit un chiffre ou un terme qu'une personne nouvelle ne
+  // peut pas deviner ; les autres aides sont retirées ou deviennent des indications sous le champ.
+  it('compte les aides gardées par la refonte des textes (T66)', () => {
+    expect(ENTREES).toHaveLength(35)
   })
 
   // Règle 3 : on dit ce qu'est le chiffre, pas ce que la personne ne doit pas savoir ni faire.
-  it.each(ENTREES.filter(([code]) => !(CODES_A_RETIRER as readonly string[]).includes(code)))(
-    '%s : dit ce que c’est, sans tournure négative',
-    (code, texte) => {
-      expect(texte, code).not.toMatch(/\b(pas|jamais|ne peut|ne comptent)\b/i)
-    },
-  )
+  it.each(ENTREES)('%s : dit ce que c’est, sans tournure négative', (code, texte) => {
+    expect(texte, code).not.toMatch(/\b(pas|jamais|ne peut|ne comptent)\b/i)
+  })
 
   it('nomme chaque code « écran.sujet », sans doublon', () => {
     const codes = ENTREES.map(([code]) => code)
@@ -97,7 +90,7 @@ describe('catalogue des aides (T38)', () => {
   })
 
   it('texteAide rend le texte du code', () => {
-    expect(texteAide('dimanche.service')).toBe(TEXTES_AIDE['dimanche.service'])
+    expect(texteAide('dimanche.actifs')).toBe(TEXTES_AIDE['dimanche.actifs'])
   })
 
   // Le lot W0 ne pose aucune aide sur un écran : chaque lot pose les siennes. Le lot I active ce

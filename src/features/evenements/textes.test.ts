@@ -33,15 +33,16 @@ describe('textes des saisies d’événement et de réunion', () => {
     expect(ligneMentions(['Coordination', 'Intégration', 'Social'])).toBe(
       'Ministères mentionnés : Coordination, Intégration et Social.',
     )
-    expect(seulPorteur('Communication')).toBe('Seul Communication met à jour cet événement.')
+    expect(seulPorteur('Communication')).toBe(
+      'Seul Communication peut mettre à jour cet événement.',
+    )
   })
 
-  it('messages de la base repris tels quels (contrat, section 7)', () => {
+  it('textes de la base, clés de la table de traduction (contrat, section 7)', () => {
     expect(MESSAGES_BASE).toEqual({
       datePasseeAjout: 'La date ne peut pas être passée.',
       datePasseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
       ligneIdentique: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
-      acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
     })
   })
 

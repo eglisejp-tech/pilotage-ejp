@@ -22,8 +22,7 @@ const CREATEUR = '10000000-0000-4000-8000-000000000001'
 const MENTIONNE = '10000000-0000-4000-8000-000000000002'
 const AUTRE = '10000000-0000-4000-8000-000000000003'
 const POINT_ID = '30000000-0000-4000-8000-000000000001'
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
 
 const changerStatut = vi.mocked(ecriture.changerStatutPoint)
 const marquer = vi.mocked(ecriture.marquerTraite)

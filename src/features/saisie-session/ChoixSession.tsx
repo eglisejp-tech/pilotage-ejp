@@ -27,9 +27,8 @@ export function ChoixSession({ sessions }: Props) {
   const toutesSaisies = lignes.every((ligne) => !ligne.aSaisir)
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-encre-2">
-        {toutesSaisies ? TEXTES_SESSION.toutesSaisies : TEXTES_SESSION.choisir}
-      </p>
+      {/* « Choisissez la session à saisir. » répétait le titre (T66, t101). */}
+      {toutesSaisies ? <p className="text-encre-2">{TEXTES_SESSION.toutesSaisies}</p> : null}
       <ul className="flex flex-col border-t border-filet">
         {lignes.map((ligne) => (
           <li key={ligne.sessionId} className="border-b border-filet">

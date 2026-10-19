@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
-import { Aide } from '@/components/aide/Aide'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChoixStatut } from '@/features/evenements/ChoixStatut'
@@ -138,9 +137,8 @@ export function FormulaireMiseAJourEvenement({
       <div className="flex flex-col gap-1.5">
         <p className="text-[15px] font-semibold">{TEXTES_EVENEMENT.libelleNom}</p>
         <p className="text-base break-words">{titre}</p>
-        <p className="text-sm leading-normal text-encre-3">
-          {ligneMentions(mentions)} {TEXTES_EVENEMENT.mentionsFigees}
-        </p>
+        {/* Rien à faire ici sur les mentions : la phrase sur les mentions figées part (t138). */}
+        <p className="text-sm leading-normal text-encre-3">{ligneMentions(mentions)}</p>
       </div>
       <ChampDate
         id="evenement-date"
@@ -154,12 +152,9 @@ export function FormulaireMiseAJourEvenement({
         idsDecrits={report ? [ID_REPORT] : []}
         apres={
           report ? (
-            <div className="flex min-h-cible flex-wrap items-center">
-              <p id={ID_REPORT} className="text-[15px] text-encre-2">
-                {report}
-              </p>
-              <Aide code="evenement.report" libelle={report} />
-            </div>
+            <p id={ID_REPORT} className="text-[15px] text-encre-2">
+              {report}
+            </p>
           ) : null
         }
         {...register('date')}

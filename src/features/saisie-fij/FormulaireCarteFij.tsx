@@ -19,7 +19,6 @@ import {
 import { erreurValeurFij } from '@/features/saisie-fij/schemas'
 import type { SaisieCarteFij } from '@/features/saisie-fij/schemas'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
-import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { leJourAHeure } from '@/features/saisie-session/session'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -34,7 +33,10 @@ interface Props {
 
 type ErreursCarte = Partial<Record<Departement, string>>
 
-/** « Dernier envoi : le 21 sept. à 20 h 30. », ou la phrase du premier envoi. */
+/**
+ * « Dernière saisie : le 21 sept. à 20 h 30. », ou la phrase de la première saisie (T66, t117 :
+ * le mot « saisie » de l'accueil, sans la mécanique de l'envoi).
+ */
 function ligneDernierEnvoi(carte: Props['carte']): string {
   const dernier = carte.reduce<string | null>(
     (plusRecent, ligne) =>
@@ -45,7 +47,7 @@ function ligneDernierEnvoi(carte: Props['carte']): string {
   )
   return dernier === null
     ? "Aucune carte enregistrée pour l'instant : saisissez les 8 départements."
-    : `Dernier envoi : ${leJourAHeure(dernier)}. Votre envoi remplacera la carte.`
+    : `Dernière saisie : ${leJourAHeure(dernier)}.`
 }
 
 /**
@@ -83,9 +85,8 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
 
   return (
     <form noValidate className="flex flex-col gap-5" onSubmit={(e) => void soumettre(e)}>
-      <LigneAvecAide code="fij.carte" libelle="Carte des FIJ" classe="font-semibold">
-        Nombre de FIJ par département
-      </LigneAvecAide>
+      {/* Le titre suffit : pas de bulle (T66, t116). */}
+      <p className="text-[15px] leading-normal font-semibold">Nombre de FIJ par département</p>
       <p className="text-sm leading-normal text-encre-3">{ligneDernierEnvoi(carte)}</p>
       <div className="grid grid-cols-2 items-start gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
         {DEPARTEMENTS_FIJ.map((departement) => (

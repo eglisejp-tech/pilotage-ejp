@@ -74,7 +74,7 @@ test.describe('Communication', () => {
     await page.getByLabel('Quelle difficulté rencontrez-vous ?').fill(TEXTE)
     await page.getByRole('button', { name: 'Envoyer le signalement' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      'Signalement envoyé. EJP Tech le lira.',
+      "Signalement envoyé. La réponse s'affichera sur cette page.",
     )
 
     const lignes = await signalementDuTest(page)
@@ -185,7 +185,7 @@ test.describe('Communication, après la clôture', () => {
       .getByRole('listitem')
       .filter({ hasText: TEXTE })
     await expect(ligne).toContainText(/Clos le \d{1,2} /)
-    await expect(ligne).toContainText(`Réponse d'EJP Tech : ${COMMENTAIRE}`)
+    await expect(ligne).toContainText(`Réponse : ${COMMENTAIRE}`)
     expect(await journalDe(page, 'signalement_clos', signalementId)).toHaveLength(1)
   })
 })

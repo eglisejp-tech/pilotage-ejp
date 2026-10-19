@@ -44,13 +44,13 @@ describe('FormulaireSession (maquette 09)', () => {
     expect(screen.getByText('Session précédente : 12')).toBeInTheDocument()
     expect(dejaComptes).toHaveValue('0')
     expect(screen.getByText('Coordination et Intégration')).toHaveClass('text-attention')
-    expect(
-      screen.getByText('Un nombre de personnes seulement, jamais de noms.'),
-    ).toBeInTheDocument()
+    // Des champs numériques : pas de rappel sur les noms (T66, t112).
+    expect(screen.queryByText(/jamais de noms/)).toBeNull()
     expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',
       '/signaler?ecran=saisie_session',
     )
+    expect(screen.getByRole('link', { name: 'Choisir une autre session' })).toBeInTheDocument()
   })
 
   it('session précédente non saisie par le ministère : « non saisie », sans la cacher', () => {
@@ -63,15 +63,11 @@ describe('FormulaireSession (maquette 09)', () => {
     expect(screen.queryByText(/^Session précédente/)).toBeNull()
   })
 
-  it('trois aides au plus, celles du document des aides', () => {
+  it('une seule aide, celle des présents (T66, t109 et t111)', () => {
     afficher()
     expect(
       screen.getAllByRole('button', { name: /^Aide : / }).map((b) => b.getAttribute('aria-label')),
-    ).toEqual([
-      'Aide : STARs de votre ministère présents',
-      'Aide : Dont déjà comptés par leur ministère principal',
-      'Aide : Ministères qui ont déjà saisi',
-    ])
+    ).toEqual(['Aide : STARs de votre ministère présents'])
   })
 
   it('calcule en direct « Comptés dans le total de l’église : 11. »', async () => {
@@ -91,12 +87,12 @@ describe('FormulaireSession (maquette 09)', () => {
     await utilisateur.clear(dejaComptes)
     await utilisateur.type(dejaComptes, '5')
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer la présence' }))
-    expect(screen.getByText('Ce nombre ne peut pas dépasser les présents.')).toBeInTheDocument()
+    expect(screen.getByText('Saisissez 3 au plus, le nombre de présents.')).toBeInTheDocument()
     expect(dejaComptes).toHaveFocus()
     expect(enregistrer).not.toHaveBeenCalled()
   })
 
-  it('déjà comptés au-delà des présents : la ligne du total dit « à corriger », pas l’inverse', async () => {
+  it('déjà comptés au-delà des présents : la ligne du total dit quoi corriger, pas l’inverse', async () => {
     const utilisateur = userEvent.setup()
     const { presents, dejaComptes } = afficher()
     expect(
@@ -105,7 +101,9 @@ describe('FormulaireSession (maquette 09)', () => {
     await utilisateur.type(presents, '3')
     await utilisateur.clear(dejaComptes)
     await utilisateur.type(dejaComptes, '5')
-    expect(screen.getByText("Comptés dans le total de l'église : à corriger.")).toBeInTheDocument()
+    expect(
+      screen.getByText("Comptés dans le total de l'église : corrigez « Dont déjà comptés »."),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/saisissez d'abord les présents/)).toBeNull()
   })
 
@@ -136,7 +134,7 @@ describe('FormulaireSession (maquette 09)', () => {
     const enregistrer = vi.fn(() => Promise.resolve())
     const { presents } = afficher(enregistrer)
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer la présence' }))
-    expect(screen.getByText('Saisissez le nombre de STARs présents.')).toBeInTheDocument()
+    expect(screen.getByText('Saisissez un nombre, 0 si aucun.')).toBeInTheDocument()
     expect(presents).toHaveFocus()
     expect(enregistrer).not.toHaveBeenCalled()
   })
@@ -171,11 +169,19 @@ describe('FormulaireSession (maquette 09)', () => {
     expect(presents).toHaveValue('7')
   })
 
-  it('correction : part de la saisie la plus récente et le dit', () => {
+  it('correction : part de la saisie la plus récente et le dit', async () => {
+    const utilisateur = userEvent.setup()
     const { presents, dejaComptes } = afficher(undefined, SAISIE_SESSION_EXEMPLE)
     expect(presents).toHaveValue('13')
     expect(dejaComptes).toHaveValue('2')
     expect(screen.getByText(/^Déjà saisi : 13 présents, dont 2 déjà comptés/)).toBeInTheDocument()
+    // La réussite d'une correction le dit (T66, m073).
+    await utilisateur.clear(presents)
+    await utilisateur.type(presents, '14')
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer la présence' }))
+    expect(
+      await screen.findByText("Correction enregistrée pour Bâtir l'Église du 26 sept."),
+    ).toBeInTheDocument()
   })
 })
 
@@ -189,10 +195,11 @@ describe('ChoixSession', () => {
     const liens = within(screen.getByRole('list')).getAllByRole('link')
     expect(liens[0]).toHaveTextContent("Bâtir l'Église, samedi 26 sept. : à saisir")
     expect(liens[0]).toHaveAttribute('href', '/saisir/session/session-batir-26-sept')
-    expect(screen.getByText('Choisissez la session à saisir.')).toBeInTheDocument()
+    // La phrase qui répétait le titre est partie (T66, t101).
+    expect(screen.queryByText('Choisissez la session à saisir.')).toBeNull()
   })
 
-  it('en attente des autres : la phrase et qui déclare les sessions, sans action', () => {
+  it('en attente des autres : la phrase et quand la liste se remplira, sans action', () => {
     render(
       <MemoryRouter>
         <ChoixSession sessions={[]} />
@@ -200,7 +207,7 @@ describe('ChoixSession', () => {
     )
     expect(screen.getByText('Aucune session à saisir.')).toBeInTheDocument()
     expect(
-      screen.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
+      screen.getByText('Vous pourrez saisir une session le jour où elle a lieu.'),
     ).toBeInTheDocument()
     expect(screen.queryByRole('link')).toBeNull()
   })
@@ -215,7 +222,7 @@ describe('ChoixSession', () => {
     )
     expect(
       screen.getByText(
-        'Toutes les sessions récentes sont saisies. Ouvrez une session pour corriger sa saisie.',
+        'Toutes les sessions récentes sont saisies. Ouvrez-en une pour la corriger.',
       ),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('link')).toHaveLength(SESSIONS_A_CHOISIR.length)

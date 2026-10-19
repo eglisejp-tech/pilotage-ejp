@@ -24,7 +24,6 @@ import {
 import { erreurValeurFij, MESSAGES_FIJ } from '@/features/saisie-fij/schemas'
 import type { SaisieStatistiquesFij } from '@/features/saisie-fij/schemas'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
-import { LigneAvecAide } from '@/features/saisie-session/LigneAvecAide'
 import { useEnvoiSaisie } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import type { Departement, RubriqueFij } from '@/lib/base'
@@ -48,7 +47,7 @@ const idChamp = (rubrique: RubriqueFij, departement: Departement) =>
 /**
  * Chiffres par département (dérivé de 08, ministère `fij` seulement ; BRIEF section 9) : la
  * semaine, puis les quatre rubriques, une par section, chacune avec ses 8 départements et son
- * total en direct (« Total : 58, 6 dép. sur 8 »). Un champ vide n'est pas envoyé : un
+ * total en direct (« Total : 58, 6 départements sur 8 »). Un champ vide n'est pas envoyé : un
  * département absent ne compte jamais pour 0. Toute la semaine part en un appel. Une valeur déjà
  * enregistrée ne s'efface pas (ajout seulement) : la vider bloque l'envoi et le dit.
  */
@@ -140,10 +139,8 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
           ))}
         </select>
       </div>
-      <LigneAvecAide code="fij.departements" libelle="Chiffres par département">
-        Laissez vide un département sans chiffre : il ne compte pas pour 0. Un chiffre déjà
-        enregistré se corrige, il ne s'efface pas.
-      </LigneAvecAide>
+      {/* Guide, exemple 5 (T66, t121 et t122) : la consigne seule, sans la bulle. */}
+      <p className="text-[15px] leading-normal">Laissez vide un département sans chiffre.</p>
       {RUBRIQUES_FIJ.map((rubrique) => (
         <fieldset
           key={rubrique.code}

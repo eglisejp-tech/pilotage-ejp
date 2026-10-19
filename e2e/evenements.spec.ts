@@ -39,17 +39,13 @@ test.describe('Ajouter un événement (maquette 11), aperçu', () => {
     await expect(titre(page)).toHaveText('Ajouter un événement')
     await expect(date(page)).toHaveAttribute('min', '2026-10-06')
     await expect(page.getByLabel("Nom de l'événement")).toHaveAccessibleDescription(
-      "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.",
+      "N'écrivez aucun nom ni information personnelle.",
     )
     await expect(page.getByRole('radio')).toHaveCount(6)
     await expect(page.getByRole('checkbox', { name: 'Communication' })).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).toBeVisible()
-    await expect(
-      page.getByText('Le ministère mentionné verra cet événement, et seulement cet événement.'),
-    ).toBeVisible()
-    await expect(
-      page.getByText('Les mentions se choisissent à la création et ne changent plus.'),
-    ).toBeVisible()
+    await expect(page.getByText('Le ministère mentionné verra cet événement.')).toBeVisible()
+    await expect(page.getByText('Vous ne pourrez plus changer les mentions.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Ajouter au calendrier' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',
@@ -93,14 +89,14 @@ test.describe('Ajouter un événement (maquette 11), aperçu', () => {
     await page.getByText('Brouillon').click()
     await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
     await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(page.getByLabel("Nom de l'événement")).toHaveValue('Soirée de louange')
   })
 
   test('aucun autre ministère actif : une phrase à la place des cases', async ({ page }) => {
     await ouvrir(page, 'sans-mention')
-    await expect(page.getByText('Aucun autre ministère actif à mentionner.')).toBeVisible()
+    await expect(page.getByText('Aucun autre ministère à mentionner.')).toBeVisible()
     await expect(page.getByRole('checkbox')).toHaveCount(0)
   })
 })
@@ -122,13 +118,13 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
     await expect(alerte.getByRole('link')).toHaveCount(0)
   })
 
-  test('nouvelle date : « Report : du sam. 10 oct. au sam. 17 oct. » et son aide, puis réussite', async ({
+  test('nouvelle date : « Report : du sam. 10 oct. au sam. 17 oct. », sans bulle, puis réussite', async ({
     page,
   }) => {
     await ouvrir(page, 'mise-a-jour')
     await date(page).fill('2026-10-17')
     await expect(page.getByText('Report : du sam. 10 oct. au sam. 17 oct.')).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(2)
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(1)
     await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
       'Événement mis à jour.',
@@ -150,21 +146,21 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
     await ouvrir(page, 'a-confirmer')
     await expect(
       page.getByText(
-        "Cet événement attend toujours sa validation. Validé en dehors de l'outil ? Choisissez « Validé ». Reporté ou annulé ? Changez la date ou choisissez « Annulé ».",
+        'Cet événement attend toujours sa validation. Choisissez son nouveau statut ou changez sa date.',
       ),
     ).toBeVisible()
   })
 
   test('états : pas pour ce profil, aucun résultat, problème passager', async ({ page }) => {
     await ouvrir(page, 'pas-porteur')
-    await expect(page.getByText('Seul Coordination met à jour cet événement.')).toBeVisible()
+    await expect(
+      page.getByText('Seul Coordination peut mettre à jour cet événement.'),
+    ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
     await expect(page.getByRole('radio')).toHaveCount(0)
 
     await ouvrir(page, 'introuvable')
-    await expect(
-      page.getByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
-    ).toBeVisible()
+    await expect(page.getByText('Cet événement est introuvable.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
 
     await ouvrir(page, 'probleme')
@@ -174,12 +170,12 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
 })
 
 test.describe('Prochaine réunion, aperçu', () => {
-  test('champs, deux aides, rappel sous l’objet, « Modifier » prérempli', async ({ page }) => {
+  test('champs, une aide, rappel sous l’objet, « Modifier » prérempli', async ({ page }) => {
     await ouvrir(page, 'reunion')
     await expect(titre(page)).toHaveText('Prochaine réunion')
-    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(2)
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(1)
     await expect(page.getByLabel('Objet (facultatif)')).toHaveAccessibleDescription(
-      "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.",
+      "N'écrivez aucun nom ni information personnelle.",
     )
     await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',
@@ -257,14 +253,14 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
     await ouvrir(page, ecran)
     await capturer(ecran)
   }
-  // Panneau 11 avec l'aide de la date ouverte (plan de l'étape 4, E5).
+  // Panneau 11 avec l'aide du statut ouverte (T66 : la date n'a plus de bulle).
   await ouvrir(page, 'ajout')
-  await page.getByRole('button', { name: 'Aide : Date' }).click()
-  await expect(page.getByRole('button', { name: 'Aide : Date' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Aide : Statut' }).click()
+  await expect(page.getByRole('button', { name: 'Aide : Statut' })).toHaveAttribute(
     'aria-expanded',
     'true',
   )
-  await capturer('ajout-aide-date')
+  await capturer('ajout-aide-statut')
   // Date refusée, avec son lien.
   await date(page).fill('2026-10-05')
   await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()

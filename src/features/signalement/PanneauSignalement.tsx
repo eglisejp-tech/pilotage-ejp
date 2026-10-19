@@ -15,14 +15,13 @@ type Props = Omit<ProprietesFormulaireSignalement, 'onAnnuler'> & {
 
 /**
  * Panneau « Signaler une difficulté » (`/signaler`, ministère seulement) : page entière sous
- * 600 px, panneau de 460 px au-delà. Sous le titre, la phrase qui dit qui lit le signalement
- * (« EJP Tech lit votre signalement. »), en texte visible et non en aide (T38) ; puis le
- * formulaire et « Vos derniers signalements ».
+ * 600 px, panneau de 460 px au-delà. Le formulaire, puis « Vos derniers signalements ». Le libellé
+ * « Quelle difficulté rencontrez-vous ? » suffit : plus de phrase sous le titre (guide, exemple 9 ;
+ * T66, t149).
  */
 export function PanneauSignalement({ mesSignalements, onFermer, surtitre, ...formulaire }: Props) {
   return (
     <PanneauSaisie titre={TEXTES_SIGNALEMENT.titre} surtitre={surtitre} onFermer={onFermer}>
-      <p className="leading-normal text-encre-2">{TEXTES_SIGNALEMENT.phraseTitre}</p>
       <FormulaireSignalement {...formulaire} onAnnuler={onFermer} />
       <MesSignalements contenu={mesSignalements} />
     </PanneauSaisie>

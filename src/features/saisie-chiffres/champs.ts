@@ -82,8 +82,6 @@ export interface DetailSensible {
   precisionMasquee: boolean
   /** Répartition du total le plus récent, reprise dans la grille ; null si aucune. */
   repartitionDepart: Readonly<Record<string, number>> | null
-  /** Première grille du formulaire : elle porte l'aide `mois.repartition`. */
-  aideGrille: boolean
   /** Premier champ « Précision » du formulaire : le rappel sur les données personnelles. */
   rappel: boolean
 }
@@ -165,8 +163,8 @@ function champDeBase(indicateur: IndicateurDeSaisie): ChampChiffre {
   }
 }
 
+// « STARs au service ce dimanche » se comprend seul : pas de bulle (T66, t069).
 const AIDES_COMMUNS: Readonly<Record<string, CodeAide>> = {
-  service: 'dimanche.service',
   actifs: 'dimanche.actifs',
   en_fij: 'dimanche.enFij',
 }
@@ -391,27 +389,15 @@ export interface EntreeMois {
  * Champs de « Chiffres du mois » (BRIEF, section 9) : les indicateurs du mois du ministère, actifs
  * ou à valider, jamais un calcul, dans l'ordre de `ordre`, chacun repris avec la saisie qui fait
  * foi pour le mois. Un sensible a sa précision et, si la coordination a donné ses catégories, sa
- * grille, reprises du total le plus récent (P46, P47). Aides : `mois.sensible` sur le premier
- * sensible, `mois.aValider` sur le premier ajout à valider qui n'a pas déjà une aide, la grille de
- * `mois.repartition` sur la première grille, chacune une seule fois (4 aides au plus avec
- * `mois.periode`).
+ * grille, reprises du total le plus récent (P46, P47). Aucune bulle : « à valider », la précision
+ * et la grille se lisent sur l'écran (T66, t081, t087 et t093).
  */
 export function champsMois(entree: EntreeMois): ChampChiffre[] {
   const periode = premierJourDuMois(entree.mois)
-  let aideSensible = false
-  let aideAValider = false
-  let aideGrille = false
   let rappel = false
   return indicateursDuMois(entree.indicateurs).map((indicateur) => {
     const deja = dePeriode(entree.mesuresMois, indicateur.id, periode)
     const champ: ChampChiffre = { ...champDeBase(indicateur), deja, depart: deja?.valeur ?? null }
-    if (indicateur.sensible && !aideSensible) {
-      aideSensible = true
-      champ.aide = 'mois.sensible'
-    } else if (champ.aValider && !aideAValider) {
-      aideAValider = true
-      champ.aide = 'mois.aValider'
-    }
     if (!indicateur.sensible) return champ
 
     const enCours = entree.categories
@@ -446,10 +432,8 @@ export function champsMois(entree: EntreeMois): ChampChiffre[] {
           : Object.fromEntries(
               categories.map(({ code }) => [code, repartition[code] ?? 0] as const),
             ),
-      aideGrille: categories.length > 0 && !aideGrille,
       rappel: !rappel,
     }
-    if (categories.length > 0) aideGrille = true
     rappel = true
     return champ
   })

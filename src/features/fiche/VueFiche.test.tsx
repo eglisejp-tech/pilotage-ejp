@@ -173,7 +173,9 @@ describe('VueFiche, ministère sur sa fiche (12)', () => {
       expect.arrayContaining([expect.stringMatching(/Bénéficiaires|masqué/)]),
     )
     expect(
-      screen.getByText('À valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir.'),
+      screen.getByText(
+        "En attente de validation depuis 2 jours. Vos chiffres compteront dès qu'il sera validé.",
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText('Mentionné par Intégration.')).toBeInTheDocument()
   })

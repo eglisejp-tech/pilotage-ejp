@@ -3,20 +3,24 @@
 
 /**
  * Rappel sur les données personnelles : une fois par formulaire, sous le premier champ libre.
- * Seule exception : le champ « Pourquoi cet indicateur ? », sans rappel (T30).
+ * Seule exception : le champ « Pourquoi cet indicateur ? », sans rappel (T30). Une phrase : la
+ * relecture est expliquée dans la page Confidentialité (guide, section 5 ; T66, t060).
  */
-export const RAPPEL_DONNEES_PERSONNELLES =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+export const RAPPEL_DONNEES_PERSONNELLES = "N'écrivez aucun nom ni information personnelle."
 
 /** Durée du message de réussite après une saisie : 6 secondes (LISEZMOI, « Réussite »). */
 export const DUREE_REUSSITE_MS = 6000
 
-/** Ce qui reste dans le formulaire après un échec d'envoi. */
-export type ObjetSaisie = 'chiffres' | 'message'
+/**
+ * Ce qui reste dans le formulaire après un échec d'envoi : des chiffres, un message (signalement,
+ * texte écrit pour quelqu'un) ou une saisie (événement, réunion : T66, t062).
+ */
+export type ObjetSaisie = 'chiffres' | 'message' | 'saisie'
 
 const ERREURS_CONNEXION: Record<ObjetSaisie, string> = {
   chiffres: 'La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez.',
   message: 'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+  saisie: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
 }
 
 /** Erreur de formulaire, sous le bouton d'enregistrement : les valeurs restent. */

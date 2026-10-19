@@ -8,8 +8,7 @@ import type { Page } from '@playwright/test'
 // base (un ministère mentionné marque un point traité, un autre ne le voit pas) sont dans
 // `e2e/points.ecriture.spec.ts`.
 
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
 const TITRE = 'Salle pour la soirée de louange'
 
 async function ouvrir(page: Page, requete = '') {

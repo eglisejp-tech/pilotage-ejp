@@ -22,7 +22,7 @@ describe('construireChiffresParDepartement', () => {
     })
   })
 
-  it('total de chaque rubrique du dimanche de référence, avec « 6 dép. sur 8 »', () => {
+  it('total de chaque rubrique du dimanche de référence, avec « 6 départements sur 8 »', () => {
     const bloc = donnees('donnees')
     expect(bloc.dimanche).toBe('2026-09-27')
     expect(bloc.semaine).toBe('Semaine 39, du 21 au 27 sept.')
@@ -34,16 +34,16 @@ describe('construireChiffresParDepartement', () => {
     ])
     const [culte] = bloc.rubriques
     expect(culte?.total).toBe(48)
-    expect(culte?.completude).toBe('6 dép. sur 8')
+    expect(culte?.completude).toBe('6 départements sur 8')
     expect(culte?.complet).toBe(false)
   })
 
-  it('« 8 dép. sur 8 » pour une semaine complète', () => {
+  it('« 8 départements sur 8 » pour une semaine complète', () => {
     const lignes = statistiquesExemple('donnees').filter((ligne) => ligne.dimanche !== '2026-09-27')
     const construit = construireChiffresParDepartement(lignes)
     if (construit?.situation !== 'donnees') throw new Error('données attendues')
     expect(construit.donnees.dimanche).toBe('2026-09-20')
-    expect(construit.donnees.rubriques[0]?.completude).toBe('8 dép. sur 8')
+    expect(construit.donnees.rubriques[0]?.completude).toBe('8 départements sur 8')
     expect(construit.donnees.rubriques[0]?.complet).toBe(true)
   })
 
@@ -66,7 +66,7 @@ describe('construireChiffresParDepartement', () => {
     expect(courbe?.points.at(-1)?.incomplet).toBe(true)
     expect(courbe?.points.at(-2)?.incomplet).toBe(false)
     expect(courbe?.description).toContain('sans saisie')
-    expect(courbe?.description).toContain('48 (6 dép. sur 8)')
+    expect(courbe?.description).toContain('48 (6 départements sur 8)')
   })
 
   it('par département : la dernière valeur, ou null (« Pas de saisie »), jamais 0', () => {
@@ -89,7 +89,7 @@ describe('construireChiffresParDepartement', () => {
     const bloc = donnees('semaine-vide')
     expect(bloc.semaineVide).toBe(true)
     expect(bloc.rubriques.every((rubrique) => rubrique.total === null)).toBe(true)
-    expect(bloc.rubriques[0]?.completude).toBe('0 dép. sur 8')
+    expect(bloc.rubriques[0]?.completude).toBe('0 département sur 8')
   })
 
   it('semaine de référence vide : la courbe finit sur un cercle vide, jamais sur un point plein', () => {

@@ -41,8 +41,8 @@ describe('ChampNombre', () => {
     const utilisateur = userEvent.setup()
     render(<Champ depart="1" />)
     const champ = screen.getByLabelText('STARs au service ce dimanche')
-    const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
-    const moins = screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' })
+    const plus = screen.getByRole('button', { name: 'Ajouter 1 : STARs au service ce dimanche' })
+    const moins = screen.getByRole('button', { name: 'Retirer 1 : STARs au service ce dimanche' })
     await utilisateur.click(plus)
     expect(champ).toHaveValue('2')
     await utilisateur.click(moins)
@@ -88,7 +88,7 @@ describe('ChampNombre', () => {
       expect(consignes[0]?.closest('[aria-live="polite"]')).not.toBeNull()
       expect(champ.getAttribute('aria-describedby')?.split(' ')).toContain(consignes[0]?.id)
       // Les boutons plus et moins n'agissent pas sur un texte à corriger.
-      const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
+      const plus = screen.getByRole('button', { name: 'Ajouter 1 : STARs au service ce dimanche' })
       expect(plus).toHaveAttribute('aria-disabled', 'true')
       await utilisateur.click(plus)
       expect(champ).toHaveValue(texte)
@@ -114,7 +114,7 @@ describe('ChampNombre', () => {
     render(<Champ depart="0" />)
     const champ = screen.getByLabelText('STARs au service ce dimanche')
     expect(champ).not.toHaveAttribute('aria-invalid')
-    const moins = screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' })
+    const moins = screen.getByRole('button', { name: 'Retirer 1 : STARs au service ce dimanche' })
     expect(moins).toHaveAttribute('aria-disabled', 'true')
     await utilisateur.click(moins)
     expect(champ).toHaveValue('0')
@@ -124,7 +124,7 @@ describe('ChampNombre', () => {
     const utilisateur = userEvent.setup()
     render(<Champ depart="9998" />)
     const champ = screen.getByLabelText('STARs au service ce dimanche')
-    const plus = screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' })
+    const plus = screen.getByRole('button', { name: 'Ajouter 1 : STARs au service ce dimanche' })
     expect(plus).not.toHaveAttribute('aria-disabled')
     await utilisateur.click(plus)
     expect(champ).toHaveValue('9999')
@@ -133,7 +133,7 @@ describe('ChampNombre', () => {
     await utilisateur.click(plus)
     expect(champ).toHaveValue('9999')
     expect(
-      screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' }),
+      screen.getByRole('button', { name: 'Retirer 1 : STARs au service ce dimanche' }),
     ).not.toHaveAttribute('aria-disabled')
   })
 
@@ -147,7 +147,7 @@ describe('ChampNombre', () => {
 
   it('en variante compacte : pas de boutons plus et moins', () => {
     render(<Champ variante="compact" />)
-    expect(screen.queryByRole('button', { name: /^Ajouter un/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: /^Ajouter 1/ })).toBeNull()
     expect(screen.getByLabelText('STARs au service ce dimanche')).toBeInTheDocument()
   })
 
@@ -217,15 +217,15 @@ describe('ChampNombre', () => {
   it('« moins » est un carré bordé, « plus » est plein (maquette 08)', () => {
     render(<Champ />)
     expect(
-      screen.getByRole('button', { name: 'Retirer un : STARs au service ce dimanche' }),
+      screen.getByRole('button', { name: 'Retirer 1 : STARs au service ce dimanche' }),
     ).toHaveClass('border', 'border-encre', 'bg-papier')
     expect(
-      screen.getByRole('button', { name: 'Ajouter un : STARs au service ce dimanche' }),
+      screen.getByRole('button', { name: 'Ajouter 1 : STARs au service ce dimanche' }),
     ).toHaveClass('bg-encre')
   })
 
   it('pose l’aide à côté du libellé, hors du <label>', () => {
-    render(<Champ aide="dimanche.service" />)
+    render(<Champ aide="dimanche.actifs" />)
     const aide = screen.getByRole('button', { name: 'Aide : STARs au service ce dimanche' })
     expect(aide.closest('label')).toBeNull()
   })

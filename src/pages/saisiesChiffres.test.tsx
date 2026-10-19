@@ -84,7 +84,8 @@ describe('/saisir/dimanche', () => {
     expect(
       screen.getByLabelText('STARs au service ce dimanche', { exact: true }),
     ).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(4)
+    // T66 : deux bulles, « STARs actifs » et « Dont en FIJ ».
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(2)
     expect(new Set(faux.tables)).toEqual(
       new Set(['compte', 'v_semaine', 'indicateur', 'v_mesure_periode']),
     )
@@ -94,11 +95,7 @@ describe('/saisir/dimanche', () => {
     connecte('ministere', { v_semaine: [SEMAINE], indicateur: INDICATEURS_DIMANCHE })
     const routeur = afficher('/saisir/dimanche?date=2026-09-28')
     expect(
-      await screen.findByText(
-        "Cette date n'est pas un dimanche déjà passé. Choisissez le dimanche 27 sept. ou un dimanche précédent.",
-        undefined,
-        ATTENTE,
-      ),
+      await screen.findByText("Cette date n'est pas proposée à la saisie.", undefined, ATTENTE),
     ).toBeInTheDocument()
     // Sans date valide, le surtitre ne répète pas le titre.
     expect(screen.getAllByText('Chiffres du dimanche')).toHaveLength(1)
@@ -133,7 +130,8 @@ describe('/saisir/mois', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Chiffres du mois')).toBeInTheDocument()
     expect(screen.getByLabelText('Malaise', { exact: true })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(4)
+    // T66 : plus de bulle sur « Chiffres du mois » (t081, t084, t087, t093).
+    expect(screen.queryAllByRole('button', { name: /^Aide : / })).toHaveLength(0)
     // Le mois n'a pas de total saisi : ni répartition ni précision à lire.
     expect(faux.tables).not.toContain('ventilation_sensible')
     expect(faux.tables).not.toContain('precision_sensible')
@@ -151,6 +149,10 @@ describe('/saisir/mois', () => {
     ).toBeInTheDocument()
     // « en cours » est dans le surtitre : le titre ne passe pas à la ligne sur un mot seul.
     expect(screen.getByText('Chiffres du mois, en cours')).toBeInTheDocument()
+    // Le mois en cours dit quoi saisir, sous le choix du mois (T66, t084).
+    expect(
+      screen.getByText('Saisissez le total à ce jour, puis complétez-le en fin de mois.'),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Bénéficiaires (passages)', { exact: true })).toBeInTheDocument()
   })
 
@@ -171,7 +173,7 @@ describe('/saisir/mois', () => {
     connecte('ministere', { v_semaine: [SEMAINE], indicateur: indicateursMoisExemple(true) })
     afficher('/saisir/mois?mois=2026-11')
     expect(
-      await screen.findByText("Ce mois n'est pas encore commencé.", undefined, ATTENTE),
+      await screen.findByText("Ce mois n'a pas encore commencé.", undefined, ATTENTE),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Saisir août 2026' })).toHaveAttribute(
       'href',
@@ -179,11 +181,15 @@ describe('/saisir/mois', () => {
     )
   })
 
-  it('sans indicateur du mois : « Votre ministère n’a pas d’indicateur du mois. » et « Revenir à ma fiche »', async () => {
+  it('sans indicateur du mois : la phrase et « Revenir à ma fiche »', async () => {
     connecte('ministere', { v_semaine: [SEMAINE], indicateur: INDICATEURS_DIMANCHE })
     afficher('/saisir/mois')
     expect(
-      await screen.findByText("Votre ministère n'a pas d'indicateur du mois.", undefined, ATTENTE),
+      await screen.findByText(
+        "Votre ministère n'a aucun chiffre à saisir chaque mois.",
+        undefined,
+        ATTENTE,
+      ),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',

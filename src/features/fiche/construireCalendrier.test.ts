@@ -118,7 +118,7 @@ describe('construireCalendrier', () => {
       { ministereId: COMMUNICATION, profil: 'ministere' },
     )
     expect(ligne?.mentionnePar).toBe('Mentionné par Coordination')
-    expect(ligne?.lectureSeule).toBe('Seul Coordination met à jour cet événement.')
+    expect(ligne?.lectureSeule).toBe('Seul Coordination peut mettre à jour cet événement.')
     expect(ligne?.duMinistere).toBe(false)
     expect(ligne?.versMiseAJour).toBeNull()
   })

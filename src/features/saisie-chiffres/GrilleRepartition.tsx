@@ -1,5 +1,4 @@
 import { useId } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
 import { MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import { idGrille } from '@/features/saisie-chiffres/envoi'
@@ -13,8 +12,6 @@ interface Props {
   categories: readonly { code: string; libelle: string }[]
   valeurs: Readonly<Record<string, string>>
   onChange: (code: string, valeur: string) => void
-  /** Première grille du formulaire : l'aide `mois.repartition` sur son titre. */
-  aide: boolean
   /** Ligne calculée en direct sous la grille. */
   etat: EtatGrille
   /** Refus avant l'envoi ou de la base : il remplace la ligne calculée. */
@@ -22,17 +19,17 @@ interface Props {
 }
 
 /**
- * « Répartition (facultatif) » d'un indicateur sensible qui a des catégories (P47) : un petit
- * champ par catégorie, dans l'ordre de la liste, et la ligne calculée en direct « Non réparti :
- * 3 ». La somme ne dépasse jamais le total : la ligne le dit dès la saisie, et rien ne part tant
- * qu'elle dépasse. Une grille vide n'envoie aucune répartition.
+ * « Répartition par catégorie (facultatif) » d'un indicateur sensible qui a des catégories
+ * (P47) : un petit champ par catégorie, dans l'ordre de la liste, et la ligne calculée en direct
+ * « Non réparti : 3 ». La somme ne dépasse jamais le total : la ligne le dit dès la saisie, et
+ * rien ne part tant qu'elle dépasse. Une grille vide n'envoie aucune répartition. Pas de bulle :
+ * le libellé et « Non réparti » suffisent (T66, t093).
  */
 export function GrilleRepartition({
   indicateurId,
   categories,
   valeurs,
   onChange,
-  aide,
   etat,
   erreur,
 }: Props) {
@@ -56,7 +53,6 @@ export function GrilleRepartition({
         <p id={idTitre} className="text-sm font-semibold">
           {TEXTES_CHIFFRES.grilleTitre}
         </p>
-        {aide ? <Aide code="mois.repartition" libelle={TEXTES_CHIFFRES.grilleTitre} /> : null}
       </div>
       <div className="grid grid-cols-2 gap-3 min-[600px]:grid-cols-3">
         {categories.map((categorie) => (

@@ -7,11 +7,16 @@ import { schemaHeure, schemaValeur } from '@/features/indicateurs/schemas'
 import { lireChamp, MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import type { ChampChiffre } from '@/features/saisie-chiffres/champs'
 import {
+  MESSAGE_CATEGORIE,
   schemaPrecision,
   schemaValeurCategorie,
   sommeCategories,
 } from '@/features/saisie-chiffres/schemas'
-import { messageSommeDepasse } from '@/features/saisie-chiffres/textes'
+import {
+  messageCategorieHorsBornes,
+  messageSommeDepasse,
+  TEXTES_CHIFFRES,
+} from '@/features/saisie-chiffres/textes'
 import type { UniteIndicateur } from '@/lib/base'
 import { heureDepuisMinutes } from '@/lib/metier/unites'
 
@@ -33,7 +38,7 @@ export function valeurDepart(champ: Pick<ChampChiffre, 'unite' | 'depart'>): Val
 
 /**
  * Valeur d'un champ : vide (rien n'est envoyé), un entier de 0 au plafond de l'unité, ou le
- * message de la borne (« Entre 0 et 9 999. »). Une heure partielle (heures sans minutes) est une
+ * message de la borne (« Saisissez un nombre entre 0 et 9 999. »). Une heure partielle (heures sans minutes) est une
  * erreur, jamais une heure devinée. Un texte qui n'est pas un nombre entier (« 12,5 ») est une
  * erreur, jamais un nombre deviné (m100).
  */
@@ -68,17 +73,22 @@ export function lirePrecision(texte: string): Lecture<string> {
   const resultat = schemaPrecision.safeParse(texte)
   return resultat.success
     ? { etat: 'ok', valeur: resultat.data }
-    : { etat: 'erreur', message: resultat.error.issues[0]?.message ?? 'Précision invalide.' }
+    : {
+        etat: 'erreur',
+        message: resultat.error.issues[0]?.message ?? TEXTES_CHIFFRES.precisionTropCourte,
+      }
 }
 
 /**
  * Grille de répartition : vide si aucune catégorie n'est remplie (pas de répartition), sinon la
- * valeur de chaque catégorie remplie. Une catégorie hors bornes donne son message ; une catégorie
+ * valeur de chaque catégorie remplie. Une catégorie hors bornes donne son message, avec son nom
+ * quand `libelles` le donne (« Catégorie « Malaise » : saisissez ... », T66, m094) ; une catégorie
  * qui n'est pas un nombre entier donne `MESSAGE_NOMBRE_ENTIER` (dit aussi sous son champ).
  */
 export function lireRepartition(
   codes: readonly string[],
   saisie: Readonly<Record<string, string>>,
+  libelles: Readonly<Record<string, string>> = {},
 ): Lecture<Record<string, number>> {
   const valeurs: Record<string, number> = {}
   for (const code of codes) {
@@ -87,7 +97,11 @@ export function lireRepartition(
     if (lecture.etat === 'vide') continue
     const resultat = schemaValeurCategorie.safeParse(lecture.valeur)
     if (!resultat.success) {
-      return { etat: 'erreur', message: resultat.error.issues[0]?.message ?? 'Entre 0 et 9 999.' }
+      const libelle = libelles[code]
+      return {
+        etat: 'erreur',
+        message: libelle === undefined ? MESSAGE_CATEGORIE : messageCategorieHorsBornes(libelle),
+      }
     }
     valeurs[code] = resultat.data
   }

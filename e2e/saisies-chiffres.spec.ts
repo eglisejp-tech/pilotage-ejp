@@ -40,7 +40,7 @@ const TOUS: Ecran[] = [
 const nomDe = ({ ecran, etat }: Ecran) => [ecran, etat].filter(Boolean).join('-')
 
 test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
-  test('le dimanche de référence, les communs, « 79 % des actifs » et quatre aides', async ({
+  test('le dimanche de référence, les communs, « 79 % des actifs » et deux aides', async ({
     page,
   }) => {
     await ouvrir(page, { ecran: 'dimanche' })
@@ -50,7 +50,8 @@ test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
     await expect(page.getByText('Dimanche dernier : 9')).toBeVisible()
     await expect(page.getByText('Saisi le 24 sept.')).toBeVisible()
     await expect(page.getByText(/^79\s% des actifs$/)).toBeVisible()
-    await expect(boutonsAide(page)).toHaveCount(4)
+    // T66 : « STARs actifs » et « Dont en FIJ » gardent leur bulle.
+    await expect(boutonsAide(page)).toHaveCount(2)
   })
 
   test('envoi : « Chiffres du dimanche 27 sept. enregistrés. »', async ({ page }) => {
@@ -107,19 +108,10 @@ test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
   }) => {
     await ouvrir(page, { ecran: 'dimanche', etat: 'correction' })
     await expect(page.getByText('Corriger les chiffres du dimanche')).toBeVisible()
-    await expect(
-      page.getByText(
-        'Déjà saisi : 10, le 27 sept. à 12 h 41. Votre saisie la remplacera dans les totaux.',
-      ),
-    ).toBeVisible()
+    await expect(page.getByText('Déjà saisi : 10, le 27 sept. à 12 h 41.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Enregistrer la correction' })).toBeVisible()
-    // La ligne du bas ne contredit pas « Votre saisie la remplacera dans les totaux ».
-    await expect(
-      page.getByText(
-        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
-      ),
-    ).toBeVisible()
-    await expect(page.getByText('elle ne remplace rien')).toHaveCount(0)
+    // Plus de phrase sur l'historique (T66, t076 et t077).
+    await expect(page.getByText(/historique/)).toHaveCount(0)
   })
 })
 
@@ -134,19 +126,21 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     await expect(page.getByText('Non réparti : 1')).toBeVisible()
     await page.getByLabel('Malaise', { exact: true }).fill('9')
     await expect(
-      page.getByText('La somme des catégories (11) dépasse le total du mois (7).'),
+      page.getByText(
+        'Les catégories font 11 pour un total de 7. Corrigez la répartition ou le total.',
+      ),
     ).toBeVisible()
     // Le message est relié au groupe et à chaque case, qui sont marquées en erreur.
-    const grille = page.getByRole('group', { name: 'Répartition (facultatif)' })
-    await expect(grille).toHaveAccessibleDescription(/dépasse le total du mois/)
+    const grille = page.getByRole('group', { name: 'Répartition par catégorie (facultatif)' })
+    await expect(grille).toHaveAccessibleDescription(/pour un total de 7/)
     await expect(page.getByLabel('Malaise', { exact: true })).toHaveAttribute(
       'aria-invalid',
       'true',
     )
     await expect(page.getByLabel('Malaise', { exact: true })).toHaveAccessibleDescription(
-      /dépasse le total du mois/,
+      /pour un total de 7/,
     )
-    await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     await expect(page.getByRole('status').getByText(/enregistrés\.$/)).toHaveCount(0)
     // Seule la somme est fausse : le focus va à la première case de la grille.
     await expect(grille.getByRole('textbox').first()).toBeFocused()
@@ -156,38 +150,36 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, { ecran: 'mois' })
-    await expect(
-      page.getByText('Lue par votre ministère, le berger, le conseil et EJP Tech.'),
-    ).toBeVisible()
-    await expect(
-      page.getByText(
-        "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.",
-      ),
-    ).toHaveCount(1)
+    await expect(page.getByText('Le berger et le conseil la lisent.')).toBeVisible()
+    await expect(page.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(1)
     await expect(page.getByText('0 sur 280')).toBeVisible()
     await page.getByLabel('Bénéficiaires (passages)', { exact: true }).fill('3')
     await page.getByLabel('Précision (facultatif)', { exact: true }).fill('Neuf cara')
-    await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     await expect(
       page.getByText('Écrivez au moins 10 caractères, ou laissez la précision vide.'),
     ).toBeVisible()
   })
 
-  test('correction : total, précision et grille repris ; envoi « Chiffres de septembre 2026 enregistrés. »', async ({
+  test('correction : total, précision et grille repris ; envoi « Correction de septembre 2026 enregistrée. »', async ({
     page,
   }) => {
     await ouvrir(page, { ecran: 'mois', etat: 'correction' })
     await expect(page.getByRole('heading', { level: 1, name: 'Septembre 2026' })).toBeVisible()
     await expect(page.getByText('Chiffres du mois, en cours')).toBeVisible()
+    // Le mois en cours dit quoi saisir (T66, t084).
+    await expect(
+      page.getByText('Saisissez le total à ce jour, puis complétez-le en fin de mois.'),
+    ).toBeVisible()
     await expect(page.getByLabel('Bénéficiaires (passages)', { exact: true })).toHaveValue('7')
     await expect(page.getByLabel('Malaise', { exact: true })).toHaveValue('4')
     await expect(page.getByLabel('Précision (facultatif)', { exact: true })).toHaveValue(
       /^Plus de passages/,
     )
     await page.getByLabel('Bénéficiaires (passages)', { exact: true }).fill('8')
-    await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     await expect(
-      page.getByRole('status').getByText('Chiffres de septembre 2026 enregistrés.'),
+      page.getByRole('status').getByText('Correction de septembre 2026 enregistrée.'),
     ).toBeVisible()
   })
 
@@ -197,7 +189,7 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     await ouvrir(page, { ecran: 'mois', etat: 'refus-precision' })
     const precision = page.getByLabel('Précision (facultatif)', { exact: true })
     await precision.fill('Texte modifié pour ce mois.')
-    await page.getByRole('button', { name: 'Enregistrer les chiffres du mois' }).click()
+    await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     // Le rappel sous le champ contient la même phrase : on vise l'erreur elle-même (son id).
     await expect(page.locator('[id^="precision-"][id$="-erreur"]')).toHaveText(REFUS_PRECISION)
     await expect(page.getByRole('alert')).toHaveCount(0)
@@ -214,7 +206,9 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
 
   test('sans indicateur du mois : la phrase et « Revenir à ma fiche »', async ({ page }) => {
     await ouvrir(page, { ecran: 'mois', etat: 'sans-indicateur' })
-    await expect(page.getByText("Votre ministère n'a pas d'indicateur du mois.")).toBeVisible()
+    await expect(
+      page.getByText("Votre ministère n'a aucun chiffre à saisir chaque mois."),
+    ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toBeVisible()
   })
@@ -239,10 +233,13 @@ test.describe('profils sans saisie', () => {
 
 test.describe('accessibilité et formats', () => {
   test('aides au clavier : Entrée ouvre, Échap ferme, le focus reste', async ({ page }) => {
+    // T66 : « Chiffres du mois » n'a plus de bulle ; celles du dimanche restent.
     await ouvrir(page, { ecran: 'mois' })
+    await expect(boutonsAide(page)).toHaveCount(0)
+    await ouvrir(page, { ecran: 'dimanche' })
     const aides = boutonsAide(page)
-    await expect(aides).toHaveCount(4)
-    for (let rang = 0; rang < 4; rang++) {
+    await expect(aides).toHaveCount(2)
+    for (let rang = 0; rang < 2; rang++) {
       const aide = aides.nth(rang)
       await aide.focus()
       await page.keyboard.press('Enter')

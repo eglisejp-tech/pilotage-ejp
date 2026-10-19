@@ -19,9 +19,8 @@ interface Props {
 /**
  * Choix du statut d'un événement (maquette 11) : six boutons radio en deux colonnes, le choix en
  * fond `--encre`. Le titre « Statut » et son aide sont hors d'une `<legend>` (le nom du groupe
- * garderait « Aide : ... ») : le groupe le lit par `aria-labelledby`. Sous les statuts, le texte
- * visible « La validation se fait en dehors de l'outil. Ici, on reporte seulement le statut. »,
- * qui sert à chaque saisie (ce n'est pas une aide en bulle).
+ * garderait « Aide : ... ») : le groupe le lit par `aria-labelledby`. Plus de note sous les
+ * statuts : « Ici, on reporte seulement le statut » faisait parler l'outil de lui (T66, t131).
  */
 export function ChoixStatut({
   id,
@@ -34,16 +33,13 @@ export function ChoixStatut({
 }: Props) {
   const idTitre = `${id}-titre`
   const idLigne = `${id}-ligne`
-  const idNote = `${id}-note`
   const idErreur = `${id}-erreur`
-  const decritPar = [ligneAuDessus ? idLigne : '', idNote, erreur ? idErreur : '']
-    .filter(Boolean)
-    .join(' ')
+  const decritPar = [ligneAuDessus ? idLigne : '', erreur ? idErreur : ''].filter(Boolean).join(' ')
 
   return (
     <fieldset
       aria-labelledby={idTitre}
-      aria-describedby={decritPar}
+      aria-describedby={decritPar || undefined}
       className="flex min-w-0 flex-col gap-1.5"
     >
       <div className="flex min-h-cible flex-wrap items-center">
@@ -81,9 +77,6 @@ export function ChoixStatut({
           </label>
         ))}
       </div>
-      <p id={idNote} className="text-sm leading-normal text-encre-3">
-        {TEXTES_EVENEMENT.noteStatut}
-      </p>
       {erreur ? (
         <p id={idErreur} className="text-[15px] leading-normal text-alerte">
           {erreur}

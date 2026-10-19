@@ -2,11 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
-import {
-  LECTEUR_SIGNALEMENT,
-  LIBELLES_ECRAN,
-  TEXTES_SIGNALEMENT,
-} from '@/features/signalement/textes'
+import { LIBELLES_ECRAN, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
 const TIRETS = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`)
 
@@ -46,10 +42,10 @@ describe('LienSignalement', () => {
 })
 
 describe('textes du signalement', () => {
-  it('dit que EJP Tech lit le signalement, et jamais que l’administration le lit', () => {
-    expect(LECTEUR_SIGNALEMENT).toBe('EJP Tech lit votre signalement.')
-    expect(TEXTES_SIGNALEMENT.phraseTitre).toBe(
-      'EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.',
+  it('ne dit pas qui lit le signalement à l’écran (T66, t149), ni l’administration', () => {
+    expect('phraseTitre' in TEXTES_SIGNALEMENT).toBe(false)
+    expect(TEXTES_SIGNALEMENT.confirmation).toBe(
+      "Signalement envoyé. La réponse s'affichera sur cette page.",
     )
     for (const texte of [...textesDe(TEXTES_SIGNALEMENT), ...Object.values(LIBELLES_ECRAN)]) {
       expect(texte).not.toMatch(/administration/i)

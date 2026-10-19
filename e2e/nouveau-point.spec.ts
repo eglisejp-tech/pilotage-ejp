@@ -10,8 +10,7 @@ import type { Page } from '@playwright/test'
 const ECRANS = ['formulaire', 'sans-mention', 'chargement', 'probleme'] as const
 type Ecran = (typeof ECRANS)[number]
 
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
 
 async function ouvrir(page: Page, ecran: Ecran = 'formulaire', envoi?: 'echec') {
   await page.goto(

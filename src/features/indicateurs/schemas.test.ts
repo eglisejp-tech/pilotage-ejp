@@ -35,27 +35,30 @@ describe('valeur selon l’unité', () => {
     }
   })
 
-  it('dit « Entre 0 et 9 999. » pour un compte et « Entre 0 et 9 999 999. » pour un grand compte', () => {
-    expect(message(schemaValeur('nombre').safeParse(10_000))).toBe(`Entre 0 et 9${F}999.`)
+  it('dit « Saisissez un nombre entre 0 et 9 999. » (T66, t095), avec la borne de l’unité', () => {
+    const borne = (max: string) => `Saisissez un nombre entre 0 et ${max}.`
+    expect(message(schemaValeur('nombre').safeParse(10_000))).toBe(borne(`9${F}999`))
     expect(message(schemaValeur('grand_nombre').safeParse(10_000_000))).toBe(
-      `Entre 0 et 9${F}999${F}999.`,
+      borne(`9${F}999${F}999`),
     )
-    expect(message(schemaValeur('euros').safeParse(10_000_000))).toBe(`Entre 0 et 9${F}999${F}999.`)
-    expect(message(schemaValeur('jours').safeParse(100_000))).toBe(`Entre 0 et 99${F}999.`)
-    expect(messageBorne('nombre')).toBe(`Entre 0 et 9${F}999.`)
+    expect(message(schemaValeur('euros').safeParse(10_000_000))).toBe(borne(`9${F}999${F}999`))
+    expect(message(schemaValeur('jours').safeParse(100_000))).toBe(borne(`99${F}999`))
+    expect(messageBorne('nombre')).toBe(borne(`9${F}999`))
   })
 
   it('dit les bornes de l’heure en heures et minutes, jamais en minutes', () => {
     expect(message(schemaValeur('heure').safeParse(1440))).toBe(
-      'Choisissez une heure entre 0 h 00 et 23 h 59.',
+      'Saisissez une heure entre 0 h 00 et 23 h 59.',
     )
     expect(message(schemaValeur('heure').safeParse(-1))).toBe(
-      'Choisissez une heure entre 0 h 00 et 23 h 59.',
+      'Saisissez une heure entre 0 h 00 et 23 h 59.',
     )
   })
 
   it('refuse un négatif, une décimale et ce qui n’est pas un nombre', () => {
-    expect(message(schemaValeur('nombre').safeParse(-1))).toBe(`Entre 0 et 9${F}999.`)
+    expect(message(schemaValeur('nombre').safeParse(-1))).toBe(
+      `Saisissez un nombre entre 0 et 9${F}999.`,
+    )
     expect(message(schemaValeur('nombre').safeParse(2.5))).toBe('Saisissez un nombre entier.')
     expect(message(schemaValeur('nombre').safeParse('12'))).toBe('Saisissez un nombre.')
     expect(message(schemaValeur('nombre').safeParse(Number.NaN))).toBe('Saisissez un nombre.')
@@ -72,16 +75,16 @@ describe('heure en heures et minutes', () => {
 
   it('refuse 24 h, 60 minutes, une décimale et un champ absent', () => {
     expect(message(schemaHeure.safeParse({ heures: 24, minutes: 0 }))).toBe(
-      'Les heures vont de 0 à 23.',
+      'Saisissez des heures de 0 à 23.',
     )
     expect(message(schemaHeure.safeParse({ heures: 10, minutes: 60 }))).toBe(
-      'Les minutes vont de 0 à 59.',
+      'Saisissez des minutes de 0 à 59.',
     )
     expect(message(schemaHeure.safeParse({ heures: -1, minutes: 0 }))).toBe(
-      'Les heures vont de 0 à 23.',
+      'Saisissez des heures de 0 à 23.',
     )
     expect(message(schemaHeure.safeParse({ heures: 10.5, minutes: 0 }))).toBe(
-      'Saisissez des heures entières.',
+      'Saisissez des heures de 0 à 23.',
     )
     expect(message(schemaHeure.safeParse({ heures: 10 }))).toBe('Saisissez les minutes.')
   })
@@ -108,11 +111,12 @@ describe('mois d’une saisie', () => {
   })
 
   it('refuse un mois futur, un mois trop ancien et autre chose qu’un mois', () => {
-    expect(message(schema.safeParse('2026-11'))).toBe("Ce mois n'est pas encore commencé.")
+    const nonPropose = "Ce mois n'est pas proposé à la saisie."
+    expect(message(schema.safeParse('2026-11'))).toBe("Ce mois n'a pas encore commencé.")
     expect(message(schema.safeParse('2024-12'))).toBe('Ce mois est trop ancien pour être saisi.')
-    expect(message(schema.safeParse('octobre'))).toBe('Choisissez un mois.')
-    expect(message(schema.safeParse('2026-10-01'))).toBe('Choisissez un mois.')
-    expect(message(schema.safeParse(undefined))).toBe('Choisissez un mois.')
+    expect(message(schema.safeParse('octobre'))).toBe(nonPropose)
+    expect(message(schema.safeParse('2026-10-01'))).toBe(nonPropose)
+    expect(message(schema.safeParse(undefined))).toBe(nonPropose)
   })
 
   it('suit le jour de Paris donné, pas la date du navigateur', () => {

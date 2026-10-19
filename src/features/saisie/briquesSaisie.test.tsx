@@ -15,11 +15,10 @@ const TIRETS = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`)
 describe('RappelDonneesPersonnelles', () => {
   it('dit la phrase du BRIEF, une fois, sans tiret', () => {
     render(<RappelDonneesPersonnelles id="rappel" />)
-    expect(
-      screen.getByText(
-        "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech.",
-      ),
-    ).toHaveAttribute('id', 'rappel')
+    expect(screen.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveAttribute(
+      'id',
+      'rappel',
+    )
     expect(RAPPEL_DONNEES_PERSONNELLES).not.toMatch(TIRETS)
   })
 })

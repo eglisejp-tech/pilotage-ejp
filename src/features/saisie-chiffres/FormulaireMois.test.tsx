@@ -40,21 +40,23 @@ function afficher(
 const total = () => screen.getByLabelText('Bénéficiaires (passages)', { exact: true })
 const categorie = (libelle: string) => screen.getByLabelText(libelle, { exact: true })
 const precision = () => screen.getByLabelText('Précision (facultatif)', { exact: true })
-const bouton = () => screen.getByRole('button', { name: 'Enregistrer les chiffres du mois' })
+const bouton = () => screen.getByRole('button', { name: 'Enregistrer les chiffres' })
+const MESSAGE_SOMME = (somme: number) =>
+  `Les catégories font ${somme} pour un total de 7. Corrigez la répartition ou le total.`
 
 describe('FormulaireMois (« Chiffres du mois »)', () => {
-  it('le choix du mois et quatre aides : période, sensible, à valider, répartition', () => {
+  it('le choix du mois, sans bulle : les textes se lisent à l’écran (T66)', () => {
     afficher(null)
-    expect(screen.getByText("Chiffres d'août")).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(4)
+    expect(screen.getByText('Mois')).toBeInTheDocument()
+    expect(screen.queryAllByRole('button', { name: /^Aide : / })).toHaveLength(0)
     expect(screen.getByRole('link', { name: 'Août 2026' })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('link', { name: 'Septembre 2026 (en cours)' })).toHaveAttribute(
       'href',
       '/saisir/mois?mois=2026-09',
     )
-    expect(
-      screen.getByText('Lue par votre ministère, le berger, le conseil et EJP Tech.'),
-    ).toBeInTheDocument()
+    // Août est fini : pas d'indication sur le total à ce jour.
+    expect(screen.queryByText(/total à ce jour/)).toBeNull()
+    expect(screen.getByText('Le berger et le conseil la lisent.')).toBeInTheDocument()
     expect(screen.getByText('0 sur 280')).toBeInTheDocument()
   })
 
@@ -67,9 +69,7 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     expect(screen.getByText('Non réparti : 1')).toBeInTheDocument()
     await utilisateur.clear(categorie('Malaise'))
     await utilisateur.type(categorie('Malaise'), '9')
-    expect(
-      screen.getByText('La somme des catégories (11) dépasse le total du mois (7).'),
-    ).toBeInTheDocument()
+    expect(screen.getByText(MESSAGE_SOMME(11))).toBeInTheDocument()
     await utilisateur.click(bouton())
     expect(enregistrer).not.toHaveBeenCalled()
   })
@@ -77,19 +77,15 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
   it('une somme trop grande : le message est relié au groupe et aux cases, le focus va à la première case', async () => {
     const utilisateur = userEvent.setup()
     afficher(null)
-    const grille = screen.getByRole('group', { name: 'Répartition (facultatif)' })
+    const grille = screen.getByRole('group', { name: 'Répartition par catégorie (facultatif)' })
     expect(grille).not.toHaveAttribute('aria-describedby')
     expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
     await utilisateur.type(total(), '7')
     await utilisateur.type(categorie('Malaise'), '9')
-    expect(grille).toHaveAccessibleDescription(
-      'La somme des catégories (9) dépasse le total du mois (7).',
-    )
+    expect(grille).toHaveAccessibleDescription(MESSAGE_SOMME(9))
     for (const libelle of ['Malaise', 'Blessure', 'Autre']) {
       expect(categorie(libelle)).toHaveAttribute('aria-invalid', 'true')
-      expect(categorie(libelle)).toHaveAccessibleDescription(
-        'La somme des catégories (9) dépasse le total du mois (7).',
-      )
+      expect(categorie(libelle)).toHaveAccessibleDescription(MESSAGE_SOMME(9))
     }
     await utilisateur.click(bouton())
     expect(categorie('Malaise')).toHaveFocus()
@@ -115,19 +111,12 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     expect(categorie('Malaise')).not.toHaveAttribute('aria-invalid')
   })
 
-  it('la ligne du bas dit que la dernière saisie compte quand « Déjà saisi » est affiché', () => {
+  it('aucune phrase sur l’historique, première saisie ou correction (T66, t076 et t077)', () => {
     afficher(null)
-    expect(
-      screen.getByText("Votre saisie s'ajoute à l'historique, elle ne remplace rien."),
-    ).toBeInTheDocument()
+    expect(screen.queryByText(/historique/)).toBeNull()
     cleanup()
     afficher('correction')
-    expect(
-      screen.getByText(
-        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
-      ),
-    ).toBeInTheDocument()
-    expect(screen.queryByText(/elle ne remplace rien/)).toBeNull()
+    expect(screen.queryByText(/historique/)).toBeNull()
   })
 
   it('une précision de 9 caractères est refusée sous le champ ; 10 caractères partent', async () => {
@@ -198,6 +187,8 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
         precision: PRECISION_EXEMPLE,
       },
     ])
+    // Une correction le dit (T66, m073).
+    expect(await screen.findByText(/^Correction d.+ 2026 enregistrée\.$/)).toBeInTheDocument()
   })
 
   it('une précision vidée : le total repart sans précision (elle disparaît de l’affichage)', async () => {
@@ -217,9 +208,7 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
   it('une précision masquée par EJP Tech n’est pas reprise, et le champ le dit', () => {
     afficher('masquee')
     expect(precision()).toHaveValue('')
-    expect(
-      screen.getByText('Votre précision de ce mois a été masquée par EJP Tech.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Votre précision de ce mois a été masquée.')).toBeInTheDocument()
   })
 
   it('un refus de la base sur le texte s’affiche sous le champ « Précision », tel quel', async () => {

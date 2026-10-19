@@ -52,26 +52,28 @@ export const TEXTES_VIDES_INDICATEURS = {
   /** « Dernières saisies » de la fiche : premier usage. Proposé. */
   aucuneDerniereSaisie: "Aucune saisie pour l'instant.",
 
-  /** « Chiffres du mois » : le ministère n'a aucun indicateur du mois (E3). Proposé. */
-  moisSansIndicateur: "Votre ministère n'a pas d'indicateur du mois.",
+  /** « Chiffres du mois » : le ministère n'a aucun indicateur du mois (E3 ; T66, t086). */
+  moisSansIndicateur: "Votre ministère n'a aucun chiffre à saisir chaque mois.",
   /** Bouton qui accompagne `moisSansIndicateur` (E3). Proposé. */
   actionRevenirAMaFiche: 'Revenir à ma fiche',
 } as const
 
 /**
- * Ajout qui attend la validation (plan, E2) : le ministère sait qu'il peut déjà saisir ; le berger,
- * le conseil et EJP Tech lisent seulement « à valider ». `attenteJours` vient de
+ * Ajout qui attend la validation (plan, E2) : le ministère sait que ses chiffres compteront ; le
+ * berger, le conseil et EJP Tech lisent seulement « à valider ». Le ministère n'a rien à demander :
+ * le texte ne nomme pas EJP Tech (guide, exemple 4 ; T66, t080). `attenteJours` vient de
  * `v_indicateur_suivi.attente_jours` (jours depuis la création, heure de Paris).
  */
 export function texteAjoutAValider(lecteur: LecteurAjout, attenteJours: number | null): string {
   if (lecteur === 'autre') return 'à valider'
+  const suite = "Vos chiffres compteront dès qu'il sera validé."
   // `attente_jours` est null quand l'indicateur n'est pas à valider : aucune durée à inventer.
-  if (attenteJours === null) return 'À valider par EJP Tech. Vous pouvez déjà le saisir.'
+  if (attenteJours === null) return `En attente de validation. ${suite}`
   const depuis =
     attenteJours <= 0
       ? "depuis aujourd'hui"
       : `depuis ${nombre(attenteJours)} ${accorder(attenteJours, 'jour', 'jours')}`
-  return `À valider par EJP Tech ${depuis}. Vous pouvez déjà le saisir.`
+  return `En attente de validation ${depuis}. ${suite}`
 }
 
 /**

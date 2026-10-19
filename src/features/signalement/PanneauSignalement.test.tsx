@@ -10,8 +10,8 @@ import type { EcranSignalement } from '@/lib/base'
 
 type Envoi = (signalement: Signalement) => Promise<void>
 
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
+const CONFIRMATION = "Signalement envoyé. La réponse s'affichera sur cette page."
 
 const OUVERT: LigneSignalement = {
   id: '43000000-0000-4000-8000-000000000001',
@@ -71,14 +71,11 @@ const envoyerLeFormulaire = () =>
   userEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }))
 
 describe('« Signaler une difficulté »', () => {
-  it('titre, qui lit, écran prérempli, rappel sous le champ et compteur « 0 sur 280 »', () => {
+  it('titre, écran prérempli, rappel sous le champ et compteur « 0 sur 280 »', () => {
     afficher()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Signaler une difficulté')
-    expect(
-      screen.getByText(
-        'EJP Tech lit votre signalement. Décrivez ce qui vous bloque en une ou deux phrases.',
-      ),
-    ).toBeInTheDocument()
+    // Le libellé suffit : plus de phrase sur qui lit (T66, t149).
+    expect(screen.queryByText(/lit votre signalement/)).toBeNull()
     expect(screen.getByText('Écran concerné : Ajouter un événement')).toBeInTheDocument()
     expect(champ()).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
     // Le rappel n'apparaît qu'une fois.
@@ -100,7 +97,9 @@ describe('« Signaler une difficulté »', () => {
     await userEvent.paste('a'.repeat(281))
     expect(screen.getByText('281 sur 280')).toHaveClass('text-alerte')
     await envoyerLeFormulaire()
-    expect(await screen.findByText('Le signalement dépasse 280 caractères.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('Raccourcissez le signalement : 280 caractères au plus.'),
+    ).toBeInTheDocument()
   })
 
   it('moins de 10 caractères : l’erreur sous le champ, rien n’est envoyé', async () => {
@@ -114,11 +113,11 @@ describe('« Signaler une difficulté »', () => {
     expect(envoyer).not.toHaveBeenCalled()
   })
 
-  it('envoi réussi : l’écran et le texte partent, « Signalement envoyé. EJP Tech le lira. », champ vidé', async () => {
+  it('envoi réussi : l’écran et le texte partent, la confirmation dit la suite, champ vidé', async () => {
     const { envoyer } = afficher()
     await userEvent.type(champ(), '  Je ne peux pas choisir la date.  ')
     await envoyerLeFormulaire()
-    expect(await screen.findByText('Signalement envoyé. EJP Tech le lira.')).toBeInTheDocument()
+    expect(await screen.findByText(CONFIRMATION)).toBeInTheDocument()
     expect(envoyer).toHaveBeenCalledWith({
       ecran: 'saisie_evenement',
       texte: 'Je ne peux pas choisir la date.',
@@ -136,8 +135,12 @@ describe('« Signaler une difficulté »', () => {
     afficher({ envoyer })
     await userEvent.type(champ(), 'Appelez le 06 12 34 56 78')
     await envoyerLeFormulaire()
+    // Le message de la table de traduction, sous le champ, en plus du rappel (T66 : la table
+    // prendra « Retirez de votre texte ... » avec la fusion des lots qui la tiennent, t152).
     expect(
-      await screen.findByText("N'écrivez aucun nom ni information personnelle."),
+      await screen.findByText("N'écrivez aucun nom ni information personnelle.", {
+        selector: '.text-alerte',
+      }),
     ).toBeInTheDocument()
     await waitFor(() => expect(champ()).toHaveFocus())
     expect(champ()).toHaveValue('Appelez le 06 12 34 56 78')
@@ -157,7 +160,7 @@ describe('« Signaler une difficulté »', () => {
     const { onFermer } = afficher()
     await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
     await envoyerLeFormulaire()
-    await screen.findByText('Signalement envoyé. EJP Tech le lira.')
+    await screen.findByText(CONFIRMATION)
     expect(screen.queryByRole('button', { name: 'Annuler' })).toBeNull()
     await userEvent.type(champ(), 'Autre')
     expect(screen.queryByRole('button', { name: 'Fermer' })).toBeNull()
@@ -172,7 +175,7 @@ describe('« Signaler une difficulté »', () => {
     const { onFermer } = afficher()
     await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
     await envoyerLeFormulaire()
-    await screen.findByText('Signalement envoyé. EJP Tech le lira.')
+    await screen.findByText(CONFIRMATION)
     await userEvent.click(screen.getByRole('button', { name: 'Fermer' }))
     expect(screen.queryByRole('alertdialog')).toBeNull()
     expect(onFermer).toHaveBeenCalledTimes(1)
@@ -210,7 +213,7 @@ describe('« Vos derniers signalements »', () => {
     expect(screen.queryByRole('heading', { name: 'Vos derniers signalements' })).toBeNull()
   })
 
-  it('« Ouvert », ou « Clos le 30 sept. » (jour de Paris) avec la réponse d’EJP Tech', () => {
+  it('« Ouvert », ou « Clos le 30 sept. » (jour de Paris) avec la réponse', () => {
     afficher({ mesSignalements: { etat: 'liste', signalements: [OUVERT, CLOS] } })
     const liste = screen.getByRole('region', { name: 'Vos derniers signalements' })
     const lignes = within(liste).getAllByRole('listitem')
@@ -219,9 +222,7 @@ describe('« Vos derniers signalements »', () => {
     expect(lignes[0]).toHaveTextContent('Ouvert')
     expect(lignes[1]).toHaveTextContent('Chiffres du dimanche, 27 sept.')
     expect(lignes[1]).toHaveTextContent('Clos le 30 sept.')
-    expect(lignes[1]).toHaveTextContent(
-      "Réponse d'EJP Tech : Réglé : le champ attendait un nombre entier.",
-    )
+    expect(lignes[1]).toHaveTextContent('Réponse : Réglé : le champ attendait un nombre entier.')
     // Un texte masqué s'affiche en encre 3.
     expect(within(lignes[1]!).getByText('[texte masqué par EJP Tech]')).toHaveClass('text-encre-3')
   })

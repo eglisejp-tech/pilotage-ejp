@@ -23,7 +23,7 @@ interface Props {
   aide?: CodeAide
   /** Définition visible sous le libellé, lue avec le champ. */
   definition?: string
-  /** Mention visible sous la définition, avant le champ (« À valider par EJP Tech... »). */
+  /** Mention visible sous la définition, avant le champ (« En attente de validation... »). */
   mention?: string
   /** Note visible sous le champ (« Saisi le 24 sept. », « 79 % des actifs »). */
   note?: string
@@ -44,11 +44,11 @@ interface Props {
  * grandes cibles de 64 px. Le texte est gardé tel quel (champ vide possible), jamais réécrit : un
  * texte qui n'est pas un nombre entier (« 12,5 », « 12a ») reste visible, et la consigne
  * `MESSAGE_NOMBRE_ENTIER` s'affiche sous le champ dès la frappe, annoncée une fois aux lecteurs
- * d'écran (m100). « Ajouter un » au plafond, « Retirer un » à 0 et les deux sur un texte à corriger sont
- * inactifs (`aria-disabled` : le focus reste sur le bouton, qui se dit indisponible). Le libellé
- * reste un `<label>` ; l'aide, si elle existe, est son voisin. Les
- * boutons « moins » et « plus » portent le libellé du champ dans leur nom accessible (« Ajouter
- * un : STARs actifs ») : un formulaire en a plusieurs paires, qui ne doivent pas se confondre.
+ * d'écran (m100). « Ajouter 1 » au plafond, « Retirer 1 » à 0 et les deux sur un texte à corriger
+ * sont inactifs (`aria-disabled` : le focus reste sur le bouton, qui se dit indisponible). Le
+ * libellé reste un `<label>` ; l'aide, si elle existe, est son voisin. Les boutons « moins » et
+ * « plus » portent le libellé du champ dans leur nom accessible (« Ajouter 1 : STARs actifs », T66
+ * t063) : un formulaire en a plusieurs paires, qui ne doivent pas se confondre.
  * Dans un conteneur de grille, le champ se range en bas de sa cellule : deux champs côte à côte
  * restent alignés même si leurs textes n'ont pas la même longueur.
  */
@@ -165,7 +165,7 @@ export function ChampNombre({
           <div className="grid grid-cols-[var(--cible-saisie)_minmax(0,1fr)_var(--cible-saisie)] items-center">
             <button
               type="button"
-              aria-label={`Retirer un : ${libelle}`}
+              aria-label={`Retirer 1 : ${libelle}`}
               aria-disabled={peutRetirer ? undefined : true}
               onClick={() => {
                 if (peutRetirer) onChange(ajusterNombre(valeur, -1, max))
@@ -177,7 +177,7 @@ export function ChampNombre({
             {champ}
             <button
               type="button"
-              aria-label={`Ajouter un : ${libelle}`}
+              aria-label={`Ajouter 1 : ${libelle}`}
               aria-disabled={peutAjouter ? undefined : true}
               onClick={() => {
                 if (peutAjouter) onChange(ajusterNombre(valeur, 1, max))

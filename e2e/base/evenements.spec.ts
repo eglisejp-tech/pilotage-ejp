@@ -10,7 +10,7 @@ import { EVENEMENT_COORDINATION, lire } from './outils-evenements.ts'
 // EJP Tech, qui n'ont ni ces adresses ni aucun bouton de saisie.
 
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
-const INTROUVABLE = "Cet événement n'existe pas ou vous n'y avez pas accès."
+const INTROUVABLE = 'Cet événement est introuvable.'
 
 async function attendreLaFinDuChargement(page: Page) {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
@@ -28,7 +28,8 @@ test.describe('ministère Communication', () => {
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).toBeVisible()
     await expect(page.getByRole('checkbox', { name: 'Communication' })).toHaveCount(0)
-    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(3)
+    // T66 : seule la bulle du statut reste.
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(1)
     // Le jour de Paris vient de la base : c'est la plus petite date permise.
     const [semaine] = await lire<{ aujourdhui: string }>(page, 'v_semaine?select=aujourdhui')
     await expect(page.getByLabel('Date', { exact: true })).toHaveAttribute(
@@ -55,11 +56,13 @@ test.describe('ministère Communication', () => {
     await expect(page.getByRole('button', { name: 'Enregistrer la mise à jour' })).toBeVisible()
   })
 
-  test('ministère mentionné : « Seul Coordination met à jour cet événement. », sans formulaire', async ({
+  test('ministère mentionné : « Seul Coordination peut mettre à jour cet événement. », sans formulaire', async ({
     page,
   }) => {
     await page.goto(`/saisir/evenement/${EVENEMENT_COORDINATION}`)
-    await expect(page.getByText('Seul Coordination met à jour cet événement.')).toBeVisible()
+    await expect(
+      page.getByText('Seul Coordination peut mettre à jour cet événement.'),
+    ).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
       '/ma-fiche',
@@ -98,13 +101,13 @@ test.describe('ministère Communication', () => {
     expect(requetes.filter((chemin) => chemin !== '/rest/v1/compte')).toEqual([])
   })
 
-  test('prochaine réunion : le formulaire et ses deux aides', async ({ page }) => {
+  test('prochaine réunion : le formulaire et son aide', async ({ page }) => {
     await page.goto('/saisir/reunion')
     await expect(page).toHaveTitle('Prochaine réunion, Pilotage EJP')
     await attendreLaFinDuChargement(page)
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(page.getByRole('button', { name: 'Enregistrer la réunion' })).toBeVisible()
-    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(2)
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(1)
   })
 })
 

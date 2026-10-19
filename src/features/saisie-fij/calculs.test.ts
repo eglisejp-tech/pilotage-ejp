@@ -30,7 +30,7 @@ describe('carte des FIJ', () => {
 
   it('un département vide ne compte pas pour 0 : le total garde sa complétude', () => {
     const champs = { ...champsCarte(CARTE_EXEMPLE), '77': '', '95': '' }
-    expect(ligneTotalCarte(champs)).toBe('Total : 24 FIJ, 6 dép. sur 8')
+    expect(ligneTotalCarte(champs)).toBe('Total : 24 FIJ, 6 départements sur 8')
     expect(ligneTotalCarte(champsDepartementsVides())).toBe('Total : aucun département saisi.')
   })
 
@@ -57,8 +57,8 @@ describe('valeur d’un champ FIJ', () => {
   it('un entier de 0 à 9 999', () => {
     expect(erreurValeurFij('0', true)).toBeNull()
     expect(erreurValeurFij('9999', true)).toBeNull()
-    expect(erreurValeurFij('10000', true)).toBe('Entre 0 et 9 999.')
-    expect(erreurValeurFij('-1', false)).toBe('Entre 0 et 9 999.')
+    expect(erreurValeurFij('10000', true)).toBe('Saisissez un nombre entre 0 et 9 999.')
+    expect(erreurValeurFij('-1', false)).toBe('Saisissez un nombre entre 0 et 9 999.')
   })
 
   it('un texte qui n’est pas un nombre entier demande d’être corrigé, jamais converti (m100)', () => {
@@ -72,7 +72,7 @@ describe('valeur d’un champ FIJ', () => {
 
   it('un texte à corriger ne compte ni dans le total ni dans les valeurs envoyées (m100)', () => {
     const champs = { ...champsDepartementsVides(), '75': '12', '77': '12,5' }
-    expect(ligneTotalCarte(champs)).toBe('Total : 12 FIJ, 1 dép. sur 8')
+    expect(ligneTotalCarte(champs)).toBe('Total : 12 FIJ, 1 département sur 8')
     const statistiques = { ...champsStatistiquesVides(), culte_ejp: champs }
     expect(valeursStatistiques(statistiques)).toEqual([
       { rubrique: 'culte_ejp', departement: '75', valeur: 12 },
@@ -84,15 +84,15 @@ describe('valeur d’un champ FIJ', () => {
       'Total : aucun département saisi.',
     )
     expect(ligneTotalCarte({ ...champsDepartementsVides(), '75': '12', '77': '-3' })).toBe(
-      'Total : 12 FIJ, 1 dép. sur 8',
+      'Total : 12 FIJ, 1 département sur 8',
     )
     // L'envoi reste refusé, avec la borne.
-    expect(erreurValeurFij('-3', false)).toBe('Entre 0 et 9 999.')
+    expect(erreurValeurFij('-3', false)).toBe('Saisissez un nombre entre 0 et 9 999.')
   })
 })
 
 describe('chiffres par département', () => {
-  it('« Total : 58, 6 dép. sur 8 » d’une rubrique, en direct', () => {
+  it('« Total : 58, 6 départements sur 8 » d’une rubrique, en direct', () => {
     const champs = {
       ...champsDepartementsVides(),
       '75': '12',
@@ -102,7 +102,7 @@ describe('chiffres par département', () => {
       '93': '13',
       '94': '12',
     }
-    expect(ligneTotalRubrique(champs)).toBe('Total : 58, 6 dép. sur 8')
+    expect(ligneTotalRubrique(champs)).toBe('Total : 58, 6 départements sur 8')
     expect(ligneTotalRubrique(champsDepartementsVides())).toBe('Total : aucun département saisi.')
   })
 
@@ -162,9 +162,9 @@ describe('chiffres par département', () => {
       '2026-09-06',
     ])
     // L'état est en tête : un menu natif coupe la fin du texte à 360 px.
-    expect(semaines[0]?.libelle).toBe('Déjà saisie, sem. 39, 21 au 27 sept.')
+    expect(semaines[0]?.libelle).toBe('Semaine 39 (déjà saisie), du 21 au 27 sept.')
     const vides = semainesProposees('2026-09-27', [])
-    expect(vides[0]?.libelle).toBe('Sem. 39, 21 au 27 sept.')
+    expect(vides[0]?.libelle).toBe('Semaine 39, du 21 au 27 sept.')
     expect(vides.every((semaine) => !semaine.dejaSaisie)).toBe(true)
   })
 
@@ -184,9 +184,7 @@ describe('chiffres par département', () => {
     expect(valeursEffacees(champs, statistiques, '2026-09-27').length).toBe(0)
   })
 
-  it('« Chiffres par département de la semaine 39 enregistrés. »', () => {
-    expect(messageReussiteStatistiques('2026-09-27')).toBe(
-      'Chiffres par département de la semaine 39 enregistrés.',
-    )
+  it('« Chiffres de la semaine 39 enregistrés. »', () => {
+    expect(messageReussiteStatistiques('2026-09-27')).toBe('Chiffres de la semaine 39 enregistrés.')
   })
 })

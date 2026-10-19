@@ -34,7 +34,7 @@ describe('champs de la saisie du dimanche', () => {
   it('les trois communs dans l’ordre de 08, avec leurs aides, notes et valeurs de départ', () => {
     const { communs, correction } = dimanche()
     expect(communs.map((champ) => [champ.code, champ.aide, champ.variante])).toEqual([
-      ['service', 'dimanche.service', 'grand'],
+      ['service', null, 'grand'],
       ['actifs', 'dimanche.actifs', 'compact'],
       ['en_fij', 'dimanche.enFij', 'compact'],
     ])
@@ -122,21 +122,15 @@ describe('champs de « Chiffres du mois »', () => {
       details: options.correction ? detailsExemple(options.masquee ?? false) : [],
     })
 
-  it('quatre aides au plus : sensible, à valider, et la grille sur le premier sensible', () => {
+  it('aucune bulle : « à valider », la précision et la grille se lisent à l’écran (T66)', () => {
     const champs = mois()
-    expect(champs.map((champ) => champ.aide)).toEqual([
-      'mois.sensible',
-      null,
-      'mois.aValider',
-      null,
-    ])
+    expect(champs.map((champ) => champ.aide)).toEqual([null, null, null, null])
     expect(champs[0]?.sensible).toMatchObject({
       categories: [
         { code: 'malaise', libelle: 'Malaise' },
         { code: 'blessure', libelle: 'Blessure' },
         { code: 'autre', libelle: 'Autre' },
       ],
-      aideGrille: true,
       rappel: true,
       precisionDepart: null,
       repartitionDepart: null,
@@ -164,7 +158,6 @@ describe('champs de « Chiffres du mois »', () => {
   it('un sensible sans liste de la coordination n’a pas de grille', () => {
     const [sensible] = mois({ categories: false })
     expect(sensible?.sensible?.categories).toEqual([])
-    expect(sensible?.sensible?.aideGrille).toBe(false)
   })
 
   it('une catégorie retirée ne se propose plus et ne se reprend pas', () => {
@@ -214,7 +207,7 @@ describe('champs de « Chiffres du mois »', () => {
         details: [],
       })
       expect(sensible?.sensible?.categories).toEqual([])
-      expect(sensible?.aide).toBe('mois.sensible')
+      expect(sensible?.aide).toBeNull()
     }
   })
 

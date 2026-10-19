@@ -1,5 +1,5 @@
 import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
-import { MESSAGES_BASE, TEXTES_REUNION } from '@/features/evenements/textes'
+import { MESSAGE_ACCES_EVENEMENT, TEXTES_REUNION } from '@/features/evenements/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
 // Lecture d'un refus de la base après un envoi (contrat de l'étape 4, section 7), par la table de
@@ -40,7 +40,7 @@ export function lireRefus(
     case 'acces':
       return saisie === 'reunion'
         ? { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
-        : { ou: 'bouton', message: MESSAGES_BASE.acces }
+        : { ou: 'bouton', message: MESSAGE_ACCES_EVENEMENT }
     case 'message':
       return lue.champ === 'date'
         ? { ou: 'date', message: lue.message }

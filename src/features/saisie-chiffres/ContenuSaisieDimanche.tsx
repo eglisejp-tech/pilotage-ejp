@@ -3,7 +3,7 @@ import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
 import { FormulaireDimanche } from '@/features/saisie-chiffres/FormulaireDimanche'
 import {
   actionSaisirDimanche,
-  dimancheRefuse,
+  DIMANCHE_REFUSE,
   TEXTES_CHIFFRES,
 } from '@/features/saisie-chiffres/textes'
 import type { EtatSaisieDimanche } from '@/features/saisie-chiffres/useSaisieDimanche'
@@ -54,7 +54,7 @@ export function ContenuSaisieDimanche({ etat }: { etat: EtatSaisieDimanche }) {
             remplace: true,
           }}
         >
-          {dimancheRefuse(etat.dimancheReference)}
+          {DIMANCHE_REFUSE}
         </EtatVide>
       ) : null}
       {etat.etat === 'pret' ? (

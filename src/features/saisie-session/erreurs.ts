@@ -6,11 +6,15 @@
 // délai) laisse le formulaire dire la phrase de `LISEZMOI.md` (« La connexion a échoué. Vos
 // chiffres sont encore dans le formulaire : réessayez. »), réservée à ce cas (m256).
 
-import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
+import { lireErreurBase } from '@/data/messagesBase'
 import type { ChampRefus } from '@/data/messagesBase'
 
-/** Refus de droit, repris du contrat de l'étape 4 (section 7). */
-export const MESSAGE_ACCES_REFUSE = MESSAGES_COMMUNS.acces
+/**
+ * Refus de droit (contrat de l'étape 4, section 7), dans la forme commune d'un élément
+ * introuvable (T66, t064 ; guide 10.10). `MESSAGES_COMMUNS.acces` de la table de traduction
+ * prendra ce texte avec la fusion des lots qui la tiennent.
+ */
+export const MESSAGE_ACCES_REFUSE = 'Cet élément est introuvable. Rechargez la page.'
 
 /** Échec d'un envoi : sa phrase (null : sans réponse) et le champ où la dire, s'il y en a un. */
 export interface EchecEnvoi {

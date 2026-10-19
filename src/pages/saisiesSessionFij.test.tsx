@@ -117,14 +117,14 @@ describe('/saisir/fij et /saisir/fij-statistiques', () => {
 })
 
 describe('/saisir/session/:id', () => {
-  it('« Choisir la session » sans session passée : en attente de l’administration', async () => {
+  it('« Choisir la session » sans session passée : quand la liste se remplira (T66, t103)', async () => {
     connecteMinistere()
     afficher('/saisir/session/choisir')
     expect(
       await screen.findByText('Aucune session à saisir.', {}, ATTENTE_ECHEC),
     ).toBeInTheDocument()
     expect(
-      screen.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
+      screen.getByText('Vous pourrez saisir une session le jour où elle a lieu.'),
     ).toBeInTheDocument()
   })
 
@@ -149,7 +149,7 @@ describe('/saisir/session/:id', () => {
     afficher(`/saisir/session/${SESSION.session_id}`)
     expect(
       await screen.findByText(
-        "Cette session n'a pas encore eu lieu. Sa saisie ouvrira le jour de la session.",
+        "Cette session n'a pas encore eu lieu. Vous pourrez la saisir le jour même.",
         {},
         ATTENTE_ECHEC,
       ),
@@ -161,11 +161,7 @@ describe('/saisir/session/:id', () => {
     const faux = connecteMinistere()
     afficher('/saisir/session/inconnue')
     expect(
-      await screen.findByText(
-        "Cette session n'existe pas ou n'est plus proposée.",
-        {},
-        ATTENTE_ECHEC,
-      ),
+      await screen.findByText('Cette session est introuvable.', {}, ATTENTE_ECHEC),
     ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Réessayer' })).toBeNull()
     expect(faux.tables).not.toContain('v_session_completude')
@@ -175,11 +171,7 @@ describe('/saisir/session/:id', () => {
     connecteMinistere()
     afficher('/saisir/session/9d2b6c7e-1f4a-4e0b-8c3d-5a6b7c8d9e0f')
     expect(
-      await screen.findByText(
-        "Cette session n'existe pas ou n'est plus proposée.",
-        {},
-        ATTENTE_ECHEC,
-      ),
+      await screen.findByText('Cette session est introuvable.', {}, ATTENTE_ECHEC),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Choisir une autre session' })).toHaveAttribute(
       'href',

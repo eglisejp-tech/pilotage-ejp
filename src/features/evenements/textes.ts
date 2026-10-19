@@ -25,14 +25,18 @@ export function libelleStatut(statut: StatutEvenement): string {
   return STATUTS_EVENEMENT.find((choix) => choix.valeur === statut)?.libelle ?? statut
 }
 
-/** Messages repris tels quels de la base (contrat de l'étape 4, section 7 ; T37). */
+/**
+ * Textes de la base (contrat de l'étape 4, section 7 ; T37) : les clés de la table de traduction
+ * (`src/data/messagesBase.ts`), que l'aperçu simule. Ils ne s'affichent pas tels quels.
+ */
 export const MESSAGES_BASE = {
   datePasseeAjout: 'La date ne peut pas être passée.',
   datePasseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
   ligneIdentique: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
-  /** Refus de droit (42501), commun à toutes les fonctions de l'API. */
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
 } as const
+
+/** Refus de droit (42501) : la forme commune d'un élément introuvable (T66, t137). */
+export const MESSAGE_ACCES_EVENEMENT = 'Cet élément est introuvable. Rechargez la page.'
 
 export const TEXTES_EVENEMENT = {
   titreAjout: 'Ajouter un événement',
@@ -43,39 +47,39 @@ export const TEXTES_EVENEMENT = {
   libelleMentions: 'Ministères mentionnés',
   /** Titre du groupe de cases : un champ facultatif le dit (LISEZMOI, « Validation »). */
   titreMentions: 'Ministères mentionnés (facultatif)',
-  /** Texte visible sous le statut (maquette 11), à l'ajout comme à la mise à jour. */
-  noteStatut: "La validation se fait en dehors de l'outil. Ici, on reporte seulement le statut.",
-  /** Note sous les mentions (BRIEF section 9, T32). */
-  noteMentions: 'Le ministère mentionné verra cet événement, et seulement cet événement.',
-  /** Texte visible sous les mentions (aides-contextuelles.md, section 8 ; proposé). */
-  mentionsFigees: 'Les mentions se choisissent à la création et ne changent plus.',
-  /** Aucun ministère à cocher (plan de l'étape 4, E5). */
-  aucuneMention: 'Aucun autre ministère actif à mentionner.',
+  /** Note sous les mentions (BRIEF section 9, T32 ; texte revu par T66, t133). */
+  noteMentions: 'Le ministère mentionné verra cet événement.',
+  /** Sous les mentions de l'ajout : prévient avant d'agir (T66, t134). */
+  mentionsFigees: 'Vous ne pourrez plus changer les mentions.',
+  /** Aucun ministère à cocher (plan de l'étape 4, E5 ; T66, t135 : même texte que les points). */
+  aucuneMention: 'Aucun autre ministère à mentionner.',
   /** Mise à jour d'un événement sans mention (proposé). */
   sansMention: 'Aucun ministère mentionné.',
   /** Ligne au-dessus du statut, pour un événement à confirmer (validation-metier.md, 4.4). */
   aConfirmer:
-    "Cet événement attend toujours sa validation. Validé en dehors de l'outil ? Choisissez « Validé ». Reporté ou annulé ? Changez la date ou choisissez « Annulé ».",
+    'Cet événement attend toujours sa validation. Choisissez son nouveau statut ou changez sa date.',
   boutonAjout: 'Ajouter au calendrier',
   boutonMiseAJour: 'Enregistrer la mise à jour',
-  boutonEnCours: 'Envoi en cours',
+  /** « Enregistrement » quand on enregistre, « Envoi » quand quelque chose part (T66, t136). */
+  boutonEnCours: 'Enregistrement en cours',
   reussiteAjout: 'Événement ajouté au calendrier.',
   /** Proposé (plan de l'étape 4, E5). */
   reussiteMiseAJour: 'Événement mis à jour.',
   /** Validation avant l'envoi, sous le champ (proposés, sur le modèle des messages de la base). */
   erreurDateVide: 'Choisissez une date.',
   erreurNomVide: "Donnez un nom à l'événement.",
-  erreurNomLong: "Le nom de l'événement fait 80 caractères au plus.",
+  erreurNomLong: 'Raccourcissez le nom : 80 caractères au plus.',
   erreurStatut: 'Choisissez un statut.',
-  erreurMention: 'Ce ministère ne peut pas être mentionné.',
-  /** États de la mise à jour (plan de l'étape 4, E5). */
-  introuvable: "Cet événement n'existe pas ou vous n'y avez pas accès.",
+  /** Un ministère coché a été désactivé entre l'ouverture et l'envoi (T66, m124). */
+  erreurMention: 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.',
+  /** États de la mise à jour (plan de l'étape 4, E5 ; T66, t143 : le bouton donne l'action). */
+  introuvable: 'Cet événement est introuvable.',
   revenirFiche: 'Revenir à ma fiche',
 } as const
 
-/** « Seul Communication met à jour cet événement. » : un ministère mentionné n'y touche pas. */
+/** « Seul Communication peut mettre à jour cet événement. » (T66, m133). */
 export function seulPorteur(nomPorteur: string): string {
-  return `Seul ${nomPorteur} met à jour cet événement.`
+  return `Seul ${nomPorteur} peut mettre à jour cet événement.`
 }
 
 /** « Mentionnés : Coordination et Intégration. » (mise à jour, en lecture seule). */
@@ -107,14 +111,15 @@ export const TEXTES_REUNION = {
   libelleObjet: 'Objet (facultatif)',
   libelleDecision: 'Décision attendue (facultatif)',
   bouton: 'Enregistrer la réunion',
-  boutonEnCours: 'Envoi en cours',
+  boutonEnCours: 'Enregistrement en cours',
   reussite: 'Réunion enregistrée.',
   erreurDateVide: 'Choisissez une date.',
   /** Date passée (proposé, sur le modèle du message de l'ajout d'un événement). */
   erreurDatePassee: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
   erreurHeure: 'Saisissez une heure, par exemple 20 h 00.',
-  erreurObjetLong: "L'objet fait 80 caractères au plus.",
-  erreurDecisionLongue: 'La décision attendue fait 80 caractères au plus.',
+  /** Forme commune d'un texte trop long (T66, t145 et t147). */
+  erreurObjetLong: "Raccourcissez l'objet : 80 caractères au plus.",
+  erreurDecisionLongue: 'Raccourcissez la décision attendue : 80 caractères au plus.',
   /** Second appui après une réussite, sans rien changer (m135, Proposé) : rien ne part. */
   dejaEnregistree: 'Cette réunion est déjà enregistrée. Changez une information pour la corriger.',
   /** Sous l'objet ou la décision qu'EJP Tech a masqué : le champ s'ouvre vide (m136, Proposé). */

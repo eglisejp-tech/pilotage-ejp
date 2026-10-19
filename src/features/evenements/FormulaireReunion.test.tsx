@@ -20,13 +20,13 @@ function afficher(
 const bouton = () => screen.getByRole('button', { name: 'Enregistrer la réunion' })
 
 describe('« Prochaine réunion » (dérivé de 11)', () => {
-  it('champs, deux aides, rappel une seule fois sous l’objet, lien « Signaler une difficulté »', () => {
+  it('champs, une aide, rappel une seule fois sous l’objet, lien « Signaler une difficulté »', () => {
     afficher()
     expect(screen.getByLabelText('Date')).toHaveValue('')
     expect(screen.getByLabelText('Date')).toHaveAttribute('min', '2026-10-06')
     expect(screen.getByLabelText('Heure (facultatif)')).toHaveValue('')
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(2)
-    expect(screen.getByRole('button', { name: 'Aide : Date' })).toBeInTheDocument()
+    // T66 (t144) : plus de bulle sur la date.
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(1)
     expect(
       screen.getByRole('button', { name: 'Aide : Décision attendue (facultatif)' }),
     ).toBeInTheDocument()
@@ -80,7 +80,9 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
     expect(screen.getByText('81 sur 80')).toBeInTheDocument()
     await userEvent.type(screen.getByLabelText('Date'), '2026-10-12')
     await userEvent.click(bouton())
-    expect(await screen.findByText("L'objet fait 80 caractères au plus.")).toBeInTheDocument()
+    expect(
+      await screen.findByText("Raccourcissez l'objet : 80 caractères au plus."),
+    ).toBeInTheDocument()
   })
 
   it('envoi : facultatifs vides à null, message de réussite, valeurs gardées', async () => {
@@ -165,10 +167,10 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
     expect(screen.getByLabelText('Date')).toHaveFocus()
   })
 
-  it('aides au clavier (date, décision attendue) : Entrée ouvre, Échap ferme, le focus reste', async () => {
+  it('aide au clavier (décision attendue) : Entrée ouvre, Échap ferme, le focus reste', async () => {
     afficher()
     const utilisateur = userEvent.setup()
-    for (const nom of ['Aide : Date', 'Aide : Décision attendue (facultatif)']) {
+    for (const nom of ['Aide : Décision attendue (facultatif)']) {
       const aide = screen.getByRole('button', { name: nom })
       aide.focus()
       await utilisateur.keyboard('{Enter}')
@@ -185,7 +187,7 @@ describe('« Prochaine réunion » (dérivé de 11)', () => {
     await userEvent.type(screen.getByLabelText('Décision attendue (facultatif)'), 'Choisir')
     await userEvent.click(bouton())
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     expect(screen.getByLabelText('Décision attendue (facultatif)')).toHaveValue('Choisir')
   })

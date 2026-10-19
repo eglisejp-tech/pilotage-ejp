@@ -76,8 +76,13 @@ test.describe('saisie du dimanche, ministère Communication', () => {
     const champ = page.getByLabel('STARs au service ce dimanche', { exact: true })
     await champ.fill(String(lignesAvant + 5))
     await page.getByRole('button', { name: /^Enregistrer (les chiffres|la correction)$/ }).click()
+    // Première saisie ou correction (T66, m073) selon le jeu d'exemple.
     await expect(
-      page.getByRole('status').getByText(/^Chiffres du dimanche .+ enregistrés\.$/),
+      page
+        .getByRole('status')
+        .getByText(
+          /^(Chiffres du dimanche .+ enregistrés|Correction du dimanche .+ enregistrée)\.$/,
+        ),
     ).toBeVisible()
     expect(await compter(page, lignesService)).toBe(lignesAvant + 1)
     expect(await compter(page, JOURNAL)).toBe(journalAvant + 1)
@@ -90,7 +95,7 @@ test.describe('saisie du dimanche, ministère Communication', () => {
     await champ.fill(String(lignesAvant + 6))
     await page.getByRole('button', { name: 'Enregistrer la correction' }).click()
     await expect(
-      page.getByRole('status').getByText(/^Chiffres du dimanche .+ enregistrés\.$/),
+      page.getByRole('status').getByText(/^Correction du dimanche .+ enregistrée\.$/),
     ).toBeVisible()
     expect(await compter(page, lignesService)).toBe(lignesAvant + 2)
     expect(await compter(page, JOURNAL)).toBe(journalAvant + 2)
@@ -138,8 +143,9 @@ test.describe('« Chiffres du mois », sensible de Social (P45 à P47)', () => {
     // Social a plusieurs indicateurs sensibles, donc plusieurs champs « Précision » : celui de
     // l'indicateur du test, par son identifiant (`idPrecision`).
     const precision = page.locator(`#precision-${id}`)
-    const enregistrer = page.getByRole('button', { name: 'Enregistrer les chiffres du mois' })
-    const reussite = page.getByRole('status').getByText(/^Chiffres d.+ enregistrés\.$/)
+    const enregistrer = page.getByRole('button', { name: 'Enregistrer les chiffres' })
+    // Le mois a déjà sa saisie : la réussite dit une correction (T66, m073).
+    const reussite = page.getByRole('status').getByText(/^Correction d.+ enregistrée\.$/)
 
     // Le mois en cours du jeu d'exemple (seed/44) est repris : 7, réparti 4, 3 et 0, et sa précision.
     await expect(total).toHaveValue('7')
@@ -175,7 +181,9 @@ test.describe('« Chiffres du mois », sensible de Social (P45 à P47)', () => {
     // 2. Une somme de catégories trop grande n'écrit rien.
     await malaise.fill('9')
     await expect(
-      page.getByText('La somme des catégories (12) dépasse le total du mois (9).'),
+      page.getByText(
+        'Les catégories font 12 pour un total de 9. Corrigez la répartition ou le total.',
+      ),
     ).toBeVisible()
     await enregistrer.click()
     expect(await compter(page, totaux)).toBe(totauxAvant + 1)

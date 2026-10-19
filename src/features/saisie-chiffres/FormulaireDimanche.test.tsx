@@ -30,7 +30,7 @@ const enregistrerLesChiffres = () =>
   screen.getByRole('button', { name: 'Enregistrer les chiffres' })
 
 describe('FormulaireDimanche (maquette 08)', () => {
-  it('les trois communs, leurs notes, et quatre aides au plus', () => {
+  it('les trois communs, leurs notes, et deux aides', () => {
     afficher(null)
     expect(service()).toHaveValue('')
     expect(screen.getByLabelText('STARs actifs', { exact: true })).toHaveValue('14')
@@ -39,10 +39,9 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(screen.getByText('Saisi le 24 sept.')).toBeInTheDocument()
     // Espace fine insécable entre le nombre et « % » (BRIEF, « Formats »).
     expect(screen.getByText(/^79\s% des actifs$/)).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(4)
-    expect(
-      screen.getByRole('button', { name: 'Aide : Indicateurs du ministère' }),
-    ).toBeInTheDocument()
+    // T66 : « STARs actifs » et « Dont en FIJ » gardent leur bulle (t069 et t074).
+    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(2)
+    expect(screen.getByText('Vos autres chiffres')).toBeInTheDocument()
     expect(
       screen.getByText(
         "Les STARs qui ont servi dans votre ministère ce dimanche. Si personne n'a servi, enregistrez 0.",
@@ -89,25 +88,16 @@ describe('FormulaireDimanche (maquette 08)', () => {
     expect(screen.queryByText(/% des actifs/)).toBeNull()
     await utilisateur.type(service(), '10')
     await utilisateur.click(enregistrerLesChiffres())
-    expect(
-      screen.getByText('Les STARs en FIJ ne peuvent pas dépasser les STARs actifs.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Saisissez 14 au plus, le nombre de STARs actifs.')).toBeInTheDocument()
     expect(screen.queryByText(/% des actifs/)).toBeNull()
   })
 
-  it('la ligne du bas ne contredit pas « Déjà saisi » : première saisie ou correction', () => {
+  it('aucune phrase sur l’historique : première saisie ou correction (T66, t076 et t077)', () => {
     afficher(null)
-    expect(
-      screen.getByText("Votre saisie s'ajoute à l'historique, elle ne remplace rien."),
-    ).toBeInTheDocument()
+    expect(screen.queryByText(/historique/)).toBeNull()
     cleanup()
     afficher('correction')
-    expect(
-      screen.getByText(
-        "Votre saisie s'ajoute à l'historique. Dans les totaux, c'est la dernière qui compte.",
-      ),
-    ).toBeInTheDocument()
-    expect(screen.queryByText(/elle ne remplace rien/)).toBeNull()
+    expect(screen.queryByText(/historique/)).toBeNull()
   })
 
   it('« Déjà saisi » est lu avec le champ (aria-describedby)', () => {
@@ -118,7 +108,9 @@ describe('FormulaireDimanche (maquette 08)', () => {
 
   it('la mention d’un ajout à valider est avant le champ, et lue avec lui', () => {
     afficher(null)
-    const mention = screen.getByText('À valider par EJP Tech. Vous pouvez déjà le saisir.')
+    const mention = screen.getByText(
+      "En attente de validation. Vos chiffres compteront dès qu'il sera validé.",
+    )
     const abonnes = screen.getByLabelText('Abonnés à ce jour', { exact: true })
     expect(abonnes.getAttribute('aria-describedby')).toContain(mention.id)
     expect(mention.compareDocumentPosition(abonnes) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
@@ -128,7 +120,7 @@ describe('FormulaireDimanche (maquette 08)', () => {
     const utilisateur = userEvent.setup()
     const enregistrer = afficher(null)
     await utilisateur.click(enregistrerLesChiffres())
-    expect(screen.getByText('Saisissez un nombre.')).toBeInTheDocument()
+    expect(screen.getByText('Saisissez un nombre, 0 si aucun.')).toBeInTheDocument()
     expect(service()).toHaveFocus()
     expect(service()).toHaveAttribute('aria-invalid', 'true')
     expect(enregistrer).not.toHaveBeenCalled()
@@ -177,19 +169,26 @@ describe('FormulaireDimanche (maquette 08)', () => {
   it('une correction : « Déjà saisi » sous le champ, la valeur reprise et « Enregistrer la correction »', () => {
     afficher('correction')
     expect(service()).toHaveValue('10')
-    expect(
-      screen.getByText(
-        'Déjà saisi : 10, le 27 sept. à 12 h 41. Votre saisie la remplacera dans les totaux.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Déjà saisi : 10, le 27 sept. à 12 h 41.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Enregistrer la correction' })).toBeInTheDocument()
+  })
+
+  it('une correction enregistrée le dit : « Correction du dimanche 27 sept. enregistrée. » (m073)', async () => {
+    const utilisateur = userEvent.setup()
+    afficher('correction')
+    await utilisateur.clear(service())
+    await utilisateur.type(service(), '12')
+    await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
+    expect(
+      await screen.findByText('Correction du dimanche 27 sept. enregistrée.'),
+    ).toBeInTheDocument()
   })
 
   it('un ajout à valider se saisit déjà, avec sa mention visible', () => {
     afficher(null)
     expect(screen.getByLabelText('Abonnés à ce jour', { exact: true })).toHaveValue('1250')
     expect(
-      screen.getByText('À valider par EJP Tech. Vous pouvez déjà le saisir.'),
+      screen.getByText("En attente de validation. Vos chiffres compteront dès qu'il sera validé."),
     ).toBeInTheDocument()
   })
 
@@ -214,11 +213,7 @@ describe('FormulaireDimanche (maquette 08)', () => {
 
   it('le dimanche matin : la phrase visible, seul l’indicateur du matin', () => {
     afficher('matin')
-    expect(
-      screen.getByText(
-        "Avant 12 h, seuls les chiffres du matin se saisissent. Le reste s'ouvre à midi.",
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Les autres chiffres s'ouvrent à 12 h.")).toBeInTheDocument()
     expect(screen.queryByLabelText('STARs au service ce dimanche')).toBeNull()
     expect(screen.getByLabelText('Présents la nuit de prière', { exact: true })).toBeInTheDocument()
   })

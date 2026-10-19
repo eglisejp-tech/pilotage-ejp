@@ -2,7 +2,6 @@ import type { FormEvent, ReactNode } from 'react'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { EtapeVerifier } from '@/features/saisie-chiffres/EtapeVerifier'
-import { TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
 import { BoutonEnregistrer } from '@/features/saisie-session/BoutonEnregistrer'
 import type { EtatEnvoi } from '@/features/saisie-session/useEnvoiSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -21,11 +20,6 @@ interface Props {
   /** Le refus de la base s'affiche-t-il sous le bouton (et non sous un champ) ? */
   erreurSousLeBouton: boolean
   ecran: EcranSignalement
-  /**
-   * Une saisie fait déjà foi pour un champ (« Déjà saisi : ... » est affiché) : la ligne de
-   * l'historique dit alors que la dernière saisie compte, sans contredire cette phrase.
-   */
-  correction: boolean
   onSubmit: () => void
   /** Les champs. */
   children: ReactNode
@@ -33,10 +27,11 @@ interface Props {
 
 /**
  * Cadre commun de la saisie du dimanche et de « Chiffres du mois » (plan de l'étape 4, E3) : les
- * champs, la phrase de l'historique, l'étape « vérifier » prévue pour les chiffres inhabituels,
- * le bouton jaune (« Enregistrement en cours » pendant l'envoi), l'erreur de formulaire (les
- * valeurs restent), le message de réussite (6 s) et le lien « Signaler une difficulté » en bas,
- * sous les boutons (T39).
+ * champs, l'étape « vérifier » prévue pour les chiffres inhabituels, le bouton jaune
+ * (« Enregistrement en cours » pendant l'envoi), l'erreur de formulaire (les valeurs restent), le
+ * message de réussite (6 s) et le lien « Signaler une difficulté » en bas, sous les boutons (T39).
+ * La phrase sur l'historique de la maquette 08 n'est plus à l'écran : elle décrivait le
+ * fonctionnement interne (T66, t076 et t077 ; la page Aide le dit).
  */
 export function FormulaireChiffres({
   bouton,
@@ -46,7 +41,6 @@ export function FormulaireChiffres({
   erreurFormulaire,
   erreurSousLeBouton,
   ecran,
-  correction,
   onSubmit,
   children,
 }: Props) {
@@ -58,9 +52,6 @@ export function FormulaireChiffres({
   return (
     <form noValidate className="flex flex-col gap-5" onSubmit={soumettre}>
       {children}
-      <p className="text-note text-encre-3">
-        {correction ? TEXTES_CHIFFRES.historiqueCorrection : TEXTES_CHIFFRES.historique}
-      </p>
       <EtapeVerifier />
       <BoutonEnregistrer
         libelle={bouton}

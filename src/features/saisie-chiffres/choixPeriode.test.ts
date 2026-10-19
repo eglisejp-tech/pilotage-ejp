@@ -138,7 +138,7 @@ describe('mois de la saisie', () => {
     })
     expect(choisirMois('2026-11', '2026-10-06', new Set())).toEqual({
       etat: 'refuse',
-      message: "Ce mois n'est pas encore commencé.",
+      message: "Ce mois n'a pas encore commencé.",
       moisPropose: '2026-09',
     })
     expect(choisirMois('2024-12', '2026-10-06', new Set())).toMatchObject({

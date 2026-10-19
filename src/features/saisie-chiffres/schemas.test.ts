@@ -19,10 +19,10 @@ const TIRETS = new RegExp(`[${String.fromCharCode(0x2013, 0x2014)}]`)
 
 describe('valeur d’un champ, bornes de chaque unité', () => {
   it.each([
-    ['nombre', '9999', '10000', 'Entre 0 et 9 999.'],
-    ['grand_nombre', '9999999', '10000000', 'Entre 0 et 9 999 999.'],
-    ['euros', '9999999', '10000000', 'Entre 0 et 9 999 999.'],
-    ['jours', '99999', '100000', 'Entre 0 et 99 999.'],
+    ['nombre', '9999', '10000', 'Saisissez un nombre entre 0 et 9 999.'],
+    ['grand_nombre', '9999999', '10000000', 'Saisissez un nombre entre 0 et 9 999 999.'],
+    ['euros', '9999999', '10000000', 'Saisissez un nombre entre 0 et 9 999 999.'],
+    ['jours', '99999', '100000', 'Saisissez un nombre entre 0 et 99 999.'],
   ] as const)('%s : %s accepté, %s refusé', (unite, permis, refuse, message) => {
     expect(lireValeur(unite, permis)).toEqual({ etat: 'ok', valeur: Number(permis) })
     expect(lireValeur(unite, '0')).toEqual({ etat: 'ok', valeur: 0 })
@@ -48,11 +48,11 @@ describe('valeur d’un champ, bornes de chaque unité', () => {
     expect(lireValeur('heure', { heures: '', minutes: '' })).toEqual({ etat: 'vide' })
     expect(lireValeur('heure', { heures: '24', minutes: '00' })).toEqual({
       etat: 'erreur',
-      message: 'Les heures vont de 0 à 23.',
+      message: 'Saisissez des heures de 0 à 23.',
     })
     expect(lireValeur('heure', { heures: '10', minutes: '60' })).toEqual({
       etat: 'erreur',
-      message: 'Les minutes vont de 0 à 59.',
+      message: 'Saisissez des minutes de 0 à 59.',
     })
     expect(lireValeur('heure', { heures: '10', minutes: '' })).toEqual({
       etat: 'erreur',
@@ -72,7 +72,7 @@ describe('précision (P46)', () => {
     expect(lirePrecision('a'.repeat(280))).toEqual({ etat: 'ok', valeur: 'a'.repeat(280) })
     expect(lirePrecision('a'.repeat(281))).toEqual({
       etat: 'erreur',
-      message: 'La précision doit faire entre 10 et 280 caractères.',
+      message: 'Raccourcissez la précision : 280 caractères au plus.',
     })
     expect(lirePrecision('   ')).toEqual({ etat: 'vide' })
   })
@@ -95,7 +95,12 @@ describe('répartition (P47)', () => {
     })
     expect(lireRepartition(codes, { malaise: '10000' })).toEqual({
       etat: 'erreur',
-      message: 'Entre 0 et 9 999.',
+      message: 'Saisissez un nombre entre 0 et 9 999.',
+    })
+    // Avec les noms des catégories, la phrase dit laquelle (T66, m094).
+    expect(lireRepartition(codes, { malaise: '10000' }, { malaise: 'Malaise' })).toEqual({
+      etat: 'erreur',
+      message: 'Catégorie « Malaise » : saisissez un nombre entre 0 et 9 999.',
     })
   })
 
@@ -111,7 +116,7 @@ describe('répartition (P47)', () => {
     })
     expect(etatGrille(total, { etat: 'ok', valeur: { malaise: 9 } })).toEqual({
       etat: 'depasse',
-      message: 'La somme des catégories (9) dépasse le total du mois (7).',
+      message: 'Les catégories font 9 pour un total de 7. Corrigez la répartition ou le total.',
     })
     expect(etatGrille({ etat: 'vide' }, { etat: 'ok', valeur: { malaise: 1 } })).toEqual({
       etat: 'sans_total',
@@ -146,7 +151,7 @@ describe('schémas partagés avec la base', () => {
     })
     expect(trop.success).toBe(false)
     expect(trop.error?.issues[0]?.message).toBe(
-      'La somme des catégories (9) dépasse le total du mois (7).',
+      'Les catégories font 9 pour un total de 7. Corrigez la répartition ou le total.',
     )
     expect(
       schemaLigneMois.safeParse({ indicateur_id: ID, valeur: 7, categories: { Malaise: 1 } })

@@ -19,10 +19,11 @@ async function ouvrir(page: Page, ecran: Ecran) {
 
 const boutonsAide = (page: Page) => page.getByRole('button', { name: /^Aide : / })
 
+// T66 : la saisie d'une session garde l'aide des présents ; les saisies FIJ n'en ont plus.
 const FORMULAIRES: (Ecran & { aides: number })[] = [
-  { ecran: 'session', aides: 3 },
-  { ecran: 'carte-fij', aides: 1 },
-  { ecran: 'chiffres-departement', aides: 1 },
+  { ecran: 'session', aides: 1 },
+  { ecran: 'carte-fij', aides: 0 },
+  { ecran: 'chiffres-departement', aides: 0 },
 ]
 
 const TOUS: Ecran[] = [
@@ -82,11 +83,11 @@ test.describe('saisie d’une session (aperçu, maquette 09)', () => {
     await expect(presents).toHaveValue('9')
   })
 
-  test('« Choisir la session » : en attente de l’administration, sans action', async ({ page }) => {
+  test('« Choisir la session » : quand la liste se remplira, sans action', async ({ page }) => {
     await ouvrir(page, { ecran: 'choix-session', etat: 'vide' })
     await expect(page.getByText('Aucune session à saisir.')).toBeVisible()
     await expect(
-      page.getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
+      page.getByText('Vous pourrez saisir une session le jour où elle a lieu.'),
     ).toBeVisible()
   })
 })
@@ -98,7 +99,7 @@ test.describe('saisies FIJ (aperçu)', () => {
     await ouvrir(page, { ecran: 'carte-fij' })
     await expect(page.getByText('Total : 29 FIJ')).toBeVisible()
     await page.getByLabel('77 Seine-et-Marne', { exact: true }).fill('')
-    await expect(page.getByText('Total : 26 FIJ, 7 dép. sur 8')).toBeVisible()
+    await expect(page.getByText('Total : 26 FIJ, 7 départements sur 8')).toBeVisible()
     await page.getByRole('button', { name: 'Enregistrer la carte' }).click()
     await expect(page.getByText('Saisissez un nombre, 0 si aucun.')).toBeVisible()
   })
@@ -109,21 +110,21 @@ test.describe('saisies FIJ (aperçu)', () => {
     await expect(rubriques).toHaveCount(4)
     await expect(rubriques.first().getByRole('textbox')).toHaveCount(8)
     await rubriques.first().getByLabel('75 Paris', { exact: true }).fill('12')
-    await expect(rubriques.first().getByText('Total : 12, 1 dép. sur 8')).toBeVisible()
+    await expect(rubriques.first().getByText('Total : 12, 1 département sur 8')).toBeVisible()
     await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
     await expect(
-      page.getByRole('status').getByText('Chiffres par département de la semaine 39 enregistrés.'),
+      page.getByRole('status').getByText('Chiffres de la semaine 39 enregistrés.'),
     ).toBeVisible()
   })
 })
 
 test.describe('bloc « Chiffres par département » de la fiche (aperçu)', () => {
-  test('total de chaque rubrique avec « 6 dép. sur 8 », jamais 0 pour un absent', async ({
+  test('total de chaque rubrique avec « 6 départements sur 8 », jamais 0 pour un absent', async ({
     page,
   }) => {
     await ouvrir(page, { ecran: 'bloc-departements', profil: 'berger' })
     await expect(page.getByRole('heading', { name: 'Chiffres par département' })).toBeVisible()
-    await expect(page.getByText('6 dép. sur 8')).toHaveCount(4)
+    await expect(page.getByText('6 départements sur 8')).toHaveCount(4)
     await expect(page.getByText('Pas de saisie').first()).toBeVisible()
     await expect(page.getByRole('img')).toHaveCount(4)
   })
@@ -157,6 +158,8 @@ test.describe('aides et accessibilité', () => {
       await ouvrir(page, formulaire)
       const boutons = boutonsAide(page)
       await expect(boutons).toHaveCount(formulaire.aides)
+      await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toBeVisible()
+      if (formulaire.aides === 0) return
       const premier = boutons.first()
       await premier.focus()
       await page.keyboard.press('Enter')

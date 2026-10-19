@@ -19,19 +19,20 @@ export const HEURE_MAX = 23
 export const MINUTE_MAX = 59
 
 /**
- * Messages d'une valeur hors limites, écrits en dur et identiques au CASE de la base
+ * Messages d'une valeur hors limites, écrits en dur avec les bornes du CASE de la base
  * (`private.controler_mesure_le`, B1) : espaces ordinaires dans les nombres, pas d'espace fine
- * produite par Intl (elle dépend de la version d'ICU du navigateur).
+ * produite par Intl (elle dépend de la version d'ICU du navigateur). L'action d'abord (T66, t095 ;
+ * guide 10.8, « Saisissez un nombre entre 0 et {max}. ») ; l'heure garde sa formule.
  */
 const MESSAGES_BORNE: Readonly<Record<UniteIndicateur, string>> = {
-  nombre: 'Entre 0 et 9 999.',
-  grand_nombre: 'Entre 0 et 9 999 999.',
-  euros: 'Entre 0 et 9 999 999.',
-  jours: 'Entre 0 et 99 999.',
-  heure: 'Choisissez une heure entre 0 h 00 et 23 h 59.',
+  nombre: 'Saisissez un nombre entre 0 et 9 999.',
+  grand_nombre: 'Saisissez un nombre entre 0 et 9 999 999.',
+  euros: 'Saisissez un nombre entre 0 et 9 999 999.',
+  jours: 'Saisissez un nombre entre 0 et 99 999.',
+  heure: 'Saisissez une heure entre 0 h 00 et 23 h 59.',
 }
 
-/** Message d'une valeur hors limites : « Entre 0 et 9 999. », « Choisissez une heure entre 0 h 00 et 23 h 59. ». */
+/** Message d'une valeur hors limites : « Saisissez un nombre entre 0 et 9 999. ». */
 export function messageBorne(unite: UniteIndicateur): string {
   return MESSAGES_BORNE[unite]
 }
@@ -55,22 +56,24 @@ export function schemaValeur(unite: UniteIndicateur) {
  */
 export const schemaHeure = z
   .object({
+    // Une seule tournure, l'action d'abord (T66, t097 et m103).
     heures: z
       .number({ error: 'Saisissez les heures.' })
-      .int('Saisissez des heures entières.')
-      .min(0, 'Les heures vont de 0 à 23.')
-      .max(HEURE_MAX, 'Les heures vont de 0 à 23.'),
+      .int('Saisissez des heures de 0 à 23.')
+      .min(0, 'Saisissez des heures de 0 à 23.')
+      .max(HEURE_MAX, 'Saisissez des heures de 0 à 23.'),
     minutes: z
       .number({ error: 'Saisissez les minutes.' })
-      .int('Saisissez des minutes entières.')
-      .min(0, 'Les minutes vont de 0 à 59.')
-      .max(MINUTE_MAX, 'Les minutes vont de 0 à 59.'),
+      .int('Saisissez des minutes de 0 à 59.')
+      .min(0, 'Saisissez des minutes de 0 à 59.')
+      .max(MINUTE_MAX, 'Saisissez des minutes de 0 à 59.'),
   })
   .transform(({ heures, minutes }) => heures * 60 + minutes)
 
+// T66 (t085, m082, m083) : le refus dit ce qui ne va pas ; le bouton dessous donne l'action.
 const MESSAGES_MOIS: Readonly<Record<RefusMois, string>> = {
-  invalide: 'Choisissez un mois.',
-  futur: "Ce mois n'est pas encore commencé.",
+  invalide: "Ce mois n'est pas proposé à la saisie.",
+  futur: "Ce mois n'a pas encore commencé.",
   trop_ancien: 'Ce mois est trop ancien pour être saisi.',
 }
 

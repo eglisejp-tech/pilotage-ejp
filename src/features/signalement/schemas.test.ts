@@ -8,7 +8,7 @@ import {
   schemaFormulaireCloture,
   schemaSignalement,
 } from '@/features/signalement/schemas'
-import { LIBELLES_ECRAN, MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
+import { LIBELLES_ECRAN } from '@/features/signalement/textes'
 
 const ID = '43000000-0000-4000-8000-000000000001'
 
@@ -50,7 +50,7 @@ describe('schemaSignalement', () => {
     )
     expect(
       erreurs(schemaSignalement.safeParse({ ecran: 'autre', texte: '😀'.repeat(281) })),
-    ).toEqual(['Le signalement dépasse 280 caractères.'])
+    ).toEqual(['Raccourcissez le signalement : 280 caractères au plus.'])
     expect(longueurEnCaracteres('a😀b')).toBe(3)
   })
 
@@ -59,24 +59,26 @@ describe('schemaSignalement', () => {
     expect(erreurs(resultat)).toEqual(['Décrivez la difficulté (10 caractères au moins).'])
   })
 
-  it('texte de 281 caractères : « Le signalement dépasse 280 caractères. »', () => {
+  it('texte de 281 caractères : « Raccourcissez le signalement : 280 caractères au plus. »', () => {
     const resultat = schemaSignalement.safeParse({ ecran: 'autre', texte: 'a'.repeat(281) })
-    expect(erreurs(resultat)).toEqual(['Le signalement dépasse 280 caractères.'])
+    expect(erreurs(resultat)).toEqual(['Raccourcissez le signalement : 280 caractères au plus.'])
   })
 
-  it('crochets et « texte masqué » refusés, comme par la base (T43)', () => {
+  it('crochets et « texte masqué » refusés, comme par la base (T43), l’action d’abord (T66)', () => {
     for (const texte of ['Le bouton [Envoyer] reste grisé', 'Mon texte masqué par erreur ici']) {
       expect(erreurs(schemaSignalement.safeParse({ ecran: 'autre', texte }))).toEqual([
-        'Les crochets et « texte masqué » sont réservés à la modération.',
+        'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
       ])
     }
     expect(contientMarqueurModeration('Texte Masqué')).toBe(true)
     expect(contientMarqueurModeration('Le bouton reste grisé')).toBe(false)
   })
 
-  it('un écran hors de la liste : « Choisissez l’écran concerné dans la liste. »', () => {
+  it('un écran hors de la liste : ouvrir le signalement depuis l’écran concerné (T66, t151)', () => {
     const resultat = schemaSignalement.safeParse({ ecran: 'saisie_point', texte: 'a'.repeat(20) })
-    expect(erreurs(resultat)).toEqual([MESSAGES_BASE_SIGNALEMENT.ecran])
+    expect(erreurs(resultat)).toEqual([
+      "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
+    ])
   })
 })
 
@@ -105,7 +107,7 @@ describe('schemaCloture', () => {
   it('crochets refusés dans le commentaire ; identifiant qui n’est pas un uuid refusé', () => {
     expect(
       erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'Réglé : [voir la fiche]' })),
-    ).toEqual(['Les crochets et « texte masqué » sont réservés à la modération.'])
+    ).toEqual(['Retirez de votre texte les crochets [ ] et les mots « texte masqué ».'])
     expect(schemaCloture.safeParse({ signalementId: 'abc', commentaire: '' }).success).toBe(false)
   })
 })

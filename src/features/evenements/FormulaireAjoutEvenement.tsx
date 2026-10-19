@@ -95,7 +95,6 @@ export function FormulaireAjoutEvenement({
       <ChampDate
         id="evenement-date"
         libelle={TEXTES_EVENEMENT.libelleDate}
-        aide="evenement.date"
         min={aujourdhui}
         dateChoisie={date}
         erreur={errors.date?.message}

@@ -9,11 +9,12 @@ import { estDateIso, jourDeLaSemaine } from '@/lib/metier/dates'
 // (`fij_departement`, `saisir_fij_statistiques`) : le schéma reprend ses bornes pour éviter
 // l'aller-retour.
 
+// T66 (t095, t119, t125, m085, m101, m118) : l'action d'abord, sans mécanique d'envoi, « chiffre ».
 export const MESSAGES_FIJ = {
   valeurManquante: 'Saisissez un nombre, 0 si aucun.',
-  valeurBornes: 'Entre 0 et 9 999.',
-  carteIncomplete: 'Saisissez les 8 départements : la carte part en un seul envoi.',
-  aucuneValeur: 'Saisissez au moins une valeur.',
+  valeurBornes: 'Saisissez un nombre entre 0 et 9 999.',
+  carteIncomplete: 'Saisissez les 8 départements, 0 si aucune FIJ.',
+  aucuneValeur: 'Saisissez au moins un chiffre.',
   dimanche: 'Choisissez une semaine.',
   doublon: "Chaque rubrique d'un département ne se saisit qu'une fois par envoi.",
 } as const

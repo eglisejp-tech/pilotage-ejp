@@ -7,6 +7,7 @@ import type { MoisAChoisir } from '@/features/saisie-chiffres/choixPeriode'
 import {
   idGrille,
   idPrecision,
+  libellesCategories,
   placerErreurBase,
   preparerMois,
   premierChampEnErreur,
@@ -64,7 +65,7 @@ function sensiblesDeDepart(champs: readonly Champ[]): Record<string, SaisieSensi
  * « Chiffres du mois » (dérivé de 08, BRIEF section 9) : le choix du mois, puis un champ par
  * indicateur du mois, repris avec la saisie qui fait foi (« Déjà saisi : ... »). Sous le total
  * d'un sensible, « Précision (facultatif) » et, s'il a des catégories, la grille « Répartition
- * (facultatif) », reprises du total le plus récent (P46, P47). Seuls les chiffres qui changent
+ * par catégorie (facultatif) », reprises du total le plus récent (P46, P47). Seuls les chiffres qui changent
  * partent, tout le mois en un appel : tout ou rien. Un refus de la base sur une précision
  * s'affiche sous ce champ, avec la phrase de la table de traduction ; les valeurs restent.
  */
@@ -140,7 +141,12 @@ export function FormulaireMois({ mois, champs, proposes, rattrapage, enregistrer
     }
     setRien(null)
     setEnvoyees(preparation.lignes)
-    void envoi.envoyer(() => enregistrer(preparation.lignes), reussiteMois(mois), signature)
+    const correction = champs.some((champ) => champ.deja !== null)
+    void envoi.envoyer(
+      () => enregistrer(preparation.lignes),
+      reussiteMois(mois, correction),
+      signature,
+    )
   }
 
   return (
@@ -154,7 +160,6 @@ export function FormulaireMois({ mois, champs, proposes, rattrapage, enregistrer
         erreurFormulaire={rien === 'aucun' ? TEXTES_CHIFFRES.aucunChiffre : null}
         erreurSousLeBouton={echec !== null && place.partie === 'bouton'}
         ecran="saisie_mois"
-        correction={champs.some((champ) => champ.deja !== null)}
         onSubmit={soumettre}
       >
         {champs.map((champ) => {
@@ -196,10 +201,9 @@ export function FormulaireMois({ mois, champs, proposes, rattrapage, enregistrer
                   categories={champ.sensible.categories}
                   valeurs={saisie.repartition}
                   onChange={changerCategorie(champ.id)}
-                  aide={champ.sensible.aideGrille}
                   etat={etatGrille(
                     lireValeur(champ.unite, valeur),
-                    lireRepartition(codes, saisie.repartition),
+                    lireRepartition(codes, saisie.repartition, libellesCategories(champ)),
                   )}
                   erreur={erreur.repartition ?? erreurBase('repartition')}
                 />

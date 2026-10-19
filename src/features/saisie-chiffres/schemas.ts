@@ -20,7 +20,8 @@ export const CATEGORIE_MAX = 9999
 /** Plus haut plafond d'unité : la borne exacte de chaque unité se contrôle champ par champ. */
 const VALEUR_MAX = Math.max(...Object.values(PLAFOND_UNITE))
 
-const MESSAGE_CATEGORIE = 'Entre 0 et 9 999.'
+/** Catégorie hors bornes : l'action d'abord (T66, t095) ; la grille dit aussi son nom (m094). */
+export const MESSAGE_CATEGORIE = 'Saisissez un nombre entre 0 et 9 999.'
 
 /**
  * Précision d'un total sensible (P46) : 10 à 280 caractères après suppression des blancs autour.

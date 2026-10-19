@@ -26,10 +26,10 @@ describe('lireRefusSignalement', () => {
     expect(estDejaClos(dejaClos)).toBe(true)
   })
 
-  it('refus de droit (42501) : le message commun, sous le bouton', () => {
+  it('refus de droit (42501) : la forme commune d’un élément introuvable, sous le bouton', () => {
     expect(lireRefusSignalement(refus('peu importe', '42501'))).toEqual({
       ou: 'bouton',
-      message: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+      message: 'Cet élément est introuvable. Rechargez la page.',
     })
   })
 

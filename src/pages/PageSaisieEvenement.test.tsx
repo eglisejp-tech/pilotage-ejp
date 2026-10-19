@@ -158,11 +158,11 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(screen.getByText(/^Cet événement attend toujours sa validation\./)).toBeInTheDocument()
   })
 
-  it('ministère mentionné : « Seul Coordination met à jour cet événement. », sans formulaire ni lecture des mentions', async () => {
+  it('ministère mentionné : « Seul Coordination peut mettre à jour cet événement. », sans formulaire ni lecture des mentions', async () => {
     const faux = connecte('ministere', { v_evenement: [evenement(COORDINATION)] })
     afficher(`/saisir/evenement/${EVENEMENT}`)
     expect(
-      await screen.findByText('Seul Coordination met à jour cet événement.'),
+      await screen.findByText('Seul Coordination peut mettre à jour cet événement.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
@@ -175,18 +175,14 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
   it('événement illisible (autre ministère) : « Cet événement n’existe pas ou vous n’y avez pas accès. »', async () => {
     connecte('ministere', { v_evenement: [] })
     afficher(`/saisir/evenement/${EVENEMENT}`)
-    expect(
-      await screen.findByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Cet événement est introuvable.')).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
   })
 
   it('identifiant qui n’en est pas un : le même message, sans aucune requête de données', async () => {
     const faux = connecte('ministere')
     afficher('/saisir/evenement/pas-un-identifiant')
-    expect(
-      await screen.findByText("Cet événement n'existe pas ou vous n'y avez pas accès."),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Cet événement est introuvable.')).toBeInTheDocument()
     expect(faux.tables.every((table) => table === 'compte')).toBe(true)
   })
 })

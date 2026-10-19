@@ -50,22 +50,21 @@ describe('présents moins déjà comptés (BRIEF, règle 5)', () => {
     )
   })
 
-  it('présents saisis mais déjà comptés au-delà : « à corriger », jamais « saisissez les présents »', () => {
-    expect(ligneComptesDansTotal({ presents: '3', dejaComptes: '5' })).toBe(
-      "Comptés dans le total de l'église : à corriger.",
-    )
+  // T66 (m110) : la ligne nomme le champ à corriger.
+  const corrigerDeja = "Comptés dans le total de l'église : corrigez « Dont déjà comptés »."
+  const corrigerPresents =
+    "Comptés dans le total de l'église : corrigez « STARs de votre ministère présents »."
+
+  it('présents saisis mais déjà comptés au-delà : corriger « Dont déjà comptés », jamais « saisissez les présents »', () => {
+    expect(ligneComptesDansTotal({ presents: '3', dejaComptes: '5' })).toBe(corrigerDeja)
   })
 
-  it('un nombre négatif ne donne jamais un total : « à corriger » (m100)', () => {
+  it('un nombre négatif ne donne jamais un total : le champ à corriger (m100)', () => {
     // 5 présents et « -4 » déjà comptés donneraient 9, plus que les présents.
     expect(comptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBeNull()
     expect(comptesDansTotal({ presents: '-3', dejaComptes: '' })).toBeNull()
-    expect(ligneComptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBe(
-      "Comptés dans le total de l'église : à corriger.",
-    )
-    expect(ligneComptesDansTotal({ presents: '-3', dejaComptes: '' })).toBe(
-      "Comptés dans le total de l'église : à corriger.",
-    )
+    expect(ligneComptesDansTotal({ presents: '5', dejaComptes: '-4' })).toBe(corrigerDeja)
+    expect(ligneComptesDansTotal({ presents: '-3', dejaComptes: '' })).toBe(corrigerPresents)
   })
 })
 
@@ -76,7 +75,7 @@ describe('schemaParticipation, partagé entre le formulaire et l’appel', () =>
 
   it('refuse plus de déjà comptés que de présents, sous le second champ', () => {
     expect(erreursSession({ presents: '3', dejaComptes: '5' }, IDS)).toEqual({
-      dejaComptes: 'Ce nombre ne peut pas dépasser les présents.',
+      dejaComptes: 'Saisissez 3 au plus, le nombre de présents.',
     })
   })
 
@@ -89,7 +88,7 @@ describe('schemaParticipation, partagé entre le formulaire et l’appel', () =>
   it('refuse un nombre négatif ou au-delà de 999', () => {
     for (const presents of ['-1', '1000']) {
       expect(erreursSession({ presents, dejaComptes: '0' }, IDS).presents, presents).toBe(
-        'Entre 0 et 999.',
+        'Saisissez un nombre entre 0 et 999.',
       )
     }
   })
@@ -109,7 +108,7 @@ describe('schemaParticipation, partagé entre le formulaire et l’appel', () =>
     expect(comptesDansTotal({ presents: '12,5', dejaComptes: '0' })).toBeNull()
     expect(comptesDansTotal({ presents: '12', dejaComptes: '1a' })).toBeNull()
     expect(ligneComptesDansTotal({ presents: '12,5', dejaComptes: '0' })).toBe(
-      "Comptés dans le total de l'église : à corriger.",
+      "Comptés dans le total de l'église : corrigez « STARs de votre ministère présents ».",
     )
   })
 
@@ -184,13 +183,14 @@ describe('textes de la saisie', () => {
     expect(messageReussiteSession('batir', null, '2026-09-26')).toBe(
       "Présence enregistrée pour Bâtir l'Église du 26 sept.",
     )
+    expect(messageReussiteSession('batir', null, '2026-09-26', true)).toBe(
+      "Correction enregistrée pour Bâtir l'Église du 26 sept.",
+    )
   })
 
   it('« Déjà saisi » dit la saisie la plus récente, à l’heure de Paris', () => {
     const ligne = ligneDejaSaisi({ valeur: 13, deja_comptes: 2, saisi_le: '2026-09-27T16:30:00Z' })
-    expect(ligne).toBe(
-      'Déjà saisi : 13 présents, dont 2 déjà comptés, le 27 sept. à 18 h 30. Votre saisie la remplacera dans les totaux.',
-    )
+    expect(ligne).toBe('Déjà saisi : 13 présents, dont 2 déjà comptés, le 27 sept. à 18 h 30.')
     expect(ligne).not.toMatch(TIRETS)
   })
 })

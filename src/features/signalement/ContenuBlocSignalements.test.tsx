@@ -5,8 +5,7 @@ import type { LigneSignalement } from '@/data/signalements'
 import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSignalements'
 import type { ContenuBloc } from '@/features/signalement/ContenuBlocSignalements'
 
-const RAPPEL =
-  "N'écrivez aucun nom ni information personnelle. Les champs libres sont relus par EJP Tech."
+const RAPPEL = "N'écrivez aucun nom ni information personnelle."
 const VIDE = 'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.'
 
 function ligne(numero: number, champs: Partial<LigneSignalement> = {}): LigneSignalement {

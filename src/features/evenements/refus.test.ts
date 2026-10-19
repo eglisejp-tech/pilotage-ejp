@@ -50,10 +50,10 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     })
   })
 
-  it('un refus de droit dit seulement que l’élément n’est pas accessible', () => {
+  it('un refus de droit dit que l’élément est introuvable (T66, t137)', () => {
     expect(lireRefus(erreurBase('new row violates row-level security policy', '42501'))).toEqual({
       ou: 'bouton',
-      message: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+      message: 'Cet élément est introuvable. Rechargez la page.',
     })
   })
 

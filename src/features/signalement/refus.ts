@@ -1,5 +1,5 @@
 import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
-import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
+import { MESSAGES_BASE_SIGNALEMENT, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
 // Lecture d'un refus après l'envoi d'un signalement ou d'une clôture (contrat de l'étape 4,
 // section 7), par la table de traduction de `src/data/messagesBase.ts` : un refus du texte
@@ -32,7 +32,7 @@ export function lireRefusSignalement(
         ? { ou: 'bouton', message: MESSAGES_COMMUNS.peutEtreFait }
         : { ou: 'connexion' }
     case 'acces':
-      return { ou: 'bouton', message: MESSAGES_BASE_SIGNALEMENT.acces }
+      return { ou: 'bouton', message: TEXTES_SIGNALEMENT.acces }
     case 'message':
       return lue.nature === 'refus' && lue.champ === 'texte'
         ? { ou: 'champ', message: lue.message }

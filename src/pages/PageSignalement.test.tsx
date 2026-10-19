@@ -93,7 +93,9 @@ describe('/signaler', () => {
     await userEvent.click(champ)
     await userEvent.paste('Je ne peux pas choisir la date de la soirée.')
     await userEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }))
-    expect(await screen.findByText('Signalement envoyé. EJP Tech le lira.')).toBeInTheDocument()
+    expect(
+      await screen.findByText("Signalement envoyé. La réponse s'affichera sur cette page."),
+    ).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('signaler_difficulte', {
       p_ecran: 'saisie_evenement',
       p_texte: 'Je ne peux pas choisir la date de la soirée.',
@@ -107,7 +109,7 @@ describe('/signaler', () => {
     afficher('/signaler')
     const liste = await screen.findByRole('region', { name: 'Vos derniers signalements' })
     expect(within(liste).getByText('Clos le 29 sept.')).toBeInTheDocument()
-    expect(liste).toHaveTextContent("Réponse d'EJP Tech : Réglé avec le ministère.")
+    expect(liste).toHaveTextContent('Réponse : Réglé avec le ministère.')
   })
 
   it('lecture de la liste en échec : le formulaire reste, « Réessayer » sous lui', async () => {

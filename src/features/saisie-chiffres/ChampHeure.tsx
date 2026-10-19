@@ -11,7 +11,7 @@ interface Props {
   onChange: (valeur: { heures: string; minutes: string }) => void
   aide?: CodeAide | null
   definition?: string
-  /** Mention visible sous la définition, avant les champs (« À valider par EJP Tech... »). */
+  /** Mention visible sous la définition, avant les champs (« En attente de validation... »). */
   mention?: string
   /** Note visible sous le format (« Saisi le 24 sept. »). */
   note?: string

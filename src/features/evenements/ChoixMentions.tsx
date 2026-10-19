@@ -1,5 +1,4 @@
 import type { Ref } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { TEXTES_EVENEMENT } from '@/features/evenements/textes'
 
 export interface MinistreAMentionner {
@@ -22,9 +21,9 @@ interface Props {
 /**
  * Mentions facultatives d'un nouvel événement (T32) : une case par ministère actif autre que
  * celui du compte, comme dans « Nouveau point ». Sous les cases, la note du BRIEF (« Le ministère
- * mentionné verra cet événement, et seulement cet événement. ») et le texte visible « Les mentions
- * se choisissent à la création et ne changent plus. ». Sans autre ministère actif, une phrase à la
- * place des cases, sans aide ni note (pas d'aide sur un état vide).
+ * mentionné verra cet événement. ») et « Vous ne pourrez plus changer les mentions. » (textes revus
+ * par T66, t133 et t134 ; plus de bulle, t132). Sans autre ministère actif, une phrase à la place
+ * des cases, sans note.
  */
 export function ChoixMentions({
   id,
@@ -55,9 +54,6 @@ export function ChoixMentions({
         <p id={idTitre} className="text-[15px] font-semibold">
           {TEXTES_EVENEMENT.titreMentions}
         </p>
-        {vide ? null : (
-          <Aide code="evenement.mentions" libelle={TEXTES_EVENEMENT.libelleMentions} />
-        )}
       </div>
       {vide ? (
         <p className="text-encre-2">{TEXTES_EVENEMENT.aucuneMention}</p>

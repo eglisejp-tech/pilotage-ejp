@@ -3,33 +3,43 @@
 // (lien et messages de date refusée) et E8 (formulaire et bloc), qui ne les réécrivent pas.
 //
 // Qui lit un signalement : le ministère qui l'a écrit et EJP Tech, jamais l'administration de
-// l'église, le berger ni le conseil. Tout texte qui le dit emploie `LECTEUR_SIGNALEMENT`.
+// l'église, le berger ni le conseil. L'écran ne le dit plus (T66, t149 ; guide, exemple 9) : la
+// page Confidentialité le dit.
 
 import type { EcranSignalement } from '@/lib/base'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
 import { accorder, nombre } from '@/lib/metier/texte'
 
-/** La phrase qui dit qui lit le signalement, partout où l'on en parle. */
-export const LECTEUR_SIGNALEMENT = 'EJP Tech lit votre signalement.'
+/** Un même texte de date passée (guide 10.10 ; T66, t140). */
+const DATE_PASSEE = "Cette date est passée. Choisissez aujourd'hui ou une date à venir."
 
 export const TEXTES_SIGNALEMENT = {
   lien: 'Signaler une difficulté',
   titre: 'Signaler une difficulté',
-  /** Phrase sous le titre du panneau : qui lit, puis ce qu'on demande. */
-  phraseTitre: `${LECTEUR_SIGNALEMENT} Décrivez ce qui vous bloque en une ou deux phrases.`,
   /** Ligne de contexte, remplie par l'outil : « Écran concerné : Ajouter un événement ». */
   ligneContexte: (ecran: EcranSignalement) => `Écran concerné : ${LIBELLES_ECRAN[ecran]}`,
   libelleChamp: 'Quelle difficulté rencontrez-vous ?',
   erreurChamp: 'Décrivez la difficulté (10 caractères au moins).',
+  /** Contrôles avant l'envoi, dans la forme commune (T66, t150, t151 et t153). */
+  erreurLong: 'Raccourcissez le signalement : 280 caractères au plus.',
+  erreurEcran: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
+  erreurCrochets: 'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
+  /** Refus de droit (42501) : la forme commune d'un élément introuvable (guide 10.10). */
+  acces: 'Cet élément est introuvable. Rechargez la page.',
   boutonEnvoyer: 'Envoyer le signalement',
   boutonEnCours: 'Envoi en cours',
   boutonAnnuler: 'Annuler',
   /** Même bouton une fois le signalement envoyé : il n'y a plus rien à annuler (proposé, E8). */
   boutonFermer: 'Fermer',
-  confirmation: 'Signalement envoyé. EJP Tech le lira.',
+  /** Ce qui va se passer, pas qui le fait (guide, exemple 9 ; T66, t154). */
+  confirmation: "Signalement envoyé. La réponse s'affichera sur cette page.",
   /** Sous le champ date de l'ajout d'un événement, avant le lien « Signaler une difficulté ». */
-  dateRefuseeAjout: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
-  /** Sous le champ date de la mise à jour d'un événement, avant le lien. */
+  dateRefuseeAjout: DATE_PASSEE,
+  /**
+   * Sous le champ date de la mise à jour d'un événement, avant le lien. Le texte commun (t140)
+   * attend la fusion des lots qui tiennent la table de traduction : la table dit ce texte tel
+   * quel, et le contrôle avant l'envoi doit dire le même (guide 10.9).
+   */
   dateRefuseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
   questionDate: 'Vous ne pouvez pas choisir de date ?',
   /**
@@ -64,7 +74,12 @@ export const LIBELLES_ECRAN: Readonly<Record<EcranSignalement, string>> = {
 export const LONGUEUR_MIN_SIGNALEMENT = 10
 export const LONGUEUR_MAX_SIGNALEMENT = 280
 
-/** Messages de la base, repris tels quels (contrat de l'étape 4, section 7 ; B7 ; T43). */
+/**
+ * Textes de la base (contrat de l'étape 4, section 7 ; B7 ; T43) : les clés de la table de
+ * traduction, que l'aperçu simule et que l'écran compare (« déjà clos »). Avant l'envoi, l'écran
+ * dit les textes de `TEXTES_SIGNALEMENT` (T66) ; la table les reprendra avec la fusion des lots
+ * qui la tiennent.
+ */
 export const MESSAGES_BASE_SIGNALEMENT = {
   texteCourt: 'Décrivez la difficulté (10 caractères au moins).',
   texteLong: 'Le signalement dépasse 280 caractères.',
@@ -74,8 +89,6 @@ export const MESSAGES_BASE_SIGNALEMENT = {
   commentaireCourt: 'Le commentaire fait 10 caractères au moins, ou reste vide.',
   commentaireLong: 'Le commentaire dépasse 280 caractères.',
   dejaClos: 'Ce signalement est déjà clos.',
-  /** Refus de droit (42501), commun à toutes les fonctions de l'API. */
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
 } as const
 
 /** « 6 oct. » : jour de Paris d'un horodatage de la base (jamais la date du navigateur). */
@@ -90,8 +103,8 @@ export const TEXTES_MES_SIGNALEMENTS = {
   nombre: 3,
   ouvert: 'Ouvert',
   clos: (closLe: string) => `Clos le ${jourDuSignalement(closLe)}`,
-  /** Devant le commentaire de clôture, s'il y en a un. */
-  commentaire: "Réponse d'EJP Tech :",
+  /** Devant le commentaire de clôture, s'il y en a un (même mot que le bloc d'EJP Tech, t155). */
+  commentaire: 'Réponse :',
   /** « Ajouter un événement, 6 oct. » */
   ligne: (ecran: EcranSignalement, saisiLe: string) =>
     `${LIBELLES_ECRAN[ecran]}, ${jourDuSignalement(saisiLe)}`,

@@ -5,7 +5,11 @@
 import type { ChampRefus } from '@/data/messagesBase'
 import type { ChampChiffre } from '@/features/saisie-chiffres/champs'
 import type { LigneMois } from '@/features/saisie-chiffres/schemas'
-import { messageValeurEffacee, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
+import {
+  fijDepasseActifs,
+  messageValeurEffacee,
+  TEXTES_CHIFFRES,
+} from '@/features/saisie-chiffres/textes'
 import {
   etatGrille,
   lirePrecision,
@@ -21,6 +25,13 @@ function erreurChampVide(champ: ChampChiffre): string | null {
   return champ.deja === null
     ? null
     : messageValeurEffacee(formaterValeur(champ.deja.valeur, champ.unite))
+}
+
+/** Nom de chaque catégorie de la grille d'un sensible, pour dire laquelle est refusée (m094). */
+export function libellesCategories(champ: ChampChiffre): Record<string, string> {
+  return Object.fromEntries(
+    (champ.sensible?.categories ?? []).map(({ code, libelle }) => [code, libelle] as const),
+  )
 }
 
 /** Erreurs d'un champ, sous le champ, sous la précision et sous la grille. */
@@ -93,7 +104,7 @@ export function preparerDimanche(
     } else if (lecture.etat === 'vide') {
       const effacee = erreurChampVide(champ)
       if (effacee !== null) erreurs[champ.id] = { valeur: effacee }
-      else if (champ.obligatoire) erreurs[champ.id] = { valeur: 'Saisissez un nombre.' }
+      else if (champ.obligatoire) erreurs[champ.id] = { valeur: TEXTES_CHIFFRES.nombreManquant }
     } else {
       lignes.push({ indicateurId: champ.id, valeur: lecture.valeur })
       if (champ.code !== null) lues.set(champ.code, lecture.valeur)
@@ -103,7 +114,7 @@ export function preparerDimanche(
   const actifs = lues.get('actifs')
   const champFij = champs.find((champ) => champ.code === 'en_fij')
   if (enFij !== undefined && actifs !== undefined && enFij > actifs && champFij) {
-    erreurs[champFij.id] = { valeur: TEXTES_CHIFFRES.fijDepasseActifs }
+    erreurs[champFij.id] = { valeur: fijDepasseActifs(actifs) }
   }
   return { lignes, erreurs }
 }
@@ -183,7 +194,7 @@ export function preparerMois(
     const precision = lirePrecision(saisie.precision)
     if (precision.etat === 'erreur') erreur.precision = precision.message
     const codes = champ.sensible.categories.map((categorie) => categorie.code)
-    const grille = lireRepartition(codes, saisie.repartition)
+    const grille = lireRepartition(codes, saisie.repartition, libellesCategories(champ))
     const ligneGrille = etatGrille(total, grille)
     if (ligneGrille.etat === 'depasse' || ligneGrille.etat === 'erreur') {
       erreur.repartition = ligneGrille.message
