@@ -16,7 +16,7 @@ interface Props {
 
 /**
  * « Dernières saisies » (maquettes 04 et 12) : les 5 dernières lignes écrites par un compte du
- * ministère, puis la note sur les corrections. Lu à part : son problème passager garde le titre et
+ * ministère ; la note sur l'historique est sur la page d'aide (T66, t211). Lu à part : son problème passager garde le titre et
  * propose « Réessayer » sans toucher le reste de la fiche. Premier usage : « Aucune saisie pour
  * l'instant. »
  */
@@ -51,30 +51,25 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
             {TEXTES_VIDES_INDICATEURS.aucuneDerniereSaisie}
           </EtatVide>
         ) : (
-          <>
-            <ul className="flex flex-col">
-              {bloc.donnees.map((ligne) => (
-                <li
-                  key={ligne.id}
-                  className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
-                >
-                  <span className="text-sm text-encre-3">{ligne.quand}</span>
-                  <span className="min-w-0 break-words">
-                    {ligne.texte}
-                    {ligne.objet !== null ? (
-                      <>
-                        {' '}
-                        <Libre texte={ligne.objet} />
-                      </>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-note leading-normal text-encre-3">
-              {TEXTES_FICHE.noteDernieresSaisies}
-            </p>
-          </>
+          <ul className="flex flex-col">
+            {bloc.donnees.map((ligne) => (
+              <li
+                key={ligne.id}
+                className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
+              >
+                <span className="text-sm text-encre-3">{ligne.quand}</span>
+                <span className="min-w-0 break-words">
+                  {ligne.texte}
+                  {ligne.objet !== null ? (
+                    <>
+                      {' '}
+                      <Libre texte={ligne.objet} />
+                    </>
+                  ) : null}
+                </span>
+              </li>
+            ))}
+          </ul>
         )
       ) : null}
     </section>

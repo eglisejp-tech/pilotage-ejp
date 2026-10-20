@@ -26,7 +26,7 @@ afterEach(() => {
 })
 
 describe('VueMaSemaine', () => {
-  it('l’ouverture de 07, « Vos saisies », « Vos chiffres de la semaine », « Vos points », « Dans l’église »', () => {
+  it('l’ouverture de 07, « Vos saisies », « Vos chiffres de la semaine », « Mes points », « Dans l’église »', () => {
     const { container } = afficher(exempleMaSemaine())
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
       'Vos chiffres sont à jour. Il reste la date de la prochaine réunion.',
@@ -35,14 +35,14 @@ describe('VueMaSemaine', () => {
       'Il reste la date de la prochaine réunion',
     )
     expect(screen.getByText('Semaine 39, du 21 au 27 sept.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Renseigner la prochaine réunion' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Ajouter la prochaine réunion' })).toHaveAttribute(
       'href',
       '/saisir/reunion',
     )
     expect(titres()).toEqual([
       'Vos saisies',
       'Vos chiffres de la semaine',
-      'Vos points',
+      'Mes points',
       "Dans l'église",
     ])
   })
@@ -72,9 +72,9 @@ describe('VueMaSemaine', () => {
     expect(within(bloc).getByText('Dimanche 27 sept.')).toBeInTheDocument()
     expect(within(bloc).getByText('+1 par rapport à dimanche dernier')).toBeInTheDocument()
     expect(
-      within(bloc).getByRole('img', { name: /^Dix derniers dimanches : 8, 9, sans saisie/ }),
+      within(bloc).getByRole('img', { name: /^10 derniers dimanches : 8, 9, sans saisie/ }),
     ).toBeInTheDocument()
-    expect(within(bloc).getByText('11 sur 14, calculé')).toBeInTheDocument()
+    expect(within(bloc).getByText('11 sur 14 actifs')).toBeInTheDocument()
     expect(within(bloc).getByText("Présents à Bâtir l'Église")).toBeInTheDocument()
     expect(within(bloc).getByText('Visuels livrés ce mois')).toBeInTheDocument()
     expect(within(bloc).getByText('Septembre en cours. Août 2026 : 6')).toBeInTheDocument()
@@ -110,7 +110,9 @@ describe('VueMaSemaine', () => {
     unmount()
     afficher(exempleFij())
     expect(within(chiffres()).getByText('Total de la carte des FIJ')).toBeInTheDocument()
-    expect(within(chiffres()).getByText('8 dép., saisi le 21 sept.')).toBeInTheDocument()
+    expect(
+      within(chiffres()).getByText('8 départements sur 8, saisi le 21 sept.'),
+    ).toBeInTheDocument()
     expect(within(chiffres()).getByText('Chiffres par département saisis')).toBeInTheDocument()
     expect(within(chiffres()).getByText('sur 32, dimanche 27 sept.')).toBeInTheDocument()
     expect(titres()).not.toContain('FIJ en Île-de-France')
@@ -134,7 +136,7 @@ describe('ChargementMaSemaine', () => {
     expect(titres()).toEqual([
       'Vos saisies',
       'Vos chiffres de la semaine',
-      'Vos points',
+      'Mes points',
       "Dans l'église",
     ])
     expect(screen.getByRole('status')).toBeEmptyDOMElement()

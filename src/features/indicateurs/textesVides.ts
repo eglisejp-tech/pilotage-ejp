@@ -31,20 +31,18 @@ export const TEXTES_VIDES_INDICATEURS = {
   pasEncoreDeSaisie: PAS_ENCORE_DE_SAISIE,
   /** Somme de l'année d'un indicateur jamais saisi : jamais « 0 ». */
   sommeSansSaisie: PAS_ENCORE_DE_SAISIE,
-  /** Mois sensible dont la répartition manque pour ce profil. Proposé (plan, E2). */
-  repartitionMasquee: 'Répartition masquée pour protéger les petits nombres.',
   /** Calcul dont une source manque ou dont le bas vaut 0 : le détail vient de `texteNonCalcule`. */
   nonCalcule: NON_CALCULE,
 
   /** Action unique d'un bloc sans saisie, au ministère seulement (E2). */
   actionSaisirLeMois: 'Saisir les chiffres du mois',
 
+  /** Premier usage : la suite (les chiffres communs) est déjà à l'écran (T66, t207 et t208). */
   propres: {
-    /** « Mes indicateurs » de la fiche du ministère, premier usage. LISEZMOI. */
-    ministere:
-      "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
-    /** Fiche vue par le berger, le conseil ou EJP Tech, premier usage. Proposé. */
-    autres: "Ce ministère n'a pas encore d'indicateur à lui. Il saisit les chiffres communs.",
+    /** « Mes indicateurs » de la fiche du ministère. */
+    ministere: "Votre ministère n'a pas encore d'indicateur à lui.",
+    /** Fiche vue par le berger, le conseil ou EJP Tech. */
+    autres: "Ce ministère n'a pas encore d'indicateur à lui.",
   },
 
   /** Bloc « Retirés » : aucun résultat. Proposé. */

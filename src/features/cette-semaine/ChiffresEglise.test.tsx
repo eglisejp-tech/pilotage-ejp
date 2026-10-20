@@ -49,14 +49,14 @@ describe('ChiffresEglise', () => {
     )
     expect(
       within(service).getByRole('img', {
-        name: /^Dix derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52/,
+        name: /^10 derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52/,
       }),
     ).toBeInTheDocument()
     expect(within(service).getByText('Dimanche 27 sept.')).toBeInTheDocument()
     expect(within(service).getByText('6 sur 8')).toHaveClass('text-attention')
 
     const actifs = within(region).getByRole('row', { name: /^STARs actifs/ })
-    expect(within(actifs).getByText('À ce jour, 1 valeur de plus de 30 jours')).toHaveClass(
+    expect(within(actifs).getByText('À ce jour, 1 chiffre de plus de 30 jours')).toHaveClass(
       'text-attention',
     )
     expect(within(actifs).getByText('8 sur 8')).toHaveClass('text-encre-3')
@@ -79,9 +79,10 @@ describe('ChiffresEglise', () => {
     const lignes = within(region).getAllByRole('listitem')
     expect(lignes).toHaveLength(6)
     expect(lignes[0]).toHaveTextContent('STARs au serviceDim. 27 sept., 6 sur 8')
-    expect(
-      within(lignes[0]!).getByRole('img', { name: /^Dix derniers dimanches/ }),
-    ).toHaveAttribute('width', '72')
+    expect(within(lignes[0]!).getByRole('img', { name: /^10 derniers dimanches/ })).toHaveAttribute(
+      'width',
+      '72',
+    )
     expect(lignes[4]).toHaveTextContent('Sam. 26 sept., 6 sur 8')
   })
 })

@@ -9,9 +9,9 @@ export type ReunionDeLaLigne = Pick<LigneVue<'v_prochaine_reunion'>, 'date' | 'h
  * Ligne de « Vos saisies » pour la prochaine réunion (maquette 07, BRIEF section 9). Ce que E7
  * appelle : `lignesReunion(reunion)`, avec `reunion` lue par `lireProchaineReunion(ministereId)`
  * (`src/data/reunions.ts`), ou `null`. La vue ne rend que la dernière déclaration dont la date
- * n'est pas passée (règle 15, jour de Paris) : null veut dire « date non confirmée ».
+ * n'est pas passée (règle 15, jour de Paris) : null veut dire « aucune date ».
  * - déclarée : Fait, « Fait, lundi 5 oct., 20 h », bouton « Corriger » ;
- * - sinon : À faire, « À faire, date non confirmée », bouton « Renseigner ».
+ * - sinon : À faire, « À faire, aucune date », bouton « Ajouter » (glossaire, T66 t167 et t168).
  * Les deux boutons ouvrent le panneau de la prochaine réunion (`/saisir/reunion`). Une seule ligne.
  */
 export function lignesReunion(reunion: ReunionDeLaLigne | null): readonly LigneVosSaisies[] {
@@ -21,8 +21,8 @@ export function lignesReunion(reunion: ReunionDeLaLigne | null): readonly LigneV
         cle: 'reunion',
         libelle: 'Prochaine réunion',
         etat: 'a_faire',
-        detail: 'À faire, date non confirmée',
-        action: { libelle: 'Renseigner', vers: '/saisir/reunion' },
+        detail: 'À faire, aucune date',
+        action: { libelle: 'Ajouter', vers: '/saisir/reunion' },
       },
     ]
   }

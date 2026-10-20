@@ -10,6 +10,7 @@
 import type { IndicateurCommun } from '@/data/eglise'
 import type { MinistereFiche, PointsFiche, SensibleFiche } from '@/data/fiche'
 import type { MinistereListe } from '@/data/ministeres'
+import type { AuteurTraitement } from '@/data/pointsListe'
 import type {
   LigneTable,
   LigneVue,
@@ -73,7 +74,7 @@ import { libelleDepuisMois, libelleMois, libelleMoisEnCours, moisDe } from '@/li
 import { phraseDeLaFiche } from '@/lib/metier/phrases'
 import { estOuvert, libelleEcheance, trierOuverts, trierTraites } from '@/lib/metier/points'
 import { formaterPourcentage, pourcentageFij } from '@/lib/metier/pourcentage'
-import { nombre, nombreEnDebutDePhrase } from '@/lib/metier/texte'
+import { nombre } from '@/lib/metier/texte'
 import { formaterValeur } from '@/lib/metier/unites'
 
 /** Toutes les lignes que la fiche lit (une par requête de `src/data/`). */
@@ -130,7 +131,7 @@ function descriptionCourbe(debut: string, points: readonly PointCourbeFiche[]): 
       ? ''
       : incomplets === 1
         ? ' Une période est incomplète.'
-        : ` ${nombreEnDebutDePhrase(incomplets)} périodes sont incomplètes.`
+        : ` ${nombre(incomplets)} périodes sont incomplètes.`
   return `${debut} : ${valeurs}.${suite}`
 }
 
@@ -242,7 +243,7 @@ function ligneService(contexte: ContexteCommuns): LigneCommune {
     ...base,
     valeur: { etat: 'saisie', texte: nombre(derniere.valeur), unite: null },
     ecart: ecartFiche(derniere.valeur, parDimanche.get(precedent) ?? null, precedent),
-    courbe: courbeDe('Dix derniers dimanches', points),
+    courbe: courbeDe('10 derniers dimanches', points),
     detail: formaterJourSemaineTitre(derniere.periode),
   }
 }
@@ -301,7 +302,7 @@ function ligneEnFij(contexte: ContexteCommuns): LigneCommune {
     detailSignale: false,
   }
   if (actifs === null || enFij === null) return { ...base, valeur: VIDE, detail: null }
-  const detail = `${nombre(enFij)} sur ${nombre(actifs)}, ${TEXTES_FICHE.calcule}`
+  const detail = TEXTES_FICHE.detailPourcentageFij(nombre(enFij), nombre(actifs))
   const pourcentage = pourcentageFij(enFij, actifs)
   return {
     ...base,
@@ -337,7 +338,7 @@ function ligneReference(contexte: Contexte, ligne: LigneVue<'v_commun_fiche'>): 
         duDimanche.total === null
           ? VIDE
           : { etat: 'saisie', texte: nombre(duDimanche.total), unite: null },
-      courbe: courbeDe('Dix derniers dimanches', points),
+      courbe: courbeDe('10 derniers dimanches', points),
       detail: `${formaterJourSemaineTitre(reference)}, ${libelleCompletude(duDimanche.nb_saisis, duDimanche.nb_attendus)}`,
       detailSignale: !completude(duDimanche.nb_saisis, duDimanche.nb_attendus).complet,
     }
@@ -394,7 +395,7 @@ function courbeIndicateur(contexte: Contexte, ligne: LigneSuivi): CourbeFiche | 
     .filter((point) => point.indicateur_id === ligne.indicateur_id)
     .sort((a, b) => a.rang - b.rang)
   if (serie.length === 0) return null
-  const debut = ligne.nature === 'mois' ? 'Douze derniers mois' : 'Dix derniers dimanches'
+  const debut = ligne.nature === 'mois' ? '12 derniers mois' : '10 derniers dimanches'
   return courbeDe(
     debut,
     serie.map((point) => ({ valeur: point.valeur, incomplet: !point.complete })),
@@ -512,7 +513,7 @@ function ligneSaisie(contexte: Contexte, ligne: LigneSuivi): LigneIndicateurFich
       ligne.etat === 'en_attente'
         ? contexte.exact
           ? texteAjoutAValider('ministere', ligne.attente_jours)
-          : TEXTES_FICHE.aValiderParEjpTech
+          : TEXTES_FICHE.aValiderLecteur
         : null,
     calcul: false,
     jamaisSaisi: ligne.derniere_periode === null && ligne.mois_en_cours_valeur === null,
@@ -663,16 +664,14 @@ function lignesDeSection(
   })
 }
 
-/** Place chaque aide sur la première ligne qui la concerne (aides-contextuelles.md). */
+/**
+ * Place chaque aide sur la première ligne qui la concerne (aides-contextuelles.md). Un calcul n'a
+ * plus de bulle : son détail visible suffit (T66, t202).
+ */
 function placerAides(lignes: LigneIndicateurFiche[]): void {
-  let calcule = false
   let somme = false
   for (const ligne of lignes) {
     const aides: AidesLigne = {}
-    if (!calcule && ligne.calcul) {
-      aides.calcule = true
-      calcule = true
-    }
     if (!somme && ligne.somme?.completude) {
       aides.somme = true
       somme = true
@@ -787,7 +786,8 @@ export function construirePointsFiche(
   const aujourdhui = lectures.semaine.aujourdhui
   const noms = nomsMinisteres(lectures.ministeres)
   const nom = (id: string) => noms.get(id) ?? 'Ministère inconnu'
-  const { points, mentions } = lectures.points
+  const { points, mentions, auteurs } = lectures.points
+  const auteur = auteurDuTraitement(auteurs, nom)
   const traitesRecents = trierTraites(points).filter((point) => {
     if (point.traite_le === null) return false
     const jours = joursDepuis(point.traite_le, aujourdhui)
@@ -807,7 +807,7 @@ export function construirePointsFiche(
       echeance:
         echeance === null || point.echeance === null
           ? null
-          : { texte: `avant le ${formaterJourCourt(point.echeance)}`, depassee: echeance.depassee },
+          : { texte: `échéance ${formaterJourCourt(point.echeance)}`, depassee: echeance.depassee },
       titre: texteLibre(point.titre),
       description: texteLibreOuNull(point.description),
       attendu: texteLibreOuNull(point.action_attendue),
@@ -822,9 +822,29 @@ export function construirePointsFiche(
         point.traite_le === null
           ? null
           : {
-              texte: TEXTES_FICHE.points.traiteLe(formaterJourCourt(jourDeParis(point.traite_le))),
+              texte: TEXTES_FICHE.points.traiteLe(
+                formaterJourCourt(jourDeParis(point.traite_le)),
+                auteur(point.traite_par),
+              ),
               commentaire: texteLibreOuNull(point.traite_commentaire),
             },
     }
   })
+}
+
+/**
+ * Qui a marqué un point traité : le nom de son ministère, sinon le libellé de son compte
+ * (« Berger ») ; null si le compte n'est pas lisible (« Traité le 3 oct. »). Même règle que
+ * l'écran 05 (`construirePoints`).
+ */
+export function auteurDuTraitement(
+  auteurs: readonly AuteurTraitement[],
+  nom: (id: string) => string,
+): (id: string | null) => string | null {
+  const comptes = new Map(auteurs.map((compte) => [compte.user_id, compte]))
+  return (id) => {
+    const compte = id === null ? undefined : comptes.get(id)
+    if (compte === undefined) return null
+    return compte.ministere_id === null ? compte.libelle : nom(compte.ministere_id)
+  }
 }

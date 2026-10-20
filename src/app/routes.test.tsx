@@ -592,7 +592,7 @@ describe('routes', () => {
       'page',
     )
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi.",
+      "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi.",
     )
     expect(screen.queryByRole('heading', { name: 'À décider' })).not.toBeInTheDocument()
   })
@@ -817,7 +817,8 @@ describe("adresses de l'étape 4", () => {
       await screen.findByRole('heading', { level: 1, name: 'Signaler une difficulté' }),
     ).toBeInTheDocument()
     expect(screen.getByText('Écran concerné : Prochaine réunion')).toBeInTheDocument()
-    expect(screen.getByText(/^EJP Tech lit votre signalement\./)).toBeInTheDocument()
+    // Plus de phrase sur le lecteur sous le titre (T66) : le formulaire dit seulement quoi écrire.
+    expect(screen.queryByText(/EJP Tech lit votre signalement/)).toBeNull()
     await waitFor(() => expect(faux.tables).toEqual(['compte', 'v_signalement']))
     expect(faux.eq).toHaveBeenCalledWith('ministere_id', 'm-communication')
   })
@@ -839,10 +840,12 @@ describe("adresses de l'étape 4", () => {
   )
 
   it.each([
-    // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »).
-    ['/apercu/fiche', 4],
-    ['/apercu/saisies', 4],
-    ['/apercu/evenements', 3],
+    // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »). T66 ne
+    // garde que les bulles qui définissent un chiffre : courbe et somme de l'année sur la fiche,
+    // STARs actifs et en FIJ à la saisie, statut d'un événement.
+    ['/apercu/fiche', 2],
+    ['/apercu/saisies', 2],
+    ['/apercu/evenements', 1],
     ['/apercu/nouveau-point', 3],
   ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
     const faux = installer({})

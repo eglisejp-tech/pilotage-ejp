@@ -36,10 +36,10 @@ describe('aperçu du calendrier et de l’alerte', () => {
     expect(screen.getByText('date passée depuis 11 jours')).toBeInTheDocument()
   })
 
-  it('fiche-vide : « Aucun événement prévu. » et réunion « Renseigner » pour le ministère', () => {
+  it('fiche-vide : « Aucun événement prévu. » et réunion « Ajouter la réunion » pour le ministère', () => {
     afficher('?ecran=fiche-vide&profil=ministere')
     expect(screen.getByText('Aucun événement prévu.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Renseigner' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ajouter la réunion' })).toBeInTheDocument()
   })
 
   it('l’administration de l’église : la page non disponible', () => {

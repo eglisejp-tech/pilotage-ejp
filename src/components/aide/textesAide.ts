@@ -22,7 +22,7 @@ export const TEXTES_AIDE = {
 
   // Chiffres par département (lot E4)
   'fij.completudeDep':
-    "Nombre de départements qui ont un chiffre cette semaine. « 6 dép. sur 8 » : le total n'inclut que ces 6.",
+    "Départements qui ont un chiffre cette semaine. Le total n'additionne que ceux-là.",
 
   // Ajouter et mettre à jour un événement (maquette 11, lot E5)
   'evenement.statut': 'Mettez le statut à jour dès que vous connaissez la décision.',
@@ -32,32 +32,15 @@ export const TEXTES_AIDE = {
     "Ce que la réunion doit trancher. Exemple : choisir la date de la sortie d'équipe.",
 
   // Fiche d'un ministère (maquettes 04 et 12, lot E2)
-  'fiche.sommeAnnee':
-    'Total des mois ou dimanches saisis depuis la date indiquée. « 8 mois sur 9 » : un mois non saisi manque au total.',
-  'fiche.calcule':
-    'Calculé à partir de deux chiffres du ministère. Exemple : 30 présences pour 10 séances donnent 3 par séance.',
-  'fiche.courbe':
-    'Évolution sur les 10 derniers dimanches ou les 12 derniers mois. Un trou marque une période non saisie.',
-  'fiche.fraicheur':
-    "Dernière action du ministère dans l'outil, saisie ou point. Vert jusqu'à 7 jours, orange jusqu'à 30, rouge au-delà.",
+  'fiche.sommeAnnee': 'Total depuis la date indiquée. « 8 mois sur 9 » : 1 mois manque au total.',
+  'fiche.courbe': 'Les 10 derniers dimanches ou les 12 derniers mois. Trou : aucune saisie.',
 
   // Vue de l'église (écrans 01 à 03, branchée par le lot I)
-  'eglise.completude':
-    'Ministères qui ont saisi ce chiffre. « 6 sur 8 » : le total additionne ces 6 ministères, 2 manquent encore.',
-  'eglise.pourcentageFij':
-    'Part des STARs actifs qui sont en FIJ. Exemple : 64 en FIJ sur 83 actifs donnent 77 %.',
-  'eglise.ecart':
-    'Différence avec dimanche dernier, sur les seuls ministères qui ont saisi les deux fois. « +3 » : 3 de plus.',
-  'eglise.courbe':
-    'Évolution du total sur les derniers dimanches ou sessions. Cercle vide : des ministères manquent ; trou : aucune saisie.',
-  'eglise.carte':
-    'Nombre de FIJ par département. Plus la case est foncée, plus le département a de FIJ par rapport aux autres.',
-
-  // Accueil du ministère et blocs d'alerte (lots E6 et E7)
-  'accueil.points':
-    'Les points créés par votre ministère ou qui le mentionnent. Un point traité reste affiché 7 jours.',
-  'accueil.aConfirmer':
-    'Événements encore « En attente de validation » à 3 jours ou moins de leur date, ou déjà passés.',
+  'eglise.completude': "Ministères qui ont saisi ce chiffre. Le total n'additionne que ceux-là.",
+  'eglise.ecart': 'Écart avec dimanche dernier, sur les ministères qui ont saisi les deux fois.',
+  // T66 (t195) proposait « des ministères n'ont pas saisi » : la règle du catalogue (dit en
+  // positif) garde « manquent », le sens est le même.
+  'eglise.courbe': 'Cercle vide : des ministères manquent. Trou : aucune saisie.',
 
   // ÉTAPES 5 ET 6 (lot C0, plan des étapes 5 à 8, section 3.0). Ajoutées à la fin du catalogue
   // seulement ; statut « Proposé, écrit le 7 octobre 2026 », à valider par la personne

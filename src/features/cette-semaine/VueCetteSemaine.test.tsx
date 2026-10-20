@@ -85,7 +85,7 @@ describe('VueCetteSemaine', () => {
     const { container, titres } = afficher('admin_eglise')
     expect(container.querySelector('mark')).toBeNull()
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi.",
+      "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi.",
     )
     expect(titres).not.toContain('À décider')
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
@@ -146,7 +146,7 @@ describe('VueCetteSemaine', () => {
       expect(within(ligne).queryByRole('img')).not.toBeInTheDocument()
     }
     expect(lignes[0]).toHaveTextContent('0 sur 8')
-    expect(lignes[3]).toHaveTextContent('0 dép.')
+    expect(lignes[3]).toHaveTextContent('0 département sur 8')
     expect(lignes[4]).toHaveTextContent("Aucune session pour l'instant")
   })
 

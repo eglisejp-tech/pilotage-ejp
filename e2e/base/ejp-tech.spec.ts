@@ -18,7 +18,7 @@ const { email, onglets } = EJP_TECH
 
 /** La phrase du berger : EJP Tech voit la même (BRIEF, section 9). */
 const phraseSemaine =
-  "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
+  "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision."
 
 const navigation = (page: Page) => page.getByRole('navigation', { name: 'Menu principal' })
 
@@ -55,7 +55,7 @@ async function verifierLectureSeule(page: Page) {
     0,
   )
   const contenu = page.getByRole('main')
-  // Les boutons « ? » des aides (« Aide : Événements à confirmer ») informent, ils n'agissent pas.
+  // Les boutons « ? » des aides informent, ils n'agissent pas.
   await expect(contenu.getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(0)
   await expect(
     contenu.getByRole('link', {

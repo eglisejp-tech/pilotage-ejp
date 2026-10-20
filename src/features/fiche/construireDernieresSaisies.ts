@@ -26,8 +26,9 @@ const LIBELLES_ACTIONS: Readonly<Record<string, string>> = {
   participation_saisie: 'Présence saisie',
   evenement_ajoute: 'Événement ajouté',
   evenement_modifie: 'Événement mis à jour',
-  reunion_saisie: 'Prochaine réunion renseignée',
-  point_cree: 'Nouveau point',
+  // Objet et participe, même verbe que le journal (T66, t212 et t213).
+  reunion_saisie: 'Prochaine réunion enregistrée',
+  point_cree: 'Point créé',
   point_statut: "Statut d'un point changé",
   point_traite: 'Point marqué traité',
   point_mention_ajoutee: 'Mention ajoutée',
@@ -88,7 +89,8 @@ function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, strin
     case 'fij_saisie': {
       const total = nombreDe(ligne.detail, 'total')
       return SANS_OBJET(
-        total === null ? libelle : `FIJ par département : ${nombre(total)} au total`,
+        // Glossaire « carte des FIJ » (T66, t214).
+        total === null ? libelle : `Carte des FIJ : ${nombre(total)} FIJ`,
       )
     }
     case 'participation_saisie': {

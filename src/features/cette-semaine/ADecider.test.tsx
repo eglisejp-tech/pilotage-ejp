@@ -39,10 +39,10 @@ describe('ADecider', () => {
     const region = afficher()
     const [premier, deuxieme, troisieme] = within(region).getAllByRole('article')
     expect(premier).toHaveTextContent('Priorité Urgente')
-    expect(premier).toHaveTextContent('Intégration, avant le 5 oct.')
+    expect(premier).toHaveTextContent('Intégration, échéance 5 oct.')
     expect(premier).toHaveTextContent('Attendu : Décision du conseil sur le budget')
     expect(deuxieme).toHaveTextContent('Priorité Haute')
-    expect(within(deuxieme!).getByText('avant le 28 sept., dépassée')).toHaveClass('text-alerte')
+    expect(within(deuxieme!).getByText('échéance 28 sept., dépassée')).toHaveClass('text-alerte')
     expect(within(troisieme!).getByText('@Coordination')).toBeInTheDocument()
   })
 
@@ -75,7 +75,7 @@ describe('ADecider', () => {
       { ...premier!, echeance: null, description: null, attendu: null, mentions: [] },
     ])
     const point = within(region).getByRole('article')
-    expect(point).not.toHaveTextContent('avant le')
+    expect(point).not.toHaveTextContent('échéance')
     expect(point).not.toHaveTextContent('Attendu')
   })
 

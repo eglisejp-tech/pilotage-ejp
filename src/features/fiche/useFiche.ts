@@ -217,7 +217,7 @@ export function useFiche(ministereId: string, lecteur: LecteurFiche): ResultatFi
     categories: categories.data ?? [],
     repartitions: repartitions.data ?? [],
     precisions: precisions.data ?? [],
-    points: points.data ?? { points: [], mentions: [] },
+    points: points.data ?? { points: [], mentions: [], auteurs: [] },
     ministeres: ministeres.data ?? [],
   }
   const dernieresSaisies: EtatBloc<DerniereSaisieFiche[]> = dernieres.isError

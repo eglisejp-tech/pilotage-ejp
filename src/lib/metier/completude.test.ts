@@ -85,13 +85,13 @@ describe('libelleAceJour', () => {
     expect(libelleAceJour(0)).toEqual({ libelle: 'À ce jour', attention: false })
   })
 
-  it('signale les valeurs de plus de 30 jours, avec le texte', () => {
+  it('signale les chiffres de plus de 30 jours, avec le texte (glossaire, T66)', () => {
     expect(libelleAceJour(1)).toEqual({
-      libelle: 'À ce jour, 1 valeur de plus de 30 jours',
+      libelle: 'À ce jour, 1 chiffre de plus de 30 jours',
       attention: true,
     })
     expect(libelleAceJour(3)).toEqual({
-      libelle: 'À ce jour, 3 valeurs de plus de 30 jours',
+      libelle: 'À ce jour, 3 chiffres de plus de 30 jours',
       attention: true,
     })
   })
@@ -102,8 +102,9 @@ describe('libelleAceJour', () => {
 })
 
 describe('libelleDepartements', () => {
-  it('écrit « 8 dép. »', () => {
-    expect(libelleDepartements(8)).toBe('8 dép.')
-    expect(libelleDepartements(0)).toBe('0 dép.')
+  it('écrit « 8 départements sur 8 », sans abréviation (T66)', () => {
+    expect(libelleDepartements(8)).toBe('8 départements sur 8')
+    expect(libelleDepartements(1)).toBe('1 département sur 8')
+    expect(libelleDepartements(0)).toBe('0 département sur 8')
   })
 })

@@ -15,8 +15,8 @@ type Profil = CompteTest['profil']
 const PROFILS: Profil[] = ['berger', 'conseil', 'admin_eglise', 'admin_plateforme']
 
 const phraseSemaine =
-  "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
-const phraseEglise = "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi."
+  "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision."
+const phraseEglise = "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi."
 
 /** Ouvre « / » et attend la vue : ni chargement, ni erreur de page. */
 async function ouvrir(page: Page, adresse = '/') {
@@ -40,7 +40,17 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
       await expect(page.locator('h1 mark')).toHaveText('un point attend votre décision')
 
       const chiffres = page.getByRole('region', { name: "Les chiffres de l'église" })
-      for (const texte of ['52', '83', '77', '29', '58', '61', '6 sur 8', '8 sur 8', '8 dép.']) {
+      for (const texte of [
+        '52',
+        '83',
+        '77',
+        '29',
+        '58',
+        '61',
+        '6 sur 8',
+        '8 sur 8',
+        '8 départements sur 8',
+      ]) {
         await expect(chiffres).toContainText(texte)
       }
       await expect(chiffres).toContainText(
@@ -67,12 +77,12 @@ for (const profil of ['berger', 'conseil', 'admin_plateforme'] as const) {
 
       const batir = page.getByRole('region', { name: /^Bâtir l'Église, / })
       await expect(batir).toContainText('58')
-      await expect(batir).toContainText('STARs présents, selon 6 ministères sur 8')
+      await expect(batir).toContainText('STARs présents (6 ministères sur 8 ont saisi)')
       await batir.getByRole('link', { name: 'Voir Anti-Dispersion' }).click()
       await expect(page).toHaveURL((url) => url.searchParams.get('session') === 'anti_dispersion')
       const antiDispersion = page.getByRole('region', { name: /^Anti-Dispersion, / })
       await expect(antiDispersion).toContainText('61')
-      await expect(antiDispersion).toContainText('STARs présents, selon 8 ministères sur 8')
+      await expect(antiDispersion).toContainText('STARs présents (8 ministères sur 8 ont saisi)')
 
       const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
       await expect(carte.getByRole('listitem')).toHaveCount(8)

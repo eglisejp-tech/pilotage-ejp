@@ -13,8 +13,9 @@ interface Props {
 }
 
 /**
- * Bloc « Les ministères » : un tableau à partir de 600 px, une liste en dessous. Sans ministère
- * actif, ni tableau ni en-têtes vides : la phrase de TEXTES_VIDES.
+ * Bloc « Les ministères » : un tableau à partir de 600 px, une liste en dessous, sans complément
+ * sur le tri (T66, t189). Sans ministère actif, ni tableau ni en-têtes vides : la phrase de
+ * TEXTES_VIDES.
  */
 export function LesMinisteres({ ministeres, avecColonnesConseil }: Props) {
   const idTitre = useId()
@@ -23,17 +24,7 @@ export function LesMinisteres({ ministeres, avecColonnesConseil }: Props) {
 
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
-      <TitreSection
-        id={idTitre}
-        titre="Les ministères"
-        complement={
-          vide ? null : (
-            <span className="hidden text-note text-encre-3 lg:inline">
-              Du moins récent au plus récent
-            </span>
-          )
-        }
-      />
+      <TitreSection id={idTitre} titre="Les ministères" />
       {vide ? (
         <MessageVide>{TEXTES_VIDES.ministeres.aucun}</MessageVide>
       ) : tableau ? (

@@ -20,14 +20,14 @@ describe('états vides des indicateurs', () => {
     expect(TEXTES_VIDES_INDICATEURS.pasEncoreDeSaisie).toBe('Pas encore de saisie')
     expect(TEXTES_VIDES_INDICATEURS.sommeSansSaisie).toBe('Pas encore de saisie')
     expect(TEXTES_VIDES_INDICATEURS.propres.ministere).toBe(
-      "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
+      "Votre ministère n'a pas encore d'indicateur à lui.",
     )
     expect(TEXTES_VIDES_INDICATEURS.nonCalcule).toBe('Non calculé')
   })
 
   it('dit les deux textes de « Indicateurs propres », selon le lecteur', () => {
     expect(TEXTES_VIDES_INDICATEURS.propres.autres).toBe(
-      "Ce ministère n'a pas encore d'indicateur à lui. Il saisit les chiffres communs.",
+      "Ce ministère n'a pas encore d'indicateur à lui.",
     )
   })
 
@@ -44,9 +44,8 @@ describe('états vides des indicateurs', () => {
   it('dit le mois en cours sans saisie, pour tout indicateur du mois, et la répartition absente', () => {
     expect(moisEnCoursSansSaisie('2026-10')).toBe('Octobre en cours : pas encore de saisie')
     expect(pasDeRepartition('2026-09')).toBe('Pas de répartition pour septembre.')
-    expect(TEXTES_VIDES_INDICATEURS.repartitionMasquee).toBe(
-      'Répartition masquée pour protéger les petits nombres.',
-    )
+    // Texte mort et faux (P52) : un sensible se lit exact, rien n'est masqué (T66, t209).
+    expect(TEXTES_VIDES_INDICATEURS).not.toHaveProperty('repartitionMasquee')
   })
 
   it('n’a plus de texte pour le mois en cours d’un sensible : il se saisit comme les autres', () => {

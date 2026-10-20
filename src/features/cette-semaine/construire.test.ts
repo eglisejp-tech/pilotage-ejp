@@ -52,7 +52,7 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
     expect(service.dateCourte).toBe('Dim. 27 sept.')
   })
 
-  it('la courbe du service : dix dimanches, les quatre derniers incomplets', () => {
+  it('la courbe du service : 10 dimanches, les 4 derniers incomplets', () => {
     const courbe = parId(donnees, 'service').courbe
     expect(courbe?.points.map((point) => point.valeur)).toEqual([
       52, 57, 53, 56, 54, 56, 50, 54, 55, 52,
@@ -70,15 +70,15 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
       true,
     ])
     expect(courbe?.description).toBe(
-      'Dix derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52. Les quatre derniers sont incomplets.',
+      '10 derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52. Les 4 derniers sont incomplets.',
     )
   })
 
-  it('83 STARs actifs, 8 sur 8, une valeur de plus de 30 jours signalée', () => {
+  it('83 STARs actifs, 8 sur 8, un chiffre de plus de 30 jours signalé', () => {
     const actifs = parId(donnees, 'actifs')
     expect(actifs.valeur).toEqual({ etat: 'saisie', texte: '83', unite: null })
     expect(actifs.completude).toEqual({ texte: '8 sur 8', complet: true })
-    expect(actifs.date).toBe('À ce jour, 1 valeur de plus de 30 jours')
+    expect(actifs.date).toBe('À ce jour, 1 chiffre de plus de 30 jours')
     expect(actifs.dateSignalee).toBe(true)
   })
 
@@ -92,7 +92,7 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
   it('carte des FIJ : 29, 8 départements, saisi le 21 sept. (heure de Paris)', () => {
     const ligne = parId(donnees, 'carte_fij')
     expect(ligne.valeur).toEqual({ etat: 'saisie', texte: '29', unite: null })
-    expect(ligne.completude).toEqual({ texte: '8 dép.', complet: true })
+    expect(ligne.completude).toEqual({ texte: '8 départements sur 8', complet: true })
     expect(ligne.date).toBe('Saisi par FIJ le 21 sept.')
     expect(donnees.carte?.total).toBe(29)
     expect(donnees.carte?.departements.map((d) => `${d.code}:${d.valeur}`)).toEqual([
@@ -118,7 +118,7 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
     expect(batir.date).toBe('Samedi 26 sept.')
     expect(batir.courbe?.points.map((point) => point.valeur)).toEqual([63, 66, 72, 58])
     expect(batir.courbe?.description).toBe(
-      'Quatre dernières sessions : 63, 66, 72, 58. La dernière est incomplète.',
+      '4 dernières sessions : 63, 66, 72, 58. La dernière est incomplète.',
     )
   })
 
@@ -129,7 +129,7 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
     expect(anti.ecart?.description).toBe(
       '+2 par rapport à la session du 22 août, pour les 8 ministères qui ont saisi les deux fois',
     )
-    expect(anti.courbe?.description).toBe('Quatre dernières sessions : 50, 53, 59, 61.')
+    expect(anti.courbe?.description).toBe('4 dernières sessions : 50, 53, 59, 61.')
   })
 
   it('À décider : en attente de décision, puis priorité, puis échéance', () => {
@@ -142,12 +142,12 @@ describe("jeu d'exemple : valeurs du BRIEF", () => {
 
   it('la phrase de la semaine surligne la partie C', () => {
     expect(donnees.phrase).toEqual([
-      { texte: "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et " },
+      { texte: "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et " },
       { texte: 'un point attend votre décision', aDecider: true },
       { texte: '.' },
     ])
     expect(donnees.ligneSecondaire).toBe(
-      "Bâtir l'Église progresse de 1 présent, et le total est incomplet : Coordination et Intégration n'ont pas saisi.",
+      "Bâtir l'Église progresse de 1 présent. Coordination et Intégration n'ont pas saisi.",
     )
   })
 
@@ -225,7 +225,7 @@ describe("un profil, la même vue que l'exemple de l'aperçu", () => {
     lectures.points = null
     const construit = construireCetteSemaine(lectures, ministere, null)
     expect(textesPhrase(construit)).toBe(
-      "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi.",
+      "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi.",
     )
   })
 })
@@ -264,7 +264,7 @@ describe('bloc de la session', () => {
     ])
   })
 
-  it('un autre rassemblement a un lien « Voir les autres rassemblements »', () => {
+  it('une autre session a un lien « Voir les autres sessions »', () => {
     const lectures = lecturesExemple()
     lectures.sessions.unshift({
       session_id: 's-autre',
@@ -316,7 +316,7 @@ describe('bloc de la session', () => {
     const donnees = construireCetteSemaine(lectures, berger, null)
     if (donnees.session.etat !== 'session') throw new Error('état')
     expect(donnees.session.session.noteDoubleCompte).toBe(
-      "61 présences saisies : 3 STARs saisis par deux ministères ne sont comptés qu'une fois.",
+      '61 présences saisies, dont 3 STARs déjà comptés par un autre ministère.',
     )
   })
 
@@ -432,7 +432,10 @@ describe('états vides : cas particuliers', () => {
     const lectures = lecturesExemple()
     lectures.carteFij = lectures.carteFij.slice(0, 3)
     const donnees = construireCetteSemaine(lectures, berger, null)
-    expect(parId(donnees, 'carte_fij').completude).toEqual({ texte: '3 dép.', complet: false })
+    expect(parId(donnees, 'carte_fij').completude).toEqual({
+      texte: '3 départements sur 8',
+      complet: false,
+    })
     expect(donnees.carte?.total).toBe(9)
     expect(donnees.carte?.departements.filter((d) => d.valeur === null)).toHaveLength(5)
   })
@@ -509,7 +512,7 @@ describe('états vides : cas particuliers', () => {
     expect(donnees.session).toEqual({
       etat: 'aucune_session_du_type',
       type: 'autre',
-      titre: 'Autre rassemblement',
+      titre: 'Autre session',
       autres: [],
     })
   })
@@ -562,9 +565,9 @@ describe('points à décider', () => {
     expect(aDecider.lienTousLesPoints).toBe('/points?vue=ouverts')
     expect(aDecider.urgent).toBe(true)
     const planning = aDecider.points[1]
-    expect(planning?.echeance).toEqual({ texte: 'avant le 28 sept.', depassee: true })
+    expect(planning?.echeance).toEqual({ texte: 'échéance 28 sept.', depassee: true })
     expect(planning?.mentions).toEqual(['Prodiges Junior', 'Social (désactivé)'])
-    expect(aDecider.points[0]?.echeance).toEqual({ texte: 'avant le 5 oct.', depassee: false })
+    expect(aDecider.points[0]?.echeance).toEqual({ texte: 'échéance 5 oct.', depassee: false })
     expect(aDecider.points[0]?.ministere).toBe('Intégration')
   })
 

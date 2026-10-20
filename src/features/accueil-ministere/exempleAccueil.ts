@@ -20,7 +20,7 @@ export const LIGNE_DIMANCHE_FAIT: LigneVosSaisies = {
   cle: 'dimanche',
   libelle: 'Chiffres du dimanche 27 sept.',
   etat: 'fait',
-  detail: 'Fait, 10 au service',
+  detail: 'Fait, 10 STARs au service',
   action: { libelle: 'Corriger', vers: '/saisir/dimanche?date=2026-09-27' },
 }
 
@@ -44,8 +44,8 @@ export const LIGNE_REUNION_A_FAIRE: LigneVosSaisies = {
   cle: 'reunion',
   libelle: 'Prochaine réunion',
   etat: 'a_faire',
-  detail: 'À faire, date non confirmée',
-  action: { libelle: 'Renseigner', vers: '/saisir/reunion' },
+  detail: 'À faire, aucune date',
+  action: { libelle: 'Ajouter', vers: '/saisir/reunion' },
 }
 
 export const LIGNE_REUNION_FAITE: LigneVosSaisies = {
@@ -85,7 +85,7 @@ export const POINTS_EXEMPLE: PointFiche[] = [
     mentionIds: ['coordination'],
     priorite: 'haute',
     ministere: 'Communication',
-    echeance: { texte: 'avant le 3 oct.', depassee: false },
+    echeance: { texte: 'échéance 3 oct.', depassee: false },
     titre: { texte: 'Salle pour la soirée de louange', masque: false },
     description: null,
     attendu: { texte: 'Confirmer la salle', masque: false },
@@ -100,7 +100,7 @@ export const POINTS_EXEMPLE: PointFiche[] = [
     mentionIds: [MINISTERE_EXEMPLE],
     priorite: 'normale',
     ministere: 'Intégration',
-    echeance: { texte: 'avant le 8 oct.', depassee: false },
+    echeance: { texte: 'échéance 8 oct.', depassee: false },
     titre: { texte: 'Visuels pour Welcome Prodiges', masque: false },
     description: null,
     attendu: { texte: 'Livrer les visuels', masque: false },

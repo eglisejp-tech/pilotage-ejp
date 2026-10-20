@@ -25,7 +25,7 @@ async function ouvrir(page: Page, titre: 'Ma semaine' | 'Cette semaine' = 'Ma se
 test.describe('ministère Communication : accueil 07', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('phrase de ce qu’il reste à faire, boutons, « Vos saisies », puis « Vos points »', async ({
+  test('phrase de ce qu’il reste à faire, boutons, « Vos saisies », puis « Mes points »', async ({
     page,
   }) => {
     await ouvrir(page)
@@ -54,14 +54,14 @@ test.describe('ministère Communication : accueil 07', () => {
     await expect(titres).toHaveText([
       'Vos saisies',
       'Vos chiffres de la semaine',
-      'Vos points',
+      'Mes points',
       "Dans l'église",
     ])
     await expect(page.getByRole('heading', { name: 'À décider' })).toHaveCount(0)
 
     const saisies = page.getByRole('region', { name: 'Vos saisies' })
     const lignes = saisies.getByRole('listitem')
-    await expect(lignes.first()).toContainText(/^Chiffres du dimanche .+Fait10 au service/)
+    await expect(lignes.first()).toContainText(/^Chiffres du dimanche .+Fait10 STARs au service/)
     await expect(
       lignes.first().getByRole('link', { name: /^Corriger : Chiffres du dimanche / }),
     ).toHaveAttribute('href', /^\/saisir\/dimanche\?date=\d{4}-\d{2}-\d{2}$/)
@@ -74,8 +74,8 @@ test.describe('ministère Communication : accueil 07', () => {
     // Pas de ligne FIJ pour un autre ministère que FIJ.
     await expect(lignes.filter({ hasText: 'Carte des FIJ' })).toHaveCount(0)
 
-    // « Vos points » : ses points et ceux qui le mentionnent, jamais ceux des autres.
-    const points = page.getByRole('region', { name: 'Vos points' })
+    // « Mes points » : ses points et ceux qui le mentionnent, jamais ceux des autres.
+    const points = page.getByRole('region', { name: 'Mes points' })
     await expect(points).toContainText('Créés ou mentionnés')
     await expect(
       points.getByRole('heading', { level: 3, name: 'Salle pour la soirée de louange' }),
@@ -87,13 +87,8 @@ test.describe('ministère Communication : accueil 07', () => {
     await expect(points.getByText('Financement de Welcome Prodiges')).toHaveCount(0)
     await expect(points.getByText('Planning du trimestre à valider')).toHaveCount(0)
 
-    // Aide `accueil.points`, à côté du titre (T38).
-    const aide = points.getByRole('button', { name: 'Aide : Vos points' })
-    await aide.click()
-    await expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await expect(points).toContainText('Un point traité reste affiché 7 jours.')
-    await page.keyboard.press('Escape')
-    await expect(aide).toHaveAttribute('aria-expanded', 'false')
+    // « Créés ou mentionnés » suffit : la bulle `accueil.points` est retirée (T66, t164).
+    await expect(points.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
   })
 
   test('« Ma semaine » : ses propres chiffres et deux totaux de l’église, aucun autre ministère', async ({
@@ -117,7 +112,7 @@ test.describe('ministère Communication : accueil 07', () => {
     await expect(service).toContainText('10')
     await expect(service).toContainText(/[+−]\d|Stable|non saisi/)
     // Sous 768 px, la courbe n'existe pas : l'écart et la date suffisent.
-    await expect(service.getByRole('img', { name: /^Dix derniers dimanches : / })).toHaveCount(
+    await expect(service.getByRole('img', { name: /^10 derniers dimanches : / })).toHaveCount(
       infos.project.name === 'telephone' ? 0 : 1,
     )
     const actifs = chiffres.getByRole('listitem').filter({ hasText: 'STARs actifs' })
@@ -170,12 +165,12 @@ test.describe('ministère Communication : accueil 07', () => {
     await expect(page).toHaveURL(/\/saisir\/dimanche\?date=\d{4}-\d{2}-\d{2}$/)
   })
 
-  test('à partir de 1024 px, « Vos points » prend la colonne de droite', async ({
+  test('à partir de 1024 px, « Mes points » prend la colonne de droite', async ({
     page,
   }, infos) => {
     await ouvrir(page)
     const saisies = await page.getByRole('region', { name: 'Vos saisies' }).boundingBox()
-    const points = await page.getByRole('region', { name: 'Vos points' }).boundingBox()
+    const points = await page.getByRole('region', { name: 'Mes points' }).boundingBox()
     expect(saisies).not.toBeNull()
     expect(points).not.toBeNull()
     if (!saisies || !points) return
@@ -225,14 +220,14 @@ for (const profil of AUTRES) {
   test.describe(`${profil} : pas d’accueil du ministère`, () => {
     test.use({ storageState: fichierSession(profil) })
 
-    test('ni « Vos saisies », ni « Vos points », ni boutons de saisie', async ({ page }) => {
+    test('ni « Vos saisies », ni « Mes points », ni boutons de saisie', async ({ page }) => {
       const requetes = suivreRequetesDeDonnees(page)
       await ouvrir(page, 'Cette semaine')
       await expect(page.getByRole('heading', { name: 'Vos saisies' })).toHaveCount(0)
       await expect(page.getByRole('heading', { name: 'Vos chiffres de la semaine' })).toHaveCount(0)
-      await expect(page.getByRole('heading', { name: 'Vos points' })).toHaveCount(0)
+      await expect(page.getByRole('heading', { name: 'Mes points' })).toHaveCount(0)
       await expect(page.getByRole('navigation', { name: 'Saisies à faire' })).toHaveCount(0)
-      await expect(page.getByRole('link', { name: /^(Saisir|Corriger|Renseigner)/ })).toHaveCount(0)
+      await expect(page.getByRole('link', { name: /^(Saisir|Corriger|Ajouter)/ })).toHaveCount(0)
       // Lectures propres à l'accueil du ministère : sessions attendues, saisies par rythme.
       expect(
         requetes.filter((chemin) => /\/session_attendu|\/v_mesure_periode|\/mesure$/.test(chemin)),

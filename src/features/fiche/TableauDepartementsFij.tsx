@@ -15,6 +15,9 @@ interface Props {
 
 const valeur = (v: number | null) => (v === null ? PAS_DE_SAISIE : nombre(v))
 
+/** « semaine 39, du 21 au 27 sept. » au milieu de la légende (T66, t223). */
+const enMinuscule = (texte: string) => `${texte.charAt(0).toLowerCase()}${texte.slice(1)}`
+
 /**
  * Dernière valeur de chaque rubrique, par département, pour la semaine de référence : un tableau
  * à partir de 600 px, une liste en dessous (BRIEF_DESIGN, section 6). Un département absent
@@ -49,7 +52,7 @@ export function TableauDepartementsFij({ rubriques, departements, semaine }: Pro
   }
   return (
     <table className="w-full border-collapse text-left text-[15px]">
-      <caption className="sr-only">Dernière valeur de chaque département, {semaine}</caption>
+      <caption className="sr-only">{`Dernière valeur de chaque département, ${enMinuscule(semaine)}`}</caption>
       <thead>
         <tr className="border-b border-filet text-note text-encre-3">
           <th scope="col" className="py-2 pr-3 font-normal">

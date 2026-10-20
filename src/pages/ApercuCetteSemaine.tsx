@@ -11,6 +11,7 @@ import {
   exemplePremierDimanche as exemplePremierDimancheMinistere,
 } from '@/features/ma-semaine/exempleMaSemaine'
 import { VueMaSemaine } from '@/features/ma-semaine/VueMaSemaine'
+import { LIBELLE_TYPE_SESSION } from '@/lib/metier/phrases'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
 const profils: { valeur: ProfilVue; libelle: string }[] = [
@@ -53,14 +54,14 @@ function lireEtat(valeur: string | null, profil: ProfilVue): EtatApercu {
   return etatsDuProfil(profil).find((etat) => etat.valeur === valeur)?.valeur ?? 'semaine'
 }
 
-/** `?session=autre` sans aucun autre rassemblement passé (T20, T22). */
+/** `?session=autre` sans aucune autre session passée (T20, T22). */
 function sessionJamaisTenue(profil: ProfilVue): DonneesCetteSemaine {
   return {
     ...exempleCetteSemaine(profil),
     session: {
       etat: 'aucune_session_du_type',
       type: 'autre',
-      titre: 'Autre rassemblement',
+      titre: LIBELLE_TYPE_SESSION.autre,
       autres: [
         { libelle: "Voir Bâtir l'Église", href: `?profil=${profil}` },
         { libelle: 'Voir Anti-Dispersion', href: `?profil=${profil}&session=anti-dispersion` },

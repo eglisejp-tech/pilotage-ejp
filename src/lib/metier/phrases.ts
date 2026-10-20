@@ -72,13 +72,14 @@ function assembler(segments: ReadonlyArray<Segment | null>): Phrase {
 /** Enum `public.type_session`. */
 export type TypeSession = 'batir' | 'anti_dispersion' | 'autre'
 
+/** « Autre session » : le glossaire ne dit pas « rassemblement » (T66, t178). */
 export const LIBELLE_TYPE_SESSION: Record<TypeSession, string> = {
   batir: "Bâtir l'Église",
   anti_dispersion: 'Anti-Dispersion',
-  autre: 'Autre rassemblement',
+  autre: 'Autre session',
 }
 
-/** « Bâtir l'Église », « Anti-Dispersion », ou le nom donné à un autre rassemblement. */
+/** « Bâtir l'Église », « Anti-Dispersion », ou le nom donné à une autre session. */
 export function nomSession(type: TypeSession, intitule: string | null): string {
   return type === 'autre' && intitule ? intitule : LIBELLE_TYPE_SESSION[type]
 }
@@ -94,19 +95,17 @@ export function sessionDu(type: TypeSession, intitule: string | null, date: Date
 }
 
 /**
- * Ligne du bloc de la session, s'il y a des STARs déjà comptés :
- * « 61 présences saisies : 3 STARs saisis par deux ministères ne sont comptés qu'une fois. »
- * `totalSaisi` et `total` : `v_session_completude.total_saisi` et `.total`. `null` sinon.
+ * Ligne du bloc de la session, s'il y a des STARs déjà comptés : « 61 présences saisies, dont
+ * 3 STARs déjà comptés par un autre ministère. » (T66, t177 : le lien sans la règle, « déjà
+ * comptés » comme la saisie). `totalSaisi` et `total` : `v_session_completude.total_saisi` et
+ * `.total`. `null` sinon.
  */
 export function phraseDoubleCompte(totalSaisi: number, total: number): string | null {
   const dejaComptes = totalSaisi - total
   if (dejaComptes <= 0) return null
   const presences = accorder(totalSaisi, 'présence saisie', 'présences saisies')
-  const stars =
-    dejaComptes === 1
-      ? "STAR saisi par deux ministères n'est compté"
-      : 'STARs saisis par deux ministères ne sont comptés'
-  return `${nombre(totalSaisi)} ${presences} : ${nombre(dejaComptes)} ${stars} qu'une fois.`
+  const stars = accorder(dejaComptes, 'STAR déjà compté', 'STARs déjà comptés')
+  return `${nombre(totalSaisi)} ${presences}, dont ${nombre(dejaComptes)} ${stars} par un autre ministère.`
 }
 
 // Phrase de la semaine (berger et conseil) et phrase de l'église (administration)
@@ -167,12 +166,13 @@ function phraseService(dimanche: DateIso, service: ServiceDuDimanche): string {
   return `${nombreEnDebutDePhrase(total)} ${accorder(total, 'STAR', 'STARs')} au service dimanche.`
 }
 
-// B : « Tous les ministères ont saisi », « Deux ministères n'ont pas encore saisi ».
+// B : « Tous les ministères ont saisi », « 2 ministères n'ont pas encore saisi » (nombres en
+// chiffres, T66 t175).
 function phraseSaisies(service: ServiceDuDimanche): string {
   const manquants = Math.max(0, service.nbAttendus - service.nbSaisis)
   if (manquants === 0) return 'Tous les ministères ont saisi'
   const verbe = accorder(manquants, "ministère n'a", "ministères n'ont")
-  return `${nombreEnDebutDePhrase(manquants)} ${verbe} pas encore saisi`
+  return `${nombre(manquants)} ${verbe} pas encore saisi`
 }
 
 // C : « un point attend votre décision », « 3 points attendent votre décision ».
@@ -218,8 +218,8 @@ function phraseMinisteresEnRetard(
   return `${noms} n'ont rien mis à jour depuis plus de ${SEUIL_ATTENTION_JOURS} jours.`
 }
 
-// « Bâtir l'Église progresse de 1 présent. », « recule de 3 présents, et le total est
-// incomplet : Coordination et Intégration n'ont pas saisi. », « est stable. »
+// « Bâtir l'Église progresse de 1 présent. », « recule de 3 présents. Coordination et
+// Intégration n'ont pas saisi. », « est stable. » (T66, t176 : 15 mots par phrase au plus)
 function phraseSession(session: SessionDeLaPhrase | null): string | null {
   if (session === null || session.ecart === null) return null
   const { ecart } = session
@@ -234,7 +234,7 @@ function phraseSession(session: SessionDeLaPhrase | null): string | null {
   if (session.manquants.length === 0) return `${debut}.`
   const manquants = trierNoms(session.manquants)
   const verbe = accorder(manquants.length, "n'a", "n'ont")
-  return `${debut}, et le total est incomplet : ${listeNoms(manquants)} ${verbe} pas saisi.`
+  return `${debut}. ${listeNoms(manquants)} ${verbe} pas saisi.`
 }
 
 function ligneSecondaire(d: DonneesPhraseEglise): string | null {
@@ -405,7 +405,8 @@ export function libelleBoutonPrincipal(saisies: readonly SaisieDeLaSemaine[]): s
     case 'session':
       return `Saisir la présence à ${nomSession(premiere.session, premiere.intitule)}`
     case 'reunion':
-      return 'Renseigner la prochaine réunion'
+      // « Ajouter » une réunion, comme le glossaire (T66, t165).
+      return 'Ajouter la prochaine réunion'
     case 'carte_fij':
       return 'Mettre à jour la carte des FIJ'
     case 'fij_statistiques':

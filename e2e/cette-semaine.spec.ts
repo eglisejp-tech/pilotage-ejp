@@ -18,8 +18,8 @@ async function ouvrir(page: Page, profil: Profil, etat: Etat = 'semaine') {
 }
 
 const phraseBerger =
-  "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision."
-const phraseEglise = "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi."
+  "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision."
+const phraseEglise = "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi."
 
 test.describe('Cette semaine, aperçu', () => {
   test('berger : phrase surlignée, chiffres, « À décider », session, carte et ministères', async ({
@@ -34,11 +34,11 @@ test.describe('Cette semaine, aperçu', () => {
 
     const chiffres = page.getByRole('region', { name: "Les chiffres de l'église" })
     await expect(chiffres).toBeVisible()
-    for (const texte of ['52', '83', '77', '29', '58', '61', '6 sur 8', '8 dép.']) {
+    for (const texte of ['52', '83', '77', '29', '58', '61', '6 sur 8', '8 départements sur 8']) {
       await expect(chiffres).toContainText(texte)
     }
     await expect(
-      chiffres.getByRole('img', { name: /^Dix derniers dimanches : 52, 57/ }),
+      chiffres.getByRole('img', { name: /^10 derniers dimanches : 52, 57/ }),
     ).toBeVisible()
 
     const aDecider = page.getByRole('region', { name: 'À décider' })
@@ -54,14 +54,14 @@ test.describe('Cette semaine, aperçu', () => {
         .getByRole('button')
         .filter({ hasNotText: /^(Marquer traité|Modifier les mentions)$/ }),
     ).toHaveCount(0)
-    await expect(aDecider.getByText('avant le 28 sept., dépassée')).toBeVisible()
+    await expect(aDecider.getByText('échéance 28 sept., dépassée')).toBeVisible()
     await expect(aDecider.getByRole('link', { name: 'Tous les points' })).toHaveAttribute(
       'href',
       '/points?vue=ouverts',
     )
 
     const session = page.getByRole('region', { name: "Bâtir l'Église, samedi 26 septembre" })
-    await expect(session).toContainText('STARs présents, selon 6 ministères sur 8')
+    await expect(session).toContainText('STARs présents (6 ministères sur 8 ont saisi)')
     const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
     await expect(carte.getByRole('listitem')).toHaveCount(8)
     await expect(carte.getByText('Paris (75) : 4 FIJ')).toBeAttached()
@@ -163,11 +163,11 @@ test.describe('Cette semaine, aperçu', () => {
     )
   })
 
-  test('rassemblement jamais tenu : son titre, sa phrase, les liens vers les autres sessions', async ({
+  test('autre session jamais tenue : son titre, sa phrase, les liens vers les autres sessions', async ({
     page,
   }) => {
     await ouvrir(page, 'admin_eglise', 'session-jamais-tenue')
-    const session = page.getByRole('region', { name: 'Autre rassemblement' })
+    const session = page.getByRole('region', { name: 'Autre session' })
     await expect(session).toContainText("Aucun autre rassemblement pour l'instant.")
     await expect(session.getByRole('link', { name: 'Voir Anti-Dispersion' })).toBeVisible()
   })

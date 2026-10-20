@@ -22,7 +22,7 @@ describe('BlocSession', () => {
   it("donne le total sans double compte, sa complétude et le lien vers l'autre session", () => {
     afficher(batir)
     const region = screen.getByRole('region', { name: "Bâtir l'Église, samedi 26 septembre" })
-    expect(region).toHaveTextContent('58STARs présents, selon 6 ministères sur 8')
+    expect(region).toHaveTextContent('58STARs présents (6 ministères sur 8 ont saisi)')
     expect(within(region).getByRole('link', { name: 'Voir Anti-Dispersion' })).toHaveAttribute(
       'href',
       '/?profil=berger&session=anti-dispersion',
@@ -57,13 +57,12 @@ describe('BlocSession', () => {
       saisis: 1,
       attendus: 3,
       apports: [{ ministere: 'Jeunesse', valeur: 1, saisis: 3 }],
-      noteDoubleCompte:
-        "3 présences saisies : 2 STARs saisis par deux ministères ne sont comptés qu'une fois.",
+      noteDoubleCompte: '3 présences saisies, dont 2 STARs déjà comptés par un autre ministère.',
       autres: [],
     })
-    expect(screen.getByText('STAR présent, selon 1 ministère sur 3')).toBeInTheDocument()
+    expect(screen.getByText('STAR présent (1 ministère sur 3 a saisi)')).toBeInTheDocument()
     expect(screen.getByText('(3 saisis)')).toBeInTheDocument()
-    expect(screen.getByText(/ne sont comptés qu'une fois/)).toBeInTheDocument()
+    expect(screen.getByText(/déjà comptés par un autre ministère/)).toBeInTheDocument()
   })
 
   it("remplace le total par « Pas encore de saisie » quand personne n'a saisi", () => {
@@ -126,11 +125,11 @@ describe('BlocSession', () => {
     expect(within(region).queryByText(/^\d+$/)).not.toBeInTheDocument()
   })
 
-  it('autre rassemblement jamais tenu : sa propre phrase', () => {
+  it('autre session jamais tenue : sa propre phrase', () => {
     afficher({
       etat: 'aucune_session_du_type',
       type: 'autre',
-      titre: 'Autre rassemblement',
+      titre: 'Autre session',
       autres: [],
     })
     expect(screen.getByText("Aucun autre rassemblement pour l'instant.")).toBeInTheDocument()

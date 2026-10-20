@@ -215,9 +215,7 @@ for (const profil of ['berger', 'conseil'] as const) {
   test.describe(`${profil} : lit les trois « à valider », sans le « Pourquoi »`, () => {
     test.use({ storageState: fichierSession(profil) })
 
-    test('sur la fiche : la marque « À valider par EJP Tech », aucun « Pourquoi »', async ({
-      page,
-    }) => {
+    test('sur la fiche : la marque « à valider », aucun « Pourquoi »', async ({ page }) => {
       await page.goto(`/ministeres/${MINISTERE_COMMUNICATION}`)
       await expect(page.getByRole('heading', { level: 1, name: 'Communication' })).toBeVisible()
       await attendreLaFinDuChargement(page)
@@ -225,7 +223,7 @@ for (const profil of ['berger', 'conseil'] as const) {
         await expect(page.getByText(suggestion.libelle, { exact: true }).first()).toBeVisible()
         await expect(page.getByText(suggestion.pourquoi)).toHaveCount(0)
       }
-      await expect(page.getByText('À valider par EJP Tech', { exact: true })).toHaveCount(3)
+      await expect(page.getByText('à valider', { exact: true })).toHaveCount(3)
       await expect(page.getByText(/Pourquoi cet indicateur/)).toHaveCount(0)
       // Cette fiche n'a ni lien « Gérer mes indicateurs » ni bouton de décision.
       await expect(page.getByRole('link', { name: 'Gérer mes indicateurs' })).toHaveCount(0)

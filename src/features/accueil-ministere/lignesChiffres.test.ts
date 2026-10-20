@@ -40,7 +40,7 @@ describe('lignesChiffres (« Vos saisies », maquette 07)', () => {
     ])
   })
 
-  it('le dimanche saisi : « Fait, 10 au service » et « Corriger » sur ce dimanche', () => {
+  it('le dimanche saisi : « Fait, 10 STARs au service » et « Corriger » sur ce dimanche', () => {
     const [ligne] = lignesChiffres({
       semaine,
       indicateurs,
@@ -51,19 +51,19 @@ describe('lignesChiffres (« Vos saisies », maquette 07)', () => {
       cle: 'dimanche',
       libelle: 'Chiffres du dimanche 4 oct.',
       etat: 'fait',
-      detail: 'Fait, 10 au service',
+      detail: 'Fait, 10 STARs au service',
       action: { libelle: 'Corriger', vers: '/saisir/dimanche?date=2026-10-04' },
     })
   })
 
-  it('un 0 saisi est une vraie valeur : « Fait, 0 au service »', () => {
+  it('un 0 saisi est une vraie valeur : « Fait, 0 STAR au service »', () => {
     const [ligne] = lignesChiffres({
       semaine,
       indicateurs,
       mesuresDimanche: [service('2026-10-04', 0)],
       mesuresMois: [],
     })
-    expect(ligne?.detail).toBe('Fait, 0 au service')
+    expect(ligne?.detail).toBe('Fait, 0 STAR au service')
   })
 
   it('le dimanche 4 oct. avant midi : la ligne porte encore le dimanche précédent', () => {

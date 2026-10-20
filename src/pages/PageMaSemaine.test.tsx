@@ -63,7 +63,7 @@ describe('PageMaSemaine', () => {
     expect(screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent)).toEqual([
       'Vos saisies',
       'Vos chiffres de la semaine',
-      'Vos points',
+      'Mes points',
       "Dans l'église",
     ])
   })

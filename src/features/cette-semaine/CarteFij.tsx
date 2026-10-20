@@ -97,10 +97,7 @@ export function CarteFij({ carte }: Props) {
               )
             })}
           </ul>
-          <p className="text-note text-encre-3">
-            Un carré par département, placé comme sur la carte. Plus il est foncé, plus il compte de
-            FIJ.
-          </p>
+          <p className="text-note text-encre-3">Plus le carré est foncé, plus il y a de FIJ.</p>
         </div>
       )}
     </section>

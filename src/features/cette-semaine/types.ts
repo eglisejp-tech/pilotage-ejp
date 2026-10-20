@@ -129,7 +129,7 @@ export interface PointADecider {
   priorite: Priorite
   /** Ministère créateur : « Intégration », « Social (désactivé) ». */
   ministere: string
-  /** « avant le 5 oct. » ; `depassee` ajoute « dépassée » en rouge. Null : sans échéance. */
+  /** « échéance 5 oct. » ; `depassee` ajoute « dépassée » en rouge. Null : sans échéance. */
   echeance: { texte: string; depassee: boolean } | null
   titre: TexteLibre
   /** Null : champ laissé vide à la création. */

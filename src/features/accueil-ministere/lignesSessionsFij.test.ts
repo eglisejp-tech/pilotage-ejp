@@ -77,24 +77,24 @@ describe('lignesFij (« Vos saisies » du ministère FIJ)', () => {
       cle: 'fij_statistiques',
       libelle: 'Chiffres par département',
       etat: 'fait',
-      detail: 'Fait, 30 valeurs sur 32',
+      detail: 'Fait, 30 chiffres sur 32',
       action: { libelle: 'Corriger', vers: '/saisir/fij-statistiques' },
     })
   })
 
-  it('une seule valeur dans la semaine : « 1 valeur » au singulier', () => {
+  it('un seul chiffre dans la semaine : « 1 chiffre » au singulier', () => {
     const [, statistiques] = lignesFij({
       ...base,
       statistiques: [{ dimanche: '2026-09-27', nb_departements: 1 }],
     })
-    expect(statistiques).toMatchObject({ etat: 'fait', detail: 'Fait, 1 valeur sur 32' })
+    expect(statistiques).toMatchObject({ etat: 'fait', detail: 'Fait, 1 chiffre sur 32' })
   })
 
-  it('carte de 30 jours ou plus : À faire, avec la date du dernier envoi', () => {
+  it('carte de 30 jours ou plus : À faire, avec la date de la dernière saisie', () => {
     const [carte] = lignesFij({ ...base, semaine: { ...base.semaine, aujourdhui: '2026-10-21' } })
     expect(carte).toMatchObject({
       etat: 'a_faire',
-      detail: 'À faire, dernier envoi le 21 sept.',
+      detail: 'À faire, dernière saisie le 21 sept.',
       action: { libelle: 'Saisir', vers: '/saisir/fij' },
     })
   })

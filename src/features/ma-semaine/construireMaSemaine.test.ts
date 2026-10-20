@@ -42,7 +42,7 @@ const ligneDe = <T extends { cle: string }>(lignes: T[], cle: string): T | undef
 describe('« Vos chiffres de la semaine »', () => {
   const chiffres = construireChiffres(lecturesExemple())
 
-  it('les trois chiffres du ministère : service avec écart et courbe, actifs, en FIJ calculé', () => {
+  it('les trois chiffres du ministère : service avec écart et courbe, actifs, en FIJ « sur 14 actifs »', () => {
     expect(chiffres.slice(0, 3).map((ligne) => ligne.cle)).toEqual(['service', 'actifs', 'en_fij'])
     const service = ligneDe(chiffres, 'service')
     expect(service).toMatchObject({
@@ -54,7 +54,7 @@ describe('« Vos chiffres de la semaine »', () => {
     expect(ligneDe(chiffres, 'actifs')).toMatchObject({ valeur: { texte: '14' } })
     expect(ligneDe(chiffres, 'en_fij')).toMatchObject({
       valeur: { texte: '79', unite: '%' },
-      detail: '11 sur 14, calculé',
+      detail: '11 sur 14 actifs',
     })
   })
 
@@ -255,12 +255,12 @@ describe('carte et chiffres par département : le ministère FIJ seul', () => {
     ).toEqual([])
   })
 
-  it('FIJ : le total de la carte, « 8 dép. », le dernier envoi, puis la complétude des valeurs', () => {
+  it('FIJ : le total de la carte, « 8 départements sur 8 », le dernier envoi, puis la complétude des valeurs', () => {
     const fij = construireFij(lecturesFijExemple())
     expect(ligneDe(fij, 'carte_fij')).toMatchObject({
       libelle: 'Total de la carte des FIJ',
       valeur: { texte: '29' },
-      detail: '8 dép., saisi le 21 sept.',
+      detail: '8 départements sur 8, saisi le 21 sept.',
     })
     expect(ligneDe(fij, 'fij_statistiques')).toMatchObject({
       libelle: 'Chiffres par département saisis',

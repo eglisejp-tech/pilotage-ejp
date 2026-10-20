@@ -15,7 +15,7 @@ describe('OuvertureSemaine', () => {
       />,
     )
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision.",
+      "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision.",
     )
     const surligneurs = container.querySelectorAll('mark')
     expect(surligneurs).toHaveLength(1)

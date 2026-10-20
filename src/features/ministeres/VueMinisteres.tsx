@@ -18,9 +18,10 @@ interface Props {
 const textes = TEXTES_FICHE.liste
 
 /**
- * Écran « Ministères » (berger, conseil, EJP Tech ; BRIEF, section 9) : titre, phrase, puis le
- * tableau des ministères actifs à partir de 600 px, une liste en dessous. Premier usage : aucun
- * ministère actif, la phrase dit qui les crée. Problème passager : bandeau et « Réessayer ».
+ * Écran « Ministères » (berger, conseil, EJP Tech ; BRIEF, section 9) : titre, puis le tableau des
+ * ministères actifs à partir de 600 px, une liste en dessous, sans phrase sur le tri (T66, t226).
+ * Premier usage : « Aucun ministère actif. » ; EJP Tech, qui les crée, lit où les créer.
+ * Problème passager : bandeau et « Réessayer ».
  * Aucune action de saisie, pour aucun profil.
  */
 export function VueMinisteres({ liste, gestion = false }: Props) {
@@ -48,16 +49,13 @@ export function VueMinisteres({ liste, gestion = false }: Props) {
             {gestion ? textes.aucunGestion : textes.aucun}
           </EtatVide>
         ) : (
-          <>
-            <p className="mt-4 max-w-prose text-encre-2">{textes.phrase}</p>
-            <div className="mt-4">
-              {tableau ? (
-                <TableauListeMinisteres ministeres={liste.donnees} idTitre={idTitre} />
-              ) : (
-                <ListeMinisteresTelephone ministeres={liste.donnees} idTitre={idTitre} />
-              )}
-            </div>
-          </>
+          <div className="mt-4">
+            {tableau ? (
+              <TableauListeMinisteres ministeres={liste.donnees} idTitre={idTitre} />
+            ) : (
+              <ListeMinisteresTelephone ministeres={liste.donnees} idTitre={idTitre} />
+            )}
+          </div>
         )
       ) : null}
     </section>

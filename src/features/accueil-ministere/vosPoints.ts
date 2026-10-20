@@ -4,7 +4,7 @@
 
 import type { PointsFiche } from '@/data/fiche'
 import type { MinistereListe } from '@/data/ministeres'
-import { JOURS_POINTS_TRAITES } from '@/features/fiche/construireFiche'
+import { auteurDuTraitement, JOURS_POINTS_TRAITES } from '@/features/fiche/construireFiche'
 import type { PointFiche, TexteLibre } from '@/features/fiche/modeleFiche'
 import { TEXTE_MASQUE, TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import { formaterJourCourt, jourDeParis } from '@/lib/metier/dates'
@@ -31,7 +31,8 @@ function texteLibre(texte: string | null): TexteLibre | null {
 /**
  * Points ouverts du ministère et ceux qui le mentionnent (priorité, puis échéance, puis création),
  * puis ceux traités depuis 7 jours au plus, du plus récent au plus ancien. Un point mentionné porte
- * « Mentionné par Intégration. » ; un point traité, « Traité le 30 sept. » et le commentaire.
+ * « Mentionné par Intégration. » ; un point traité, « Traité le 30 sept. par Jeunesse. » et le
+ * commentaire.
  */
 export function construireVosPoints({
   ministereId,
@@ -43,7 +44,8 @@ export function construireVosPoints({
     ministeres.map((m) => [m.id, m.desactive_le === null ? m.nom : `${m.nom} (désactivé)`]),
   )
   const nom = (id: string) => noms.get(id) ?? 'Ministère inconnu'
-  const { points, mentions } = lectures
+  const { points, mentions, auteurs } = lectures
+  const auteur = auteurDuTraitement(auteurs, nom)
   const traites = trierTraites(points).filter((point) => {
     const jours = joursDepuis(point.traite_le, aujourdhui)
     return jours !== null && jours <= JOURS_POINTS_TRAITES
@@ -62,7 +64,7 @@ export function construireVosPoints({
       echeance:
         ouvert && point.echeance !== null
           ? {
-              texte: `avant le ${formaterJourCourt(point.echeance)}`,
+              texte: `échéance ${formaterJourCourt(point.echeance)}`,
               depassee: echeanceDepassee(point.echeance, aujourdhui),
             }
           : null,
@@ -77,7 +79,10 @@ export function construireVosPoints({
         point.traite_le === null
           ? null
           : {
-              texte: TEXTES_FICHE.points.traiteLe(formaterJourCourt(jourDeParis(point.traite_le))),
+              texte: TEXTES_FICHE.points.traiteLe(
+                formaterJourCourt(jourDeParis(point.traite_le)),
+                auteur(point.traite_par),
+              ),
               commentaire: texteLibre(point.traite_commentaire),
             },
     }

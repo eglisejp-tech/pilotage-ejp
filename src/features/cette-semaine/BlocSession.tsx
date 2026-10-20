@@ -13,9 +13,11 @@ interface Props {
 
 function resume({ total, saisis, attendus }: DerniereSession) {
   if (total === null) return TEXTES_VIDES.session.resumeSansSaisie(attendus)
+  // « STARs présents (6 ministères sur 8 ont saisi) » : des mots de tous les jours (T66, t185).
   const presents = total > 1 ? 'STARs présents' : 'STAR présent'
   const ministeres = saisis > 1 ? 'ministères' : 'ministère'
-  return `${presents}, selon ${nombre(saisis)} ${ministeres} sur ${nombre(attendus)}`
+  const ontSaisi = saisis > 1 ? 'ont saisi' : 'a saisi'
+  return `${presents} (${nombre(saisis)} ${ministeres} sur ${nombre(attendus)} ${ontSaisi})`
 }
 
 /** Liens vers les autres types de session qui en ont une passée (T20), à droite du titre. */

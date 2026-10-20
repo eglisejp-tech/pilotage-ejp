@@ -1,6 +1,5 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
-import { Aide } from '@/components/aide/Aide'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
 import type { LigneAlerte } from '@/features/cette-semaine/construireAlerte'
@@ -41,14 +40,10 @@ export function EvenementsAConfirmer({ etat }: Props) {
   const affichees = lignesVisibles(lignes, deplie)
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
-      <div
-        data-ligne-aide
-        className="flex items-center gap-1 border-b-2 border-encre pb-3 [&>button]:-my-3"
-      >
+      <div className="border-b-2 border-encre pb-3">
         <h2 id={idTitre} className="font-lecture text-section leading-tight font-medium">
           {TEXTES_A_CONFIRMER.titre}
         </h2>
-        <Aide code="accueil.aConfirmer" libelle={TEXTES_A_CONFIRMER.titre} placement="flottante" />
       </div>
       {etat.etat === 'erreur' ? (
         <EtatVide

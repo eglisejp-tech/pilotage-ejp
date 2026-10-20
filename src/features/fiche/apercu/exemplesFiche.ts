@@ -14,6 +14,7 @@ export const SOCIAL = '10000000-0000-4000-8000-000000000005'
 const INTEGRATION = '10000000-0000-4000-8000-000000000002'
 const COORDINATION = '10000000-0000-4000-8000-000000000003'
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
+const COMPTE_SOCIAL = 'c0000000-0000-4000-8000-000000000005'
 
 /** Écrans de l'aperçu (`?ecran=`). */
 export const ECRANS_APERCU_FICHE = [
@@ -421,6 +422,7 @@ const POINTS: Point[] = [
     statut: 'traite',
     traitement_id: 'b1000000-0000-4000-8000-000000000003',
     traite_le: '2026-10-03T18:00:00+02:00',
+    traite_par: COMPTE_SOCIAL,
     traite_commentaire: 'Trois équipes se relaient, le planning est affiché au local.',
   }),
 ]
@@ -429,6 +431,9 @@ const MENTIONS = [
   { point_id: 'b0000000-0000-4000-8000-000000000001', ministere_id: COORDINATION },
   { point_id: 'b0000000-0000-4000-8000-000000000002', ministere_id: SOCIAL },
 ]
+
+/** Le compte qui a marqué traité le point de Social : « Traité le 3 oct. par Social. » */
+const AUTEURS = [{ user_id: COMPTE_SOCIAL, ministere_id: SOCIAL, libelle: 'Ministère Social' }]
 
 /**
  * Lignes de la fiche de Social (`fiche-vide` : premier usage), les mêmes pour tous les lecteurs
@@ -488,7 +493,7 @@ export function lecturesExempleFiche(vide: boolean): LecturesFiche {
       },
       { indicateur_id: PASSAGES, ministere_id: SOCIAL, mois: '2026-09-01', texte: TEXTE_MASQUE },
     ],
-    points: { points: POINTS, mentions: MENTIONS },
+    points: { points: POINTS, mentions: MENTIONS, auteurs: AUTEURS },
     ministeres: MINISTERES,
   }
   if (!vide) return base
@@ -503,7 +508,7 @@ export function lecturesExempleFiche(vide: boolean): LecturesFiche {
     categories: [],
     repartitions: [],
     precisions: [],
-    points: { points: [], mentions: [] },
+    points: { points: [], mentions: [], auteurs: [] },
   }
 }
 

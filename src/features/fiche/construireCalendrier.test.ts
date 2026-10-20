@@ -112,13 +112,13 @@ describe('construireCalendrier', () => {
     }
   })
 
-  it('un événement qui mentionne le ministère : « Mentionné par Coordination », lecture seule', () => {
+  it('un événement qui mentionne le ministère : « Mentionné par Coordination », sans bouton', () => {
     const [ligne] = construireCalendrier(
       lectures([evenement({ id: 'm', ministere_id: COORDINATION })]),
       { ministereId: COMMUNICATION, profil: 'ministere' },
     )
     expect(ligne?.mentionnePar).toBe('Mentionné par Coordination')
-    expect(ligne?.lectureSeule).toBe('Seul Coordination peut mettre à jour cet événement.')
+    expect(ligne).not.toHaveProperty('lectureSeule')
     expect(ligne?.duMinistere).toBe(false)
     expect(ligne?.versMiseAJour).toBeNull()
   })
@@ -186,27 +186,27 @@ describe('phrasesBandeau', () => {
   it('le ministère porteur : une phrase, sans aucun titre', () => {
     const phrases = phrasesBandeau(lignesAlerte('ministere', [aConfirmer('a')]), 'ministere')
     expect(phrases).toEqual([
-      'Un événement est encore en attente de validation et sa date approche ou est passée. Mettez à jour son statut.',
+      'Un événement proche ou passé attend toujours sa validation. Mettez à jour son statut.',
     ])
     expect(phrases.join(' ')).not.toContain('Soirée')
   })
 
-  it('plusieurs événements : le nombre en lettres de un à dix', () => {
+  it('plusieurs événements : le nombre en chiffres (T66)', () => {
     const phrases = phrasesBandeau(
       lignesAlerte('ministere', [aConfirmer('a'), aConfirmer('b')]),
       'ministere',
     )
-    expect(phrases[0]).toMatch(/^Deux événements sont encore en attente/)
+    expect(phrases[0]).toBe(
+      '2 événements proches ou passés attendent toujours leur validation. Mettez à jour leur statut.',
+    )
   })
 
-  it('le ministère mentionné : il lit, il ne change pas le statut', () => {
+  it('le ministère mentionné : il lit, sans droits décrits', () => {
     const phrases = phrasesBandeau(
       lignesAlerte('ministere', [aConfirmer('a', COORDINATION)]),
       'ministere',
     )
-    expect(phrases).toEqual([
-      'Un événement qui vous mentionne est encore en attente de validation. Le ministère qui le porte met à jour son statut.',
-    ])
+    expect(phrases).toEqual(['Un événement qui vous mentionne attend toujours sa validation.'])
   })
 
   it('porteur et mentionné : deux phrases', () => {
@@ -219,7 +219,6 @@ describe('phrasesBandeau', () => {
 
   it('le berger, le conseil et EJP Tech : une phrase, sans consigne de mise à jour', () => {
     const phrases = phrasesBandeau(lignesAlerte('berger', [aConfirmer('a')]), 'berger')
-    expect(phrases).toHaveLength(1)
-    expect(phrases[0]).toContain('Le ministère qui le porte met à jour son statut.')
+    expect(phrases).toEqual(['Un événement proche ou passé attend toujours sa validation.'])
   })
 })

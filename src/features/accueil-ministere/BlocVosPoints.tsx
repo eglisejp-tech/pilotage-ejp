@@ -1,5 +1,4 @@
 import { useId } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
@@ -14,28 +13,22 @@ interface Props {
 }
 
 /**
- * « Vos points » de l'accueil du ministère (maquette 07 ; BRIEF, section 9) : ses points ouverts et
+ * « Mes points » de l'accueil du ministère (maquette 07 ; BRIEF, section 9) : ses points ouverts et
  * ceux qui le mentionnent, puis ceux traités depuis 7 jours, chacun comme sur « Ma fiche »
- * (`CartePointFiche`). Aide `accueil.points` à côté du titre, hors du titre (T38). Tout est fait :
- * « Aucun point ouvert pour votre ministère. » Lu à part : un problème passager garde le titre et
- * propose « Réessayer ». Chaque point porte ses boutons « Changer le statut » et « Marquer
- * traité » (`ActionsPoint`, étape 5). Le bloc porte le repère de focus de la page
- * (`data-repli-focus`) : quand un point traité quitte la liste, le focus y revient.
+ * (`CartePointFiche`). « Créés ou mentionnés » suffit : plus de bulle (T66, t164). Tout est fait :
+ * « Aucun point ouvert. » Lu à part : un problème passager garde le titre et propose
+ * « Réessayer ». Chaque point porte ses boutons « Changer le statut » et « Marquer traité »
+ * (`ActionsPoint`, étape 5). Le bloc porte le repère de focus de la page (`data-repli-focus`) :
+ * quand un point traité quitte la liste, le focus y revient.
  */
 export function BlocVosPoints({ bloc, compte }: Props) {
   const idTitre = useId()
   return (
     <section aria-labelledby={idTitre} data-repli-focus className="flex min-w-0 flex-col">
-      <div
-        data-ligne-aide
-        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b-2 border-encre pb-3"
-      >
-        <div className="flex items-center gap-1 [&>span]:-my-3">
-          <h2 id={idTitre} className="font-lecture text-section leading-tight font-medium">
-            {TEXTES_ACCUEIL.titrePoints}
-          </h2>
-          <Aide code="accueil.points" libelle={TEXTES_ACCUEIL.titrePoints} placement="flottante" />
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b-2 border-encre pb-3">
+        <h2 id={idTitre} className="font-lecture text-section leading-tight font-medium">
+          {TEXTES_ACCUEIL.titrePoints}
+        </h2>
         <span className="text-note text-encre-3">{TEXTES_ACCUEIL.complementPoints}</span>
       </div>
       {bloc.etat === 'chargement' ? <ChargementBloc /> : null}

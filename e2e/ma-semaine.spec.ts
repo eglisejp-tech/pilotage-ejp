@@ -28,14 +28,15 @@ test.describe('Ma semaine, aperçu', () => {
     )
     await expect(page.locator('h1 mark')).toHaveText('Il reste la date de la prochaine réunion')
     await expect(page.getByText('Semaine 39, du 21 au 27 sept.')).toBeAttached()
-    await expect(
-      page.getByRole('link', { name: 'Renseigner la prochaine réunion' }),
-    ).toHaveAttribute('href', '/saisir/reunion')
+    await expect(page.getByRole('link', { name: 'Ajouter la prochaine réunion' })).toHaveAttribute(
+      'href',
+      '/saisir/reunion',
+    )
     // L'onglet « Ma semaine » est vérifié par navigation.spec.ts.
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Vos saisies',
       'Vos chiffres de la semaine',
-      'Vos points',
+      'Mes points',
       "Dans l'église",
     ])
   })
@@ -49,14 +50,14 @@ test.describe('Ma semaine, aperçu', () => {
       'STARs au service',
       'Dimanche 27 sept.',
       'STARs actifs',
-      '11 sur 14, calculé',
+      '11 sur 14 actifs',
       "Présents à Bâtir l'Église",
       'Visuels livrés ce mois',
     ]) {
       await expect(chiffres).toContainText(texte)
     }
     // Sous 768 px, la courbe se lit en texte (le détail et l'écart) : la colonne n'existe pas.
-    await expect(chiffres.getByRole('img', { name: /^Dix derniers dimanches : 8, 9/ })).toHaveCount(
+    await expect(chiffres.getByRole('img', { name: /^10 derniers dimanches : 8, 9/ })).toHaveCount(
       testInfo.project.name === 'telephone' ? 0 : 1,
     )
     await expect(
@@ -105,7 +106,7 @@ test.describe('Ma semaine, aperçu', () => {
     await ouvrir(page, 'fij')
     const chiffres = page.getByRole('region', { name: 'Vos chiffres de la semaine' })
     await expect(chiffres).toContainText('Total de la carte des FIJ')
-    await expect(chiffres).toContainText('8 dép., saisi le 21 sept.')
+    await expect(chiffres).toContainText('8 départements sur 8, saisi le 21 sept.')
     await expect(chiffres).toContainText('Chiffres par département saisis')
     await expect(chiffres).toContainText('sur 32, dimanche 27 sept.')
     await expect(page.getByRole('heading', { name: 'FIJ en Île-de-France' })).toHaveCount(0)
@@ -122,7 +123,7 @@ test.describe('Ma semaine, aperçu', () => {
     }
     const saisies = await boite('Vos saisies')
     const chiffres = await boite('Vos chiffres de la semaine')
-    const points = await boite('Vos points')
+    const points = await boite('Mes points')
     const eglise = await boite("Dans l'église")
     // À gauche, saisies puis chiffres ; à droite, points puis église (à partir de 1024 px).
     expect(chiffres.y).toBeGreaterThan(saisies.y)

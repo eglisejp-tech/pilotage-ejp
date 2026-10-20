@@ -65,7 +65,7 @@ export function libelleManquants(noms: readonly string[]): string | null {
 
 /** Indicateur « à ce jour » : date affichée et signal des valeurs de plus de 30 jours (règle 13). */
 export interface DateAceJour {
-  /** « À ce jour », ou « À ce jour, 1 valeur de plus de 30 jours » */
+  /** « À ce jour », ou « À ce jour, 1 chiffre de plus de 30 jours » (glossaire, T66, t190). */
   libelle: string
   /** Vrai s'il faut l'afficher en orange (`--attention`), toujours avec le texte. */
   attention: boolean
@@ -74,15 +74,22 @@ export interface DateAceJour {
 export function libelleAceJour(nbPlusDe30Jours: number): DateAceJour {
   verifierCompte(nbPlusDe30Jours, 'nbPlusDe30Jours')
   if (nbPlusDe30Jours === 0) return { libelle: 'À ce jour', attention: false }
-  const valeurs = accorder(nbPlusDe30Jours, 'valeur', 'valeurs')
+  const chiffres = accorder(nbPlusDe30Jours, 'chiffre', 'chiffres')
   return {
-    libelle: `À ce jour, ${nombre(nbPlusDe30Jours)} ${valeurs} de plus de 30 jours`,
+    libelle: `À ce jour, ${nombre(nbPlusDe30Jours)} ${chiffres} de plus de 30 jours`,
     attention: true,
   }
 }
 
-/** Complétude de la carte des FIJ : départements qui ont une valeur (« 8 dép. »). */
+/** Nombre de départements de la carte des FIJ (Île-de-France). */
+const DEPARTEMENTS_CARTE = 8
+
+/**
+ * Complétude de la carte des FIJ : départements qui ont une valeur, sans abréviation
+ * (« 8 départements sur 8 », « 1 département sur 8 » ; T66, t191).
+ */
 export function libelleDepartements(nbDepartements: number): string {
   verifierCompte(nbDepartements, 'nbDepartements')
-  return `${nombre(nbDepartements)} dép.`
+  const departements = nbDepartements > 1 ? 'départements' : 'département'
+  return `${nombre(nbDepartements)} ${departements} sur ${nombre(DEPARTEMENTS_CARTE)}`
 }

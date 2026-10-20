@@ -26,8 +26,7 @@ export type SessionExemple = 'batir' | 'anti_dispersion'
 
 const semaine = { numero: 39, periode: 'du 21 au 27 sept.' }
 
-const noteChiffres =
-  "Chaque chiffre additionne les saisies des ministères. Un STAR saisi par deux ministères n'est compté qu'une fois. Courbes : dix derniers dimanches ou quatre dernières sessions."
+const noteChiffres = 'Courbes : 10 derniers dimanches ou 4 dernières sessions.'
 
 function texte(valeur: string) {
   return { texte: valeur, masque: false }
@@ -62,7 +61,7 @@ const chiffres: LigneChiffre[] = [
         { valeur: 52, incomplet: true },
       ],
       description:
-        'Dix derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52. Les quatre derniers sont incomplets.',
+        '10 derniers dimanches : 52, 57, 53, 56, 54, 56, 50, 54, 55, 52. Les 4 derniers sont incomplets.',
     },
     date: 'Dimanche 27 sept.',
     dateCourte: 'Dim. 27 sept.',
@@ -75,7 +74,7 @@ const chiffres: LigneChiffre[] = [
     valeur: saisie('83'),
     ecart: null,
     courbe: null,
-    date: 'À ce jour, 1 valeur de plus de 30 jours',
+    date: 'À ce jour, 1 chiffre de plus de 30 jours',
     dateCourte: null,
     dateSignalee: true,
     completude: { texte: '8 sur 8', complet: true },
@@ -100,7 +99,7 @@ const chiffres: LigneChiffre[] = [
     date: 'Saisi par FIJ le 21 sept.',
     dateCourte: null,
     dateSignalee: false,
-    completude: { texte: '8 dép.', complet: true },
+    completude: { texte: '8 départements sur 8', complet: true },
   },
   {
     id: 'batir',
@@ -114,7 +113,7 @@ const chiffres: LigneChiffre[] = [
     },
     courbe: {
       points: [{ valeur: 63 }, { valeur: 66 }, { valeur: 72 }, { valeur: 58, incomplet: true }],
-      description: 'Quatre dernières sessions : 63, 66, 72, 58. La dernière est incomplète.',
+      description: '4 dernières sessions : 63, 66, 72, 58. La dernière est incomplète.',
     },
     date: 'Samedi 26 sept.',
     dateCourte: 'Sam. 26 sept.',
@@ -133,7 +132,7 @@ const chiffres: LigneChiffre[] = [
     },
     courbe: {
       points: [{ valeur: 50 }, { valeur: 53 }, { valeur: 59 }, { valeur: 61 }],
-      description: 'Quatre dernières sessions : 50, 53, 59, 61.',
+      description: '4 dernières sessions : 50, 53, 59, 61.',
     },
     date: 'Samedi 19 sept.',
     dateCourte: 'Sam. 19 sept.',
@@ -151,7 +150,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'financement-welcome',
     priorite: 'urgente',
     ministere: 'Intégration',
-    echeance: { texte: 'avant le 5 oct.', depassee: false },
+    echeance: { texte: 'échéance 5 oct.', depassee: false },
     titre: texte('Financement de Welcome Prodiges'),
     description: texte(
       "Budget nécessaire pour l'accueil du 15 octobre (collation, supports imprimés).",
@@ -166,7 +165,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'planning-trimestre',
     priorite: 'haute',
     ministere: 'Coordination',
-    echeance: { texte: 'avant le 28 sept.', depassee: true },
+    echeance: { texte: 'échéance 28 sept.', depassee: true },
     titre: texte('Planning du trimestre à valider'),
     description: texte("Les dates d'octobre à décembre doivent être arrêtées avant la réunion."),
     attendu: texte('Valider les dates du trimestre'),
@@ -179,7 +178,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'salle-louange',
     priorite: 'haute',
     ministere: 'Communication',
-    echeance: { texte: 'avant le 3 oct.', depassee: false },
+    echeance: { texte: 'échéance 3 oct.', depassee: false },
     titre: texte('Salle pour la soirée de louange'),
     description: texte("La salle du 10 octobre n'est pas encore confirmée."),
     attendu: texte('Confirmer la salle'),
@@ -192,7 +191,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'visuels-welcome',
     priorite: 'normale',
     ministere: 'Intégration',
-    echeance: { texte: 'avant le 8 oct.', depassee: false },
+    echeance: { texte: 'échéance 8 oct.', depassee: false },
     titre: texte('Visuels pour Welcome Prodiges'),
     description: texte("Affiche et flyer de l'accueil du 15 octobre."),
     attendu: texte('Livrer les visuels'),
@@ -205,7 +204,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'renfort-sortie',
     priorite: 'normale',
     ministere: 'Jeunesse',
-    echeance: { texte: 'avant le 10 oct.', depassee: false },
+    echeance: { texte: 'échéance 10 oct.', depassee: false },
     titre: texte('Renfort de 4 STARs pour la sortie'),
     description: texte('Il manque 4 accompagnateurs pour la sortie du 17 octobre.'),
     attendu: texte('Trouver des volontaires'),
@@ -218,7 +217,7 @@ export const pointsOuvertsExemple: PointADecider[] = [
     id: 'reimpression-supports',
     priorite: 'normale',
     ministere: 'Prodiges Junior',
-    echeance: { texte: 'avant le 11 oct.', depassee: false },
+    echeance: { texte: 'échéance 11 oct.', depassee: false },
     titre: texte('Réimpression des supports'),
     description: texte('Les livrets du trimestre sont épuisés.'),
     attendu: texte('Passer la commande'),
@@ -456,17 +455,17 @@ export function exempleCetteSemaine(
   session: SessionExemple = 'batir',
 ): DonneesCetteSemaine {
   const phraseEglise = [
-    { texte: "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi." },
+    { texte: "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi." },
   ]
   return pourProfil(profil, {
     phraseEglise,
     phraseSemaine: [
-      { texte: "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et " },
+      { texte: "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et " },
       { texte: 'un point attend votre décision', aDecider: true },
       { texte: '.' },
     ],
     ligneSecondaire:
-      "Bâtir l'Église progresse de 1 présent, et le total est incomplet : Coordination et Intégration n'ont pas saisi.",
+      "Bâtir l'Église progresse de 1 présent. Coordination et Intégration n'ont pas saisi.",
     chiffres,
     resume: [ligne('service'), ligne('en_fij'), { ...ligne('batir'), id: 'derniere_session' }],
     aDecider: pointsOuvertsExemple,
@@ -507,7 +506,7 @@ const chiffresPremierDimanche: LigneChiffre[] = [
   ligneVide('actifs', 'STARs actifs', TEXTES_VIDES.chiffres.dateAceJour, zeroSurHuit),
   ligneVide('en_fij', 'STARs présents en FIJ', TEXTES_VIDES.chiffres.dateAceJour, zeroSurHuit),
   ligneVide('carte_fij', 'FIJ en Île-de-France', TEXTES_VIDES.chiffres.dateAceJour, {
-    texte: '0 dép.',
+    texte: '0 département sur 8',
     complet: false,
   }),
   ligneVide('batir', "Présents à Bâtir l'Église", TEXTES_VIDES.chiffres.dateSansSession, null),

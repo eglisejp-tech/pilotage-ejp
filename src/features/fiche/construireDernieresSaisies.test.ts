@@ -20,7 +20,7 @@ describe('construireDernieresSaisies', () => {
       {
         id: 101,
         quand: '22 sept., 21 h 30',
-        texte: 'Nouveau point :',
+        texte: 'Point créé :',
         objet: { texte: 'Local de stockage des dons', masque: false },
       },
     ])
@@ -42,7 +42,7 @@ describe('construireDernieresSaisies', () => {
       COMMUNS_EXEMPLE,
     )
     expect(ligne).toMatchObject({
-      texte: 'Nouveau point :',
+      texte: 'Point créé :',
       objet: { texte: TEXTE_MASQUE, masque: true },
     })
   })
@@ -109,7 +109,7 @@ describe('construireDernieresSaisies', () => {
     )
     expect(lignes.map((l) => l.texte)).toEqual([
       'Prochaine réunion : lundi 12 oct., 20 h',
-      'FIJ par département : 29 au total',
+      'Carte des FIJ : 29 FIJ',
       'Événement ajouté',
       'Saisie enregistrée',
     ])

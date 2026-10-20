@@ -34,7 +34,7 @@ function avec(champs: Partial<DonneesPhraseSemaine>): DonneesPhraseSemaine {
 describe('phraseDeLaSemaine : phrase principale', () => {
   it('assemble A, B et C, avec C surligné sans le point final', () => {
     expect(phraseDeLaSemaine(avec({ nbPointsEnAttenteDeDecision: 1 })).principale).toEqual([
-      normal("52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et "),
+      normal("52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et "),
       surligne('un point attend votre décision'),
       normal('.'),
     ])
@@ -47,18 +47,18 @@ describe('phraseDeLaSemaine : phrase principale', () => {
 
   it('omet C sans point en attente de décision', () => {
     expect(phraseDeLaSemaine(semaine).principale).toEqual([
-      normal("52 STARs au service dimanche. Deux ministères n'ont pas encore saisi."),
+      normal("52 STARs au service dimanche. 2 ministères n'ont pas encore saisi."),
     ])
   })
 
-  it('écrit B selon le nombre de ministères qui manquent', () => {
+  it('écrit B selon le nombre de ministères qui manquent, en chiffres (T66, t175)', () => {
     const b = (nbSaisis: number, nbAttendus: number) =>
       texteDePhrase(
         phraseDeLaSemaine(avec({ service: { total: 52, nbSaisis, nbAttendus } })).principale,
       )
     expect(b(8, 8)).toBe('52 STARs au service dimanche. Tous les ministères ont saisi.')
-    expect(b(7, 8)).toBe("52 STARs au service dimanche. Un ministère n'a pas encore saisi.")
-    expect(b(1, 11)).toBe("52 STARs au service dimanche. Dix ministères n'ont pas encore saisi.")
+    expect(b(7, 8)).toBe("52 STARs au service dimanche. 1 ministère n'a pas encore saisi.")
+    expect(b(1, 11)).toBe("52 STARs au service dimanche. 10 ministères n'ont pas encore saisi.")
     expect(b(1, 12)).toBe("52 STARs au service dimanche. 11 ministères n'ont pas encore saisi.")
   })
 
@@ -165,7 +165,7 @@ describe('phraseDeLaSemaine : ligne secondaire', () => {
       },
     })
     expect(phraseDeLaSemaine(d).secondaire).toBe(
-      "Social n'a rien mis à jour depuis 31 jours. Bâtir l'Église recule de 14 présents, et le total est incomplet : Coordination et Intégration n'ont pas saisi.",
+      "Social n'a rien mis à jour depuis 31 jours. Bâtir l'Église recule de 14 présents. Coordination et Intégration n'ont pas saisi.",
     )
   })
 
@@ -179,7 +179,7 @@ describe('phraseDeLaSemaine : ligne secondaire', () => {
     expect(session(-1)).toBe('Anti-Dispersion recule de 1 présent.')
     expect(session(0)).toBe('Anti-Dispersion est stable.')
     expect(session(0, ['Intégration'])).toBe(
-      "Anti-Dispersion est stable, et le total est incomplet : Intégration n'a pas saisi.",
+      "Anti-Dispersion est stable. Intégration n'a pas saisi.",
     )
   })
 
@@ -206,7 +206,7 @@ describe("phraseDeLEglise (administration de l'église)", () => {
     })
     const phrase = phraseDeLEglise(d)
     expect(phrase.principale).toEqual([
-      normal("52 STARs au service dimanche. Deux ministères n'ont pas encore saisi."),
+      normal("52 STARs au service dimanche. 2 ministères n'ont pas encore saisi."),
     ])
     expect(phrase.secondaire).toBe("Social n'a rien mis à jour depuis 31 jours.")
   })
@@ -313,7 +313,7 @@ describe('phraseDAccueil et libelleBoutonPrincipal (accueil du ministère)', () 
       surligne('Il reste la date de la prochaine réunion'),
       normal('.'),
     ])
-    expect(libelleBoutonPrincipal(saisies)).toBe('Renseigner la prochaine réunion')
+    expect(libelleBoutonPrincipal(saisies)).toBe('Ajouter la prochaine réunion')
   })
 
   it('liste tout ce qui reste quand les chiffres manquent', () => {
@@ -426,7 +426,7 @@ describe('sessions', () => {
     expect(nomSession('batir', null)).toBe("Bâtir l'Église")
     expect(nomSession('anti_dispersion', null)).toBe('Anti-Dispersion')
     expect(nomSession('autre', 'Soirée de louange')).toBe('Soirée de louange')
-    expect(nomSession('autre', null)).toBe('Autre rassemblement')
+    expect(nomSession('autre', null)).toBe('Autre session')
   })
 
   it("écrit le titre du bloc : « Bâtir l'Église, samedi 26 septembre »", () => {
@@ -440,12 +440,12 @@ describe('sessions', () => {
     expect(sessionDu('batir', null, '2026-09-26')).toBe("Bâtir l'Église du 26 sept.")
   })
 
-  it('explique les STARs comptés une seule fois', () => {
+  it('montre les STARs déjà comptés, sans dire la règle (T66, t177)', () => {
     expect(phraseDoubleCompte(61, 58)).toBe(
-      "61 présences saisies : 3 STARs saisis par deux ministères ne sont comptés qu'une fois.",
+      '61 présences saisies, dont 3 STARs déjà comptés par un autre ministère.',
     )
     expect(phraseDoubleCompte(59, 58)).toBe(
-      "59 présences saisies : 1 STAR saisi par deux ministères n'est compté qu'une fois.",
+      '59 présences saisies, dont 1 STAR déjà compté par un autre ministère.',
     )
   })
 

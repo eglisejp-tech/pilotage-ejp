@@ -68,12 +68,14 @@ function afficher(
 const aides = () => screen.queryAllByRole('button', { name: /^Aide : / })
 
 describe('VueFiche, berger (04)', () => {
-  it('le nom, le chemin vers la liste, la phrase surlignée et la fraîcheur avec son aide', () => {
+  it('le nom, le chemin vers la liste, la phrase surlignée et la fraîcheur, sans bulle', () => {
     afficher('berger')
     expect(screen.getByRole('heading', { level: 1, name: 'Social' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ministères' })).toHaveAttribute('href', '/ministeres')
     expect(screen.getByText('Un point attend une décision').tagName).toBe('MARK')
-    expect(screen.getByRole('button', { name: 'Aide : Mis à jour il y a 3 jours' })).toBeVisible()
+    // « Mis à jour il y a 3 jours » se comprend seul : la bulle `fiche.fraicheur` est retirée (T66).
+    expect(screen.getByText('Mis à jour il y a 3 jours')).toBeVisible()
+    expect(screen.queryByRole('button', { name: 'Aide : Mis à jour il y a 3 jours' })).toBeNull()
   })
 
   it('sensible en valeur exacte (P52), le mois en cours « en cours », jamais un 0 pour une absence', () => {
@@ -106,12 +108,12 @@ describe('VueFiche, berger (04)', () => {
     expect(screen.getByText(/collecte de rentrée, tous orientés/)).toBeInTheDocument()
   })
 
-  it('quatre aides, chacune une fois, ni « moins de 3 » ni « masqué » ; aucun bouton de saisie', async () => {
+  it('deux aides (courbe, somme de l’année), chacune une fois, ni « moins de 3 » ni « masqué » ; aucun bouton de saisie', async () => {
     afficher('berger')
     await userEvent.click(screen.getByText('Répartition par catégorie'))
     const noms = aides().map((bouton) => bouton.getAttribute('aria-label'))
-    expect(noms).toHaveLength(4)
-    expect(new Set(noms).size).toBe(4)
+    expect(noms).toHaveLength(2)
+    expect(new Set(noms).size).toBe(2)
     expect(noms).not.toEqual(expect.arrayContaining([expect.stringMatching(/masqué|moins de 3/)]))
     expect(screen.queryByRole('link', { name: ACTIONS })).toBeNull()
   })
@@ -184,11 +186,7 @@ describe('VueFiche, ministère sur sa fiche (12)', () => {
 describe('VueFiche, états vides (T36)', () => {
   it('premier usage, berger : les deux textes des indicateurs propres et des points', () => {
     afficher('berger', { vide: true, dernieres: { etat: 'donnees', donnees: [] } })
-    expect(
-      screen.getByText(
-        "Ce ministère n'a pas encore d'indicateur à lui. Il saisit les chiffres communs.",
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText("Ce ministère n'a pas encore d'indicateur à lui.")).toBeInTheDocument()
     expect(screen.getByText('Aucun point ouvert pour Social.')).toBeInTheDocument()
     expect(screen.getByText("Aucune saisie pour l'instant.")).toBeInTheDocument()
     expect(screen.getByText('Aucune saisie')).toBeInTheDocument()
@@ -199,11 +197,9 @@ describe('VueFiche, états vides (T36)', () => {
   it('premier usage, ministère : son texte de « Mes indicateurs » et de ses points', () => {
     afficher('ministere', { vide: true })
     expect(
-      screen.getByText(
-        "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
-      ),
+      screen.getByText("Votre ministère n'a pas encore d'indicateur à lui."),
     ).toBeInTheDocument()
-    expect(screen.getByText('Aucun point ouvert pour votre ministère.')).toBeInTheDocument()
+    expect(screen.getByText('Aucun point ouvert.')).toBeInTheDocument()
   })
 
   it('« Retirés » : aucun résultat', async () => {
@@ -257,9 +253,9 @@ describe('VueFiche, états vides (T36)', () => {
     expect(within(bloc).getByText('Octobre en cours : 7')).toBeInTheDocument()
   })
 
-  it('un lecteur autre que le ministère lit « À valider par EJP Tech » sur un ajout à valider', () => {
+  it('un lecteur autre que le ministère lit « à valider » sur un ajout à valider', () => {
     afficher('berger')
-    expect(screen.getByText('À valider par EJP Tech')).toBeInTheDocument()
+    expect(screen.getByText('à valider')).toBeInTheDocument()
     expect(screen.queryByText(/Vous pouvez déjà le saisir/)).toBeNull()
   })
 })

@@ -33,9 +33,9 @@ describe('VueReunion', () => {
     expect(screen.getByText('Décision attendue : Valider la salle')).toBeInTheDocument()
   })
 
-  it('le ministère a « Modifier », les autres profils aucun bouton', () => {
+  it('le ministère a « Modifier la réunion », les autres profils aucun bouton', () => {
     const { unmount } = afficher(declaree, true)
-    expect(screen.getByRole('link', { name: 'Modifier' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: 'Modifier la réunion' })).toHaveAttribute(
       'href',
       '/saisir/reunion',
     )
@@ -44,18 +44,18 @@ describe('VueReunion', () => {
     expect(screen.queryByRole('link')).toBeNull()
   })
 
-  it('non renseignée : « Renseigner » pour le ministère', () => {
+  it('aucune date : « Ajouter la réunion » pour le ministère', () => {
     afficher({ etat: 'donnees', reunion: null }, true)
-    expect(screen.getByText('Non renseignée.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Renseigner' })).toHaveAttribute(
+    expect(screen.getByText('Aucune date.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ajouter la réunion' })).toHaveAttribute(
       'href',
       '/saisir/reunion',
     )
   })
 
-  it('non renseignée : « Non renseignée. » sans aucun bouton pour le berger', () => {
+  it('aucune date : « Aucune date. » sans aucun bouton pour le berger', () => {
     afficher({ etat: 'donnees', reunion: null }, false)
-    expect(screen.getByText('Non renseignée.')).toBeInTheDocument()
+    expect(screen.getByText('Aucune date.')).toBeInTheDocument()
     expect(screen.queryByRole('link')).toBeNull()
   })
 

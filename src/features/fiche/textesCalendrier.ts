@@ -4,7 +4,7 @@
 // donnent encore (à reporter dans LISEZMOI à la fin de l'étape). Aucun titre d'événement n'entre
 // dans une phrase : un texte libre n'est jamais recopié dans un message.
 
-import { nombreEnDebutDePhrase } from '@/lib/metier/texte'
+import { nombre } from '@/lib/metier/texte'
 
 export const TEXTES_CALENDRIER = {
   titre: 'Calendrier prévisionnel',
@@ -28,7 +28,8 @@ export const TEXTES_CALENDRIER = {
 /**
  * Bandeau de la fiche (T31, proposition d'affichage). Une phrase visible, sans bulle, jamais en
  * `role="alert"` (réservé aux erreurs de page). Proposé : T31 écrit un texte par événement ; le
- * bandeau en compte plusieurs sans reprendre aucun titre.
+ * bandeau en compte plusieurs sans reprendre aucun titre. Revu par T66 (t219 à t221) : le risque,
+ * puis l'action pour le seul porteur ; aucun droit décrit, nombres en chiffres.
  */
 export const TEXTES_BANDEAU = {
   /** Mot en tête, pour que le bandeau ne tienne pas à sa couleur. */
@@ -36,26 +37,27 @@ export const TEXTES_BANDEAU = {
   /** Le ministère qui porte l'événement. */
   porteur: (n: number) =>
     n === 1
-      ? 'Un événement est encore en attente de validation et sa date approche ou est passée. Mettez à jour son statut.'
-      : `${nombreEnDebutDePhrase(n)} événements sont encore en attente de validation et leur date approche ou est passée. Mettez à jour leur statut.`,
+      ? 'Un événement proche ou passé attend toujours sa validation. Mettez à jour son statut.'
+      : `${nombre(n)} événements proches ou passés attendent toujours leur validation. Mettez à jour leur statut.`,
   /** Un ministère mentionné : il lit, il ne change pas le statut. */
   mentionne: (n: number) =>
     n === 1
-      ? 'Un événement qui vous mentionne est encore en attente de validation. Le ministère qui le porte met à jour son statut.'
-      : `${nombreEnDebutDePhrase(n)} événements qui vous mentionnent sont encore en attente de validation. Les ministères qui les portent mettent à jour leur statut.`,
+      ? 'Un événement qui vous mentionne attend toujours sa validation.'
+      : `${nombre(n)} événements qui vous mentionnent attendent toujours leur validation.`,
   /** Berger, conseil et EJP Tech, sur la fiche d'un ministère. */
   lecteur: (n: number) =>
     n === 1
-      ? 'Un événement est encore en attente de validation et sa date approche ou est passée. Le ministère qui le porte met à jour son statut.'
-      : `${nombreEnDebutDePhrase(n)} événements sont encore en attente de validation et leur date approche ou est passée. Le ministère qui les porte met à jour leur statut.`,
+      ? 'Un événement proche ou passé attend toujours sa validation.'
+      : `${nombre(n)} événements proches ou passés attendent toujours leur validation.`,
 } as const
 
 export const TEXTES_REUNION_FICHE = {
   libelle: 'Prochaine réunion',
-  /** Berger, conseil et EJP Tech : rien n'est déclaré (plan de l'étape 4, E6). */
-  nonRenseignee: 'Non renseignée.',
-  renseigner: 'Renseigner',
-  modifier: 'Modifier',
+  /** Berger, conseil et EJP Tech : rien n'est déclaré (glossaire, T66 t215). */
+  nonRenseignee: 'Aucune date.',
+  /** Liens compréhensibles seuls (T66, t216 et t217). */
+  renseigner: 'Ajouter la réunion',
+  modifier: 'Modifier la réunion',
   decisionAttendue: 'Décision attendue',
   erreur: 'La connexion a échoué.',
   reessayer: 'Réessayer',

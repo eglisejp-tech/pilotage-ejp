@@ -31,19 +31,30 @@ export async function lirePointsListe(): Promise<PointsListe> {
   const points = lecturePoints.data
   if (points.length === 0) return { points, mentions: [], auteurs: [] }
 
+  const [lectureMentions, auteurs] = await Promise.all([
+    supabase().from('v_point_mention').select('point_id, ministere_id'),
+    lireAuteursTraitement(points),
+  ])
+  if (lectureMentions.error) throw lectureMentions.error
+  return { points, mentions: lectureMentions.data, auteurs }
+}
+
+/**
+ * Les comptes qui ont marqué traité un de ces points, un par auteur distinct, jamais la liste de
+ * tous les comptes. Aucun point traité : aucune lecture. Sert aussi aux points de la fiche et de
+ * « Mes points » de l'accueil (« Traité le 3 oct. par Jeunesse. », T66).
+ */
+export async function lireAuteursTraitement(
+  points: readonly Pick<LigneVue<'v_point'>, 'traite_par'>[],
+): Promise<AuteurTraitement[]> {
   const idsAuteurs = [
     ...new Set(points.flatMap((point) => (point.traite_par === null ? [] : [point.traite_par]))),
   ]
-  const [lectureMentions, lectureAuteurs] = await Promise.all([
-    supabase().from('v_point_mention').select('point_id, ministere_id'),
-    idsAuteurs.length === 0
-      ? Promise.resolve({ data: [] as AuteurTraitement[], error: null })
-      : supabase()
-          .from('compte')
-          .select('user_id, ministere_id, libelle')
-          .in('user_id', idsAuteurs),
-  ])
-  if (lectureMentions.error) throw lectureMentions.error
-  if (lectureAuteurs.error) throw lectureAuteurs.error
-  return { points, mentions: lectureMentions.data, auteurs: lectureAuteurs.data }
+  if (idsAuteurs.length === 0) return []
+  const { data, error } = await supabase()
+    .from('compte')
+    .select('user_id, ministere_id, libelle')
+    .in('user_id', idsAuteurs)
+  if (error) throw error
+  return data
 }

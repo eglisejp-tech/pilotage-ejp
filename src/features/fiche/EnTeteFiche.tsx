@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Aide } from '@/components/aide/Aide'
 import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { MarqueFraicheur } from '@/features/fiche/MarqueFraicheur'
 import type { DonneesFiche } from '@/features/fiche/modeleFiche'
@@ -18,7 +17,8 @@ interface Props {
 
 /**
  * Ouverture de la fiche (maquettes 04 et 12) : surtitre (« Votre ministère », ou le chemin
- * « Ministères, Communication »), nom du ministère, phrase de la fiche, fraîcheur avec son aide,
+ * « Ministères, Communication »), nom du ministère, phrase de la fiche, fraîcheur (sans bulle :
+ * « Mis à jour il y a 3 jours » se comprend seul, T66 t200),
  * prochaine réunion (emplacement de E6), puis, pour le ministère seulement, ses boutons de saisie.
  * EJP Tech lit la fiche sans aucun bouton (T29).
  */
@@ -48,9 +48,8 @@ export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
           <PhraseFiche phrase={donnees.phrase} />
         </div>
         <div className="flex min-w-60 flex-col gap-1.5 text-[15px]">
-          <p data-ligne-aide className="flex items-center">
+          <p className="flex items-center">
             <MarqueFraicheur libelle={fraicheur.libelle} etat={fraicheur.etat} />
-            <Aide code="fiche.fraicheur" libelle={fraicheur.libelle} placement="flottante" />
           </p>
           {reunion}
         </div>

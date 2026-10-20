@@ -32,10 +32,7 @@ interface Props {
  */
 export function LigneEvenement({ ligne, avecAction }: Props) {
   const aDesNotes =
-    ligne.report !== null ||
-    ligne.mentions.length > 0 ||
-    ligne.mentionnePar !== null ||
-    ligne.lectureSeule !== null
+    ligne.report !== null || ligne.mentions.length > 0 || ligne.mentionnePar !== null
   return (
     <li
       className={cn(
@@ -53,7 +50,6 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
           <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-note text-encre-3">
             {ligne.report !== null ? <span>{ligne.report}</span> : null}
             {ligne.mentionnePar !== null ? <span>{ligne.mentionnePar}.</span> : null}
-            {ligne.lectureSeule !== null ? <span>{ligne.lectureSeule}</span> : null}
             {ligne.mentions.map((nom) => (
               <span key={nom} className="bg-nuit-pale px-1.5 py-px whitespace-nowrap text-nuit">
                 @{nom}

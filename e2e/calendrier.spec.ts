@@ -62,15 +62,13 @@ test.describe('calendrier de la fiche (aperçu)', () => {
     await expect(page.getByText('Décision attendue : Choisir le lieu de stockage')).toBeVisible()
   })
 
-  test('le ministère : « Ajouter un événement », « Modifier » pour la réunion', async ({
-    page,
-  }) => {
+  test('le ministère : « Ajouter un événement », « Modifier la réunion »', async ({ page }) => {
     await ouvrir(page, { profil: 'ministere' })
     await expect(page.getByRole('link', { name: 'Ajouter un événement' })).toHaveAttribute(
       'href',
       '/saisir/evenement',
     )
-    await expect(page.getByRole('link', { name: 'Modifier' })).toHaveAttribute(
+    await expect(page.getByRole('link', { name: 'Modifier la réunion' })).toHaveAttribute(
       'href',
       '/saisir/reunion',
     )
@@ -84,7 +82,7 @@ test.describe('calendrier de la fiche (aperçu)', () => {
     const bandeau = page.locator('[data-alerte-fiche]')
     await expect(bandeau).toContainText('À confirmer')
     await expect(bandeau).toContainText(
-      'Deux événements sont encore en attente de validation et leur date approche ou est passée. Mettez à jour leur statut.',
+      '2 événements proches ou passés attendent toujours leur validation. Mettez à jour leur statut.',
     )
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(page.getByText('dans 3 jours')).toBeVisible()
@@ -105,14 +103,14 @@ test.describe('calendrier de la fiche (aperçu)', () => {
     }
   })
 
-  test('vide : « Aucun événement prévu. », réunion « Non renseignée. »', async ({ page }) => {
+  test('vide : « Aucun événement prévu. », réunion « Aucune date. »', async ({ page }) => {
     await ouvrir(page, { ecran: 'fiche-vide', profil: 'berger' })
     await expect(page.getByText('Aucun événement prévu.')).toBeVisible()
-    await expect(page.getByText('Non renseignée.')).toBeVisible()
+    await expect(page.getByText('Aucune date.')).toBeVisible()
     await expect(page.getByRole('link', { name: ACTIONS })).toHaveCount(0)
     await ouvrir(page, { ecran: 'fiche-vide', profil: 'ministere' })
     await expect(page.getByRole('link', { name: 'Ajouter un événement' })).toHaveCount(1)
-    await expect(page.getByRole('link', { name: 'Renseigner' })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Ajouter la réunion' })).toBeVisible()
   })
 })
 
@@ -149,12 +147,14 @@ test.describe('bloc « Événements à confirmer » (aperçu)', () => {
     )
   })
 
-  test('l’aide du titre se lit sans survol', async ({ page }) => {
+  test('la phrase définit la liste, sans bulle sur le titre (T66)', async ({ page }) => {
     await ouvrir(page, { ecran: 'a-confirmer', profil: 'berger' })
-    const aide = page.getByRole('button', { name: 'Aide : Événements à confirmer' })
-    await aide.click()
-    await expect(aide).toHaveAttribute('aria-expanded', 'true')
-    await expect(page.getByText(/à 3 jours ou moins de leur date, ou déjà passés/)).toBeVisible()
+    await expect(
+      page.getByText(
+        'Toujours en attente de validation, à 3 jours ou moins de leur date, ou déjà passés.',
+      ),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Aide : Événements à confirmer' })).toHaveCount(0)
   })
 
   test('rien à confirmer : ni titre ni cadre', async ({ page }) => {

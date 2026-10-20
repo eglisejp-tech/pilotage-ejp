@@ -37,7 +37,8 @@ export const TEXTES_BLOC_FIJ = {
     terminerPhrase(
       `Aucun département saisi pour la ${semaine.charAt(0).toLowerCase()}${semaine.slice(1)}`,
     ),
-  note: 'Dernière saisie de chaque département pour la semaine. Un département sans saisie ne compte pas pour 0. Courbes : dix dernières semaines.',
+  /** Même forme que la note de « Cette semaine » (T66, t222). */
+  note: 'Courbes : 10 dernières semaines.',
 } as const
 
 export interface RubriqueDuBloc {
@@ -81,7 +82,7 @@ function description(points: readonly { valeur: number | null; nb: number }[]): 
       ? `${nombre(valeur)} (${libelleDepartementsSur8(nb)})`
       : nombre(valeur)
   })
-  return `Dix dernières semaines : ${morceaux.join(', ')}.`
+  return `10 dernières semaines : ${morceaux.join(', ')}.`
 }
 
 /**

@@ -87,14 +87,14 @@ describe('lignesReunion', () => {
     )
   })
 
-  it('non déclarée : À faire, date non confirmée, bouton « Renseigner »', () => {
+  it('non déclarée : « À faire, aucune date », bouton « Ajouter »', () => {
     expect(lignesReunion(null)).toEqual([
       {
         cle: 'reunion',
         libelle: 'Prochaine réunion',
         etat: 'a_faire',
-        detail: 'À faire, date non confirmée',
-        action: { libelle: 'Renseigner', vers: '/saisir/reunion' },
+        detail: 'À faire, aucune date',
+        action: { libelle: 'Ajouter', vers: '/saisir/reunion' },
       },
     ])
   })

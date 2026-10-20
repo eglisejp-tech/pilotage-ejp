@@ -63,7 +63,7 @@ test.describe('fiche 04 lue par le berger (aperçu)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Social' })).toBeVisible()
     await expect(page.locator('mark')).toHaveText('Un point attend une décision')
     await expect(page.getByText('Mis à jour il y a 3 jours')).toBeVisible()
-    await expect(page.getByText('11 sur 14, calculé')).toBeVisible()
+    await expect(page.getByText('11 sur 14 actifs')).toBeVisible()
   })
 
   test('un sensible à 2 s’affiche exact (P52), le mois en cours « en cours »', async ({ page }) => {
@@ -173,11 +173,7 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
   }) => {
     await ouvrir(page, { ecran: 'fiche-vide', profil: 'berger' })
     await expect(page.getByText('Pas encore de saisie')).toHaveCount(3)
-    await expect(
-      page.getByText(
-        "Ce ministère n'a pas encore d'indicateur à lui. Il saisit les chiffres communs.",
-      ),
-    ).toBeVisible()
+    await expect(page.getByText("Ce ministère n'a pas encore d'indicateur à lui.")).toBeVisible()
     await expect(page.getByText('Aucun point ouvert pour Social.')).toBeVisible()
     await expect(page.getByText("Aucune saisie pour l'instant.")).toBeVisible()
   })
@@ -218,9 +214,7 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
       '/ministeres/10000000-0000-4000-8000-000000000001',
     )
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'conseil' })
-    await expect(
-      page.getByText('Aucun ministère actif. EJP Tech crée les ministères.'),
-    ).toBeVisible()
+    await expect(page.getByText('Aucun ministère actif.', { exact: true })).toBeVisible()
     // EJP Tech, qui crée les ministères (T60), n'est pas renvoyé vers lui-même.
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'admin_plateforme' })
     await expect(

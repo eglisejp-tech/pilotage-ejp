@@ -36,7 +36,7 @@ import {
 } from '@/lib/metier/points'
 import { detailFij } from '@/lib/metier/pourcentage'
 import { libellePeriode } from '@/lib/metier/semaine'
-import { comparerNoms, majusculeInitiale, nombre, nombreEnDebutDePhrase } from '@/lib/metier/texte'
+import { comparerNoms, nombre } from '@/lib/metier/texte'
 import { TEXTE_MASQUE, TEXTES_VIDES } from './textesVides'
 import type {
   ApportSession,
@@ -102,8 +102,8 @@ export interface LecturesCetteSemaine {
 type LigneSession = LigneVue<'v_session_completude'>
 type LigneTableau = LigneVue<'v_tableau_ministeres'>
 
-const NOTE_CHIFFRES =
-  "Chaque chiffre additionne les saisies des ministères. Un STAR saisi par deux ministères n'est compté qu'une fois. Courbes : dix derniers dimanches ou quatre dernières sessions."
+// La règle du STAR compté une fois est sur la page d'aide (T66, t180).
+const NOTE_CHIFFRES = 'Courbes : 10 derniers dimanches ou 4 dernières sessions.'
 
 const DEPARTEMENTS: { code: CodeDepartement; nom: string }[] = [
   { code: '75', nom: 'Paris' },
@@ -121,7 +121,7 @@ const TYPES_SESSION: TypeSession[] = ['batir', 'anti_dispersion', 'autre']
 const LIBELLE_LIEN_SESSION: Record<TypeSession, string> = {
   batir: `Voir ${LIBELLE_TYPE_SESSION.batir}`,
   anti_dispersion: `Voir ${LIBELLE_TYPE_SESSION.anti_dispersion}`,
-  autre: 'Voir les autres rassemblements',
+  autre: 'Voir les autres sessions',
 }
 
 /** Nombre de sessions du même type dans la courbe. */
@@ -141,12 +141,7 @@ function texteLibreOuNull(texte: string | null): TexteLibre | null {
 
 // Courbes
 
-function enLettres(n: number, feminin: boolean): string {
-  if (n === 1) return feminin ? 'une' : 'un'
-  return nombreEnDebutDePhrase(n).toLowerCase()
-}
-
-// « Les quatre derniers sont incomplets. », « La dernière est incomplète. »
+// « Les 4 derniers sont incomplets. », « La dernière est incomplète. » Nombres en chiffres (T66, t181).
 function phraseIncompletes(points: readonly PointCourbe[], feminin: boolean): string {
   const total = points.length
   const incomplets = points.filter((point) => point.incomplet === true).length
@@ -161,13 +156,13 @@ function phraseIncompletes(points: readonly PointCourbe[], feminin: boolean): st
     if (incomplets === total) return ` ${feminin ? 'Toutes' : 'Tous'} sont ${adjectif(true)}.`
     if (incomplets === 1)
       return ` ${feminin ? 'La dernière' : 'Le dernier'} est ${adjectif(false)}.`
-    return ` Les ${enLettres(incomplets, feminin)} dernier${e}s sont ${adjectif(true)}.`
+    return ` Les ${nombre(incomplets)} dernier${e}s sont ${adjectif(true)}.`
   }
-  const nombreIncomplets = majusculeInitiale(enLettres(incomplets, feminin))
-  return ` ${nombreIncomplets} ${incomplets === 1 ? 'est' : 'sont'} ${adjectif(incomplets > 1)}.`
+  if (incomplets === 1) return ` ${feminin ? 'Une' : 'Un'} est ${adjectif(false)}.`
+  return ` ${nombre(incomplets)} sont ${adjectif(true)}.`
 }
 
-/** « Dix derniers dimanches : 49, sans saisie, 52. Le dernier est incomplet. » */
+/** « 10 derniers dimanches : 49, sans saisie, 52. Le dernier est incomplet. » */
 function descriptionCourbe(points: readonly PointCourbe[], feminin: boolean): string {
   const nb = points.length
   const debut =
@@ -175,7 +170,7 @@ function descriptionCourbe(points: readonly PointCourbe[], feminin: boolean): st
       ? feminin
         ? 'Dernière session'
         : 'Dernier dimanche'
-      : `${nombreEnDebutDePhrase(nb)} ${feminin ? 'dernières sessions' : 'derniers dimanches'}`
+      : `${nombre(nb)} ${feminin ? 'dernières sessions' : 'derniers dimanches'}`
   const valeurs = points
     .map((point) =>
       point.valeur === null ? TEXTES_VIDES.chiffres.pointDeCourbeSansSaisie : nombre(point.valeur),
@@ -652,7 +647,7 @@ function pointADecider(point: LigneVue<'v_point'>, contexte: Contexte): PointADe
       point.echeance === null
         ? null
         : {
-            texte: `avant le ${formaterJourCourt(point.echeance)}`,
+            texte: `échéance ${formaterJourCourt(point.echeance)}`,
             depassee: echeanceDepassee(point.echeance, contexte.lectures.semaine.aujourdhui),
           },
     titre: texteLibre(point.titre),

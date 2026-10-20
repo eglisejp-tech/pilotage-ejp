@@ -25,9 +25,9 @@ const VALEURS_PAR_SEMAINE = RUBRIQUES_FIJ.length * NOMBRE_DEPARTEMENTS
 
 /**
  * Lignes de « Vos saisies » du seul ministère `fij` (BRIEF, section 9) : « Carte des FIJ », Faite
- * si le dernier envoi a moins de 30 jours ; « Chiffres par département », Faits si la semaine de
- * référence a au moins une valeur, avec leur complétude (« 30 valeurs sur 32 »). Aucune ligne pour
- * un autre ministère.
+ * si la dernière saisie a moins de 30 jours ; « Chiffres par département », Faits si la semaine de
+ * référence a au moins une valeur, avec leur complétude (« 30 chiffres sur 32 »). Aucune ligne
+ * pour un autre ministère. Les mots du glossaire : « saisie », « chiffre » (T66, t169 et t170).
  */
 export function lignesFij({
   estFij,
@@ -63,7 +63,7 @@ export function lignesFij({
         detail:
           dernierEnvoi === null
             ? null
-            : `À faire, dernier envoi le ${formaterJourCourt(jourDeParis(dernierEnvoi))}`,
+            : `À faire, dernière saisie le ${formaterJourCourt(jourDeParis(dernierEnvoi))}`,
         action: { libelle: 'Saisir', vers: '/saisir/fij' },
       }
 
@@ -76,7 +76,7 @@ export function lignesFij({
           cle: 'fij_statistiques',
           libelle: 'Chiffres par département',
           etat: 'fait',
-          detail: `Fait, ${nombre(valeurs)} ${accorder(valeurs, 'valeur', 'valeurs')} sur ${nombre(VALEURS_PAR_SEMAINE)}`,
+          detail: `Fait, ${nombre(valeurs)} ${accorder(valeurs, 'chiffre', 'chiffres')} sur ${nombre(VALEURS_PAR_SEMAINE)}`,
           action: { libelle: 'Corriger', vers: '/saisir/fij-statistiques' },
         }
       : {

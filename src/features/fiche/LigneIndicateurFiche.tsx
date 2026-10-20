@@ -21,8 +21,8 @@ interface Props {
 }
 
 /**
- * Une ligne d'indicateur propre de la fiche : libellé (marque « à valider » en texte visible,
- * aide de la première ligne calculée), dernière valeur, petite courbe, date de la dernière saisie
+ * Une ligne d'indicateur propre de la fiche : libellé (marque « à valider » en texte visible ; le
+ * détail d'un calcul suffit, sans bulle, T66 t202), dernière valeur, petite courbe, date de la dernière saisie
  * et somme de l'année avec sa complétude. Dessous, pour un indicateur du mois, la valeur du mois
  * en cours ; pour un sensible, ses précisions et sa répartition repliée (P45 à P47).
  */
@@ -40,12 +40,7 @@ export function LigneIndicateurFiche({ ligne }: Props) {
     <li className="border-b border-filet py-3">
       <div className={GRILLE_LIGNE}>
         <span className={CASE_LIBELLE}>
-          <span className="inline-flex flex-wrap items-center">
-            <span>{ligne.libelle}</span>
-            {aides.calcule ? (
-              <Aide code="fiche.calcule" libelle={ligne.libelle} placement="flottante" />
-            ) : null}
-          </span>
+          <span>{ligne.libelle}</span>
           {ligne.aValider !== null ? (
             <span className="block text-note font-semibold text-attention">{ligne.aValider}</span>
           ) : null}

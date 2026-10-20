@@ -112,8 +112,6 @@ export interface DetailSensible {
 
 /** Aides de la fiche placées sur une ligne (aides-contextuelles.md, « Fiche d'un ministère »). */
 export interface AidesLigne {
-  /** `fiche.calcule`, sur le libellé de la première ligne calculée. */
-  calcule?: boolean
   /** `fiche.sommeAnnee`, à côté de la complétude de la première somme de l'année. */
   somme?: boolean
 }
@@ -122,7 +120,7 @@ export interface AidesLigne {
 export interface LigneIndicateurFiche {
   id: string
   libelle: string
-  /** Ajout à valider : « À valider par EJP Tech » (lecteurs), ou la phrase du ministère. */
+  /** Ajout à valider : « à valider » (lecteurs), ou la phrase du ministère. */
   aValider: string | null
   calcul: boolean
   /** Jamais saisi, ni pour un mois fini ni pour le mois en cours : « première saisie » attendue. */
@@ -187,7 +185,7 @@ export interface PointFiche {
   priorite: Priorite
   /** Ministère créateur : « Communication », « Social (désactivé) ». */
   ministere: string
-  /** « avant le 3 oct. », avec « dépassée » en rouge s'il y a lieu ; null sans échéance. */
+  /** « échéance 3 oct. », avec « dépassée » en rouge s'il y a lieu ; null sans échéance. */
   echeance: { texte: string; depassee: boolean } | null
   titre: TexteLibre
   description: TexteLibre | null

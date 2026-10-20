@@ -133,7 +133,7 @@ describe('PageCetteSemaine', () => {
       expect(titres()).toEqual([
         'Vos saisies',
         'Vos chiffres de la semaine',
-        'Vos points',
+        'Mes points',
         "Dans l'église",
       ])
     })
@@ -186,7 +186,7 @@ describe('PageCetteSemaine', () => {
         </MemoryRouter>,
       )
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-        "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision.",
+        "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision.",
       )
     })
   })
@@ -234,7 +234,7 @@ describe('PageCetteSemaine', () => {
       afficher('admin_plateforme')
       expect(hook).toHaveBeenCalledWith({ profil: 'admin_plateforme' }, null)
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-        "52 STARs au service dimanche. Deux ministères n'ont pas encore saisi, et un point attend votre décision.",
+        "52 STARs au service dimanche. 2 ministères n'ont pas encore saisi, et un point attend votre décision.",
       )
       const aDecider = screen.getByRole('region', { name: 'À décider' })
       expect(within(aDecider).getAllByRole('heading', { level: 3 })).toHaveLength(3)

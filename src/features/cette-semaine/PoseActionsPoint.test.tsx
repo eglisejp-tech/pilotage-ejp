@@ -145,16 +145,16 @@ describe('la vue « Cette semaine » donne son compte à chaque profil', () => {
     expect(posees()).toHaveLength(0)
   })
 
-  it('ministère : « Vos points » reçoit le compte du ministère, pas « À décider »', () => {
+  it('ministère : « Mes points » reçoit le compte du ministère, pas « À décider »', () => {
     dans(<VueCetteSemaine donnees={exempleCetteSemaine('ministere')} accueil={exempleAccueil()} />)
     expect(screen.queryByRole('region', { name: 'À décider' })).not.toBeInTheDocument()
-    const recues = posees(screen.getByRole('region', { name: 'Vos points' }))
+    const recues = posees(screen.getByRole('region', { name: 'Mes points' }))
     expect(recues).toHaveLength(POINTS_EXEMPLE.length)
     expect(recues.every((recue) => recue.compte?.ministereId === MINISTERE_EXEMPLE)).toBe(true)
   })
 })
 
-describe('« Vos points » (accueil du ministère)', () => {
+describe('« Mes points » (accueil du ministère)', () => {
   it('chaque point porte son créateur et ses mentions par identifiants', () => {
     dans(<BlocVosPoints bloc={{ etat: 'donnees', donnees: POINTS_EXEMPLE }} compte={MINISTERE} />)
     const recues = posees()
@@ -175,12 +175,12 @@ describe('« Vos points » (accueil du ministère)', () => {
       },
     ])
     expect(recues.every((recue) => recue.compte?.ministereId === MINISTERE_EXEMPLE)).toBe(true)
-    expect(screen.getByRole('region', { name: 'Vos points' })).toHaveAttribute('data-repli-focus')
+    expect(screen.getByRole('region', { name: 'Mes points' })).toHaveAttribute('data-repli-focus')
   })
 
   it('un point mentionné garde « Mentionné par Intégration. » avant ses boutons', () => {
     dans(<BlocVosPoints bloc={{ etat: 'donnees', donnees: POINTS_EXEMPLE }} compte={MINISTERE} />)
-    const [, mentionne] = within(screen.getByRole('region', { name: 'Vos points' })).getAllByRole(
+    const [, mentionne] = within(screen.getByRole('region', { name: 'Mes points' })).getAllByRole(
       'article',
     )
     const texte = mentionne as HTMLElement

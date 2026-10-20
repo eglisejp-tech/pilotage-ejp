@@ -23,7 +23,7 @@ function ligne(donnees: ReturnType<typeof berger>, libelle: string): LigneIndica
 }
 
 describe('construireFiche : chiffres communs', () => {
-  it('service, actifs et en FIJ : valeur, écart, courbe et date ; FIJ calculé', () => {
+  it('service, actifs et en FIJ : valeur, écart, courbe et date ; « 11 sur 14 actifs »', () => {
     const [service, actifs, enFij] = berger().communs
     expect(service).toMatchObject({
       libelle: 'STARs au service',
@@ -38,7 +38,7 @@ describe('construireFiche : chiffres communs', () => {
     expect(enFij).toMatchObject({
       libelle: 'STARs présents en FIJ',
       valeur: { etat: 'saisie', texte: '79', unite: '%' },
-      detail: '11 sur 14, calculé',
+      detail: '11 sur 14 actifs',
     })
   })
 
@@ -193,9 +193,9 @@ describe('construireFiche : indicateurs propres', () => {
     })
   })
 
-  it('ajout à valider : « À valider par EJP Tech » pour le berger, la phrase du ministère pour lui ; jamais saisi : « vide »', () => {
+  it('ajout à valider : « à valider » pour le berger, la phrase du ministère pour lui ; jamais saisi : « vide »', () => {
     expect(ligne(berger(), 'Collectes organisées')).toMatchObject({
-      aValider: 'À valider par EJP Tech',
+      aValider: 'à valider',
       valeur: { etat: 'vide' },
       moisEnCours: { texte: 'Octobre en cours : pas encore de saisie' },
     })
@@ -370,7 +370,8 @@ describe('construireFiche : indicateur sensible (P45 à P47, P52)', () => {
     const aides = (donnees: ReturnType<typeof berger>) =>
       donnees.sections.flatMap((s) => s.lignes).map((l) => l.aides)
     const duBerger = aides(berger())
-    expect(duBerger.filter((a) => a.calcule)).toHaveLength(1)
+    // Un calcul n'a plus de bulle : son détail visible suffit (T66, t202).
+    expect(duBerger.filter((a) => 'calcule' in a)).toHaveLength(0)
     expect(duBerger.filter((a) => a.somme)).toHaveLength(1)
     expect(aides(ministere())).toEqual(duBerger)
     expect(berger().aideCourbe).toBe(true)
@@ -389,13 +390,13 @@ describe('construirePointsFiche', () => {
     ])
     expect(points[0]).toMatchObject({
       ministere: 'Social',
-      echeance: { texte: 'avant le 15 oct.', depassee: false },
+      echeance: { texte: 'échéance 15 oct.', depassee: false },
       mentions: ['Coordination'],
       mentionnePar: null,
     })
-    expect(points[1]?.echeance).toEqual({ texte: 'avant le 2 oct.', depassee: true })
+    expect(points[1]?.echeance).toEqual({ texte: 'échéance 2 oct.', depassee: true })
     expect(points[1]?.description).toEqual({ texte: '[texte masqué par EJP Tech]', masque: true })
-    expect(points[2]?.traite?.texte).toBe('Traité le 3 oct.')
+    expect(points[2]?.traite?.texte).toBe('Traité le 3 oct. par Social.')
   })
 
   it('les identifiants des boutons viennent de v_point et de v_point_mention, point par point', () => {

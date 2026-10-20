@@ -19,8 +19,8 @@ const classeLien = 'inline-flex min-h-cible items-center text-nuit underline und
 /**
  * « Prochaine réunion » sous la fraîcheur, à l'ouverture de la fiche (maquettes 04 et 12) :
  * « Prochaine réunion : lundi 5 oct., 20 h », puis l'objet et « Décision attendue : ... ». Rien
- * n'est déclaré : « Non renseignée. » (berger, conseil, EJP Tech) ou « Renseigner » (ministère).
- * Le ministère a « Modifier » ; les autres profils n'ont aucun bouton. Rien pendant le chargement.
+ * n'est déclaré : « Aucune date. », et « Ajouter la réunion » pour le ministère. Le ministère a
+ * « Modifier la réunion » ; les autres profils n'ont aucun bouton. Rien pendant le chargement.
  */
 export function VueReunion({ etat, peutSaisir }: Props) {
   if (etat.etat === 'chargement') return null

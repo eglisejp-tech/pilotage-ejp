@@ -45,7 +45,11 @@ describe('EvenementsAConfirmer', () => {
     expect(
       screen.getByRole('heading', { level: 2, name: 'Événements à confirmer' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/Ces événements attendent encore leur validation/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Toujours en attente de validation, à 3 jours ou moins de leur date, ou déjà passés.',
+      ),
+    ).toBeInTheDocument()
     const ligne = screen.getByRole('listitem')
     expect(ligne).toHaveTextContent(
       '« Soirée de louange », Communication : samedi 10 oct., dans 3 jours',
@@ -54,11 +58,9 @@ describe('EvenementsAConfirmer', () => {
       'href',
       '/ministeres/m-com',
     )
-    // Seuls l'aide du titre et le lien du ministère : jamais « Mettre à jour » ni « Marquer traité ».
-    expect(screen.queryByRole('button', { name: /Mettre à jour|Marquer traité/ })).toBeNull()
-    expect(
-      screen.getByRole('button', { name: 'Aide : Événements à confirmer' }),
-    ).toBeInTheDocument()
+    // Seul le lien du ministère : jamais « Mettre à jour » ni « Marquer traité », et plus de bulle
+    // sur le titre, la phrase définit la liste (T66, t198).
+    expect(screen.queryByRole('button')).toBeNull()
   })
 
   it('une date passée s’écrit avec les mots, la plus ancienne en tête', () => {

@@ -25,7 +25,7 @@ describe('catalogue des aides (T38)', () => {
   // T66 (19 octobre 2026) : une bulle définit un chiffre ou un terme qu'une personne nouvelle ne
   // peut pas deviner ; les autres aides sont retirées ou deviennent des indications sous le champ.
   it('compte les aides gardées par la refonte des textes (T66)', () => {
-    expect(ENTREES).toHaveLength(35)
+    expect(ENTREES).toHaveLength(29)
   })
 
   // Règle 3 : on dit ce qu'est le chiffre, pas ce que la personne ne doit pas savoir ni faire.

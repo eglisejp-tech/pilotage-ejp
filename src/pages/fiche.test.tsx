@@ -211,9 +211,9 @@ describe('/ministeres', () => {
   it('le berger lit la liste, chaque nom ouvre la fiche, description sous le nom', async () => {
     installer('berger', { v_semaine: [SEMAINE], v_tableau_ministeres: TABLEAU_EXEMPLE })
     afficher('/ministeres')
-    expect(
-      await screen.findByText(/Du moins récent au plus récent/, {}, ATTENTE),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Communication' }, ATTENTE)).toBeInTheDocument()
+    // Plus de phrase sur le tri sous le titre (T66, t226).
+    expect(screen.queryByText(/Du moins récent au plus récent/)).toBeNull()
     expect(screen.getByRole('link', { name: 'Communication' })).toHaveAttribute(
       'href',
       '/ministeres/10000000-0000-4000-8000-000000000001',
@@ -231,9 +231,7 @@ describe('/ministeres', () => {
   it('aucun ministère actif : la phrase de premier usage, sans tableau vide', async () => {
     installer('conseil', { v_semaine: [SEMAINE], v_tableau_ministeres: [] })
     afficher('/ministeres')
-    expect(
-      await screen.findByText('Aucun ministère actif. EJP Tech crée les ministères.', {}, ATTENTE),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Aucun ministère actif.', {}, ATTENTE)).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBeNull()
   })
 

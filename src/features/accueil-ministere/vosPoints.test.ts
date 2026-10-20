@@ -54,6 +54,7 @@ function lectures(): LecturesVosPoints {
           statut: 'traite',
           traitement_id: 'traitement-c',
           traite_le: '2026-10-03T18:00:00+02:00',
+          traite_par: 'compte-coordination',
         }),
       ],
       mentions: [
@@ -61,9 +62,35 @@ function lectures(): LecturesVosPoints {
         { point_id: 'a', ministere_id: COMMUNICATION },
         { point_id: 'b', ministere_id: SOCIAL },
       ],
+      auteurs: [
+        {
+          user_id: 'compte-coordination',
+          ministere_id: COORDINATION,
+          libelle: 'Ministère Coordination',
+        },
+      ],
     },
   }
 }
+
+describe('construireVosPoints : textes de la carte (T66)', () => {
+  it('« échéance 5 oct. » et « Traité le 3 oct. par Coordination. »', () => {
+    const base = lectures()
+    base.points.points[0] = { ...base.points.points[0]!, echeance: '2026-10-15' }
+    const points = construireVosPoints(base)
+    expect(points.find((p) => p.id === 'a')?.echeance?.texte).toBe('échéance 15 oct.')
+    expect(points.find((p) => p.id === 'c')?.traite?.texte).toBe(
+      'Traité le 3 oct. par Coordination.',
+    )
+  })
+
+  it('auteur illisible : « Traité le 3 oct. », sans nom', () => {
+    const base = lectures()
+    base.points.auteurs = []
+    const traite = construireVosPoints(base).find((p) => p.id === 'c')
+    expect(traite?.traite?.texte).toBe('Traité le 3 oct.')
+  })
+})
 
 describe('construireVosPoints : identifiants des boutons', () => {
   it('statut, ministère créateur et mentions viennent de v_point et de v_point_mention, point par point', () => {

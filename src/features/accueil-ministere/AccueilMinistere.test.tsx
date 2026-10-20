@@ -45,10 +45,10 @@ afterEach(() => {
 
 describe('etatAffiche', () => {
   it('sépare le mot d’état du détail écrit par le lot', () => {
-    expect(etatAffiche(LIGNE_DIMANCHE_FAIT)).toEqual({ mot: 'fait', texte: '10 au service' })
+    expect(etatAffiche(LIGNE_DIMANCHE_FAIT)).toEqual({ mot: 'fait', texte: '10 STARs au service' })
     expect(etatAffiche(LIGNE_REUNION_A_FAIRE)).toEqual({
       mot: 'a_faire',
-      texte: 'Date non confirmée',
+      texte: 'Aucune date',
     })
     expect(etatAffiche(LIGNE_EVENEMENT_A_CONFIRMER)).toEqual({
       mot: 'a_faire',
@@ -81,8 +81,8 @@ describe('BlocVosSaisies', () => {
     const bloc = screen.getByRole('region', { name: 'Vos saisies' })
     const lignes = within(bloc).getAllByRole('listitem')
     expect(lignes).toHaveLength(5)
-    expect(lignes[0]).toHaveTextContent('Chiffres du dimanche 27 sept.Fait10 au service')
-    expect(lignes[2]).toHaveTextContent('Prochaine réunionÀ faireDate non confirmée')
+    expect(lignes[0]).toHaveTextContent('Chiffres du dimanche 27 sept.Fait10 STARs au service')
+    expect(lignes[2]).toHaveTextContent('Prochaine réunionÀ faireAucune date')
 
     const corriger = within(lignes[0] as HTMLElement).getByRole('link')
     expect(corriger).toHaveTextContent('Corriger')
@@ -90,7 +90,7 @@ describe('BlocVosSaisies', () => {
     expect(corriger).toHaveAttribute('href', '/saisir/dimanche?date=2026-09-27')
     expect(
       within(lignes[2] as HTMLElement).getByRole('link', {
-        name: 'Renseigner : Prochaine réunion',
+        name: 'Ajouter : Prochaine réunion',
       }),
     ).toHaveAttribute('href', '/saisir/reunion')
     expect(
@@ -111,10 +111,10 @@ describe('BlocVosPoints', () => {
       <BlocVosPoints bloc={bloc} compte={{ type: 'ministere', ministereId: MINISTERE_EXEMPLE }} />,
     )
 
-  it('titre, « Créés ou mentionnés », aide `accueil.points` hors du titre, puis les points', async () => {
+  it('titre « Mes points », « Créés ou mentionnés » sans bulle, puis les points', () => {
     afficher({ etat: 'donnees', donnees: POINTS_EXEMPLE })
-    const bloc = screen.getByRole('region', { name: 'Vos points' })
-    expect(within(bloc).getByRole('heading', { level: 2 })).toHaveTextContent(/^Vos points$/)
+    const bloc = screen.getByRole('region', { name: 'Mes points' })
+    expect(within(bloc).getByRole('heading', { level: 2 })).toHaveTextContent(/^Mes points$/)
     expect(bloc).toHaveTextContent('Créés ou mentionnés')
     expect(
       within(bloc)
@@ -122,28 +122,23 @@ describe('BlocVosPoints', () => {
         .map((t) => t.textContent),
     ).toEqual(['Salle pour la soirée de louange', 'Visuels pour Welcome Prodiges'])
     expect(bloc).toHaveTextContent('Mentionné par Intégration.')
-
-    const aide = within(bloc).getByRole('button', { name: 'Aide : Vos points' })
-    await userEvent.click(aide)
-    expect(aide).toHaveAttribute('aria-expanded', 'true')
-    expect(bloc).toHaveTextContent(
-      'Les points créés par votre ministère ou qui le mentionnent. Un point traité reste affiché 7 jours.',
-    )
+    // « Créés ou mentionnés » suffit : la bulle `accueil.points` est retirée (T66, t164).
+    expect(within(bloc).queryByRole('button', { name: /^Aide : / })).toBeNull()
     // Les boutons de chaque point sont ceux d'`ActionsPoint` (étape 5) : leur pose est vérifiée
     // par `PoseActionsPoint.test.tsx`, avec les propriétés qu'elle lui donne.
   })
 
-  it('tout est fait : « Aucun point ouvert pour votre ministère. »', () => {
+  it('tout est fait : « Aucun point ouvert. »', () => {
     afficher({ etat: 'donnees', donnees: [] })
-    expect(screen.getByRole('region', { name: 'Vos points' })).toHaveTextContent(
-      'Aucun point ouvert pour votre ministère.',
+    expect(screen.getByRole('region', { name: 'Mes points' })).toHaveTextContent(
+      'Aucun point ouvert.',
     )
   })
 
   it('problème passager : le titre reste, « Réessayer » relance la lecture', async () => {
     const reessayer = vi.fn()
     afficher({ etat: 'erreur', reessayer })
-    expect(screen.getByRole('heading', { name: 'Vos points' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Mes points' })).toBeInTheDocument()
     expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
     expect(reessayer).toHaveBeenCalledTimes(1)
@@ -167,14 +162,14 @@ describe('OuvertureMinistere', () => {
       within(actions)
         .getAllByRole('link')
         .map((lien) => lien.textContent),
-    ).toEqual(['Renseigner la prochaine réunion', 'Saisir une session', 'Nouveau point'])
+    ).toEqual(['Ajouter la prochaine réunion', 'Saisir une session', 'Nouveau point'])
     expect(within(actions).getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
       'href',
       '/saisir/point',
     )
-    expect(
-      within(actions).getByRole('link', { name: 'Renseigner la prochaine réunion' }),
-    ).toHaveClass('bg-lumiere')
+    expect(within(actions).getByRole('link', { name: 'Ajouter la prochaine réunion' })).toHaveClass(
+      'bg-lumiere',
+    )
     // La note de conception de 07 ne s'affiche pas.
     expect(screen.queryByText(/Le dimanche midi/)).not.toBeInTheDocument()
   })
@@ -204,11 +199,11 @@ describe('VueCetteSemaine avec l’accueil du ministère', () => {
   const titres = () =>
     screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent ?? '')
 
-  it('ordinateur : ouverture, « Vos saisies », « Vos points », puis les blocs de l’église', () => {
+  it('ordinateur : ouverture, « Vos saisies », « Mes points », puis les blocs de l’église', () => {
     dans(<VueCetteSemaine donnees={exempleCetteSemaine('ministere')} accueil={exempleAccueil()} />)
     expect(titres()).toEqual([
       'Vos saisies',
-      'Vos points',
+      'Mes points',
       "L'église cette semaine",
       "Bâtir l'Église, samedi 26 septembre",
       'FIJ en Île-de-France',
@@ -217,10 +212,10 @@ describe('VueCetteSemaine avec l’accueil du ministère', () => {
     expect(screen.queryByRole('region', { name: 'À décider' })).not.toBeInTheDocument()
   })
 
-  it('téléphone : « Vos saisies » et « Vos points » avant « L’église cette semaine » et « Tout voir »', () => {
+  it('téléphone : « Vos saisies » et « Mes points » avant « L’église cette semaine » et « Tout voir »', () => {
     simulerLargeur(390)
     dans(<VueCetteSemaine donnees={exempleCetteSemaine('ministere')} accueil={exempleAccueil()} />)
-    expect(titres()).toEqual(['Vos saisies', 'Vos points', "L'église cette semaine"])
+    expect(titres()).toEqual(['Vos saisies', 'Mes points', "L'église cette semaine"])
     expect(screen.getByRole('button', { name: 'Tout voir' })).toHaveAttribute(
       'aria-expanded',
       'false',
@@ -230,7 +225,7 @@ describe('VueCetteSemaine avec l’accueil du ministère', () => {
   it('les autres profils ne reçoivent ni l’ouverture de 07 ni ses blocs', () => {
     dans(<VueCetteSemaine donnees={exempleCetteSemaine('admin_eglise')} />)
     expect(titres()).not.toContain('Vos saisies')
-    expect(titres()).not.toContain('Vos points')
+    expect(titres()).not.toContain('Mes points')
     expect(screen.queryByRole('navigation', { name: 'Saisies à faire' })).not.toBeInTheDocument()
   })
 })

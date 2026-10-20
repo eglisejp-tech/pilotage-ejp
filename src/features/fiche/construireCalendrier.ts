@@ -4,7 +4,7 @@
 
 import type { EvenementLu } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
-import { libelleStatut, seulPorteur } from '@/features/evenements/textes'
+import { libelleStatut } from '@/features/evenements/textes'
 import type { TexteLibre } from '@/features/cette-semaine/types'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import { TEXTES_BANDEAU, TEXTES_CALENDRIER } from '@/features/fiche/textesCalendrier'
@@ -44,10 +44,11 @@ export interface LigneCalendrier {
   report: string | null
   /** Noms des ministères mentionnés (« Coordination »), pour l'écriture « @Coordination ». */
   mentions: string[]
-  /** « Mentionné par Communication », pour un événement d'un autre ministère. */
+  /**
+   * « Mentionné par Communication », pour un événement d'un autre ministère. Sur la fiche,
+   * l'absence de bouton suffit : plus de « Seul Communication... » (T66, t218).
+   */
   mentionnePar: string | null
-  /** « Seul Communication met à jour cet événement. » : lecture seule d'un événement mentionné. */
-  lectureSeule: string | null
   /** Adresse de « Mettre à jour » : le ministère porteur seul (sa propre fiche), sinon null. */
   versMiseAJour: string | null
 }
@@ -101,10 +102,6 @@ export function construireCalendrier(
         mentionnePar: duMinistere
           ? null
           : TEXTES_CALENDRIER.mentionnePar(nom(evenement.ministere_id)),
-        lectureSeule:
-          duMinistere || contexte.profil !== 'ministere'
-            ? null
-            : seulPorteur(nom(evenement.ministere_id)),
         versMiseAJour: peutMettreAJour ? `/saisir/evenement/${evenement.id}` : null,
       }
     },

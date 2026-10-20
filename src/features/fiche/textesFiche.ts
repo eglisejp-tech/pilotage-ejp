@@ -24,7 +24,6 @@ export const TEXTES_FICHE = {
   complementPoints: 'Créés ou mentionnés',
   titreDernieresSaisies: 'Dernières saisies',
   toutLeJournal: 'Tout le journal',
-  noteDernieresSaisies: "Une correction est une nouvelle saisie. L'historique ne se modifie pas.",
 
   /** Boutons de saisie de « Ma fiche » (maquette 12), au ministère seulement. */
   saisirDimanche: 'Saisir les chiffres du dimanche',
@@ -34,10 +33,10 @@ export const TEXTES_FICHE = {
   /** Premier usage d'un indicateur du mois, au-dessus de son action. Proposé (E2). */
   premiereSaisieDuMois: 'Un indicateur du mois attend sa première saisie.',
   /**
-   * Ajout à valider lu par le berger, le conseil ou EJP Tech : le mot seul ne dit pas qui valide.
-   * Le ministère lit la phrase de `texteAjoutAValider` (E1). Proposé (revue de E2).
+   * Ajout à valider lu par le berger, le conseil ou EJP Tech : l'état seul, sans dire qui valide
+   * (T66, t206). Le ministère lit la phrase de `texteAjoutAValider` (E1).
    */
-  aValiderParEjpTech: 'À valider par EJP Tech',
+  aValiderLecteur: 'à valider',
 
   /** Libellés des chiffres communs quand la demande du ministère n'en donne pas (BRIEF, section 4). */
   communs: {
@@ -45,16 +44,16 @@ export const TEXTES_FICHE = {
     actifs: 'STARs actifs',
     en_fij: 'STARs présents en FIJ',
   },
-  /** Détail du pourcentage FIJ d'un ministère : « 11 sur 14, calculé » (maquette 04). */
-  calcule: 'calculé',
+  /** Détail du pourcentage FIJ d'un ministère : « 11 sur 14 actifs », comme l'église (T66, t204). */
+  detailPourcentageFij: (enFij: string, actifs: string) => `${enFij} sur ${actifs} actifs`,
   /** Indicateur « à ce jour » saisi il y a plus de 30 jours. Proposé. */
   plusDe30Jours: 'il y a plus de 30 jours',
 
   repartition: 'Répartition par catégorie',
 
   points: {
-    /** LISEZMOI, « États » (07, 12). */
-    aucunMinistere: 'Aucun point ouvert pour votre ministère.',
+    /** LISEZMOI, « États » (07, 12) ; même texte que « À décider » (T66, t163). */
+    aucunMinistere: 'Aucun point ouvert.',
     /** Fiche 04 lue par le berger, le conseil ou EJP Tech. Proposé (E2). */
     aucun: (nom: string) => `Aucun point ouvert pour ${nom}.`,
     attendu: 'Attendu :',
@@ -62,8 +61,12 @@ export const TEXTES_FICHE = {
     depassee: ', dépassée',
     /** LISEZMOI, écarts connus (07 et 12). */
     mentionnePar: (nom: string) => `Mentionné par ${nom}.`,
-    /** « Traité le 3 oct. » : l'abréviation du mois sert de point final. */
-    traiteLe: (jour: string) => terminerPhrase(`Traité le ${jour}`),
+    /**
+     * « Traité le 3 oct. par Jeunesse. », même forme que l'écran 05 (T66, t173). Auteur illisible :
+     * « Traité le 3 oct. », l'abréviation du mois sert de point final.
+     */
+    traiteLe: (jour: string, auteur: string | null) =>
+      terminerPhrase(auteur === null ? `Traité le ${jour}` : `Traité le ${jour} par ${auteur}`),
   },
 
   /** `/ministeres/:id` d'un identifiant inconnu ou d'un ministère désactivé. Proposé (E2). */
@@ -77,15 +80,8 @@ export const TEXTES_FICHE = {
 
   liste: {
     titre: 'Ministères',
-    /**
-     * BRIEF, section 9 : « Du moins récent au plus récent. Ouvrez un ministère pour voir sa
-     * fiche. » La phrase du milieu dit où commencent les ministères sans saisie. Proposé (revue
-     * de E2).
-     */
-    phrase:
-      'Du moins récent au plus récent. Les ministères sans saisie récente sont en premier. Ouvrez un ministère pour voir sa fiche.',
-    /** Premier usage. Proposé (E2). */
-    aucun: 'Aucun ministère actif. EJP Tech crée les ministères.',
+    /** Premier usage, sans dire qui crée les ministères (T66, t227). */
+    aucun: 'Aucun ministère actif.',
     /** Premier usage, lu par EJP Tech, qui crée les ministères (T60). Proposé. */
     aucunGestion: 'Aucun ministère actif. Créez-les dans Ministères et comptes.',
     colonneMinistere: 'Ministère',
@@ -95,7 +91,7 @@ export const TEXTES_FICHE = {
     colonnePoint: 'Point ouvert',
     /** Textes de la vue de l'église (étape 3), repris pour les mêmes colonnes. */
     aucunEvenement: 'Aucun événement prévu',
-    reunionNonRenseignee: 'Non renseignée',
+    reunionNonRenseignee: 'Aucune date',
     aucunPointOuvert: 'Aucun',
   },
 } as const

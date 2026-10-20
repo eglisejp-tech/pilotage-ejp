@@ -29,7 +29,7 @@ export interface DonneesLignesChiffres {
  * Lignes de « Vos saisies » pour les chiffres (maquette 07 ; BRIEF, section 9), dans cet ordre :
  *
  * - « Chiffres du dimanche 27 sept. » : Fait si les STARs au service sont saisis pour le dimanche
- *   de référence (« Fait, 10 au service », « Corriger »), sinon « Saisir ». Le dimanche de
+ *   de référence (« Fait, 10 STARs au service », « Corriger »), sinon « Saisir ». Le dimanche de
  *   référence bascule le dimanche à 12 h (heure de Paris, `v_semaine`) : la ligne redevient
  *   « À faire » à ce moment.
  * - « Chiffres de septembre », les chiffres du mois écoulé, seulement si le ministère a des
@@ -63,7 +63,8 @@ export function lignesChiffres({
           cle: 'dimanche',
           libelle: libelleDimanche,
           etat: 'fait',
-          detail: `Fait, ${nombre(saisieService.valeur)} au service`,
+          // Expression fixe du glossaire (T66, t166).
+          detail: `Fait, ${nombre(saisieService.valeur)} ${accorder(saisieService.valeur, 'STAR', 'STARs')} au service`,
           action: { libelle: 'Corriger', vers: adresseSaisieDimanche(semaine.dimanche) },
         }
       : {

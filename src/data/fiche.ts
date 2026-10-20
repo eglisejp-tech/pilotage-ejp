@@ -7,6 +7,8 @@
 // La RLS décide de ce que chaque profil lit : un filtre nomme seulement la fiche voulue (le
 // berger, le conseil et EJP Tech lisent toutes les fiches ; un ministère, la sienne).
 
+import { lireAuteursTraitement } from '@/data/pointsListe'
+import type { AuteurTraitement } from '@/data/pointsListe'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
@@ -110,10 +112,12 @@ export async function lirePrecisionsMinistere(
   return data
 }
 
-/** Points de la fiche et toutes leurs mentions (noms des ministères mentionnés). */
+/** Points de la fiche, toutes leurs mentions et les auteurs des traitements. */
 export interface PointsFiche {
   points: LigneVue<'v_point'>[]
   mentions: LigneVue<'v_point_mention'>[]
+  /** Un compte par auteur distinct de traitement (`lireAuteursTraitement`). */
+  auteurs: AuteurTraitement[]
 }
 
 const COLONNES_POINT =
@@ -122,7 +126,8 @@ const COLONNES_POINT =
 /**
  * Points créés par le ministère ou qui le mentionnent, ouverts ou traités (la fiche garde les
  * traités des 7 derniers jours), avec leurs mentions. Trois requêtes : les points qui mentionnent
- * le ministère, puis les points, puis toutes les mentions de ces points.
+ * le ministère, puis les points, puis, en même temps, toutes les mentions de ces points et les
+ * comptes qui en ont marqué un traité (« Traité le 3 oct. par Jeunesse. », T66).
  */
 export async function lirePointsMinistere(ministereId: string): Promise<PointsFiche> {
   const lectureMentionnant = await supabase()
@@ -139,17 +144,20 @@ export async function lirePointsMinistere(ministereId: string): Promise<PointsFi
   const lecturePoints = await supabase().from('v_point').select(COLONNES_POINT).or(filtre)
   if (lecturePoints.error) throw lecturePoints.error
   const points = lecturePoints.data
-  if (points.length === 0) return { points, mentions: [] }
+  if (points.length === 0) return { points, mentions: [], auteurs: [] }
 
-  const lectureMentions = await supabase()
-    .from('v_point_mention')
-    .select('point_id, ministere_id')
-    .in(
-      'point_id',
-      points.map((point) => point.id),
-    )
+  const [lectureMentions, auteurs] = await Promise.all([
+    supabase()
+      .from('v_point_mention')
+      .select('point_id, ministere_id')
+      .in(
+        'point_id',
+        points.map((point) => point.id),
+      ),
+    lireAuteursTraitement(points),
+  ])
   if (lectureMentions.error) throw lectureMentions.error
-  return { points, mentions: lectureMentions.data }
+  return { points, mentions: lectureMentions.data, auteurs }
 }
 
 /** Nombre de lignes de « Dernières saisies » (BRIEF, section 9). */

@@ -98,7 +98,7 @@ describe('construireOuverture', () => {
       { texte: '.' },
     ])
     expect(ouverture.principal).toEqual({
-      libelle: 'Renseigner la prochaine réunion',
+      libelle: 'Ajouter la prochaine réunion',
       vers: '/saisir/reunion',
     })
     expect(ouverture.secondaires).toEqual([
