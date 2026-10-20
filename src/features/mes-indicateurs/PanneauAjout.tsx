@@ -27,11 +27,11 @@ const classeChoisir =
 /**
  * Panneau « Ajouter un indicateur » (configuration-indicateurs.md, 7.3, parcours d'ajout du lot 1) :
  * page entière sous 600 px, panneau de 460 px au-delà. Une limite atteinte (3 ajouts, 30 lignes) :
- * seulement l'explication. Sinon les suggestions que la fiche n'a pas encore, avec leur rythme et
- * leur définition ; « Choisir » ouvre le champ « Pourquoi cet indicateur ? ». Plus aucune
- * suggestion : « Toutes les suggestions sont déjà sur votre fiche. ». Dessous, ce qu'il faut faire
- * si rien ne convient : demander à l'administration de l'église (le lot 2 ouvrira l'écriture de
- * son propre indicateur).
+ * seulement l'explication (aux 3 ajouts, « Retirez-en un » : le ministère retire lui-même, T62).
+ * Sinon les suggestions que la fiche n'a pas encore, avec leur rythme et leur définition ;
+ * « Choisir » ouvre le champ « Pourquoi cet indicateur ? ». Plus aucune suggestion : « Toutes les
+ * suggestions sont déjà sur votre fiche. ». Dessous, ce qu'il faut faire si rien ne convient :
+ * demander un indicateur à EJP Tech (le lot 2 ouvrira l'écriture de son propre indicateur).
  */
 export function PanneauAjout({ suggestions, limite, envoyer, onFait, onFermer }: Props) {
   const [choisie, setChoisie] = useState<SuggestionProposee | null>(null)

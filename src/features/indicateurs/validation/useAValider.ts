@@ -7,7 +7,11 @@ import {
   lireUsageConfiguration,
 } from '@/data/indicateursConfiguration'
 import { masquerTexte } from '@/data/moderation'
-import { lireDecisionsRecentes, validerIndicateur } from '@/data/validationIndicateurs'
+import {
+  lireDecisionsRecentes,
+  lireRetraitsRecents,
+  validerIndicateur,
+} from '@/data/validationIndicateurs'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import { CLES_CONFIGURATION } from '@/features/indicateurs/configuration/cles'
@@ -16,34 +20,49 @@ import {
   construireDecidees,
   construireLignesAdministration,
   construireLignesEjpTech,
+  construireRetraitsMinisteres,
 } from '@/features/indicateurs/validation/construire'
-import type { LigneAValider, LigneDecidee } from '@/features/indicateurs/validation/construire'
+import type {
+  LigneAValider,
+  LigneDecidee,
+  LigneRetraitMinistere,
+} from '@/features/indicateurs/validation/construire'
 import type { ActionsLigne } from '@/features/indicateurs/validation/LigneAValider'
 
 /** Clés des lectures du bloc : une par profil, pour que chacun relise ce que lit la base. */
 export const CLES_A_VALIDER = {
   ejpTech: ['indicateurs', 'a-valider', 'ejp-tech'],
   decidees: ['indicateurs', 'a-valider', 'decidees'],
+  retraits: ['indicateurs', 'a-valider', 'retraits'],
 } as const
 
-/** Ce que reçoit la vue du bloc : les lignes, les décisions récentes et les actions. */
+/** Ce que reçoit la vue du bloc : les lignes, les décisions et les retraits récents, les actions. */
 export interface BlocAValiderLu {
   lignes: EtatBloc<LigneAValider[]>
   decidees: EtatBloc<LigneDecidee[]> | null
+  /** Les retraits des ministères (T62), lus par EJP Tech seul ; null pour l'administration. */
+  retraits: EtatBloc<LigneRetraitMinistere[]> | null
   actions: ActionsLigne | null
 }
 
 /**
- * Bloc d'EJP Tech : la file `v_a_valider` (avec le « Pourquoi ») et les décisions des 30 derniers
- * jours, lues à part : l'échec des décisions ne cache pas la file. « Valider » et « Refuser »
- * appellent `valider_indicateur`. Après chaque décision, réussie ou non (une réponse perdue
- * n'empêche pas la fonction d'avoir abouti, et un autre compte a pu décider avant), les lectures
- * sont relues.
+ * Bloc d'EJP Tech : la file `v_a_valider` (avec le « Pourquoi »), les décisions et les retraits
+ * faits par les ministères (T62) des 30 derniers jours, lus à part : l'échec d'une liste ne cache
+ * pas la file. « Valider » et « Refuser » appellent `valider_indicateur`. Après chaque décision,
+ * réussie ou non (une réponse perdue n'empêche pas la fonction d'avoir abouti, et un autre compte a
+ * pu décider avant), les lectures sont relues.
  */
 export function useBlocEjpTech(): BlocAValiderLu {
   const demandes = useQuery({ queryKey: CLES_A_VALIDER.ejpTech, queryFn: lireAValider })
   const decisions = useQuery({ queryKey: CLES_A_VALIDER.decidees, queryFn: lireDecisionsRecentes })
+  const retraitsLus = useQuery({ queryKey: CLES_A_VALIDER.retraits, queryFn: lireRetraitsRecents })
   const apresEcriture = useApresEcriture()
+
+  const retraits = useMemo((): EtatBloc<LigneRetraitMinistere[]> => {
+    if (retraitsLus.isError) return { etat: 'erreur', reessayer: () => void retraitsLus.refetch() }
+    if (retraitsLus.data === undefined) return { etat: 'chargement' }
+    return { etat: 'donnees', donnees: construireRetraitsMinisteres(retraitsLus.data) }
+  }, [retraitsLus])
 
   const lignes = useMemo((): EtatBloc<LigneAValider[]> => {
     if (demandes.isError) return { etat: 'erreur', reessayer: () => void demandes.refetch() }
@@ -73,8 +92,8 @@ export function useBlocEjpTech(): BlocAValiderLu {
           apresEcriture()
         }
       },
-      // « Masquer le texte » (`masquer_texte`) : le « Pourquoi » d'une demande ou le motif d'un
-      // refus. Les lectures sont relues, réussi ou non.
+      // « Masquer le texte » (`masquer_texte`) : le « Pourquoi » d'une demande, le motif d'un
+      // refus ou celui d'un retrait par un ministère (T62). Les lectures sont relues, réussi ou non.
       masquer: async (masquage) => {
         try {
           await masquerTexte(masquage)
@@ -86,7 +105,7 @@ export function useBlocEjpTech(): BlocAValiderLu {
     [apresEcriture],
   )
 
-  return { lignes, decidees, actions }
+  return { lignes, decidees, retraits, actions }
 }
 
 /**
@@ -138,5 +157,5 @@ export function useBlocAdministration(): BlocAValiderLu {
       ),
     }
   }, [indicateurs, usage, ministeres])
-  return { lignes, decidees: null, actions: null }
+  return { lignes, decidees: null, retraits: null, actions: null }
 }

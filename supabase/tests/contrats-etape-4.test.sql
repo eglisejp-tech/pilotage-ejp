@@ -6,7 +6,8 @@
 -- de 000-outils.test.sql.
 -- Les listes attendues sont celles des documents : configuration-indicateurs.md 5.10,
 -- validation-metier.md 2.7, plan B5 (statistiques FIJ), T39 (signalements, question 14 : oui),
--- P46 et T41 (précision d'un indicateur sensible).
+-- P46 et T41 (précision d'un indicateur sensible), T62 (retrait d'un ajout par son ministère : cible
+-- retrait_indicateur et couple (retrait_indicateur, motif), 20261014090000_retrait_par_le_ministere.sql).
 -- Les codes du lot 2 des indicateurs n'y sont pas. Les noms des contraintes sont ceux du
 -- contrat (section 1), moderation_masque_check compris (20261007090500_contrats_etape_4_correctifs.sql).
 begin;
@@ -19,14 +20,14 @@ update ctx set ministere = tests.creer_compte('contrats-ministere@exemple.test',
 grant select on ctx to authenticated, anon;
 
 -- Petite matrice de l'aide (fin du fichier), écrite avant plan() pour que tests.nombre_essais
--- compte ses essais : EJP Tech lit les 17 lignes de modération écrites plus bas, un ministère
+-- compte ses essais : EJP Tech lit les 18 lignes de modération écrites plus bas, un ministère
 -- aucune ; personne n'ajoute ni ne modifie. La ligne aal1 d'EJP Tech est écrite : elle remplace
 -- la ligne dérivée.
 create temp table matrice_essai (texte text, profils text);
 insert into matrice_essai
 select format($$
     values
-      ('EJP Tech', 'moderation', 'lire', 'aal2', '17', %1$L),
+      ('EJP Tech', 'moderation', 'lire', 'aal2', '18', %1$L),
       ('EJP Tech', 'moderation', 'lire', 'aal1', '0', %1$L),
       ('ministère', 'moderation', 'lire', 'aal2', '0', %1$L),
       ('EJP Tech', 'moderation', 'ajouter', 'aal2', '42501', %2$L),
@@ -38,7 +39,7 @@ select format($$
   'update public.moderation set motif = motif where cible_id in (select cible_id from essai_moderation)'),
   $$ select 'EJP Tech', tech from ctx union all select 'ministère', ministere from ctx $$;
 
-select plan(74 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
+select plan(76 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
 
 -- Listes attendues
 create temp table attendu_action (code text primary key);
@@ -57,12 +58,13 @@ create temp table attendu_cible_journal (code text primary key);
 insert into attendu_cible_journal values
   ('session'), ('evenement'), ('reunion'), ('point_attention'), ('point_suivi'), ('compte'), ('ministere'),
   ('indicateur'), ('demande_indicateur'), ('validation'), ('signalement'), ('signalement_suivi'),
-  ('precision_sensible');
+  ('precision_sensible'), ('retrait_indicateur');
 
 create temp table attendu_cible_moderation (code text primary key);
 insert into attendu_cible_moderation values
   ('point_attention'), ('point_suivi'), ('evenement'), ('reunion'),
-  ('demande_indicateur'), ('validation'), ('signalement'), ('signalement_suivi'), ('precision_sensible');
+  ('demande_indicateur'), ('validation'), ('signalement'), ('signalement_suivi'), ('precision_sensible'),
+  ('retrait_indicateur');
 
 create temp table attendu_couple (rang int primary key, cible text not null, champ text not null);
 insert into attendu_couple values
@@ -71,7 +73,7 @@ insert into attendu_couple values
   (6, 'reunion', 'objet'), (7, 'reunion', 'decision_attendue'),
   (8, 'demande_indicateur', 'pourquoi'), (9, 'validation', 'motif'),
   (10, 'signalement', 'texte'), (11, 'signalement_suivi', 'commentaire'),
-  (12, 'precision_sensible', 'texte');
+  (12, 'precision_sensible', 'texte'), (13, 'retrait_indicateur', 'motif');
 
 -- Valeurs écrites dans un check « colonne in (...) », lues dans sa définition.
 create function pg_temp.valeurs_du_check(p_table regclass, p_contrainte name) returns setof text
@@ -153,7 +155,7 @@ select set_eq($$
    cross join (select champ from attendu_couple union select 'libelle') as h(champ)
    where pg_temp.couple_accepte(c.cible, h.champ)
 $$, $$ select cible, champ from attendu_couple $$,
-  'moderation : les 12 couples (cible, champ) de la liste, et eux seuls, se masquent');
+  'moderation : les 13 couples (cible, champ) de la liste, et eux seuls, se masquent');
 
 select lives_ok(format('insert into public.moderation (cible, cible_id, decision, par) values (%L, %L, %L, %L)',
                        c.code, gen_random_uuid(), 'rien_a_signaler', (select tech from ctx)),
@@ -176,11 +178,11 @@ select * from tests.verifier_matrice((select texte from matrice_essai), (select 
 select is(tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true), 9,
   'aide de matrice : 5 lignes écrites, 1 ligne aal1 dérivée (une ligne écrite remplace la sienne, un refus n''en a pas), 3 lignes de l''anonyme');
 
--- L'aide signale un écart : une ligne volontairement fausse (un ministère qui lirait les 17
+-- L'aide signale un écart : une ligne volontairement fausse (un ministère qui lirait les 18
 -- lignes) fait échouer son test. check_test retire ce test du compte et vérifie son échec.
 select * from check_test(
   (select * from tests.verifier_matrice(
-     $$ values ('ministère', 'moderation', 'lire', 'aal2', '17',
+     $$ values ('ministère', 'moderation', 'lire', 'aal2', '18',
                 'select 1 from public.moderation where cible_id in (select cible_id from essai_moderation)') $$,
      $$ select 'ministère', ministere from ctx $$)),
   false,

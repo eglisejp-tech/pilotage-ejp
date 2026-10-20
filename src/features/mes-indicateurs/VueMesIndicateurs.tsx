@@ -8,14 +8,19 @@ import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
-import type { DonneesMesIndicateurs } from '@/features/mes-indicateurs/construire'
+import type {
+  DonneesMesIndicateurs,
+  LigneMonIndicateur,
+} from '@/features/mes-indicateurs/construire'
+import { FenetreRetrait } from '@/features/mes-indicateurs/FenetreRetrait'
 import {
   RetiresMesIndicateurs,
   SectionsMesIndicateurs,
 } from '@/features/mes-indicateurs/ListeMesIndicateurs'
 import { PanneauAjout } from '@/features/mes-indicateurs/PanneauAjout'
 import type { FormulaireSuggestion } from '@/features/mes-indicateurs/schemas'
-import { TEXTES_MES_INDICATEURS } from '@/features/mes-indicateurs/textes'
+import { reussiteRetrait, TEXTES_MES_INDICATEURS } from '@/features/mes-indicateurs/textes'
+import type { RetirerAjout } from '@/features/mes-indicateurs/useMesIndicateurs'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
 import { ErreurDePage } from '@/pages/ErreurDePage'
@@ -26,6 +31,11 @@ interface Props {
   donnees: EtatBloc<DonneesMesIndicateurs>
   /** L'appel à `ajouter_suggestion` pour la suggestion choisie. */
   envoyer: (code: string, formulaire: FormulaireSuggestion) => Promise<void>
+  /**
+   * L'appel à `retirer_mon_indicateur` pour un ajout du ministère, avec son motif (T62) : rend
+   * l'état de l'ajout au moment du retrait, ou null s'il n'a pas pu être relu.
+   */
+  retirer: RetirerAjout
 }
 
 /** Le focus n'est plus nulle part : son élément a disparu (panneau fermé). */
@@ -42,9 +52,10 @@ function focusPerdu(): boolean {
  * motif d'un refus. Aucune valeur n'est lue. Le bouton « Ajouter un indicateur » ouvre un panneau
  * de 460 px (page entière sous 600 px) ; il reste actif à la limite, le panneau dit alors quoi
  * faire. Un envoi réussi ferme le panneau et s'annonce 6 secondes ; le focus revient au titre
- * quand le bouton d'origine n'est plus là.
+ * quand le bouton d'origine n'est plus là. Sur ses ajouts, « Retirer la demande » ou « Retirer »
+ * ouvre la fenêtre du motif (T62) ; un retrait réussi s'annonce de la même façon.
  */
-export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
+export function VueMesIndicateurs({ titre, donnees: lecture, envoyer, retirer }: Props) {
   // T65 : la phrase, le bouton d'ajout et les sections arrivent ensemble, après la tenue.
   const donnees = useLectureAffichee(lecture).lecture
   useTitrePage(titre)
@@ -52,8 +63,14 @@ export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
   const titreRef = useRef<HTMLHeadingElement>(null)
   const enPanneau = useLargeurMin(LARGEUR_PANNEAU)
   const [panneau, setPanneau] = useState(false)
+  const [aRetirer, setARetirer] = useState<LigneMonIndicateur | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+
+  const annoncer = (message: string) => {
+    setReussite(message)
+    setEnvoi((n) => n + 1)
+  }
 
   // Sous 600 px, le panneau prend la page entière.
   const pleinePage = panneau && !enPanneau
@@ -64,11 +81,14 @@ export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
     if (etait && !pleinePage && focusPerdu()) titreRef.current?.focus()
   }, [pleinePage])
 
+  const pret = donnees.etat === 'donnees' ? donnees.donnees : null
+
+  // Un ajout retiré quitte sa section quand la liste est relue : le focus, rendu à son bouton par
+  // la fenêtre puis perdu avec lui, revient au titre.
+  const nombreDeRetires = pret?.retires.length ?? null
   useEffect(() => {
     if (envoi > 0 && focusPerdu()) titreRef.current?.focus()
-  }, [envoi])
-
-  const pret = donnees.etat === 'donnees' ? donnees.donnees : null
+  }, [envoi, nombreDeRetires])
 
   return (
     <div className="flex flex-col gap-8">
@@ -106,7 +126,9 @@ export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
             ) : null}
           </header>
 
-          <div className="-my-5">
+          {/* Vide, la région ne creuse pas d'écart ; affichée, l'annonce garde sous elle l'écart
+              des sections, pour ne pas coller au titre de rythme qui suit. */}
+          <div className="-my-5 has-[p]:mb-0">
             <MessageReussite message={reussite} envoi={envoi} />
           </div>
 
@@ -129,7 +151,9 @@ export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
                 {TEXTES_MES_INDICATEURS.aucunIndicateur}
               </EtatVide>
             ) : null}
-            {pret ? <SectionsMesIndicateurs sections={pret.sections} /> : null}
+            {pret ? (
+              <SectionsMesIndicateurs sections={pret.sections} surRetirer={setARetirer} />
+            ) : null}
             {pret ? <RetiresMesIndicateurs retires={pret.retires} /> : null}
           </ApresChargement>
         </>
@@ -142,10 +166,28 @@ export function VueMesIndicateurs({ titre, donnees: lecture, envoyer }: Props) {
           envoyer={envoyer}
           onFait={(message) => {
             setPanneau(false)
-            setReussite(message)
-            setEnvoi((n) => n + 1)
+            annoncer(message)
           }}
           onFermer={() => setPanneau(false)}
+        />
+      ) : null}
+
+      {aRetirer !== null && aRetirer.retrait !== null && aRetirer.retrait.genre !== 'source' ? (
+        <FenetreRetrait
+          key={aRetirer.id}
+          libelle={aRetirer.libelle}
+          demande={aRetirer.retrait.genre === 'demande'}
+          retirer={(motif) => retirer(aRetirer.id, motif)}
+          onFait={(etatAvant) => {
+            // L'état relu dans la base fait foi : EJP Tech a pu valider la demande entre-temps.
+            const demande =
+              etatAvant === null
+                ? aRetirer.retrait?.genre === 'demande'
+                : etatAvant === 'en_attente'
+            setARetirer(null)
+            annoncer(reussiteRetrait(aRetirer.libelle, demande))
+          }}
+          onAnnuler={() => setARetirer(null)}
         />
       ) : null}
     </div>

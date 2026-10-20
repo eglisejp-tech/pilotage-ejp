@@ -69,11 +69,11 @@ export const TEXTES_PANNEAU_AJOUT = {
 } as const
 
 /**
- * Proposé : une limite atteinte, avec ce qu'il faut faire (le ministère ne retire pas lui-même au
- * lot 1). Le contact est EJP Tech (T59).
+ * Une limite atteinte, avec ce qu'il faut faire : le texte de la base et de la conception (4.2).
+ * Depuis T62, le ministère retire lui-même un de ses ajouts (« Retirer » sur la ligne).
  */
 export function explicationLimiteAjouts(limites: LimitesIndicateurs): string {
-  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.`
+  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs à lui. Retirez-en un pour en ajouter un autre.`
 }
 
 export function explicationLimiteLignes(limites: LimitesIndicateurs): string {
@@ -151,6 +151,16 @@ export function debutRefus(jour: string | null): string {
   return jour === null ? 'Refusé' : `Refusé le ${jour}`
 }
 
+/**
+ * Le point qui termine la phrase après la citation d'un motif (refus ou retrait) : aucun quand le
+ * motif finit déjà sa phrase par un point, un point d'exclamation, d'interrogation ou de
+ * suspension, comme le veut la typographie d'une citation en fin de phrase (« ... plus utile. »,
+ * jamais « ... plus utile. ». »).
+ */
+export function pointApresCitation(motif: string): string {
+  return /[.!?…]$/u.test(motif.trimEnd()) ? '' : '.'
+}
+
 /** Motifs de retrait (liste fermée de la base), dits au ministère. */
 const MOTIFS_RETRAIT: Readonly<Record<MotifRetrait, string>> = {
   plus_suivi: "n'est plus suivi",
@@ -164,6 +174,8 @@ const MOTIFS_RETRAIT: Readonly<Record<MotifRetrait, string>> = {
   confidentialite: 'confidentialité',
   source_retiree: 'sa source est retirée',
   refuse: 'refusé',
+  /** Sans le motif écrit (illisible) : le retrait du ministère lui-même (T62). */
+  ministere: 'à votre demande',
 }
 
 /** « Retiré le 3 oct. : doublon. » (un refus a sa propre phrase, avec le motif d'EJP Tech). */
@@ -171,6 +183,75 @@ export function texteRetrait(jour: string | null, motif: MotifRetrait | null): s
   const quand = jour === null ? '' : ` le ${jour}`
   const pourquoi = motif === null ? '' : ` : ${MOTIFS_RETRAIT[motif]}`
   return terminerPhrase(`Retiré${quand}${pourquoi}`)
+}
+
+/**
+ * « Retiré par vous le 14 oct. », « Demande retirée par vous le 14 oct. » : un retrait du
+ * ministère (T62) ; son motif suit, en citation, comme celui d'un refus.
+ */
+export function debutRetraitParVous(jour: string | null, demande: boolean): string {
+  const quand = jour === null ? '' : ` le ${jour}`
+  return demande ? `Demande retirée par vous${quand}` : `Retiré par vous${quand}`
+}
+
+/** Motif du retrait d'un ajout (T62) : 10 à 280 caractères après `btrim`, comme la base. */
+export const LONGUEUR_MIN_MOTIF_RETRAIT = 10
+export const LONGUEUR_MAX_MOTIF_RETRAIT = 280
+
+/** Messages de la base (`retirer_mon_indicateur`), repris tels quels avant l'envoi. */
+export const MESSAGES_BASE_RETRAIT = {
+  motifCourt: 'Expliquez pourquoi vous le retirez (10 caractères au moins).',
+  motifLong: 'Le motif dépasse 280 caractères.',
+} as const
+
+/**
+ * « Retirer la demande » (ajout à valider) et « Retirer » (ajout validé) de « Mes indicateurs »
+ * (T62 ; configuration-indicateurs.md, 7.3 ; validation-metier.md, 5.2). Les textes marqués
+ * « Proposé » attendent la validation de la personne responsable.
+ */
+export const TEXTES_RETRAIT = {
+  retirerDemande: 'Retirer la demande',
+  retirer: 'Retirer',
+  libelleChamp: 'Pourquoi le retirer ?',
+  /** Rappel sous le premier champ libre du formulaire (CLAUDE.md). */
+  rappel: "N'écrivez aucun nom ni information personnelle.",
+  annuler: 'Annuler',
+  /** Le nom de l'action, suivi de « en cours » (m231). */
+  enCours: 'Retrait en cours',
+  /** Proposé : ce qui arrive à une demande à valider, avant de confirmer. */
+  consequenceDemande:
+    "EJP Tech n'aura plus à le valider et il ne sera plus proposé à la saisie. Vos saisies restent enregistrées.",
+  /** Proposé : ce qui arrive à un ajout validé, avant de confirmer. */
+  consequenceAjout: 'Il ne sera plus proposé à la saisie. Vos saisies restent enregistrées.',
+  /** Proposé : qui lit le motif (T62 : le retrait apparaît chez EJP Tech). */
+  lecteurMotif: 'EJP Tech lira votre motif.',
+} as const
+
+/** Titre de la fenêtre : « Retirer la demande « Projets en cours » ? », « Retirer « Demandes reçues » ? ». */
+export function titreRetrait(libelle: string, demande: boolean): string {
+  const action = demande ? TEXTES_RETRAIT.retirerDemande : TEXTES_RETRAIT.retirer
+  return `${action} «${NBSP}${libelle}${NBSP}» ?`
+}
+
+/** Nom accessible du bouton d'une ligne : il commence par le texte visible et nomme l'indicateur. */
+export function nomBoutonRetrait(libelle: string, demande: boolean): string {
+  const action = demande ? TEXTES_RETRAIT.retirerDemande : TEXTES_RETRAIT.retirer
+  return `${action} «${NBSP}${libelle}${NBSP}»`
+}
+
+/** Proposé : l'annonce après un retrait réussi. */
+export function reussiteRetrait(libelle: string, demande: boolean): string {
+  return demande
+    ? `Demande «${NBSP}${libelle}${NBSP}» retirée.`
+    : `«${NBSP}${libelle}${NBSP}» retiré.`
+}
+
+/**
+ * À la place de « Retirer » sur la source d'un calcul : le texte de la base et de la conception
+ * (configuration-indicateurs.md, 4.2), avec le contact EJP Tech (T60).
+ */
+export function texteSourceDeCalcul(calcul: string): string {
+  return `Ce chiffre sert au calcul «${NBSP}${calcul}${NBSP}» : demandez à EJP Tech de le retirer.`
 }
 
 export interface ComptesMesIndicateurs {

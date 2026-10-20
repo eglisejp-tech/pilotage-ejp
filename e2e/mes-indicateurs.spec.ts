@@ -5,13 +5,15 @@ import type { Locator, Page } from '@playwright/test'
 // « Mes indicateurs » (lot L4, `/ma-fiche/indicateurs`) sur l'aperçu de développement : le vrai
 // écran, des données d'exemple, des envois simulés comme les fonctions de la base (aucune base,
 // aucune écriture). Trois formats par les projets Playwright : 1440, 834 et 390 px. Les parcours
-// avec la base locale (trois suggestions, refus d'une quatrième, décision d'EJP Tech) sont dans
-// e2e/base/validation-indicateurs.ecriture.spec.ts.
+// avec la base locale (trois suggestions, refus d'une quatrième, décision d'EJP Tech, retrait
+// d'un ajout par le ministère, T62) sont dans e2e/base/validation-indicateurs.ecriture.spec.ts.
 
-type Ecran = { vue?: string; envoi?: string; profil?: string }
+type Ecran = { vue?: string; envoi?: string; profil?: string; retrait?: string }
 
-const adresse = ({ vue = 'normal', envoi, profil = 'ministere' }: Ecran) =>
-  `/apercu/mes-indicateurs?profil=${profil}&vue=${vue}${envoi ? `&envoi=${envoi}` : ''}`
+const adresse = ({ vue = 'normal', envoi, profil = 'ministere', retrait }: Ecran) =>
+  `/apercu/mes-indicateurs?profil=${profil}&vue=${vue}${envoi ? `&envoi=${envoi}` : ''}${
+    retrait ? `&retrait=${retrait}` : ''
+  }`
 
 async function ouvrir(page: Page, ecran: Ecran = {}) {
   await page.goto(adresse(ecran))
@@ -48,9 +50,21 @@ const TOUS: Ecran[] = [
   { vue: 'vide' },
   { vue: 'limite' },
   { vue: 'toutes' },
+  { vue: 'source' },
   { vue: 'chargement' },
   { vue: 'probleme' },
 ]
+
+/** La fenêtre « Retirer » d'un ajout (T62), ouverte depuis le bouton de sa ligne. */
+async function ouvrirLeRetrait(page: Page, nom: RegExp): Promise<Locator> {
+  await bouton(page, nom).click()
+  const fenetre = page.getByRole('dialog')
+  await expect(fenetre).toBeVisible()
+  return fenetre
+}
+
+const RETIRER_PROJETS = /^Retirer la demande «\s*Projets en cours\s*»$/
+const RETIRER_DEMANDES = /^Retirer «\s*Demandes reçues\s*»$/
 
 test.describe('Mes indicateurs (ministère), aperçu', () => {
   test('titre, phrase, sections par rythme, lien vers « Ma fiche »', async ({ page }) => {
@@ -87,15 +101,20 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await expect(page.getByText('Suggestion ajoutée par vous le 8 oct.')).toBeVisible()
   })
 
-  test('« Retirés (2) » s’ouvre de lui-même : il porte le motif d’un refus d’EJP Tech', async ({
+  test('« Retirés (3) » s’ouvre de lui-même : il porte le motif d’un refus d’EJP Tech', async ({
     page,
   }) => {
     await ouvrir(page)
-    const motif = page.getByText(/Refusé le 5 oct\. : «.*Publications\..*»\./)
+    // Un motif qui finit déjà sa phrase : aucun point de plus après les guillemets.
+    const motif = page.getByText(/^Refusé le 5 oct\. : «.*Publications\..*»$/)
     await expect(motif).toBeVisible()
     await expect(page.getByText('Retiré le 3 oct. : doublon.')).toBeVisible()
+    // T62 : le retrait fait par le ministère, avec son propre motif.
+    await expect(
+      page.getByText(/^Retiré par vous le 9 oct\. : «.*directs assurés\..*»$/),
+    ).toBeVisible()
     // Le titre est souligné (on voit qu'il s'ouvre et se referme) ; un clic le replie.
-    const titre = page.getByText('Retirés (2)')
+    const titre = page.getByText('Retirés (3)')
     await expect(titre).toHaveCSS('text-decoration-line', 'underline')
     await titre.click()
     await expect(motif).toBeHidden()
@@ -159,8 +178,12 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
   }) => {
     await ouvrir(page, { vue: 'limite' })
     const panneau = await ouvrirLePanneau(page)
-    await expect(panneau.getByText(/^Votre ministère a déjà 3 indicateurs à lui\./)).toBeVisible()
-    await expect(panneau.getByText(/Demandez à EJP Tech/)).toBeVisible()
+    // T62 : le ministère retire lui-même un de ses ajouts.
+    await expect(
+      panneau.getByText(
+        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+      ),
+    ).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
     await expect(panneau.getByRole('textbox')).toHaveCount(0)
     await panneau.getByRole('button', { name: 'Fermer' }).click()
@@ -253,12 +276,136 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
   })
 })
 
+test.describe('T62 : retrait d’un ajout par le ministère, aperçu', () => {
+  test('ses ajouts seulement : « Retirer la demande » à valider, « Retirer » validé', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await expect(bouton(page, RETIRER_PROJETS)).toBeVisible()
+    await expect(bouton(page, RETIRER_DEMANDES)).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Retirer/ })).toHaveCount(2)
+  })
+
+  test('« Retirer la demande » : motif de 10 à 280 caractères, rappel, puis la ligne passe sous « Retirés »', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await expect(
+      fenetre.getByRole('heading', { name: /^Retirer la demande «\s*Projets en cours\s*» \?$/ }),
+    ).toBeVisible()
+    await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toBeVisible()
+    await expect(fenetre.getByText('0 sur 280')).toBeVisible()
+    await expect(fenetre.getByText(/EJP Tech lira votre motif\./)).toBeVisible()
+    const champ = fenetre.getByRole('textbox', { name: 'Pourquoi le retirer ?' })
+    await champ.fill('Neuf cara')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(
+      fenetre.getByText('Expliquez pourquoi vous le retirez (10 caractères au moins).'),
+    ).toBeVisible()
+    await champ.fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(
+      reussite(page).getByText(/^Demande «\s*Projets en cours\s*» retirée\.$/),
+    ).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(bouton(page, RETIRER_PROJETS)).toHaveCount(0)
+    await expect(page.getByText('Retirés (4)')).toBeVisible()
+    await expect(
+      page.getByText(/^Demande retirée par vous le 12 oct\. : «.*ne nous sert plus\..*»$/),
+    ).toBeVisible()
+    // Un ajout de moins : la phrase le dit, et la suggestion redevient proposée.
+    await expect(page.getByText(/Vous pouvez en ajouter 2 autres\./)).toBeVisible()
+  })
+
+  test('l’annonce garde sous elle l’écart des sections : elle ne colle pas au titre qui suit', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    const annonce = reussite(page).getByText(/^Demande «\s*Projets en cours\s*» retirée\.$/)
+    await expect(annonce).toBeVisible()
+    const basAnnonce = await annonce.evaluate((element) => element.getBoundingClientRect().bottom)
+    const hautTitre = await page
+      .getByRole('heading', { level: 2, name: 'Chaque dimanche' })
+      .evaluate((element) => element.getBoundingClientRect().top)
+    // L'écart des sections de la page (gap-8, 32 px), pas les 12 px d'avant.
+    expect(hautTitre - basAnnonce).toBeGreaterThanOrEqual(30)
+  })
+
+  test('EJP Tech a validé la demande pendant que la fenêtre était ouverte : l’annonce dit « retiré »', async ({
+    page,
+  }) => {
+    await ouvrir(page, { retrait: 'valide' })
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(reussite(page).getByText(/^«\s*Projets en cours\s*» retiré\.$/)).toBeVisible()
+    await expect(
+      page.getByText(/^Retiré par vous le 12 oct\. : «.*ne nous sert plus\..*»$/),
+    ).toBeVisible()
+  })
+
+  test('« Annuler » et Échap ferment la fenêtre sans rien retirer', async ({ page }) => {
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    await fenetre.getByRole('button', { name: 'Annuler' }).click()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(bouton(page, RETIRER_DEMANDES)).toBeFocused()
+    await expect(page.getByText('Retirés (3)')).toBeVisible()
+  })
+
+  test('la base refuse : le motif sous le champ, la connexion perdue sous les boutons, motif gardé', async ({
+    page,
+  }) => {
+    await ouvrir(page, { retrait: 'motif' })
+    let fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    await fenetre.getByRole('textbox').fill('Demandé par une personne précise.')
+    await fenetre.getByRole('button', { name: 'Retirer' }).click()
+    await expect(fenetre.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
+    await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(
+      2,
+    )
+
+    await ouvrir(page, { retrait: 'echec' })
+    fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer' }).click()
+    await expect(fenetre.getByRole('alert')).toContainText('La connexion a échoué.')
+    await expect(fenetre.getByRole('textbox')).toHaveValue('Ce chiffre ne nous sert plus.')
+
+    await ouvrir(page, { retrait: 'deja' })
+    fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+    await fenetre.getByRole('button', { name: 'Retirer' }).click()
+    await expect(fenetre.getByRole('alert')).toHaveText('Cet indicateur est déjà retiré.')
+  })
+
+  test('la source d’un calcul : pas de bouton, la ligne dit qui peut la retirer', async ({
+    page,
+  }) => {
+    await ouvrir(page, { vue: 'source' })
+    await expect(bouton(page, RETIRER_DEMANDES)).toHaveCount(0)
+    await expect(
+      page.getByText(
+        /^Ce chiffre sert au calcul «\s*Taux de livraison\s*» : demandez à EJP Tech de le retirer\.$/,
+      ),
+    ).toBeVisible()
+    await expect(bouton(page, RETIRER_PROJETS)).toBeVisible()
+  })
+})
+
 test.describe('accessibilité et petits écrans', () => {
   test('axe, WCAG 2.2 AA : chaque écran, puis le panneau et son formulaire', async ({ page }) => {
     test.setTimeout(120_000)
     for (const ecran of TOUS) {
       await ouvrir(page, ecran)
-      // « Retirés (2) » est déjà ouvert sur la vue normale : l'audit lit aussi la liste.
+      // « Retirés (3) » est déjà ouvert sur la vue normale : l'audit lit aussi la liste.
       try {
         await auditer(page)
       } catch (erreur) {
@@ -276,6 +423,15 @@ test.describe('accessibilité et petits écrans', () => {
     await ouvrir(page, { vue: 'limite' })
     await ouvrirLePanneau(page)
     await auditer(page)
+    // T62 : la fenêtre « Retirer », puis avec l'erreur du motif.
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    await auditer(page)
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(
+      fenetre.getByText('Expliquez pourquoi vous le retirez (10 caractères au moins).'),
+    ).toBeVisible()
+    await auditer(page)
   })
 
   test('cibles de 44 px : boutons, liens et champs', async ({ page }) => {
@@ -291,6 +447,13 @@ test.describe('accessibilité et petits écrans', () => {
     const panneau = await ouvrirLePanneau(page)
     await choisir(panneau, 'Demandes traitées')
     for (const cible of await panneau.locator('button:visible, textarea:visible').all()) {
+      const boite = await cible.boundingBox()
+      if (boite === null) continue
+      expect(boite.height).toBeGreaterThanOrEqual(43.5)
+    }
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
+    for (const cible of await fenetre.locator('button:visible, textarea:visible').all()) {
       const boite = await cible.boundingBox()
       if (boite === null) continue
       expect(boite.height).toBeGreaterThanOrEqual(43.5)
@@ -313,6 +476,13 @@ test.describe('accessibilité et petits écrans', () => {
     expect(await debord(), 'liste des suggestions').toBeLessThanOrEqual(0)
     await choisir(panneau, 'Demandes traitées')
     expect(await debord(), 'formulaire').toBeLessThanOrEqual(0)
+    await ouvrir(page)
+    const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+    expect(await debord(), 'fenêtre « Retirer »').toBeLessThanOrEqual(0)
+    const boite = await fenetre.boundingBox()
+    expect(boite).not.toBeNull()
+    expect(boite!.x).toBeGreaterThanOrEqual(0)
+    expect(boite!.x + boite!.width).toBeLessThanOrEqual(360)
   })
 })
 
@@ -334,5 +504,25 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await choisir(panneau, 'Demandes traitées')
   await page.screenshot({
     path: `test-results/captures/mes-indicateurs-panneau-pourquoi-${taille}.png`,
+  })
+  // T62 : la fenêtre « Retirer la demande », son erreur, puis la page après le retrait.
+  await ouvrir(page)
+  const fenetre = await ouvrirLeRetrait(page, RETIRER_PROJETS)
+  await page.screenshot({
+    path: `test-results/captures/mes-indicateurs-retrait-fenetre-${taille}.png`,
+  })
+  await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+  await expect(
+    fenetre.getByText('Expliquez pourquoi vous le retirez (10 caractères au moins).'),
+  ).toBeVisible()
+  await page.screenshot({
+    path: `test-results/captures/mes-indicateurs-retrait-erreur-${taille}.png`,
+  })
+  await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
+  await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await page.screenshot({
+    path: `test-results/captures/mes-indicateurs-retrait-fait-${taille}.png`,
+    fullPage: true,
   })
 })

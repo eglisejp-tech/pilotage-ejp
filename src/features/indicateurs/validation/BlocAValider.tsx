@@ -19,8 +19,10 @@ export interface ProprietesBlocAValider {
 }
 
 function BlocEjpTech() {
-  const { lignes, decidees, actions } = useBlocEjpTech()
-  return <VueAValider decide lignes={lignes} decidees={decidees} actions={actions} />
+  const { lignes, decidees, retraits, actions } = useBlocEjpTech()
+  return (
+    <VueAValider decide lignes={lignes} decidees={decidees} retraits={retraits} actions={actions} />
+  )
 }
 
 function BlocAdministration() {

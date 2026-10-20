@@ -8,11 +8,15 @@ interface Props {
   reessayer: () => void
 }
 
-/** Chargement ou échec de la lecture des termes d'un calcul, dans un panneau ou une fenêtre. */
+/**
+ * Chargement ou échec de la lecture des termes d'un calcul, dans un panneau ou une fenêtre. La
+ * zone `status` ne porte pas `aria-busy` : certains lecteurs d'écran n'annoncent pas ce qui change
+ * dans une zone occupée (T65, accessibilité).
+ */
 export function EtatLectureTermes({ enCours, message, erreur, reessayer }: Props) {
   if (enCours) {
     return (
-      <p role="status" aria-busy="true" className="leading-normal text-encre-2">
+      <p role="status" className="leading-normal text-encre-2">
         {message}
       </p>
     )

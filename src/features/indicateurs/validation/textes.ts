@@ -53,6 +53,19 @@ export const TEXTES_A_VALIDER = {
   contexteMasquageMotif: 'Indicateur refusé',
   /** Nom du champ du motif de refus, dans la fenêtre « Masquer le texte ». */
   motifDuRefus: 'Motif du refus',
+  /**
+   * Titre de la liste repliée des retraits faits par les ministères (EJP Tech, T62). Proposé.
+   */
+  titreRetraits: 'Retirés par les ministères ces 30 derniers jours',
+  /** Fenêtre « Masquer le texte » du motif d'un retrait : ce qu'on masque. Proposé. */
+  contexteMasquageRetrait: 'Indicateur retiré par son ministère',
+  /** Nom du champ du motif d'un retrait, dans la fenêtre « Masquer le texte ». */
+  motifDuRetrait: 'Motif du retrait',
+  /**
+   * Fenêtre « Masquer le texte » du « Pourquoi » d'une demande retirée par son ministère avant la
+   * décision : elle a quitté la file, son « Pourquoi » se masque ici (T62). Proposé.
+   */
+  contexteMasquagePourquoiRetire: 'Demande retirée par son ministère',
   /** Annonces après une décision (m231, Proposé : la fenêtre a déjà dit qui lira le motif). */
   reussiteValide: 'Indicateur validé.',
   reussiteRefus: 'Indicateur refusé.',
@@ -126,4 +139,13 @@ export const TEXTES_FENETRE_REFUS = {
 export function texteDecision(decision: 'valide' | 'refuse', instant: string): string {
   const jour = formaterJourCourt(jourDeParis(instant))
   return decision === 'valide' ? `Validée le ${jour}` : `Refusée le ${jour}`
+}
+
+/**
+ * Un retrait par un ministère (T62), dans la liste repliée : « Demande retirée le 14 oct. » pour un
+ * ajout encore à valider, « Retiré le 14 oct. » pour un ajout validé. Le motif suit, en citation.
+ */
+export function texteRetraitMinistere(demande: boolean, instant: string): string {
+  const jour = formaterJourCourt(jourDeParis(instant))
+  return demande ? `Demande retirée le ${jour}` : `Retiré le ${jour}`
 }

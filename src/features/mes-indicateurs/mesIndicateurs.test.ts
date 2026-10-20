@@ -1,18 +1,27 @@
 import { describe, expect, it } from 'vitest'
 import { lecturesNormales, lecturesVides } from '@/features/mes-indicateurs/apercu/exemples'
 import { construireMesIndicateurs, PREFIXE_SUGGESTION } from '@/features/mes-indicateurs/construire'
-import { lireRefusSuggestion } from '@/features/mes-indicateurs/refus'
-import { schemaFormulaireSuggestion, schemaSuggestion } from '@/features/mes-indicateurs/schemas'
+import { lireRefusRetrait, lireRefusSuggestion } from '@/features/mes-indicateurs/refus'
+import {
+  schemaFormulaireRetrait,
+  schemaFormulaireSuggestion,
+  schemaRetrait,
+  schemaSuggestion,
+} from '@/features/mes-indicateurs/schemas'
 import {
   explicationLimiteAjouts,
   explicationLimiteLignes,
+  nomBoutonRetrait,
   phraseAjoutsRestants,
   phraseMesIndicateurs,
+  pointApresCitation,
+  reussiteRetrait,
   reussiteSuggestion,
   rythmeEnPhrase,
   SUITE_EN_ATTENTE,
   texteEnAttente,
   texteRetrait,
+  titreRetrait,
 } from '@/features/mes-indicateurs/textes'
 
 const MINISTERE = '10000000-0000-4000-8000-000000000001'
@@ -186,10 +195,10 @@ describe('phrases de l’écran', () => {
     expect(texteRetrait(null, null)).toBe('Retiré.')
   })
 
-  it('les limites disent ce qu’il faut faire, avec les plafonds de la base, contact EJP Tech (T59)', () => {
+  it('les limites disent ce qu’il faut faire, avec les plafonds de la base (T62 : retirez-en un ; T59 : EJP Tech)', () => {
     const limites = { ajouts: 3, ajouts_max: 3, lignes: 12, lignes_max: 30 }
     expect(explicationLimiteAjouts(limites)).toBe(
-      "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
+      'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
     )
     expect(explicationLimiteLignes(limites)).toBe(
       "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
@@ -273,19 +282,117 @@ describe('l’écran construit à partir des lectures', () => {
     )
   })
 
-  it('« Retirés » : un retrait avec son motif, un refus avec le motif d’EJP Tech', () => {
+  it('« Retirés » : le retrait par vous avec votre motif, un refus avec le motif d’EJP Tech, un retrait avec son motif', () => {
     expect(donnees.retires.map((ligne) => ligne.libelle)).toEqual([
+      'Participants',
       'Activités réalisées',
       'Vidéos archivées',
     ])
     expect(donnees.retires[0]).toMatchObject({
-      detail: 'Refusé le 5 oct.',
-      motifRefus: 'Ce chiffre existe déjà sur votre fiche sous le nom Publications.',
+      detail: 'Retiré par vous le 9 oct.',
+      motifRefus: null,
+      motifRetrait: 'Nous comptons déjà ces présences avec les directs assurés.',
     })
     expect(donnees.retires[1]).toMatchObject({
+      detail: 'Refusé le 5 oct.',
+      motifRefus: 'Ce chiffre existe déjà sur votre fiche sous le nom Publications.',
+      motifRetrait: null,
+    })
+    expect(donnees.retires[2]).toMatchObject({
       detail: 'Retiré le 3 oct. : doublon.',
       motifRefus: null,
+      motifRetrait: null,
     })
+  })
+
+  it('T62 : une demande retirée par vous le dit ; sans motif lisible, « à votre demande »', () => {
+    const lectures = lecturesNormales()
+    const projets = lectures.indicateurs.find(
+      (indicateur) => indicateur.libelle === 'Projets en cours',
+    )!
+    const retiree = {
+      ...projets,
+      etat: 'retire' as const,
+      retire_le: '2026-10-14T09:00:00+02:00',
+      retrait_motif: 'ministere' as const,
+    }
+    const avecMotif = construireMesIndicateurs({
+      ...lectures,
+      indicateurs: [retiree],
+      retraits: [
+        {
+          indicateur_id: projets.id,
+          etat_avant: 'en_attente',
+          motif: 'Ce chiffre ne nous sert plus.',
+          saisi_le: '2026-10-14T09:00:00+02:00',
+        },
+      ],
+    })
+    expect(avecMotif.retires[0]).toMatchObject({
+      detail: 'Demande retirée par vous le 14 oct.',
+      motifRetrait: 'Ce chiffre ne nous sert plus.',
+    })
+    const sansMotif = construireMesIndicateurs({
+      ...lectures,
+      indicateurs: [retiree],
+      retraits: [],
+    })
+    expect(sansMotif.retires[0]).toMatchObject({
+      detail: 'Retiré le 14 oct. : à votre demande.',
+      motifRetrait: null,
+    })
+  })
+
+  it('T62 : « Retirer la demande » sur un ajout à valider, « Retirer » sur un ajout validé, rien ailleurs', () => {
+    const lignes = donnees.sections.flatMap((section) => section.lignes)
+    const par = (libelle: string) => lignes.find((ligne) => ligne.libelle === libelle)
+    expect(par('Projets en cours')?.retrait).toEqual({ genre: 'demande' })
+    expect(par('Demandes reçues')?.retrait).toEqual({ genre: 'ajout' })
+    // Les prévus de la coordination et les calculs ne se retirent pas par le ministère.
+    expect(par('Publications')?.retrait).toBeNull()
+    expect(par('Taux de livraison')?.retrait).toBeNull()
+    expect(lignes.filter((ligne) => ligne.retrait !== null)).toHaveLength(2)
+  })
+
+  it('T62 : la source d’un calcul suivi dit qui peut la retirer, à la place du bouton', () => {
+    const lectures = lecturesNormales()
+    const demandes = lectures.indicateurs.find(
+      (indicateur) => indicateur.libelle === 'Demandes reçues',
+    )!
+    const taux = lectures.indicateurs.find(
+      (indicateur) => indicateur.libelle === 'Taux de livraison',
+    )!
+    const resultat = construireMesIndicateurs({
+      ...lectures,
+      termes: [...lectures.termes, { calcul_id: taux.id, source_id: demandes.id }],
+    })
+    const ligne = resultat.sections
+      .flatMap((section) => section.lignes)
+      .find((candidate) => candidate.id === demandes.id)
+    expect(ligne?.retrait?.genre).toBe('source')
+    expect(ligne?.retrait?.genre === 'source' ? espaces(ligne.retrait.message) : '').toBe(
+      'Ce chiffre sert au calcul « Taux de livraison » : demandez à EJP Tech de le retirer.',
+    )
+    // Un calcul retiré ne retient plus sa source.
+    const sansCalcul = construireMesIndicateurs({
+      ...lectures,
+      indicateurs: lectures.indicateurs.map((indicateur) =>
+        indicateur.id === taux.id
+          ? {
+              ...indicateur,
+              etat: 'retire' as const,
+              retire_le: '2026-10-10T09:00:00+02:00',
+              retrait_motif: 'plus_suivi' as const,
+            }
+          : indicateur,
+      ),
+      termes: [{ calcul_id: taux.id, source_id: demandes.id }],
+    })
+    expect(
+      sansCalcul.sections
+        .flatMap((section) => section.lignes)
+        .find((candidate) => candidate.id === demandes.id)?.retrait,
+    ).toEqual({ genre: 'ajout' })
   })
 
   it('un retiré pour confidentialité n’y figure pas', () => {
@@ -343,6 +450,92 @@ describe('l’écran construit à partir des lectures', () => {
   })
 })
 
+describe('citation d’un motif en fin de phrase', () => {
+  it('un seul point : aucun après les guillemets quand le motif finit déjà sa phrase', () => {
+    expect(pointApresCitation('Ce chiffre ne nous sert plus.')).toBe('')
+    expect(pointApresCitation('Pourquoi le garder ?')).toBe('')
+    expect(pointApresCitation('Nous verrons plus tard…  ')).toBe('')
+    expect(pointApresCitation('Ce chiffre ne nous sert plus')).toBe('.')
+    // Le texte de masquage finit par un crochet : la phrase prend son point.
+    expect(pointApresCitation('[texte masqué par EJP Tech]')).toBe('.')
+  })
+})
+
+describe('T62 : retrait d’un ajout par le ministère', () => {
+  const motif = (texte: string) => schemaFormulaireRetrait.safeParse({ motif: texte })
+
+  it('le motif compte 10 à 280 caractères après espaces retirés, avec les phrases de la base', () => {
+    const court = motif('   Neuf cara   ')
+    expect(court.success).toBe(false)
+    if (!court.success) {
+      expect(court.error.issues[0]?.message).toBe(
+        'Expliquez pourquoi vous le retirez (10 caractères au moins).',
+      )
+    }
+    expect(motif('Dix caract').success).toBe(true)
+    expect(motif('a'.repeat(280)).success).toBe(true)
+    const long = motif('a'.repeat(281))
+    expect(long.success).toBe(false)
+    if (!long.success) {
+      expect(long.error.issues[0]?.message).toBe('Le motif dépasse 280 caractères.')
+    }
+  })
+
+  it('l’appel à la base reprend le même schéma, avec le motif sans espaces autour', () => {
+    const indicateurId = '00000000-0000-4000-8000-000000000017'
+    expect(schemaRetrait.parse({ indicateurId, motif: '  Ne nous sert plus.  ' })).toEqual({
+      indicateurId,
+      motif: 'Ne nous sert plus.',
+    })
+    expect(schemaRetrait.safeParse({ indicateurId: 'x', motif: 'a'.repeat(20) }).success).toBe(
+      false,
+    )
+  })
+
+  it('les textes : titre, nom du bouton, annonce', () => {
+    expect(espaces(titreRetrait('Projets en cours', true))).toBe(
+      'Retirer la demande « Projets en cours » ?',
+    )
+    expect(espaces(titreRetrait('Demandes reçues', false))).toBe('Retirer « Demandes reçues » ?')
+    expect(espaces(nomBoutonRetrait('Projets en cours', true))).toBe(
+      'Retirer la demande « Projets en cours »',
+    )
+    expect(espaces(nomBoutonRetrait('Demandes reçues', false))).toBe('Retirer « Demandes reçues »')
+    expect(espaces(reussiteRetrait('Projets en cours', true))).toBe(
+      'Demande « Projets en cours » retirée.',
+    )
+    expect(espaces(reussiteRetrait('Demandes reçues', false))).toBe('« Demandes reçues » retiré.')
+  })
+
+  it('un refus du motif se dit sous le champ ; la source d’un calcul et un ajout déjà retiré sous les boutons', () => {
+    expect(
+      lireRefusRetrait({
+        code: 'P0001',
+        message: "N'écrivez aucun nom ni information personnelle.",
+      }),
+    ).toEqual({ ou: 'champ', message: "N'écrivez aucun nom ni information personnelle." })
+    expect(
+      lireRefusRetrait({
+        code: 'P0001',
+        message: 'Expliquez pourquoi vous le retirez (10 caractères au moins).',
+      }).ou,
+    ).toBe('champ')
+    expect(
+      lireRefusRetrait({
+        code: 'P0001',
+        message: 'Ce chiffre sert au calcul « Taux » : demandez à EJP Tech de le retirer.',
+      }),
+    ).toEqual({
+      ou: 'bouton',
+      message: 'Ce chiffre sert au calcul « Taux » : demandez à EJP Tech de le retirer.',
+    })
+    expect(lireRefusRetrait({ code: 'P0001', message: 'Cet indicateur est déjà retiré.' })).toEqual(
+      { ou: 'bouton', message: 'Cet indicateur est déjà retiré.' },
+    )
+    expect(lireRefusRetrait(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+  })
+})
+
 describe('refus de la base après « Envoyer pour validation »', () => {
   it('un refus du « Pourquoi » se dit sous le champ, tel quel', () => {
     expect(
@@ -361,8 +554,8 @@ describe('refus de la base après « Envoyer pour validation »', () => {
     for (const [message, phrase] of [
       [
         'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
-        // Le même texte que le contrôle avant l'envoi (guide, 10.9) : le ministère ne retire pas
-        // lui-même un ajout au lot 1 (P53), il le demande à EJP Tech.
+        // Le même texte que le contrôle avant l'envoi (guide, 10.9) : depuis T62, le ministère
+        // retire lui-même un de ses ajouts.
         explicationLimiteAjouts(limites),
       ],
       [

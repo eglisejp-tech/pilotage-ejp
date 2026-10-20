@@ -15,7 +15,11 @@ import { appeler, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 // 4. EJP Tech lit les « Pourquoi », valide une suggestion et en refuse une avec un motif ; une
 //    seconde décision est refusée ;
 // 5. Communication lit la suite : une suggestion active, une refusée avec le motif, une encore à
-//    valider, et il lui reste un ajout.
+//    valider, et il lui reste un ajout ;
+// 6. T62 : Communication retire sa demande encore à valider avec un motif (un prévu de la
+//    coordination ne se retire pas) ; EJP Tech lit le retrait, le ministère, le jour et le motif
+//    dans l'écran Indicateurs, et l'action sans le texte dans le Journal technique ; le berger, le
+//    conseil et l'administration ne lisent pas le motif.
 //
 // Ce parcours ne se rejoue pas sur la même base : les trois suggestions de Communication y restent.
 // Dans la CI, le projet `ecritures` passe en dernier sur une base neuve : sans effet. En local,
@@ -52,6 +56,8 @@ const SUGGESTIONS = [
 
 const MOTIF_REFUS = 'Ce chiffre existe déjà sur votre fiche sous un autre nom.'
 const AUTRE_POURQUOI = 'Compter les participants venus à nos activités du mois.'
+/** T62 : le motif du retrait de « Personnes formées » par Communication. */
+const MOTIF_RETRAIT = 'Nos formations sont déjà comptées par le ministère Formation.'
 
 /** Identifiants des demandes d'ajout de Communication, par libellé (lus par son compte). */
 const demandes = new Map<string, string>()
@@ -165,9 +171,12 @@ test.describe('Communication envoie ses suggestions', () => {
     await attendreLaFinDuChargement(page)
     await page.getByRole('button', { name: 'Ajouter un indicateur' }).click()
     const panneau = page.getByRole('dialog', { name: 'Ajouter un indicateur' })
-    await expect(panneau.getByText(/^Votre ministère a déjà 3 indicateurs à lui\./)).toBeVisible()
-    // Contact : EJP Tech (T59).
-    await expect(panneau.getByText(/Demandez à EJP Tech/)).toBeVisible()
+    // T62 : le ministère retire lui-même un de ses ajouts.
+    await expect(
+      panneau.getByText(
+        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+      ),
+    ).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
     await panneau.getByRole('button', { name: 'Fermer' }).click()
 
@@ -426,7 +435,8 @@ test.describe('Communication lit la suite', () => {
     await expect(page.getByText(/^Retirés \(1\)$/)).toBeVisible()
     await expect(page.locator('details[open] summary', { hasText: 'Retirés' })).toHaveCount(1)
     await expect(
-      page.getByText(new RegExp(`Refusé le .* : «\\s*${MOTIF_REFUS}\\s*»\\.`)),
+      // Le motif finit déjà sa phrase : aucun point de plus après les guillemets.
+      page.getByText(new RegExp(`Refusé le .* : «\\s*${MOTIF_REFUS}\\s*»$`)),
     ).toBeVisible()
   })
 
@@ -451,3 +461,158 @@ test.describe('Communication lit la suite', () => {
     ).toHaveCount(0)
   })
 })
+
+test.describe('T62 : Communication retire sa demande avec un motif', () => {
+  test.use({ storageState: fichierSession('ministere') })
+
+  test('un prévu de la coordination ne se retire pas : la base le refuse, sans rien écrire', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const prevus = await lire<{ id: string }>(
+      page,
+      `indicateur?select=id&ministere_id=eq.${MINISTERE_COMMUNICATION}&origine=eq.eglise&etat=eq.actif&limit=1`,
+    )
+    expect(prevus).toHaveLength(1)
+    const refus = await appeler(page, 'retirer_mon_indicateur', {
+      p_indicateur_id: prevus[0]!.id,
+      p_motif: MOTIF_RETRAIT,
+    })
+    expect(refus.status()).toBe(400)
+    expect(((await refus.json()) as { message: string }).message).toBe(
+      "Cet indicateur n'a pas été ajouté par votre ministère. Demandez à EJP Tech de le retirer.",
+    )
+    expect(await lire<unknown>(page, 'retrait_indicateur?select=id')).toEqual([])
+  })
+
+  test('« Retirer la demande » : motif de 10 à 280 caractères, puis la ligne passe sous « Retirés »', async ({
+    page,
+  }) => {
+    await page.goto('/ma-fiche/indicateurs')
+    await attendreLaFinDuChargement(page)
+    // Ses deux ajouts suivis ont leur bouton ; les prévus de la coordination n'en ont pas.
+    await expect(page.getByRole('button', { name: /^Retirer/ })).toHaveCount(2)
+    await expect(
+      page.getByRole('button', { name: /^Retirer «\s*Événements couverts\s*»$/ }),
+    ).toBeVisible()
+    await page
+      .getByRole('button', { name: /^Retirer la demande «\s*Personnes formées\s*»$/ })
+      .click()
+    const fenetre = page.getByRole('dialog', {
+      name: /^Retirer la demande «\s*Personnes formées\s*» \?$/,
+    })
+    await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toBeVisible()
+    const champ = fenetre.getByRole('textbox', { name: 'Pourquoi le retirer ?' })
+    // Trop court : refusé par le formulaire, rien n'est écrit.
+    await champ.fill('Court')
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(
+      fenetre.getByText('Expliquez pourquoi vous le retirez (10 caractères au moins).'),
+    ).toBeVisible()
+    await champ.fill(MOTIF_RETRAIT)
+    await fenetre.getByRole('button', { name: 'Retirer la demande' }).click()
+    await expect(page.getByText(/^Demande «\s*Personnes formées\s*» retirée\.$/)).toBeVisible()
+    await expect(page.getByRole('dialog')).toHaveCount(0)
+    await expect(page.getByText(/^Retirés \(2\)$/)).toBeVisible()
+    await expect(
+      page.getByText(new RegExp(`^Demande retirée par vous le .* : «\\s*${MOTIF_RETRAIT}\\s*»$`)),
+    ).toBeVisible()
+    await expect(page.getByText(/^À valider par EJP Tech depuis/)).toHaveCount(0)
+    await expect(page.getByText(/Vous pouvez en ajouter 2 autres\./)).toBeVisible()
+
+    const retire = (await indicateursDeCommunication(page)).find(
+      (indicateur) => indicateur.libelle === 'Personnes formées',
+    )
+    expect(retire).toMatchObject({ etat: 'retire', retrait_motif: 'ministere' })
+    expect(
+      await lire<{ motif: string; etat_avant: string }>(
+        page,
+        'retrait_indicateur?select=motif,etat_avant',
+      ),
+    ).toEqual([{ motif: MOTIF_RETRAIT, etat_avant: 'en_attente' }])
+  })
+
+  test('le journal dit l’action, jamais le motif ; un second retrait est refusé', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const journal = await lire<{ detail: { motif?: string; attente?: boolean } }>(
+      page,
+      `v_journal?select=detail&action=eq.indicateur_retire&ministere_id=eq.${MINISTERE_COMMUNICATION}`,
+    )
+    expect(journal).toHaveLength(1)
+    expect(journal[0]!.detail).toMatchObject({ motif: 'ministere', attente: true })
+    expect(JSON.stringify(journal)).not.toContain(MOTIF_RETRAIT)
+    const retire = (await indicateursDeCommunication(page)).find(
+      (indicateur) => indicateur.libelle === 'Personnes formées',
+    )
+    const second = await appeler(page, 'retirer_mon_indicateur', {
+      p_indicateur_id: retire?.id,
+      p_motif: MOTIF_RETRAIT,
+    })
+    expect(second.status()).toBe(400)
+    expect(((await second.json()) as { message: string }).message).toBe(
+      'Cet indicateur est déjà retiré.',
+    )
+  })
+})
+
+test.describe('T62 : EJP Tech lit le retrait', () => {
+  test.use({ storageState: fichierSession('admin_plateforme') })
+
+  test('dans l’écran Indicateurs : le ministère, le jour et le motif ; la demande a quitté la file', async ({
+    page,
+  }) => {
+    await page.goto('/indicateurs')
+    await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs' })).toBeVisible()
+    await attendreLaFinDuChargement(page)
+    await expect(lignesDeCommunication(page)).toHaveCount(0)
+    await page.getByText(/Retirés par les ministères ces 30 derniers jours \(\d+\)/).click()
+    const liste = page.locator('details', {
+      hasText: 'Retirés par les ministères ces 30 derniers jours',
+    })
+    await expect(liste.getByText(/Communication, «\s*Personnes formées\s*»/)).toBeVisible()
+    await expect(
+      liste.getByText(new RegExp(`^Demande retirée le .* : «\\s*${MOTIF_RETRAIT}\\s*»$`)),
+    ).toBeVisible()
+    // La demande a quitté la file : son « Pourquoi » se lit ici, déjà masqué plus haut dans ce
+    // parcours, donc sans second « Masquer le texte ».
+    await expect(
+      liste.getByText(/^Pourquoi : «\s*\[texte masqué par EJP Tech\]\s*»$/),
+    ).toBeVisible()
+    await expect(liste.getByText(SUGGESTIONS[2].pourquoi)).toHaveCount(0)
+    await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
+  })
+
+  test('dans le Journal technique : l’action et l’indicateur, sans le texte du motif', async ({
+    page,
+  }) => {
+    await page.goto(
+      `/journal-technique?action=indicateur_retire&ministere=${MINISTERE_COMMUNICATION}&periode=tout`,
+    )
+    await expect(page.getByRole('heading', { level: 1, name: 'Journal technique' })).toBeVisible()
+    await attendreLaFinDuChargement(page)
+    const lignes = page.getByRole('list', { name: 'Lignes du journal' }).getByRole('listitem')
+    await expect(lignes.filter({ hasText: 'A retiré un indicateur' })).toHaveCount(1)
+    await expect(lignes.first()).toContainText(
+      'Personnes formées, demande retirée par le ministère',
+    )
+    await expect(page.getByText(MOTIF_RETRAIT)).toHaveCount(0)
+  })
+})
+
+for (const profil of ['berger', 'conseil', 'admin_eglise'] as const) {
+  test.describe(`T62 : ${profil} ne lit pas le motif d’un retrait`, () => {
+    test.use({ storageState: fichierSession(profil) })
+
+    test('la base ne lui rend aucune ligne de retrait', async ({ page }) => {
+      await page.goto('/')
+      expect(await lire<unknown>(page, 'retrait_indicateur?select=motif')).toEqual([])
+      const ajout = await appeler(page, 'retirer_mon_indicateur', {
+        p_indicateur_id: '00000000-0000-4000-8000-000000000000',
+        p_motif: MOTIF_RETRAIT,
+      })
+      expect(ajout.status()).toBe(403)
+    })
+  })
+}

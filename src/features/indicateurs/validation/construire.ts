@@ -7,12 +7,17 @@ import type {
   LigneUsage,
   MinistereConfiguration,
 } from '@/data/indicateursConfiguration'
-import type { AttenteAdministration, DecisionRecente } from '@/data/validationIndicateurs'
+import type {
+  AttenteAdministration,
+  DecisionRecente,
+  RetraitRecent,
+} from '@/data/validationIndicateurs'
 import {
   estEnRetard,
   texteAttente,
   texteDecision,
   texteEnvoyeLe,
+  texteRetraitMinistere,
 } from '@/features/indicateurs/validation/textes'
 import type { LigneVue, NatureIndicateur } from '@/lib/base'
 import { libelleRythme } from '@/lib/metier/indicateurs'
@@ -130,6 +135,43 @@ export function construireLignesAdministration(
       enRetard: estEnRetard(attente.attente_jours),
       pourquoi: null,
       nbValeurs: null,
+    }))
+}
+
+/** Un retrait de la liste repliée « Retirés par les ministères ces 30 derniers jours » (T62). */
+export interface LigneRetraitMinistere {
+  /** Identifiant du retrait (`retrait_indicateur.id`), cible du masquage de son motif. */
+  id: string
+  ministere: string
+  libelle: string
+  /** « Demande retirée le 14 oct. », « Retiré le 14 oct. ». */
+  texte: string
+  /** Le motif écrit par le ministère, ou le texte de masquage. */
+  motif: string
+  /**
+   * Une demande retirée avant la décision : son « Pourquoi » (ou le texte de masquage) et
+   * l'identifiant de la demande, cible de son masquage. Elle a quitté la file : c'est ici qu'EJP
+   * Tech peut encore le masquer. Null pour un ajout validé.
+   */
+  pourquoi: { demandeId: string; texte: string } | null
+}
+
+/** Retraits des ministères des 30 derniers jours, du plus récent au plus ancien (T62). */
+export function construireRetraitsMinisteres(
+  retraits: readonly RetraitRecent[],
+): LigneRetraitMinistere[] {
+  return retraits
+    .toSorted((a, b) => b.saisi_le.localeCompare(a.saisi_le))
+    .map((retrait) => ({
+      id: retrait.retrait_id,
+      ministere: retrait.ministere_nom,
+      libelle: retrait.libelle,
+      texte: texteRetraitMinistere(retrait.etat_avant === 'en_attente', retrait.saisi_le),
+      motif: retrait.motif,
+      pourquoi:
+        retrait.demande === null
+          ? null
+          : { demandeId: retrait.demande.id, texte: retrait.demande.pourquoi },
     }))
 }
 

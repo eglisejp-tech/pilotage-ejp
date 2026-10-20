@@ -7,7 +7,7 @@ import type { CibleMasquable, MotifMasquage } from '@/lib/base'
 // champ, un des quatre motifs de la liste. Le texte masqué n'est jamais une saisie : aucun champ
 // libre ici, donc aucun rappel sur les données personnelles.
 
-/** Les cibles de `private.masquer_texte` (migration 20261009110000). */
+/** Les cibles de `private.masquer_texte` (migrations 20261009110000 et 20261014090000, T62). */
 export const CIBLES_MASQUABLES = [
   'point_attention',
   'point_suivi',
@@ -18,6 +18,7 @@ export const CIBLES_MASQUABLES = [
   'validation',
   'signalement',
   'signalement_suivi',
+  'retrait_indicateur',
 ] as const satisfies readonly CibleMasquable[]
 
 /** Les motifs de la liste, dans l'ordre du BRIEF. */
