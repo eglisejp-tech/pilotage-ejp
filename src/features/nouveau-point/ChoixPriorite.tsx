@@ -1,5 +1,4 @@
 import type { Ref } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { PRIORITES_POINT, TEXTES_POINT } from '@/features/nouveau-point/textes'
 import type { Priorite } from '@/lib/base'
 
@@ -17,9 +16,9 @@ interface Props {
 
 /**
  * Choix de la priorité (maquette 10) : trois vrais boutons radio côte à côte, le choix en fond
- * `--encre` et en gras (jamais la couleur seule). Le titre « Priorité » et son aide sont hors
- * d'une `<legend>` (le nom du groupe garderait « Aide : ... ») : le groupe le lit par
- * `aria-labelledby`, comme le statut d'un événement.
+ * `--encre` et en gras (jamais la couleur seule). Le titre « Priorité », sans bulle (l'ordre de
+ * tri n'est pas à expliquer, T66 t237), est lu par `aria-labelledby`, comme le statut d'un
+ * événement.
  */
 export function ChoixPriorite({ id, valeur, onChange, onBlur, refPremier, erreur }: Props) {
   const idTitre = `${id}-titre`
@@ -30,12 +29,9 @@ export function ChoixPriorite({ id, valeur, onChange, onBlur, refPremier, erreur
       aria-describedby={erreur ? idErreur : undefined}
       className="flex min-w-0 flex-col gap-1.5"
     >
-      <div className="flex min-h-cible flex-wrap items-center">
-        <p id={idTitre} className="text-[15px] font-semibold">
-          {TEXTES_POINT.libellePriorite}
-        </p>
-        <Aide code="point.priorite" libelle={TEXTES_POINT.libellePriorite} />
-      </div>
+      <p id={idTitre} className="text-[15px] font-semibold">
+        {TEXTES_POINT.libellePriorite}
+      </p>
       <div className="flex pl-px">
         {PRIORITES_POINT.map((priorite, rang) => (
           <label key={priorite.valeur} className="relative -ml-px flex flex-1">

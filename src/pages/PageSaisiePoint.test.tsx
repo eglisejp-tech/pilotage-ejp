@@ -84,8 +84,8 @@ describe('/saisir/point (maquette 10)', () => {
     const faux = connecte('ministere')
     afficher('/saisir/point')
     expect(await screen.findByRole('checkbox', { name: 'Coordination' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Nouveau point d'attention")
-    expect(document.title).toBe("Nouveau point d'attention, Pilotage EJP")
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Nouveau point$/)
+    expect(document.title).toBe('Nouveau point, Pilotage EJP')
     // Ni lui-même, ni un ministère désactivé.
     expect(
       screen

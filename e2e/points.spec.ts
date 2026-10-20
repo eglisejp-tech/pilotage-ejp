@@ -124,20 +124,10 @@ test.describe('écran 05 lu par le berger (aperçu)', () => {
     await expect(articles(page)).toHaveCount(9)
   })
 
-  test('l’aide du filtre s’ouvre et se ferme à Échap, le focus reste sur le bouton', async ({
-    page,
-  }) => {
+  test('le filtre se comprend seul : aucune bulle sur l’écran (T66)', async ({ page }) => {
     await ouvrir(page, { profil: 'berger' })
-    const aide = page.getByRole('button', { name: 'Aide : Filtrer par ministère' })
-    await aide.click()
-    await expect(
-      page.getByText('Les points créés par le ministère choisi et ceux qui le mentionnent.'),
-    ).toBeVisible()
-    await page.keyboard.press('Escape')
-    await expect(
-      page.getByText('Les points créés par le ministère choisi et ceux qui le mentionnent.'),
-    ).toBeHidden()
-    await expect(aide).toBeFocused()
+    await expect(page.getByRole('combobox', { name: 'Filtrer par ministère' })).toBeVisible()
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
   })
 
   test('au clavier : Tab atteint les onglets puis le filtre', async ({ page }) => {
@@ -153,9 +143,18 @@ test.describe('écran 05 lu par le berger (aperçu)', () => {
 })
 
 test.describe('« Mes points » du ministère, EJP Tech et l’administration (aperçu)', () => {
-  test('le ministère : « Mes points », ses points seulement, sans filtre', async ({ page }) => {
+  test('le ministère : « Mes points », ses points seulement, sans filtre, avec « Nouveau point »', async ({
+    page,
+  }) => {
     await ouvrir(page, { profil: 'ministere' })
     await expect(page.getByRole('heading', { level: 1, name: 'Mes points' })).toBeVisible()
+    await expect(
+      page.getByText('Vos points et ceux qui mentionnent votre ministère.'),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
     await expect(articles(page)).toHaveCount(2)
     await expect(page.getByRole('combobox')).toHaveCount(0)
     await expect(page.getByRole('link', { name: /^Traités/ })).toHaveText('Traités (1)')
@@ -169,8 +168,8 @@ test.describe('« Mes points » du ministère, EJP Tech et l’administration (a
     const contenu = page.getByRole('main')
     await expect(contenu.getByRole('button', { name: ACTIONS })).toHaveCount(0)
     await expect(contenu.getByRole('link', { name: ACTIONS })).toHaveCount(0)
-    // Les boutons « ? » informent, ils n'agissent pas.
-    await expect(contenu.getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(0)
+    // Plus aucune bulle sur l'écran (T66) : aucun bouton du tout.
+    await expect(contenu.getByRole('button')).toHaveCount(0)
   })
 
   test('l’administration de l’église reçoit la page non disponible, sans aucun point', async ({
@@ -193,17 +192,21 @@ test.describe('états vides et problèmes (T36)', () => {
     await expect(page.getByText('Aucun point ouvert.')).toBeVisible()
     await expect(page.getByRole('link', { name: /^Ouverts/ })).toHaveText('Ouverts (0)')
     await ouvrir(page, { etat: 'vide', vue: 'traites' })
-    await expect(page.getByText("Aucun point traité pour l'instant.")).toBeVisible()
+    await expect(page.getByText('Aucun point traité.')).toBeVisible()
     await ouvrir(page, { profil: 'ministere', etat: 'vide', vue: 'tous' })
-    await expect(page.getByText("Aucun point pour l'instant.")).toBeVisible()
-    await expect(
-      page.getByText('Les points que vous créez, et ceux qui vous mentionnent, apparaîtront ici.'),
-    ).toBeVisible()
+    await expect(page.getByText('Aucun point.', { exact: true })).toBeVisible()
+    // Le ministère a « Nouveau point » en tête et dans l'état vide (T66, m161).
+    await expect(page.getByRole('link', { name: 'Nouveau point' })).toHaveCount(2)
+    await expect(page.getByText(/apparaîtront ici/)).toHaveCount(0)
   })
 
-  test('un ministère choisi sans point traité : son nom dans la phrase', async ({ page }) => {
+  test('un ministère choisi sans point traité : son nom dans la phrase, et la sortie du filtre', async ({
+    page,
+  }) => {
     await ouvrir(page, { vue: 'traites', ministere: 'min-jeunesse' })
     await expect(page.getByText('Aucun point traité pour Jeunesse.')).toBeVisible()
+    await page.getByRole('button', { name: 'Voir tous les ministères' }).click()
+    await expect(page).not.toHaveURL(/ministere=/)
   })
 
   test('chargement : le titre est déjà là, « Chargement » après 300 ms', async ({ page }) => {
@@ -225,9 +228,6 @@ test.describe('accessibilité', () => {
   for (const ecran of TOUS) {
     test(`audit axe : ${nomDe(ecran)}`, async ({ page }) => {
       await ouvrir(page, ecran)
-      if (ecran.etat === undefined && ecran.profil === 'berger' && ecran.vue === undefined) {
-        await page.getByRole('button', { name: 'Aide : Filtrer par ministère' }).click()
-      }
       const resultat = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .analyze()

@@ -253,7 +253,7 @@ describe('« Marquer traité » pour un ministère', () => {
       'Réglé avec le propriétaire.',
     )
     await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
-    const enCours = await screen.findByRole('button', { name: 'Envoi en cours' })
+    const enCours = await screen.findByRole('button', { name: 'Enregistrement en cours' })
     expect(enCours).toHaveAttribute('aria-disabled', 'true')
     await utilisateur.click(enCours)
     expect(marquer).toHaveBeenCalledTimes(1)
@@ -399,7 +399,9 @@ describe('« Marquer traité » pour un ministère', () => {
     await utilisateur.paste('é'.repeat(281))
     expect(screen.getByText('281 sur 280')).toBeInTheDocument()
     await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
-    expect(screen.getByText('Le commentaire dépasse 280 caractères.')).toBeInTheDocument()
+    expect(
+      screen.getByText('Raccourcissez le commentaire : 280 caractères au plus.'),
+    ).toBeInTheDocument()
     expect(marquer).not.toHaveBeenCalled()
   })
 })
@@ -432,7 +434,7 @@ describe('« Marquer traité » pour le berger et le conseil', () => {
 })
 
 describe('« Changer le statut »', () => {
-  it('trois vrais boutons radio, le statut actuel choisi, la note visible, une aide sur « Statut »', async () => {
+  it('trois vrais boutons radio, le statut actuel choisi, la note visible, sans bulle', async () => {
     const utilisateur = userEvent.setup()
     afficher(ministere(CREATEUR), unPoint('en_cours'))
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
@@ -446,9 +448,10 @@ describe('« Changer le statut »', () => {
     expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
     expect(screen.getByRole('radio', { name: 'En attente de décision' })).not.toBeChecked()
     expect(groupe).toHaveAccessibleDescription(
-      'Un point « En attente de décision » passe avant les autres dans « À décider ».',
+      'En attente de décision : le berger ou le conseil doit trancher.',
     )
-    expect(screen.getByRole('button', { name: 'Aide : Statut' })).toBeInTheDocument()
+    // La note définit le statut : la bulle `point.statut` est retirée (T66, t256).
+    expect(screen.queryByRole('button', { name: /^Aide : / })).toBeNull()
     expect(screen.getByRole('button', { name: 'Enregistrer le statut' })).toBeInTheDocument()
     // Aucun champ libre : pas de rappel sur les données personnelles.
     expect(screen.queryByText(RAPPEL)).toBeNull()
@@ -523,7 +526,7 @@ describe('« Changer le statut »', () => {
     await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      "Ce point n'existe pas ou vous n'y avez pas accès.",
+      'Ce point est introuvable. Fermez cette fenêtre pour mettre la page à jour.',
     )
     await utilisateur.keyboard('{Escape}')
     await waitFor(() => expect(invalider).toHaveBeenCalledTimes(1))

@@ -12,7 +12,7 @@ interface Props {
   onBlur?: () => void
   refPremier?: Ref<HTMLInputElement>
   erreur?: string
-  /** Titre du groupe : « Mentionner un ministère (facultatif) » à la création. */
+  /** Titre du groupe : « Ministères mentionnés (facultatif) » à la création. */
   titre?: string
   /** Notes sous les boutons : celles de la création par défaut. */
   notes?: readonly string[]
@@ -21,10 +21,9 @@ interface Props {
 /**
  * Mentions facultatives d'un nouveau point (maquette 10) : un bouton à cocher par ministère actif
  * autre que celui du compte. Un ministère coché prend le fond `--encre`, le gras et un « ✓ »
- * (jamais la couleur seule). Sous les boutons, la note du BRIEF (le ministère mentionné verra ce
- * point, et seulement ce point) et la ligne « Le ministère créateur, le berger et le conseil
- * peuvent modifier les mentions tant que le point n'est pas traité. » (T54). Sans autre ministère actif, une phrase à la place des boutons, sans note. Pas
- * d'aide en bulle : la note visible dit déjà ce qu'il faut (le formulaire garde trois aides).
+ * (jamais la couleur seule). Sous les boutons, une note : « Le ministère mentionné verra ce point
+ * et pourra le marquer traité. » (T66 : plus de phrase sur les droits). Sans autre ministère, une
+ * phrase à la place des boutons, sans note. Pas d'aide en bulle : la note visible suffit.
  * « Modifier les mentions » (T54) réutilise ces boutons avec son titre et ses notes.
  */
 export function ChoixMentionsPoint({
@@ -36,7 +35,7 @@ export function ChoixMentionsPoint({
   refPremier,
   erreur,
   titre = TEXTES_POINT.titreMentions,
-  notes = [TEXTES_POINT.noteMentions, TEXTES_POINT.mentionsModifiables],
+  notes = [TEXTES_POINT.noteMentions],
 }: Props) {
   const idTitre = `${id}-titre`
   const idNote = `${id}-note`

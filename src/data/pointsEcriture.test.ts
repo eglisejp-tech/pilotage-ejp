@@ -159,7 +159,7 @@ describe('creerPoint', () => {
     expect(
       schemaBaseNouveauPoint.safeParse({ ...base, description: '🙏'.repeat(281) }).error?.issues[0]
         ?.message,
-    ).toBe(MESSAGES_POINT.refus.description)
+    ).toBe(MESSAGES_POINT.controle.description)
     expect(schemaBaseNouveauPoint.safeParse({ ...base, attendu: '🙏'.repeat(80) }).success).toBe(
       true,
     )
@@ -175,7 +175,7 @@ describe('creerPoint', () => {
     }
     for (const echeance of ['12/10/2026', '2026-02-30']) {
       const resultat = schemaBaseNouveauPoint.safeParse({ ...base, echeance })
-      expect(resultat.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.echeanceFormat)
+      expect(resultat.error?.issues[0]?.message).toBe(MESSAGES_POINT.controle.echeanceFormat)
     }
     expect(schemaBaseNouveauPoint.safeParse({ ...base, echeance: '2026-10-12' }).success).toBe(true)
   })
@@ -255,12 +255,14 @@ describe('marquerTraite', () => {
 })
 
 describe('schemaCommentaireTraiteMinistere', () => {
-  it('demande 10 à 280 caractères une fois les bords retirés, avec les messages de la base', () => {
+  it('demande 10 à 280 caractères une fois les bords retirés, avec les messages du formulaire', () => {
     const court = schemaCommentaireTraiteMinistere.safeParse(`  ${'x'.repeat(9)}  `)
     expect(court.success).toBe(false)
-    expect(court.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.commentaireCourt)
+    expect(court.error?.issues[0]?.message).toBe(MESSAGES_POINT.controle.commentaireCourt)
     const long = schemaCommentaireTraiteMinistere.safeParse('x'.repeat(281))
-    expect(long.error?.issues[0]?.message).toBe(MESSAGES_POINT.refus.commentaireLong)
+    expect(long.error?.issues[0]?.message).toBe(
+      'Raccourcissez le commentaire : 280 caractères au plus.',
+    )
     expect(schemaCommentaireTraiteMinistere.parse(` ${'x'.repeat(10)} `)).toBe('x'.repeat(10))
     expect(schemaCommentaireTraiteMinistere.safeParse('x'.repeat(280)).success).toBe(true)
   })
@@ -270,11 +272,11 @@ describe('schemaCommentaireTraiteMinistere', () => {
     expect(schemaCommentaireTraiteMinistere.safeParse('🙏'.repeat(280)).success).toBe(true)
     expect(
       schemaCommentaireTraiteMinistere.safeParse('🙏'.repeat(281)).error?.issues[0]?.message,
-    ).toBe(MESSAGES_POINT.refus.commentaireLong)
+    ).toBe(MESSAGES_POINT.controle.commentaireLong)
     // 8 caractères pour la base, 11 unités UTF-16 : refusé comme trop court.
     expect(
       schemaCommentaireTraiteMinistere.safeParse('Fait 🙏🙏🙏').error?.issues[0]?.message,
-    ).toBe(MESSAGES_POINT.refus.commentaireCourt)
+    ).toBe(MESSAGES_POINT.controle.commentaireCourt)
     // 275 caractères avec des émojis (plus de 280 unités UTF-16) : accepté.
     const texte = `${'x'.repeat(265)}${'🙏'.repeat(10)}`
     expect(texte.length).toBeGreaterThan(280)
@@ -299,10 +301,17 @@ describe('messageDeRefusPoint', () => {
     ).toBe('Expliquez ce qui a été traité et comment (10 caractères au moins).')
   })
 
-  it('dit seulement que le point n’est pas accessible pour un refus de droit (42501)', () => {
+  it('dit seulement que le point est introuvable pour un refus de droit (42501, m149)', () => {
     expect(messageDeRefusPoint({ code: '42501', message: 'autre texte interne' })).toBe(
-      "Ce point n'existe pas ou vous n'y avez pas accès.",
+      'Ce point est introuvable. Fermez cette fenêtre pour mettre la page à jour.',
     )
+    // Le texte que la base lève pour un point hors de portée donne la même phrase.
+    expect(
+      messageDeRefusPoint({
+        code: '42501',
+        message: "Ce point n'existe pas ou vous n'y avez pas accès.",
+      }),
+    ).toBe(MESSAGES_POINT.refus.acces)
   })
 
   it('garde le refus de création réservée aux ministères', () => {
@@ -330,9 +339,9 @@ describe('messageDeRefusPoint', () => {
     }
   })
 
-  it('en création, un autre refus de droit parle de la création, pas d’un point existant', () => {
+  it('en création, un autre refus de droit dit la connexion expirée, pas un point existant (m141)', () => {
     expect(messageDeRefusPoint({ code: '42501', message: 'row-level security' }, 'creation')).toBe(
-      "Vous n'avez pas accès à la création de points.",
+      'Votre connexion a expiré. Reconnectez-vous.',
     )
     expect(
       messageDeRefusPoint(
@@ -362,7 +371,7 @@ describe('messageDeRefusPoint', () => {
   it('montre le premier problème d’une valeur refusée avant l’appel, pas « La connexion a échoué »', async () => {
     const faux = installer()
     const erreurLongue = await marquerTraite(POINT, 'x'.repeat(281)).catch((e: unknown) => e)
-    expect(messageDeRefusPoint(erreurLongue)).toBe(MESSAGES_POINT.refus.commentaireLong)
+    expect(messageDeRefusPoint(erreurLongue)).toBe(MESSAGES_POINT.controle.commentaireLong)
     const erreurId = await changerStatutPoint('1', 'en_cours').catch((e: unknown) => e)
     expect(messageDeRefusPoint(erreurId)).toBe(MESSAGES_POINT.refus.acces)
     const erreurPoint = await creerPoint({
@@ -373,7 +382,7 @@ describe('messageDeRefusPoint', () => {
       echeance: null,
       mentions: [],
     }).catch((e: unknown) => e)
-    expect(messageDeRefusPoint(erreurPoint, 'creation')).toBe(MESSAGES_POINT.refus.prioriteVide)
+    expect(messageDeRefusPoint(erreurPoint, 'creation')).toBe(MESSAGES_POINT.controle.prioriteVide)
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
@@ -437,7 +446,7 @@ describe('modifierMentionsPoint', () => {
     const erreurPoint = await modifierMentionsPoint('1', []).catch((e: unknown) => e)
     expect(messageDeRefusPoint(erreurPoint)).toBe(MESSAGES_POINT.refus.acces)
     const erreurMention = await modifierMentionsPoint(POINT, ['Social']).catch((e: unknown) => e)
-    expect(messageDeRefusPoint(erreurMention)).toBe(MESSAGES_POINT.refus.mentionRefusee)
+    expect(messageDeRefusPoint(erreurMention)).toBe(MESSAGES_POINT.controle.mentionRefusee)
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 

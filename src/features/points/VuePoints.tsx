@@ -1,7 +1,8 @@
 import { useId } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
-import type { SituationVide } from '@/components/etats/situations'
+import type { ActionVide, SituationVide } from '@/components/etats/situations'
+import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { FiltreMinistere } from '@/features/points/FiltreMinistere'
 import { ListePoints } from '@/features/points/ListePoints'
 import type { DonneesPoints } from '@/features/points/modelePoints'
@@ -20,12 +21,20 @@ interface Props {
   compte: CompteDesActions
 }
 
-/** État vide de la vue : la phrase, et sa situation (T36). */
+/** Adresse du formulaire « Nouveau point » (maquette 10), pour le ministère seulement. */
+const VERS_NOUVEAU_POINT = '/saisir/point'
+
+/**
+ * État vide de la vue : la phrase, sa situation (T36) et au plus une action (T66, m159 à m163) :
+ * « Voir tous les ministères » sous un filtre sans résultat, « Nouveau point » pour le ministère
+ * sans point ouvert ou sans aucun point.
+ */
 function videDe(
   vue: Vue,
   donnees: DonneesPoints,
   profil: ProfilPoints,
-): { situation: SituationVide; texte: string; suite?: string } {
+  retirerFiltre: () => void,
+): { situation: SituationVide; texte: string; action?: ActionVide } {
   const choisi = donnees.ministereChoisi
   if (choisi !== null) {
     const texte = {
@@ -33,18 +42,26 @@ function videDe(
       traites: TEXTES_POINTS.vide.traitesDe,
       tous: TEXTES_POINTS.vide.tousDe,
     }[vue](choisi.nom)
-    return { situation: 'aucun_resultat', texte }
+    return {
+      situation: 'aucun_resultat',
+      texte,
+      action: { libelle: TEXTES_POINTS.voirTousLesMinisteres, surClic: retirerFiltre },
+    }
   }
   return {
     situation: vue === 'ouverts' ? 'tout_est_fait' : 'premier_usage',
     texte: TEXTES_POINTS.vide[vue],
-    suite: profil === 'ministere' && vue === 'tous' ? TEXTES_POINTS.vide.suiteMinistere : undefined,
+    action:
+      profil === 'ministere' && vue !== 'traites'
+        ? { libelle: TEXTES_POINTS.nouveauPoint, vers: VERS_NOUVEAU_POINT }
+        : undefined,
   }
 }
 
 /**
  * Écran 05 « Points d'attention » du berger, du conseil et d'EJP Tech, et « Mes points » du
- * ministère (BRIEF, section 9 ; maquette 05) : titre et phrase, onglets Ouverts, Traités et Tous
+ * ministère (BRIEF, section 9 ; maquette 05) : titre ; pour le ministère, la phrase de sa liste et
+ * le bouton « Nouveau point » (T66) ; onglets Ouverts, Traités et Tous
  * avec leur nombre, filtre « Tous les ministères » (pas pour le ministère), tableau des points,
  * puis « Traités récemment » sous l'onglet Ouverts. La vue (`?vue=`) et le ministère
  * (`?ministere=`) sont dans l'adresse. Les nombres des onglets suivent le filtre.
@@ -72,14 +89,23 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
     setParametres(suivants)
   }
 
-  const vide = lignes.length === 0 ? videDe(vue, donnees, profil) : null
+  const vide =
+    lignes.length === 0 ? videDe(vue, donnees, profil, () => choisirMinistere(null)) : null
+  const introduction = profil === 'ministere' ? TEXTES_POINTS.introduction.ministere : null
   return (
     <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-2.5">
         <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
-        <p className="max-w-[720px] leading-relaxed text-encre-2">
-          {TEXTES_POINTS.introduction[profil]}
-        </p>
+        {introduction !== null ? (
+          <p className="max-w-[720px] leading-relaxed text-encre-2">{introduction}</p>
+        ) : null}
+        {profil === 'ministere' ? (
+          <p className="mt-2">
+            <Link to={VERS_NOUVEAU_POINT} className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
+              {TEXTES_POINTS.nouveauPoint}
+            </Link>
+          </p>
+        ) : null}
       </header>
 
       <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
@@ -97,7 +123,7 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
           {TEXTES_POINTS.titreListe[vue]}
         </h2>
         {vide !== null ? (
-          <EtatVide situation={vide.situation} suite={vide.suite}>
+          <EtatVide situation={vide.situation} action={vide.action}>
             {vide.texte}
           </EtatVide>
         ) : (

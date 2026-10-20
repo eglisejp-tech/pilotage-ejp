@@ -2,7 +2,7 @@ import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 
-// « Nouveau point d'attention » (maquette 10, lot P2) sur l'aperçu de développement : le vrai
+// « Nouveau point » (maquette 10, lot P2) sur l'aperçu de développement : le vrai
 // panneau, données d'exemple, envoi simulé comme la base (aucune base, aucune écriture).
 // « Aujourd'hui » y est le mardi 6 octobre 2026. Trois formats par les projets Playwright : 1440,
 // 834 et 390 px. Le parcours avec la base est dans `e2e/base/nouveau-point.ecriture.spec.ts`.
@@ -27,23 +27,30 @@ const reussite = (page: Page) => page.getByRole('status').filter({ hasText: 'Poi
 /** Coche un ministère par son libellé (la case est cachée, comme les boutons de la maquette). */
 async function mentionner(page: Page, nom: string) {
   await page
-    .getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
+    .getByRole('group', { name: 'Ministères mentionnés (facultatif)' })
     .getByText(nom, { exact: true })
     .click()
   await expect(page.getByRole('checkbox', { name: nom })).toBeChecked()
 }
 
-test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
-  test('champs dans l’ordre de la maquette, rappel sous le titre, trois aides, mentions et lien', async ({
+test.describe('Nouveau point (maquette 10), aperçu', () => {
+  test('champs dans l’ordre de la maquette, rappel sous le titre, indications sans bulle, mentions et lien', async ({
     page,
   }) => {
     await ouvrir(page)
-    await expect(page).toHaveTitle("Nouveau point d'attention, Pilotage EJP")
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText("Nouveau point d'attention")
+    await expect(page).toHaveTitle('Nouveau point, Pilotage EJP')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nouveau point')
     await expect(page.getByText('Ministère Communication', { exact: true })).toBeVisible()
     await expect(titre(page)).toHaveAccessibleDescription(RAPPEL)
     await expect(page.getByText(RAPPEL)).toHaveCount(1)
-    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(3)
+    // Plus de bulle (T66) : l'attendu et l'échéance portent une indication visible.
+    await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
+    await expect(
+      page.getByLabel('Ce qui est attendu (facultatif)', { exact: true }),
+    ).toHaveAccessibleDescription('Exemple : confirmer la salle avant samedi.')
+    await expect(echeance(page)).toHaveAccessibleDescription(
+      'Le dernier jour où une réponse vous est utile.',
+    )
     // Ordre de haut en bas : titre, ce qui se passe, priorité, attendu, échéance, mentions.
     const ordre = await page
       .locator('input, textarea')
@@ -62,7 +69,7 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     await expect(page.getByRole('checkbox', { name: 'Communication' })).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).toBeAttached()
     await expect(
-      page.getByText(/^Le ministère mentionné verra ce point, et seulement ce point\./),
+      page.getByText('Le ministère mentionné verra ce point et pourra le marquer traité.'),
     ).toBeVisible()
     await expect(creer(page)).toBeVisible()
     await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
@@ -94,9 +101,7 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     await ouvrir(page)
     await creer(page).click()
     await expect(titre(page)).toHaveAttribute('aria-invalid', 'true')
-    await expect(titre(page)).toHaveAccessibleDescription(
-      new RegExp('Donnez un titre au point \\(80 caractères au plus\\)\\.'),
-    )
+    await expect(titre(page)).toHaveAccessibleDescription(/Donnez un titre au point\./)
     await expect(reussite(page)).toHaveCount(0)
   })
 
@@ -105,7 +110,9 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     await titre(page).fill('Salle pour la soirée de louange')
     await echeance(page).fill('2026-10-05')
     await creer(page).click()
-    await expect(echeance(page)).toHaveAccessibleDescription("L'échéance ne peut pas être passée.")
+    await expect(echeance(page)).toHaveAccessibleDescription(
+      "Le dernier jour où une réponse vous est utile. Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
+    )
     await expect(titre(page)).toHaveValue('Salle pour la soirée de louange')
   })
 
@@ -149,12 +156,12 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     await expect(creer(page)).not.toHaveAttribute('aria-disabled', 'true')
   })
 
-  test('aucun autre ministère actif : une phrase à la place des cases', async ({ page }) => {
+  test('aucun autre ministère : une phrase à la place des cases', async ({ page }) => {
     await ouvrir(page, 'sans-mention')
-    await expect(page.getByText('Aucun autre ministère actif à mentionner.')).toBeVisible()
+    await expect(page.getByText('Aucun autre ministère à mentionner.')).toBeVisible()
     await expect(page.getByRole('checkbox')).toHaveCount(0)
     // Le bouton garde, sous la phrase, au moins l'espace du formulaire (20 px entre les blocs).
-    const phrase = await page.getByText('Aucun autre ministère actif à mentionner.').boundingBox()
+    const phrase = await page.getByText('Aucun autre ministère à mentionner.').boundingBox()
     const bouton = await creer(page).boundingBox()
     expect(phrase).not.toBeNull()
     expect(bouton).not.toBeNull()
@@ -165,7 +172,7 @@ test.describe("Nouveau point d'attention (maquette 10), aperçu", () => {
     page,
   }) => {
     await ouvrir(page)
-    const groupe = page.getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
+    const groupe = page.getByRole('group', { name: 'Ministères mentionnés (facultatif)' })
     const puce = (nom: string) => groupe.locator('label', { hasText: nom }).locator('span').first()
     const style = (nom: string) =>
       puce(nom).evaluate((element) => {
@@ -221,13 +228,10 @@ test.describe('accessibilité et largeurs', () => {
     expect(resultat.violations).toEqual([])
   })
 
-  test('audit axe avec l’aide de la priorité ouverte', async ({ page }) => {
+  test('audit axe avec une échéance choisie et ses indications', async ({ page }) => {
     await ouvrir(page)
-    await page.getByRole('button', { name: 'Aide : Priorité' }).click()
-    await expect(page.getByRole('button', { name: 'Aide : Priorité' })).toHaveAttribute(
-      'aria-expanded',
-      'true',
-    )
+    await echeance(page).fill('2026-10-10')
+    await expect(page.getByText('samedi 10 octobre 2026')).toBeVisible()
     const resultat = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze()
@@ -260,7 +264,7 @@ test.describe('accessibilité et largeurs', () => {
   }) => {
     await ouvrir(page)
     const largeur = page.viewportSize()?.width ?? 0
-    const fenetre = page.getByRole('dialog', { name: "Nouveau point d'attention" })
+    const fenetre = page.getByRole('dialog', { name: 'Nouveau point' })
     if (largeur < 600) {
       await expect(fenetre).toHaveCount(0)
     } else {
@@ -306,13 +310,10 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await echeance(page).fill('2026-10-10')
   await mentionner(page, 'Coordination')
   await capturer('rempli')
-  // Messages de refus, puis aide de la priorité ouverte.
+  // Messages de refus.
   await ouvrir(page)
   await echeance(page).fill('2026-10-05')
   await creer(page).click()
   await expect(titre(page)).toHaveAttribute('aria-invalid', 'true')
   await capturer('refus')
-  await ouvrir(page)
-  await page.getByRole('button', { name: 'Aide : Priorité' }).click()
-  await capturer('aide-priorite')
 })

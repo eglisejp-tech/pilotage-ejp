@@ -66,7 +66,7 @@ for (const profil of ['berger', 'conseil'] as const) {
       const financement = page.getByRole('article', { name: 'Financement de Welcome Prodiges' })
       await expect(financement).toContainText('Urgente')
       await expect(financement).toContainText('En attente de décision')
-      await expect(financement).toContainText('Intégration, mentions :')
+      await expect(financement).toContainText('Intégration')
       await expect(
         page.getByRole('article', { name: 'Salle pour la soirée de louange' }),
       ).toContainText('@Coordination')
@@ -146,12 +146,10 @@ for (const profil of ['berger', 'conseil'] as const) {
       await expect(articles(page)).toHaveCount(4)
     })
 
-    test('l’aide du filtre', async ({ page }) => {
+    test('le filtre se comprend seul : sans bulle (T66)', async ({ page }) => {
       await ouvrirPoints(page)
-      await page.getByRole('button', { name: 'Aide : Filtrer par ministère' }).click()
-      await expect(
-        page.getByText('Les points créés par le ministère choisi et ceux qui le mentionnent.'),
-      ).toBeVisible()
+      await expect(page.getByRole('combobox', { name: 'Filtrer par ministère' })).toBeVisible()
+      await expect(page.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
     })
   })
 }
@@ -166,8 +164,8 @@ test.describe('EJP Tech : écran 05 en lecture seule', () => {
     const contenu = page.getByRole('main')
     await expect(contenu.getByRole('button', { name: ACTIONS })).toHaveCount(0)
     await expect(contenu.getByRole('link', { name: ACTIONS })).toHaveCount(0)
-    // Les boutons « ? » des aides informent, ils n'agissent pas : aucun autre bouton.
-    await expect(contenu.getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(0)
+    // Aucun bouton : l'écran n'a plus de bulle (T66).
+    await expect(contenu.getByRole('button')).toHaveCount(0)
     // Aucun bouton dans aucune rangée, ouverte ou traitée.
     await expect(articles(page).getByRole('button')).toHaveCount(0)
     await page.goto('/points?vue=traites')
@@ -180,8 +178,14 @@ test.describe('EJP Tech : écran 05 en lecture seule', () => {
 test.describe('ministère Communication : « Mes points »', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('ses points et celui qui le mentionne, sans filtre de ministère', async ({ page }) => {
+  test('ses points et celui qui le mentionne, sans filtre de ministère, avec « Nouveau point »', async ({
+    page,
+  }) => {
     await ouvrirPoints(page, '/points', 'Mes points')
+    await expect(page.getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
     // Créés : Salle (ouvert), Micros (traité). Mentionné : Visuels (ouvert).
     await expect(onglets(page)).toHaveText(['Ouverts (2)', 'Traités (1)', 'Tous (3)'])
     await expect(titres(page)).toHaveText([
@@ -198,7 +202,7 @@ test.describe('ministère Communication : « Mes points »', () => {
     await ouvrirPoints(page, '/points', 'Mes points')
     await expect(
       page.getByRole('article', { name: 'Visuels pour Welcome Prodiges' }),
-    ).toContainText('Intégration, mentions :')
+    ).toContainText('Intégration mentionne@Communication')
   })
 
   test('« Traités récemment » et l’onglet Traités : son point traité', async ({ page }) => {

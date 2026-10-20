@@ -55,10 +55,13 @@ describe('schéma du formulaire « Nouveau point d’attention »', () => {
     })
   })
 
-  it('titre vide, fait d’espaces ou de 81 caractères : le message de la base', () => {
-    for (const titre of ['', '   ', 'a'.repeat(81)]) {
-      expect(erreurs({ titre })).toEqual([['titre', MESSAGES_POINT.refus.titre]])
+  it('titre vide ou fait d’espaces, puis de 81 caractères : deux messages distincts (m137)', () => {
+    for (const titre of ['', '   ']) {
+      expect(erreurs({ titre })).toEqual([['titre', 'Donnez un titre au point.']])
     }
+    expect(erreurs({ titre: 'a'.repeat(81) })).toEqual([
+      ['titre', 'Raccourcissez le titre : 80 caractères au plus.'],
+    ])
     expect(schema.safeParse({ ...VALIDE, titre: 'a'.repeat(80) }).success).toBe(true)
   })
 
@@ -66,14 +69,14 @@ describe('schéma du formulaire « Nouveau point d’attention »', () => {
     expect(schema.safeParse({ ...VALIDE, description: 'a'.repeat(280) }).success).toBe(true)
     expect(schema.safeParse({ ...VALIDE, description: '😀'.repeat(280) }).success).toBe(true)
     expect(erreurs({ description: 'a'.repeat(281) })).toEqual([
-      ['description', MESSAGES_POINT.refus.description],
+      ['description', 'Raccourcissez ce texte : 280 caractères au plus.'],
     ])
   })
 
   it('« Ce qui est attendu » : 80 caractères au plus', () => {
     expect(schema.safeParse({ ...VALIDE, attendu: 'a'.repeat(80) }).success).toBe(true)
     expect(erreurs({ attendu: 'a'.repeat(81) })).toEqual([
-      ['attendu', MESSAGES_POINT.refus.attendu],
+      ['attendu', 'Raccourcissez ce texte : 80 caractères au plus.'],
     ])
   })
 
@@ -81,41 +84,41 @@ describe('schéma du formulaire « Nouveau point d’attention »', () => {
     for (const priorite of ['normale', 'haute', 'urgente']) {
       expect(schema.safeParse({ ...VALIDE, priorite }).success).toBe(true)
     }
-    expect(erreurs({ priorite: '' })).toEqual([['priorite', MESSAGES_POINT.refus.prioriteVide]])
+    expect(erreurs({ priorite: '' })).toEqual([['priorite', MESSAGES_POINT.controle.prioriteVide]])
     expect(erreurs({ priorite: 'critique' })).toEqual([
-      ['priorite', MESSAGES_POINT.refus.prioriteVide],
+      ['priorite', MESSAGES_POINT.controle.prioriteVide],
     ])
   })
 
-  it('échéance : aujourd’hui et plus tard permis, la veille refusée avec le message de la base', () => {
+  it('échéance : aujourd’hui et plus tard permis, la veille refusée avant l’envoi', () => {
     expect(schema.parse({ ...VALIDE, echeance: '2026-10-06' }).echeance).toBe('2026-10-06')
     expect(schema.parse({ ...VALIDE, echeance: '2027-01-01' }).echeance).toBe('2027-01-01')
     expect(erreurs({ echeance: '2026-10-05' })).toEqual([
-      ['echeance', MESSAGES_POINT.refus.echeancePassee],
+      ['echeance', "Cette date est passée. Choisissez aujourd'hui ou une date à venir."],
     ])
   })
 
-  it('échéance qui n’est pas une date : « Choisissez une date au format jour, mois, année. »', () => {
+  it('échéance qui n’est pas une date : « Choisissez une date, ou laissez le champ vide. »', () => {
     for (const echeance of ['12/10/2026', '2026-02-30', 'demain']) {
       expect(erreurs({ echeance }), echeance).toEqual([
-        ['echeance', MESSAGES_POINT.refus.echeanceFormat],
+        ['echeance', 'Choisissez une date, ou laissez le champ vide.'],
       ])
     }
   })
 
   it('le ministère du compte ne se mentionne pas, ni un identifiant qui n’en est pas un', () => {
     expect(erreurs({ mentions: [COORDINATION, MOI] })).toEqual([
-      ['mentions', MESSAGES_POINT.refus.mentionRefusee],
+      ['mentions', MESSAGES_POINT.controle.mentionRefusee],
     ])
     expect(erreurs({ mentions: ['pas-un-identifiant'] })).toEqual([
-      ['mentions.0', MESSAGES_POINT.refus.mentionRefusee],
+      ['mentions.0', MESSAGES_POINT.controle.mentionRefusee],
     ])
   })
 
   it('plusieurs champs refusés à la fois : un message par champ', () => {
     expect(erreurs({ titre: '', echeance: '2026-10-05' })).toEqual([
-      ['titre', MESSAGES_POINT.refus.titre],
-      ['echeance', MESSAGES_POINT.refus.echeancePassee],
+      ['titre', MESSAGES_POINT.controle.titreVide],
+      ['echeance', MESSAGES_POINT.controle.echeancePassee],
     ])
   })
 })

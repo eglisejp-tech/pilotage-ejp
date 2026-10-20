@@ -10,7 +10,7 @@ import {
   plusJours,
 } from './outils-evenements.ts'
 
-// « Nouveau point d'attention » (étape 5, lot P2) avec la base locale : projet « ecritures » (en
+// « Nouveau point » (étape 5, lot P2) avec la base locale : projet « ecritures » (en
 // série, à 1440 px, après les projets de lecture). Chaque parcours crée ses propres points (titre
 // suffixé), jamais ceux du jeu d'exemple que lisent d'autres tests, et compare les comptes avant et
 // après. Les dates viennent de `v_semaine` (heure de Paris). Seul un compte de ministère crée un
@@ -48,7 +48,7 @@ const requeteJournalDuMinistere = `journal?select=id&action=eq.point_cree&minist
 /** Coche un ministère dans le groupe des mentions (la case est cachée, son libellé se clique). */
 async function mentionner(page: Page, nom: string) {
   await page
-    .getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
+    .getByRole('group', { name: 'Ministères mentionnés (facultatif)' })
     .getByText(nom, { exact: true })
     .click()
   await expect(page.getByRole('checkbox', { name: nom })).toBeChecked()
@@ -64,7 +64,7 @@ test.describe('Communication', () => {
     page,
   }) => {
     await page.goto('/saisir/point')
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText("Nouveau point d'attention")
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Nouveau point')
     const aujourdhui = await aujourdhuiDeLaBase(page)
     const journalAvant = await compter(page, requeteJournalDuMinistere)
     // Le ministère du compte ne se mentionne pas lui-même.

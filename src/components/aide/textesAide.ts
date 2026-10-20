@@ -78,22 +78,10 @@ export const TEXTES_AIDE = {
   'indicateurs.usage':
     "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
 
-  // Points d'attention (étape 5, plan 3.1, BRIEF sections 3 règle 7 et 9). Nouveau point
-  // (maquette 10, lot P2) : `point.priorite` sur la légende « Priorité », `point.attendu` sur
-  // « Ce qui est attendu », `point.echeance` sur « Échéance » ; les mentions ont déjà leur note
-  // visible, le titre et « Ce qui se passe » se comprennent seuls (3 aides sur 4 au plus).
-  // « Changer le statut » (lot P1) : `point.statut` sur la légende des trois statuts ; il définit
-  // le statut, et son effet (le point passe avant les autres dans « À décider ») reste un texte
-  // visible sous les statuts (règle 6). « Marquer traité » n'a pas d'aide : qui lit le commentaire
-  // est un texte visible (section 8, comme la « Précision »). Écran 05 (lot P3) : `points.filtre`
-  // sur le filtre « Tous les ministères ».
-  'point.priorite':
-    'Les points ouverts se lisent par priorité : Urgente en premier, puis Haute, puis Normale.',
-  'point.attendu':
-    "La décision ou l'aide que vous attendez. Exemple : confirmer la salle avant samedi.",
-  'point.echeance': 'Le dernier jour où une réponse vous est encore utile.',
-  'point.statut': "« En attente de décision » : le point attend l'avis du berger ou du conseil.",
-  'points.filtre': 'Les points créés par le ministère choisi et ceux qui le mentionnent.',
+  // Points d'attention (étape 5) : plus aucune bulle depuis T66. L'attendu et l'échéance d'un
+  // nouveau point portent une indication visible sous le champ, le statut « En attente de
+  // décision » est défini par la note sous les statuts ; la priorité et le filtre de l'écran 05 se
+  // comprennent seuls (l'ordre de tri et le fonctionnement d'un filtre ne s'expliquent pas).
 
   // Sessions (écran 14, lot L2, statut Proposé) : sessions.attendus sur « Ministères attendus » du
   // formulaire, sessions.saisies sur la colonne « Saisies » de la liste.

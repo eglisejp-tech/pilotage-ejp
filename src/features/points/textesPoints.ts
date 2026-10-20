@@ -19,19 +19,17 @@ export type VuePoints = 'ouverts' | 'traites' | 'tous'
 export const VUES_POINTS: readonly VuePoints[] = ['ouverts', 'traites', 'tous']
 
 export const TEXTES_POINTS = {
-  /** Phrase sous le titre, selon le profil (maquette 05 pour le berger et le conseil). */
+  /**
+   * Phrase sous le titre : le ministère seul, pour dire ce que contient sa liste. L'ordre de tri
+   * et les droits ne se décrivent pas (T66, t246 à t248 ; guide, exemple 1).
+   */
   introduction: {
-    berger:
-      'Triés par priorité, puis par échéance. Les décisions se prennent en conseil ; ici, on marque seulement ce qui est traité.',
-    conseil:
-      'Triés par priorité, puis par échéance. Les décisions se prennent en conseil ; ici, on marque seulement ce qui est traité.',
-    /** Proposé : le ministère lit ses points et ceux qui le mentionnent. */
-    ministere:
-      'Les points créés par votre ministère ou qui le mentionnent, triés par priorité, puis par échéance.',
-    /** Proposé : EJP Tech lit sans rien marquer (T29). */
-    admin_plateforme:
-      'Triés par priorité, puis par échéance. Les décisions se prennent en conseil ; vous lisez les points sans les modifier.',
-  } satisfies Record<ProfilPoints, string>,
+    ministere: 'Vos points et ceux qui mentionnent votre ministère.',
+  } satisfies Partial<Record<ProfilPoints, string>>,
+  /** Bouton du ministère, en tête de « Mes points » et dans ses états vides (T66, point ouvert 1). */
+  nouveauPoint: 'Nouveau point',
+  /** Action d'un filtre sans résultat : revenir à tous les ministères (m163). */
+  voirTousLesMinisteres: 'Voir tous les ministères',
 
   navigationVues: 'Vues des points',
   /** Libellé d'un onglet, avec son nombre : « Ouverts (4) ». */
@@ -51,7 +49,7 @@ export const TEXTES_POINTS = {
   } satisfies Record<VuePoints, string>,
 
   filtre: {
-    /** Libellé du choix et nom accessible de l'aide `points.filtre`. */
+    /** Libellé du choix, lu par les lecteurs d'écran. */
     libelle: 'Filtrer par ministère',
     tous: 'Tous les ministères',
   },
@@ -67,9 +65,11 @@ export const TEXTES_POINTS = {
   echeanceDe: 'Échéance : ',
   priorite: 'Priorité ',
   attendu: 'Attendu :',
-  /** « Intégration, mentions : » puis les mentions, ou « Aucune ». */
-  mentions: 'mentions :',
-  aucuneMention: 'Aucune',
+  /**
+   * Lu avant les puces « @Coordination » par les lecteurs d'écran seulement : « Intégration
+   * mentionne @Coordination ». Sans mention, rien (T66, t250 et t251).
+   */
+  mentionne: 'mentionne',
   /** Statut d'un point traité, dans la colonne « Statut ». */
   traite: 'Traité',
 
@@ -78,18 +78,19 @@ export const TEXTES_POINTS = {
   traiteLe: (jour: string, auteur: string | null): string =>
     auteur === null ? `Traité le ${jour}` : `Traité le ${jour} par ${auteur}`,
 
+  /**
+   * États vides : la phrase seule ; le ministère a le bouton « Nouveau point » (ouverts et tous),
+   * un filtre sans résultat « Voir tous les ministères » (T66, m159 à m163).
+   */
   vide: {
     /** LISEZMOI, « États » (05). */
     ouverts: 'Aucun point ouvert.',
-    traites: "Aucun point traité pour l'instant.",
-    /** Proposé. */
-    tous: "Aucun point pour l'instant.",
-    /** Proposé : un ministère choisi dans le filtre, sans point dans cette vue. */
+    traites: 'Aucun point traité.',
+    tous: 'Aucun point.',
+    /** Un ministère choisi dans le filtre, sans point dans cette vue. */
     ouvertsDe: (nom: string): string => terminerPhrase(`Aucun point ouvert pour ${nom}`),
     traitesDe: (nom: string): string => terminerPhrase(`Aucun point traité pour ${nom}`),
     tousDe: (nom: string): string => terminerPhrase(`Aucun point pour ${nom}`),
-    /** Proposé : ce qui viendra, sous l'état vide du ministère. */
-    suiteMinistere: 'Les points que vous créez, et ceux qui vous mentionnent, apparaîtront ici.',
   },
 
   /** LISEZMOI, « États » : mêmes textes que « Cette semaine ». */

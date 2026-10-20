@@ -19,19 +19,33 @@ export const LONGUEUR_DESCRIPTION_POINT = 280
 export const LONGUEUR_ATTENDU_POINT = 80
 
 /**
- * Messages des fonctions de points. `refus` reprend, mot pour mot, les messages que la base lève
- * (erreur `P0001`), que la table de traduction dit tels quels en attendant la refonte des
- * messages ; les mêmes textes servent aux contrôles des formulaires. `reussite` est ce que l'écran
- * dit après une écriture (« Point créé. », « Statut enregistré : En cours. »).
+ * Messages des fonctions de points. `controle` est ce que les formulaires disent avant l'envoi
+ * (refonte des textes, T66). `refus` reprend, mot pour mot, les messages que la base lève (erreur
+ * `P0001`) : ce sont les clés de la table de traduction (`src/data/messagesBase.ts`), qui les dit
+ * tels quels jusqu'à ce qu'elle reçoive les textes de la refonte, avec la fusion de T62 et T64 ;
+ * `refus` garde aussi les phrases que l'écran dit pour un refus de droit (`creationAcces`,
+ * `acces`). `reussite` est ce que l'écran dit après une écriture (« Point créé. »).
  */
 export const MESSAGES_POINT = {
+  controle: {
+    titreVide: 'Donnez un titre au point.',
+    titreLong: 'Raccourcissez le titre : 80 caractères au plus.',
+    description: 'Raccourcissez ce texte : 280 caractères au plus.',
+    attendu: 'Raccourcissez ce texte : 80 caractères au plus.',
+    /** La base reçoit une date, jamais un autre texte : ce contrôle n'existe qu'à l'écran. */
+    echeanceFormat: 'Choisissez une date, ou laissez le champ vide.',
+    echeancePassee: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
+    mentionRefusee: 'Un ministère coché ne peut plus être mentionné. Décochez-le, puis réessayez.',
+    commentaireCourt: 'Expliquez ce qui a été traité et comment (10 caractères au moins).',
+    commentaireLong: 'Raccourcissez le commentaire : 280 caractères au plus.',
+    /** La priorité vient d'une liste fermée : ce contrôle n'existe qu'à l'écran. */
+    prioriteVide: 'Choisissez une priorité.',
+  },
   refus: {
     titre: 'Donnez un titre au point (80 caractères au plus).',
     description: 'La description dépasse 280 caractères.',
     attendu: "L'action attendue dépasse 80 caractères.",
     echeancePassee: "L'échéance ne peut pas être passée.",
-    /** Contrôle de l'interface seulement : la base reçoit une date, jamais un autre texte. */
-    echeanceFormat: 'Choisissez une date au format jour, mois, année.',
     mentionRefusee: 'Ce ministère ne peut pas être mentionné.',
     pointTraiteStatut: 'Ce point est traité : il ne change plus.',
     pointDejaTraite: 'Ce point est déjà traité.',
@@ -50,14 +64,18 @@ export const MESSAGES_POINT = {
     statutTraite: 'Utilisez le bouton Marquer traité.',
     commentaireLong: 'Le commentaire dépasse 280 caractères.',
     commentaireCourt: 'Expliquez ce qui a été traité et comment (10 caractères au moins).',
-    /** Contrôle de l'interface seulement : la priorité vient d'une liste fermée. */
-    prioriteVide: 'Choisissez une priorité.',
     /** Refus de droit (42501) de `creer_point` : le compte n'est pas un compte de ministère. */
     creationReservee: 'Seul un compte de ministère peut créer un point.',
-    /** Tout autre refus de droit (42501) de `creer_point` (double authentification, compte inactif). */
-    creationAcces: "Vous n'avez pas accès à la création de points.",
-    /** Refus de droit (42501) de `changer_statut_point` et `marquer_traite`, et tout autre 42501. */
-    acces: "Ce point n'existe pas ou vous n'y avez pas accès.",
+    /**
+     * Phrase de l'écran pour tout autre refus de droit (42501) de `creer_point` : le cas le plus
+     * courant est une connexion expirée (T66, m141).
+     */
+    creationAcces: MESSAGES_COMMUNS.connexionExpiree,
+    /**
+     * Phrase de l'écran pour un refus de droit (42501) d'une action sur un point : il est sorti de
+     * la portée du compte, la page se relit à la fermeture (T66, m149).
+     */
+    acces: 'Ce point est introuvable. Fermez cette fenêtre pour mettre la page à jour.',
   },
   reussite: {
     creation: 'Point créé.',
@@ -144,7 +162,7 @@ function texteFacultatif(max: number, message: string) {
 
 /** Identifiants de ministères mentionnés : des uuid, sans doublon. */
 const schemaMentions = z
-  .array(z.uuid(MESSAGES_POINT.refus.mentionRefusee))
+  .array(z.uuid(MESSAGES_POINT.controle.mentionRefusee))
   .transform((ids) => [...new Set(ids)])
 
 /** Ce que `modifier_mentions_point` reçoit : la liste voulue des ministères mentionnés (vide : aucun). */
@@ -155,16 +173,16 @@ export const schemaBaseNouveauPoint = z.object({
   titre: texteBorne(
     1,
     LONGUEUR_TITRE_POINT,
-    MESSAGES_POINT.refus.titre,
-    MESSAGES_POINT.refus.titre,
+    MESSAGES_POINT.controle.titreVide,
+    MESSAGES_POINT.controle.titreLong,
   ),
-  description: texteFacultatif(LONGUEUR_DESCRIPTION_POINT, MESSAGES_POINT.refus.description),
-  attendu: texteFacultatif(LONGUEUR_ATTENDU_POINT, MESSAGES_POINT.refus.attendu),
-  priorite: z.enum(VALEURS_PRIORITE, { error: MESSAGES_POINT.refus.prioriteVide }),
+  description: texteFacultatif(LONGUEUR_DESCRIPTION_POINT, MESSAGES_POINT.controle.description),
+  attendu: texteFacultatif(LONGUEUR_ATTENDU_POINT, MESSAGES_POINT.controle.attendu),
+  priorite: z.enum(VALEURS_PRIORITE, { error: MESSAGES_POINT.controle.prioriteVide }),
   /** Jour de Paris au format AAAA-MM-JJ, ou null : sans échéance. */
   echeance: z
-    .string({ error: MESSAGES_POINT.refus.echeanceFormat })
-    .refine(estDateIso, MESSAGES_POINT.refus.echeanceFormat)
+    .string({ error: MESSAGES_POINT.controle.echeanceFormat })
+    .refine(estDateIso, MESSAGES_POINT.controle.echeanceFormat)
     .nullable(),
   mentions: schemaMentions,
 })
@@ -181,7 +199,7 @@ export const schemaBaseStatutPoint = z.enum(STATUTS_CHOISIS, {
  */
 export const schemaBaseCommentaireTraite = texteFacultatif(
   COMMENTAIRE_TRAITE_MAX,
-  MESSAGES_POINT.refus.commentaireLong,
+  MESSAGES_POINT.controle.commentaireLong,
 )
 
 /**
@@ -192,8 +210,8 @@ export const schemaBaseCommentaireTraite = texteFacultatif(
 export const schemaCommentaireTraiteMinistere = texteBorne(
   COMMENTAIRE_TRAITE_MIN_MINISTERE,
   COMMENTAIRE_TRAITE_MAX,
-  MESSAGES_POINT.refus.commentaireCourt,
-  MESSAGES_POINT.refus.commentaireLong,
+  MESSAGES_POINT.controle.commentaireCourt,
+  MESSAGES_POINT.controle.commentaireLong,
 )
 
 /** Identifiant d'un point : un uuid, sinon le point n'est pas accessible. */

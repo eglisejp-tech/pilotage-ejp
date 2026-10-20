@@ -1,6 +1,5 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { messageDeRefusPoint, STATUTS_CHOISIS } from '@/data/pointsEcriture'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
@@ -29,9 +28,9 @@ function statutInitial(statut: StatutPoint): StatutChoisi {
 /**
  * Fenêtre « Changer le statut » (BRIEF section 9, dérivée du choix de priorité de 10) : le titre
  * du point, trois vrais boutons radio segmentés (« À traiter », « En cours », « En attente de
- * décision », le statut actuel choisi), le texte visible sur l'effet de « En attente de décision »,
- * puis « Enregistrer le statut » et « Annuler ». Le bouton n'est jamais grisé (BRIEF, section 9).
- * Un refus de la base (« Ce point est traité : il ne change plus. ») se dit sous le bouton
+ * décision », le statut actuel choisi), le texte visible qui dit qui tranche « En attente de
+ * décision » (sans bulle, T66), puis « Enregistrer le statut » et « Annuler ». Le bouton n'est
+ * jamais grisé (BRIEF, section 9). Un refus de la base (« Ce point est traité : il ne change plus. ») se dit sous le bouton
  * d'enregistrement, avant « Annuler », tel quel. Enregistrer le statut déjà en place n'écrit rien :
  * la fenêtre reste ouverte et le dit sous le bouton (m146), jusqu'au choix d'un autre statut.
  */
@@ -75,12 +74,9 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           aria-describedby={idNote}
           className="flex min-w-0 flex-col gap-1.5"
         >
-          <div className="flex min-h-cible flex-wrap items-center">
-            <p id={idTitre} className="text-[15px] font-semibold">
-              {TEXTES_ACTIONS_POINT.statut.libelle}
-            </p>
-            <Aide code="point.statut" libelle={TEXTES_ACTIONS_POINT.statut.libelle} />
-          </div>
+          <p id={idTitre} className="text-[15px] font-semibold">
+            {TEXTES_ACTIONS_POINT.statut.libelle}
+          </p>
           <div className="grid grid-cols-3">
             {CHOIX_STATUT.map((option) => (
               <label key={option.valeur} className="relative flex not-first:-ml-px">

@@ -18,9 +18,9 @@ function champEcheance(aujourdhui: DateIso) {
     .superRefine((valeur, contexte) => {
       if (valeur === '') return
       if (!estDateIso(valeur)) {
-        contexte.addIssue({ code: 'custom', message: MESSAGES_POINT.refus.echeanceFormat })
+        contexte.addIssue({ code: 'custom', message: MESSAGES_POINT.controle.echeanceFormat })
       } else if (valeur < aujourdhui) {
-        contexte.addIssue({ code: 'custom', message: MESSAGES_POINT.refus.echeancePassee })
+        contexte.addIssue({ code: 'custom', message: MESSAGES_POINT.controle.echeancePassee })
       }
     })
     .transform((valeur) => (valeur === '' ? null : valeur))
@@ -38,7 +38,7 @@ export function schemaFormulairePoint(contexte: { aujourdhui: DateIso; ministere
     echeance: champEcheance(contexte.aujourdhui),
     mentions: base.mentions.refine(
       (ids) => !ids.includes(contexte.ministereId),
-      MESSAGES_POINT.refus.mentionRefusee,
+      MESSAGES_POINT.controle.mentionRefusee,
     ),
   })
 }

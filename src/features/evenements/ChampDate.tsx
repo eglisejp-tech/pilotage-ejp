@@ -1,6 +1,4 @@
 import type { ComponentProps, ReactNode } from 'react'
-import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
-import type { CodeAide } from '@/components/aide/textesAide'
 import { appelleUnSignalement } from '@/features/evenements/refus'
 import { dateEnToutesLettres } from '@/features/evenements/textes'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -14,8 +12,11 @@ type Props = Omit<
 > & {
   id: string
   libelle: string
-  /** Aide en bulle à côté du libellé (au plus une par champ). */
-  aide?: CodeAide
+  /**
+   * Indication sous le champ, lue avec lui (« Le dernier jour où une réponse vous est utile. ») :
+   * ce qu'il faut pour remplir se voit, jamais dans une bulle (T66).
+   */
+  note?: string
   /** Message sous le champ, relié par `aria-describedby`. */
   erreur?: string
   /**
@@ -36,15 +37,15 @@ type Props = Omit<
 }
 
 /**
- * Champ date d'un formulaire de saisie (maquette 11) : libellé, aide éventuelle, champ de 52 px,
- * puis le message d'erreur. Une date refusée (T37) se dit sous le champ, suivie de « Vous ne
- * pouvez pas choisir de date ? Signaler une difficulté » (aides-contextuelles.md, section 7) ;
- * les autres messages n'ont pas de lien.
+ * Champ date d'un formulaire de saisie (maquette 11) : libellé, champ de 52 px, indication
+ * éventuelle, puis le message d'erreur. Une date refusée (T37) se dit sous le champ, suivie de
+ * « Vous ne pouvez pas choisir de date ? Signaler une difficulté » (aides-contextuelles.md,
+ * section 7) ; les autres messages n'ont pas de lien.
  */
 export function ChampDate({
   id,
   libelle,
-  aide,
+  note,
   erreur,
   ecran,
   apres,
@@ -52,17 +53,16 @@ export function ChampDate({
   dateChoisie,
   ...proprietes
 }: Props) {
+  const idNote = `${id}-note`
   const idErreur = `${id}-erreur`
-  const decritPar = [erreur ? idErreur : '', ...idsDecrits].filter(Boolean).join(' ')
+  const decritPar = [note ? idNote : '', erreur ? idErreur : '', ...idsDecrits]
+    .filter(Boolean)
+    .join(' ')
   return (
     <div className="flex flex-col gap-1.5">
-      {aide ? (
-        <LibelleAvecAide htmlFor={id} libelle={libelle} code={aide} />
-      ) : (
-        <label htmlFor={id} className="text-[15px] font-semibold">
-          {libelle}
-        </label>
-      )}
+      <label htmlFor={id} className="text-[15px] font-semibold">
+        {libelle}
+      </label>
       <input
         {...proprietes}
         id={id}
@@ -71,6 +71,11 @@ export function ChampDate({
         aria-describedby={decritPar || undefined}
         className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
+      {note ? (
+        <p id={idNote} className="text-sm leading-normal text-encre-2">
+          {note}
+        </p>
+      ) : null}
       <p aria-live="polite" className="text-[15px] text-encre-2">
         {dateChoisie !== undefined && estDateIso(dateChoisie)
           ? dateEnToutesLettres(dateChoisie)

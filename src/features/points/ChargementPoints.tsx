@@ -8,7 +8,7 @@ interface Props {
 }
 
 /**
- * Chargement de l'écran 05 (LISEZMOI, « États ») : le titre, sa phrase et le filet des onglets
+ * Chargement de l'écran 05 (LISEZMOI, « États ») : le titre, la phrase du ministère et le filet des onglets
  * tout de suite ; après 300 ms, « Chargement » en `--encre-3` à la place de la liste, avec
  * `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). Pas d'animation.
  * Les 10 s et l'erreur viennent de `usePoints`.
@@ -19,9 +19,11 @@ export function ChargementPoints({ titre, profil }: Props) {
     <div aria-busy="true" className="flex flex-col gap-12">
       <header className="flex flex-col gap-2.5">
         <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
-        <p className="max-w-[720px] leading-relaxed text-encre-2">
-          {TEXTES_POINTS.introduction[profil]}
-        </p>
+        {profil === 'ministere' ? (
+          <p className="max-w-[720px] leading-relaxed text-encre-2">
+            {TEXTES_POINTS.introduction.ministere}
+          </p>
+        ) : null}
       </header>
       <div className="flex flex-col">
         <div className="min-h-cible border-b-2 border-encre" />

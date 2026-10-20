@@ -3,6 +3,7 @@ import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { ChampLibre } from './ChampLibre'
 import { PoseActionsPoint } from './PoseActionsPoint'
 import { couleursPriorite, libellesPriorite } from './priorites'
+import { TEXTES_A_DECIDER } from './textesADecider'
 import type { PointADecider as DonneesPoint } from './types'
 
 interface Props {
@@ -27,7 +28,7 @@ export function PointADecider({ point, compte = null }: Props) {
         <p
           className={`font-chiffres text-[19px] font-extrabold tracking-[0.04em] uppercase ${couleursPriorite[point.priorite]}`}
         >
-          <span className="sr-only">Priorité </span>
+          <span className="sr-only">{TEXTES_A_DECIDER.priorite}</span>
           {libellesPriorite[point.priorite]}
         </p>
         <p className="text-note text-encre-3">
@@ -37,7 +38,7 @@ export function PointADecider({ point, compte = null }: Props) {
               ,{' '}
               <span className={point.echeance.depassee ? 'font-semibold text-alerte' : undefined}>
                 {point.echeance.texte}
-                {point.echeance.depassee ? ', dépassée' : null}
+                {point.echeance.depassee ? TEXTES_A_DECIDER.depassee : null}
               </span>
             </>
           ) : null}
@@ -55,7 +56,7 @@ export function PointADecider({ point, compte = null }: Props) {
         <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
           {point.attendu ? (
             <span>
-              Attendu :{' '}
+              {TEXTES_A_DECIDER.attendu}{' '}
               <strong className="text-encre">
                 <ChampLibre texte={point.attendu} />
               </strong>

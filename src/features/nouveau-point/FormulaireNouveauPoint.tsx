@@ -41,10 +41,10 @@ const VIDE: ValeursFormulairePoint = {
 }
 
 /**
- * Formulaire « Nouveau point d'attention » (maquette 10, BRIEF section 9) : titre (80 caractères,
- * le seul obligatoire, avec le rappel sur les données personnelles juste dessous), « Ce qui se
- * passe » (280), priorité, « Ce qui est attendu » (80), échéance (aujourd'hui ou plus tard) et
- * mentions. Trois aides : priorité, attendu et échéance. Un refus de la base se dit sous le champ
+ * Formulaire « Nouveau point » (maquette 10, BRIEF section 9) : titre (80 caractères, le seul
+ * obligatoire, avec le rappel sur les données personnelles juste dessous), « Ce qui se passe »
+ * (280), priorité, « Ce qui est attendu » (80), échéance (aujourd'hui ou plus tard) et mentions.
+ * Aucune bulle : l'attendu et l'échéance portent une indication visible (T66). Un refus de la base se dit sous le champ
  * qu'il désigne, sinon sous le bouton ; après un échec, les valeurs restent. Après une création, le
  * formulaire se vide et dit « Point créé. » pendant 6 secondes : un point est un ajout seulement,
  * un second clic ne peut donc pas en envoyer un doublon (le titre est vide).
@@ -141,7 +141,7 @@ export function FormulaireNouveauPoint({
         id="point-attendu"
         libelle={TEXTES_POINT.libelleAttendu}
         longueur={longueurEnCaracteres(attendu ?? '')}
-        aide="point.attendu"
+        note={TEXTES_POINT.indicationAttendu}
         autoComplete="off"
         erreur={errors.attendu?.message}
         {...register('attendu')}
@@ -149,7 +149,7 @@ export function FormulaireNouveauPoint({
       <ChampDate
         id="point-echeance"
         libelle={TEXTES_POINT.libelleEcheance}
-        aide="point.echeance"
+        note={TEXTES_POINT.indicationEcheance}
         min={aujourdhui}
         dateChoisie={echeance}
         erreur={errors.echeance?.message}

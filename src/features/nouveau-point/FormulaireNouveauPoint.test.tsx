@@ -50,17 +50,17 @@ async function remplir(echeance?: string) {
   return utilisateur
 }
 
-describe('« Nouveau point d’attention » (maquette 10)', () => {
-  it('champs dans l’ordre de la maquette, trois aides, rappel une seule fois sous le titre', () => {
+describe('« Nouveau point » (maquette 10)', () => {
+  it('champs dans l’ordre de la maquette, sans bulle, deux indications, rappel une seule fois sous le titre', () => {
     afficher()
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(3)
-    for (const nom of [
-      'Aide : Priorité',
-      'Aide : Ce qui est attendu (facultatif)',
-      'Aide : Échéance (facultatif)',
-    ]) {
-      expect(screen.getByRole('button', { name: nom })).toBeInTheDocument()
-    }
+    // Plus de bulle (T66) : l'attendu et l'échéance portent une indication visible.
+    expect(screen.queryAllByRole('button', { name: /^Aide : / })).toHaveLength(0)
+    expect(screen.getByLabelText('Ce qui est attendu (facultatif)')).toHaveAccessibleDescription(
+      'Exemple : confirmer la salle avant samedi.',
+    )
+    expect(screen.getByLabelText('Échéance (facultatif)')).toHaveAccessibleDescription(
+      'Le dernier jour où une réponse vous est utile.',
+    )
     expect(screen.getAllByText(RAPPEL_DONNEES_PERSONNELLES)).toHaveLength(1)
     expect(titre()).toHaveAccessibleDescription(RAPPEL_DONNEES_PERSONNELLES)
     // Les champs, de haut en bas (le titre porte le rappel, pas la description).
@@ -93,16 +93,16 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     expect(groupe).toBeInTheDocument()
   })
 
-  it('mentions : les autres ministères, la note visible et la ligne sur la création', () => {
+  it('mentions : les autres ministères et la note visible, en une phrase', () => {
     afficher()
     expect(
       screen
         .getAllByRole('checkbox')
         .map((caseACocher) => caseACocher.closest('label')?.textContent),
     ).toEqual(['Coordination', 'Intégration'])
-    const groupe = screen.getByRole('group', { name: 'Mentionner un ministère (facultatif)' })
+    const groupe = screen.getByRole('group', { name: 'Ministères mentionnés (facultatif)' })
     expect(groupe).toHaveAccessibleDescription(
-      "Le ministère mentionné verra ce point, et seulement ce point. Il pourra le marquer traité en expliquant ce qui a été fait. Le berger et le conseil voient tous les points. Le ministère créateur, le berger et le conseil peuvent modifier les mentions tant que le point n'est pas traité.",
+      'Le ministère mentionné verra ce point et pourra le marquer traité.',
     )
   })
 
@@ -113,9 +113,9 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     expect(screen.getByText('✓')).toHaveAttribute('aria-hidden', 'true')
   })
 
-  it('aucun autre ministère actif : une phrase, sans case ni note', () => {
+  it('aucun autre ministère : une phrase, sans case ni note', () => {
     afficher(undefined, [])
-    expect(screen.getByText('Aucun autre ministère actif à mentionner.')).toBeInTheDocument()
+    expect(screen.getByText('Aucun autre ministère à mentionner.')).toBeInTheDocument()
     expect(screen.queryByRole('checkbox')).toBeNull()
     expect(screen.queryByText(/Le ministère mentionné verra ce point/)).toBeNull()
   })
@@ -124,7 +124,7 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     const envoyer = vi.fn(() => Promise.resolve())
     afficher(envoyer)
     await userEvent.click(bouton())
-    const message = await screen.findByText(MESSAGES_POINT.refus.titre)
+    const message = await screen.findByText('Donnez un titre au point.')
     expect(titre()).toHaveAttribute('aria-invalid', 'true')
     expect(titre()).toHaveAccessibleDescription(
       `${RAPPEL_DONNEES_PERSONNELLES} ${message.textContent}`,
@@ -152,14 +152,14 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     expect(screen.getByText(`60 sur ${LONGUEUR_TITRE_POINT}`)).toBeInTheDocument()
   })
 
-  it('échéance passée : refusée avant l’envoi, sous le champ, avec le message de la base', async () => {
+  it('échéance passée : refusée avant l’envoi, sous le champ, après son indication', async () => {
     const envoyer = vi.fn(() => Promise.resolve())
     afficher(envoyer)
     await remplir('2026-10-05')
     await userEvent.click(bouton())
-    const message = await screen.findByText(MESSAGES_POINT.refus.echeancePassee)
+    const message = await screen.findByText(MESSAGES_POINT.controle.echeancePassee)
     expect(screen.getByLabelText('Échéance (facultatif)')).toHaveAccessibleDescription(
-      message.textContent ?? '',
+      `Le dernier jour où une réponse vous est utile. ${message.textContent ?? ''}`,
     )
     expect(titre()).toHaveValue('  Salle pour la soirée de louange ')
     expect(envoyer).not.toHaveBeenCalled()
@@ -218,11 +218,11 @@ describe('« Nouveau point d’attention » (maquette 10)', () => {
     afficher(envoyer)
     await userEvent.type(titre(), 'Un point')
     await userEvent.click(bouton())
-    expect(await screen.findByRole('button', { name: 'Envoi en cours' })).toHaveAttribute(
+    expect(await screen.findByRole('button', { name: 'Enregistrement en cours' })).toHaveAttribute(
       'aria-disabled',
       'true',
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Envoi en cours' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrement en cours' }))
     finir()
     expect(await screen.findByText('Point créé.')).toBeInTheDocument()
     expect(envoyer).toHaveBeenCalledTimes(1)

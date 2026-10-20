@@ -261,13 +261,11 @@ describe('la fenêtre « Modifier les mentions »', () => {
     expect(lireMinisteres).toHaveBeenCalledTimes(2)
   })
 
-  it('sans autre ministère actif, une phrase à la place des cases', async () => {
+  it('sans autre ministère, une phrase à la place des cases', async () => {
     lireMinisteres.mockResolvedValue([ministere(CREATEUR, 'Communication')])
     afficher(compteMinistere(CREATEUR), unPoint('a_traiter', []))
     const fenetre = await ouvrir()
-    expect(
-      await within(fenetre).findByText('Aucun autre ministère actif à mentionner.'),
-    ).toBeVisible()
+    expect(await within(fenetre).findByText('Aucun autre ministère à mentionner.')).toBeVisible()
     expect(within(fenetre).queryAllByRole('checkbox')).toHaveLength(0)
   })
 

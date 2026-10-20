@@ -11,17 +11,17 @@ function afficher(requete: string) {
   )
 }
 
-describe('aperçu de « Nouveau point d’attention »', () => {
+describe('aperçu de « Nouveau point »', () => {
   it('par défaut : le formulaire, avec le compte du ministère au-dessus du titre', () => {
     afficher('')
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Nouveau point d'attention")
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/^Nouveau point$/)
     expect(screen.getByText('Ministère Communication')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Créer le point' })).toBeInTheDocument()
   })
 
   it('« sans-mention » : une phrase à la place des cases', () => {
     afficher('?ecran=sans-mention')
-    expect(screen.getByText('Aucun autre ministère actif à mentionner.')).toBeInTheDocument()
+    expect(screen.getByText('Aucun autre ministère à mentionner.')).toBeInTheDocument()
   })
 
   it('« probleme » : « Réessayer » à la place du formulaire', () => {

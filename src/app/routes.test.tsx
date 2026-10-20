@@ -842,15 +842,15 @@ describe("adresses de l'étape 4", () => {
   it.each([
     // Lot E2 : la fiche de Social lue par son ministère (ni « moins de 3 » ni « masqué »). T66 ne
     // garde que les bulles qui définissent un chiffre : courbe et somme de l'année sur la fiche,
-    // STARs actifs et en FIJ à la saisie, statut d'un événement.
+    // STARs actifs et en FIJ à la saisie, statut d'un événement ; le nouveau point n'en a plus.
     ['/apercu/fiche', 2],
     ['/apercu/saisies', 2],
     ['/apercu/evenements', 1],
-    ['/apercu/nouveau-point', 3],
+    ['/apercu/nouveau-point', 0],
   ])('l’aperçu %s : %i aides, sans aucune requête au serveur', (adresse, nombreDAides) => {
     const faux = installer({})
     afficher(`${adresse}?profil=ministere`)
-    expect(screen.getAllByRole('button', { name: /^Aide : / })).toHaveLength(nombreDAides)
+    expect(screen.queryAllByRole('button', { name: /^Aide : / })).toHaveLength(nombreDAides)
     expect(faux.from).not.toHaveBeenCalled()
   })
 })

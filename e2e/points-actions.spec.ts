@@ -181,7 +181,9 @@ test.describe('Marquer traité', () => {
 })
 
 test.describe('Changer le statut', () => {
-  test('trois boutons radio, statut actuel choisi, aide, enregistrement', async ({ page }) => {
+  test('trois boutons radio, statut actuel choisi, note visible sans bulle, enregistrement', async ({
+    page,
+  }) => {
     await ouvrir(page, 'profil=ministere&statut=attente_decision')
     await boutonDuPoint(page, 'Changer le statut').click()
     const boite = fenetre(page)
@@ -190,9 +192,9 @@ test.describe('Changer le statut', () => {
     await expect(boite.getByRole('radio')).toHaveCount(3)
     await expect(boite.getByRole('radio', { name: 'En attente de décision' })).toBeChecked()
     await expect(
-      boite.getByText('Un point « En attente de décision » passe avant les autres'),
+      boite.getByText('En attente de décision : le berger ou le conseil doit trancher.'),
     ).toBeVisible()
-    await expect(boite.getByRole('button', { name: 'Aide : Statut' })).toBeVisible()
+    await expect(boite.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
     await expect(boite.getByText(RAPPEL)).toHaveCount(0)
     await auditer(page)
 

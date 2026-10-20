@@ -15,7 +15,7 @@ interface Props {
 
 /**
  * Une rangée de l'écran 05 (maquette 05) : priorité, point (titre, description, attendu, ministère
- * et mentions), statut, échéance et boutons. À partir de 1024 px, ce sont les colonnes du
+ * et ses puces de mentions, lues « mentionne @Coordination »), statut, échéance et boutons. À partir de 1024 px, ce sont les colonnes du
  * tableau ; en dessous, une carte (priorité et échéance en tête, puis le point, le statut et les
  * boutons), comme « À décider ». Un point traité n'a ni échéance ni bouton : il dit « Traité le
  * 30 sept. par Coordination » et cite son commentaire. L'échéance dépassée est en rouge et porte
@@ -63,20 +63,19 @@ export function LignePoint({ ligne, compte }: Props) {
         ) : null}
         <p className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-3">
           <span>
-            {ligne.ministere}, {TEXTES_POINTS.mentions}
+            {ligne.ministere}
+            {ligne.mentions.length > 0 ? (
+              <span className="sr-only"> {TEXTES_POINTS.mentionne}</span>
+            ) : null}
           </span>
-          {ligne.mentions.length === 0 ? (
-            <span>{TEXTES_POINTS.aucuneMention}</span>
-          ) : (
-            ligne.mentions.map((mention) => (
-              <span
-                key={mention}
-                className="bg-nuit-pale px-1.5 py-px text-note whitespace-nowrap text-nuit"
-              >
-                @{mention}
-              </span>
-            ))
-          )}
+          {ligne.mentions.map((mention) => (
+            <span
+              key={mention}
+              className="bg-nuit-pale px-1.5 py-px text-note whitespace-nowrap text-nuit"
+            >
+              @{mention}
+            </span>
+          ))}
         </p>
         {ligne.traite !== null ? (
           <p className="text-sm text-encre-2">

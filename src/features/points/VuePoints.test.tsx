@@ -55,14 +55,12 @@ function afficher(
 const rangees = () => screen.getAllByRole('heading', { level: 3 }).map((titre) => titre.textContent)
 
 describe('écran 05 : le berger', () => {
-  it('titre, phrase, onglets avec leur nombre, filtre et tableau', () => {
+  it('titre sans phrase de mode d’emploi, onglets avec leur nombre, filtre et tableau', () => {
     afficher('berger')
     expect(screen.getByRole('heading', { level: 1, name: "Points d'attention" })).toBeVisible()
-    expect(
-      screen.getByText(
-        'Triés par priorité, puis par échéance. Les décisions se prennent en conseil ; ici, on marque seulement ce qui est traité.',
-      ),
-    ).toBeVisible()
+    // L'ordre se voit : plus de phrase sur le tri ni sur les décisions (T66, t246).
+    expect(screen.queryByText(/Triés par priorité/)).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Nouveau point' })).toBeNull()
     const onglets = within(screen.getByRole('navigation', { name: 'Vues des points' }))
     expect(onglets.getAllByRole('link').map((lien) => lien.textContent)).toEqual([
       'Ouverts (5)',
@@ -74,7 +72,7 @@ describe('écran 05 : le berger', () => {
       'page',
     )
     expect(screen.getByRole('combobox', { name: 'Filtrer par ministère' })).toHaveValue('')
-    expect(screen.getByRole('button', { name: 'Aide : Filtrer par ministère' })).toBeVisible()
+    expect(screen.queryByRole('button', { name: /^Aide : / })).toBeNull()
   })
 
   it('Ouverts : par priorité, puis échéance ; « Traités récemment » dessous', () => {
@@ -106,9 +104,12 @@ describe('écran 05 : le berger', () => {
     expect(financement).toHaveTextContent('Priorité Urgente')
     expect(financement).toHaveTextContent('Statut : En attente de décision')
     expect(financement).toHaveTextContent('Échéance : 5 oct.')
-    expect(financement).toHaveTextContent('Intégration, mentions :Aucune')
+    // Sans mention, le ministère seul ; avec, les puces lues « mentionne » (T66, t250 et t251).
+    expect(financement).toHaveTextContent('Intégration')
+    expect(financement).not.toHaveTextContent(/mentions :|Aucune|mentionne/)
     const salle = screen.getByRole('article', { name: 'Salle pour la soirée de louange' })
-    expect(salle).toHaveTextContent('Communication, mentions :@Coordination')
+    expect(salle).toHaveTextContent('Communication mentionne@Coordination')
+    expect(within(salle).getByText('mentionne', { exact: false })).toHaveClass('sr-only')
     expect(salle).toHaveTextContent('Attendu : Confirmer la salle')
     const renfort = screen.getByRole('article', { name: 'Renfort de 4 STARs pour la sortie' })
     expect(renfort).toHaveTextContent('@Social (désactivé)')
@@ -238,14 +239,14 @@ describe('écran 05 : les boutons de chaque rangée', () => {
 })
 
 describe('« Mes points » du ministère', () => {
-  it('même écran, ses points seulement, sans filtre de ministère', () => {
+  it('même écran, ses points seulement, sans filtre de ministère, avec « Nouveau point »', () => {
     afficher('ministere')
     expect(screen.getByRole('heading', { level: 1, name: 'Mes points' })).toBeVisible()
-    expect(
-      screen.getByText(
-        'Les points créés par votre ministère ou qui le mentionnent, triés par priorité, puis par échéance.',
-      ),
-    ).toBeVisible()
+    expect(screen.getByText('Vos points et ceux qui mentionnent votre ministère.')).toBeVisible()
+    expect(screen.getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
     expect(screen.queryByRole('combobox')).toBeNull()
     expect(screen.queryByRole('button', { name: /^Aide : / })).toBeNull()
     expect(rangees().slice(0, 2)).toEqual([
@@ -256,10 +257,10 @@ describe('« Mes points » du ministère', () => {
     expect(screen.getByRole('link', { name: 'Traités (1)' })).toBeVisible()
   })
 
-  it('un ministère mentionné lit « Intégration, mentions : @Communication » sur le point qui le mentionne', () => {
+  it('un ministère mentionné lit « Intégration » et « @Communication » sur le point qui le mentionne', () => {
     afficher('ministere')
     const visuels = screen.getByRole('article', { name: 'Visuels pour Welcome Prodiges' })
-    expect(visuels).toHaveTextContent('Intégration, mentions :@Communication')
+    expect(visuels).toHaveTextContent('Intégration mentionne@Communication')
   })
 
   it('les boutons savent le ministère du compte', () => {
@@ -277,15 +278,12 @@ describe('« Mes points » du ministère', () => {
 describe('EJP Tech : lecture seule', () => {
   it('lit tous les points, sans aucun bouton ni lien d’action', () => {
     afficher('admin_plateforme')
-    expect(screen.getByText(/vous lisez les points sans les modifier/)).toBeVisible()
+    // Ses droits ne se décrivent pas (T66, t248) : l'absence de bouton suffit.
+    expect(screen.queryByText(/vous lisez les points sans les modifier/)).toBeNull()
     expect(rangees()).toHaveLength(5)
     expect(screen.queryByRole('button', { name: ACTIONS })).toBeNull()
     expect(screen.queryByRole('link', { name: ACTIONS })).toBeNull()
-    // L'aide du filtre informe, elle n'agit pas.
-    const boutons = screen
-      .queryAllByRole('button')
-      .map((bouton) => bouton.getAttribute('aria-label'))
-    expect(boutons).toEqual(['Aide : Filtrer par ministère'])
+    expect(screen.queryAllByRole('button')).toEqual([])
   })
 })
 
@@ -298,24 +296,36 @@ describe('états vides (T36)', () => {
     expect(screen.queryByRole('article')).toBeNull()
   })
 
-  it('Traités sans point : « Aucun point traité pour l’instant. »', () => {
-    afficher('berger', { vide: true, adresse: '/points?vue=traites' })
-    expect(screen.getByText("Aucun point traité pour l'instant.")).toBeVisible()
+  it('Traités sans point : « Aucun point traité. », sans bouton', () => {
+    afficher('ministere', { vide: true, adresse: '/points?vue=traites' })
+    expect(screen.getByText('Aucun point traité.')).toBeVisible()
+    // « Nouveau point » en tête de page seulement : un point traité ne se crée pas.
+    expect(screen.getAllByRole('link', { name: 'Nouveau point' })).toHaveLength(1)
   })
 
-  it('Tous sans point : « Aucun point pour l’instant. » ; le ministère lit ce qui viendra', () => {
+  it('Tous sans point : « Aucun point. » ; le ministère a « Nouveau point » dans l’état vide', () => {
     afficher('ministere', { vide: true, adresse: '/points?vue=tous' })
-    expect(screen.getByText("Aucun point pour l'instant.")).toBeVisible()
+    expect(screen.getByText('Aucun point.')).toBeVisible()
+    const etat = screen.getByText('Aucun point.').closest('[data-situation]')
     expect(
-      screen.getByText(
-        'Les points que vous créez, et ceux qui vous mentionnent, apparaîtront ici.',
-      ),
-    ).toBeVisible()
+      within(etat as HTMLElement).getByRole('link', { name: 'Nouveau point' }),
+    ).toHaveAttribute('href', '/saisir/point')
+    expect(screen.queryByText(/apparaîtront ici/)).toBeNull()
   })
 
-  it('un ministère choisi sans point dans la vue : le nom du ministère', () => {
+  it('Ouverts sans point, ministère : « Aucun point ouvert. » et « Nouveau point »', () => {
+    afficher('ministere', { vide: true })
+    const etat = screen.getByText('Aucun point ouvert.').closest('[data-situation]')
+    expect(within(etat as HTMLElement).getByRole('link', { name: 'Nouveau point' })).toBeVisible()
+  })
+
+  it('un ministère choisi sans point dans la vue : le nom du ministère et « Voir tous les ministères »', async () => {
+    const utilisateur = userEvent.setup()
     afficher('berger', { adresse: '/points?ministere=min-jeunesse&vue=traites' })
     expect(screen.getByText('Aucun point traité pour Jeunesse.')).toBeVisible()
     expect(screen.getByRole('link', { name: 'Ouverts (1)' })).toBeVisible()
+    await utilisateur.click(screen.getByRole('button', { name: 'Voir tous les ministères' }))
+    expect(screen.getByTestId('adresse')).toHaveTextContent('?vue=traites')
+    expect(screen.getByTestId('adresse')).not.toHaveTextContent('ministere')
   })
 })

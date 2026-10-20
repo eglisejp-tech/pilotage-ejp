@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 import { MessageVide } from './MessageVide'
 import { PointADecider } from './PointADecider'
+import { TEXTES_A_DECIDER } from './textesADecider'
 import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
 import type { PointADecider as DonneesPoint } from './types'
@@ -35,13 +36,13 @@ export function ADecider({ points, lienTousLesPoints, compte = null }: Props) {
     <section aria-labelledby={idTitre} data-repli-focus className="flex min-w-0 flex-col">
       <TitreSection
         id={idTitre}
-        titre="À décider"
+        titre={TEXTES_A_DECIDER.titre}
         complement={
           <Link
             to={lienTousLesPoints}
             className="-my-3 inline-flex min-h-cible items-center text-sm text-nuit underline underline-offset-4"
           >
-            Tous les points
+            {TEXTES_A_DECIDER.tousLesPoints}
           </Link>
         }
       />
