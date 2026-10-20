@@ -199,7 +199,11 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
       )
       const attente = container.querySelector<HTMLElement>('[aria-busy="true"]')
       expect(attente).not.toBeNull()
-      const zone = within(attente as HTMLElement).getByRole('status')
+      // La zone status de l'indicateur, juste avant les places qui attendent, n'est dans aucun
+      // élément occupé : son texte est annoncé (T65).
+      const zone = attente?.previousElementSibling as HTMLElement
+      expect(zone).toHaveAttribute('role', 'status')
+      expect(zone.closest('[aria-busy="true"]')).toBeNull()
       expect(zone).toBeEmptyDOMElement()
       act(() => vi.advanceTimersByTime(300))
       expect(zone).toHaveTextContent(/^Chargement des personnes$/)

@@ -39,19 +39,45 @@ export function useEstMinistereFij(ministereId: string): {
   return { etat, reessayer: () => void code.refetch() }
 }
 
-export type EtatSaisieCarte =
+/** Ce que la garde décide avant toute lecture de la saisie : attendre, l'échec, ou un autre ministère. */
+type AvantSaisie =
   | { etat: 'chargement' }
   | { etat: 'erreur'; reessayer: () => void }
+  /** Le ministère du compte n'est pas `fij` : la page non disponible, sans autre requête. */
+  | { etat: 'autre' }
+
+/**
+ * La lecture du code du ministère précède celle de la saisie et compte dans la même attente
+ * (T65) : une seule flamme du début à la fin, sans clignoter entre les deux lectures. La saisie
+ * ne se lit qu'une fois le ministère `fij` confirmé (`enabled`) ; null quand c'est le cas.
+ */
+function avantSaisie(garde: { etat: EtatMinistereFij; reessayer: () => void }): AvantSaisie | null {
+  if (garde.etat === 'chargement') return { etat: 'chargement' }
+  if (garde.etat === 'erreur') return { etat: 'erreur', reessayer: garde.reessayer }
+  if (garde.etat === 'autre') return { etat: 'autre' }
+  return null
+}
+
+export type EtatSaisieCarte =
+  | AvantSaisie
   | {
       etat: 'pret'
       carte: LigneVue<'v_carte_fij'>[]
       enregistrer: (valeurs: SaisieCarteFij) => Promise<void>
     }
 
-/** Lecture de la carte des FIJ (dernière valeur de chaque département) et son envoi. */
+/**
+ * Carte des FIJ, réservée au ministère `fij` : le code du ministère du compte, puis la carte
+ * (dernière valeur de chaque département), et son envoi.
+ */
 export function useSaisieCarte(ministereId: string): EtatSaisieCarte {
   const client = useQueryClient()
-  const carte = useQuery({ queryKey: [RACINE, 'carte'], queryFn: lireCarteFij })
+  const garde = useEstMinistereFij(ministereId)
+  const carte = useQuery({
+    queryKey: [RACINE, 'carte'],
+    queryFn: lireCarteFij,
+    enabled: garde.etat === 'fij',
+  })
   const enregistrer = useCallback(
     async (valeurs: SaisieCarteFij) => {
       await enregistrerCarteFij(ministereId, valeurs)
@@ -62,14 +88,15 @@ export function useSaisieCarte(ministereId: string): EtatSaisieCarte {
     },
     [client, ministereId],
   )
+  const avant = avantSaisie(garde)
+  if (avant) return avant
   if (carte.isError) return { etat: 'erreur', reessayer: () => void carte.refetch() }
   if (carte.isPending) return { etat: 'chargement' }
   return { etat: 'pret', carte: carte.data, enregistrer }
 }
 
 export type EtatSaisieStatistiques =
-  | { etat: 'chargement' }
-  | { etat: 'erreur'; reessayer: () => void }
+  | AvantSaisie
   | {
       etat: 'pret'
       dimancheReference: string
@@ -77,11 +104,20 @@ export type EtatSaisieStatistiques =
       enregistrer: (saisie: SaisieStatistiquesFij) => Promise<void>
     }
 
-/** Lectures des chiffres par département (semaine de référence, 10 dimanches) et leur envoi. */
-export function useSaisieStatistiques(): EtatSaisieStatistiques {
+/**
+ * Chiffres par département, réservés au ministère `fij` : le code du ministère du compte, puis
+ * la semaine de référence et les 10 dimanches, et leur envoi.
+ */
+export function useSaisieStatistiques(ministereId: string): EtatSaisieStatistiques {
   const client = useQueryClient()
-  const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
-  const statistiques = useQuery({ queryKey: CLE_STATISTIQUES_FIJ, queryFn: lireStatistiquesFij })
+  const garde = useEstMinistereFij(ministereId)
+  const fij = garde.etat === 'fij'
+  const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine, enabled: fij })
+  const statistiques = useQuery({
+    queryKey: CLE_STATISTIQUES_FIJ,
+    queryFn: lireStatistiquesFij,
+    enabled: fij,
+  })
   const enregistrer = useCallback(
     async (saisie: SaisieStatistiquesFij) => {
       await enregistrerStatistiquesFij(saisie)
@@ -89,6 +125,8 @@ export function useSaisieStatistiques(): EtatSaisieStatistiques {
     },
     [client],
   )
+  const avant = avantSaisie(garde)
+  if (avant) return avant
   // v_semaine sans ligne (hors aal2) : traité comme un problème passager.
   if (semaine.isError || statistiques.isError || semaine.data === null) {
     return {

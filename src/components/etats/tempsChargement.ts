@@ -14,6 +14,12 @@ export const DUREE_MIN_INDICATEUR_MS = 600
 export const DUREE_FONDU_MS = 180
 
 /**
+ * Le fondu ne joue qu'une fois (`Arrivee`) : il est réputé fini après deux fois sa durée (une
+ * image en retard ne le coupe jamais), puis ce qui apparaît dessous arrive sans animation.
+ */
+export const FIN_DU_FONDU_MS = 2 * DUREE_FONDU_MS
+
+/**
  * Ouverture de l'outil : le monogramme se dessine, puis la flamme s'allume, en 1,2 s. Une fois
  * commencée, l'ouverture va jusqu'au bout (au moins 600 ms, comme tout indicateur).
  */

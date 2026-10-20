@@ -10,8 +10,8 @@ import { debordementHorizontal, LARGEUR_MINIMALE } from './outils/controles.ts'
 const OUVERTURE = '/apercu/ouverture'
 const MOMENTS = {
   page: '/apercu/chargement?moment=page&profil=ministere',
-  liste: '/apercu/chargement?moment=liste&profil=berger',
-  bloc: '/apercu/chargement?moment=bloc&profil=ministere',
+  liste: '/apercu/chargement?moment=liste&profil=berger&onglet=/journal',
+  bloc: '/apercu/chargement?moment=bloc&profil=ministere&onglet=/ma-fiche',
   envoi: '/apercu/chargement?moment=envoi&profil=ministere',
   'envoi-en-cours': '/apercu/chargement?moment=envoi&profil=ministere&etat=en-cours',
 } as const
@@ -24,6 +24,28 @@ async function ouvrir(page: Page, adresse: string) {
 /** Les animations CSS en cours dans la page (les formes SMIL n'en font pas partie). */
 function animationsCss(page: Page) {
   return page.evaluate(() => document.getAnimations().length)
+}
+
+/**
+ * L'onglet de l'écran montré est actif dans l'en-tête, comme dans l'application, et l'accueil ne
+ * l'est pas. Les onglets (1024 px et plus) et le menu du téléphone portent chacun le lien.
+ */
+async function verifierOngletActif(page: Page, libelle: string) {
+  const actifs = page.locator('a[aria-current="page"]')
+  await expect(actifs.filter({ hasText: libelle }).first()).toBeAttached()
+  await expect(actifs.filter({ hasText: /^(Cette semaine|Ma semaine)$/ })).toHaveCount(0)
+}
+
+/**
+ * La zone `status` qui annonce le chargement n'est dans aucun élément `aria-busy` : certains
+ * lecteurs d'écran n'annoncent pas ce qui change dans une zone occupée.
+ */
+async function annonceHorsZoneOccupee(page: Page, texte: string) {
+  const annonce = page.getByRole('status').filter({ hasText: texte })
+  await expect(annonce).toHaveCount(1)
+  await expect(annonce.locator('xpath=ancestor-or-self::*[@aria-busy="true"]')).toHaveCount(0)
+  // L'attente reste marquée (aria-busy), sur le dessin ou les places réservées.
+  expect(await page.locator('[aria-busy="true"]').count()).toBeGreaterThan(0)
 }
 
 test.describe('animations de chargement (T65)', () => {
@@ -61,9 +83,8 @@ test.describe('animations de chargement (T65)', () => {
     page,
   }) => {
     await ouvrir(page, MOMENTS.page)
-    await expect(
-      page.locator('[aria-busy="true"]').getByText('Chargement de Ma semaine', { exact: true }),
-    ).toBeVisible()
+    await expect(page.getByText('Chargement de Ma semaine', { exact: true })).toBeVisible()
+    await annonceHorsZoneOccupee(page, 'Chargement de Ma semaine')
     const flamme = page.locator('[data-flamme="vivante"]')
     await expect(flamme).toHaveAttribute('aria-hidden', 'true')
     const formes = await flamme.locator('animate').getAttribute('values')
@@ -90,6 +111,9 @@ test.describe('animations de chargement (T65)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
     await expect(page.getByText('Chargement du journal', { exact: true })).toBeVisible()
     await expect(page.locator('[data-flamme="vivante"]')).toHaveCount(1)
+    await annonceHorsZoneOccupee(page, 'Chargement du journal')
+    // L'onglet de l'écran montré est actif, comme dans l'application.
+    await verifierOngletActif(page, 'Journal')
   })
 
   test('3. bloc : la petite flamme dans le bloc seulement, le reste de la page ne bouge pas', async ({
@@ -106,23 +130,57 @@ test.describe('animations de chargement (T65)', () => {
     await expect(page.getByRole('region', { name: 'Dernières saisies' })).toContainText(
       'Chiffres du dimanche 11 oct. enregistrés',
     )
+    await annonceHorsZoneOccupee(page, 'Chargement du calendrier')
+    await verifierOngletActif(page, 'Ma fiche')
   })
 
-  test('4. envoi : le bouton garde sa largeur, dit « … en cours » avec la petite flamme', async ({
+  test('4. envoi, « … en cours » plus court : le bouton garde exactement sa largeur', async ({
     page,
   }) => {
+    await ouvrir(page, MOMENTS.envoi)
+    const bouton = page.getByRole('button', { name: "Relancer l'invitation", exact: true })
+    const avant = (await bouton.boundingBox())?.width ?? 0
+    await bouton.click()
+    const enCours = page.getByRole('button', { name: 'Envoi en cours' })
+    await expect(enCours).toBeVisible()
+    // Sans la largeur gardée, « Envoi en cours » ferait rétrécir le bouton.
+    const largeurLibre = await enCours.evaluate((element) => {
+      const copie = element.cloneNode(true) as HTMLElement
+      copie.style.minWidth = ''
+      copie.style.position = 'absolute'
+      element.parentElement?.append(copie)
+      const largeur = copie.getBoundingClientRect().width
+      copie.remove()
+      return largeur
+    })
+    expect(largeurLibre).toBeLessThan(avant - 1)
+    expect(Math.abs(((await enCours.boundingBox())?.width ?? 0) - avant)).toBeLessThanOrEqual(0.5)
+    await expect(enCours.locator('[data-flamme="petite"]')).toHaveAttribute('aria-hidden', 'true')
+    // L'envoi simulé finit : le libellé revient, et le bouton reprend sa largeur libre.
+    await expect(bouton).toBeVisible({ timeout: 5_000 })
+    expect(Math.abs(((await bouton.boundingBox())?.width ?? 0) - avant)).toBeLessThanOrEqual(0.5)
+  })
+
+  test('4. envoi, « … en cours » plus long : le bouton ne rétrécit pas, il s’élargit pour le texte entier', async ({
+    page,
+  }) => {
+    // Écart consigné dans T65 : « Valider » devient « Validation en cours », plus long ; le
+    // bouton s'élargit (il ne coupe pas le texte), sans déborder de la page.
     await ouvrir(page, MOMENTS.envoi)
     const bouton = page.getByRole('button', { name: 'Valider', exact: true })
     const avant = (await bouton.boundingBox())?.width ?? 0
     await bouton.click()
     const enCours = page.getByRole('button', { name: 'Validation en cours' })
     await expect(enCours).toBeVisible()
-    expect((await enCours.boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(avant - 0.5)
+    const pendant = await enCours.boundingBox()
+    expect(pendant?.width ?? 0).toBeGreaterThan(avant + 1)
+    expect((pendant?.x ?? 0) + (pendant?.width ?? 0)).toBeLessThanOrEqual(
+      page.viewportSize()?.width ?? 0,
+    )
+    // Le texte tient sur une ligne : pas de retour à la ligne dans le bouton.
+    expect(pendant?.height ?? 0).toBeLessThan(60)
     await expect(enCours.locator('[data-flamme="petite"]')).toHaveAttribute('aria-hidden', 'true')
-    // L'envoi simulé finit : le libellé revient.
-    await expect(page.getByRole('button', { name: 'Valider', exact: true })).toBeVisible({
-      timeout: 5_000,
-    })
+    await expect(bouton).toBeVisible({ timeout: 5_000 })
   })
 
   test('moins d’animations : la flamme et le monogramme restent, immobiles', async ({ page }) => {
@@ -153,6 +211,14 @@ test.describe('animations de chargement (T65)', () => {
       await ouvrir(page, adresse)
       if (!nom.startsWith('envoi'))
         await expect(page.locator('[data-flamme], svg').first()).toBeVisible()
+      // « Pilotage EJP » arrive en fondu pendant l'ouverture : l'audit attend la flamme vivante,
+      // pour ne jamais mesurer le contraste d'un texte à moitié transparent.
+      if (nom === 'ouverture')
+        await expect(page.locator('svg[data-ouverture]')).toHaveAttribute(
+          'data-ouverture',
+          'vivante',
+          { timeout: 5_000 },
+        )
       expect(decrireFautes(await auditerAxe(page)), 'axe : WCAG 2.1 A et AA').toEqual([])
       await page.setViewportSize({ width: LARGEUR_MINIMALE, height: 800 })
       await ouvrir(page, adresse)
@@ -183,3 +249,57 @@ test.describe('animations de chargement (T65)', () => {
     }
   })
 })
+
+// L'attente de chaque écran touché par T65, sur son aperçu figé dans son chargement, aux trois
+// largeurs : la flamme vivante et les places réservées d'une page ou d'un panneau (moment 2), la
+// petite flamme d'un bloc (moment 3). Les animations sont réduites (playwright.config.ts) : la
+// capture est nette, le dessin entier et immobile.
+const ATTENTES = {
+  'cette-semaine': '/apercu/cette-semaine?profil=berger&etat=chargement',
+  'ma-semaine': '/apercu/cette-semaine?profil=ministere&etat=chargement',
+  fiche: '/apercu/fiche?profil=berger&ecran=chargement',
+  ministeres: '/apercu/fiche?profil=berger&ecran=ministeres-chargement',
+  journal: '/apercu/journal?profil=berger&etat=chargement',
+  points: '/apercu/points?profil=berger&etat=chargement',
+  comptes: '/apercu/comptes?profil=admin_plateforme&vue=chargement',
+  sessions: '/apercu/sessions?profil=admin_plateforme&vue=chargement',
+  indicateurs: '/apercu/indicateurs?profil=admin_plateforme&vue=liste-chargement',
+  'indicateurs-ministere': '/apercu/indicateurs?profil=admin_plateforme&vue=chargement',
+  'mes-indicateurs': '/apercu/mes-indicateurs?profil=ministere&vue=chargement',
+  personnes: '/apercu/personnes?profil=admin_plateforme&etat=chargement',
+  'saisie-evenement': '/apercu/evenements?profil=ministere&ecran=chargement',
+  'saisie-point': '/apercu/nouveau-point?profil=ministere&ecran=chargement',
+  'choix-session': '/apercu/saisies-e4?profil=ministere&ecran=choix-session&etat=chargement',
+  'chiffres-departement':
+    '/apercu/saisies-e4?profil=ministere&ecran=bloc-departements&etat=chargement',
+  calendrier: '/apercu/calendrier?profil=ministere&ecran=fiche-chargement',
+  'a-valider': '/apercu/validation-indicateurs?profil=admin_plateforme&vue=chargement',
+  signalements: '/apercu/signalements?profil=admin_plateforme&vue=bloc-chargement',
+  moderation: '/apercu/moderation?profil=admin_plateforme&vue=file-chargement',
+  'qr-code': '/apercu/connexion?ecran=activation&etat=chargement',
+} as const
+
+test(
+  'captures des attentes des écrans en 1440, 834 et 390 px',
+  { tag: '@captures' },
+  async ({ page }) => {
+    test.setTimeout(180_000)
+    const largeur = page.viewportSize()?.width ?? 0
+    for (const [nom, adresse] of Object.entries(ATTENTES)) {
+      await ouvrir(page, adresse)
+      // Le texte qui dit ce qui charge, dans sa zone status, avec la flamme (après 300 ms).
+      await expect(
+        page
+          .getByRole('status')
+          .filter({ hasText: /^Chargement (de |du |des )/ })
+          .first(),
+        nom,
+      ).toBeVisible()
+      await expect(page.locator('[data-flamme]').first(), nom).toBeVisible()
+      await page.screenshot({
+        path: `test-results/captures/attente-${nom}-${largeur}.png`,
+        fullPage: true,
+      })
+    }
+  },
+)

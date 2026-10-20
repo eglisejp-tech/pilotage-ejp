@@ -67,12 +67,16 @@ describe('useAttenteChargement (T65, règle de temps)', () => {
     expect(result.current.attente).toBe(false)
   })
 
-  it('une erreur attend de même la fin des 600 ms', () => {
+  // Le crochet ignore le résultat de la lecture : une erreur attend comme un contenu. Les écrans
+  // d'erreur qui suivent sont vérifiés par ApresChargement.test.tsx et Garde.test.tsx.
+  it('réponse à 400 ms : l’indicateur, montré à 300 ms, part à 900 ms exactement', () => {
     const { result, rerender } = monter(true)
     avancer(400)
     rerender({ lecture: false, duree: undefined })
     expect(result.current.attente).toBe(true)
-    avancer(550)
+    act(() => vi.advanceTimersByTime(499))
+    expect(result.current.attente).toBe(true)
+    act(() => vi.advanceTimersByTime(1))
     expect(result.current.attente).toBe(false)
   })
 

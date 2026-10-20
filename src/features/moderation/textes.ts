@@ -20,7 +20,7 @@ export const TEXTES_MODERATION = {
       ? 'Aucun texte en attente'
       : `${nombre(n)} ${accorder(n, 'texte en attente', 'textes en attente')}`,
   vide: 'Aucun texte à relire.',
-  /** Avec la flamme vivante, après 300 ms sans réponse (T65). */
+  /** Avec la petite flamme, dans le bloc, après 300 ms sans réponse (T65, moment 3). */
   chargement: 'Chargement des textes à relire',
   boutonRelu: 'Rien à signaler',
   boutonMasquer: 'Masquer le texte',

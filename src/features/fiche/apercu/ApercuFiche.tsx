@@ -39,7 +39,8 @@ const reessayer = () => undefined
  * - `fiche-vide` (premier usage), `fiche-erreur-bloc` (« Dernières saisies » en échec),
  *   `fiche-erreur-points` (les points en échec), `fiche-erreur-details` (le détail des sensibles
  *   en échec), `chargement`, `erreur`, `introuvable` ;
- * - `ministeres`, `ministeres-vide`, `ministeres-erreur` : la liste (berger, conseil, EJP Tech).
+ * - `ministeres`, `ministeres-vide`, `ministeres-erreur`, `ministeres-chargement` (T65) : la liste
+ *   (berger, conseil, EJP Tech).
  * Enregistrée seulement en développement.
  */
 export function ApercuFiche() {
@@ -86,6 +87,8 @@ export function ApercuFiche() {
       )
     case 'ministeres-erreur':
       return <VueMinisteres liste={{ etat: 'erreur', reessayer }} />
+    case 'ministeres-chargement':
+      return <VueMinisteres liste={{ etat: 'chargement' }} />
     case 'chargement':
       return (
         <>

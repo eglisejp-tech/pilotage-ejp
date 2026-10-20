@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { BoutonLigneSimule } from '@/features/chargement/apercu/BoutonLigneSimule'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { DernieresSaisies } from '@/features/fiche/DernieresSaisies'
 import type { DerniereSaisieFiche } from '@/features/fiche/modeleFiche'
@@ -10,7 +9,10 @@ import { ChargementMaSemaine } from '@/features/ma-semaine/ChargementMaSemaine'
 
 type Moment = 'page' | 'liste' | 'bloc' | 'envoi'
 
-/** Les moments d'attente de T65, chacun avec l'adresse de son aperçu. */
+/**
+ * Les moments d'attente de T65, chacun avec l'adresse de son aperçu. `onglet` : l'onglet de
+ * l'écran montré (le journal, la fiche), actif dans l'en-tête comme dans l'application.
+ */
 const MOMENTS: { valeur: Moment | 'ouverture'; libelle: string; adresse: string }[] = [
   { valeur: 'ouverture', libelle: "Ouverture de l'outil", adresse: '/apercu/ouverture' },
   {
@@ -21,12 +23,12 @@ const MOMENTS: { valeur: Moment | 'ouverture'; libelle: string; adresse: string 
   {
     valeur: 'liste',
     libelle: 'Une liste qui charge',
-    adresse: '/apercu/chargement?moment=liste&profil=berger',
+    adresse: '/apercu/chargement?moment=liste&profil=berger&onglet=/journal',
   },
   {
     valeur: 'bloc',
     libelle: 'Un bloc qui se relit',
-    adresse: '/apercu/chargement?moment=bloc&profil=ministere',
+    adresse: '/apercu/chargement?moment=bloc&profil=ministere&onglet=/ma-fiche',
   },
   {
     valeur: 'envoi',
@@ -58,25 +60,14 @@ const SAISIES_EXEMPLE: DerniereSaisieFiche[] = [
 const classeLien =
   'inline-flex min-h-cible items-center text-nuit underline underline-offset-4 aria-[current=page]:font-semibold aria-[current=page]:text-encre aria-[current=page]:no-underline'
 
-const classeBoutonLigne =
-  'inline-flex min-h-cible items-center justify-center bg-lumiere px-4.5 text-[15px] font-bold text-encre aria-disabled:cursor-wait'
-
-/** Durée de l'envoi simulé du bouton de ligne, comme dans la proposition validée. */
-const DUREE_ENVOI_SIMULE_MS = 1500
-
 /**
- * Un envoi (moment 4) : le bouton d'enregistrement d'une saisie (pleine largeur) et un bouton de
- * ligne, qui garde sa largeur quand son libellé devient « Validation en cours ». `enCours` force
- * l'état pour les captures ; sinon un clic simule un envoi de 1,5 s.
+ * Un envoi (moment 4) : le bouton d'enregistrement d'une saisie (pleine largeur) et deux boutons
+ * de ligne. « Relancer l'invitation » devient « Envoi en cours », plus court : le bouton garde sa
+ * largeur. « Valider » devient « Validation en cours », plus long : le bouton ne rétrécit jamais,
+ * mais s'élargit pour l'afficher (écart consigné dans T65). `enCours` force l'état pour les
+ * captures ; sinon un clic simule un envoi de 1,5 s.
  */
 function Envoi({ enCours }: { enCours: boolean }) {
-  const [simule, setSimule] = useState(false)
-  useEffect(() => {
-    if (!simule) return
-    const minuterie = window.setTimeout(() => setSimule(false), DUREE_ENVOI_SIMULE_MS)
-    return () => window.clearTimeout(minuterie)
-  }, [simule])
-  const occupe = enCours || simule
   return (
     <div className="flex max-w-[460px] flex-col gap-8">
       <h1 className="font-lecture text-titre leading-tight font-medium">Chiffres du dimanche</h1>
@@ -90,18 +81,19 @@ function Envoi({ enCours }: { enCours: boolean }) {
       </form>
       <div className="flex flex-wrap items-center gap-3 border-t border-filet pt-4">
         <p className="text-[15px]">Projets en cours, demandé par Communication</p>
-        <button
-          type="button"
-          aria-disabled={occupe || undefined}
-          onClick={() => {
-            if (!occupe) setSimule(true)
-          }}
-          className={classeBoutonLigne}
-        >
-          <LibelleEnvoi enCours={occupe} libelleEnCours="Validation en cours">
-            Valider
-          </LibelleEnvoi>
-        </button>
+        <BoutonLigneSimule
+          libelle="Valider"
+          libelleEnCours="Validation en cours"
+          enCours={enCours}
+        />
+      </div>
+      <div className="flex flex-wrap items-center gap-3 border-t border-filet pt-4">
+        <p className="text-[15px]">Compte de Social, invitation sans réponse</p>
+        <BoutonLigneSimule
+          libelle="Relancer l'invitation"
+          libelleEnCours="Envoi en cours"
+          enCours={enCours}
+        />
       </div>
     </div>
   )

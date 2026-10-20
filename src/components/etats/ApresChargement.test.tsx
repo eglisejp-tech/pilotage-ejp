@@ -11,7 +11,7 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function Bloc({ enChargement }: { enChargement: boolean }) {
+function Bloc({ enChargement, erreur = false }: { enChargement: boolean; erreur?: boolean }) {
   return (
     <section className="flex flex-col gap-4">
       <h2>Vos points</h2>
@@ -19,7 +19,11 @@ function Bloc({ enChargement }: { enChargement: boolean }) {
         enChargement={enChargement}
         indicateur={<ChargementEnLigne texte="Chargement de vos points" />}
       >
-        {enChargement ? null : <p>Aucun point ouvert pour votre ministère.</p>}
+        {enChargement ? null : erreur ? (
+          <p role="alert">La connexion a échoué. Réessayez.</p>
+        ) : (
+          <p>Aucun point ouvert pour votre ministère.</p>
+        )}
       </ApresChargement>
     </section>
   )
@@ -41,6 +45,28 @@ describe('ApresChargement (T65)', () => {
     const enveloppe = contenu.parentElement
     expect(enveloppe).toHaveClass('arrivee')
     expect(enveloppe?.parentElement).toBe(container.querySelector('section'))
+  })
+
+  it('une erreur juste après l’indicateur attend elle aussi ses 600 ms', () => {
+    const { rerender } = render(<Bloc enChargement />)
+    act(() => vi.advanceTimersByTime(300))
+    act(() => vi.advanceTimersByTime(100))
+    // La lecture échoue à 400 ms : l'indicateur, montré à 300 ms, tient jusqu'à 900 ms.
+    rerender(<Bloc enChargement={false} erreur />)
+    expect(screen.queryByRole('alert')).toBeNull()
+    act(() => vi.advanceTimersByTime(499))
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement de vos points')
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
+    expect(screen.queryByText('Chargement de vos points')).toBeNull()
+  })
+
+  it('une erreur avant 300 ms s’affiche aussitôt, sans indicateur', () => {
+    const { rerender } = render(<Bloc enChargement />)
+    act(() => vi.advanceTimersByTime(200))
+    rerender(<Bloc enChargement={false} erreur />)
+    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
   })
 
   it('données déjà là : le contenu tel quel, sans enveloppe ni attente', () => {

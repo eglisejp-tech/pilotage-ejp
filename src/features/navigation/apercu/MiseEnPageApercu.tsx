@@ -8,7 +8,7 @@ import { ONGLETS } from '@/features/navigation/profils'
  * session ni appel au serveur. « Se déconnecter » n'y fait rien.
  */
 export function MiseEnPageApercu() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const [parametres] = useSearchParams()
   // L'écran des indicateurs est celui d'EJP Tech, qui les configure (T60), pas du berger.
   const profil = lireProfilApercu(
@@ -17,14 +17,17 @@ export function MiseEnPageApercu() {
   )
   // L'aperçu d'un écran qui a son onglet (/apercu/comptes pour /comptes) montre cet onglet
   // actif, comme l'application ; sinon l'aperçu tient lieu d'accueil : le premier onglet y mène
-  // et s'affiche actif.
-  const ici = `${pathname}?profil=${profil}`
+  // et s'affiche actif. `?onglet=/journal` désigne l'onglet actif d'un aperçu qui montre l'écran
+  // d'un autre onglet (/apercu/chargement : le journal qui charge) ; il y mène, adresse comprise.
+  const ongletDemande = parametres.get('onglet')
+  const ici = ongletDemande ? `${pathname}${search}` : `${pathname}?profil=${profil}`
   const rangActif = Math.max(
     0,
-    ONGLETS[profil].findIndex(
-      ({ chemin }) =>
-        chemin !== '/' &&
-        (pathname === `/apercu${chemin}` || pathname.startsWith(`/apercu${chemin}/`)),
+    ONGLETS[profil].findIndex(({ chemin }) =>
+      ongletDemande
+        ? chemin === ongletDemande
+        : chemin !== '/' &&
+          (pathname === `/apercu${chemin}` || pathname.startsWith(`/apercu${chemin}/`)),
     ),
   )
   const onglets = ONGLETS[profil].map((onglet, rang) =>

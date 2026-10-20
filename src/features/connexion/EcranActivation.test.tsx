@@ -65,11 +65,11 @@ describe('EcranActivation (maquette 17)', () => {
     const texte = await screen.findByText('Chargement du QR code')
     const chargement = texte.closest('[role="status"]')
     await waitFor(() => expect(chargement).toHaveTextContent(/^Chargement du QR code$/))
-    expect(chargement?.closest('[aria-busy="true"]')).not.toBeNull()
-    expect(chargement?.querySelector('[data-flamme="petite"]')).toHaveAttribute(
-      'aria-hidden',
-      'true',
-    )
+    // aria-busy marque l'attente sur le dessin, jamais autour de la zone status (annoncée).
+    expect(chargement?.closest('[aria-busy="true"]')).toBeNull()
+    const flamme = chargement?.parentElement?.querySelector('[data-flamme="petite"]')
+    expect(flamme).toHaveAttribute('aria-hidden', 'true')
+    expect(flamme?.closest('[aria-busy="true"]')).not.toBeNull()
   })
 
   it('active avec un code collé', async () => {

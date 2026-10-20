@@ -24,9 +24,10 @@ type Proprietes = {
 
 /**
  * Encadré du QR code (maquette 17). Pendant sa préparation, la petite flamme et « Chargement du
- * QR code » apparaissent après 300 ms, dans le cadre, avec aria-busy
- * (docs/reference/maquettes/LISEZMOI.md, « États » ; T65, moment 3), au moins 600 ms une fois
- * montrées ; le QR code arrive ensuite en fondu, à la même place. Un échec de connexion se dit
+ * QR code » apparaissent après 300 ms, dans le cadre (docs/reference/maquettes/LISEZMOI.md,
+ * « États » ; T65, moment 3), au moins 600 ms une fois montrées ; `aria-busy` est sur le dessin
+ * (`ChargementEnLigne`), jamais autour de la zone `status`. Le QR code arrive ensuite en fondu, à
+ * la même place. Un échec de connexion se dit
  * dans le cadre même (role="alert"), avec « Réessayer » : l'écran n'oblige plus à saisir un code
  * pour relancer la préparation. Au clic, le focus reste sur le cadre, que le bouton quitte pendant
  * le nouvel essai. Un refus précis se dit au même endroit, sans bouton : réessayer tout de suite
@@ -41,7 +42,6 @@ export function QrCodeActivation({ qrCode, enEchec = false, onReessayer, refus }
     <div
       ref={cadre}
       tabIndex={-1}
-      aria-busy={attente ? true : undefined}
       className="flex justify-center border border-filet bg-papier p-4 outline-hidden"
     >
       {attente ? (

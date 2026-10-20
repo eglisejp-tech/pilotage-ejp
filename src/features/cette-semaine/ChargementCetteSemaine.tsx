@@ -13,11 +13,14 @@ interface Props {
   profil: ProfilVue
 }
 
-/** Titre de section et son filet, puis la place réservée au contenu, grise et immobile. */
+/**
+ * Titre de section et son filet, puis la place réservée au contenu, grise et immobile. La section
+ * attend son contenu : `aria-busy` (la zone `status` de la page n'y est pas).
+ */
 function SectionEnAttente({ titre }: { titre: string }) {
   const idTitre = useId()
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col gap-4">
+    <section aria-labelledby={idTitre} aria-busy="true" className="flex min-w-0 flex-col gap-4">
       <TitreSection id={idTitre} titre={titre} />
       <PlaceReservee className="h-24" />
     </section>
@@ -28,8 +31,9 @@ function SectionEnAttente({ titre }: { titre: string }) {
  * Chargement de « Cette semaine » (LISEZMOI, « États » ; T65, moment 2) : les titres de section
  * et leurs filets tout de suite, à leur place, avec la place de leur contenu en gris immobile ;
  * après 300 ms, la flamme vivante et « Chargement de Cette semaine » à la place de la phrase,
- * avec `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). Les 10 s et
- * l'erreur viennent de useCetteSemaine.
+ * puis, après 4 s, « Chargement plus long que d'habitude » (m248). Les 10 s et l'erreur viennent
+ * de useCetteSemaine. `aria-busy` est sur les sections qui attendent, jamais autour de la zone
+ * `status` : certains lecteurs d'écran n'annoncent pas ce qui change dans une zone occupée.
  */
 export function ChargementCetteSemaine({ profil }: Props) {
   const telephone = !useLargeurMin(600)
@@ -54,7 +58,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
       : undefined
   if (accueil && telephone) {
     return (
-      <div aria-busy="true" className="flex flex-col gap-9">
+      <div className="flex flex-col gap-9">
         {ouverture}
         {accueil.vosSaisies}
         {accueil.vosPoints}
@@ -64,7 +68,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
   }
 
   return (
-    <div aria-busy="true">
+    <div>
       <GrilleCetteSemaine
         ouverture={ouverture}
         chiffres={

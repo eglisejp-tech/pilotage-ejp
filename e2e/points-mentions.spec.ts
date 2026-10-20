@@ -42,15 +42,6 @@ async function ouvrirFenetre(page: Page, requete = 'profil=ministere') {
   await boutonDuPoint(page, BOUTON).click()
   const boite = fenetre(page)
   await expect(boite.getByRole('checkbox').first()).toBeVisible()
-  // Les cases arrivent en fondu de 180 ms, avec 4 px de montée (T65) : on mesure une fois arrivées.
-  await page.evaluate(() =>
-    Promise.all(
-      document
-        .getAnimations()
-        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
-        .map((animation) => animation.finished),
-    ),
-  )
   return boite
 }
 

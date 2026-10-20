@@ -45,45 +45,52 @@ export function OuvertureOutil({ ouverture }: Props) {
   }, [visible, phase])
 
   const long = mot === MESSAGES_COMMUNS.chargementLong
+  // `aria-busy` marque l'attente sur le dessin ; la zone `status`, à côté, n'est jamais dans un
+  // élément `aria-busy` (certains lecteurs d'écran n'annoncent pas ce qui change dans une zone
+  // occupée). Elle existe dès le départ, vide, pour que le texte soit annoncé à son arrivée.
   return (
-    <div role="status" className="flex flex-col items-center gap-3 text-center">
-      {mot === null ? null : (
-        <>
-          <svg
-            ref={dessin}
-            viewBox="8 82 152 204"
-            aria-hidden="true"
-            focusable="false"
-            data-ouverture={phase}
-            data-immobile={immobile ? '' : undefined}
-            className="h-32 w-24 overflow-visible"
-          >
-            {MONOGRAMME.map((trait) => (
-              <path key={trait} className="ouverture-trace" pathLength={1} d={trait} />
-            ))}
-            {phase === 'dessin' ? (
-              <>
-                <defs>
-                  <linearGradient id={idFlamme} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0" style={{ stopColor: 'var(--flamme-haut)' }} />
-                    <stop offset="1" style={{ stopColor: 'var(--flamme-bas)' }} />
-                  </linearGradient>
-                </defs>
-                <path className="ouverture-allumage" fill={`url(#${idFlamme})`} d={FLAMME} />
-              </>
-            ) : (
-              <FlammeAnimee />
-            )}
-          </svg>
-          <p
-            aria-hidden="true"
-            className={`font-lecture text-xl font-semibold text-encre ${phase === 'dessin' ? 'ouverture-nom' : ''}`}
-          >
-            {NOM_OUTIL}
-          </p>
-          <p className={long ? 'text-[15px] leading-normal text-encre-2' : 'sr-only'}>{mot}</p>
-        </>
-      )}
+    <div className="flex flex-col items-center gap-3 text-center">
+      <div aria-busy="true" className="contents">
+        {mot === null ? null : (
+          <>
+            <svg
+              ref={dessin}
+              viewBox="8 82 152 204"
+              aria-hidden="true"
+              focusable="false"
+              data-ouverture={phase}
+              data-immobile={immobile ? '' : undefined}
+              className="h-32 w-24 overflow-visible"
+            >
+              {MONOGRAMME.map((trait) => (
+                <path key={trait} className="ouverture-trace" pathLength={1} d={trait} />
+              ))}
+              {phase === 'dessin' ? (
+                <>
+                  <defs>
+                    <linearGradient id={idFlamme} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" style={{ stopColor: 'var(--flamme-haut)' }} />
+                      <stop offset="1" style={{ stopColor: 'var(--flamme-bas)' }} />
+                    </linearGradient>
+                  </defs>
+                  <path className="ouverture-allumage" fill={`url(#${idFlamme})`} d={FLAMME} />
+                </>
+              ) : (
+                <FlammeAnimee />
+              )}
+            </svg>
+            <p
+              aria-hidden="true"
+              className={`font-lecture text-xl font-semibold text-encre ${phase === 'dessin' ? 'ouverture-nom' : ''}`}
+            >
+              {NOM_OUTIL}
+            </p>
+          </>
+        )}
+      </div>
+      <p role="status" className={long ? 'text-[15px] leading-normal text-encre-2' : 'sr-only'}>
+        {mot}
+      </p>
     </div>
   )
 }

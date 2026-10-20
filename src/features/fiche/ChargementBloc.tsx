@@ -9,11 +9,12 @@ interface Props {
  * Chargement d'un bloc qui se lit à part (LISEZMOI, « États » ; T65, moment 3) : le titre du bloc
  * est déjà là ; après 300 ms, la petite flamme et ce qui charge, dans le bloc seulement, puis,
  * après 4 s, « Chargement plus long que d'habitude » (m248). La zone `status` existe dès le
- * départ, vide, pour que le texte soit annoncé.
+ * départ, vide, pour que le texte soit annoncé ; `aria-busy` est sur le dessin
+ * (`ChargementEnLigne`), jamais autour de cette zone.
  */
 export function ChargementBloc({ texte }: Props) {
   return (
-    <div aria-busy="true" className="py-[18px]">
+    <div className="py-[18px]">
       <ChargementEnLigne texte={texte} />
     </div>
   )

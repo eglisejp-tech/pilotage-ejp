@@ -219,6 +219,46 @@ test.describe('ministère Communication : accueil 07', () => {
   })
 })
 
+// Les attentes réelles de l'outil (T65), avec les animations : les autres parcours les réduisent
+// (playwright.config.ts). Chaque lecture de l'API de données attend 800 ms : la vérification de
+// la session dépasse 300 ms (l'ouverture de l'outil joue), puis Ma semaine lit ses données (sa
+// flamme), puis le contenu arrive. Aucun audit axe ici : il tomberait pendant un fondu.
+test.describe('ministère Communication : les attentes de l’outil, animations comprises (T65)', () => {
+  test.use({
+    storageState: fichierSession('ministere'),
+    contextOptions: { reducedMotion: 'no-preference' },
+  })
+
+  test('l’ouverture de l’outil, puis la flamme de Ma semaine, puis le contenu', async ({
+    page,
+  }) => {
+    await page.route('**/rest/v1/**', async (route) => {
+      await new Promise((resoudre) => setTimeout(resoudre, 800))
+      await route.continue()
+    })
+    await page.goto('/')
+    // 1. L'ouverture : le monogramme et la flamme, plein écran ; le texte est lu.
+    const ouverture = page.locator('svg[data-ouverture]')
+    await expect(ouverture).toBeVisible({ timeout: 10_000 })
+    await expect(ouverture.locator('.ouverture-trace')).toHaveCount(4)
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Chargement de Pilotage EJP' }),
+    ).toHaveCount(1)
+    // 2. La session lue, Ma semaine attend ses données : la flamme vivante et son texte.
+    await expect(page.getByText('Chargement de Ma semaine', { exact: true })).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(ouverture).toHaveCount(0)
+    await expect(page.locator('[data-flamme="vivante"]')).toHaveCount(1)
+    // 3. Le contenu : plus aucune attente, la page entière.
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 30_000 })
+    await expect(page.getByText('Chargement de Ma semaine', { exact: true })).toHaveCount(0)
+    await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
+    await expect(page.getByRole('heading', { level: 2, name: 'Vos saisies' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Vos points' })).toBeVisible()
+  })
+})
+
 // Les autres profils n'ont ni l'ouverture de 07 ni ses blocs, et ne lisent rien pour elle.
 const AUTRES: CompteTest['profil'][] = ['berger', 'conseil', 'admin_eglise', 'admin_plateforme']
 for (const profil of AUTRES) {

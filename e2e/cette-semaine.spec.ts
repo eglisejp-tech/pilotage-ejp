@@ -176,11 +176,13 @@ test.describe('Cette semaine, aperçu', () => {
     page,
   }) => {
     await ouvrir(page, 'berger', 'chargement')
-    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    // Chaque section attend son contenu (aria-busy) ; la zone status qui annonce le chargement
+    // n'est dans aucun élément occupé, pour être lue.
+    await expect(page.locator('section[aria-busy="true"]').first()).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: 'Les ministères' })).toBeVisible()
-    await expect(
-      page.locator('[aria-busy="true"]').getByText('Chargement de Cette semaine', { exact: true }),
-    ).toBeVisible()
+    const annonce = page.getByRole('status').filter({ hasText: 'Chargement de Cette semaine' })
+    await expect(annonce).toBeVisible()
+    await expect(annonce.locator('xpath=ancestor-or-self::*[@aria-busy="true"]')).toHaveCount(0)
   })
 
   test('EJP Tech : le contenu du berger, en lecture seule, sans aucun bouton (T29)', async ({
@@ -273,7 +275,7 @@ test.describe('Cette semaine, aperçu', () => {
       await ouvrir(page, 'berger', etat)
       if (etat === 'chargement') {
         await page
-          .locator('[aria-busy="true"]')
+          .getByRole('status')
           .getByText('Chargement de Cette semaine', { exact: true })
           .waitFor()
       }

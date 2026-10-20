@@ -155,13 +155,15 @@ test.describe('Ma semaine, aperçu', () => {
     page,
   }) => {
     await ouvrir(page, 'chargement')
-    await expect(page.locator('[aria-busy="true"]')).toBeVisible()
+    // Chaque section attend son contenu (aria-busy) ; la zone status qui annonce le chargement
+    // n'est dans aucun élément occupé, pour être lue.
+    await expect(page.locator('section[aria-busy="true"]')).toHaveCount(4)
     await expect(
       page.getByRole('heading', { level: 2, name: 'Vos chiffres de la semaine' }),
     ).toBeVisible()
-    await expect(
-      page.locator('[aria-busy="true"]').getByText('Chargement de Ma semaine', { exact: true }),
-    ).toBeVisible()
+    const annonce = page.getByRole('status').filter({ hasText: 'Chargement de Ma semaine' })
+    await expect(annonce).toBeVisible()
+    await expect(annonce.locator('xpath=ancestor-or-self::*[@aria-busy="true"]')).toHaveCount(0)
   })
 
   test('erreur de page : bandeau et « Réessayer »', async ({ page }) => {
@@ -218,7 +220,7 @@ test.describe('Ma semaine, aperçu', () => {
       await ouvrir(page, etat)
       if (etat === 'chargement') {
         await page
-          .locator('[aria-busy="true"]')
+          .getByRole('status')
           .getByText('Chargement de Ma semaine', { exact: true })
           .waitFor()
       }

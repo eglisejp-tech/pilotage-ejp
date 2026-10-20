@@ -36,11 +36,14 @@ describe('IndicateurChargement (T65, moment 2 : page de contenu)', () => {
     expect(screen.getByRole('status')).toHaveTextContent("Chargement plus long que d'habitude")
   })
 
-  it('ChargementPage : aria-busy et deux places réservées, grises seulement avec la flamme', () => {
+  it('ChargementPage : deux places réservées, aria-busy, grises seulement avec la flamme', () => {
     const { container } = render(<ChargementPage texte="Chargement des sessions" />)
-    expect(container.firstElementChild).toHaveAttribute('aria-busy', 'true')
     const places = container.querySelectorAll('[data-place-reservee]')
     expect(places).toHaveLength(2)
+    // Les places attendent le contenu (aria-busy) ; la zone status n'est dans aucun élément
+    // occupé, pour que son texte soit annoncé.
+    expect(places[0]?.closest('[aria-busy="true"]')).not.toBeNull()
+    expect(screen.getByRole('status').closest('[aria-busy="true"]')).toBeNull()
     for (const place of places) {
       expect(place).toHaveAttribute('aria-hidden', 'true')
       expect(place).toHaveAttribute('data-place-reservee', 'attente')
@@ -64,5 +67,8 @@ describe('ChargementEnLigne (T65, moment 3 : bloc qui se relit)', () => {
     const flamme = container.querySelector('[data-flamme="petite"]')
     expect(flamme).toHaveAttribute('aria-hidden', 'true')
     expect(flamme).toHaveClass('h-[1.5em]', 'flamme-battement')
+    // aria-busy marque l'attente sur le dessin, jamais autour de la zone status.
+    expect(flamme?.closest('[aria-busy="true"]')).not.toBeNull()
+    expect(screen.getByRole('status').closest('[aria-busy="true"]')).toBeNull()
   })
 })

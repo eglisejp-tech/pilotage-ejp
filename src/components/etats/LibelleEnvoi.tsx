@@ -16,8 +16,9 @@ interface Props {
  * petite flamme (dessin, `aria-hidden`) et « … en cours », qui devient le nom du bouton. Le bouton
  * garde sa largeur : il ne rétrécit pas quand le libellé change (largeur mesurée au repos, posée
  * en `min-width` pendant l'envoi, jamais plus large que la place disponible). Il ne grandit que
- * si « … en cours » demande plus de place. Un bouton pleine largeur n'en a pas besoin, mais la
- * règle ne le gêne pas.
+ * si « … en cours » demande plus de place (« Valider », « Validation en cours ») : le texte reste
+ * entier, sur une ligne ; écart avec la proposition, consigné dans T65. Un bouton pleine largeur
+ * n'en a pas besoin, mais la règle ne le gêne pas.
  */
 export function LibelleEnvoi({ enCours, libelleEnCours, children }: Props) {
   const repere = useRef<HTMLSpanElement>(null)
