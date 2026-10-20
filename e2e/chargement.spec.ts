@@ -27,6 +27,9 @@ function animationsCss(page: Page) {
 }
 
 test.describe('animations de chargement (T65)', () => {
+  // Les autres parcours réduisent les animations (playwright.config.ts) : ici, on les veut.
+  test.use({ contextOptions: { reducedMotion: 'no-preference' } })
+
   test('1. ouverture : le monogramme et la flamme, puis la flamme vivante ; le texte est lu', async ({
     page,
   }) => {

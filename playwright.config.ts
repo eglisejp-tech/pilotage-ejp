@@ -47,6 +47,11 @@ export default defineConfig({
     baseURL: `http://localhost:${port}`,
     locale: 'fr-FR',
     timezoneId: 'Europe/Paris',
+    // « Réduire les animations » (T65) : le contenu qui suit un chargement arrive sans fondu, et
+    // les audits axe et les mesures ne tombent jamais au milieu d'une animation (un texte à moitié
+    // opaque échouerait au contraste). e2e/chargement.spec.ts rétablit les animations pour les
+    // tester, puis les réduit de nouveau pour vérifier qu'elles s'arrêtent.
+    contextOptions: { reducedMotion: 'reduce' },
     trace: 'on-first-retry',
   },
   projects: [
