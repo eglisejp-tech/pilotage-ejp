@@ -31,7 +31,14 @@ export function LibelleEnvoi({ enCours, libelleEnCours, children }: Props) {
     if (!enCours) {
       bouton.style.minWidth = ''
       largeurAuRepos.current = bouton.getBoundingClientRect().width
-      return
+      // La largeur au repos change encore après le premier affichage (police chargée après coup,
+      // mise en page qui bouge) : on la suit tant que le bouton est au repos.
+      if (typeof ResizeObserver === 'undefined') return
+      const suivi = new ResizeObserver(() => {
+        largeurAuRepos.current = bouton.getBoundingClientRect().width
+      })
+      suivi.observe(bouton)
+      return () => suivi.disconnect()
     }
     if (largeurAuRepos.current > 0) {
       bouton.style.minWidth = `min(${largeurAuRepos.current}px, 100%)`
