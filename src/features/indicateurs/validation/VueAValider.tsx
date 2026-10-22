@@ -9,6 +9,7 @@ import { ANCRE_A_VALIDER } from '@/features/indicateurs/validation/ancre'
 import type {
   LigneAValider as Ligne,
   LigneDecidee,
+  LigneRetraitMinistere,
 } from '@/features/indicateurs/validation/construire'
 import { LigneAValider } from '@/features/indicateurs/validation/LigneAValider'
 import type { ActionsLigne } from '@/features/indicateurs/validation/LigneAValider'
@@ -26,6 +27,11 @@ interface Props {
   lignes: EtatBloc<Ligne[]>
   /** Les décisions des 30 derniers jours (EJP Tech seulement) : lues à part, leur échec ne bloque rien. */
   decidees: EtatBloc<LigneDecidee[]> | null
+  /**
+   * Les retraits des ministères des 30 derniers jours, avec leur motif (EJP Tech seulement, T62) :
+   * lus à part, comme les décisions. Absent ou `null` : l'administration, qui ne les lit pas.
+   */
+  retraits?: EtatBloc<LigneRetraitMinistere[]> | null
   /** `null` : lecture seule. */
   actions: ActionsLigne | null
 }
@@ -43,9 +49,10 @@ function focusPerdu(): boolean {
  * sans « Pourquoi ». Le bloc garde son titre et son ancre (`#a-valider`) même vide, pour que le lien
  * de la Modération et celui d'un indicateur à valider arrivent toujours quelque part ; vide, il dit
  * « Rien à valider. ». Après une décision, le message est annoncé 6 secondes et le focus revient
- * au titre quand la ligne décidée a disparu.
+ * au titre quand la ligne décidée a disparu. EJP Tech lit dessous, repliés, les décisions et les
+ * retraits faits par les ministères (T62) des 30 derniers jours, avec leur motif.
  */
-export function VueAValider({ decide, lignes, decidees, actions }: Props) {
+export function VueAValider({ decide, lignes, decidees, retraits = null, actions }: Props) {
   const idTitre = useId()
   const section = useRef<HTMLElement>(null)
   const { hash } = useLocation()
@@ -140,7 +147,111 @@ export function VueAValider({ decide, lignes, decidees, actions }: Props) {
       {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
         <BandeauErreur reessayer={decidees.reessayer} />
       ) : null}
+      {liste !== null && retraits !== null && retraits.etat === 'donnees' ? (
+        retraits.donnees.length > 0 ? (
+          <RetraitsMinisteres lignes={retraits.donnees} actions={actions} surMasque={annoncer} />
+        ) : null
+      ) : null}
+      {liste !== null && retraits !== null && retraits.etat === 'erreur' ? (
+        <BandeauErreur reessayer={retraits.reessayer} />
+      ) : null}
     </section>
+  )
+}
+
+interface PropsRetraits {
+  lignes: LigneRetraitMinistere[]
+  /** `null` : lecture seule, aucun « Masquer le texte ». */
+  actions: ActionsLigne | null
+  surMasque: (message: string) => void
+}
+
+/**
+ * « Retirés par les ministères ces 30 derniers jours », repliés (T62) : « Kumi, « Projets en
+ * cours » », puis « Demande retirée le 14 oct. : « motif » ». Le motif est un texte libre écrit
+ * par le ministère : EJP Tech peut le masquer, comme le « Pourquoi » et le motif d'un refus (ces
+ * textes n'entrent pas dans la file de la Modération). Une demande retirée avant la décision a
+ * quitté la file : son « Pourquoi » suit, avec son propre « Masquer le texte », pour qu'EJP Tech
+ * puisse encore le lire et le masquer (ce champ n'a pas de rappel sur les données personnelles,
+ * T30). Chaque bouton est décrit par la ligne et par le texte qu'il masque.
+ */
+function RetraitsMinisteres({ lignes, actions, surMasque }: PropsRetraits) {
+  const prefixe = useId()
+  return (
+    <details className="mt-4 border-t border-filet">
+      <summary className="inline-flex min-h-cible cursor-pointer items-center text-[15px] font-semibold underline underline-offset-4">
+        {TEXTES_A_VALIDER.titreRetraits} ({nombre(lignes.length)})
+      </summary>
+      <ul className="divide-y divide-filet pb-2">
+        {lignes.map((ligne) => {
+          const idTitre = `${prefixe}-${ligne.id}`
+          const idMotif = `${idTitre}-motif`
+          const idPourquoi = `${idTitre}-pourquoi`
+          const masquable = actions !== null && ligne.motif !== TEXTE_MASQUE
+          const pourquoi = ligne.pourquoi
+          const pourquoiMasquable =
+            actions !== null && pourquoi !== null && pourquoi.texte !== TEXTE_MASQUE
+          return (
+            <li key={ligne.id} className="flex flex-col gap-0.5 py-3">
+              <p id={idTitre} className="text-[15px] wrap-anywhere">
+                <span className="font-semibold">{ligne.ministere}</span>
+                {', '}«&nbsp;{ligne.libelle}&nbsp;»
+              </p>
+              <p id={idMotif} className="text-note wrap-anywhere text-encre-3">
+                {ligne.texte}
+                {' : '}«&nbsp;
+                <ChampLibre texte={{ texte: ligne.motif, masque: ligne.motif === TEXTE_MASQUE }} />
+                &nbsp;»
+              </p>
+              {masquable ? (
+                <div className="mt-1">
+                  <MasquageTexte
+                    contexte={`${TEXTES_A_VALIDER.contexteMasquageRetrait}, ${ligne.ministere}`}
+                    cible="retrait_indicateur"
+                    cibleId={ligne.id}
+                    champ={{
+                      code: 'motif',
+                      libelle: TEXTES_A_VALIDER.motifDuRetrait,
+                      texte: ligne.motif,
+                    }}
+                    masquer={actions.masquer}
+                    surMasque={() => surMasque(TEXTES_MODERATION.reussiteMasque)}
+                    decritPar={`${idTitre} ${idMotif}`}
+                  />
+                </div>
+              ) : null}
+              {pourquoi !== null ? (
+                <p id={idPourquoi} className="mt-2 text-note wrap-anywhere text-encre-3">
+                  {TEXTES_A_VALIDER.pourquoi}
+                  {' : '}«&nbsp;
+                  <ChampLibre
+                    texte={{ texte: pourquoi.texte, masque: pourquoi.texte === TEXTE_MASQUE }}
+                  />
+                  &nbsp;»
+                </p>
+              ) : null}
+              {pourquoiMasquable ? (
+                <div className="mt-1">
+                  <MasquageTexte
+                    contexte={`${TEXTES_A_VALIDER.contexteMasquagePourquoiRetire}, ${ligne.ministere}`}
+                    cible="demande_indicateur"
+                    cibleId={pourquoi.demandeId}
+                    champ={{
+                      code: 'pourquoi',
+                      libelle: TEXTES_A_VALIDER.pourquoi,
+                      texte: pourquoi.texte,
+                    }}
+                    masquer={actions.masquer}
+                    surMasque={() => surMasque(TEXTES_MODERATION.reussiteMasque)}
+                    decritPar={`${idTitre} ${idPourquoi}`}
+                  />
+                </div>
+              ) : null}
+            </li>
+          )
+        })}
+      </ul>
+    </details>
   )
 }
 

@@ -354,6 +354,35 @@ describe('une ligne du journal, en mots', () => {
     ).toBe('8 indicateurs prévus pour Communication')
   })
 
+  it('T62 : un retrait par le ministère dit qui l’a fait, jamais son motif écrit', () => {
+    expect(
+      texteDe({
+        action: 'indicateur_retire',
+        cible: 'indicateur',
+        cible_texte: 'Projets en cours',
+        detail: { motif: 'ministere', attente: true, avec_saisies: false, retrait: 'r1' },
+      }),
+    ).toBe('Projets en cours, demande retirée par le ministère')
+    expect(
+      texteDe({
+        action: 'indicateur_retire',
+        cible: 'indicateur',
+        cible_texte: 'Demandes reçues',
+        detail: { motif: 'ministere', attente: false, avec_saisies: true, retrait: 'r2' },
+      }),
+    ).toBe('Demandes reçues, retiré par le ministère')
+    // Le masquage du motif d'un retrait : la cible, le ministère et le motif de la liste.
+    expect(
+      texteDe({
+        action: 'texte_masque',
+        cible: 'retrait_indicateur',
+        cible_texte: 'Projets en cours',
+        ministere_nom: 'Kumi',
+        detail: { champ: 'motif', motif: 'autre' },
+      }),
+    ).toBe("Retrait d'un indicateur de Kumi, motif : autre")
+  })
+
   it('un libellé retiré pour confidentialité s’affiche en `--encre-3`', () => {
     const construite = construireLigne(
       ligne({

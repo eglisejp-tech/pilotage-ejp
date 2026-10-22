@@ -133,6 +133,7 @@ const OBJET_SANS_TEXTE: Readonly<Record<string, string>> = {
   precision_sensible: 'une précision sur un indicateur sensible',
   signalement: 'un signalement',
   signalement_suivi: 'un signalement',
+  retrait_indicateur: "le retrait d'un indicateur",
   session: 'une session',
   compte: 'un compte',
   ministere: 'un ministère',
@@ -150,6 +151,7 @@ const TEXTE_DE_LA_MODERATION: Readonly<Record<string, string>> = {
   precision_sensible: "Précision d'un chiffre",
   signalement: 'Signalement',
   signalement_suivi: "Clôture d'un signalement",
+  retrait_indicateur: "Retrait d'un indicateur",
 }
 
 /** Motifs d'un texte masqué (`moderation.motif`, BRIEF section 6) : un code, jamais du texte. */
@@ -431,6 +433,15 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
       ]
     }
     case 'indicateur_retire': {
+      // T62 : retiré par le ministère qui l'avait ajouté. Son motif écrit n'est jamais au journal.
+      if (texteDe(detail, 'motif') === 'ministere') {
+        return avecSuite(
+          objet(ligne),
+          detail?.['attente'] === true
+            ? 'demande retirée par le ministère'
+            : 'retiré par le ministère',
+        )
+      }
       const motif = MOTIFS_RETRAIT[texteDe(detail, 'motif') ?? '']
       return avecSuite(objet(ligne), motif === undefined ? null : `motif : ${motif}`)
     }

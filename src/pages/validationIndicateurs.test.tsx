@@ -125,6 +125,43 @@ const AVEC_DECISIONS: Record<string, unknown[]> = {
   })),
 }
 
+/** La demande retirée par Communication avant la décision : son « Pourquoi » se masque ici. */
+const DEMANDE_RETIREE = '00000000-0000-4000-8000-0000000000f9'
+
+/**
+ * Les retraits faits par les ministères des 30 derniers jours (T62) : une demande retirée par
+ * Communication, avec son motif et le « Pourquoi » de la demande, et un ajout validé retiré par
+ * Intégration, au motif masqué.
+ */
+const AVEC_RETRAITS: Record<string, unknown[]> = {
+  v_semaine: [{ aujourdhui: '2026-10-12' }],
+  demande_indicateur: [
+    {
+      id: DEMANDE_RETIREE,
+      indicateur_id: DEMANDES_EXEMPLE[1]!.indicateur_id,
+      pourquoi: 'Voir combien de projets restent ouverts chaque mois.',
+    },
+  ],
+  retrait_indicateur: [
+    {
+      id: '00000000-0000-4000-8000-0000000000f1',
+      indicateur_id: DEMANDES_EXEMPLE[1]!.indicateur_id,
+      ministere_id: '10000000-0000-4000-8000-000000000001',
+      etat_avant: 'en_attente',
+      motif: 'Nous suivons déjà ces projets dans un autre chiffre.',
+      saisi_le: '2026-10-09T17:30:00+02:00',
+    },
+    {
+      id: '00000000-0000-4000-8000-0000000000f2',
+      indicateur_id: DEMANDES_EXEMPLE[2]!.indicateur_id,
+      ministere_id: '10000000-0000-4000-8000-000000000003',
+      etat_avant: 'actif',
+      motif: '[texte masqué par EJP Tech]',
+      saisi_le: '2026-10-02T12:15:00+02:00',
+    },
+  ],
+}
+
 const ligne = (ministere: string) =>
   within(screen.getByRole('heading', { level: 3, name: ministere }).closest('article')!)
 
@@ -537,6 +574,108 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     )
   })
 
+  it('T62 : les retraits des ministères, repliés, avec le ministère, le jour et le motif', async () => {
+    connecte('admin_plateforme', { lignes: AVEC_RETRAITS })
+    afficher('/indicateurs')
+    await bloc()
+    const resume = await screen.findByText(/Retirés par les ministères ces 30 derniers jours \(2\)/)
+    expect(resume.closest('details')).not.toHaveAttribute('open')
+    expect(resume).toHaveClass('underline')
+    await userEvent.click(resume)
+    const retraits = within(resume.closest('details')!)
+    expect(retraits.getByText(/«\s*Projets en cours\s*»/)).toBeInTheDocument()
+    expect(
+      retraits.getByText(
+        /^Demande retirée le 9 oct\. : «\s*Nous suivons déjà ces projets dans un autre chiffre\.\s*»$/,
+      ),
+    ).toBeInTheDocument()
+    expect(retraits.getByText(/^Retiré le 2 oct\. :/)).toBeInTheDocument()
+    // Le plus récent d'abord.
+    const noms = retraits
+      .getAllByText(/^(Communication|Intégration)$/)
+      .map((nom) => nom.textContent)
+    expect(noms).toEqual(['Communication', 'Intégration'])
+  })
+
+  it('T62 : « Masquer le texte » sous le motif d’un retrait, jamais sous un motif déjà masqué', async () => {
+    const faux = connecte('admin_plateforme', { lignes: AVEC_RETRAITS })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      await screen.findByText(/Retirés par les ministères ces 30 derniers jours \(2\)/),
+    )
+    const retraits = within(
+      screen.getByText(/Retirés par les ministères ces 30 derniers jours/).closest('details')!,
+    )
+    // Le motif de Communication et le « Pourquoi » de sa demande retirée ; rien sous le motif
+    // masqué d'Intégration, dont l'ajout validé n'a plus de « Pourquoi » à montrer.
+    const boutons = retraits.getAllByRole('button', { name: 'Masquer le texte' })
+    expect(boutons).toHaveLength(2)
+    expect(boutons[0]).toHaveAccessibleDescription(
+      /Communication.*Demande retirée le 9 oct\. : «\s*Nous suivons déjà/,
+    )
+    await userEvent.click(boutons[0]!)
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    expect(
+      within(fenetre).getByText('Indicateur retiré par son ministère, Communication'),
+    ).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('radio', { name: "Nom d'une personne" }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
+        p_cible: 'retrait_indicateur',
+        p_cible_id: '00000000-0000-4000-8000-0000000000f1',
+        p_champ: 'motif',
+        p_motif: 'nom_personne',
+      }),
+    )
+  })
+
+  it('T62 : une demande retirée avant la décision garde son « Pourquoi », qu’EJP Tech masque ici', async () => {
+    const faux = connecte('admin_plateforme', { lignes: AVEC_RETRAITS })
+    afficher('/indicateurs')
+    await bloc()
+    await userEvent.click(
+      await screen.findByText(/Retirés par les ministères ces 30 derniers jours \(2\)/),
+    )
+    const retraits = within(
+      screen.getByText(/Retirés par les ministères ces 30 derniers jours/).closest('details')!,
+    )
+    expect(
+      retraits.getByText(
+        /^Pourquoi : «\s*Voir combien de projets restent ouverts chaque mois\.\s*»$/,
+      ),
+    ).toBeInTheDocument()
+    // Un seul « Pourquoi » : l'ajout validé d'Intégration n'en montre pas.
+    expect(retraits.getAllByText(/^Pourquoi :/)).toHaveLength(1)
+    const bouton = retraits.getAllByRole('button', { name: 'Masquer le texte' })[1]!
+    expect(bouton).toHaveAccessibleDescription(/Communication.*Pourquoi : «\s*Voir combien/)
+    await userEvent.click(bouton)
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    expect(
+      within(fenetre).getByText('Demande retirée par son ministère, Communication'),
+    ).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('radio', { name: /^Coordonnées/ }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
+        p_cible: 'demande_indicateur',
+        p_cible_id: DEMANDE_RETIREE,
+        p_champ: 'pourquoi',
+        p_motif: 'coordonnees',
+      }),
+    )
+  })
+
+  it('T62 : une lecture des retraits qui échoue : le bandeau et « Réessayer », le reste lisible', async () => {
+    connecte('admin_plateforme', { lignes: AVEC_DECISIONS, enEchec: ['retrait_indicateur'] })
+    afficher('/indicateurs')
+    await bloc()
+    expect(await screen.findByText(/Décidées ces 30 derniers jours \(3\)/)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+    expect(screen.queryByText(/Retirés par les ministères/)).toBeNull()
+  })
+
   it('un refus de la base au masquage se dit dans la fenêtre, qui reste ouverte', async () => {
     const faux = connecte('admin_plateforme')
     faux.rpc.mockRejectedValueOnce({
@@ -575,9 +714,16 @@ describe('/indicateurs, bloc « À valider » pour l’administration de l’ég
     expect(
       ligne('Kumi').getByText(/Nouvel indicateur\s*: «\s*Demandes reçues\s*»/),
     ).toBeInTheDocument()
-    // Jamais la file d'EJP Tech, ni les décisions, ni une valeur.
+    // Jamais la file d'EJP Tech, ni les décisions, ni les retraits des ministères (T62), ni une
+    // valeur.
     const tables = new Set(faux.tables)
-    for (const interdite of ['v_a_valider', 'validation', 'demande_indicateur', 'mesure']) {
+    for (const interdite of [
+      'v_a_valider',
+      'validation',
+      'demande_indicateur',
+      'retrait_indicateur',
+      'mesure',
+    ]) {
       expect(tables.has(interdite), interdite).toBe(false)
     }
   })

@@ -11,8 +11,11 @@ import {
   INDICATEURS_EXEMPLE,
   LIMITES_EXEMPLE,
   REFUS_EXEMPLE,
+  RETRAITS_EXEMPLE,
   SUGGESTIONS_EXEMPLE,
   SUIVI_EXEMPLE,
+  TERMES_EXEMPLE,
+  TERMES_SOURCE_EXEMPLE,
 } from '@/features/mes-indicateurs/apercu/exemples'
 import type { LimitesIndicateurs, TypeCompte } from '@/lib/base'
 import { clientRequetes } from '@/lib/requetes'
@@ -59,6 +62,11 @@ function connecte(type: TypeCompte, options: Options = {}) {
         saisi_le: refus.saisi_le,
       })),
       demande_indicateur: [{ id: DEMANDE_REFUSEE, indicateur_id: ACTIVITES.id }],
+      retrait_indicateur: RETRAITS_EXEMPLE.map((retrait) => ({
+        ...retrait,
+        ministere_id: ID_MINISTERE_EXEMPLE,
+      })),
+      indicateur_terme: [...TERMES_EXEMPLE],
       v_suggestions: [...SUGGESTIONS_EXEMPLE],
       ...options.lignes,
     },
@@ -127,7 +135,14 @@ describe('/ma-fiche/indicateurs, lectures', () => {
       '/ma-fiche',
     )
     const lues = new Set(faux.tables)
-    for (const table of ['indicateur', 'v_indicateur_suivi', 'validation', 'v_suggestions']) {
+    for (const table of [
+      'indicateur',
+      'v_indicateur_suivi',
+      'validation',
+      'v_suggestions',
+      'retrait_indicateur',
+      'indicateur_terme',
+    ]) {
       expect(lues.has(table), table).toBe(true)
     }
     for (const interdite of ['mesure', 'v_mesure_periode', 'v_calcul', 'v_a_valider']) {
@@ -158,15 +173,22 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
-    const resume = screen.getByText('Retirés (2)')
+    const resume = screen.getByText('Retirés (3)')
     expect(resume.closest('details')).toHaveAttribute('open')
     expect(resume).toHaveClass('underline')
+    // Le motif finit déjà sa phrase : aucun point de plus après les guillemets.
     expect(
       screen.getByText(
-        /Refusé le 5 oct\. : «\s*Ce chiffre existe déjà sur votre fiche sous le nom Publications\.\s*»\./,
+        /^Refusé le 5 oct\. : «\s*Ce chiffre existe déjà sur votre fiche sous le nom Publications\.\s*»$/,
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Retiré le 3 oct. : doublon.')).toBeInTheDocument()
+    // T62 : le retrait fait par le ministère, avec le motif qu'il a écrit.
+    expect(
+      screen.getByText(
+        /^Retiré par vous le 9 oct\. : «\s*Nous comptons déjà ces présences avec les directs assurés\.\s*»$/,
+      ),
+    ).toBeInTheDocument()
     // Le ministère peut le replier.
     await userEvent.click(resume)
     expect(resume.closest('details')).not.toHaveAttribute('open')
@@ -176,7 +198,8 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     connecte('ministere', { lignes: { validation: [], demande_indicateur: [] } })
     afficher('/ma-fiche/indicateurs')
     await ecran()
-    const resume = screen.getByText('Retirés (2)')
+    // Le motif d'un retrait par le ministère ne l'ouvre pas : il l'a écrit lui-même.
+    const resume = screen.getByText('Retirés (3)')
     expect(resume.closest('details')).not.toHaveAttribute('open')
     expect(resume).toHaveClass('underline')
   })
@@ -348,10 +371,12 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await ecran()
     expect(screen.getByText(/Vous avez atteint le maximum de 3 ajouts\./)).toBeInTheDocument()
     const panneau = await ouvrirLePanneau()
+    // T62 : le ministère retire lui-même un de ses ajouts.
     expect(
-      within(panneau).getByText(/^Votre ministère a déjà 3 indicateurs à lui\./),
+      within(panneau).getByText(
+        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+      ),
     ).toBeInTheDocument()
-    expect(within(panneau).getByText(/Demandez à EJP Tech/)).toBeInTheDocument()
     expect(within(panneau).queryByRole('button', { name: /^Choisir «/ })).toBeNull()
     expect(within(panneau).queryByRole('textbox')).toBeNull()
   })
@@ -388,9 +413,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.type(within(panneau).getByRole('textbox'), 'Voir ce que le ministère a mené.')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
     const alerte = await within(panneau).findByRole('alert')
-    // Le même texte que la limite vue avant l'envoi, contact EJP Tech (m233, T59).
+    // Le même texte que la limite vue avant l'envoi (m233, T62).
     expect(alerte).toHaveTextContent(
-      "Votre ministère a déjà 3 indicateurs à lui. Demandez à EJP Tech d'en retirer un pour en ajouter un autre.",
+      'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
     )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })
@@ -462,6 +487,155 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.click(within(panneau).getByRole('button', { name: 'Retour' }))
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
     expect(faux.rpc).not.toHaveBeenCalledWith('ajouter_suggestion', expect.anything())
+  })
+})
+
+describe('/ma-fiche/indicateurs, retrait d’un ajout par le ministère (T62)', () => {
+  const PROJETS = INDICATEURS_EXEMPLE.find(
+    (indicateur) => indicateur.libelle === 'Projets en cours',
+  )!
+
+  it('ses ajouts seulement : « Retirer la demande » à valider, « Retirer » validé, rien sur un prévu', async () => {
+    connecte('ministere')
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    expect(
+      screen.getByRole('button', { name: /^Retirer la demande «\s*Projets en cours\s*»$/ }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /^Retirer «\s*Demandes reçues\s*»$/ }),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Retirer/ })).toHaveLength(2)
+  })
+
+  it('la fenêtre : titre, motif de 10 à 280 caractères avec rappel et compteur, refus avant tout appel', async () => {
+    const faux = connecte('ministere')
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Retirer la demande «\s*Projets en cours/ }),
+    )
+    const fenetre = await screen.findByRole('dialog', {
+      name: /^Retirer la demande «\s*Projets en cours\s*» \?$/,
+    })
+    expect(
+      within(fenetre).getByText("N'écrivez aucun nom ni information personnelle."),
+    ).toBeVisible()
+    expect(within(fenetre).getByText('0 sur 280')).toBeInTheDocument()
+    expect(within(fenetre).getByText(/EJP Tech lira votre motif\./)).toBeInTheDocument()
+    await userEvent.type(
+      within(fenetre).getByRole('textbox', { name: 'Pourquoi le retirer ?' }),
+      'Neuf cara',
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer la demande' }))
+    expect(
+      await within(fenetre).findByText(
+        'Expliquez pourquoi vous le retirez (10 caractères au moins).',
+      ),
+    ).toBeInTheDocument()
+    expect(faux.rpc).not.toHaveBeenCalledWith('retirer_mon_indicateur', expect.anything())
+  })
+
+  /** La ligne de retrait que la base relit après l'appel (le faux client rend la première). */
+  function retraitRelu(etatAvant: 'en_attente' | 'actif') {
+    return {
+      retrait_indicateur: [
+        {
+          indicateur_id: PROJETS.id,
+          ministere_id: ID_MINISTERE_EXEMPLE,
+          etat_avant: etatAvant,
+          motif: 'Ce chiffre ne nous sert plus.',
+          saisi_le: '2026-10-12T11:00:00+02:00',
+        },
+        ...RETRAITS_EXEMPLE.map((retrait) => ({ ...retrait, ministere_id: ID_MINISTERE_EXEMPLE })),
+      ],
+    }
+  }
+
+  it('« Retirer la demande » appelle retirer_mon_indicateur avec le motif, ferme la fenêtre et l’annonce', async () => {
+    const faux = connecte('ministere', { lignes: retraitRelu('en_attente') })
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Retirer la demande «\s*Projets en cours/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), '  Ce chiffre ne nous sert plus.  ')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer la demande' }))
+    await waitFor(() =>
+      expect(faux.rpc).toHaveBeenCalledWith('retirer_mon_indicateur', {
+        p_indicateur_id: PROJETS.id,
+        p_motif: 'Ce chiffre ne nous sert plus.',
+      }),
+    )
+    expect(
+      await screen.findByText(/^Demande «\s*Projets en cours\s*» retirée\.$/),
+    ).toBeInTheDocument()
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    // L'état d'avant le retrait est relu dans la ligne écrite par la base, pour cet indicateur.
+    expect(faux.filtres).toContainEqual({
+      table: 'retrait_indicateur',
+      operateur: 'eq',
+      colonne: 'indicateur_id',
+      valeur: PROJETS.id,
+    })
+  })
+
+  it('EJP Tech a validé la demande pendant que la fenêtre était ouverte : l’annonce dit « retiré »', async () => {
+    connecte('ministere', { lignes: retraitRelu('actif') })
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    await userEvent.click(
+      screen.getByRole('button', { name: /^Retirer la demande «\s*Projets en cours/ }),
+    )
+    const fenetre = await screen.findByRole('dialog')
+    await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre ne nous sert plus.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer la demande' }))
+    expect(await screen.findByText(/^«\s*Projets en cours\s*» retiré\.$/)).toBeInTheDocument()
+    expect(screen.queryByText(/^Demande «\s*Projets en cours\s*» retirée\.$/)).toBeNull()
+  })
+
+  it('un refus de la base : le motif sous le champ, la source d’un calcul sous les boutons', async () => {
+    const faux = connecte('ministere')
+    let message = "N'écrivez aucun nom ni information personnelle."
+    faux.rpc.mockImplementation((nom: string) =>
+      nom === 'limites_indicateurs'
+        ? Promise.resolve({ data: [LIMITES_EXEMPLE], error: null })
+        : Promise.reject({ code: 'P0001', message }),
+    )
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    await userEvent.click(screen.getByRole('button', { name: /^Retirer «\s*Demandes reçues/ }))
+    const fenetre = await screen.findByRole('dialog')
+    const champ = within(fenetre).getByRole('textbox')
+    await userEvent.type(champ, 'Demandé par jean@exemple.test.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer' }))
+    // Le rappel sous le champ, puis la même phrase dite comme erreur du champ.
+    await waitFor(() =>
+      expect(
+        within(fenetre).getAllByText("N'écrivez aucun nom ni information personnelle."),
+      ).toHaveLength(2),
+    )
+    expect(champ).toHaveAttribute('aria-invalid', 'true')
+
+    message = 'Ce chiffre sert au calcul « Taux de livraison » : demandez à EJP Tech de le retirer.'
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'Ce chiffre ne nous sert plus.')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer' }))
+    expect(await within(fenetre).findByRole('alert')).toHaveTextContent(message)
+    expect(champ).toHaveValue('Ce chiffre ne nous sert plus.')
+  })
+
+  it('la source d’un calcul suivi n’a pas de bouton : la ligne dit qui peut la retirer', async () => {
+    connecte('ministere', { lignes: { indicateur_terme: [...TERMES_SOURCE_EXEMPLE] } })
+    afficher('/ma-fiche/indicateurs')
+    await ecran()
+    expect(screen.queryByRole('button', { name: /^Retirer «\s*Demandes reçues/ })).toBeNull()
+    expect(
+      screen.getByText(
+        /^Ce chiffre sert au calcul «\s*Taux de livraison\s*» : demandez à EJP Tech de le retirer\.$/,
+      ),
+    ).toBeInTheDocument()
   })
 })
 

@@ -75,6 +75,8 @@ const MOTIFS: Readonly<Record<MotifRetrait, string>> = {
   confidentialite: 'confidentialité',
   source_retiree: 'sa source est retirée',
   refuse: 'refusé',
+  // T62 : le motif écrit par le ministère se lit par EJP Tech seul, dans le bloc « À valider ».
+  ministere: 'à la demande du ministère',
 }
 
 /** Ce que dit une unité autre que le simple nombre : la mention se lit seule, sans définition. */

@@ -1,10 +1,11 @@
 // Données d'exemple de l'aperçu de « Mes indicateurs » (lot L4) : le ministère Communication, avec
 // cinq prévus de la coordination, une suggestion validée, une suggestion à valider depuis 2 jours,
-// un indicateur retiré (doublon) et une suggestion refusée avec son motif. Dates fixes : les
-// captures et les tests ne dépendent pas du jour. Aucune valeur d'indicateur, aucun nom de personne.
+// un indicateur retiré (doublon), une suggestion refusée avec son motif et une suggestion retirée
+// par le ministère avec le sien (T62). Dates fixes : les captures et les tests ne dépendent pas du
+// jour. Aucune valeur d'indicateur, aucun nom de personne.
 
-import type { IndicateurDuMinistere, RefusRecu } from '@/data/validationIndicateurs'
-import type { LecturesMesIndicateurs } from '@/features/mes-indicateurs/construire'
+import type { IndicateurDuMinistere, RefusRecu, RetraitLu } from '@/data/validationIndicateurs'
+import type { LecturesMesIndicateurs, TermeDeCalcul } from '@/features/mes-indicateurs/construire'
 import type { LigneVue, LimitesIndicateurs } from '@/lib/base'
 
 export const ID_MINISTERE_EXEMPLE = '10000000-0000-4000-8000-000000000001'
@@ -128,6 +129,18 @@ export const ACTIVITES = indicateur(19, {
   retrait_motif: 'refuse',
 })
 
+export const PARTICIPANTS = indicateur(20, {
+  libelle: 'Participants',
+  definition: 'Personnes présentes aux activités du ministère dans le mois, une fois par activité.',
+  nature: 'mois',
+  etat: 'retire',
+  origine: 'ministere',
+  modele_code: 'suggestion_participants',
+  cree_le: '2026-09-15T09:00:00+02:00',
+  retire_le: '2026-10-09T18:20:00+02:00',
+  retrait_motif: 'ministere',
+})
+
 export const INDICATEURS_EXEMPLE: readonly IndicateurDuMinistere[] = [
   PUBLICATIONS,
   VISUELS,
@@ -138,6 +151,29 @@ export const INDICATEURS_EXEMPLE: readonly IndicateurDuMinistere[] = [
   PROJETS,
   ARCHIVES,
   ACTIVITES,
+  PARTICIPANTS,
+]
+
+/** Le retrait de « Participants » par le ministère, avec son motif (T62). */
+export const RETRAITS_EXEMPLE: readonly RetraitLu[] = [
+  {
+    indicateur_id: PARTICIPANTS.id,
+    etat_avant: 'actif',
+    motif: 'Nous comptons déjà ces présences avec les directs assurés.',
+    saisi_le: '2026-10-09T18:20:00+02:00',
+  },
+]
+
+/** « Taux de livraison » se sert de deux prévus : « Demandes reçues » reste retirable. */
+export const TERMES_EXEMPLE: readonly TermeDeCalcul[] = [
+  { calcul_id: TAUX.id, source_id: TOURNAGES.id },
+  { calcul_id: TAUX.id, source_id: PUBLICATIONS.id },
+]
+
+/** Variante : « Taux de livraison » se sert de « Demandes reçues », qui ne se retire plus. */
+export const TERMES_SOURCE_EXEMPLE: readonly TermeDeCalcul[] = [
+  { calcul_id: TAUX.id, source_id: TOURNAGES.id },
+  { calcul_id: TAUX.id, source_id: DEMANDES.id },
 ]
 
 export const SUIVI_EXEMPLE: readonly Suivi[] = [
@@ -201,6 +237,8 @@ export function lecturesNormales(): LecturesMesIndicateurs {
     indicateurs: INDICATEURS_EXEMPLE,
     suivi: SUIVI_EXEMPLE,
     refus: REFUS_EXEMPLE,
+    retraits: RETRAITS_EXEMPLE,
+    termes: TERMES_EXEMPLE,
     suggestions: SUGGESTIONS_EXEMPLE,
     limites: LIMITES_EXEMPLE,
   }
@@ -213,6 +251,8 @@ export function lecturesVides(): LecturesMesIndicateurs {
     indicateurs: [],
     suivi: [],
     refus: [],
+    retraits: [],
+    termes: [],
     suggestions: SUGGESTIONS_EXEMPLE,
     limites: { ajouts: 0, ajouts_max: 3, lignes: 0, lignes_max: 30 },
   }

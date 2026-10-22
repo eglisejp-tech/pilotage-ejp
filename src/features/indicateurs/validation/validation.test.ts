@@ -3,11 +3,13 @@ import {
   ATTENTES_EXEMPLE,
   DECISIONS_EXEMPLE,
   DEMANDES_EXEMPLE,
+  RETRAITS_EXEMPLE,
 } from '@/features/indicateurs/validation/apercu/exemples'
 import {
   construireDecidees,
   construireLignesAdministration,
   construireLignesEjpTech,
+  construireRetraitsMinisteres,
 } from '@/features/indicateurs/validation/construire'
 import { lireRefusValidation } from '@/features/indicateurs/validation/refus'
 import { schemaDecision, schemaFormulaireRefus } from '@/features/indicateurs/validation/schemas'
@@ -213,6 +215,26 @@ describe('décisions des 30 derniers jours', () => {
     ])
     expect(decidees[0]?.motif).toBeNull()
     expect(decidees[1]?.motif).toBe('Ce chiffre existe déjà sur la fiche sous un autre nom.')
+  })
+})
+
+describe('T62 : retraits des ministères des 30 derniers jours', () => {
+  const retraits = construireRetraitsMinisteres(RETRAITS_EXEMPLE)
+
+  it('du plus récent au plus ancien, avec le jour et le motif', () => {
+    expect(retraits.map((ligne) => [ligne.ministere, ligne.texte])).toEqual([
+      ['Kumi', 'Demande retirée le 9 oct.'],
+      ['Eagles', 'Retiré le 2 oct.'],
+    ])
+  })
+
+  it('une demande retirée avant la décision garde son « Pourquoi », cible de son masquage', () => {
+    expect(retraits[0]?.pourquoi).toEqual({
+      demandeId: '00000000-0000-4000-8000-0000000000e1',
+      texte: 'Voir combien de projets restent ouverts chaque mois.',
+    })
+    // Un ajout validé n'en montre pas : EJP Tech l'a lu avant de valider.
+    expect(retraits[1]?.pourquoi).toBeNull()
   })
 })
 

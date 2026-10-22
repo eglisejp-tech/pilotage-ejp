@@ -41,7 +41,12 @@ const TOUS: Ecran[] = [
   { vue: 'chargement' },
   { vue: 'probleme' },
   { vue: 'decisions-probleme' },
+  { vue: 'retraits-probleme' },
 ]
+
+/** La liste repliée des retraits faits par les ministères (T62). */
+const retraits = (page: Page) =>
+  page.locator('details', { hasText: 'Retirés par les ministères ces 30 derniers jours' })
 
 test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
   test('titre, phrase, trois ajouts du plus ancien au plus récent, « en retard » avec le mot', async ({
@@ -271,7 +276,80 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
         /Refusée le 5 oct\. : «.*Ce chiffre existe déjà sur la fiche sous un autre nom\..*»/,
       ),
     ).toBeVisible()
-    await expect(page.getByText('[texte masqué]').last()).toBeVisible()
+    await expect(
+      page
+        .locator('details', { hasText: 'Décidées ces 30 derniers jours' })
+        .getByText('[texte masqué]'),
+    ).toBeVisible()
+  })
+
+  test('T62 : les retraits des ministères, repliés, avec le ministère, le jour et le motif', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    const resume = page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/)
+    await expect(resume).toHaveCSS('text-decoration-line', 'underline')
+    await expect(page.getByText(/^Demande retirée le 9 oct\./)).toBeHidden()
+    await resume.click()
+    const liste = retraits(page)
+    await expect(liste.getByText(/Kumi, «\s*Projets en cours\s*»/)).toBeVisible()
+    await expect(
+      liste.getByText(
+        /^Demande retirée le 9 oct\. : «\s*Nous suivons déjà ces projets dans « Activités réalisées »\.\s*»$/,
+      ),
+    ).toBeVisible()
+    await expect(liste.getByText(/^Retiré le 2 oct\. : «\s*\[texte masqué\]\s*»$/)).toBeVisible()
+    // La demande retirée avant la décision a quitté la file : son « Pourquoi » se lit ici.
+    await expect(
+      liste.getByText(/^Pourquoi : «\s*Voir combien de projets restent ouverts chaque mois\.\s*»$/),
+    ).toBeVisible()
+    await expect(liste.getByText(/^Pourquoi :/)).toHaveCount(1)
+  })
+
+  test('T62 : « Masquer le texte » sous le motif d’un retrait, jamais sous un motif déjà masqué', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
+    const liste = retraits(page)
+    // Le motif de Kumi et le « Pourquoi » de sa demande retirée ; rien sous le motif masqué.
+    const boutons = liste.getByRole('button', { name: 'Masquer le texte' })
+    await expect(boutons).toHaveCount(2)
+    await boutons.first().click()
+    const fenetre = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
+    await expect(fenetre.getByText('Indicateur retiré par son ministère, Kumi')).toBeVisible()
+    await fenetre.getByRole('radio', { name: 'Autre information personnelle' }).check()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
+    await expect(reussite(page)).toHaveText('Texte masqué.')
+    await expect(boutons).toHaveCount(1)
+    await expect(liste.getByText('[texte masqué]')).toHaveCount(2)
+  })
+
+  test('T62 : le « Pourquoi » d’une demande retirée avant la décision se masque dans la liste', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
+    const liste = retraits(page)
+    await liste.getByRole('button', { name: 'Masquer le texte' }).last().click()
+    const fenetre = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
+    await expect(fenetre.getByText('Demande retirée par son ministère, Kumi')).toBeVisible()
+    await expect(fenetre.getByText(/Voir combien de projets restent ouverts/)).toBeVisible()
+    await fenetre.getByRole('radio', { name: 'Autre information personnelle' }).check()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
+    await expect(reussite(page)).toHaveText('Texte masqué.')
+    await expect(liste.getByText(/^Pourquoi : «\s*\[texte masqué\]\s*»$/)).toBeVisible()
+    await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
+  })
+
+  test('T62 : la liste des retraits ne se lit pas : un bandeau et « Réessayer », le reste lisible', async ({
+    page,
+  }) => {
+    await ouvrir(page, { vue: 'retraits-probleme' })
+    await expect(page.getByText(/Décidées ces 30 derniers jours \(3\)/)).toBeVisible()
+    await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await expect(bouton(page, 'Réessayer')).toBeVisible()
+    await expect(page.getByText(/Retirés par les ministères/)).toHaveCount(0)
   })
 })
 
@@ -297,6 +375,8 @@ test.describe('bloc « À valider » (administration de l’église), aperçu', 
     await expect(bloc.getByText(/Suivre les demandes/)).toHaveCount(0)
     await expect(bloc.getByText(/valeurs? déjà saisies?/)).toHaveCount(0)
     await expect(bloc.getByText(/Décidées ces 30 derniers jours/)).toHaveCount(0)
+    // T62 : les retraits des ministères et leur motif se lisent par EJP Tech seul.
+    await expect(bloc.getByText(/Retirés par les ministères/)).toHaveCount(0)
     await expect(ligne(page, 'Kumi').getByText('en retard')).toBeVisible()
     await expect(ligne(page, 'Kumi')).toContainText('Envoyé le 1 oct.')
   })
@@ -329,6 +409,7 @@ test.describe('accessibilité et petits écrans', () => {
     }
     await ouvrir(page)
     await page.getByText(/Décidées ces 30 derniers jours \(3\)/).click()
+    await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
     await auditer(page)
     await bouton(page, /^Refuser «\s*Demandes reçues\s*» de Kumi$/).click()
     await auditer(page)
@@ -397,6 +478,12 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await page.getByText(/Décidées ces 30 derniers jours \(3\)/).click()
   await page.screenshot({
     path: `test-results/captures/validation-indicateurs-decidees-${taille}.png`,
+    fullPage: true,
+  })
+  // T62 : les retraits des ministères, ouverts, avec leur motif.
+  await page.getByText(/Retirés par les ministères ces 30 derniers jours \(2\)/).click()
+  await page.screenshot({
+    path: `test-results/captures/validation-indicateurs-retraits-${taille}.png`,
     fullPage: true,
   })
   await bouton(page, /^Refuser «\s*Demandes reçues\s*» de Kumi$/).click()

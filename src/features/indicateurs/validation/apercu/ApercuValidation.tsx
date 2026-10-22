@@ -7,13 +7,19 @@ import {
   ATTENTES_EXEMPLE,
   DECISIONS_EXEMPLE,
   DEMANDES_EXEMPLE,
+  RETRAITS_EXEMPLE,
 } from '@/features/indicateurs/validation/apercu/exemples'
 import {
   construireDecidees,
   construireLignesAdministration,
   construireLignesEjpTech,
+  construireRetraitsMinisteres,
 } from '@/features/indicateurs/validation/construire'
-import type { LigneAValider, LigneDecidee } from '@/features/indicateurs/validation/construire'
+import type {
+  LigneAValider,
+  LigneDecidee,
+  LigneRetraitMinistere,
+} from '@/features/indicateurs/validation/construire'
 import type { ActionsLigne } from '@/features/indicateurs/validation/LigneAValider'
 import { MESSAGES_BASE_VALIDATION } from '@/features/indicateurs/validation/textes'
 import { VueAValider } from '@/features/indicateurs/validation/VueAValider'
@@ -35,7 +41,8 @@ const reessayer = () => undefined
  * - `?profil=admin_plateforme` (défaut : EJP Tech décide et lit le « Pourquoi ») ou `admin_eglise`
  *   (lit l'attente sans bouton ni « Pourquoi ») ; tout autre profil : « Page non disponible » ;
  * - `vue=liste` (défaut), `vide` (rien n'attend), `chargement`, `probleme`, `decisions-probleme`
- *   (la liste « Décidées » ne se lit pas) ;
+ *   (la liste « Décidées » ne se lit pas), `retraits-probleme` (la liste des retraits faits par les
+ *   ministères, T62, ne se lit pas) ;
  * - `&envoi=echec` simule une connexion perdue, `&envoi=decidee` une demande déjà décidée par un
  *   autre compte, `&envoi=motif` un refus du motif par la base (donnée personnelle).
  * Enregistrée seulement en développement.
@@ -96,6 +103,24 @@ export function ApercuValidation() {
     }
   }, [vue, decisions, masquees])
 
+  const retraits = useMemo((): EtatBloc<LigneRetraitMinistere[]> => {
+    if (vue === 'retraits-probleme') return { etat: 'erreur', reessayer }
+    return {
+      etat: 'donnees',
+      donnees: construireRetraitsMinisteres(
+        RETRAITS_EXEMPLE.map((retrait) => ({
+          ...retrait,
+          motif: masquees.includes(retrait.retrait_id) ? TEXTE_MASQUE : retrait.motif,
+          // Le « Pourquoi » d'une demande retirée se masque par l'identifiant de la demande.
+          demande:
+            retrait.demande !== null && masquees.includes(retrait.demande.id)
+              ? { ...retrait.demande, pourquoi: TEXTE_MASQUE }
+              : retrait.demande,
+        })),
+      ),
+    }
+  }, [vue, masquees])
+
   const actions: ActionsLigne = {
     valider: (ligne) => decider(ligne, 'valide', null),
     refuser: (ligne, motif) => decider(ligne, 'refuse', motif),
@@ -152,6 +177,7 @@ export function ApercuValidation() {
         decide={decide}
         lignes={lignes}
         decidees={decide ? decidees : null}
+        retraits={decide ? retraits : null}
         actions={decide ? actions : null}
       />
     </section>

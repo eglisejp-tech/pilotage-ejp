@@ -42,7 +42,10 @@ Posés une fois par `supabase/migrations/20261007090000_contrats_etape_4.sql`, v
 B8 (`20261009105000_sensibles_precisions_repartitions.sql`) réécrit `journal_cible_check`,
 `moderation_cible_check` et `moderation_cible_champ_check` avec l'union de tous les codes, plus la
 cible `precision_sensible` et le couple (`precision_sensible`, `texte`) ; `journal_action_check`
-ne change pas. B8 met à jour les listes attendues de `contrats-etape-4.test.sql`. Noms des
+ne change pas. B8 met à jour les listes attendues de `contrats-etape-4.test.sql`. De même, T62
+(retrait d'un ajout par son ministère, `20261014090000_retrait_par_le_ministere.sql`) réécrit ces
+trois contraintes avec la cible `retrait_indicateur` et le couple (`retrait_indicateur`, `motif`),
+et met à jour les mêmes listes attendues. Noms des
 contraintes : `journal_action_check`, `journal_cible_check`, `moderation_cible_check`,
 `moderation_cible_champ_check`, et `moderation_masque_check` (une décision « masque » si et
 seulement si un champ et un motif sont donnés : contrainte des étapes 1 à 3, nommée par
@@ -164,27 +167,29 @@ fraîcheur (un signalement n'est pas une saisie).
 
 `session`, `evenement`, `reunion`, `point_attention`, `point_suivi`, `compte`, `ministere` (étapes 1
 à 3), puis `indicateur`, `signalement`, et les cibles de modération `demande_indicateur`,
-`validation`, `signalement_suivi`, et `precision_sensible` (B8, changement du 6 octobre). Règle :
+`validation`, `signalement_suivi`, `precision_sensible` (B8, changement du 6 octobre), et
+`retrait_indicateur` (T62, étape 6). Règle :
 **toute cible de la modération est une cible du journal**, parce que `marquer_relu` et
 `masquer_texte` écrivent leur ligne (`texte_relu`, `texte_masque`) avec la cible de la modération.
-`v_journal` (B3 pour `indicateur`, B8 pour `precision_sensible`, B7 pour `signalement`) calcule
-`cible_texte` sous la RLS du lecteur.
+`v_journal` (B3 pour `indicateur`, B8 pour `precision_sensible`, B7 pour `signalement`, T62 pour
+`retrait_indicateur`) calcule `cible_texte` sous la RLS du lecteur.
 
 ### Cibles et couples de la modération
 
-| Cible                | Champ masquable (couple)                  | Origine                                | Lot qui étend `masquer_texte` et `marquer_relu`                                   |
-| -------------------- | ----------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------- |
-| `point_attention`    | `titre`, `description`, `action_attendue` | étapes 1 à 3                           | aucun                                                                             |
-| `point_suivi`        | `commentaire`                             | étapes 1 à 3                           | aucun                                                                             |
-| `evenement`          | `titre`                                   | étapes 1 à 3                           | aucun                                                                             |
-| `reunion`            | `objet`, `decision_attendue`              | étapes 1 à 3                           | aucun                                                                             |
-| `demande_indicateur` | `pourquoi`                                | étape 4                                | B3                                                                                |
-| `validation`         | `motif`                                   | étape 4                                | B3                                                                                |
-| `signalement`        | `texte`                                   | étape 4 (T39)                          | B7, après B3 et B8                                                                |
-| `signalement_suivi`  | `commentaire`                             | étape 4 (T39)                          | B7, après B3 et B8                                                                |
-| `precision_sensible` | `texte`                                   | étape 4 (P46, changement du 6 octobre) | B8, après B3 et B4, avant B7 (B7 reprend `masquer_texte` depuis la version de B8) |
+| Cible                | Champ masquable (couple)                  | Origine                                | Lot qui étend `masquer_texte` et `marquer_relu`                                          |
+| -------------------- | ----------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `point_attention`    | `titre`, `description`, `action_attendue` | étapes 1 à 3                           | aucun                                                                                    |
+| `point_suivi`        | `commentaire`                             | étapes 1 à 3                           | aucun                                                                                    |
+| `evenement`          | `titre`                                   | étapes 1 à 3                           | aucun                                                                                    |
+| `reunion`            | `objet`, `decision_attendue`              | étapes 1 à 3                           | aucun                                                                                    |
+| `demande_indicateur` | `pourquoi`                                | étape 4                                | B3                                                                                       |
+| `validation`         | `motif`                                   | étape 4                                | B3                                                                                       |
+| `signalement`        | `texte`                                   | étape 4 (T39)                          | B7, après B3 et B8                                                                       |
+| `signalement_suivi`  | `commentaire`                             | étape 4 (T39)                          | B7, après B3 et B8                                                                       |
+| `precision_sensible` | `texte`                                   | étape 4 (P46, changement du 6 octobre) | B8, après B3 et B4, avant B7 (B7 reprend `masquer_texte` depuis la version de B8)        |
+| `retrait_indicateur` | `motif`                                   | étape 6 (T62)                          | T62, `masquer_texte` seulement (hors de la file de la Modération, comme le « Pourquoi ») |
 
-Douze couples en tout (onze posés par W0, un par B8). Le texte masqué reste « [texte masqué par EJP Tech] ». L'écran Modération
+Treize couples en tout (onze posés par W0, un par B8, un par T62). Le texte masqué reste « [texte masqué par EJP Tech] ». L'écran Modération
 (étape 6) relit et masque ; à l'étape 4, seul le bloc « Signalements » existe sur `/moderation`.
 
 ## 2. Horodatages réservés des migrations

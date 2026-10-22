@@ -53,6 +53,8 @@ export type MotifRetrait =
   | 'confidentialite'
   | 'source_retiree'
   | 'refuse'
+  /** Retiré par le ministère qui l'a ajouté (T62) : son motif écrit est dans `retrait_indicateur`. */
+  | 'ministere'
 
 /** Motifs qu'un écran peut envoyer à `retirer_indicateur` (les autres sont posés par la base). */
 export type MotifRetraitChoisi =
@@ -156,6 +158,22 @@ export type TablesIndicateurs = {
     ministere_id: string
     decision: DecisionValidation
     motif: string | null
+    saisi_le: string
+    saisi_par: string
+  }>
+  /**
+   * Retrait d'un ajout par son ministère (T62, 20261014090000) : une ligne par indicateur, en
+   * ajout seulement, écrite par `retirer_mon_indicateur`. Lue par ce ministère et EJP Tech. Le
+   * motif devient « [texte masqué par EJP Tech] » s'il est masqué.
+   */
+  retrait_indicateur: TableEnLecture<{
+    id: string
+    indicateur_id: string
+    ministere_id: string
+    /** `en_attente` : la demande est retirée avant la décision d'EJP Tech ; `actif` : un ajout validé. */
+    etat_avant: 'en_attente' | 'actif'
+    /** 10 à 280 caractères. */
+    motif: string
     saisi_le: string
     saisi_par: string
   }>
@@ -451,6 +469,14 @@ export type FonctionsIndicateurs = {
     Args: { p_indicateur_id: string; p_motif: MotifRetraitChoisi | 'confidentialite' }
     /** Nombre de calculs retirés avec lui. */
     Returns: number
+  }
+  /**
+   * Retrait d'un ajout par le ministère qui l'a fait (T62) : à valider ou validé, avec un motif de
+   * 10 à 280 caractères. La source d'un calcul suivi est refusée (le message nomme le calcul).
+   */
+  retirer_mon_indicateur: {
+    Args: { p_indicateur_id: string; p_motif: string }
+    Returns: undefined
   }
   valider_indicateur: {
     Args: { p_demande_id: string; p_decision: DecisionValidation; p_motif?: string | null }

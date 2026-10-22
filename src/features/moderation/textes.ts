@@ -65,6 +65,7 @@ export const LIBELLES_CIBLE: Readonly<Record<CibleMasquable, string>> = {
   validation: "Motif d'un refus",
   signalement: 'Signalement',
   signalement_suivi: 'Commentaire de clôture',
+  retrait_indicateur: "Motif d'un retrait",
 }
 
 /** Nom d'un champ libre, sur la ligne et dans la fenêtre : « Ce qui se passe ». */
@@ -93,6 +94,7 @@ export function libelleChamp(cible: CibleMasquable, champ: string): string {
   if (cible === 'precision_sensible' && champ === 'texte') return 'Précision'
   if (cible === 'signalement' && champ === 'texte') return 'Signalement'
   if (cible === 'signalement_suivi' && champ === 'commentaire') return 'Commentaire de clôture'
+  if (cible === 'retrait_indicateur' && champ === 'motif') return 'Motif du retrait'
   return LIBELLES_CHAMP[champ] ?? champ
 }
 
