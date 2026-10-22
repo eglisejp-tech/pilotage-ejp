@@ -22,7 +22,7 @@ function Bloc({ enChargement, erreur = false }: { enChargement: boolean; erreur?
         {enChargement ? null : erreur ? (
           <p role="alert">La connexion a échoué. Réessayez.</p>
         ) : (
-          <p>Aucun point ouvert pour votre ministère.</p>
+          <p>Aucun point ouvert.</p>
         )}
       </ApresChargement>
     </section>
@@ -36,11 +36,11 @@ describe('ApresChargement (T65)', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Chargement de vos points')
     act(() => vi.advanceTimersByTime(100))
     rerender(<Bloc enChargement={false} />)
-    expect(screen.queryByText('Aucun point ouvert pour votre ministère.')).toBeNull()
+    expect(screen.queryByText('Aucun point ouvert.')).toBeNull()
     act(() => vi.advanceTimersByTime(499))
     expect(screen.getByRole('status')).toHaveTextContent('Chargement de vos points')
     act(() => vi.advanceTimersByTime(1))
-    const contenu = screen.getByText('Aucun point ouvert pour votre ministère.')
+    const contenu = screen.getByText('Aucun point ouvert.')
     // L'enveloppe du fondu ne fait pas de boîte : le paragraphe reste dans le flex du bloc.
     const enveloppe = contenu.parentElement
     expect(enveloppe).toHaveClass('arrivee')
@@ -71,7 +71,7 @@ describe('ApresChargement (T65)', () => {
 
   it('données déjà là : le contenu tel quel, sans enveloppe ni attente', () => {
     render(<Bloc enChargement={false} />)
-    const contenu = screen.getByText('Aucun point ouvert pour votre ministère.')
+    const contenu = screen.getByText('Aucun point ouvert.')
     expect(contenu.parentElement?.tagName).toBe('SECTION')
   })
 })

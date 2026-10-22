@@ -302,11 +302,8 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
       return [simple(chiffresSaisis(detail, contexte.codesCommuns))]
     case 'fij_saisie': {
       const total = nombreDe(detail, 'total')
-      return [
-        simple(
-          total === null ? 'Carte des FIJ' : `FIJ par département : ${nombre(total)} au total`,
-        ),
-      ]
+      // Les mêmes mots que « Dernières saisies » de la fiche (T66, t214 : glossaire « carte des FIJ »).
+      return [simple(total === null ? 'Carte des FIJ' : `Carte des FIJ : ${nombre(total)} FIJ`)]
     }
     case 'fij_statistiques_saisies': {
       const dimanche = jourDe(detail, 'dimanche')

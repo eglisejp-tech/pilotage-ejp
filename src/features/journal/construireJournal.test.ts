@@ -125,9 +125,7 @@ describe('une ligne du journal, en mots', () => {
   })
 
   it('carte des FIJ et chiffres par département', () => {
-    expect(texteDe({ action: 'fij_saisie', detail: { total: 29 } })).toBe(
-      'FIJ par département : 29 au total',
-    )
+    expect(texteDe({ action: 'fij_saisie', detail: { total: 29 } })).toBe('Carte des FIJ : 29 FIJ')
     expect(
       texteDe({
         action: 'fij_statistiques_saisies',
