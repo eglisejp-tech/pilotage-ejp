@@ -102,7 +102,8 @@ export interface LecturesCetteSemaine {
 type LigneSession = LigneVue<'v_session_completude'>
 type LigneTableau = LigneVue<'v_tableau_ministeres'>
 
-// La règle du STAR compté une fois est sur la page d'aide (T66, t180).
+// La règle du STAR compté une fois quitte la note (T66, t180) : elle ira dans la page Aide, qui
+// reste à créer (guide de rédaction, section 6).
 const NOTE_CHIFFRES = 'Courbes : 10 derniers dimanches ou 4 dernières sessions.'
 
 const DEPARTEMENTS: { code: CodeDepartement; nom: string }[] = [

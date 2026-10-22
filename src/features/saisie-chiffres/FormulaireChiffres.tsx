@@ -31,7 +31,7 @@ interface Props {
  * (« Enregistrement en cours » pendant l'envoi), l'erreur de formulaire (les valeurs restent), le
  * message de réussite (6 s) et le lien « Signaler une difficulté » en bas, sous les boutons (T39).
  * La phrase sur l'historique de la maquette 08 n'est plus à l'écran : elle décrivait le
- * fonctionnement interne (T66, t076 et t077 ; la page Aide le dit).
+ * fonctionnement interne (T66, t076 et t077 ; elle ira dans la page Aide, qui reste à créer).
  */
 export function FormulaireChiffres({
   bouton,

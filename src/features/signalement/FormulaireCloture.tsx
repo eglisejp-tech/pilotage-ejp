@@ -30,7 +30,8 @@ export interface ProprietesFormulaireCloture {
  * Petit panneau « Clore le signalement » (BRIEF, « Modération ») : « Réponse au ministère
  * (facultatif) » (10 à 280 caractères, rappel en dessous, premier champ libre), « Un signalement
  * clos ne se rouvre pas. », puis « Clore le signalement », le même libellé que le bouton qui
- * ouvre le panneau (T66). La consigne « transmis à l'administration » est sur la page d'aide. Un
+ * ouvre le panneau (T66). La consigne « transmis à l'administration » est dans le guide d'EJP
+ * Tech (`docs/exploitation.md`, section 11), en attendant la page Aide (T66, point 10). Un
  * refus de la réponse se dit sous le champ ; la connexion perdue sous le bouton, réponse gardée.
  */
 export function FormulaireCloture({

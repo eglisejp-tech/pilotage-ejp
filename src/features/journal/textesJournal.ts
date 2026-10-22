@@ -6,7 +6,8 @@ import { TAILLE_PAGE_JOURNAL } from '@/data/journal'
 import type { TypeCompte } from '@/lib/base'
 
 // Ce que contient le journal, sans dire qu'il ne se modifie pas (T66, t372 et t373 ; guide,
-// exemple 6) : l'inaltérabilité est sur la page d'aide.
+// exemple 6) : l'inaltérabilité est dans les conditions d'utilisation, et ira dans la page Aide,
+// qui reste à créer.
 const COMMUN = 'Ce que chaque compte a saisi ou modifié, avec la date.'
 
 export const TEXTES_JOURNAL = {

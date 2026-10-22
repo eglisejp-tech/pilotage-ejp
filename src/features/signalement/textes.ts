@@ -130,8 +130,8 @@ export const TEXTES_BLOC_SIGNALEMENTS = {
   boutonClore: 'Clore le signalement',
   /**
    * La réponse que lira le ministère (t365). La consigne « transmis à l'administration » (T39)
-   * n'est plus sous le champ : elle est dans le guide d'EJP Tech, `docs/exploitation.md`, en
-   * attendant une page d'aide (T66, point ouvert 10).
+   * n'est plus sous le champ : elle est dans le guide d'EJP Tech, `docs/exploitation.md`
+   * (section 11), en attendant la page Aide, qui reste à créer (T66, point 10).
    */
   libelleCommentaire: 'Réponse au ministère (facultatif)',
   noteDefinitive: 'Un signalement clos ne se rouvre pas.',
