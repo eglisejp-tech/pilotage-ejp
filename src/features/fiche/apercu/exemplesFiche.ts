@@ -29,6 +29,7 @@ export const ECRANS_APERCU_FICHE = [
   'ministeres',
   'ministeres-vide',
   'ministeres-erreur',
+  'ministeres-chargement',
 ] as const
 
 export type EcranApercuFiche = (typeof ECRANS_APERCU_FICHE)[number]

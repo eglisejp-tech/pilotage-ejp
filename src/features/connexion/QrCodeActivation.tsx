@@ -1,6 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
+import { Arrivee } from '@/components/etats/Arrivee'
+import { ChargementEnLigne } from '@/components/etats/ChargementEnLigne'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 
-const DELAI_CHARGEMENT = 300
+/** Pendant la préparation du QR code, avec la petite flamme (T65, moment 3). */
+export const TEXTE_QR_EN_PREPARATION = 'Chargement du QR code'
 
 /** La préparation du QR code a échoué (m044) : le cadre le dit, avec « Réessayer ». */
 export const MESSAGE_QR_EN_ECHEC = "Le QR code n'a pas pu s'afficher. Réessayez."
@@ -19,38 +23,41 @@ type Proprietes = {
 }
 
 /**
- * Encadré du QR code (maquette 17). Pendant sa préparation, « Chargement » apparaît après
- * 300 ms, sans animation, avec aria-busy (docs/reference/maquettes/LISEZMOI.md, « États »). Un
- * échec de connexion se dit dans le cadre même (role="alert"), avec « Réessayer » : l'écran
- * n'oblige plus à saisir un code pour relancer la préparation. Au clic, le focus reste sur le
- * cadre, que le bouton quitte pendant le nouvel essai. Un refus précis se dit au même endroit,
- * sans bouton : réessayer tout de suite ne servirait à rien, ou aggraverait une limite.
+ * Encadré du QR code (maquette 17). Pendant sa préparation, la petite flamme et « Chargement du
+ * QR code » apparaissent après 300 ms, dans le cadre (docs/reference/maquettes/LISEZMOI.md,
+ * « États » ; T65, moment 3), au moins 600 ms une fois montrées ; `aria-busy` est sur le dessin
+ * (`ChargementEnLigne`), jamais autour de la zone `status`. Le QR code arrive ensuite en fondu, à
+ * la même place. Un échec de connexion se dit
+ * dans le cadre même (role="alert"), avec « Réessayer » : l'écran n'oblige plus à saisir un code
+ * pour relancer la préparation. Au clic, le focus reste sur le cadre, que le bouton quitte pendant
+ * le nouvel essai. Un refus précis se dit au même endroit, sans bouton : réessayer tout de suite
+ * ne servirait à rien, ou aggraverait une limite.
  */
 export function QrCodeActivation({ qrCode, enEchec = false, onReessayer, refus }: Proprietes) {
-  const [chargementVisible, setChargementVisible] = useState(false)
   const cadre = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (qrCode) return
-    const minuterie = setTimeout(() => setChargementVisible(true), DELAI_CHARGEMENT)
-    return () => clearTimeout(minuterie)
-  }, [qrCode])
+  const enPreparation = !qrCode && !enEchec && !refus
+  const { attente, fondu } = useAttenteChargement(enPreparation)
 
   return (
     <div
       ref={cadre}
       tabIndex={-1}
-      aria-busy={qrCode || enEchec || refus ? undefined : true}
       className="flex justify-center border border-filet bg-papier p-4 outline-hidden"
     >
-      {qrCode ? (
-        <img
-          src={qrCode}
-          alt="QR code d'activation de Pilotage EJP"
-          width={200}
-          height={200}
-          className="box-content block size-50 bg-papier p-3"
-        />
+      {attente ? (
+        <div className="flex size-56 items-center justify-center">
+          <ChargementEnLigne texte={TEXTE_QR_EN_PREPARATION} />
+        </div>
+      ) : qrCode ? (
+        <Arrivee fondu={fondu}>
+          <img
+            src={qrCode}
+            alt="QR code d'activation de Pilotage EJP"
+            width={200}
+            height={200}
+            className="box-content block size-50 bg-papier p-3"
+          />
+        </Arrivee>
       ) : refus ? (
         <div className="flex min-h-56 w-full flex-col items-center justify-center text-center">
           <p role="alert" className="text-[15px] leading-normal text-alerte">
@@ -75,11 +82,7 @@ export function QrCodeActivation({ qrCode, enEchec = false, onReessayer, refus }
             </button>
           ) : null}
         </div>
-      ) : (
-        <p className="flex size-56 items-center justify-center text-encre-3">
-          {chargementVisible ? 'Chargement' : null}
-        </p>
-      )}
+      ) : null}
     </div>
   )
 }

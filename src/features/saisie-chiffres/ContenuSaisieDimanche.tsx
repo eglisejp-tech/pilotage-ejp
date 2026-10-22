@@ -1,4 +1,6 @@
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
 import { FormulaireDimanche } from '@/features/saisie-chiffres/FormulaireDimanche'
 import {
@@ -20,55 +22,63 @@ const CONNEXION_ECHOUEE = 'La connexion a échoué. Réessayez.'
  * « Signaler une difficulté » reste en bas dans chaque état.
  */
 export function ContenuSaisieDimanche({ etat }: { etat: EtatSaisieDimanche }) {
-  if (etat.etat === 'pret' && !(etat.matin && etat.champs.propres.length === 0)) {
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis la suite arrive en fondu.
+  const { attente, fondu } = useAttenteChargement(etat.etat === 'chargement')
+  if (!attente && etat.etat === 'pret' && !(etat.matin && etat.champs.propres.length === 0)) {
     return (
-      <FormulaireDimanche
-        key={etat.dimanche}
-        dimanche={etat.dimanche}
-        matin={etat.matin}
-        champs={etat.champs}
-        proposes={etat.proposes}
-        enregistrer={etat.enregistrer}
-      />
+      <Arrivee fondu={fondu}>
+        <FormulaireDimanche
+          key={etat.dimanche}
+          dimanche={etat.dimanche}
+          matin={etat.matin}
+          champs={etat.champs}
+          proposes={etat.proposes}
+          enregistrer={etat.enregistrer}
+        />
+      </Arrivee>
     )
   }
   // Les actions vers un autre dimanche remplacent l'entrée d'historique : « Retour » ferme la
   // saisie (BRIEF, section 9, Adresses).
   return (
     <>
-      {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {etat.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
-        >
-          {CONNEXION_ECHOUEE}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'refuse' ? (
-        <EtatVide
-          situation="aucun_resultat"
-          action={{
-            libelle: actionSaisirDimanche(etat.dimancheReference),
-            vers: adresseSaisieDimanche(etat.dimancheReference),
-            remplace: true,
-          }}
-        >
-          {DIMANCHE_REFUSE}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'pret' ? (
-        <EtatVide
-          situation="en_attente_des_autres"
-          action={{
-            libelle: actionSaisirDimanche(etat.dimancheReference),
-            vers: adresseSaisieDimanche(etat.dimancheReference),
-            remplace: true,
-          }}
-        >
-          {TEXTES_CHIFFRES.matinSansIndicateur}
-        </EtatVide>
-      ) : null}
+      {attente ? <ChargementSaisie /> : null}
+      {attente ? null : (
+        <Arrivee fondu={fondu}>
+          {etat.etat === 'erreur' ? (
+            <EtatVide
+              situation="probleme_passager"
+              action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
+            >
+              {CONNEXION_ECHOUEE}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'refuse' ? (
+            <EtatVide
+              situation="aucun_resultat"
+              action={{
+                libelle: actionSaisirDimanche(etat.dimancheReference),
+                vers: adresseSaisieDimanche(etat.dimancheReference),
+                remplace: true,
+              }}
+            >
+              {DIMANCHE_REFUSE}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'pret' ? (
+            <EtatVide
+              situation="en_attente_des_autres"
+              action={{
+                libelle: actionSaisirDimanche(etat.dimancheReference),
+                vers: adresseSaisieDimanche(etat.dimancheReference),
+                remplace: true,
+              }}
+            >
+              {TEXTES_CHIFFRES.matinSansIndicateur}
+            </EtatVide>
+          ) : null}
+        </Arrivee>
+      )}
       <LienSignalement ecran="saisie_dimanche" />
     </>
   )

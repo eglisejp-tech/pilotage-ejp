@@ -1,3 +1,4 @@
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { actionsDeLaLigne, LIBELLES_ACTIONS } from '@/features/comptes/actionsLigne'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
@@ -54,7 +55,12 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
             pleineLargeur && 'w-full',
           )}
         >
-          {enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]}
+          <LibelleEnvoi
+            enCours={enCours === action}
+            libelleEnCours={TEXTES_COMPTES.enCours[action]}
+          >
+            {LIBELLES_ACTIONS[action]}
+          </LibelleEnvoi>
         </button>
       ))}
     </div>

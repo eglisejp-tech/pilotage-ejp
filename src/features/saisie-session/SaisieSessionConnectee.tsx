@@ -1,4 +1,6 @@
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
 import { FormulaireSession } from '@/features/saisie-session/FormulaireSession'
@@ -24,7 +26,9 @@ const CONNEXION_ECHOUEE = 'La connexion a échoué. Réessayez.'
  */
 export function SaisieSessionConnectee({ sessionId, ministereId, titre, onFermer }: Props) {
   const etat = useSaisieSession(sessionId, ministereId)
-  const session = etat.etat === 'pret' || etat.etat === 'future' ? etat.session : null
+  // T65 : la flamme reste au moins 600 ms une fois montrée, puis la suite arrive en fondu.
+  const { attente, fondu } = useAttenteChargement(etat.etat === 'chargement')
+  const session = !attente && (etat.etat === 'pret' || etat.etat === 'future') ? etat.session : null
 
   return (
     <PanneauSaisie
@@ -32,47 +36,53 @@ export function SaisieSessionConnectee({ sessionId, ministereId, titre, onFermer
       surtitre={TEXTES_SESSION.surtitre}
       onFermer={onFermer}
     >
-      {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {etat.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
-        >
-          {CONNEXION_ECHOUEE}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'introuvable' ? (
-        <EtatVide
-          situation="aucun_resultat"
-          action={{ libelle: TEXTES_SESSION.autreSession, vers: adresseSaisieSession() }}
-        >
-          {TEXTES_SESSION.introuvable}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'future' ? (
-        <EtatVide
-          situation="en_attente_des_autres"
-          action={{ libelle: TEXTES_SESSION.autreSession, vers: adresseSaisieSession() }}
-        >
-          {TEXTES_SESSION.future}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'pret' ? (
-        <FormulaireSession
-          session={{
-            sessionId: etat.session.session_id,
-            type: etat.session.type,
-            intitule: etat.session.intitule,
-            date: etat.session.date,
-            nbSaisis: etat.session.nb_saisis,
-            nbAttendus: etat.session.nb_attendus,
-            manquants: etat.session.manquants,
-          }}
-          ministereId={ministereId}
-          precedente={etat.precedente}
-          dejaSaisi={etat.dejaSaisi}
-          enregistrer={etat.enregistrer}
-        />
+      {attente ? <ChargementSaisie /> : null}
+      {attente ? null : (
+        <Arrivee fondu={fondu}>
+          {etat.etat === 'erreur' ? (
+            <EtatVide
+              situation="probleme_passager"
+              action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
+            >
+              {CONNEXION_ECHOUEE}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'introuvable' ? (
+            <EtatVide
+              situation="aucun_resultat"
+              action={{ libelle: TEXTES_SESSION.autreSession, vers: adresseSaisieSession() }}
+            >
+              {TEXTES_SESSION.introuvable}
+            </EtatVide>
+          ) : null}
+          {etat.etat === 'future' ? (
+            <EtatVide
+              situation="en_attente_des_autres"
+              action={{ libelle: TEXTES_SESSION.autreSession, vers: adresseSaisieSession() }}
+            >
+              {TEXTES_SESSION.future}
+            </EtatVide>
+          ) : null}
+        </Arrivee>
+      )}
+      {!attente && etat.etat === 'pret' ? (
+        <Arrivee fondu={fondu}>
+          <FormulaireSession
+            session={{
+              sessionId: etat.session.session_id,
+              type: etat.session.type,
+              intitule: etat.session.intitule,
+              date: etat.session.date,
+              nbSaisis: etat.session.nb_saisis,
+              nbAttendus: etat.session.nb_attendus,
+              manquants: etat.session.manquants,
+            }}
+            ministereId={ministereId}
+            precedente={etat.precedente}
+            dejaSaisi={etat.dejaSaisi}
+            enregistrer={etat.enregistrer}
+          />
+        </Arrivee>
       ) : (
         // Le formulaire porte son propre lien ; session absente, future ou panne : celui-ci.
         <LienSignalement ecran="saisie_session" />

@@ -1,4 +1,5 @@
 import { EtatVide } from '@/components/etats/EtatVide'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import type { ConnexionAffichee } from '@/features/personnes/construirePersonnes'
 import { TEXTES_PERSONNES } from '@/features/personnes/textes'
 
@@ -45,7 +46,9 @@ export function BlocConnexions({ connexions, aPlus, plusEnCours, surPlus }: Prop
           }}
           className={classeBouton}
         >
-          {plusEnCours ? TEXTES_PERSONNES.plusEnCours : TEXTES_PERSONNES.plus}
+          <LibelleEnvoi enCours={plusEnCours} libelleEnCours={TEXTES_PERSONNES.plusEnCours}>
+            {TEXTES_PERSONNES.plus}
+          </LibelleEnvoi>
         </button>
       ) : null}
     </section>

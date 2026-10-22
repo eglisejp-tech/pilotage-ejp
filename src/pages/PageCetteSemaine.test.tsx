@@ -75,7 +75,7 @@ describe('PageCetteSemaine', () => {
   })
 
   describe('chargement', () => {
-    it('titres de section et filets tout de suite, « Chargement » après 300 ms, avec aria-busy', () => {
+    it('titres de section et places grises tout de suite, la flamme et « Chargement de Cette semaine » après 300 ms (T65)', () => {
       vi.useFakeTimers()
       const { container } = afficher('berger')
       expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
@@ -89,16 +89,43 @@ describe('PageCetteSemaine', () => {
         'FIJ en Île-de-France',
         'Les ministères',
       ])
-      expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
+      // Une place réservée, grise et immobile, sous chaque titre.
+      expect(container.querySelectorAll('[data-place-reservee]')).toHaveLength(5)
+      expect(screen.queryByText('Chargement de Cette semaine')).not.toBeInTheDocument()
 
-      // La zone d'annonce est là dès le départ, vide, pour que « Chargement » soit annoncé.
+      // La zone d'annonce est là dès le départ, vide, pour que le texte soit annoncé.
       expect(screen.getByRole('status')).toBeEmptyDOMElement()
       act(() => vi.advanceTimersByTime(299))
-      expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
+      expect(screen.queryByText('Chargement de Cette semaine')).not.toBeInTheDocument()
+      expect(container.querySelector('[data-flamme]')).toBeNull()
       act(() => vi.advanceTimersByTime(1))
-      expect(screen.getByText('Chargement')).toHaveClass('text-encre-3')
-      expect(screen.getByRole('status')).toHaveTextContent('Chargement')
+      expect(screen.getByRole('status')).toHaveTextContent(/^Chargement de Cette semaine$/)
+      expect(container.querySelector('[data-flamme="vivante"]')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      )
       expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('une réponse après la flamme la laisse 600 ms au moins, puis la vue arrive en fondu (T65)', () => {
+      vi.useFakeTimers()
+      const { container, rerender } = afficher('berger')
+      // Deux pas : React rend la flamme à 300 ms, puis la réponse arrive à 400 ms.
+      act(() => vi.advanceTimersByTime(300))
+      act(() => vi.advanceTimersByTime(100))
+      hook.mockReturnValue(pret(exempleCetteSemaine('berger')))
+      rerender(
+        <MemoryRouter>
+          <PageCetteSemaine lecteur={LECTEURS.berger} />
+        </MemoryRouter>,
+      )
+      // Montrée à 300 ms : elle reste jusqu'à 900 ms.
+      expect(screen.getByRole('status')).toHaveTextContent('Chargement de Cette semaine')
+      act(() => vi.advanceTimersByTime(499))
+      expect(screen.getByRole('status')).toHaveTextContent('Chargement de Cette semaine')
+      act(() => vi.advanceTimersByTime(1))
+      expect(screen.queryByText('Chargement de Cette semaine')).not.toBeInTheDocument()
+      expect(container.querySelector('.arrivee-sections')).not.toBeNull()
     })
 
     it('EJP Tech : les blocs du berger, « À décider » compris (T29)', () => {

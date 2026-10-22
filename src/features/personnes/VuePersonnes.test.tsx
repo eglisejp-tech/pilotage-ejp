@@ -187,20 +187,26 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
     },
   )
 
-  it('« Chargement », puis « Chargement plus long que d’habitude » après 4 s (m248)', () => {
+  it('« Chargement des personnes », puis « Chargement plus long que d’habitude » après 4 s (m248, T65)', () => {
     vi.useFakeTimers()
     try {
-      render(
+      const { container } = render(
         <VuePersonnes
           titre="Personnes"
           resultat={{ etat: 'chargement' }}
           actions={{ afficherPlus: vi.fn(), effacer: vi.fn(), effacerAnciens: vi.fn() }}
         />,
       )
-      const zone = screen.getByRole('status', { busy: true })
+      const attente = container.querySelector<HTMLElement>('[aria-busy="true"]')
+      expect(attente).not.toBeNull()
+      // La zone status de l'indicateur, juste avant les places qui attendent, n'est dans aucun
+      // élément occupé : son texte est annoncé (T65).
+      const zone = attente?.previousElementSibling as HTMLElement
+      expect(zone).toHaveAttribute('role', 'status')
+      expect(zone.closest('[aria-busy="true"]')).toBeNull()
       expect(zone).toBeEmptyDOMElement()
       act(() => vi.advanceTimersByTime(300))
-      expect(zone).toHaveTextContent(/^Chargement$/)
+      expect(zone).toHaveTextContent(/^Chargement des personnes$/)
       act(() => vi.advanceTimersByTime(3_700))
       expect(zone).toHaveTextContent("Chargement plus long que d'habitude")
     } finally {

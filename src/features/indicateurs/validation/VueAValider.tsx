@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { useLocation } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
@@ -52,7 +54,15 @@ function focusPerdu(): boolean {
  * au titre quand la ligne décidée a disparu. EJP Tech lit dessous, repliés, les décisions et les
  * retraits faits par les ministères (T62) des 30 derniers jours, avec leur motif.
  */
-export function VueAValider({ decide, lignes, decidees, retraits = null, actions }: Props) {
+export function VueAValider({
+  decide,
+  lignes: lecture,
+  decidees,
+  retraits = null,
+  actions,
+}: Props) {
+  // T65 : le nombre en attente, la phrase et la liste arrivent ensemble, après la tenue.
+  const lignes = useLectureAffichee(lecture).lecture
   const idTitre = useId()
   const section = useRef<HTMLElement>(null)
   const { hash } = useLocation()
@@ -118,43 +128,47 @@ export function VueAValider({ decide, lignes, decidees, retraits = null, actions
         </div>
       ) : null}
 
-      {lignes.etat === 'chargement' ? <ChargementBloc /> : null}
-      {lignes.etat === 'erreur' ? <BandeauErreur reessayer={lignes.reessayer} /> : null}
-      {liste !== null && liste.length === 0 ? (
-        <EtatVide situation="tout_est_fait">{TEXTES_A_VALIDER.vide}</EtatVide>
-      ) : null}
-      {liste !== null && liste.length > 0 ? (
-        <ul className="divide-y divide-filet">
-          {liste.map((ligne) => (
-            <li key={ligne.id}>
-              <LigneAValider
-                ligne={ligne}
-                actions={actions}
-                surFait={annoncer}
-                surRefus={signalerRefus}
-              />
-            </li>
-          ))}
-        </ul>
-      ) : null}
+      <ApresChargement
+        enChargement={lignes.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_A_VALIDER.chargement} />}
+      >
+        {lignes.etat === 'erreur' ? <BandeauErreur reessayer={lignes.reessayer} /> : null}
+        {liste !== null && liste.length === 0 ? (
+          <EtatVide situation="tout_est_fait">{TEXTES_A_VALIDER.vide}</EtatVide>
+        ) : null}
+        {liste !== null && liste.length > 0 ? (
+          <ul className="divide-y divide-filet">
+            {liste.map((ligne) => (
+              <li key={ligne.id}>
+                <LigneAValider
+                  ligne={ligne}
+                  actions={actions}
+                  surFait={annoncer}
+                  surRefus={signalerRefus}
+                />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
-      {/* Sans la file (chargement, erreur), aucun chiffre ne paraît seul : le bandeau parle. */}
-      {liste !== null && decidees !== null && decidees.etat === 'donnees' ? (
-        decidees.donnees.length > 0 ? (
-          <Decidees lignes={decidees.donnees} actions={actions} surMasque={annoncer} />
-        ) : null
-      ) : null}
-      {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
-        <BandeauErreur reessayer={decidees.reessayer} />
-      ) : null}
-      {liste !== null && retraits !== null && retraits.etat === 'donnees' ? (
-        retraits.donnees.length > 0 ? (
-          <RetraitsMinisteres lignes={retraits.donnees} actions={actions} surMasque={annoncer} />
-        ) : null
-      ) : null}
-      {liste !== null && retraits !== null && retraits.etat === 'erreur' ? (
-        <BandeauErreur reessayer={retraits.reessayer} />
-      ) : null}
+        {/* Sans la file (chargement, erreur), aucun chiffre ne paraît seul : le bandeau parle. */}
+        {liste !== null && decidees !== null && decidees.etat === 'donnees' ? (
+          decidees.donnees.length > 0 ? (
+            <Decidees lignes={decidees.donnees} actions={actions} surMasque={annoncer} />
+          ) : null
+        ) : null}
+        {liste !== null && decidees !== null && decidees.etat === 'erreur' ? (
+          <BandeauErreur reessayer={decidees.reessayer} />
+        ) : null}
+        {liste !== null && retraits !== null && retraits.etat === 'donnees' ? (
+          retraits.donnees.length > 0 ? (
+            <RetraitsMinisteres lignes={retraits.donnees} actions={actions} surMasque={annoncer} />
+          ) : null
+        ) : null}
+        {liste !== null && retraits !== null && retraits.etat === 'erreur' ? (
+          <BandeauErreur reessayer={retraits.reessayer} />
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

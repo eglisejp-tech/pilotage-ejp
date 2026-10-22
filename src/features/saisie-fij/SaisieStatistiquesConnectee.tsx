@@ -1,22 +1,34 @@
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
+import { SURTITRE_FIJ } from '@/features/saisie-fij/departements'
 import { FormulaireStatistiquesFij } from '@/features/saisie-fij/FormulaireStatistiquesFij'
 import { useSaisieStatistiques } from '@/features/saisie-fij/useSaisiesFij'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
+import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 interface Props {
+  ministereId: string
   titre: string
   onFermer: () => void
 }
 
-/** Chiffres par département avec leurs lectures : chargement, problème passager, formulaire. */
-export function SaisieStatistiquesConnectee({ titre, onFermer }: Props) {
-  const etat = useSaisieStatistiques()
+/**
+ * Chiffres par département avec leurs lectures : le code du ministère du compte (réservés au
+ * ministère `fij` : un autre reçoit la page non disponible, sans autre requête), puis la semaine
+ * et les chiffres. Une seule attente pour toutes ces lectures (T65), puis le problème passager,
+ * la page non disponible ou le formulaire, qui arrive en fondu.
+ */
+export function SaisieStatistiquesConnectee({ ministereId, titre, onFermer }: Props) {
+  const etat = useSaisieStatistiques(ministereId)
+  const { attente, fondu } = useAttenteChargement(etat.etat === 'chargement')
+  if (!attente && etat.etat === 'autre') return <PageNonDisponible />
   return (
-    <PanneauSaisie titre={titre} surtitre="FIJ en Île-de-France" onFermer={onFermer}>
-      {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {etat.etat === 'erreur' ? (
+    <PanneauSaisie titre={titre} surtitre={SURTITRE_FIJ} onFermer={onFermer}>
+      {attente ? <ChargementSaisie /> : null}
+      {!attente && etat.etat === 'erreur' ? (
         <EtatVide
           situation="probleme_passager"
           action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
@@ -24,12 +36,14 @@ export function SaisieStatistiquesConnectee({ titre, onFermer }: Props) {
           La connexion a échoué. Réessayez.
         </EtatVide>
       ) : null}
-      {etat.etat === 'pret' ? (
-        <FormulaireStatistiquesFij
-          dimancheReference={etat.dimancheReference}
-          statistiques={etat.statistiques}
-          enregistrer={etat.enregistrer}
-        />
+      {!attente && etat.etat === 'pret' ? (
+        <Arrivee fondu={fondu}>
+          <FormulaireStatistiquesFij
+            dimancheReference={etat.dimancheReference}
+            statistiques={etat.statistiques}
+            enregistrer={etat.enregistrer}
+          />
+        </Arrivee>
       ) : (
         // Le formulaire porte son propre lien ; ici, un ministère bloqué en a aussi besoin.
         <LienSignalement ecran="saisie_fij_statistiques" />

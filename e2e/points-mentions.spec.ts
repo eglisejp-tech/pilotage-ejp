@@ -196,7 +196,7 @@ test.describe('la fenêtre', () => {
     )
   })
 
-  test('lecture des ministères en échec : « Réessayer » ; lente : « Chargement »', async ({
+  test('lecture des ministères en échec : « Réessayer » ; lente : « Chargement du formulaire » (T65)', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=ministere&ministeres=probleme')
@@ -207,7 +207,7 @@ test.describe('la fenêtre', () => {
 
     await ouvrir(page, 'profil=ministere&ministeres=lent')
     await boutonDuPoint(page, BOUTON).click()
-    await expect(fenetre(page).getByRole('status')).toHaveText('Chargement')
+    await expect(fenetre(page).getByRole('status')).toHaveText('Chargement du formulaire')
     await expect(fenetre(page).getByRole('checkbox')).toHaveCount(0)
   })
 

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 import { lireRefusModeration } from '@/features/moderation/refus'
@@ -220,7 +221,12 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
               aria-disabled={enCours ? true : undefined}
               className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
             >
-              {enCours ? TEXTES_FENETRE_MASQUAGE.boutonEnCours : TEXTES_FENETRE_MASQUAGE.bouton}
+              <LibelleEnvoi
+                enCours={enCours}
+                libelleEnCours={TEXTES_FENETRE_MASQUAGE.boutonEnCours}
+              >
+                {TEXTES_FENETRE_MASQUAGE.bouton}
+              </LibelleEnvoi>
             </button>
           </div>
           {refus !== null ? <ErreurFormulaire message={refus} /> : null}

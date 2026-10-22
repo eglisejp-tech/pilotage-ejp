@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import type { PrevuCatalogue } from '@/features/indicateurs/configuration/catalogue'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
@@ -127,7 +128,9 @@ export function BlocPrevus({ donnees, creation }: Props) {
             className={classeBouton}
           >
             {/* Pendant l'envoi : « Création en cours » (m227). */}
-            {enCours ? TEXTES_CONFIGURATION.creationEnCours : boutonCreerPrevus(nombre)}
+            <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}>
+              {boutonCreerPrevus(nombre)}
+            </LibelleEnvoi>
           </button>
         </div>
       ) : null}

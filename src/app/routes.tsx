@@ -3,6 +3,8 @@ import { MiseEnPageConnectee } from '@/app/MiseEnPageConnectee'
 import { PageAcceptation } from '@/features/acceptation/PageAcceptation'
 import { ApercuAvancement } from '@/features/avancement/apercu/ApercuAvancement'
 import { ApercuCalendrier } from '@/features/calendrier/apercu/ApercuCalendrier'
+import { ApercuChargement } from '@/features/chargement/apercu/ApercuChargement'
+import { ApercuOuverture } from '@/features/chargement/apercu/ApercuOuverture'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
 import { ApercuConnexion } from '@/features/connexion/apercu/ApercuConnexion'
 import { ApercuDeclaration } from '@/features/declaration/apercu/ApercuDeclaration'
@@ -46,6 +48,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
       { path: '/apercu/connexion', element: <ApercuConnexion /> },
       // T56 : « Qui utilise l'outil ? » (déclaration simulée, aucune requête).
       { path: '/apercu/qui-utilise', element: <ApercuDeclaration /> },
+      // T65 : l'ouverture de l'outil, plein écran, pendant la vérification de la session.
+      { path: '/apercu/ouverture', element: <ApercuOuverture /> },
       {
         path: '/apercu',
         element: <MiseEnPageApercu />,
@@ -84,6 +88,8 @@ const routesDeDeveloppement: RouteObject[] = import.meta.env.DEV
           { path: 'moderation', element: <ApercuModeration /> },
           // T56 : onglet « Personnes » d'EJP Tech et en-tête « Vous : Marie » (aucune requête).
           { path: 'personnes', element: <ApercuPersonnes /> },
+          // T65 : une page, une liste, un bloc qui se relit et un envoi, figés dans leur attente.
+          { path: 'chargement', element: <ApercuChargement /> },
         ],
       },
     ]

@@ -25,7 +25,7 @@ Le point commun : **un tableau de direction ressemble à une note bien écrite, 
 
 ## 3. Ce que nous refusons
 
-- Les codes du SaaS générique : tuiles identiques à coins arrondis et ombres, dégradés, violet, icônes décoratives, emoji.
+- Les codes du SaaS générique : tuiles identiques à coins arrondis et ombres, dégradés (sauf celui de la flamme du logo d'EJP Tech dans les attentes, T65), violet, icônes décoratives, emoji.
 - Les polices « par défaut » (Inter, Roboto, Arial, Space Grotesk).
 - Le folklore d'église (vitraux, doré, serif ornée) : ce n'est pas l'image de l'EJP.
 - Les barres de couleur sur le bord des cartes, les pastilles partout, les surtitres en capitales qui répètent le titre.

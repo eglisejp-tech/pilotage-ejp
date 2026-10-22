@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { EcranActivation } from '@/features/connexion/EcranActivation'
@@ -62,12 +62,18 @@ describe('EcranActivation (maquette 17)', () => {
     expect(screen.queryByText('Compte partagé.')).not.toBeInTheDocument()
   })
 
-  it('annonce la préparation du QR code après 300 ms, avec aria-busy', async () => {
+  it('annonce la préparation du QR code après 300 ms, avec la petite flamme et aria-busy (T65)', async () => {
     afficher({ qrCode: undefined, cle: undefined })
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
-    expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
-    const chargement = await screen.findByText('Chargement')
-    expect(chargement.closest('[aria-busy="true"]')).not.toBeNull()
+    expect(screen.queryByText('Chargement du QR code')).not.toBeInTheDocument()
+    const texte = await screen.findByText('Chargement du QR code')
+    const chargement = texte.closest('[role="status"]')
+    await waitFor(() => expect(chargement).toHaveTextContent(/^Chargement du QR code$/))
+    // aria-busy marque l'attente sur le dessin, jamais autour de la zone status (annoncée).
+    expect(chargement?.closest('[aria-busy="true"]')).toBeNull()
+    const flamme = chargement?.parentElement?.querySelector('[data-flamme="petite"]')
+    expect(flamme).toHaveAttribute('aria-hidden', 'true')
+    expect(flamme?.closest('[aria-busy="true"]')).not.toBeNull()
   })
 
   it('active avec un code collé', async () => {

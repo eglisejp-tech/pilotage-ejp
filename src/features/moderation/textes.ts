@@ -20,6 +20,8 @@ export const TEXTES_MODERATION = {
       ? 'Aucun texte à relire'
       : `${nombre(n)} ${accorder(n, 'texte à relire', 'textes à relire')}`,
   vide: 'Aucun texte à relire.',
+  /** Avec la petite flamme, dans le bloc, après 300 ms sans réponse (T65, moment 3). */
+  chargement: 'Chargement des textes à relire',
   boutonRelu: 'Marquer relu',
   boutonMasquer: 'Masquer le texte',
   /** « Relu le 29 sept. » */

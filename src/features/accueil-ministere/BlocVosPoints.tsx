@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
@@ -31,26 +32,30 @@ export function BlocVosPoints({ bloc, compte }: Props) {
         </h2>
         <span className="text-note text-encre-3">{TEXTES_ACCUEIL.complementPoints}</span>
       </div>
-      {bloc.etat === 'chargement' ? <ChargementBloc /> : null}
-      {bloc.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_ACCUEIL.reessayer, surClic: bloc.reessayer }}
-        >
-          {TEXTES_ACCUEIL.erreur}
-        </EtatVide>
-      ) : null}
-      {bloc.etat === 'donnees' ? (
-        bloc.donnees.length === 0 ? (
-          <EtatVide situation="tout_est_fait">{TEXTES_ACCUEIL.aucunPoint}</EtatVide>
-        ) : (
-          <div className="flex flex-col divide-y divide-filet">
-            {bloc.donnees.map((point) => (
-              <CartePointFiche key={point.id} point={point} compte={compte} />
-            ))}
-          </div>
-        )
-      ) : null}
+      <ApresChargement
+        enChargement={bloc.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_ACCUEIL.chargementPoints} />}
+      >
+        {bloc.etat === 'erreur' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_ACCUEIL.reessayer, surClic: bloc.reessayer }}
+          >
+            {TEXTES_ACCUEIL.erreur}
+          </EtatVide>
+        ) : null}
+        {bloc.etat === 'donnees' ? (
+          bloc.donnees.length === 0 ? (
+            <EtatVide situation="tout_est_fait">{TEXTES_ACCUEIL.aucunPoint}</EtatVide>
+          ) : (
+            <div className="flex flex-col divide-y divide-filet">
+              {bloc.donnees.map((point) => (
+                <CartePointFiche key={point.id} point={point} compte={compte} />
+              ))}
+            </div>
+          )
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

@@ -1,7 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
-import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
+import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { compterEnAttente } from '@/features/moderation/construire'
 import type { TexteARelire } from '@/features/moderation/construire'
 import { LigneARelire } from '@/features/moderation/LigneARelire'
@@ -32,7 +34,11 @@ interface Props {
  * Après une décision, le message est annoncé et le focus revient au titre (la ligne a changé de
  * place : à relire d'abord, puis les décisions).
  */
-export function FileARelire({ contenu }: Props) {
+export function FileARelire({ contenu: lecture }: Props) {
+  // T65 : la petite flamme reste au moins 600 ms une fois montrée ; le nombre en attente et la
+  // liste arrivent ensuite ensemble, en fondu.
+  const { lecture: contenu, fondu } = useLectureAffichee(lecture)
+  const attente = contenu.etat === 'chargement'
   const idTitre = useId()
   const titre = useRef<HTMLHeadingElement>(null)
   const [reussite, setReussite] = useState<string | null>(null)
@@ -69,42 +75,43 @@ export function FileARelire({ contenu }: Props) {
         ) : null}
       </div>
 
-      {contenu.etat === 'chargement' ? (
-        <div className="py-[18px]">
-          <ChargementSaisie />
-        </div>
-      ) : null}
-      {contenu.etat === 'probleme' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
-        >
-          {TEXTES_VIDES.page.erreur}
-        </EtatVide>
+      {attente ? <ChargementBloc texte={TEXTES_MODERATION.chargement} /> : null}
+      {!attente && contenu.etat === 'probleme' ? (
+        <Arrivee fondu={fondu}>
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
+          >
+            {TEXTES_VIDES.page.erreur}
+          </EtatVide>
+        </Arrivee>
       ) : null}
 
+      {/* La région des messages reste montée dans tous les états : ses annonces partent. */}
       <MessageReussite message={reussite} envoi={envoi} />
 
-      {contenu.etat === 'liste' ? (
-        contenu.textes.length === 0 ? (
-          <EtatVide situation="tout_est_fait">{TEXTES_MODERATION.vide}</EtatVide>
-        ) : (
-          <ol>
-            {contenu.textes.map((texte) => (
-              <li
-                key={`${texte.cible}:${texte.cibleId}`}
-                className="border-t border-filet first:border-t-0"
-              >
-                <LigneARelire
-                  texte={texte}
-                  relire={() => contenu.relire(texte)}
-                  masquer={(choix) => contenu.masquer(texte, choix)}
-                  surFait={surFait}
-                />
-              </li>
-            ))}
-          </ol>
-        )
+      {!attente && contenu.etat === 'liste' ? (
+        <Arrivee fondu={fondu}>
+          {contenu.textes.length === 0 ? (
+            <EtatVide situation="tout_est_fait">{TEXTES_MODERATION.vide}</EtatVide>
+          ) : (
+            <ol>
+              {contenu.textes.map((texte) => (
+                <li
+                  key={`${texte.cible}:${texte.cibleId}`}
+                  className="border-t border-filet first:border-t-0"
+                >
+                  <LigneARelire
+                    texte={texte}
+                    relire={() => contenu.relire(texte)}
+                    masquer={(choix) => contenu.masquer(texte, choix)}
+                    surFait={surFait}
+                  />
+                </li>
+              ))}
+            </ol>
+          )}
+        </Arrivee>
       ) : null}
     </section>
   )

@@ -1,4 +1,5 @@
 import { useId, useState } from 'react'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import type { LigneAValider as Ligne } from '@/features/indicateurs/validation/construire'
@@ -161,7 +162,9 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
                 onClick={() => void valider()}
                 className={boutonPrincipal}
               >
-                {enCours ? TEXTES_A_VALIDER.validationEnCours : TEXTES_A_VALIDER.valider}
+                <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_A_VALIDER.validationEnCours}>
+                  {TEXTES_A_VALIDER.valider}
+                </LibelleEnvoi>
               </button>
             </div>
           </div>

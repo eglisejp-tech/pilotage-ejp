@@ -381,6 +381,21 @@ const ACCEPTATION: Ecran[] = ['normal', 'en-cours', 'erreur-reseau'].map((etat) 
   adresse: `/apercu/connexion?outils=non&ecran=acceptation&etat=${etat}`,
 }))
 
+// T65 : les attentes de l'outil, figées (une page, une liste, un bloc qui se relit, un envoi).
+// L'ouverture de l'outil, plein écran et sans titre de page, a ses contrôles dans
+// e2e/chargement.spec.ts.
+const CHARGEMENT: Ecran[] = [
+  ...['page&profil=ministere', 'liste&profil=berger', 'bloc&profil=ministere'].map((requete) => ({
+    nom: `chargement ${requete.split('&')[0]}`,
+    adresse: `/apercu/chargement?moment=${requete}`,
+  })),
+  { nom: 'chargement envoi', adresse: '/apercu/chargement?moment=envoi&profil=ministere' },
+  {
+    nom: 'chargement envoi en cours',
+    adresse: '/apercu/chargement?moment=envoi&profil=ministere&etat=en-cours',
+  },
+]
+
 const ECRANS: Ecran[] = [
   ...CONNEXION,
   ...ACCEPTATION,
@@ -402,6 +417,7 @@ const ECRANS: Ecran[] = [
   ...POINTS_ACTIONS,
   ...POINTS,
   ...JOURNAL,
+  ...CHARGEMENT,
 ]
 
 // Dans la CI, un job par format (1440, 834 et 390 px) a 30 minutes, et ses parcours durent déjà 14 à

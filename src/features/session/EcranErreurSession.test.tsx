@@ -42,13 +42,17 @@ describe('EcranErreurSession', () => {
 })
 
 describe('EcranChargement', () => {
-  it('rien, puis « Chargement », puis « Chargement plus long que d’habitude » après 4 s (m248)', () => {
+  it('rien, puis « Chargement de Pilotage EJP », puis « Chargement plus long que d’habitude » après 4 s (m248, T65)', () => {
     vi.useFakeTimers()
-    render(<EcranChargement />)
-    expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
+    const { container } = render(<EcranChargement />)
+    expect(screen.queryByText('Chargement de Pilotage EJP')).not.toBeInTheDocument()
+    expect(container.querySelector('svg')).toBeNull()
     act(() => vi.advanceTimersByTime(300))
-    expect(screen.getByText('Chargement')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent('Chargement de Pilotage EJP')
+    // Le dessin ne se lit pas : le texte suffit.
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
     act(() => vi.advanceTimersByTime(DELAI_CHARGEMENT_LONG))
     expect(screen.getByRole('status')).toHaveTextContent("Chargement plus long que d'habitude")
+    expect(screen.getByText("Chargement plus long que d'habitude")).not.toHaveClass('sr-only')
   })
 })

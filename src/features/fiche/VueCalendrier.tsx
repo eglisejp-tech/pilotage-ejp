@@ -1,5 +1,7 @@
 import { useId } from 'react'
 import { Link } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { BandeauAlerteFiche } from '@/features/fiche/BandeauAlerteFiche'
@@ -37,7 +39,9 @@ const classeBouton =
  * Vide : « Aucun événement prévu. » (avec « Ajouter un événement » pour le ministère). Lu à part :
  * son problème passager garde le titre et propose « Réessayer ».
  */
-export function VueCalendrier({ etat, profil }: Props) {
+export function VueCalendrier({ etat: lecture, profil }: Props) {
+  // T65 : « Ajouter un événement » et la liste arrivent ensemble, après la tenue.
+  const etat = useLectureAffichee(lecture).lecture
   const idTitre = useId()
   const estMinistere = profil === 'ministere'
   const ajouter = (
@@ -54,47 +58,51 @@ export function VueCalendrier({ etat, profil }: Props) {
         titre={TEXTES_CALENDRIER.titre}
         complement={estMinistere && lignes.length > 0 ? ajouter : undefined}
       />
-      {etat.etat === 'chargement' ? <ChargementBloc /> : null}
-      {etat.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_CALENDRIER.reessayer, surClic: etat.reessayer }}
-        >
-          {TEXTES_CALENDRIER.erreur}
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'donnees' ? (
-        etat.lignes.length === 0 ? (
+      <ApresChargement
+        enChargement={etat.etat === 'chargement'}
+        indicateur={<ChargementBloc texte={TEXTES_CALENDRIER.chargement} />}
+      >
+        {etat.etat === 'erreur' ? (
           <EtatVide
-            situation="premier_usage"
-            peutAgir={estMinistere}
-            action={{ libelle: TEXTES_CALENDRIER.ajouter, vers: '/saisir/evenement' }}
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_CALENDRIER.reessayer, surClic: etat.reessayer }}
           >
-            {TEXTES_CALENDRIER.aucun}
+            {TEXTES_CALENDRIER.erreur}
           </EtatVide>
-        ) : (
-          <>
-            <BandeauAlerteFiche phrases={phrasesBandeau(etat.lignes, profil)} />
-            <div
-              aria-hidden="true"
-              className={cn(
-                GRILLE_EVENEMENT,
-                avecAction && GRILLE_EVENEMENT_ACTION,
-                'hidden border-b border-filet py-2.5 text-sm text-encre-3 md:grid',
-              )}
+        ) : null}
+        {etat.etat === 'donnees' ? (
+          etat.lignes.length === 0 ? (
+            <EtatVide
+              situation="premier_usage"
+              peutAgir={estMinistere}
+              action={{ libelle: TEXTES_CALENDRIER.ajouter, vers: '/saisir/evenement' }}
             >
-              <span>{TEXTES_CALENDRIER.colonneDate}</span>
-              <span>{TEXTES_CALENDRIER.colonneEvenement}</span>
-              <span>{TEXTES_CALENDRIER.colonneStatut}</span>
-            </div>
-            <ul className="flex flex-col">
-              {etat.lignes.map((ligne) => (
-                <LigneEvenement key={ligne.id} ligne={ligne} avecAction={avecAction} />
-              ))}
-            </ul>
-          </>
-        )
-      ) : null}
+              {TEXTES_CALENDRIER.aucun}
+            </EtatVide>
+          ) : (
+            <>
+              <BandeauAlerteFiche phrases={phrasesBandeau(etat.lignes, profil)} />
+              <div
+                aria-hidden="true"
+                className={cn(
+                  GRILLE_EVENEMENT,
+                  avecAction && GRILLE_EVENEMENT_ACTION,
+                  'hidden border-b border-filet py-2.5 text-sm text-encre-3 md:grid',
+                )}
+              >
+                <span>{TEXTES_CALENDRIER.colonneDate}</span>
+                <span>{TEXTES_CALENDRIER.colonneEvenement}</span>
+                <span>{TEXTES_CALENDRIER.colonneStatut}</span>
+              </div>
+              <ul className="flex flex-col">
+                {etat.lignes.map((ligne) => (
+                  <LigneEvenement key={ligne.id} ligne={ligne} avecAction={avecAction} />
+                ))}
+              </ul>
+            </>
+          )
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

@@ -1,3 +1,4 @@
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { ContenuSaisieDimanche } from '@/features/saisie-chiffres/ContenuSaisieDimanche'
 import { surtitreDimanche, titreDimanche } from '@/features/saisie-chiffres/textes'
@@ -17,7 +18,8 @@ interface Props {
  * (« Dimanche 27 septembre ») ; le panneau garde sa place dans chaque état.
  */
 export function SaisieDimancheConnectee({ ministereId, parametreDate, titre, onFermer }: Props) {
-  const etat = useSaisieDimanche(ministereId, parametreDate)
+  // T65 : le titre du dimanche et le formulaire arrivent ensemble, après la tenue de la flamme.
+  const etat = useLectureAffichee(useSaisieDimanche(ministereId, parametreDate)).lecture
   return (
     <PanneauSaisie
       titre={etat.etat === 'pret' ? titreDimanche(etat.dimanche) : titre}

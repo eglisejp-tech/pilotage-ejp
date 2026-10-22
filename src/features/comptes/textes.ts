@@ -18,7 +18,7 @@ export const TEXTES_COMPTES = {
   introductionLecture:
     'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
 
-  chargement: 'Chargement',
+  chargement: 'Chargement des ministères et des comptes',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 

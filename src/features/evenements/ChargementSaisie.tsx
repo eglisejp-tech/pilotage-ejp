@@ -1,20 +1,17 @@
-import { useMotChargement } from '@/components/etats/useMotChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 
-/**
- * Chargement d'un panneau de saisie (LISEZMOI, « États ») : le titre du panneau est déjà là ;
- * après 300 ms, « Chargement » en `--encre-3` à la place du formulaire, avec `aria-busy`, puis,
- * après 4 s, « Chargement plus long que d'habitude » (m248). Pas d'animation. La zone `status`
- * existe dès le départ, vide, pour que le mot soit annoncé.
- */
-export function ChargementSaisie() {
-  const mot = useMotChargement(TEXTES_VIDES.page.chargement)
+interface Props {
+  /** Ce qui charge ; par défaut, « Chargement du formulaire ». */
+  texte?: string
+}
 
-  return (
-    <div aria-busy="true">
-      <p role="status" className="text-encre-3">
-        {mot}
-      </p>
-    </div>
-  )
+/**
+ * Chargement d'un panneau de saisie (LISEZMOI, « États » ; T65, moment 2) : le titre du panneau
+ * est déjà là ; après 300 ms, la flamme vivante et ce qui charge à la place du formulaire, avec
+ * `aria-busy`, puis, après 4 s, « Chargement plus long que d'habitude » (m248). La zone `status`
+ * existe dès le départ, vide, pour que le texte soit annoncé.
+ */
+export function ChargementSaisie({ texte = TEXTES_VIDES.page.chargementFormulaire }: Props) {
+  return <ChargementPage texte={texte} />
 }

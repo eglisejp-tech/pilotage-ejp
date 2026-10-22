@@ -209,10 +209,12 @@ test.describe('états vides et problèmes (T36)', () => {
     await expect(page).not.toHaveURL(/ministere=/)
   })
 
-  test('chargement : le titre est déjà là, « Chargement » après 300 ms', async ({ page }) => {
+  test('chargement : le titre est déjà là, « Chargement des points » après 300 ms (T65)', async ({
+    page,
+  }) => {
     await ouvrir(page, { etat: 'chargement' })
     await expect(page.getByRole('heading', { level: 1, name: "Points d'attention" })).toBeVisible()
-    await expect(page.getByText('Chargement', { exact: true })).toBeVisible()
+    await expect(page.getByText('Chargement des points', { exact: true })).toBeVisible()
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(1)
   })
 

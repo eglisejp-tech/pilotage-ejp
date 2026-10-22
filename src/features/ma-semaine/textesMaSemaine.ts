@@ -5,6 +5,8 @@
 export const TEXTES_MA_SEMAINE = {
   /** Libellé de l'onglet et titre de l'écran, pour un compte de ministère seulement. */
   onglet: 'Ma semaine',
+  /** Avec la flamme vivante, après 300 ms sans réponse (T65 ; texte de la proposition validée). */
+  chargement: 'Chargement de Ma semaine',
   titreChiffres: 'Vos chiffres de la semaine',
   titreEglise: "Dans l'église",
   /** Lien sous les chiffres : l'historique complet est sur « Ma fiche ». */

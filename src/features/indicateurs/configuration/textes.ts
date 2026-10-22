@@ -57,6 +57,9 @@ export const TEXTES_CONFIGURATION = {
   },
   /** Bouton « Créer » ou « Créer ces 6 indicateurs » pendant l'envoi (m227, Proposé). */
   creationEnCours: 'Création en cours',
+  /** Chargement de la liste, puis de l'écran d'un ministère (T65). */
+  chargement: 'Chargement des indicateurs',
+  chargementMinistere: 'Chargement des indicateurs du ministère',
   /** Erreurs de page (LISEZMOI, « États »). */
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',

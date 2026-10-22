@@ -17,7 +17,12 @@ export const TEXTES_SESSIONS = {
   titreListe: 'Toutes les sessions',
   /** État vide (T36, « premier usage ») : le bouton « Ajouter une session » est à côté (T66). */
   vide: 'Aucune session.',
-  chargement: 'Chargement',
+  chargement: 'Chargement des sessions',
+  /**
+   * Panneau d'une session : la liste des ministères attendus se lit à part, avec la flamme
+   * vivante et les places réservées du formulaire (T65, moment 2, `ChargementPage`).
+   */
+  chargementAttendus: 'Chargement des ministères attendus',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 

@@ -1,6 +1,7 @@
 import { useId } from 'react'
+import { IndicateurChargement } from '@/components/etats/IndicateurChargement'
+import { PlaceReservee } from '@/components/etats/PlaceReservee'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 
 interface Props {
@@ -8,25 +9,32 @@ interface Props {
   titre: string
 }
 
+/** Une section qui attend son contenu : `aria-busy` (la zone `status` de la fiche n'y est pas). */
 function SectionEnChargement({ titre }: { titre: string }) {
   const idTitre = useId()
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
+    <section aria-labelledby={idTitre} aria-busy="true" className="flex min-w-0 flex-col gap-4">
       <TitreSection id={idTitre} titre={titre} />
-      <ChargementBloc />
+      <PlaceReservee className="h-24" />
     </section>
   )
 }
 
 /**
- * Fiche en chargement (LISEZMOI, « États ») : le titre de l'écran et les titres de section avec
- * leur filet, tout de suite, puis « Chargement » à la place du contenu après 300 ms. La page garde
- * sa forme entre le chargement et le résultat.
+ * Fiche en chargement (LISEZMOI, « États » ; T65, moment 2) : le titre de l'écran et les titres
+ * de section avec leur filet, tout de suite, avec la place de leur contenu ; après 300 ms, la
+ * flamme vivante et « Chargement de la fiche » sous le titre, et les places en gris immobile. La
+ * page garde sa forme entre le chargement et le résultat. `aria-busy` est sur les sections qui
+ * attendent, jamais autour de la zone `status` : certains lecteurs d'écran n'annoncent pas ce qui
+ * change dans une zone occupée.
  */
 export function SqueletteFiche({ titre }: Props) {
   return (
     <div className="flex flex-col gap-12">
-      <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
+      <header className="flex flex-col gap-4">
+        <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
+        <IndicateurChargement texte={TEXTES_FICHE.chargement} />
+      </header>
       <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16">
         <SectionEnChargement titre={TEXTES_FICHE.titreChiffres} />
         <div className="flex min-w-0 flex-col gap-12">

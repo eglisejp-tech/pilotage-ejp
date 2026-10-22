@@ -1,8 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { Arrivee } from '@/components/etats/Arrivee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import type { LigneSignalement } from '@/data/signalements'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
-import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
+import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { Masquage } from '@/features/moderation/schemas'
 import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
@@ -42,7 +44,11 @@ interface Props {
  * clôture, « Signalement clos. » est annoncé et le focus revient au titre du bloc (la ligne a
  * quitté les ouverts).
  */
-export function ContenuBlocSignalements({ contenu }: Props) {
+export function ContenuBlocSignalements({ contenu: lecture }: Props) {
+  // T65 : la petite flamme reste au moins 600 ms une fois montrée ; le nombre d'ouverts et la
+  // liste arrivent ensuite ensemble, en fondu.
+  const { lecture: contenu, fondu } = useLectureAffichee(lecture)
+  const attente = contenu.etat === 'chargement'
   const idTitre = useId()
   const idClos = useId()
   const titre = useRef<HTMLHeadingElement>(null)
@@ -118,18 +124,16 @@ export function ContenuBlocSignalements({ contenu }: Props) {
         ) : null}
       </div>
 
-      {contenu.etat === 'chargement' ? (
-        <div className="py-[18px]">
-          <ChargementSaisie />
-        </div>
-      ) : null}
-      {contenu.etat === 'probleme' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
-        >
-          {TEXTES_VIDES.page.erreur}
-        </EtatVide>
+      {attente ? <ChargementBloc texte={TEXTES_BLOC_SIGNALEMENTS.chargement} /> : null}
+      {!attente && contenu.etat === 'probleme' ? (
+        <Arrivee fondu={fondu}>
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
+          >
+            {TEXTES_VIDES.page.erreur}
+          </EtatVide>
+        </Arrivee>
       ) : null}
 
       {refus ? (
@@ -139,8 +143,8 @@ export function ContenuBlocSignalements({ contenu }: Props) {
       ) : null}
       <MessageReussite message={reussite} envoi={envoi} />
 
-      {contenu.etat === 'liste' ? (
-        <>
+      {!attente && contenu.etat === 'liste' ? (
+        <Arrivee fondu={fondu}>
           {/* Sans ouvert, quand des clos suivent, le compteur du titre suffit (T66, m171). */}
           {ouverts.length === 0 ? (
             clos.length > 0 ? null : (
@@ -176,7 +180,7 @@ export function ContenuBlocSignalements({ contenu }: Props) {
               </ol>
             </section>
           ) : null}
-        </>
+        </Arrivee>
       ) : null}
     </section>
   )

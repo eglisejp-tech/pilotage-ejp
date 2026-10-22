@@ -234,7 +234,7 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     )
     await expect(bouton(page, 'Ajouter le compte du berger')).toBeVisible()
     await ouvrir(page, 'vue=chargement')
-    await expect(page.getByText('Chargement')).toBeVisible()
+    await expect(page.getByText('Chargement des ministères et des comptes')).toBeVisible()
     await ouvrir(page, 'vue=probleme')
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await expect(bouton(page, 'Réessayer')).toBeVisible()

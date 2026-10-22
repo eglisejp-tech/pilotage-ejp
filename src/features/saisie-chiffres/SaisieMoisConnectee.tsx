@@ -1,3 +1,4 @@
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { ContenuSaisieMois } from '@/features/saisie-chiffres/ContenuSaisieMois'
 import { surtitreMois, titreMois } from '@/features/saisie-chiffres/textes'
@@ -18,7 +19,8 @@ interface Props {
  * connu, le titre de l'adresse reste seul : le surtitre ne répète pas le titre.
  */
 export function SaisieMoisConnectee({ ministereId, parametreMois, titre, onFermer }: Props) {
-  const etat = useSaisieMois(ministereId, parametreMois)
+  // T65 : le titre du mois et le formulaire arrivent ensemble, après la tenue de la flamme.
+  const etat = useLectureAffichee(useSaisieMois(ministereId, parametreMois)).lecture
   return (
     <PanneauSaisie
       titre={etat.etat === 'pret' ? titreMois(etat.mois) : titre}

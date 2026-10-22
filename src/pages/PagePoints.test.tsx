@@ -83,18 +83,22 @@ describe('PagePoints', () => {
     expect(hook).toHaveBeenCalledWith('conseil', 'min-social')
   })
 
-  it('chargement : le titre tout de suite, « Chargement » après 300 ms, avec aria-busy', () => {
+  it('chargement : le titre tout de suite, la flamme et « Chargement des points » après 300 ms, avec aria-busy (T65)', () => {
     vi.useFakeTimers()
     connecter('berger')
     const { container } = afficher("Points d'attention")
     expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 1, name: "Points d'attention" })).toBeVisible()
-    expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
+    expect(screen.queryByText('Chargement des points')).not.toBeInTheDocument()
     expect(screen.getByRole('status')).toBeEmptyDOMElement()
     act(() => vi.advanceTimersByTime(299))
-    expect(screen.queryByText('Chargement')).not.toBeInTheDocument()
+    expect(screen.queryByText('Chargement des points')).not.toBeInTheDocument()
     act(() => vi.advanceTimersByTime(1))
-    expect(screen.getByText('Chargement')).toHaveClass('text-encre-3')
+    expect(screen.getByRole('status')).toHaveTextContent(/^Chargement des points$/)
+    expect(container.querySelector('[data-flamme="vivante"]')).toHaveAttribute(
+      'aria-hidden',
+      'true',
+    )
   })
 
   it('erreur : le bandeau « La connexion a échoué. Réessayez. » et « Réessayer »', async () => {

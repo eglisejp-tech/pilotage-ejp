@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { FenetreConfirmation } from '@/features/comptes/FenetreConfirmation'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
@@ -46,7 +48,9 @@ function focusPerdu(): boolean {
  * un panneau ; « Supprimer » passe par une fenêtre de confirmation. La réussite s'affiche en haut
  * de la page, 6 secondes. Quand le bouton qui avait le focus disparaît, le focus va au titre.
  */
-export function VueSessions({ titre, donnees, actions }: Props) {
+export function VueSessions({ titre, donnees: lecture, actions }: Props) {
+  // T65 : « Déclarer une session » et la liste arrivent ensemble, après la tenue de la flamme.
+  const donnees = useLectureAffichee(lecture).lecture
   const idListe = useId()
   const avecColonne = useLargeurMin(LARGEUR_COLONNE)
   const enPanneau = useLargeurMin(LARGEUR_PANNEAU)
@@ -135,32 +139,38 @@ export function VueSessions({ titre, donnees, actions }: Props) {
         <MessageReussite message={reussite} envoi={envoi} />
       </div>
 
-      {!pleinePage && donnees.etat === 'chargement' ? <ChargementBloc /> : null}
-      {!pleinePage && donnees.etat === 'erreur' ? (
-        <ErreurDePage
-          message={TEXTES_SESSIONS.erreur}
-          libelleBouton={TEXTES_SESSIONS.reessayer}
-          onReessayer={donnees.reessayer}
-        />
-      ) : null}
-      {!pleinePage && pret ? (
-        <div className="grid grid-cols-1 items-start gap-10 min-[1024px]:grid-cols-[minmax(0,1fr)_400px]">
-          <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
-            <TitreSection id={idListe} titre={TEXTES_SESSIONS.titreListe} />
-            {pret.lignes.length === 0 ? (
-              <EtatVide situation="premier_usage">{TEXTES_SESSIONS.vide}</EtatVide>
-            ) : (
-              <ListeSessions
-                lignes={pret.lignes}
-                idTitre={idListe}
-                onModifier={(ligne) => setPanneau({ genre: 'modifier', ligne })}
-                onSupprimer={setASupprimer}
-              />
-            )}
-          </section>
-          {colonne}
-        </div>
-      ) : null}
+      {pleinePage ? null : (
+        <ApresChargement
+          enChargement={donnees.etat === 'chargement'}
+          indicateur={<ChargementPage texte={TEXTES_SESSIONS.chargement} />}
+        >
+          {donnees.etat === 'erreur' ? (
+            <ErreurDePage
+              message={TEXTES_SESSIONS.erreur}
+              libelleBouton={TEXTES_SESSIONS.reessayer}
+              onReessayer={donnees.reessayer}
+            />
+          ) : null}
+          {pret ? (
+            <div className="grid grid-cols-1 items-start gap-10 min-[1024px]:grid-cols-[minmax(0,1fr)_400px]">
+              <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
+                <TitreSection id={idListe} titre={TEXTES_SESSIONS.titreListe} />
+                {pret.lignes.length === 0 ? (
+                  <EtatVide situation="premier_usage">{TEXTES_SESSIONS.vide}</EtatVide>
+                ) : (
+                  <ListeSessions
+                    lignes={pret.lignes}
+                    idTitre={idListe}
+                    onModifier={(ligne) => setPanneau({ genre: 'modifier', ligne })}
+                    onSupprimer={setASupprimer}
+                  />
+                )}
+              </section>
+              {colonne}
+            </div>
+          ) : null}
+        </ApresChargement>
+      )}
 
       {pret && panneau ? (
         <PanneauSession

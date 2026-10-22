@@ -52,15 +52,15 @@ describe('états du panneau d’événement (T36)', () => {
     expect(reessayer).toHaveBeenCalledTimes(1)
   })
 
-  it('chargement : le titre tout de suite, « Chargement » après 300 ms', () => {
+  it('chargement : le titre tout de suite, la flamme et « Chargement du formulaire » après 300 ms (T65)', () => {
     vi.useFakeTimers()
     afficher({ etat: 'chargement', mode: 'mise_a_jour' })
     expect(titre()).toHaveTextContent("Mettre à jour l'événement")
-    expect(screen.queryByText('Chargement')).toBeNull()
+    expect(screen.queryByText('Chargement du formulaire')).toBeNull()
     act(() => {
       vi.advanceTimersByTime(300)
     })
-    expect(screen.getByText('Chargement')).toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(/^Chargement du formulaire$/)
   })
 })
 

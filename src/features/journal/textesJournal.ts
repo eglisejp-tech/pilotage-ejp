@@ -44,7 +44,8 @@ export const TEXTES_JOURNAL = {
   /** Sous la liste, annoncé à voix haute après « Afficher 50 lignes de plus » (Proposé). */
   compteur: (affichees: number, aPlus: boolean) =>
     aPlus ? `${affichees} lignes affichées.` : `Toutes les lignes sont affichées (${affichees}).`,
-  chargement: 'Chargement',
+  /** Avec la flamme vivante, après 300 ms sans réponse (T65 : le texte dit ce qui charge). */
+  chargement: 'Chargement du journal',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

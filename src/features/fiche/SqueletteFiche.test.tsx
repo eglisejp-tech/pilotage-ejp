@@ -12,21 +12,26 @@ afterEach(() => {
 
 describe('SqueletteFiche (chargement)', () => {
   it('le titre de l’écran et les trois titres de section sont là tout de suite', () => {
-    render(<SqueletteFiche titre="Ma fiche" />)
+    const { container } = render(<SqueletteFiche titre="Ma fiche" />)
     expect(screen.getByRole('heading', { level: 1, name: 'Ma fiche' })).toBeInTheDocument()
+    expect(container.querySelector('[aria-busy="true"]')).not.toBeNull()
     for (const titre of ['Les chiffres du ministère', "Points d'attention", 'Dernières saisies']) {
       const section = screen.getByRole('region', { name: titre })
       expect(within(section).getByRole('heading', { level: 2, name: titre })).toBeVisible()
-      expect(section.querySelector('[aria-busy="true"]')).not.toBeNull()
+      // Une place réservée, grise après 300 ms seulement (T65).
+      expect(section.querySelector('[data-place-reservee="attente"]')).not.toBeNull()
     }
   })
 
-  it('« Chargement » n’entre dans chaque section qu’après 300 ms', () => {
-    render(<SqueletteFiche titre="Fiche du ministère" />)
-    expect(screen.queryByText('Chargement')).toBeNull()
+  it('la flamme et « Chargement de la fiche » n’arrivent qu’après 300 ms, une seule fois (T65)', () => {
+    const { container } = render(<SqueletteFiche titre="Fiche du ministère" />)
+    expect(screen.queryByText('Chargement de la fiche')).toBeNull()
+    expect(container.querySelector('[data-flamme]')).toBeNull()
     act(() => {
       vi.advanceTimersByTime(300)
     })
-    expect(screen.getAllByText('Chargement')).toHaveLength(3)
+    expect(screen.getByRole('status')).toHaveTextContent(/^Chargement de la fiche$/)
+    expect(container.querySelectorAll('[data-flamme="vivante"]')).toHaveLength(1)
+    expect(container.querySelectorAll('[data-place-reservee="visible"]')).toHaveLength(3)
   })
 })

@@ -1,9 +1,10 @@
 import { useId } from 'react'
 import type { ReactNode } from 'react'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import type { ConfigurationIndicateurs } from '@/features/indicateurs/configuration/construire'
 import { ListeIndicateursTelephone } from '@/features/indicateurs/configuration/ListeIndicateursTelephone'
@@ -52,58 +53,66 @@ export function VueIndicateurs({ titre, profil, configuration, creation, blocAVa
       </h1>
       <div className="mt-2 border-t-2 border-encre" />
       {gestion ? null : <p className="mt-4 max-w-prose text-encre-2">{textes.lecture}</p>}
-      {configuration.etat === 'erreur' ? (
-        <div className="mt-6">
-          <ErreurDePage
-            message={textes.erreur}
-            libelleBouton={textes.reessayer}
-            onReessayer={configuration.reessayer}
-          />
-        </div>
-      ) : null}
-      {configuration.etat === 'chargement' ? <ChargementBloc /> : null}
-      {configuration.etat === 'donnees' ? (
-        <>
-          {configuration.donnees.lignes.length === 0 ? (
-            <EtatVide
-              situation="premier_usage"
-              action={{ libelle: textes.liste.actionMinisteres, vers: '/comptes' }}
-              peutAgir={gestion}
-            >
-              {gestion ? textes.liste.aucunMinistere : textes.liste.aucunMinistereLecture}
-            </EtatVide>
-          ) : (
-            <div className="mt-4 max-w-prose text-encre-2">
-              {configuration.donnees.phrases.map((phrase) => (
-                <p key={phrase}>{phrase}</p>
-              ))}
-            </div>
-          )}
-          {blocAValider}
-          <ReussiteCreation creation={creation} />
-          {/* Le refus s'affiche sur la ligne du ministère ; sans cette ligne, ici. */}
-          {configuration.donnees.lignes.some((ligne) => ligne.id === creation.dernier) ? null : (
-            <RefusCreation refus={creation.refus} />
-          )}
-          {configuration.donnees.lignes.length === 0 ? null : (
-            <div className="mt-4">
-              {tableau ? (
-                <TableauIndicateurs
-                  lignes={configuration.donnees.lignes}
-                  creation={gestion ? creation : null}
-                  idTitre={idTitre}
-                />
-              ) : (
-                <ListeIndicateursTelephone
-                  lignes={configuration.donnees.lignes}
-                  creation={gestion ? creation : null}
-                  idTitre={idTitre}
-                />
-              )}
-            </div>
-          )}
-        </>
-      ) : null}
+      <ApresChargement
+        enChargement={configuration.etat === 'chargement'}
+        indicateur={
+          <div className="mt-4">
+            <ChargementPage texte={textes.chargement} />
+          </div>
+        }
+      >
+        {configuration.etat === 'erreur' ? (
+          <div className="mt-6">
+            <ErreurDePage
+              message={textes.erreur}
+              libelleBouton={textes.reessayer}
+              onReessayer={configuration.reessayer}
+            />
+          </div>
+        ) : null}
+        {configuration.etat === 'donnees' ? (
+          <>
+            {configuration.donnees.lignes.length === 0 ? (
+              <EtatVide
+                situation="premier_usage"
+                action={{ libelle: textes.liste.actionMinisteres, vers: '/comptes' }}
+                peutAgir={gestion}
+              >
+                {gestion ? textes.liste.aucunMinistere : textes.liste.aucunMinistereLecture}
+              </EtatVide>
+            ) : (
+              <div className="mt-4 max-w-prose text-encre-2">
+                {configuration.donnees.phrases.map((phrase) => (
+                  <p key={phrase}>{phrase}</p>
+                ))}
+              </div>
+            )}
+            {blocAValider}
+            <ReussiteCreation creation={creation} />
+            {/* Le refus s'affiche sur la ligne du ministère ; sans cette ligne, ici. */}
+            {configuration.donnees.lignes.some((ligne) => ligne.id === creation.dernier) ? null : (
+              <RefusCreation refus={creation.refus} />
+            )}
+            {configuration.donnees.lignes.length === 0 ? null : (
+              <div className="mt-4">
+                {tableau ? (
+                  <TableauIndicateurs
+                    lignes={configuration.donnees.lignes}
+                    creation={gestion ? creation : null}
+                    idTitre={idTitre}
+                  />
+                ) : (
+                  <ListeIndicateursTelephone
+                    lignes={configuration.donnees.lignes}
+                    creation={gestion ? creation : null}
+                    idTitre={idTitre}
+                  />
+                )}
+              </div>
+            )}
+          </>
+        ) : null}
+      </ApresChargement>
     </section>
   )
 }

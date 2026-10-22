@@ -1,3 +1,4 @@
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { MESSAGE_DEJA_ENREGISTRE } from '@/features/saisie-session/useEnvoiSaisie'
 
 interface Props {
@@ -11,7 +12,10 @@ interface Props {
   doublon?: boolean
 }
 
-/** Bouton principal d'une saisie (maquettes 08 et 09) : jaune, pleine largeur, 58 px. */
+/**
+ * Bouton principal d'une saisie (maquettes 08 et 09) : jaune, pleine largeur, 58 px. Pendant
+ * l'envoi, la petite flamme accompagne « Enregistrement en cours » (T65, moment 4).
+ */
 export function BoutonEnregistrer({
   libelle,
   enCours,
@@ -26,7 +30,9 @@ export function BoutonEnregistrer({
         aria-disabled={dejaEnvoye ? true : undefined}
         className="min-h-14.5 w-full bg-lumiere px-4 text-[17px] font-bold text-encre disabled:cursor-wait aria-disabled:opacity-60"
       >
-        {enCours ? 'Enregistrement en cours' : libelle}
+        <LibelleEnvoi enCours={enCours} libelleEnCours="Enregistrement en cours">
+          {libelle}
+        </LibelleEnvoi>
       </button>
       {doublon ? (
         <p role="status" className="text-[15px] leading-normal text-encre-3">

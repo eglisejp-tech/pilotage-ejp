@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { estDejaClos, lireRefusSignalement } from '@/features/signalement/refus'
@@ -101,9 +102,12 @@ export function FormulaireCloture({
           aria-disabled={isSubmitting ? true : undefined}
           className="inline-flex min-h-cible items-center bg-encre px-4 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
         >
-          {isSubmitting
-            ? TEXTES_BLOC_SIGNALEMENTS.boutonEnCours
-            : TEXTES_BLOC_SIGNALEMENTS.boutonConfirmer}
+          <LibelleEnvoi
+            enCours={isSubmitting}
+            libelleEnCours={TEXTES_BLOC_SIGNALEMENTS.boutonEnCours}
+          >
+            {TEXTES_BLOC_SIGNALEMENTS.boutonConfirmer}
+          </LibelleEnvoi>
         </button>
         <button
           type="button"

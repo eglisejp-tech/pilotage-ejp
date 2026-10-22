@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { ApresChargement } from '@/components/etats/ApresChargement'
+import { ChargementPage } from '@/components/etats/ChargementPage'
+import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
-import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
 import type {
   DonneesMesIndicateurs,
@@ -53,7 +55,9 @@ function focusPerdu(): boolean {
  * quand le bouton d'origine n'est plus là. Sur ses ajouts, « Retirer la demande » ou « Retirer »
  * ouvre la fenêtre du motif (T62) ; un retrait réussi s'annonce de la même façon.
  */
-export function VueMesIndicateurs({ titre, donnees, envoyer, retirer }: Props) {
+export function VueMesIndicateurs({ titre, donnees: lecture, envoyer, retirer }: Props) {
+  // T65 : la phrase, le bouton d'ajout et les sections arrivent ensemble, après la tenue.
+  const donnees = useLectureAffichee(lecture).lecture
   useTitrePage(titre)
   const idTitre = useId()
   const titreRef = useRef<HTMLHeadingElement>(null)
@@ -128,23 +132,30 @@ export function VueMesIndicateurs({ titre, donnees, envoyer, retirer }: Props) {
             <MessageReussite message={reussite} envoi={envoi} />
           </div>
 
-          {donnees.etat === 'chargement' ? <ChargementBloc /> : null}
-          {donnees.etat === 'erreur' ? (
-            <ErreurDePage
-              message={TEXTES_MES_INDICATEURS.erreur}
-              libelleBouton={TEXTES_MES_INDICATEURS.reessayer}
-              onReessayer={donnees.reessayer}
-            />
-          ) : null}
-          {pret?.vide ? (
-            <EtatVide situation="premier_usage" suite={TEXTES_MES_INDICATEURS.aucunIndicateurSuite}>
-              {TEXTES_MES_INDICATEURS.aucunIndicateur}
-            </EtatVide>
-          ) : null}
-          {pret ? (
-            <SectionsMesIndicateurs sections={pret.sections} surRetirer={setARetirer} />
-          ) : null}
-          {pret ? <RetiresMesIndicateurs retires={pret.retires} /> : null}
+          <ApresChargement
+            enChargement={donnees.etat === 'chargement'}
+            indicateur={<ChargementPage texte={TEXTES_MES_INDICATEURS.chargement} />}
+          >
+            {donnees.etat === 'erreur' ? (
+              <ErreurDePage
+                message={TEXTES_MES_INDICATEURS.erreur}
+                libelleBouton={TEXTES_MES_INDICATEURS.reessayer}
+                onReessayer={donnees.reessayer}
+              />
+            ) : null}
+            {pret?.vide ? (
+              <EtatVide
+                situation="premier_usage"
+                suite={TEXTES_MES_INDICATEURS.aucunIndicateurSuite}
+              >
+                {TEXTES_MES_INDICATEURS.aucunIndicateur}
+              </EtatVide>
+            ) : null}
+            {pret ? (
+              <SectionsMesIndicateurs sections={pret.sections} surRetirer={setARetirer} />
+            ) : null}
+            {pret ? <RetiresMesIndicateurs retires={pret.retires} /> : null}
+          </ApresChargement>
         </>
       )}
 

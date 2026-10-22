@@ -1,3 +1,4 @@
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
@@ -29,16 +30,20 @@ interface Props {
 export function PanneauNouveauPoint({ contenu, onFermer, surtitre }: Props) {
   return (
     <PanneauSaisie titre={TEXTES_POINT.titre} surtitre={surtitre} onFermer={onFermer}>
-      {contenu.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {contenu.etat === 'probleme' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
-        >
-          {TEXTES_VIDES.page.erreur}
-        </EtatVide>
-      ) : null}
-      {contenu.etat === 'formulaire' ? <FormulaireNouveauPoint {...contenu} /> : null}
+      <ApresChargement
+        enChargement={contenu.etat === 'chargement'}
+        indicateur={<ChargementSaisie />}
+      >
+        {contenu.etat === 'probleme' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: TEXTES_VIDES.page.reessayer, surClic: contenu.reessayer }}
+          >
+            {TEXTES_VIDES.page.erreur}
+          </EtatVide>
+        ) : null}
+        {contenu.etat === 'formulaire' ? <FormulaireNouveauPoint {...contenu} /> : null}
+      </ApresChargement>
     </PanneauSaisie>
   )
 }

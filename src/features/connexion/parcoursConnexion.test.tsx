@@ -196,14 +196,14 @@ describe('chaîne de connexion', () => {
     expect(screen.queryByText(/nouveau mot de passe/)).not.toBeInTheDocument()
   })
 
-  it("retour de Google : « Chargement » pendant l'échange du code, jamais le formulaire (m010)", async () => {
+  it("retour de Google : « Chargement de Pilotage EJP » pendant l'échange du code, jamais le formulaire (m010)", async () => {
     // auth-js attend la fin de l'échange PKCE avant de répondre à getSession (initializePromise) :
     // tant qu'il dure, la garde de /connexion n'affiche que son écran de chargement.
     const faux = installer({})
     faux.auth.getSession.mockReturnValue(new Promise(() => {}) as never)
     afficher('/connexion?code=0b6d1c4e')
 
-    expect(await screen.findByText('Chargement')).toBeInTheDocument()
+    expect(await screen.findByText('Chargement de Pilotage EJP')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Se connecter' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Continuer avec Google' })).not.toBeInTheDocument()
   })

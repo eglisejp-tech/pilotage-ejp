@@ -18,6 +18,8 @@ export const TEXTES_ACCUEIL = {
   actions: 'Saisies à faire',
   /** LISEZMOI, « États » (07) ; même texte que « À décider » (T66, t163). */
   aucunPoint: 'Aucun point ouvert.',
+  /** « Mes points » se lit à part : la petite flamme et ce texte, dans le bloc (T65). */
+  chargementPoints: 'Chargement de vos points',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

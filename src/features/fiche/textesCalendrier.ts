@@ -21,6 +21,8 @@ export const TEXTES_CALENDRIER = {
   mentionnePar: (nom: string) => `Mentionné par ${nom}`,
   /** « Reporté du sam. 3 oct. » : l'ancienne date, lue dans l'historique (K10b). Proposé. */
   reporteDu: (jour: string) => `Reporté du ${jour}`,
+  /** Le bloc se lit à part : la petite flamme et ce texte, dans le bloc (T65). */
+  chargement: 'Chargement du calendrier',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

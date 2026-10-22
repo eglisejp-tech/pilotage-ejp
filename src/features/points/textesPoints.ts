@@ -93,8 +93,8 @@ export const TEXTES_POINTS = {
     tousDe: (nom: string): string => terminerPhrase(`Aucun point pour ${nom}`),
   },
 
-  /** LISEZMOI, « États » : mêmes textes que « Cette semaine ». */
-  chargement: 'Chargement',
+  /** LISEZMOI, « États » : mêmes textes que « Cette semaine » ; T65, ce qui charge. */
+  chargement: 'Chargement des points',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

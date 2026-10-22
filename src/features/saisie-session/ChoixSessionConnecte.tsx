@@ -1,3 +1,4 @@
+import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { PanneauSaisie } from '@/features/saisie/PanneauSaisie'
 import { ChargementSaisie } from '@/features/saisie-session/ChargementSaisie'
@@ -16,16 +17,20 @@ export function ChoixSessionConnecte({ ministereId, onFermer }: Props) {
   const etat = useChoixSession(ministereId)
   return (
     <PanneauSaisie titre={TEXTES_SESSION.titreChoix} onFermer={onFermer}>
-      {etat.etat === 'chargement' ? <ChargementSaisie /> : null}
-      {etat.etat === 'erreur' ? (
-        <EtatVide
-          situation="probleme_passager"
-          action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
-        >
-          La connexion a échoué. Réessayez.
-        </EtatVide>
-      ) : null}
-      {etat.etat === 'pret' ? <ChoixSession sessions={etat.sessions} /> : null}
+      <ApresChargement
+        enChargement={etat.etat === 'chargement'}
+        indicateur={<ChargementSaisie texte={TEXTES_SESSION.chargementChoix} />}
+      >
+        {etat.etat === 'erreur' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: 'Réessayer', surClic: etat.reessayer }}
+          >
+            La connexion a échoué. Réessayez.
+          </EtatVide>
+        ) : null}
+        {etat.etat === 'pret' ? <ChoixSession sessions={etat.sessions} /> : null}
+      </ApresChargement>
       <LienSignalement ecran="saisie_session" />
     </PanneauSaisie>
   )

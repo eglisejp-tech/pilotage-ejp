@@ -1,3 +1,5 @@
+import { Arrivee } from '@/components/etats/Arrivee'
+import { useAttenteChargement } from '@/components/etats/useAttenteChargement'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { FicheIntrouvable } from '@/features/fiche/FicheIntrouvable'
 import type { ProfilFiche } from '@/features/fiche/modeleFiche'
@@ -15,23 +17,27 @@ interface Props {
 }
 
 /**
- * Fiche d'un ministère lue dans la base : chargement (titres de section tout de suite,
- * « Chargement » après 300 ms), erreur de page avec « Réessayer », ministère inconnu ou
- * désactivé, puis la fiche.
+ * Fiche d'un ministère lue dans la base : chargement (titres de section tout de suite, la flamme
+ * et « Chargement de la fiche » après 300 ms, au moins 600 ms une fois montrés, T65), erreur de
+ * page avec « Réessayer », ministère inconnu ou désactivé, puis la fiche, en fondu.
  * L'onglet du navigateur porte l'écran (« Ma fiche, Pilotage EJP »).
  */
 export function FicheConnectee({ ministereId, profil, titre }: Props) {
   useTitrePage(titre)
   const resultat = useFiche(ministereId, { profil })
+  const { attente, fondu } = useAttenteChargement(resultat.etat === 'chargement')
+  if (attente) return <SqueletteFiche titre={titre} />
   switch (resultat.etat) {
     case 'pret':
       return (
-        <VueFiche
-          donnees={resultat.donnees}
-          points={resultat.points}
-          dernieresSaisies={resultat.dernieresSaisies}
-          reessayerDetailsSensibles={resultat.reessayerDetailsSensibles}
-        />
+        <Arrivee fondu={fondu} mode="sections">
+          <VueFiche
+            donnees={resultat.donnees}
+            points={resultat.points}
+            dernieresSaisies={resultat.dernieresSaisies}
+            reessayerDetailsSensibles={resultat.reessayerDetailsSensibles}
+          />
+        </Arrivee>
       )
     case 'chargement':
       return <SqueletteFiche titre={titre} />
@@ -47,6 +53,10 @@ export function FicheConnectee({ ministereId, profil, titre }: Props) {
         </>
       )
     case 'introuvable':
-      return <FicheIntrouvable titre={titre} profil={profil} />
+      return (
+        <Arrivee fondu={fondu}>
+          <FicheIntrouvable titre={titre} profil={profil} />
+        </Arrivee>
+      )
   }
 }
