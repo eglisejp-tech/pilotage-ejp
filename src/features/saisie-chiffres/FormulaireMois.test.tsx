@@ -211,7 +211,7 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     expect(screen.getByText('Votre précision de ce mois a été masquée.')).toBeInTheDocument()
   })
 
-  it('un refus de la base sur le texte s’affiche sous le champ « Précision », tel quel', async () => {
+  it('un refus de la base sur le texte s’affiche sous le champ « Précision », traduit', async () => {
     const utilisateur = userEvent.setup()
     const refus = vi.fn<Enregistrer>(() =>
       Promise.reject({ code: 'P0001', message: "N'écrivez aucun nom ni information personnelle." }),
@@ -220,13 +220,15 @@ describe('FormulaireMois (« Chiffres du mois »)', () => {
     await utilisateur.clear(precision())
     await utilisateur.type(precision(), 'Texte modifié pour ce mois.')
     await utilisateur.click(bouton())
-    // Le rappel sous le champ contient la même phrase : l'erreur se trouve par son identifiant.
+    // L'erreur se trouve par son identifiant ; elle dit ce que la base détecte (T66, m268).
     const message = await waitFor(() => {
       const erreur = document.querySelector('[id^="precision-"][id$="-erreur"]')
       expect(erreur).not.toBeNull()
       return erreur as HTMLElement
     })
-    expect(message).toHaveTextContent("N'écrivez aucun nom ni information personnelle.")
+    expect(message).toHaveTextContent(
+      'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    )
     expect(precision().getAttribute('aria-describedby')).toContain(message.id)
     expect(screen.queryByRole('alert')).toBeNull()
     expect(precision()).toHaveValue('Texte modifié pour ce mois.')

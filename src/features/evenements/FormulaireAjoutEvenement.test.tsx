@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { FormulaireAjoutEvenement } from '@/features/evenements/FormulaireAjoutEvenement'
 import type { AjoutEvenement } from '@/features/evenements/schemas'
-import { MESSAGES_BASE } from '@/features/evenements/textes'
+import { MESSAGES_BASE, TEXTES_EVENEMENT } from '@/features/evenements/textes'
 import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
 
 const MINISTERES = [
@@ -122,7 +122,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     expect(screen.getByLabelText('Date')).toHaveFocus()
   })
 
-  it('autre refus de la base : tel quel sous le bouton ; connexion perdue : valeurs gardées', async () => {
+  it('autre refus de la base : traduit sous le bouton ; connexion perdue : valeurs gardées', async () => {
     const envoyer = vi
       .fn<(evenement: AjoutEvenement) => Promise<void>>()
       .mockRejectedValueOnce({ code: 'P0001', message: 'Ce ministère ne peut pas être mentionné.' })
@@ -130,9 +130,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     afficher(envoyer)
     await remplir('2026-10-10')
     await userEvent.click(bouton())
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ce ministère ne peut pas être mentionné.',
-    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(TEXTES_EVENEMENT.erreurMention)
     await userEvent.click(bouton())
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',

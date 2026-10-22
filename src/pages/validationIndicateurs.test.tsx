@@ -347,11 +347,15 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     const fenetre = await screen.findByRole('dialog')
     await userEvent.type(within(fenetre).getByRole('textbox'), 'Merci de ne rien écrire ici.')
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
-    const message = await within(fenetre).findAllByText(
-      "N'écrivez aucun nom ni information personnelle.",
-    )
-    // Le rappel fixe et le refus de la base : deux fois la même phrase, le second sous le champ.
-    expect(message).toHaveLength(2)
+    // Le rappel fixe, puis le refus de la base sous le champ : ce qu'elle détecte (T66, m268).
+    expect(
+      await within(fenetre).findByText(
+        'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(fenetre).getByText("N'écrivez aucun nom ni information personnelle."),
+    ).toBeInTheDocument()
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
@@ -368,7 +372,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
     expect(
       await within(fenetre).findByText(
-        /La connexion a échoué\. Votre message est encore dans le formulaire/,
+        /La connexion a échoué\. Votre saisie est encore dans le formulaire/,
       ),
     ).toBeInTheDocument()
     expect(within(fenetre).getByRole('textbox')).toHaveValue('Ce chiffre existe déjà ailleurs.')
@@ -441,7 +445,10 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     const fenetre = await screen.findByRole('dialog')
     await userEvent.type(within(fenetre).getByRole('textbox'), 'Ce chiffre existe déjà ailleurs.')
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent('Cette demande a déjà été décidée.')
+    // Formule « changé entre-temps » (T66, m235).
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Cette demande a déjà reçu une réponse. Rechargez la page.',
+    )
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
@@ -457,7 +464,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       screen.getByRole('button', { name: /^Valider «\s*Demandes reçues\s*» de Kumi$/ }),
     )
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.",
+      'Cette demande a été retirée ou remplacée. Rechargez la page.',
     )
   })
 
@@ -615,12 +622,12 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       /Communication.*Demande retirée le 9 oct\. : «\s*Nous suivons déjà/,
     )
     await userEvent.click(boutons[0]!)
-    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer ce texte ?' })
     expect(
       within(fenetre).getByText('Indicateur retiré par son ministère, Communication'),
     ).toBeInTheDocument()
     await userEvent.click(within(fenetre).getByRole('radio', { name: "Nom d'une personne" }))
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
         p_cible: 'retrait_indicateur',
@@ -651,12 +658,12 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     const bouton = retraits.getAllByRole('button', { name: 'Masquer le texte' })[1]!
     expect(bouton).toHaveAccessibleDescription(/Communication.*Pourquoi : «\s*Voir combien/)
     await userEvent.click(bouton)
-    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer ce texte ?' })
     expect(
       within(fenetre).getByText('Demande retirée par son ministère, Communication'),
     ).toBeInTheDocument()
     await userEvent.click(within(fenetre).getByRole('radio', { name: /^Coordonnées/ }))
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
         p_cible: 'demande_indicateur',

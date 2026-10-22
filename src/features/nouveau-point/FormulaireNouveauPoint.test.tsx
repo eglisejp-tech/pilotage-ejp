@@ -232,7 +232,8 @@ describe('« Nouveau point » (maquette 10)', () => {
     afficher(() => Promise.reject({ code: 'P0001', message: MESSAGES_POINT.refus.echeancePassee }))
     await remplir('2026-10-06')
     await userEvent.click(bouton())
-    expect(await screen.findByText(MESSAGES_POINT.refus.echeancePassee)).toBeInTheDocument()
+    // La table de traduction donne le texte du contrôle avant l'envoi (T66, m125).
+    expect(await screen.findByText(MESSAGES_POINT.controle.echeancePassee)).toBeInTheDocument()
     expect(titre()).toHaveValue('  Salle pour la soirée de louange ')
     expect(screen.getByLabelText('Échéance (facultatif)')).toHaveFocus()
   })

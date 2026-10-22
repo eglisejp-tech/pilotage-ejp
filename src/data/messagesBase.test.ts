@@ -12,14 +12,26 @@ import {
   phraseLecture,
   surSessionChangee,
 } from '@/data/messagesBase'
+import { MESSAGES_POINT } from '@/data/pointsEcriture'
+import { TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { schemaPourquoi } from '@/features/indicateurs/schemas'
+import { MOTIF_TROP_LONG } from '@/features/indicateurs/validation/textes'
 import {
   explicationLimiteAjouts,
   explicationLimiteLignes,
+  MESSAGES_BASE_RETRAIT,
   MESSAGES_BASE_SUGGESTION,
 } from '@/features/mes-indicateurs/textes'
-import { TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
-import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
+import { messageSommeDepasse, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
+import { MESSAGES_FIJ } from '@/features/saisie-fij/schemas'
+import { TEXTES_BLOC_SIGNALEMENTS, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import { MESSAGES_PRENOM } from '@/lib/metier/declaration'
+
+/** Les messages du « Pourquoi » que le schéma partagé dit avant l'envoi (m233). */
+const messageDe = (resultat: { error?: { issues: { message: string }[] } }) =>
+  resultat.error?.issues[0]?.message ?? ''
+const schemaPourquoiCourt = messageDe(schemaPourquoi.safeParse('court'))
+const schemaPourquoiLong = messageDe(schemaPourquoi.safeParse('a'.repeat(281)))
 
 const refus = (message: string, code = 'P0001') => ({ code, message, details: null, hint: null })
 
@@ -308,7 +320,11 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
     ['Choisissez le rythme : chaque dimanche, chaque mois ou à ce jour.', MESSAGES_ECRITURE.rythme],
     ['Expliquez pourquoi en 10 caractères au moins.', MESSAGES_BASE_SUGGESTION.pourquoiCourt],
     ['280 caractères au plus.', MESSAGES_BASE_SUGGESTION.pourquoiLong],
+    ['Expliquez pourquoi en 10 caractères au moins.', schemaPourquoiCourt],
+    ['280 caractères au plus.', schemaPourquoiLong],
     ["Cette suggestion n'existe pas.", MESSAGES_BASE_SUGGESTION.inexistante],
+    ['Le motif dépasse 280 caractères.', MESSAGES_BASE_RETRAIT.motifLong],
+    ['Le motif dépasse 280 caractères.', MOTIF_TROP_LONG],
     [
       'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
       explicationLimiteAjouts(limites),
@@ -327,6 +343,26 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
       TEXTES_SIGNALEMENT.dateRefuseeMiseAJour,
     ],
     ['Saisissez au moins un chiffre.', TEXTES_CHIFFRES.aucunChiffre],
+    ['Saisissez au moins une valeur.', MESSAGES_FIJ.aucuneValeur],
+    ['La somme des catégories (9) dépasse le total du mois (7).', messageSommeDepasse(9, 7)],
+    // Points (T66, m137 à m151) et signalements (m167 à m173).
+    ['La description dépasse 280 caractères.', MESSAGES_POINT.controle.description],
+    ["L'action attendue dépasse 80 caractères.", MESSAGES_POINT.controle.attendu],
+    ["L'échéance ne peut pas être passée.", MESSAGES_POINT.controle.echeancePassee],
+    ['Ce ministère ne peut pas être mentionné.', MESSAGES_POINT.controle.mentionRefusee],
+    ['Le signalement dépasse 280 caractères.', TEXTES_SIGNALEMENT.erreurLong],
+    ["Choisissez l'écran concerné dans la liste.", TEXTES_SIGNALEMENT.erreurEcran],
+    [
+      'Les crochets et « texte masqué » sont réservés à la modération.',
+      TEXTES_SIGNALEMENT.erreurCrochets,
+    ],
+    [
+      'Le commentaire fait 10 caractères au moins, ou reste vide.',
+      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireCourt,
+    ],
+    // Sessions (T66, t313 et m124) et événements (m124).
+    ["Un ministère coché n'est pas actif.", TEXTES_EVENEMENT.erreurMention],
+    ["Ce mois n'est pas encore commencé.", "Ce mois n'a pas encore commencé."],
     ['Indiquez votre prénom.', MESSAGES_PRENOM.vide],
     ['30 caractères au plus.', MESSAGES_PRENOM.long],
     ['Écrivez seulement votre prénom, en lettres.', MESSAGES_PRENOM.lettres],

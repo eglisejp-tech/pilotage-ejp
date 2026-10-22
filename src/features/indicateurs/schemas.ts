@@ -110,16 +110,19 @@ function schemaTexteLibre(messageTropCourt: string, messageTropLong: string) {
     })
 }
 
-/** « Pourquoi cet indicateur ? » : 10 à 280 caractères. Aucun rappel sous ce champ (T30). */
+/**
+ * « Pourquoi cet indicateur ? » : 10 à 280 caractères. Aucun rappel sous ce champ (T30). Les
+ * textes que la table de traduction donne aux refus de `ajouter_suggestion` (T66, m233).
+ */
 export const schemaPourquoi = schemaTexteLibre(
-  'Expliquez pourquoi en 10 caractères au moins.',
-  `${LONGUEUR_TEXTE_MAX} caractères au plus.`,
+  'Expliquez pourquoi (10 caractères au moins).',
+  `Raccourcissez ce texte : ${LONGUEUR_TEXTE_MAX} caractères au plus.`,
 )
 
 /** Motif d'un refus ou d'une décision : 10 à 280 caractères (validation-metier.md 5.4). */
 export const schemaMotif = schemaTexteLibre(
   'Expliquez le refus (10 caractères au moins).',
-  // Forme « Raccourcissez » (T66, t344) ; le refus de la base garde son texte (messagesBase.ts).
+  // Forme « Raccourcissez », la même que la table de traduction (T66, t344 et m236).
   'Raccourcissez le motif : 280 caractères au plus.',
 )
 

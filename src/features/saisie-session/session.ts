@@ -32,6 +32,11 @@ export const TEXTES_SESSION = {
   toutesSaisies: 'Toutes les sessions récentes sont saisies. Ouvrez-en une pour la corriger.',
   /** Aucun résultat : identifiant inconnu dans l'adresse (le bouton donne l'action). */
   introuvable: 'Cette session est introuvable.',
+  /**
+   * Refus de droit à l'envoi (42501) : la session est sortie de la portée du compte ; le lien
+   * « Choisir une autre session » est à côté (T66, t160 et m115).
+   */
+  inaccessible: 'Cette session est introuvable. Choisissez une autre session.',
   /** En attente : une session future n'accepte aucune saisie (BRIEF, règle 5). */
   future: "Cette session n'a pas encore eu lieu. Vous pourrez la saisir le jour même.",
   autreSession: 'Choisir une autre session',

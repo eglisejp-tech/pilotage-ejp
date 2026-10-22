@@ -160,7 +160,7 @@ test.describe('Communication envoie ses suggestions', () => {
       expect(ligne?.pourquoi).toBe(suggestion.pourquoi)
       demandes.set(suggestion.libelle, ligne?.id ?? '')
     }
-    await expect(page.getByText(/À valider par EJP Tech depuis aujourd'hui\./)).toHaveCount(3)
+    await expect(page.getByText(/En attente de validation depuis aujourd'hui\./)).toHaveCount(3)
     await expect(page.getByText(/Vous avez atteint le maximum de 3 ajouts\./)).toBeVisible()
   })
 
@@ -171,10 +171,10 @@ test.describe('Communication envoie ses suggestions', () => {
     await attendreLaFinDuChargement(page)
     await page.getByRole('button', { name: 'Ajouter un indicateur' }).click()
     const panneau = page.getByRole('dialog', { name: 'Ajouter un indicateur' })
-    // T62 : le ministère retire lui-même un de ses ajouts.
+    // T62 : le ministère retire lui-même un de ses ajouts (texte revu par T66, m233).
     await expect(
       panneau.getByText(
-        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+        'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
       ),
     ).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
@@ -429,7 +429,7 @@ test.describe('Communication lit la suite', () => {
     await expect(page.getByText(/2 ajoutés par vous/)).toBeVisible()
     await expect(page.getByText(/Vous pouvez en ajouter 1 autre\./)).toBeVisible()
     // Une seule ligne reste « à valider » : « Personnes formées ».
-    await expect(page.getByText(/^À valider par EJP Tech depuis/)).toHaveCount(1)
+    await expect(page.getByText(/^En attente de validation depuis/)).toHaveCount(1)
     await expect(page.getByText('Événements couverts', { exact: true })).toBeVisible()
     // « Retirés » s'ouvre de lui-même : il porte le motif d'un refus, que Communication doit lire.
     await expect(page.getByText(/^Retirés \(1\)$/)).toBeVisible()
@@ -517,7 +517,7 @@ test.describe('T62 : Communication retire sa demande avec un motif', () => {
     await expect(
       page.getByText(new RegExp(`^Demande retirée par vous le .* : «\\s*${MOTIF_RETRAIT}\\s*»$`)),
     ).toBeVisible()
-    await expect(page.getByText(/^À valider par EJP Tech depuis/)).toHaveCount(0)
+    await expect(page.getByText(/^En attente de validation depuis/)).toHaveCount(0)
     await expect(page.getByText(/Vous pouvez en ajouter 2 autres\./)).toBeVisible()
 
     const retire = (await indicateursDeCommunication(page)).find(

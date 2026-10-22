@@ -6,15 +6,14 @@
 // délai) laisse le formulaire dire la phrase de `LISEZMOI.md` (« La connexion a échoué. Vos
 // chiffres sont encore dans le formulaire : réessayez. »), réservée à ce cas (m256).
 
-import { lireErreurBase } from '@/data/messagesBase'
+import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import type { ChampRefus } from '@/data/messagesBase'
 
 /**
  * Refus de droit (contrat de l'étape 4, section 7), dans la forme commune d'un élément
- * introuvable (T66, t064 ; guide 10.10). `MESSAGES_COMMUNS.acces` de la table de traduction
- * prendra ce texte avec la fusion des lots qui la tiennent.
+ * introuvable de la table de traduction (T66, t064 et m273 ; guide 10.10).
  */
-export const MESSAGE_ACCES_REFUSE = 'Cet élément est introuvable. Rechargez la page.'
+export const MESSAGE_ACCES_REFUSE = MESSAGES_COMMUNS.acces
 
 /** Échec d'un envoi : sa phrase (null : sans réponse) et le champ où la dire, s'il y en a un. */
 export interface EchecEnvoi {
@@ -22,15 +21,18 @@ export interface EchecEnvoi {
   champ: ChampRefus | null
 }
 
-/** Phrase et champ d'un envoi refusé ; `message` null : problème de connexion. */
-export function lireEchecEnvoi(erreur: unknown): EchecEnvoi {
+/**
+ * Phrase et champ d'un envoi refusé ; `message` null : problème de connexion. `acces` : la phrase
+ * d'un refus de droit, quand l'écran connaît l'objet (« Cette session est introuvable. », m115).
+ */
+export function lireEchecEnvoi(erreur: unknown, acces: string = MESSAGE_ACCES_REFUSE): EchecEnvoi {
   const lue = lireErreurBase(erreur)
   switch (lue.genre) {
     case 'reseau':
     case 'delai':
       return { message: null, champ: null }
     case 'acces':
-      return { message: MESSAGE_ACCES_REFUSE, champ: null }
+      return { message: acces, champ: null }
     case 'message':
       return { message: lue.message, champ: lue.champ }
   }

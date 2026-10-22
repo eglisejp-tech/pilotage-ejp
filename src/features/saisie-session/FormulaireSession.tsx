@@ -69,7 +69,8 @@ export function FormulaireSession({
     dejaComptes: String(dejaSaisi?.deja_comptes ?? 0),
   })
   const [erreurs, setErreurs] = useState<ErreursSession>({})
-  const envoi = useEnvoiSaisie()
+  // Un refus de droit : la session est sortie de la portée du compte (T66, t160 et m115).
+  const envoi = useEnvoiSaisie(TEXTES_SESSION.inaccessible)
   const signature = signatureSession(champs)
   const completude = phraseCompletudeSession(
     session.nbSaisis,

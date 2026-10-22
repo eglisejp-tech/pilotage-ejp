@@ -42,8 +42,8 @@ export const MESSAGES_COMMUNS = {
   delaiLecture: 'La réponse met trop de temps. Réessayez.',
   /** Chargement qui dépasse `DELAI_CHARGEMENT_LONG`, avant l'échec à 10 s (m248). */
   chargementLong: "Chargement plus long que d'habitude",
-  /** Refus d'accès commun (42501), quand l'écran n'a pas de phrase à lui. */
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+  /** Refus d'accès commun (42501), quand l'écran n'a pas de phrase à lui (forme « introuvable », m273). */
+  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 /** Champ sous lequel une phrase se dit ; l'écran le place s'il l'a, sinon sous le bouton. */
@@ -64,9 +64,8 @@ export type ChampRefus =
 
 /**
  * Une entrée de la table. `texte` absent : la phrase de la base est déjà écrite pour la personne
- * (validée aux étapes 4 à 7) et se dit telle que la table la reçoit, en attendant la refonte des
- * messages. Un `%` du texte prend, dans l'ordre, les valeurs que la base a mises à la place des `%`
- * de sa clé.
+ * et se dit telle que la table la reçoit (gardée par la refonte des textes, T66). Un `%` du texte
+ * prend, dans l'ordre, les valeurs que la base a mises à la place des `%` de sa clé.
  */
 interface Traduction {
   texte?: string
@@ -83,24 +82,59 @@ const MENTIONS_CHANGEES =
 /** Une liste lue par la page a changé pendant la saisie (m099). */
 const LISTE_CHANGEE = 'La liste a changé. Rechargez la page, puis réessayez.'
 
+/** La liste des catégories d'un indicateur sensible a changé pendant la saisie (m097). */
+const CATEGORIES_CHANGEES = 'La liste des catégories a changé. Rechargez la page, puis réessayez.'
+
+/** Un chiffre hors de la plage de son unité, dit sous le bouton (m080, m099). */
+const LIMITE = 'Un chiffre dépasse la limite.'
+
+/** Date passée, partout la même phrase (guide 10.10 ; m125). */
+const DATE_PASSEE = "Cette date est passée. Choisissez aujourd'hui ou une date à venir."
+
+/** Un ministère coché a été désactivé entre l'ouverture et l'envoi (m124). */
+const MINISTERE_DESACTIVE = 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.'
+
+/** Point traité entre-temps, dans sa fenêtre (m148). */
+const POINT_DEJA_TRAITE =
+  'Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.'
+
+/** Le catalogue des indicateurs prévus est à corriger : réessayer ne sert à rien (m229). */
+const PREVUS_EN_PANNE = "Les indicateurs prévus n'ont pas pu être créés. Prévenez EJP Tech."
+
 /**
  * Refus de saisie (P0001), par texte exact de la base. Une clé qui porte `%` reconnaît le message
  * que la base a complété.
  */
 const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
-  // Textes libres (private.verifier_texte : messages rendus par `raise exception '%'`).
-  "N'écrivez aucun nom ni information personnelle.": { champ: 'texte' },
-  'Les crochets et « texte masqué » sont réservés à la modération.': { champ: 'texte' },
+  // Textes libres (private.verifier_texte : messages rendus par `raise exception '%'`). Ce que la
+  // base détecte, puis quoi faire (T66, m268 et m269 ; m234 pour les libellés d'indicateur).
+  "N'écrivez aucun nom ni information personnelle.": {
+    texte: 'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    champ: 'texte',
+  },
+  'Les crochets et « texte masqué » sont réservés à la modération.': {
+    texte: 'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
+    champ: 'texte',
+  },
   'Un taux, une moyenne ou une évolution se calcule : ne le saisissez pas.': { champ: 'nom' },
   "La somme de l'année s'affiche toute seule : saisissez le chiffre de la période.": {
     champ: 'nom',
   },
-  "Inutile d'écrire la période : choisissez le rythme plus bas.": { champ: 'nom' },
+  // Pas de consigne de position (guide 7 ; m234).
+  "Inutile d'écrire la période : choisissez le rythme plus bas.": {
+    texte: "Inutile d'écrire la période : choisissez le rythme.",
+    champ: 'nom',
+  },
   "Ce chiffre semble sensible : cochez « Domaine sensible », ou confirmez que ce n'est pas le cas.":
     { champ: 'nom' },
-  // Variante d'un ministère : verifier_libelle la rend sans la lever (m234, hors de ce lot).
+  // Variante d'un ministère : verifier_libelle la rend sans la lever (m234 : formule « Demandez à
+  // EJP Tech de ... »).
   "Ce chiffre semble toucher la santé, l'accompagnement ou les enfants. Un domaine sensible se demande à EJP Tech, qui vérifiera votre ajout.":
-    { champ: 'nom' },
+    {
+      texte:
+        "Ce chiffre semble toucher la santé, l'accompagnement ou les enfants. Demandez à EJP Tech de l'ajouter.",
+      champ: 'nom',
+    },
 
   // Chiffres du dimanche et du mois (controler_mesure_le, verifier_fij_actifs, saisir_chiffres_mois).
   // Le dimanche vient de l'adresse, sans champ de date : la phrase se dit sous le bouton.
@@ -114,34 +148,60 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     texte: "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres.",
     champ: 'en_fij',
   },
-  "« % » n'est plus proposé à la saisie.": {},
-  'Entre 0 et 9 999.': {},
-  'Entre 0 et 99 999.': {},
-  'Entre 0 et 9 999 999.': {},
-  'Choisissez une heure entre 0 h 00 et 23 h 59.': {},
-  "Ce mois n'est pas encore commencé.": {},
+  // Changé entre-temps : le reste du formulaire est à renvoyer (T66, t158 et m078).
+  "« % » n'est plus proposé à la saisie.": {
+    texte: "« % » n'est plus suivi. Rechargez la page, puis réessayez.",
+  },
+  // Loin du champ : ce qui cloche, puis la consigne du contrôle avant l'envoi (T66, m080).
+  'Entre 0 et 9 999.': { texte: `${LIMITE} Saisissez un nombre entre 0 et 9 999.` },
+  'Entre 0 et 99 999.': { texte: `${LIMITE} Saisissez un nombre entre 0 et 99 999.` },
+  'Entre 0 et 9 999 999.': { texte: `${LIMITE} Saisissez un nombre entre 0 et 9 999 999.` },
+  'Choisissez une heure entre 0 h 00 et 23 h 59.': {
+    texte: 'Saisissez une heure entre 0 h 00 et 23 h 59.',
+  },
+  // Même texte que l'écran (T66, t157 et m070 ; t085 et m083).
+  'Seul un indicateur saisi du dimanche se saisit dès le dimanche matin.': {
+    texte: "Les autres chiffres s'ouvrent à 12 h.",
+  },
+  "Ce mois n'est pas encore commencé.": { texte: "Ce mois n'a pas encore commencé." },
+  'Un mois se saisit à la date de son 1er jour.': {
+    texte: "Ce mois n'est pas proposé à la saisie.",
+  },
   'Ce mois est trop ancien pour être saisi.': {},
   'Saisissez au moins un chiffre.': {},
   'Un envoi compte 30 chiffres au plus.': {},
   "Un indicateur ne se saisit qu'une fois par envoi.": {},
+  // Un seul texte pour 1 à 9 caractères et au-delà de 280 : l'écran contrôle les deux cas avant
+  // l'envoi (precisionTropCourte, precisionTropLongue) ; la base ne dit pas lequel.
   'La précision doit faire entre 10 et 280 caractères.': { champ: 'precision' },
-  'La somme des catégories (%) dépasse le total du mois (%).': { champ: 'repartition' },
+  'La somme des catégories (%) dépasse le total du mois (%).': {
+    texte: 'Les catégories font % pour un total de %. Corrigez la répartition ou le total.',
+    champ: 'repartition',
+  },
+  // La liste des catégories a changé pendant la saisie (T66, m097).
+  "Cet indicateur n'a pas de répartition.": { texte: CATEGORIES_CHANGEES },
+  "Cette catégorie n'est pas dans la liste de l'indicateur.": { texte: CATEGORIES_CHANGEES },
+  'La répartition se donne par catégorie.': { texte: CATEGORIES_CHANGEES },
+  "Un total ne se répartit qu'une fois.": { texte: CATEGORIES_CHANGEES },
+  "Une répartition demande de 3 à 6 catégories en cours dans la liste de l'indicateur.": {
+    texte: CATEGORIES_CHANGEES,
+  },
+  "Une répartition reprend toutes les catégories en cours de la liste de l'indicateur, et elles seules.":
+    { texte: CATEGORIES_CHANGEES },
 
   // Chiffres par département (saisir_fij_statistiques).
   'Rubrique inconnue.': { texte: LISTE_CHANGEE },
   'Département inconnu.': { texte: LISTE_CHANGEE },
   'Chaque valeur est un nombre entier de 0 à 9 999.': {
-    texte: 'Un chiffre dépasse la limite. Saisissez un nombre entre 0 et 9 999.',
+    texte: `${LIMITE} Saisissez un nombre entre 0 et 9 999.`,
   },
-  'Saisissez au moins une valeur.': {},
+  // Glossaire « chiffre » (T66, t125 et m085).
+  'Saisissez au moins une valeur.': { texte: 'Saisissez au moins un chiffre.' },
 
-  // Événements (ajouter_evenement, controler_evenement_etat). La date passée reprend le texte de
-  // la section 7 des aides (TEXTES_SIGNALEMENT.dateRefuseeAjout, formule « Date passée »).
-  'La date ne peut pas être passée.': {
-    texte: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
-    champ: 'date',
-  },
-  "La nouvelle date doit être aujourd'hui ou plus tard.": { champ: 'date' },
+  // Événements (ajouter_evenement, controler_evenement_etat). Une seule phrase de date passée,
+  // à l'ajout comme à la mise à jour (T66, t140 et m125).
+  'La date ne peut pas être passée.': { texte: DATE_PASSEE, champ: 'date' },
+  "La nouvelle date doit être aujourd'hui ou plus tard.": { texte: DATE_PASSEE, champ: 'date' },
   "Rien n'a changé : ce statut et cette date sont déjà enregistrés.": {
     texte: "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
   },
@@ -149,23 +209,38 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Donnez un nom à l'événement (80 caractères au plus).": { champ: 'nom' },
   'Choisissez un statut.': {},
 
-  // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions).
+  // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions). Les textes
+  // des contrôles avant l'envoi (MESSAGES_POINT.controle ; T66, t240 à t262 et m137 à m151).
+  // Le titre vide ou trop long lève un seul message : il reste tel quel.
   'Donnez un titre au point (80 caractères au plus).': { champ: 'titre' },
-  'La description dépasse 280 caractères.': { champ: 'description' },
-  "L'action attendue dépasse 80 caractères.": { champ: 'attendu' },
-  "L'échéance ne peut pas être passée.": { champ: 'echeance' },
-  'Ce ministère ne peut pas être mentionné.': { champ: 'mentions' },
-  'Ce point est traité : il ne change plus.': {},
-  'Ce point est déjà traité.': {},
-  'Ce point est traité : ses mentions ne changent plus.': {},
+  'La description dépasse 280 caractères.': {
+    texte: 'Raccourcissez ce texte : 280 caractères au plus.',
+    champ: 'description',
+  },
+  "L'action attendue dépasse 80 caractères.": {
+    texte: 'Raccourcissez ce texte : 80 caractères au plus.',
+    champ: 'attendu',
+  },
+  "L'échéance ne peut pas être passée.": { texte: DATE_PASSEE, champ: 'echeance' },
+  'Ce ministère ne peut pas être mentionné.': { texte: MINISTERE_DESACTIVE, champ: 'mentions' },
+  'Ce point est traité : il ne change plus.': { texte: POINT_DEJA_TRAITE },
+  'Ce point est déjà traité.': { texte: POINT_DEJA_TRAITE },
+  'Ce point est traité : ses mentions ne changent plus.': { texte: POINT_DEJA_TRAITE },
   'Choisissez les ministères à mentionner.': { champ: 'mentions' },
-  'Utilisez le bouton Marquer traité.': {},
-  'Le commentaire dépasse 280 caractères.': { champ: 'texte' },
+  'Utilisez le bouton Marquer traité.': {
+    texte: 'Pour traiter ce point, choisissez « Marquer traité ».',
+  },
+  // Le même message pour un commentaire de point (« Commentaire ») et la réponse à un
+  // signalement : « ce texte », comme pour la description (T66, m151 et m173).
+  'Le commentaire dépasse 280 caractères.': {
+    texte: 'Raccourcissez ce texte : 280 caractères au plus.',
+    champ: 'texte',
+  },
   'Expliquez ce qui a été traité et comment (10 caractères au moins).': { champ: 'texte' },
   'Ce ministère est déjà mentionné sur ce point.': { texte: MENTIONS_CHANGEES },
   "Ce ministère n'est pas mentionné sur ce point.": { texte: MENTIONS_CHANGEES },
 
-  // Sessions (declarer_session, supprimer_session, ministeres_actifs).
+  // Sessions (declarer_session, supprimer_session, ministeres_actifs ; T66, t315 à t318).
   'Une session % est déjà déclarée le %.': {
     texte: 'Une session % existe déjà le %. Choisissez une autre date.',
     champ: 'date',
@@ -174,16 +249,30 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     texte: 'Des ministères ont déjà saisi cette session. Elle reste dans la liste.',
   },
   'Choisissez le type et la date de la session.': {},
-  'Donnez un nom au rassemblement (80 caractères au plus).': { champ: 'nom' },
-  'Seul un autre rassemblement porte un nom.': {},
+  'Donnez un nom au rassemblement (80 caractères au plus).': {
+    texte: 'Donnez un nom à la session (80 caractères au plus).',
+    champ: 'nom',
+  },
+  'Seul un autre rassemblement porte un nom.': {
+    texte: 'Seule une autre session porte un nom. Retirez le nom.',
+  },
   'Cochez au moins un ministère.': {},
-  "Un ministère coché n'est pas actif.": {},
+  "Un ministère coché n'est pas actif.": { texte: MINISTERE_DESACTIVE },
 
-  // Signalements (signaler_difficulte, clore_signalement).
+  // Signalements (signaler_difficulte, clore_signalement) : les textes des contrôles avant
+  // l'envoi (TEXTES_SIGNALEMENT, TEXTES_BLOC_SIGNALEMENTS ; T66, m167, m168 et m173).
   'Décrivez la difficulté (10 caractères au moins).': { champ: 'texte' },
-  'Le signalement dépasse 280 caractères.': { champ: 'texte' },
-  "Choisissez l'écran concerné dans la liste.": {},
-  'Le commentaire fait 10 caractères au moins, ou reste vide.': { champ: 'texte' },
+  'Le signalement dépasse 280 caractères.': {
+    texte: 'Raccourcissez le signalement : 280 caractères au plus.',
+    champ: 'texte',
+  },
+  "Choisissez l'écran concerné dans la liste.": {
+    texte: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
+  },
+  'Le commentaire fait 10 caractères au moins, ou reste vide.': {
+    texte: 'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+    champ: 'texte',
+  },
   'Ce signalement est déjà clos.': {},
 
   // Modération (marquer_relu, masquer_texte, auteur_texte).
@@ -250,9 +339,11 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     texte: 'Raccourcissez ce texte : 280 caractères au plus.',
     champ: 'texte',
   },
-  // Le même texte que le contrôle avant l'envoi (`explicationLimiteAjouts`, guide 10.9) : depuis
-  // T62, le ministère retire lui-même un de ses ajouts dans « Mes indicateurs ».
-  'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.': {},
+  // Le même texte que le contrôle avant l'envoi (`explicationLimiteAjouts`, guide 10.9 ; T66,
+  // m233) : depuis T62, le ministère retire lui-même un de ses ajouts dans « Mes indicateurs ».
+  'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.': {
+    texte: 'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
+  },
   // Le texte de la base nomme EJP Tech depuis T60 (20261013130000_gestion_ejp_tech.sql).
   "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.": {},
   'Cette fiche compte déjà 30 indicateurs. Retirez-en un pour en ajouter un autre.': {},
@@ -277,22 +368,51 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Le calcul « % » demande un chiffre qui n'est plus suivi sur cette fiche.": {
     texte: "Le calcul « % » a besoin d'un chiffre qui n'est plus suivi sur cette fiche.",
   },
+  // Le catalogue est à corriger : la formule « panne » sans « Réessayez » ; le texte technique
+  // reste dans les journaux (T66, m229).
+  'Deux indicateurs prévus portent le même nom, « % » : le catalogue est à corriger.': {
+    texte: PREVUS_EN_PANNE,
+  },
+  'Un indicateur prévu porte le nom du chiffre commun « % » : le catalogue est à corriger.': {
+    texte: PREVUS_EN_PANNE,
+  },
 
   // Indicateurs : correction, retrait, validation (corriger_indicateur, retirer_indicateur,
-  // valider_indicateur ; textes de l'étape 6, en attendant la refonte).
-  "Rien n'a changé : ce libellé et cette définition sont déjà enregistrés.": {},
-  'Un indicateur retiré ne change plus.': {},
-  'Cet indicateur est déjà retiré.': {},
+  // valider_indicateur ; T66, m235 et m236 : « déjà enregistré » et « changé entre-temps »).
+  "Rien n'a changé : ce libellé et cette définition sont déjà enregistrés.": {
+    texte: "Ce nom et cette définition sont déjà enregistrés. Changez l'un des deux.",
+  },
+  'Un indicateur retiré ne change plus.': {
+    texte: 'Cet indicateur est retiré : il ne change plus.',
+  },
+  'Cet indicateur est déjà retiré.': {
+    texte: 'Cet indicateur est déjà retiré. Rechargez la page.',
+  },
   'Choisissez le motif du retrait.': {},
-  'Ce chiffre a déjà des valeurs : remplacez-le pour en changer le sens.': {},
-  'Ce chiffre semble sensible : remplacez-le par un nouvel indicateur « Domaine sensible ».': {},
+  'Ce chiffre a déjà des valeurs : remplacez-le pour en changer le sens.': {
+    texte: "Ce chiffre a déjà des valeurs. Pour changer ce qu'il compte, remplacez-le.",
+  },
+  'Ce chiffre semble sensible : remplacez-le par un nouvel indicateur « Domaine sensible ».': {
+    texte:
+      'Ce chiffre semble sensible. Remplacez-le par un nouvel indicateur « Domaine sensible ».',
+  },
   "Une suggestion garde le nom qu'elle a dans tous les ministères.": {},
-  'Cette demande a déjà été décidée.': {},
-  "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.": {},
+  'Cette demande a déjà été décidée.': {
+    texte: 'Cette demande a déjà reçu une réponse. Rechargez la page.',
+  },
+  "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.": {
+    texte: 'Cette demande a été retirée ou remplacée. Rechargez la page.',
+  },
   'Choisissez de valider ou de refuser.': {},
-  "Une correction du nom ne se décide pas encore dans l'outil.": {},
+  "Une correction du nom ne se décide pas encore dans l'outil.": {
+    texte: "La correction d'un nom n'est pas encore disponible.",
+  },
   'Expliquez le refus (10 caractères au moins).': { champ: 'texte' },
-  'Le motif dépasse 280 caractères.': { champ: 'texte' },
+  // Refus d'EJP Tech (valider_indicateur) et retrait d'un ministère (retirer_mon_indicateur).
+  'Le motif dépasse 280 caractères.': {
+    texte: 'Raccourcissez le motif : 280 caractères au plus.',
+    champ: 'texte',
+  },
 
   // Retrait d'un ajout par son ministère (retirer_mon_indicateur, T62) : le motif sous son champ,
   // le reste sous les boutons de la fenêtre. La source d'un calcul : le même texte que la ligne de
@@ -304,39 +424,28 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   // Garde-fous de la base que l'interface ne déclenche pas (m274) : le repli.
   'Ce rôle ne convient pas à ce calcul.': REPLI,
   'Ce texte est réservé au retrait pour confidentialité.': REPLI,
-  "Cet indicateur n'a pas de répartition.": REPLI,
-  "Cette catégorie n'est pas dans la liste de l'indicateur.": REPLI,
   'Chaque catégorie compte un nombre entier de 0 à 9 999.': REPLI,
   'Chaque chiffre est un nombre entier.': REPLI,
   'Chaque chiffre porte son indicateur et sa valeur.': REPLI,
   "Chaque rubrique d'un département ne se saisit qu'une fois par envoi.": REPLI,
-  'Deux indicateurs prévus portent le même nom, « % » : le catalogue est à corriger.': REPLI,
   "L'indicateur remplacé est retiré avec le motif « remplacé ».": REPLI,
-  'La répartition se donne par catégorie.': REPLI,
   "La source d'un calcul prévu est un indicateur saisi, non sensible, du même modèle.": REPLI,
   "Le calcul « % » n'a pas tous ses termes.": REPLI,
   "Le remplaçant d'un indicateur sensible est sensible.": REPLI,
-  'Seul un indicateur saisi du dimanche se saisit dès le dimanche matin.': REPLI,
   'Un chiffre commun ne se calcule pas.': REPLI,
   "Un comptage d'événements se lit par mois.": REPLI,
   'Un décalage se compte en mois : il demande un calcul du mois.': REPLI,
   'Un envoi compte 32 valeurs au plus : 4 rubriques pour 8 départements.': REPLI,
   'Un indicateur naît actif ou à valider.': REPLI,
-  'Un indicateur prévu porte le nom du chiffre commun « % » : le catalogue est à corriger.': REPLI,
   'Un indicateur sensible est un nombre de 0 à 9 999.': REPLI,
   'Un indicateur sensible ne se calcule pas.': REPLI,
   'Un indicateur sensible se saisit chaque mois.': REPLI,
-  'Un mois se saisit à la date de son 1er jour.': REPLI,
   'Un terme appartient à un calcul.': REPLI,
   'Un terme prévu appartient à un calcul prévu.': REPLI,
-  "Un total ne se répartit qu'une fois.": REPLI,
   'Une catégorie appartient à un indicateur sensible du catalogue.': REPLI,
   "Une précision accompagne le total du mois d'un indicateur sensible.": REPLI,
   'Une précision accompagne seulement un indicateur sensible.': REPLI,
   "Une répartition accompagne le total du mois d'un indicateur sensible.": REPLI,
-  "Une répartition demande de 3 à 6 catégories en cours dans la liste de l'indicateur.": REPLI,
-  "Une répartition reprend toutes les catégories en cours de la liste de l'indicateur, et elles seules.":
-    REPLI,
   // Le motif d'une déclaration de prénom est fixé par l'interface (T56).
   'Motif inconnu.': REPLI,
   // Codes des fonctions serveur des comptes : seules les Edge Functions les reçoivent et les
@@ -371,11 +480,17 @@ const REFUS_DE_DROIT: Readonly<
   "Cette session n'existe pas ou vous n'y avez pas accès.": 'acces',
   'Seul EJP Tech peut masquer un texte.': 'acces',
   'Seul EJP Tech peut relire un texte.': 'acces',
-  'Seul un compte de ministère peut ajouter un événement.': 'acces',
+  // Formule « droit refusé », sans nom d'équipe (T66, m126 et m142). Une session : l'écran dit
+  // sa propre phrase (`erreurAccesAjout`, m207).
+  'Seul un compte de ministère peut ajouter un événement.': {
+    texte: "Votre compte ne permet pas d'ajouter un événement.",
+  },
   "Seules l'administration de l'église et EJP Tech déclarent une session.": 'acces',
   'Seul un compte de ministère indique un prénom.': 'acces',
   'Seul EJP Tech efface un prénom.': 'acces',
-  'Seul un compte de ministère peut créer un point.': {},
+  'Seul un compte de ministère peut créer un point.': {
+    texte: 'Votre compte ne permet pas de créer un point.',
+  },
   // Garde-fous de la base (inaltérabilité, indicateurs, catégories) : le repli (m274).
   "Ce changement d'état n'est pas permis.": REPLI,
   'Cette catégorie sert déjà dans une répartition : elle ne change plus, elle se retire seulement.':

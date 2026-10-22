@@ -335,10 +335,6 @@ export function construireMesIndicateurs(lectures: LecturesMesIndicateurs): Donn
   const suivi = new Map(lectures.suivi.map((ligne) => [ligne.indicateur_id, ligne]))
   const sources = calculsParSource(lectures.indicateurs, lectures.termes)
   const ajoutesParVous = suivis.filter((indicateur) => indicateur.origine === 'ministere').length
-  const prevus = suivis.filter(estPrevu).length
-  const ajoutesParLEglise = suivis.filter(
-    (indicateur) => indicateur.origine === 'eglise' && !estPrevu(indicateur),
-  ).length
   const ajoutsRestants =
     lectures.limites === null
       ? null
@@ -346,11 +342,8 @@ export function construireMesIndicateurs(lectures: LecturesMesIndicateurs): Donn
   return {
     nomMinistere: lectures.nomMinistere,
     phrase: phraseMesIndicateurs({
-      nom: lectures.nomMinistere,
       suivis: suivis.length,
-      prevus,
       ajoutesParVous,
-      ajoutesParLEglise,
       ajoutsRestants,
       ajoutsMax: lectures.limites?.ajouts_max ?? 0,
     }),

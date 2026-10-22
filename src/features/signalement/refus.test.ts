@@ -5,21 +5,31 @@ import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
 const refus = (message: string, code = 'P0001') => ({ code, message, details: null, hint: null })
 
 describe('lireRefusSignalement', () => {
+  // Le texte de la base est la clé : l'écran dit le texte revu par T66 (m167 à m173, m268, m269).
   it.each([
-    MESSAGES_BASE_SIGNALEMENT.texteCourt,
-    MESSAGES_BASE_SIGNALEMENT.texteLong,
-    MESSAGES_BASE_SIGNALEMENT.donneesPersonnelles,
-    MESSAGES_BASE_SIGNALEMENT.crochets,
-    MESSAGES_BASE_SIGNALEMENT.commentaireCourt,
-    MESSAGES_BASE_SIGNALEMENT.commentaireLong,
-  ])('« %s » : sous le champ, tel quel', (message) => {
-    expect(lireRefusSignalement(refus(message))).toEqual({ ou: 'champ', message })
+    [MESSAGES_BASE_SIGNALEMENT.texteCourt, 'Décrivez la difficulté (10 caractères au moins).'],
+    [MESSAGES_BASE_SIGNALEMENT.texteLong, 'Raccourcissez le signalement : 280 caractères au plus.'],
+    [
+      MESSAGES_BASE_SIGNALEMENT.donneesPersonnelles,
+      'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    ],
+    [
+      MESSAGES_BASE_SIGNALEMENT.crochets,
+      'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
+    ],
+    [
+      MESSAGES_BASE_SIGNALEMENT.commentaireCourt,
+      'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+    ],
+    [MESSAGES_BASE_SIGNALEMENT.commentaireLong, 'Raccourcissez ce texte : 280 caractères au plus.'],
+  ])('« %s » : sous le champ, traduit', (base, message) => {
+    expect(lireRefusSignalement(refus(base))).toEqual({ ou: 'champ', message })
   })
 
   it('écran hors liste et signalement déjà clos : sous le bouton', () => {
     expect(lireRefusSignalement(refus(MESSAGES_BASE_SIGNALEMENT.ecran))).toEqual({
       ou: 'bouton',
-      message: "Choisissez l'écran concerné dans la liste.",
+      message: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
     })
     const dejaClos = lireRefusSignalement(refus(MESSAGES_BASE_SIGNALEMENT.dejaClos))
     expect(dejaClos).toEqual({ ou: 'bouton', message: 'Ce signalement est déjà clos.' })

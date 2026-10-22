@@ -21,10 +21,10 @@ export const LONGUEUR_ATTENDU_POINT = 80
 /**
  * Messages des fonctions de points. `controle` est ce que les formulaires disent avant l'envoi
  * (refonte des textes, T66). `refus` reprend, mot pour mot, les messages que la base lève (erreur
- * `P0001`) : ce sont les clés de la table de traduction (`src/data/messagesBase.ts`), qui les dit
- * tels quels jusqu'à ce qu'elle reçoive les textes de la refonte, avec la fusion de T62 et T64 ;
- * `refus` garde aussi les phrases que l'écran dit pour un refus de droit (`creationAcces`,
- * `acces`). `reussite` est ce que l'écran dit après une écriture (« Point créé. »).
+ * `P0001`) : ce sont les clés de la table de traduction (`src/data/messagesBase.ts`), qui leur
+ * donne les textes de `controle` (T66, m137 à m151) ; ils ne s'affichent pas tels quels. `refus`
+ * garde aussi les phrases que l'écran dit pour un refus de droit (`creationAcces`, `acces`).
+ * `reussite` est ce que l'écran dit après une écriture (« Point créé. »).
  */
 export const MESSAGES_POINT = {
   controle: {
@@ -35,7 +35,11 @@ export const MESSAGES_POINT = {
     /** La base reçoit une date, jamais un autre texte : ce contrôle n'existe qu'à l'écran. */
     echeanceFormat: 'Choisissez une date, ou laissez le champ vide.',
     echeancePassee: "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
-    mentionRefusee: 'Un ministère coché ne peut plus être mentionné. Décochez-le, puis réessayez.',
+    /**
+     * Un seul texte pour un ministère qu'on ne peut plus mentionner, avant l'envoi comme après le
+     * refus de la base : en pratique, il a été désactivé (T66, m124, qui corrige t243).
+     */
+    mentionRefusee: 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.',
     commentaireCourt: 'Expliquez ce qui a été traité et comment (10 caractères au moins).',
     commentaireLong: 'Raccourcissez le commentaire : 280 caractères au plus.',
     /** La priorité vient d'une liste fermée : ce contrôle n'existe qu'à l'écran. */

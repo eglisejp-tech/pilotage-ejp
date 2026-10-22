@@ -36,11 +36,11 @@ export const TEXTES_SIGNALEMENT = {
   /** Sous le champ date de l'ajout d'un événement, avant le lien « Signaler une difficulté ». */
   dateRefuseeAjout: DATE_PASSEE,
   /**
-   * Sous le champ date de la mise à jour d'un événement, avant le lien. Le texte commun (t140)
-   * attend la fusion des lots qui tiennent la table de traduction : la table dit ce texte tel
-   * quel, et le contrôle avant l'envoi doit dire le même (guide 10.9).
+   * Sous le champ date de la mise à jour d'un événement, avant le lien : le texte commun de la
+   * date passée (T66, t140 et m125), le même que la table de traduction donne au refus de la base
+   * (guide 10.9).
    */
-  dateRefuseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
+  dateRefuseeMiseAJour: DATE_PASSEE,
   questionDate: 'Vous ne pouvez pas choisir de date ?',
   /**
    * Ligne identique à l'état actuel, sous le bouton, sans lien : dite avant l'envoi, et par la
@@ -75,9 +75,9 @@ export const LONGUEUR_MAX_SIGNALEMENT = 280
 
 /**
  * Textes de la base (contrat de l'étape 4, section 7 ; B7 ; T43) : les clés de la table de
- * traduction, que l'aperçu simule et que l'écran compare (« déjà clos »). Avant l'envoi, l'écran
- * dit les textes de `TEXTES_SIGNALEMENT` (T66) ; la table les reprendra avec la fusion des lots
- * qui la tiennent.
+ * traduction, que l'aperçu simule et que l'écran compare (« déjà clos »). Ils ne s'affichent pas
+ * tels quels : avant l'envoi comme après un refus, l'écran dit les textes de `TEXTES_SIGNALEMENT`
+ * et de `TEXTES_BLOC_SIGNALEMENTS` (T66 ; `src/data/messagesBase.ts`).
  */
 export const MESSAGES_BASE_SIGNALEMENT = {
   texteCourt: 'Décrivez la difficulté (10 caractères au moins).',

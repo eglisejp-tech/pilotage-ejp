@@ -73,7 +73,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Mes indicateurs' })).toBeVisible()
     await expect(
       page.getByText(
-        'Communication suit 7 indicateurs : 5 prévus par la coordination et 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
+        '7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
       ),
     ).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
@@ -87,16 +87,21 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
       '/ma-fiche',
     )
     await expect(page.getByText('Se calcule tout seul')).toBeVisible()
-    await expect(page.getByText('Prévu par la coordination')).toHaveCount(5)
+    // Sans nommer la coordination sur l'écran d'un ministère (T66, t339).
+    await expect(page.getByText('Indicateur prévu', { exact: true })).toHaveCount(5)
+    await expect(page.getByText(/coordination/)).toHaveCount(0)
   })
 
-  test('un ajout à valider dit son attente, puis ce qu’on peut déjà faire, en deux lignes', async ({
+  test('un ajout à valider dit son attente, puis ce qui arrive aux chiffres, en deux lignes', async ({
     page,
   }) => {
     await ouvrir(page)
-    const attente = page.getByText('À valider par EJP Tech depuis 2 jours.', { exact: true })
+    // Le ministère n'a rien à demander : sans nommer EJP Tech (T66, t080).
+    const attente = page.getByText('En attente de validation depuis 2 jours.', { exact: true })
     await expect(attente).toBeVisible()
-    await expect(page.getByText('Vous pouvez déjà le saisir.', { exact: true })).toBeVisible()
+    await expect(
+      page.getByText("Vos chiffres compteront dès qu'il sera validé.", { exact: true }),
+    ).toBeVisible()
     await expect(page.getByText(/le berger voit ses valeurs/)).toHaveCount(0)
     await expect(page.getByText('Suggestion ajoutée par vous le 8 oct.')).toBeVisible()
   })
@@ -170,7 +175,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0)
     // La suggestion rejoint la liste, à valider ; il ne reste plus d'ajout permis.
     await expect(page.getByText(/Vous avez atteint le maximum de 3 ajouts\./)).toBeVisible()
-    await expect(page.getByText(/^À valider par EJP Tech depuis aujourd'hui\./)).toBeVisible()
+    await expect(page.getByText(/^En attente de validation depuis aujourd'hui\./)).toBeVisible()
   })
 
   test('3 ajouts : le panneau ne montre que l’explication, le bouton qui l’ouvre reste actif', async ({
@@ -178,10 +183,10 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
   }) => {
     await ouvrir(page, { vue: 'limite' })
     const panneau = await ouvrirLePanneau(page)
-    // T62 : le ministère retire lui-même un de ses ajouts.
+    // T62 : le ministère retire lui-même un de ses ajouts (texte revu par T66, m233).
     await expect(
       panneau.getByText(
-        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+        'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
       ),
     ).toBeVisible()
     await expect(panneau.getByRole('button', { name: /^Choisir «/ })).toHaveCount(0)
@@ -202,11 +207,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     page,
   }) => {
     await ouvrir(page, { vue: 'vide' })
-    await expect(
-      page.getByText(
-        "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
-      ),
-    ).toBeVisible()
+    await expect(page.getByText("Votre ministère n'a pas encore d'indicateur à lui.")).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveCount(0)
     await expect(bouton(page, 'Ajouter un indicateur')).toBeVisible()
   })
@@ -230,7 +231,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await champ.fill('Voir ce que le ministère a mené.')
     await bouton(page, 'Envoyer pour validation').click()
     await expect(panneau.getByRole('alert')).toContainText(
-      'Votre ministère a déjà 3 indicateurs à lui.',
+      'Votre ministère a déjà 3 indicateurs ajoutés.',
     )
     await expect(champ).toHaveValue('Voir ce que le ministère a mené.')
 
@@ -239,7 +240,10 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await choisir(panneau, 'Demandes traitées')
     await panneau.getByRole('textbox').fill('Écrire à quelqu’un pour voir.')
     await bouton(page, 'Envoyer pour validation').click()
-    await expect(panneau.getByText("N'écrivez aucun nom ni information personnelle.")).toBeVisible()
+    // Ce que la base détecte, puis quoi faire (T66, m268).
+    await expect(
+      panneau.getByText('Retirez de votre texte les emails, liens, numéros et noms de personnes.'),
+    ).toBeVisible()
     await expect(panneau.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
 
     await ouvrir(page, { envoi: 'echec' })
@@ -368,8 +372,12 @@ test.describe('T62 : retrait d’un ajout par le ministère, aperçu', () => {
     await fenetre.getByRole('textbox').fill('Demandé par une personne précise.')
     await fenetre.getByRole('button', { name: 'Retirer' }).click()
     await expect(fenetre.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
+    // Le rappel, puis l'erreur du champ : ce que la base détecte (T66, m268).
+    await expect(
+      fenetre.getByText('Retirez de votre texte les emails, liens, numéros et noms de personnes.'),
+    ).toBeVisible()
     await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(
-      2,
+      1,
     )
 
     await ouvrir(page, { retrait: 'echec' })

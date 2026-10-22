@@ -137,8 +137,9 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
     await ouvrir(page, 'mise-a-jour')
     await date(page).fill('2026-10-05')
     await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
+    // Une seule phrase de date passée, comme à l'ajout (T66, t140 et m125).
     await expect(date(page)).toHaveAccessibleDescription(
-      "La nouvelle date doit être aujourd'hui ou plus tard. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
+      "Cette date est passée. Choisissez aujourd'hui ou une date à venir. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
     )
   })
 

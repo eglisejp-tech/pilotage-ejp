@@ -5,7 +5,7 @@
 // responsable.
 
 import type { LimitesIndicateurs, MotifRetrait, NatureIndicateur } from '@/lib/base'
-import { accorder, listeNoms, nombre, terminerPhrase } from '@/lib/metier/texte'
+import { accorder, nombre, terminerPhrase } from '@/lib/metier/texte'
 
 /** Espace insécable : dans les guillemets français (BRIEF, « Formats »). */
 const NBSP = String.fromCodePoint(0xa0)
@@ -22,7 +22,8 @@ export const MESSAGES_BASE_SUGGESTION = {
   pourquoiCourt: 'Expliquez pourquoi (10 caractères au moins).',
   pourquoiLong: 'Raccourcissez ce texte : 280 caractères au plus.',
   inexistante: 'Cet indicateur prévu est introuvable. Rechargez la page.',
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+  /** Refus de droit (42501) : la forme commune d'un élément introuvable (T66, m273). */
+  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 export const TEXTES_MES_INDICATEURS = {
@@ -32,9 +33,11 @@ export const TEXTES_MES_INDICATEURS = {
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
   chargement: 'Chargement de vos indicateurs',
-  /** État vide : aucun indicateur suivi (LISEZMOI, « États »). */
-  aucunIndicateur:
-    "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
+  /**
+   * État vide : aucun indicateur suivi (LISEZMOI, « États ») ; le même texte que la fiche, sans
+   * la suite sur les chiffres communs, déjà à l'écran (T66, t207).
+   */
+  aucunIndicateur: "Votre ministère n'a pas encore d'indicateur à lui.",
   /** Le suffixe de l'état vide : ce qu'on peut faire. Proposé. */
   aucunIndicateurSuite: 'Ajoutez une suggestion pour suivre un chiffre de plus.',
   titreRetires: 'Retirés',
@@ -50,9 +53,11 @@ export const TEXTES_MES_INDICATEURS = {
 export const TEXTES_PANNEAU_AJOUT = {
   titre: 'Ajouter un indicateur',
   titreSuggestions: 'Suggestions',
-  /** Proposé : sous le titre des suggestions. */
-  introSuggestions:
-    "Choisissez l'indicateur que vous voulez suivre. EJP Tech vérifie chaque ajout avant qu'il compte dans les totaux.",
+  /**
+   * Proposé : sous le titre des suggestions. La vérification d'EJP Tech ne se dit qu'une fois,
+   * sous le « Pourquoi » (T66 ; guide, section 6).
+   */
+  introSuggestions: "Choisissez l'indicateur que vous voulez suivre.",
   choisir: 'Choisir',
   /** Toutes les suggestions sont déjà sur la fiche (LISEZMOI, « États »). */
   toutesDejaLa: 'Toutes les suggestions sont déjà sur votre fiche.',
@@ -69,11 +74,12 @@ export const TEXTES_PANNEAU_AJOUT = {
 } as const
 
 /**
- * Une limite atteinte, avec ce qu'il faut faire : le texte de la base et de la conception (4.2).
- * Depuis T62, le ministère retire lui-même un de ses ajouts (« Retirer » sur la ligne).
+ * Une limite atteinte, avec ce qu'il faut faire : le texte que la table de traduction donne au
+ * refus de la base (conception, 4.2 ; T66, m233). Depuis T62, le ministère retire lui-même un de
+ * ses ajouts (« Retirer » sur la ligne).
  */
 export function explicationLimiteAjouts(limites: LimitesIndicateurs): string {
-  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs à lui. Retirez-en un pour en ajouter un autre.`
+  return `Votre ministère a déjà ${nombre(limites.ajouts_max)} indicateurs ajoutés. Retirez-en un pour en ajouter un autre.`
 }
 
 export function explicationLimiteLignes(limites: LimitesIndicateurs): string {
@@ -111,18 +117,23 @@ export function nomBoutonChoisir(libelle: string): string {
   return `${TEXTES_PANNEAU_AJOUT.choisir} «${NBSP}${libelle}${NBSP}»`
 }
 
-/** « Ajoutée par vous le 12 oct. » et ses variantes, selon l'origine de la ligne. */
+/**
+ * « Ajoutée par vous le 12 oct. » et ses variantes, selon l'origine de la ligne. Un indicateur de
+ * la liste prévue se dit « Indicateur prévu », sans nommer la coordination sur l'écran d'un
+ * ministère (T66, t339 ; glossaire).
+ */
 export const MENTIONS_ORIGINE = {
-  prevu: 'Prévu par la coordination',
-  suggestionEglise: 'Suggestion de la coordination',
+  prevu: 'Indicateur prévu',
+  suggestionEglise: 'Indicateur prévu',
   ajoutEglise: "Ajouté par l'administration de l'église ou EJP Tech",
   suggestionMinistere: (jour: string) => `Suggestion ajoutée par vous le ${jour}`,
   ajoutMinistere: (jour: string) => `Ajouté par vous le ${jour}`,
 } as const
 
 /**
- * « À valider par EJP Tech depuis 2 jours. » : l'état d'un ajout qui attend, en gras orange avec le
- * mot (7.3). La suite, `SUITE_EN_ATTENTE`, est dite à part, en texte normal.
+ * « En attente de validation depuis 2 jours. » : l'état d'un ajout qui attend, en gras orange avec
+ * le mot (7.3). Le ministère n'a rien à demander : le texte ne nomme pas EJP Tech, comme la fiche
+ * (T66, t080 et m076). La suite, `SUITE_EN_ATTENTE`, est dite à part, en texte normal.
  */
 export function texteEnAttente(jours: number | null): string {
   const depuis =
@@ -131,15 +142,15 @@ export function texteEnAttente(jours: number | null): string {
       : jours <= 0
         ? " depuis aujourd'hui"
         : ` depuis ${nombre(jours)} ${accorder(jours, 'jour', 'jours')}`
-  return `À valider par EJP Tech${depuis}.`
+  return `En attente de validation${depuis}.`
 }
 
 /**
- * Ce que le ministère peut faire pendant l'attente : la phrase déjà dite sur la fiche et dans la
- * saisie (« Vous pouvez déjà le saisir. »), sans la mécanique interne (qui voit quoi) de
- * configuration-indicateurs.md, 7.3. Proposé.
+ * Ce qui arrive aux chiffres pendant l'attente : la phrase de la fiche et de la saisie (T66, t080 ;
+ * guide, exemple 4), sans la mécanique interne (qui voit quoi) de configuration-indicateurs.md,
+ * 7.3.
  */
-export const SUITE_EN_ATTENTE = 'Vous pouvez déjà le saisir.'
+export const SUITE_EN_ATTENTE = "Vos chiffres compteront dès qu'il sera validé."
 
 /** « Dernière saisie le 2 oct. » : le jour de Paris, la valeur n'est jamais lue ici. */
 export function texteDerniereSaisie(jour: string): string {
@@ -201,7 +212,8 @@ export const LONGUEUR_MAX_MOTIF_RETRAIT = 280
 /** Messages de la base (`retirer_mon_indicateur`), repris tels quels avant l'envoi. */
 export const MESSAGES_BASE_RETRAIT = {
   motifCourt: 'Expliquez pourquoi vous le retirez (10 caractères au moins).',
-  motifLong: 'Le motif dépasse 280 caractères.',
+  /** Forme commune « Raccourcissez », la même que la table de traduction (T66, t344). */
+  motifLong: 'Raccourcissez le motif : 280 caractères au plus.',
 } as const
 
 /**
@@ -255,15 +267,10 @@ export function texteSourceDeCalcul(calcul: string): string {
 }
 
 export interface ComptesMesIndicateurs {
-  nom: string
   /** Indicateurs suivis : actifs ou à valider, calculs compris. */
   suivis: number
-  /** Dont les prévus de la coordination. */
-  prevus: number
   /** Dont ajoutés par le ministère, suggestions comprises. */
   ajoutesParVous: number
-  /** Dont ajoutés par l'administration de l'église ou EJP Tech, hors prévus. */
-  ajoutesParLEglise: number
   /** Ajouts encore permis (3 moins les ajouts du ministère), ou null si la limite n'est pas lue. */
   ajoutsRestants: number | null
   /** Ajouts permis au ministère (3, `limites_indicateurs.ajouts_max`) ; sans effet si la limite n'est pas lue. */
@@ -271,32 +278,19 @@ export interface ComptesMesIndicateurs {
 }
 
 /**
- * La phrase de l'écran (7.3) : « Communication suit 7 indicateurs : 5 prévus par la coordination
- * et 2 ajoutés par vous. Vous pouvez en ajouter 1 autre. ». `null` quand rien n'est suivi : l'état
- * vide parle à la place.
+ * La phrase de l'écran (7.3), revue par T66 comme celle de la configuration (t329 ; guide,
+ * exemple 16) : « 7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1
+ * autre. ». Le détail de chaque ligne reste dans la liste, sans nommer la coordination. Les ajouts
+ * du ministère restent dits : ils expliquent la limite. `null` quand rien n'est suivi : l'état vide
+ * parle à la place.
  */
 export function phraseMesIndicateurs(comptes: ComptesMesIndicateurs): string | null {
   if (comptes.suivis === 0) return null
-  const parties: string[] = []
-  if (comptes.prevus > 0) {
-    parties.push(
-      `${nombre(comptes.prevus)} ${accorder(comptes.prevus, 'prévu', 'prévus')} par la coordination`,
-    )
-  }
-  if (comptes.ajoutesParVous > 0) {
-    parties.push(
-      `${nombre(comptes.ajoutesParVous)} ${accorder(comptes.ajoutesParVous, 'ajouté', 'ajoutés')} par vous`,
-    )
-  }
-  if (comptes.ajoutesParLEglise > 0) {
-    parties.push(
-      `${nombre(comptes.ajoutesParLEglise)} ${accorder(comptes.ajoutesParLEglise, 'ajouté', 'ajoutés')} par l'administration de l'église ou EJP Tech`,
-    )
-  }
-  const detail = parties.length > 0 ? ` : ${listeNoms(parties)}` : ''
-  const suivi = terminerPhrase(
-    `${comptes.nom} suit ${nombre(comptes.suivis)} ${accorder(comptes.suivis, 'indicateur', 'indicateurs')}${detail}`,
-  )
+  const dont =
+    comptes.ajoutesParVous > 0
+      ? `, dont ${nombre(comptes.ajoutesParVous)} ${accorder(comptes.ajoutesParVous, 'ajouté', 'ajoutés')} par vous`
+      : ''
+  const suivi = `${nombre(comptes.suivis)} ${accorder(comptes.suivis, 'indicateur suivi', 'indicateurs suivis')}${dont}.`
   return comptes.ajoutsRestants === null
     ? suivi
     : `${suivi} ${phraseAjoutsRestants(comptes.ajoutsRestants, comptes.ajoutsMax, comptes.ajoutesParVous)}`

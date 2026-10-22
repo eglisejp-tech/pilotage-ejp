@@ -135,12 +135,13 @@ describe('« Signaler une difficulté »', () => {
     afficher({ envoyer })
     await userEvent.type(champ(), 'Appelez le 06 12 34 56 78')
     await envoyerLeFormulaire()
-    // Le message de la table de traduction, sous le champ, en plus du rappel (T66 : la table
-    // prendra « Retirez de votre texte ... » avec la fusion des lots qui la tiennent, t152).
+    // Le message de la table de traduction, sous le champ, en plus du rappel : ce que la base
+    // détecte, puis quoi faire (T66, t152 et m268).
     expect(
-      await screen.findByText("N'écrivez aucun nom ni information personnelle.", {
-        selector: '.text-alerte',
-      }),
+      await screen.findByText(
+        'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+        { selector: '.text-alerte' },
+      ),
     ).toBeInTheDocument()
     await waitFor(() => expect(champ()).toHaveFocus())
     expect(champ()).toHaveValue('Appelez le 06 12 34 56 78')

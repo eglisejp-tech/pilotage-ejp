@@ -180,8 +180,9 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
   }) => {
     await ouvrir(page, { envoi: 'decidee' })
     await bouton(page, /^Valider «\s*Demandes reçues\s*» de Kumi$/).click()
+    // Formule « changé entre-temps » (T66, m235).
     await expect(page.getByRole('region', { name: 'À valider' }).getByRole('alert')).toHaveText(
-      'Cette demande a déjà été décidée.',
+      'Cette demande a déjà reçu une réponse. Rechargez la page.',
     )
     await expect(page.getByRole('heading', { level: 3, name: 'Kumi' })).toHaveCount(0)
   })

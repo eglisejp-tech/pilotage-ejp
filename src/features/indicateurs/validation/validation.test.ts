@@ -239,19 +239,25 @@ describe('T62 : retraits des ministères des 30 derniers jours', () => {
 })
 
 describe('refus de la base', () => {
-  it('un refus du motif se dit sous le champ, tel quel', () => {
+  it('un refus du motif se dit sous le champ, traduit (T66, m268)', () => {
     expect(
       lireRefusValidation({
         code: 'P0001',
         message: "N'écrivez aucun nom ni information personnelle.",
       }),
-    ).toEqual({ ou: 'champ', message: "N'écrivez aucun nom ni information personnelle." })
+    ).toEqual({
+      ou: 'champ',
+      message: 'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    })
   })
 
-  it('une demande déjà décidée ou sortie se dit sous les boutons', () => {
+  it('une demande déjà décidée ou sortie se dit sous les boutons (T66, m235)', () => {
     expect(
       lireRefusValidation({ code: 'P0001', message: 'Cette demande a déjà été décidée.' }),
-    ).toEqual({ ou: 'bouton', message: 'Cette demande a déjà été décidée.' })
+    ).toEqual({
+      ou: 'bouton',
+      message: 'Cette demande a déjà reçu une réponse. Rechargez la page.',
+    })
     expect(
       lireRefusValidation({
         code: 'P0001',
@@ -260,10 +266,10 @@ describe('refus de la base', () => {
     ).toBe('bouton')
   })
 
-  it('un refus de droit dit que l’élément n’est pas accessible', () => {
+  it('un refus de droit dit que l’élément est introuvable (T66, m273)', () => {
     expect(lireRefusValidation({ code: '42501', message: 'x' })).toEqual({
       ou: 'bouton',
-      message: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+      message: 'Cet élément est introuvable. Rechargez la page.',
     })
   })
 

@@ -104,50 +104,39 @@ describe('message après l’envoi, selon le rythme', () => {
 })
 
 describe('phrases de l’écran', () => {
-  it('la phrase de la conception : suivis, prévus, ajoutés par vous, ajouts restants', () => {
-    expect(
-      phraseMesIndicateurs({
-        nom: 'Communication',
-        suivis: 7,
-        prevus: 5,
-        ajoutesParVous: 2,
-        ajoutesParLEglise: 0,
-        ajoutsRestants: 1,
-        ajoutsMax: 3,
-      }),
-    ).toBe(
-      'Communication suit 7 indicateurs : 5 prévus par la coordination et 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
+  it('suivis, ajoutés par vous, ajouts restants, sans nommer la coordination (T66, t329)', () => {
+    const phrase = phraseMesIndicateurs({
+      suivis: 7,
+      ajoutesParVous: 2,
+      ajoutsRestants: 1,
+      ajoutsMax: 3,
+    })
+    expect(phrase).toBe(
+      '7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
     )
+    expect(phrase).not.toMatch(/coordination/)
   })
 
   it('un seul indicateur, sans ajout : « Vous pouvez en ajouter 3. »', () => {
     expect(
       phraseMesIndicateurs({
-        nom: 'Kumi',
         suivis: 1,
-        prevus: 1,
         ajoutesParVous: 0,
-        ajoutesParLEglise: 0,
         ajoutsRestants: 3,
         ajoutsMax: 3,
       }),
-    ).toBe('Kumi suit 1 indicateur : 1 prévu par la coordination. Vous pouvez en ajouter 3.')
+    ).toBe('1 indicateur suivi. Vous pouvez en ajouter 3.')
   })
 
-  it('les ajouts de l’église se disent à part', () => {
+  it('un seul ajout : « dont 1 ajouté par vous », puis les autres ajouts permis', () => {
     expect(
       phraseMesIndicateurs({
-        nom: 'Kumi',
         suivis: 2,
-        prevus: 0,
         ajoutesParVous: 1,
-        ajoutesParLEglise: 1,
         ajoutsRestants: 2,
         ajoutsMax: 3,
       }),
-    ).toContain(
-      "1 ajouté par vous et 1 ajouté par l'administration de l'église ou EJP Tech. Vous pouvez en ajouter 2 autres.",
-    )
+    ).toBe('2 indicateurs suivis, dont 1 ajouté par vous. Vous pouvez en ajouter 2 autres.')
   })
 
   it('la limite atteinte : « c’est le maximum »', () => {
@@ -157,11 +146,8 @@ describe('phrases de l’écran', () => {
   it('rien de suivi : pas de phrase, l’état vide parle à la place', () => {
     expect(
       phraseMesIndicateurs({
-        nom: 'Kumi',
         suivis: 0,
-        prevus: 0,
         ajoutesParVous: 0,
-        ajoutesParLEglise: 0,
         ajoutsRestants: 3,
         ajoutsMax: 3,
       }),
@@ -171,23 +157,20 @@ describe('phrases de l’écran', () => {
   it('sans limite lue, la phrase ne promet aucun ajout restant', () => {
     expect(
       phraseMesIndicateurs({
-        nom: 'Kumi',
         suivis: 1,
-        prevus: 1,
         ajoutesParVous: 0,
-        ajoutesParLEglise: 0,
         ajoutsRestants: null,
         ajoutsMax: 0,
       }),
-    ).toBe('Kumi suit 1 indicateur : 1 prévu par la coordination.')
+    ).toBe('1 indicateur suivi.')
   })
 
-  it('l’attente d’une validation dit les jours, puis ce qu’on peut déjà faire, à part', () => {
-    expect(texteEnAttente(2)).toBe('À valider par EJP Tech depuis 2 jours.')
-    expect(texteEnAttente(0)).toBe("À valider par EJP Tech depuis aujourd'hui.")
-    expect(texteEnAttente(1)).toBe('À valider par EJP Tech depuis 1 jour.')
-    expect(texteEnAttente(null)).toBe('À valider par EJP Tech.')
-    expect(SUITE_EN_ATTENTE).toBe('Vous pouvez déjà le saisir.')
+  it('l’attente d’une validation dit les jours, puis ce qui arrive aux chiffres, à part (T66, t080)', () => {
+    expect(texteEnAttente(2)).toBe('En attente de validation depuis 2 jours.')
+    expect(texteEnAttente(0)).toBe("En attente de validation depuis aujourd'hui.")
+    expect(texteEnAttente(1)).toBe('En attente de validation depuis 1 jour.')
+    expect(texteEnAttente(null)).toBe('En attente de validation.')
+    expect(SUITE_EN_ATTENTE).toBe("Vos chiffres compteront dès qu'il sera validé.")
   })
 
   it('un retrait dit son jour et son motif', () => {
@@ -198,7 +181,7 @@ describe('phrases de l’écran', () => {
   it('les limites disent ce qu’il faut faire, avec les plafonds de la base (T62 : retirez-en un ; T59 : EJP Tech)', () => {
     const limites = { ajouts: 3, ajouts_max: 3, lignes: 12, lignes_max: 30 }
     expect(explicationLimiteAjouts(limites)).toBe(
-      'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+      'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
     )
     expect(explicationLimiteLignes(limites)).toBe(
       "Votre fiche compte déjà 30 indicateurs. Demandez à EJP Tech d'en retirer un.",
@@ -212,9 +195,9 @@ describe('phrases de l’écran', () => {
 describe('l’écran construit à partir des lectures', () => {
   const donnees = construireMesIndicateurs(lecturesNormales())
 
-  it('la phrase : 7 suivis, 5 prévus, 2 ajoutés par vous, 1 ajout restant', () => {
+  it('la phrase : 7 suivis, 2 ajoutés par vous, 1 ajout restant (T66, t329)', () => {
     expect(donnees.phrase).toBe(
-      'Communication suit 7 indicateurs : 5 prévus par la coordination et 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
+      '7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
     )
     expect(donnees.vide).toBe(false)
     expect(donnees.limite).toBeNull()
@@ -239,7 +222,7 @@ describe('l’écran construit à partir des lectures', () => {
     const lignes = donnees.sections.flatMap((section) => section.lignes)
     const par = (libelle: string) => lignes.find((ligne) => ligne.libelle === libelle)
     expect(par('Publications')).toMatchObject({
-      origine: 'Prévu par la coordination',
+      origine: 'Indicateur prévu',
       usage: 'Dernière saisie le 2 oct.',
       attente: null,
     })
@@ -254,8 +237,8 @@ describe('l’écran construit à partir des lectures', () => {
     const lignes = donnees.sections.flatMap((section) => section.lignes)
     const projets = lignes.find((ligne) => ligne.libelle === 'Projets en cours')
     expect(projets?.enAttente).toBe(true)
-    expect(projets?.attente).toBe('À valider par EJP Tech depuis 2 jours.')
-    expect(projets?.attenteSuite).toBe('Vous pouvez déjà le saisir.')
+    expect(projets?.attente).toBe('En attente de validation depuis 2 jours.')
+    expect(projets?.attenteSuite).toBe("Vos chiffres compteront dès qu'il sera validé.")
     // Une ligne qui n'attend pas ne dit ni l'une ni l'autre.
     const publications = lignes.find((ligne) => ligne.libelle === 'Publications')
     expect(publications).toMatchObject({ attente: null, attenteSuite: null })
@@ -427,7 +410,7 @@ describe('l’écran construit à partir des lectures', () => {
       limites: { ajouts: 3, ajouts_max: 3, lignes: 8, lignes_max: 30 },
     })
     expect(resultat.limite).toMatchObject({ genre: 'ajouts' })
-    expect(resultat.limite?.message).toMatch(/^Votre ministère a déjà 3 indicateurs à lui\./)
+    expect(resultat.limite?.message).toMatch(/^Votre ministère a déjà 3 indicateurs ajoutés\./)
     expect(resultat.phrase).toContain('Vous avez atteint le maximum de 3 ajouts.')
   })
 
@@ -477,7 +460,7 @@ describe('T62 : retrait d’un ajout par le ministère', () => {
     const long = motif('a'.repeat(281))
     expect(long.success).toBe(false)
     if (!long.success) {
-      expect(long.error.issues[0]?.message).toBe('Le motif dépasse 280 caractères.')
+      expect(long.error.issues[0]?.message).toBe('Raccourcissez le motif : 280 caractères au plus.')
     }
   })
 
@@ -513,7 +496,10 @@ describe('T62 : retrait d’un ajout par le ministère', () => {
         code: 'P0001',
         message: "N'écrivez aucun nom ni information personnelle.",
       }),
-    ).toEqual({ ou: 'champ', message: "N'écrivez aucun nom ni information personnelle." })
+    ).toEqual({
+      ou: 'champ',
+      message: 'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    })
     expect(
       lireRefusRetrait({
         code: 'P0001',
@@ -530,20 +516,23 @@ describe('T62 : retrait d’un ajout par le ministère', () => {
       message: 'Ce chiffre sert au calcul « Taux » : demandez à EJP Tech de le retirer.',
     })
     expect(lireRefusRetrait({ code: 'P0001', message: 'Cet indicateur est déjà retiré.' })).toEqual(
-      { ou: 'bouton', message: 'Cet indicateur est déjà retiré.' },
+      { ou: 'bouton', message: 'Cet indicateur est déjà retiré. Rechargez la page.' },
     )
     expect(lireRefusRetrait(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
   })
 })
 
 describe('refus de la base après « Envoyer pour validation »', () => {
-  it('un refus du « Pourquoi » se dit sous le champ, tel quel', () => {
+  it('un refus du « Pourquoi » se dit sous le champ, traduit (T66, m268)', () => {
     expect(
       lireRefusSuggestion({
         code: 'P0001',
         message: "N'écrivez aucun nom ni information personnelle.",
       }),
-    ).toEqual({ ou: 'champ', message: "N'écrivez aucun nom ni information personnelle." })
+    ).toEqual({
+      ou: 'champ',
+      message: 'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+    })
     expect(lireRefusSuggestion({ code: 'P0001', message: '280 caractères au plus.' }).ou).toBe(
       'champ',
     )
@@ -578,7 +567,7 @@ describe('refus de la base après « Envoyer pour validation »', () => {
   it('un refus de droit, une connexion perdue, un refus inattendu', () => {
     expect(lireRefusSuggestion({ code: '42501', message: 'x' })).toEqual({
       ou: 'bouton',
-      message: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+      message: 'Cet élément est introuvable. Rechargez la page.',
     })
     expect(lireRefusSuggestion(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
     expect(lireRefusSuggestion({ code: '23505', message: 'duplicate key' })).toEqual({

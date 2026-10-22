@@ -334,7 +334,12 @@ describe('contrôles, limites et termes', () => {
         message: 'Cette fiche a déjà un indicateur « X ». Choisissez un autre nom.',
         bloquant: true,
       },
-      { famille: 'donnees_personnelles', message: personnel, bloquant: true },
+      // Ce que la base détecte, puis quoi faire (T66, m268).
+      {
+        famille: 'donnees_personnelles',
+        message: 'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+        bloquant: true,
+      },
     ])
     expect(rpc).toHaveBeenCalledWith('verifier_libelle', {
       p_libelle: 'X',

@@ -196,7 +196,7 @@ describe('la fenêtre « Modifier les mentions »', () => {
     expect(modifierMentions).not.toHaveBeenCalled()
   })
 
-  it('un refus de la base se dit tel quel, la fenêtre et les cases restent', async () => {
+  it('un refus de la base se dit traduit, la fenêtre et les cases restent (T66, m148)', async () => {
     modifierMentions.mockRejectedValue({
       code: 'P0001',
       message: 'Ce point est traité : ses mentions ne changent plus.',
@@ -206,7 +206,7 @@ describe('la fenêtre « Modifier les mentions »', () => {
     await userEvent.click(await within(fenetre).findByRole('checkbox', { name: 'Social' }))
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Enregistrer les mentions' }))
     expect(await within(fenetre).findByRole('alert')).toHaveTextContent(
-      'Ce point est traité : ses mentions ne changent plus.',
+      'Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.',
     )
     expect(within(fenetre).getByRole('checkbox', { name: 'Social' })).toBeChecked()
     // La page est périmée : elle est relue à la fermeture.

@@ -172,12 +172,14 @@ test.describe('la fenêtre', () => {
     await auditer(page)
   })
 
-  test('refus de la base : son message, tel quel, sous le bouton', async ({ page }) => {
+  test('refus de la base : son message, traduit, sous le bouton (T66, m148)', async ({ page }) => {
     const boite = await ouvrirFenetre(page, 'profil=ministere&envoi=refus')
     await basculer(page, boite, 'Social')
     await boite.getByRole('button', { name: 'Enregistrer les mentions' }).click()
     const alerte = boite.getByRole('alert')
-    await expect(alerte).toHaveText('Ce point est traité : ses mentions ne changent plus.')
+    await expect(alerte).toHaveText(
+      'Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.',
+    )
     const boiteAlerte = await alerte.boundingBox()
     const boiteAnnuler = await boite.getByRole('button', { name: 'Annuler' }).boundingBox()
     expect(boiteAlerte).not.toBeNull()

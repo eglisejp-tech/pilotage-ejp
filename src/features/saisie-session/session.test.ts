@@ -198,7 +198,7 @@ describe('textes de la saisie', () => {
 describe('message d’un envoi refusé', () => {
   it('un refus de la base prend la phrase de la table de traduction', () => {
     expect(messageErreurEnvoi({ code: 'P0001', message: 'Saisissez au moins une valeur.' })).toBe(
-      'Saisissez au moins une valeur.',
+      'Saisissez au moins un chiffre.',
     )
     expect(
       lireEchecEnvoi({

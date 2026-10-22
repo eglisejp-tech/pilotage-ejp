@@ -27,8 +27,11 @@ export interface EtatEnvoi {
   doublonRefuse: (signature: string) => boolean
 }
 
-/** État d'envoi d'un formulaire de saisie : en cours, échec, réussite (LISEZMOI, « États »). */
-export function useEnvoiSaisie(): EtatEnvoi {
+/**
+ * État d'envoi d'un formulaire de saisie : en cours, échec, réussite (LISEZMOI, « États »).
+ * `acces` : la phrase d'un refus de droit, si l'écran en a une à lui (`lireEchecEnvoi`).
+ */
+export function useEnvoiSaisie(acces?: string): EtatEnvoi {
   const [enCours, setEnCours] = useState(false)
   const [echec, setEchec] = useState<EtatEnvoi['echec']>(null)
   const [reussite, setReussite] = useState<EtatEnvoi['reussite']>(null)
@@ -60,14 +63,14 @@ export function useEnvoiSaisie(): EtatEnvoi {
         return true
       } catch (erreur) {
         setReussite(null)
-        setEchec(lireEchecEnvoi(erreur))
+        setEchec(lireEchecEnvoi(erreur, acces))
         return false
       } finally {
         verrou.current = false
         setEnCours(false)
       }
     },
-    [],
+    [acces],
   )
 
   return {

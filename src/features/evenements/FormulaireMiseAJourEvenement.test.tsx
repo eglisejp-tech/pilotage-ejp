@@ -137,9 +137,10 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     afficher(undefined, envoyer)
     await changerDate('2026-10-05')
     await userEvent.click(bouton())
-    const message = await screen.findByText(/La nouvelle date doit être/)
+    // Une seule phrase de date passée, comme à l'ajout (T66, t140 et m125).
+    const message = await screen.findByText(/Cette date est passée/)
     expect(message).toHaveTextContent(
-      "La nouvelle date doit être aujourd'hui ou plus tard. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
+      "Cette date est passée. Choisissez aujourd'hui ou une date à venir. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
     )
     expect(within(message).getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',
@@ -155,7 +156,7 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     )
     await changerDate('2026-10-07')
     await userEvent.click(bouton())
-    const message = await screen.findByText(/La nouvelle date doit être/)
+    const message = await screen.findByText(/Cette date est passée/)
     expect(
       within(message).getByRole('link', { name: 'Signaler une difficulté' }),
     ).toBeInTheDocument()

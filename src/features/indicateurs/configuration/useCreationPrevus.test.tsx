@@ -52,19 +52,20 @@ describe('messageDeRefusPrevus', () => {
     ).toBe("Cette fiche a déjà des indicateurs prévus : « Aucun prévu » ne s'applique plus.")
   })
 
-  it('un garde-fou technique (« le catalogue est à corriger ») : le repli, pas le texte', () => {
-    expect(
-      messageDeRefusPrevus({
-        code: 'P0001',
-        message:
-          'Deux indicateurs prévus portent le même nom, « X » : le catalogue est à corriger.',
-      }),
-    ).toBe("L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.")
+  it('le catalogue est à corriger : la panne, sans « Réessayez », jamais le texte (T66, m229)', () => {
+    for (const message of [
+      'Deux indicateurs prévus portent le même nom, « X » : le catalogue est à corriger.',
+      'Un indicateur prévu porte le nom du chiffre commun « X » : le catalogue est à corriger.',
+    ]) {
+      expect(messageDeRefusPrevus({ code: 'P0001', message })).toBe(
+        "Les indicateurs prévus n'ont pas pu être créés. Prévenez EJP Tech.",
+      )
+    }
   })
 
-  it('un refus de droit (42501) dit seulement que l’élément n’est pas accessible', () => {
+  it('un refus de droit (42501) dit seulement que l’élément est introuvable (T66, m273)', () => {
     expect(messageDeRefusPrevus({ code: '42501', message: 'permission denied for table x' })).toBe(
-      "Cet élément n'existe pas ou vous n'y avez pas accès.",
+      'Cet élément est introuvable. Rechargez la page.',
     )
   })
 

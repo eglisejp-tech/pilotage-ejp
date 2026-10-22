@@ -8,14 +8,16 @@ const REPLI =
   "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
 
 describe('refus d’une création de point', () => {
+  // La table donne au refus de la base le texte du contrôle avant l'envoi (T66, m137 à m151) ;
+  // le titre vide ou trop long n'a qu'un message de la base, dit tel quel.
   it.each([
-    [MESSAGES_POINT.refus.titre, 'titre'],
-    [MESSAGES_POINT.refus.description, 'description'],
-    [MESSAGES_POINT.refus.attendu, 'attendu'],
-    [MESSAGES_POINT.refus.echeancePassee, 'echeance'],
-    [MESSAGES_POINT.refus.mentionRefusee, 'mentions'],
-  ])('« %s » : dit sous le champ « %s », par la table de traduction', (message, champ) => {
-    expect(lireRefusPoint(refusDeLaBase(message))).toEqual({ ou: 'champ', champ, message })
+    [MESSAGES_POINT.refus.titre, 'titre', MESSAGES_POINT.refus.titre],
+    [MESSAGES_POINT.refus.description, 'description', MESSAGES_POINT.controle.description],
+    [MESSAGES_POINT.refus.attendu, 'attendu', MESSAGES_POINT.controle.attendu],
+    [MESSAGES_POINT.refus.echeancePassee, 'echeance', MESSAGES_POINT.controle.echeancePassee],
+    [MESSAGES_POINT.refus.mentionRefusee, 'mentions', MESSAGES_POINT.controle.mentionRefusee],
+  ])('« %s » : dit sous le champ « %s », par la table de traduction', (base, champ, message) => {
+    expect(lireRefusPoint(refusDeLaBase(base))).toEqual({ ou: 'champ', champ, message })
   })
 
   it('un refus absent de la table : le repli sous le bouton, jamais le texte brut (m270)', () => {
@@ -34,7 +36,7 @@ describe('refus d’une création de point', () => {
     })
     expect(
       lireRefusPoint({ code: '42501', message: MESSAGES_POINT.refus.creationReservee }),
-    ).toEqual({ ou: 'bouton', message: MESSAGES_POINT.refus.creationReservee })
+    ).toEqual({ ou: 'bouton', message: 'Votre compte ne permet pas de créer un point.' })
   })
 
   it('connexion expirée, compte désactivé : leur phrase (m271, m272)', () => {

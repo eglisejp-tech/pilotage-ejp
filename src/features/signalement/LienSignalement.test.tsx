@@ -63,8 +63,9 @@ describe('textes du signalement', () => {
     expect(TEXTES_SIGNALEMENT.dateRefuseeAjout).toBe(
       "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
     )
+    // Une seule phrase de date passée, à l'ajout comme à la mise à jour (T66, t140 et m125).
     expect(TEXTES_SIGNALEMENT.dateRefuseeMiseAJour).toBe(
-      "La nouvelle date doit être aujourd'hui ou plus tard.",
+      "Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
     )
     expect(TEXTES_SIGNALEMENT.questionDate).toBe('Vous ne pouvez pas choisir de date ?')
     // Formule « déjà enregistré » (m134, proposé le 12 octobre 2026).

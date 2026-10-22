@@ -17,12 +17,17 @@ export const LONGUEUR_MIN_MOTIF = 10
 export const LONGUEUR_MAX_MOTIF = 280
 
 /**
- * Motif trop long, dit avant l'envoi (T66, t344 et m236). Le refus de la base garde son texte
- * (`motifLong`, clé de la table de traduction) jusqu'à la fusion de T62 et T64.
+ * Motif trop long, dit avant l'envoi (T66, t344 et m236) : le même texte que la table de
+ * traduction donne au refus de la base (`motifLong`, sa clé).
  */
 export const MOTIF_TROP_LONG = 'Raccourcissez le motif : 280 caractères au plus.'
 
-/** Messages de la base (`valider_indicateur`), repris tels quels par l'écran. */
+/**
+ * Messages de la base (`valider_indicateur`) : les clés de la table de traduction
+ * (`src/data/messagesBase.ts`), que l'aperçu simule. `motifCourt` se dit tel quel ; les autres
+ * prennent les textes de la refonte (T66, m235 et m236). `acces` est la phrase de l'écran pour un
+ * refus de droit.
+ */
 export const MESSAGES_BASE_VALIDATION = {
   motifCourt: 'Expliquez le refus (10 caractères au moins).',
   motifLong: 'Le motif dépasse 280 caractères.',
@@ -30,7 +35,8 @@ export const MESSAGES_BASE_VALIDATION = {
   sortie: "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.",
   choix: 'Choisissez de valider ou de refuser.',
   correction: "Une correction du nom ne se décide pas encore dans l'outil.",
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+  /** Forme commune d'un élément introuvable (T66, m273). */
+  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 export const TEXTES_A_VALIDER = {

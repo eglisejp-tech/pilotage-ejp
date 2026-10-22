@@ -35,10 +35,10 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     )
   })
 
-  it('un autre refus de la table : sa phrase, sous le bouton', () => {
+  it('un autre refus de la table : sa phrase, sous le bouton (T66, m124)', () => {
     expect(lireRefus(erreurBase('Ce ministère ne peut pas être mentionné.'))).toEqual({
       ou: 'bouton',
-      message: 'Ce ministère ne peut pas être mentionné.',
+      message: 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.',
     })
   })
 

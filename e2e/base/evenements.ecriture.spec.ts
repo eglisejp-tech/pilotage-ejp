@@ -145,8 +145,9 @@ test.describe('Communication', () => {
     )
     await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, -1))
     await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
+    // Une seule phrase de date passée, comme à l'ajout (T66, t140 et m125).
     await expect(page.getByLabel('Date', { exact: true })).toHaveAccessibleDescription(
-      "La nouvelle date doit être aujourd'hui ou plus tard. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
+      "Cette date est passée. Choisissez aujourd'hui ou une date à venir. Vous ne pouvez pas choisir de date ? Signaler une difficulté",
     )
     expect(await compter(page, `evenement_etat?select=id&evenement_id=eq.${evenementId}`)).toBe(
       etatsAvant,

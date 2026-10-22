@@ -115,7 +115,10 @@ export const TEXTES_FENETRE_MASQUAGE = {
   erreurMotif: 'Choisissez un motif dans la liste.',
 } as const
 
-/** Messages de la base, repris tels quels (migration 20261009110000). */
+/**
+ * Messages de la base (migration 20261009110000) : les clés de la table de traduction, que
+ * l'aperçu simule ; l'écran dit leurs textes revus (T66, t357 à t359 ; `src/data/messagesBase.ts`).
+ */
 export const MESSAGES_BASE_MODERATION = {
   introuvable: 'Texte introuvable, vide ou déjà masqué.',
   dejaRelu: 'Ce texte a déjà été relu.',

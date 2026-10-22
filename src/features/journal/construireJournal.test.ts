@@ -380,7 +380,8 @@ describe('une ligne du journal, en mots', () => {
         ministere_nom: 'Kumi',
         detail: { champ: 'motif', motif: 'autre' },
       }),
-    ).toBe("Retrait d'un indicateur de Kumi, motif : autre")
+      // Les mêmes motifs que la fenêtre de masquage (T66, t382).
+    ).toBe("Retrait d'un indicateur de Kumi, motif : autre information personnelle")
   })
 
   it('un libellé retiré pour confidentialité s’affiche en `--encre-3`', () => {

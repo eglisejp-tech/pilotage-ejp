@@ -23,6 +23,9 @@ const MENTIONNE = '10000000-0000-4000-8000-000000000002'
 const AUTRE = '10000000-0000-4000-8000-000000000003'
 const POINT_ID = '30000000-0000-4000-8000-000000000001'
 const RAPPEL = "N'écrivez aucun nom ni information personnelle."
+/** Point traité entre-temps : la phrase de la table de traduction (T66, m148). */
+const DEJA_TRAITE =
+  'Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.'
 
 const changerStatut = vi.mocked(ecriture.changerStatutPoint)
 const marquer = vi.mocked(ecriture.marquerTraite)
@@ -261,7 +264,7 @@ describe('« Marquer traité » pour un ministère', () => {
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })
 
-  it('un refus de la base se dit tel quel sous le bouton, le texte reste dans le champ', async () => {
+  it('un refus de la base se dit sous le bouton, traduit, le texte reste dans le champ', async () => {
     const utilisateur = userEvent.setup()
     marquer.mockRejectedValue({ code: 'P0001', message: 'Ce point est déjà traité.' })
     const { invalider } = afficher(ministere(CREATEUR))
@@ -270,7 +273,7 @@ describe('« Marquer traité » pour un ministère', () => {
     await utilisateur.type(champ, 'Réglé avec le propriétaire.')
     await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(DEJA_TRAITE)
     expect(champ).toHaveValue('Réglé avec le propriétaire.')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     // L'erreur est sous le bouton d'enregistrement, avant « Annuler ».
@@ -299,13 +302,13 @@ describe('« Marquer traité » pour un ministère', () => {
       'Réglé avec le propriétaire.',
     )
     await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
-    expect(await screen.findByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
+    expect(await screen.findByRole('alert')).toHaveTextContent(DEJA_TRAITE)
 
     // Le point revient traité (l'autre profil l'a traité) : les boutons disparaissent, mais pas la
     // fenêtre ni le message de refus.
     rerender(arbre(unPoint('traite')))
     expect(screen.getByRole('dialog', { name: 'Marquer traité' })).toBeInTheDocument()
-    expect(screen.getByRole('alert')).toHaveTextContent('Ce point est déjà traité.')
+    expect(screen.getByRole('alert')).toHaveTextContent(DEJA_TRAITE)
     await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
@@ -496,7 +499,7 @@ describe('« Changer le statut »', () => {
     expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
   })
 
-  it('un refus de la base (point traité entre-temps) se dit sous le bouton, tel quel', async () => {
+  it('un refus de la base (point traité entre-temps) se dit sous le bouton, traduit', async () => {
     const utilisateur = userEvent.setup()
     changerStatut.mockRejectedValue({
       code: 'P0001',
@@ -506,9 +509,7 @@ describe('« Changer le statut »', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
     await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
     await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ce point est traité : il ne change plus.',
-    )
+    expect(await screen.findByRole('alert')).toHaveTextContent(DEJA_TRAITE)
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     // La page est relue à la fermeture de la fenêtre, pas pendant.
     expect(invalider).not.toHaveBeenCalled()

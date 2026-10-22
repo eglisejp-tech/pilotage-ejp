@@ -121,7 +121,7 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     expect(document.title).toBe('Mes indicateurs, Pilotage EJP')
     expect(
       screen.getByText(
-        'Communication suit 7 indicateurs : 5 prévus par la coordination et 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
+        '7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1 autre.',
       ),
     ).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 2 }).map((titre) => titre.textContent)).toEqual([
@@ -157,13 +157,18 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     connecte('ministere')
     afficher('/ma-fiche/indicateurs')
     await ecran()
-    // L'état en gras orange, puis ce qu'on peut faire, en texte normal et sur sa ligne.
-    const attente = screen.getByText('À valider par EJP Tech depuis 2 jours.')
+    // L'état en gras orange, puis ce qui arrive aux chiffres, en texte normal et sur sa ligne
+    // (T66, t080 : sans nommer EJP Tech).
+    const attente = screen.getByText('En attente de validation depuis 2 jours.')
     expect(attente).toBeInTheDocument()
-    expect(attente.nextElementSibling).toHaveTextContent('Vous pouvez déjà le saisir.')
+    expect(attente.nextElementSibling).toHaveTextContent(
+      "Vos chiffres compteront dès qu'il sera validé.",
+    )
     expect(screen.queryByText(/le berger voit ses valeurs/)).toBeNull()
     expect(screen.getByText('Suggestion ajoutée par vous le 8 oct.')).toBeInTheDocument()
-    expect(screen.getAllByText('Prévu par la coordination')).toHaveLength(5)
+    // Sans nommer la coordination sur l'écran d'un ministère (T66, t339).
+    expect(screen.getAllByText('Indicateur prévu')).toHaveLength(5)
+    expect(screen.queryByText(/coordination/)).toBeNull()
     expect(screen.getByText('Dernière saisie le 2 oct.')).toBeInTheDocument()
     expect(screen.getAllByText('Jamais saisi')).toHaveLength(2)
     expect(screen.getByText('Se calcule tout seul')).toBeInTheDocument()
@@ -226,11 +231,9 @@ describe('/ma-fiche/indicateurs, lectures', () => {
     afficher('/ma-fiche/indicateurs')
     await ecran()
     expect(
-      screen.getByText(
-        "Votre ministère n'a pas encore d'indicateur à lui. Les STARs au service, actifs et en FIJ se saisissent déjà chaque dimanche.",
-      ),
+      screen.getByText("Votre ministère n'a pas encore d'indicateur à lui."),
     ).toBeInTheDocument()
-    expect(screen.queryByText(/suit \d+ indicateur/)).toBeNull()
+    expect(screen.queryByText(/\d+ indicateurs? suivis?/)).toBeNull()
   })
 
   it('une lecture qui échoue : « La connexion a échoué. Réessayez. » et « Réessayer »', async () => {
@@ -371,10 +374,10 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await ecran()
     expect(screen.getByText(/Vous avez atteint le maximum de 3 ajouts\./)).toBeInTheDocument()
     const panneau = await ouvrirLePanneau()
-    // T62 : le ministère retire lui-même un de ses ajouts.
+    // T62 : le ministère retire lui-même un de ses ajouts (texte revu par T66, m233).
     expect(
       within(panneau).getByText(
-        'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+        'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
       ),
     ).toBeInTheDocument()
     expect(within(panneau).queryByRole('button', { name: /^Choisir «/ })).toBeNull()
@@ -415,7 +418,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     const alerte = await within(panneau).findByRole('alert')
     // Le même texte que la limite vue avant l'envoi (m233, T62).
     expect(alerte).toHaveTextContent(
-      'Votre ministère a déjà 3 indicateurs à lui. Retirez-en un pour en ajouter un autre.',
+      'Votre ministère a déjà 3 indicateurs ajoutés. Retirez-en un pour en ajouter un autre.',
     )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })
@@ -441,8 +444,11 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
       'Écrire à jean@exemple.test pour voir.',
     )
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
+    // Ce que la base détecte, puis quoi faire (T66, m268).
     expect(
-      await within(panneau).findByText("N'écrivez aucun nom ni information personnelle."),
+      await within(panneau).findByText(
+        'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+      ),
     ).toBeInTheDocument()
     expect(within(panneau).getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
   })
@@ -462,8 +468,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     )
     await userEvent.type(within(panneau).getByRole('textbox'), 'Voir ce que le ministère a mené.')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
+    // La phrase commune des formulaires (T66, m257).
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      /^La connexion a échoué\. Votre message est encore dans le formulaire/,
+      /^La connexion a échoué\. Votre saisie est encore dans le formulaire/,
     )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })
@@ -610,12 +617,15 @@ describe('/ma-fiche/indicateurs, retrait d’un ajout par le ministère (T62)', 
     const champ = within(fenetre).getByRole('textbox')
     await userEvent.type(champ, 'Demandé par jean@exemple.test.')
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Retirer' }))
-    // Le rappel sous le champ, puis la même phrase dite comme erreur du champ.
-    await waitFor(() =>
-      expect(
-        within(fenetre).getAllByText("N'écrivez aucun nom ni information personnelle."),
-      ).toHaveLength(2),
-    )
+    // Le rappel sous le champ, puis l'erreur du champ : ce que la base détecte (T66, m268).
+    expect(
+      await within(fenetre).findByText(
+        'Retirez de votre texte les emails, liens, numéros et noms de personnes.',
+      ),
+    ).toBeInTheDocument()
+    expect(
+      within(fenetre).getByText("N'écrivez aucun nom ni information personnelle."),
+    ).toBeInTheDocument()
     expect(champ).toHaveAttribute('aria-invalid', 'true')
 
     message = 'Ce chiffre sert au calcul « Taux de livraison » : demandez à EJP Tech de le retirer.'

@@ -314,10 +314,10 @@ describe('messageDeRefusPoint', () => {
     ).toBe(MESSAGES_POINT.refus.acces)
   })
 
-  it('garde le refus de création réservée aux ministères', () => {
+  it('la création réservée aux ministères : la formule « droit refusé » (T66, m142)', () => {
     expect(
       messageDeRefusPoint({ code: '42501', message: MESSAGES_POINT.refus.creationReservee }),
-    ).toBe('Seul un compte de ministère peut créer un point.')
+    ).toBe('Votre compte ne permet pas de créer un point.')
   })
 
   it('double authentification absente : la connexion a expiré, pas « introuvable » (m271)', () => {
@@ -348,7 +348,7 @@ describe('messageDeRefusPoint', () => {
         { code: '42501', message: MESSAGES_POINT.refus.creationReservee },
         'creation',
       ),
-    ).toBe(MESSAGES_POINT.refus.creationReservee)
+    ).toBe('Votre compte ne permet pas de créer un point.')
   })
 
   it('mentions changées entre-temps par un autre compte : fermer la fenêtre (m157)', () => {
@@ -409,13 +409,13 @@ describe('messageDeRefusPoint', () => {
     expect(MESSAGES_POINT.reussite.mentions).toBe('Mentions enregistrées.')
   })
 
-  it('un refus de mentions de la base garde le texte de la table (point traité, ministère refusé)', () => {
-    for (const message of [
-      MESSAGES_POINT.refus.pointTraiteMentions,
-      MESSAGES_POINT.refus.mentionRefusee,
-    ]) {
-      expect(messageDeRefusPoint({ code: 'P0001', message })).toBe(message)
-    }
+  it('un refus de mentions de la base prend le texte de la table (point traité, ministère refusé)', () => {
+    expect(
+      messageDeRefusPoint({ code: 'P0001', message: MESSAGES_POINT.refus.pointTraiteMentions }),
+    ).toBe('Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.')
+    expect(
+      messageDeRefusPoint({ code: 'P0001', message: MESSAGES_POINT.refus.mentionRefusee }),
+    ).toBe(MESSAGES_POINT.controle.mentionRefusee)
   })
 })
 

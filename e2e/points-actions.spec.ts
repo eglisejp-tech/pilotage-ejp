@@ -156,14 +156,16 @@ test.describe('Marquer traité', () => {
     await auditer(page)
   })
 
-  test('refus de la base : son message, tel quel', async ({ page }) => {
+  test('refus de la base : son message, traduit (T66, m148)', async ({ page }) => {
     await ouvrir(page, 'profil=ministere&envoi=refus')
     await boutonDuPoint(page, 'Marquer traité').click()
     const boite = fenetre(page)
     await boite.getByLabel('Ce qui a été traité, et comment').fill('Salle confirmée le 10.')
     await boite.getByRole('button', { name: 'Marquer traité' }).click()
     const alerte = boite.getByRole('alert')
-    await expect(alerte).toHaveText('Ce point est déjà traité.')
+    await expect(alerte).toHaveText(
+      'Ce point a déjà été marqué traité. Fermez cette fenêtre pour mettre la page à jour.',
+    )
     // L'erreur est sous le bouton d'enregistrement, avant « Annuler » : elle reste à l'écran.
     const boiteAlerte = await alerte.boundingBox()
     const boiteAnnuler = await boite.getByRole('button', { name: 'Annuler' }).boundingBox()

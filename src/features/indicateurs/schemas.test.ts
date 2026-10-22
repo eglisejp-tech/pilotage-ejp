@@ -135,13 +135,13 @@ describe('« Pourquoi » et motif : 10 à 280 caractères après suppression des
 
   it('refuse moins de 10 caractères, espaces autour exclus', () => {
     expect(message(schemaPourquoi.safeParse('123456789'))).toBe(
-      'Expliquez pourquoi en 10 caractères au moins.',
+      'Expliquez pourquoi (10 caractères au moins).',
     )
     expect(message(schemaPourquoi.safeParse('   123456789   '))).toBe(
-      'Expliquez pourquoi en 10 caractères au moins.',
+      'Expliquez pourquoi (10 caractères au moins).',
     )
     expect(message(schemaPourquoi.safeParse(''))).toBe(
-      'Expliquez pourquoi en 10 caractères au moins.',
+      'Expliquez pourquoi (10 caractères au moins).',
     )
     expect(message(schemaMotif.safeParse('court'))).toBe(
       'Expliquez le refus (10 caractères au moins).',
@@ -152,7 +152,9 @@ describe('« Pourquoi » et motif : 10 à 280 caractères après suppression des
   it('refuse plus de 280 caractères, espaces autour exclus', () => {
     expect(schemaPourquoi.safeParse('a'.repeat(280)).success).toBe(true)
     expect(schemaPourquoi.safeParse(` ${'a'.repeat(280)} `).success).toBe(true)
-    expect(message(schemaPourquoi.safeParse('a'.repeat(281)))).toBe('280 caractères au plus.')
+    expect(message(schemaPourquoi.safeParse('a'.repeat(281)))).toBe(
+      'Raccourcissez ce texte : 280 caractères au plus.',
+    )
     expect(message(schemaMotif.safeParse('a'.repeat(281)))).toBe(
       'Raccourcissez le motif : 280 caractères au plus.',
     )
