@@ -15,6 +15,19 @@
   (section 6) sont réécrits : cinq aides sont supprimées, vingt-huit restent. Trois de ces cinq sont
   encore appelées par un écran (`CODES_A_RETIRER`), les deux de la fiche sont déjà retirées avec le
   lot I (valeurs exactes, P52). Sources de la recherche à la fin de la section 2.
+- **Changement du 19 octobre 2026 (T66, refonte des textes)** : les règles de rédaction de tous les
+  textes sont dans `docs/conception/guide-de-redaction.md`, qui remplace la section 2. Une aide
+  définit un chiffre ou un terme qu'une personne nouvelle ne peut pas deviner (guide, section 4) :
+  **18 aides restent** (15 des écrans inventoriés le 12 octobre, 3 du lot indicateurs) :
+  `dimanche.actifs`, `dimanche.enFij`, `session.presents`, `fij.completudeDep`, `evenement.statut`,
+  `reunion.decision`, `fiche.sommeAnnee`, `fiche.courbe`, `eglise.completude`, `eglise.ecart`,
+  `eglise.courbe`, `comptes.etat`, `indicateurs.nombre`, `indicateurs.prevus`, `indicateurs.usage`,
+  `indicateurs.domaine`, `indicateurs.calcul`, `indicateurs.pourquoi`. Les autres sont retirées ou
+  deviennent une **indication visible sous le champ** (prop `note` de `ChampTexteCourt`, `ChampDate`,
+  `ChampLigne` et `ChoixMinisteres`) : l'attendu et l'échéance d'un point, la période d'un mois,
+  l'email d'un ministère, les ministères attendus d'une session, le choix de la liste des indicateurs
+  prévus. Les textes à jour sont dans `src/components/aide/textesAide.ts` (seule source) ; les
+  sections 6 et 7 ci-dessous gardent l'historique du 7 octobre.
 - **Sources** : `docs/plan-etape-4.md` (lots E2 à E7), `BRIEF.md` (sections 3, 4 et 9),
   `docs/reference/maquettes/LISEZMOI.md`, maquettes 04, 07, 08, 09, 11 et 12,
   `src/styles/tokens.css`, composants de `src/features/cette-semaine/`.
@@ -57,6 +70,12 @@ Une aide ne contient **aucun nom de personne** ni donnée de la base : ses texte
 dans le code. L'ouverture d'une aide n'est ni comptée ni écrite au journal.
 
 ## 2. Règles de rédaction
+
+**Remplacée le 19 octobre 2026 par `docs/conception/guide-de-redaction.md` (T66).** Le guide en
+reprend l'essentiel et le change sur quatre points (guide, section 9) : une courte phrase négative
+est permise quand elle rassure ou protège ; 120 caractères au plus, 90 visés ; le vocabulaire suit le
+glossaire du guide ; les rôles ne se nomment presque jamais. Le texte ci-dessous reste pour
+l'historique.
 
 Réécrites le 7 octobre 2026, après une recherche sur la rédaction des aides courtes (sources en fin
 de section) et les remarques de la personne responsable : une aide dit **ce que la personne doit
@@ -328,8 +347,12 @@ référence et ne reçoit aucun token nouveau.
 
 ## 6. Catalogue
 
-Statut de tous les textes : **Proposé, réécrit le 7 octobre 2026 après les remarques de la personne
-responsable**, à valider par elle. La colonne « Car. » donne le nombre de caractères (120 au plus).
+**État au 19 octobre 2026 (T66)** : 18 aides, validées avec la refonte des textes (liste en tête de
+ce document) ; leurs textes sont dans `src/components/aide/textesAide.ts`, que le test
+`textesAide.test.ts` compte. Le catalogue ci-dessous est celui du 7 octobre, gardé pour l'historique.
+
+Statut de tous les textes (7 octobre) : **Proposé, réécrit le 7 octobre 2026 après les remarques de
+la personne responsable**, à valider par elle. La colonne « Car. » donne le nombre de caractères (120 au plus).
 Placement : **Flux** ou **Flottante** (section 3). Profils : ceux qui voient l'écran ; EJP Tech lit
 les écrans de lecture, mais n'a aucun écran de saisie (T29).
 
@@ -513,6 +536,14 @@ Un problème de compte ou de connexion ne passe pas par ce lien : un ministère 
 connecter écrit à EJP Tech, qui gère les comptes (T60, 13 octobre 2026 ; l'administration avant).
 
 ### Les textes
+
+Revus par T66 (19 octobre 2026) ; les textes à jour sont dans `src/features/signalement/textes.ts` :
+plus de phrase sous le titre ; « Signalement envoyé. La réponse s'affichera sur cette page. » ;
+« Réponse : » devant la réponse d'EJP Tech ; mise à jour d'un événement : « Cette date est passée.
+Choisissez aujourd'hui ou une date à venir. », comme à l'ajout ; côté EJP Tech, « Réponse au
+ministère (facultatif) », « Un signalement clos ne se rouvre pas. » et « Clore le signalement » ; la
+consigne « transmis à l'administration » est dans `docs/exploitation.md` (section 11). Le tableau
+ci-dessous garde les textes du 7 octobre.
 
 | Élément                                                                         | Texte                                                                                                                            |
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
