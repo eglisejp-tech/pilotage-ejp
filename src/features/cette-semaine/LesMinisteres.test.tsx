@@ -57,7 +57,7 @@ describe('LesMinisteres', () => {
     const social = within(tableau).getByRole('row', { name: /^Social/ })
     expect(within(social).getByText('Il y a 24 jours')).toHaveClass('text-attention')
     expect(social).toHaveTextContent("14 nov., Collecte d'hiver")
-    expect(social).toHaveTextContent('Non renseignée')
+    expect(social).toHaveTextContent('Aucune date')
     expect(social).toHaveTextContent('Aucun')
     expect(within(social).getByRole('link', { name: 'Social' })).toHaveAttribute(
       'href',
@@ -105,12 +105,12 @@ describe('LesMinisteres', () => {
   it('sans ministère actif : la phrase, ni tableau ni en-têtes vides', () => {
     render(<LesMinisteres ministeres={[]} avecColonnesConseil />)
     const region = screen.getByRole('region', { name: 'Les ministères' })
-    expect(within(region).getByText("Aucun ministère actif pour l'instant.")).toBeInTheDocument()
+    expect(within(region).getByText('Aucun ministère actif.')).toBeInTheDocument()
     expect(within(region).queryByRole('table')).not.toBeInTheDocument()
     expect(within(region).queryByText('Du moins récent au plus récent')).not.toBeInTheDocument()
   })
 
-  it("cellules vides : « Aucun événement prévu », « Non renseignée », « Aucun » ; nom d'événement masqué en encre-3", () => {
+  it("cellules vides : « Aucun événement prévu », « Aucune date », « Aucun » ; nom d'événement masqué en encre-3", () => {
     const [premier] = exempleCetteSemaine('berger').ministeres
     render(
       <MemoryRouter>
@@ -138,7 +138,7 @@ describe('LesMinisteres', () => {
     )
     const [vide, masque] = screen.getAllByRole('row').slice(1)
     expect(vide).toHaveTextContent('Aucun événement prévu')
-    expect(vide).toHaveTextContent('Non renseignée')
+    expect(vide).toHaveTextContent('Aucune date')
     expect(within(vide!).getByText('Aucun')).toHaveClass('text-encre-3')
     expect(within(masque!).getByText('[texte masqué]')).toHaveClass('text-encre-3')
   })

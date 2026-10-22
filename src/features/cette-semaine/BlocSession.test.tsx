@@ -96,13 +96,11 @@ describe('BlocSession', () => {
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it("dit quand aucune session n'est déclarée, sous le titre et son filet", () => {
+  it("dit quand il n'y a aucune session, sous le titre et son filet, sans nommer de rôle (T66)", () => {
     afficher({ etat: 'aucune_session' })
     const region = screen.getByRole('region', { name: 'Dernière session' })
-    expect(within(region).getByText('Aucune session déclarée.')).toBeInTheDocument()
-    expect(
-      within(region).getByText("L'administration de l'église ou EJP Tech déclare les sessions."),
-    ).toBeInTheDocument()
+    expect(within(region).getByText("Aucune session pour l'instant.")).toBeInTheDocument()
+    expect(within(region).queryByText(/sessions\.$/)).not.toBeInTheDocument()
     expect(within(region).queryByRole('link')).not.toBeInTheDocument()
     expect(screen.queryByTestId('barre-session')).not.toBeInTheDocument()
   })
@@ -132,7 +130,7 @@ describe('BlocSession', () => {
       titre: 'Autre session',
       autres: [],
     })
-    expect(screen.getByText("Aucun autre rassemblement pour l'instant.")).toBeInTheDocument()
+    expect(screen.getByText("Aucune autre session pour l'instant.")).toBeInTheDocument()
     // D'autres sessions existent : pas de phrase sur qui les déclare.
     expect(screen.queryByText(/déclare les sessions/)).not.toBeInTheDocument()
   })

@@ -53,7 +53,7 @@ export function ApercuSaisiesE4() {
     case 'session':
       return (
         <>
-          <title>Aperçu, Saisie d'une session, Pilotage EJP</title>
+          <title>Aperçu, Présence à une session, Pilotage EJP</title>
           <PanneauSaisie
             titre={titreSession(
               SESSION_EXEMPLE.type,

@@ -62,7 +62,7 @@ const classeLien =
 
 /**
  * Un envoi (moment 4) : le bouton d'enregistrement d'une saisie (pleine largeur) et deux boutons
- * de ligne. « Relancer l'invitation » devient « Envoi en cours », plus court : le bouton garde sa
+ * de ligne. « Renvoyer l'invitation » devient « Envoi en cours », plus court : le bouton garde sa
  * largeur. « Valider » devient « Validation en cours », plus long : le bouton ne rétrécit jamais,
  * mais s'élargit pour l'afficher (écart consigné dans T65). `enCours` force l'état pour les
  * captures ; sinon un clic simule un envoi de 1,5 s.
@@ -90,7 +90,7 @@ function Envoi({ enCours }: { enCours: boolean }) {
       <div className="flex flex-wrap items-center gap-3 border-t border-filet pt-4">
         <p className="text-[15px]">Compte de Social, invitation sans réponse</p>
         <BoutonLigneSimule
-          libelle="Relancer l'invitation"
+          libelle="Renvoyer l'invitation"
           libelleEnCours="Envoi en cours"
           enCours={enCours}
         />

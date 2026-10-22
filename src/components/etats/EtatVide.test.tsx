@@ -139,18 +139,18 @@ describe('EtatVide', () => {
     }
   })
 
-  it('dit ce qui viendra, ou qui doit agir, sous la phrase', () => {
+  it('dit ce qui viendra sous la phrase', () => {
     afficher(
       <EtatVide
-        situation="premier_usage"
-        suite="L'administration de l'église déclare les sessions."
+        situation="en_attente_des_autres"
+        suite="Vous pourrez saisir une session le jour où elle a lieu."
       >
-        Aucune session déclarée.
+        Aucune session à saisir.
       </EtatVide>,
     )
-    expect(screen.getByText('Aucune session déclarée.')).toBeInTheDocument()
+    expect(screen.getByText('Aucune session à saisir.')).toBeInTheDocument()
     expect(
-      screen.getByText("L'administration de l'église déclare les sessions."),
+      screen.getByText('Vous pourrez saisir une session le jour où elle a lieu.'),
     ).toBeInTheDocument()
   })
 

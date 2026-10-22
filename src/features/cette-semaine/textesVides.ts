@@ -21,8 +21,9 @@ import { NON_CALCULE } from '@/lib/metier/pourcentage'
 import { nombre } from '@/lib/metier/texte'
 
 /**
- * Champ libre masqué par EJP Tech (`private.masquer_texte`, BRIEF règle 9). Un texte égal à
- * cette valeur porte `masque: true` (TexteLibre) et s'affiche en `--encre-3`.
+ * Marqueur que la base écrit à la place d'un champ libre masqué (`private.masquer_texte`, BRIEF
+ * règle 9). Un texte égal à cette valeur porte `masque: true` (TexteLibre) ; il s'affiche
+ * « [texte masqué] » en `--encre-3` (`TEXTE_MASQUE_AFFICHE`, T66 t356).
  */
 export const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
 
@@ -70,18 +71,16 @@ export const TEXTES_VIDES = {
   session: {
     /** Titre du bloc quand aucune session n'est affichée. Étape 1 (BlocSession). */
     titre: 'Dernière session',
-    /** Aucune session passée, tous types confondus. LISEZMOI, « Premier dimanche ». */
-    aucuneSession: 'Aucune session déclarée.',
     /**
-     * Sous « Aucune session déclarée. » : qui fera apparaître la suite (écran 14). Proposé ;
-     * l'administration et EJP Tech depuis T60.
+     * Aucune session passée, tous types confondus. LISEZMOI, « Premier dimanche » ; revu par T66
+     * (t182) : sans « déclarer », et sans la phrase qui disait qui ajoute les sessions (t183).
      */
-    quiDeclare: "L'administration de l'église ou EJP Tech déclare les sessions.",
-    /** `?session=` d'un type qui n'a encore aucune session passée. Proposé. */
+    aucuneSession: "Aucune session pour l'instant.",
+    /** `?session=` d'un type qui n'a encore aucune session passée. Proposé ; glossaire (t184). */
     aucuneSessionDuType: {
       batir: "Aucune session Bâtir l'Église pour l'instant.",
       anti_dispersion: "Aucune session Anti-Dispersion pour l'instant.",
-      autre: "Aucun autre rassemblement pour l'instant.",
+      autre: "Aucune autre session pour l'instant.",
     } satisfies Record<TypeSession, string>,
     /** À la place du grand chiffre, quand aucun ministère n'a saisi la session. LISEZMOI. */
     totalSansSaisie: 'Pas encore de saisie',
@@ -103,14 +102,14 @@ export const TEXTES_VIDES = {
   },
 
   ministeres: {
-    /** Aucun ministère actif. Proposé. */
-    aucun: "Aucun ministère actif pour l'instant.",
+    /** Aucun ministère actif. Proposé ; le même texte que « Ministères » (T66, t187). */
+    aucun: 'Aucun ministère actif.',
     /** Fraîcheur d'un ministère qui n'a jamais rien écrit. BRIEF règle 6. */
     aucuneSaisie: libelleFraicheur(null),
     /** Colonne « Prochain événement ». LISEZMOI, « Vide » (04, 12), sans point final en cellule. */
     aucunEvenement: 'Aucun événement prévu',
-    /** Colonne « Prochaine réunion » (berger, conseil). BRIEF section 9. */
-    reunionNonRenseignee: 'Non renseignée',
+    /** Colonne « Prochaine réunion » (berger, conseil). BRIEF section 9 ; glossaire (T66, t188). */
+    reunionNonRenseignee: 'Aucune date',
     /** Colonne « Point ouvert » (berger, conseil). BRIEF section 9. */
     aucunPointOuvert: 'Aucun',
   },

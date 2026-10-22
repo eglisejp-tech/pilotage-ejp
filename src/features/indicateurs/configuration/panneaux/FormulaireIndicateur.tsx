@@ -374,7 +374,9 @@ function CorpsIndicateur({
           libelle={remplace === undefined ? textes.bouton : TEXTES_PANNEAUX.remplacement.bouton}
           enCours={enCours}
           libelleEnCours={
-            remplace === undefined ? TEXTES_PANNEAUX.ajoutEnCours : TEXTES_PANNEAUX.enCours
+            remplace === undefined
+              ? TEXTES_PANNEAUX.ajoutEnCours
+              : TEXTES_PANNEAUX.remplacementEnCours
           }
         />
         {refus !== null ? <ErreurEnvoi message={refus} /> : null}

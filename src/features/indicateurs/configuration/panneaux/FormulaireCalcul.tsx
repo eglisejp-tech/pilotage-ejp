@@ -311,7 +311,9 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
           libelle={remplace === undefined ? textes.bouton : textes.boutonRemplacement}
           enCours={enCours}
           libelleEnCours={
-            remplace === undefined ? TEXTES_PANNEAUX.ajoutEnCours : TEXTES_PANNEAUX.enCours
+            remplace === undefined
+              ? TEXTES_PANNEAUX.ajoutEnCours
+              : TEXTES_PANNEAUX.remplacementEnCours
           }
         />
         {refus !== null ? <ErreurEnvoi message={refus} /> : null}

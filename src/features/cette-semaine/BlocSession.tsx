@@ -65,12 +65,7 @@ export function BlocSession({ bloc }: Props) {
             ? TEXTES_VIDES.session.aucuneSession
             : TEXTES_VIDES.session.aucuneSessionDuType[bloc.type]}
         </MessageVide>
-        {/* Aucune session du tout : la phrase suivante dit d'où viendra la première. */}
-        {sansType ? (
-          <p className="-mt-2.5 max-w-prose text-sm text-encre-2">
-            {TEXTES_VIDES.session.quiDeclare}
-          </p>
-        ) : null}
+        {/* Plus de phrase sur qui ajoute les sessions : un rôle sans action (T66, t183). */}
       </section>
     )
   }

@@ -486,8 +486,9 @@ describe('panneau « Ajouter un indicateur »', () => {
     )
     await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
+    // La phrase commune des formulaires (T66, m257).
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Ce que vous avez écrit est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
   })
 
@@ -723,13 +724,13 @@ describe('panneau « Corriger »', () => {
     )
     expect(
       within(panneau).getByText(
-        "Vous pouvez corriger le libellé et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur.",
+        "Vous pouvez corriger le nom et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur.",
       ),
     ).toBeVisible()
     expect(
       within(panneau).getAllByText(/N'écrivez aucun nom ni information personnelle/),
     ).toHaveLength(1)
-    expect(within(panneau).getByText('Le libellé et la définition.')).toBeVisible()
+    expect(within(panneau).getByText('Le nom et la définition.')).toBeVisible()
     await utilisateur.clear(within(panneau).getByLabelText('Ce que vous comptez'))
     await utilisateur.type(
       within(panneau).getByLabelText('Ce que vous comptez'),
@@ -1071,7 +1072,7 @@ describe('fenêtre « Retirer »', () => {
 })
 
 describe('fenêtre « Retirer pour confidentialité »', () => {
-  it('dit que le libellé et la définition seront masqués, avant de confirmer', async () => {
+  it('dit que le nom et la définition seront masqués, avant de confirmer', async () => {
     const ecritures = ecrituresDe()
     const utilisateur = afficher(ID_COMMUNICATION, ecritures)
     await utilisateur.click(bouton('Retirer pour confidentialité « Publications »'))
@@ -1084,7 +1085,7 @@ describe('fenêtre « Retirer pour confidentialité »', () => {
     ).toBeVisible()
     expect(
       within(fenetre).getByText(
-        "Le libellé et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
+        "Le nom et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
       ),
     ).toBeVisible()
     expect(within(fenetre).getByText(/rien ne se supprime/)).toBeVisible()
@@ -1123,7 +1124,7 @@ describe('fenêtre « Retirer pour confidentialité »', () => {
     const fenetre = await screen.findByRole('alertdialog')
     const confirmer = within(fenetre).getByRole('button', { name: 'Retirer pour confidentialité' })
     await utilisateur.click(confirmer)
-    await utilisateur.click(within(fenetre).getByRole('button', { name: 'Envoi en cours' }))
+    await utilisateur.click(within(fenetre).getByRole('button', { name: 'Retrait en cours' }))
     expect(ecritures.retirer).toHaveBeenCalledTimes(1)
     terminer?.()
     expect(await screen.findByText('Indicateur retiré pour confidentialité.')).toBeVisible()

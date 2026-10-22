@@ -18,13 +18,21 @@ export const TEXTES_PANNEAUX = {
   },
   /** Mots communs aux panneaux et aux fenêtres. */
   annuler: 'Annuler',
-  enCours: 'Envoi en cours',
+  /**
+   * Pendant l'envoi, le bouton dit le nom de son action (guide 10.6 ; T66, t309 et m231) :
+   * « Envoi » reste pour ce qui part (signalement, email), pas pour ce qui s'enregistre.
+   */
+  enCours: 'Enregistrement en cours',
   /** « Ajouter l'indicateur » et « Ajouter le calcul » pendant l'envoi (m231, Proposé). */
   ajoutEnCours: 'Ajout en cours',
+  /** « Remplacer l'indicateur » et « Remplacer le calcul » pendant l'envoi (T66). */
+  remplacementEnCours: 'Remplacement en cours',
+  /** « Retirer l'indicateur » et « Retirer pour confidentialité » pendant l'envoi (T66). */
+  retraitEnCours: 'Retrait en cours',
   reessayer: 'Réessayer',
-  /** Proposé : la connexion échoue pendant un envoi, le formulaire garde ce qui est écrit. */
+  /** La phrase commune des formulaires (T66, m257). */
   connexionFormulaire:
-    'La connexion a échoué. Ce que vous avez écrit est encore dans le formulaire : réessayez.',
+    'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
   connexionFenetre: 'La connexion a échoué. Réessayez.',
   /** Proposé : les limites de la fiche n'ont pas pu être lues. */
   limitesIllisibles:
@@ -42,7 +50,8 @@ export const TEXTES_PANNEAUX = {
       mois: "Chaque mois, le total d'un mois",
       a_ce_jour: "À ce jour, où on en est aujourd'hui",
     },
-    sorte: 'Sorte de nombre',
+    /** Le mot de l'erreur « Choisissez le type de nombre. » (T66, m233). */
+    sorte: 'Type de nombre',
     sorteOptions: {
       nombre: "Un compte (jusqu'à 9 999)",
       grand_nombre: "Un grand compte (jusqu'à 9 999 999)",
@@ -109,14 +118,15 @@ export const TEXTES_PANNEAUX = {
   },
   correction: {
     titre: "Corriger l'indicateur",
-    note: "Vous pouvez corriger le libellé et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur.",
+    // « Nom », le mot courant, comme les refus de la base (T66, t340 et m235).
+    note: "Vous pouvez corriger le nom et la définition tant que rien n'est saisi. Ensuite, remplacez l'indicateur.",
     /** Proposé : un calcul dont les chiffres ont des valeurs ne se corrige plus (la base le refuse). */
     calculDejaSaisi:
       "Ce calcul a déjà des valeurs : les chiffres qu'il utilise sont saisis. Pour changer son nom ou ce qu'il calcule, remplacez-le.",
     bouton: 'Enregistrer la correction',
-    change: 'Le libellé et la définition.',
+    change: 'Le nom et la définition.',
     resteIdentique:
-      "Le rythme, la sorte de nombre et le domaine : pour les changer, remplacez l'indicateur.",
+      "Le rythme, le type de nombre et le domaine : pour les changer, remplacez l'indicateur.",
     resteIdentiqueCalcul: "Le type de calcul et les deux chiffres qu'il utilise.",
   },
   retrait: {
@@ -154,7 +164,7 @@ export const TEXTES_PANNEAUX = {
     texte: "Le nom et la définition seront masqués. C'est définitif.",
     bouton: 'Retirer pour confidentialité',
     change:
-      "Le libellé et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
+      "Le nom et la définition sont masqués. L'indicateur ne s'affiche plus sur aucune fiche.",
     resteIdentique: "Les valeurs saisies : rien ne se supprime, elles ne s'affichent plus.",
   },
 } as const

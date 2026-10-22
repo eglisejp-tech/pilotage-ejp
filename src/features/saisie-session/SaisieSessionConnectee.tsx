@@ -12,7 +12,7 @@ import { titreSession } from '@/lib/metier/phrases'
 interface Props {
   sessionId: string
   ministereId: string
-  /** Titre de l'adresse (« Saisie d'une session »), tant que la session n'est pas lue. */
+  /** Titre de l'adresse (« Présence à une session »), tant que la session n'est pas lue. */
   titre: string
   onFermer: () => void
 }

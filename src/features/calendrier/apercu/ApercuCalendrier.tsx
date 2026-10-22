@@ -43,7 +43,7 @@ const reessayer = () => undefined
  *   événement à confirmer (donc sans bandeau) ;
  * - `fiche-alerte` : un événement de Social à confirmer à 3 jours, un autre passé de plus de
  *   7 jours, un événement de Coordination qui mentionne Social, et le bandeau d'alerte ;
- * - `fiche-vide` (« Aucun événement prévu. », réunion « Non renseignée. » ou « Renseigner »),
+ * - `fiche-vide` (« Aucun événement prévu. », réunion « Aucune date. » ou « Ajouter la réunion »),
  *   `fiche-erreur`, `fiche-chargement` ;
  * - `a-confirmer` : le bloc « Événements à confirmer » de « Cette semaine » (8 lignes, 5 puis
  *   « Voir les 8 événements à confirmer »), `a-confirmer-un`, `a-confirmer-vide` (le bloc

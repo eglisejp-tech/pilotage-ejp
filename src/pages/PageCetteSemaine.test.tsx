@@ -298,7 +298,7 @@ describe('PageCetteSemaine', () => {
         expect(within(chiffres).getAllByText('0 sur 8')).toHaveLength(3)
         expect(
           within(screen.getByRole('region', { name: 'Dernière session' })).getByText(
-            'Aucune session déclarée.',
+            "Aucune session pour l'instant.",
           ),
         ).toBeInTheDocument()
         expect(

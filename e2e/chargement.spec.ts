@@ -138,7 +138,7 @@ test.describe('animations de chargement (T65)', () => {
     page,
   }) => {
     await ouvrir(page, MOMENTS.envoi)
-    const bouton = page.getByRole('button', { name: "Relancer l'invitation", exact: true })
+    const bouton = page.getByRole('button', { name: "Renvoyer l'invitation", exact: true })
     const avant = (await bouton.boundingBox())?.width ?? 0
     await bouton.click()
     const enCours = page.getByRole('button', { name: 'Envoi en cours' })

@@ -123,7 +123,7 @@ describe('VueCetteSemaine', () => {
         "Aucun ministère n'a encore saisi les chiffres du dimanche 27 sept.",
       )
       expect(screen.getAllByText('Pas encore de saisie')).toHaveLength(6)
-      expect(screen.getByText('Aucune session déclarée.')).toBeInTheDocument()
+      expect(screen.getByText("Aucune session pour l'instant.")).toBeInTheDocument()
       expect(
         screen.getByText("La carte s'affichera quand FIJ aura saisi ses chiffres."),
       ).toBeInTheDocument()
@@ -150,19 +150,19 @@ describe('VueCetteSemaine', () => {
     expect(lignes[4]).toHaveTextContent("Aucune session pour l'instant")
   })
 
-  it('un rassemblement jamais tenu (?session=autre) : son titre, sa phrase et ses liens', () => {
+  it('une autre session jamais tenue (?session=autre) : son titre, sa phrase et ses liens', () => {
     const donnees: DonneesCetteSemaine = {
       ...exempleCetteSemaine('admin_eglise'),
       session: {
         etat: 'aucune_session_du_type',
         type: 'autre',
-        titre: 'Autre rassemblement',
+        titre: 'Autre session',
         autres: [{ libelle: "Voir Bâtir l'Église", href: '/?session=batir' }],
       },
     }
     afficher('admin_eglise', donnees)
-    const region = screen.getByRole('region', { name: 'Autre rassemblement' })
-    expect(region).toHaveTextContent("Aucun autre rassemblement pour l'instant.")
+    const region = screen.getByRole('region', { name: 'Autre session' })
+    expect(region).toHaveTextContent("Aucune autre session pour l'instant.")
     expect(within(region).getByRole('link', { name: "Voir Bâtir l'Église" })).toBeInTheDocument()
   })
 

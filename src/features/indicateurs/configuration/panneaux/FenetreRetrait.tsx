@@ -194,7 +194,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
               aria-disabled={enCours || !pret ? true : undefined}
               className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
             >
-              <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_PANNEAUX.enCours}>
+              <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_PANNEAUX.retraitEnCours}>
                 {confidentialite
                   ? TEXTES_PANNEAUX.confidentialite.bouton
                   : TEXTES_PANNEAUX.retrait.bouton}

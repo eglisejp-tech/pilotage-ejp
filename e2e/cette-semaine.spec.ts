@@ -152,9 +152,10 @@ test.describe('Cette semaine, aperçu', () => {
     await expect(page.getByRole('region', { name: 'À décider' })).toContainText(
       'Aucun point ouvert.',
     )
-    await expect(page.getByRole('region', { name: 'Dernière session' })).toContainText(
-      "Aucune session déclarée.L'administration de l'église ou EJP Tech déclare les sessions.",
-    )
+    // Sans dire qui ajoute les sessions (T66, t182 et t183).
+    const session = page.getByRole('region', { name: 'Dernière session' })
+    await expect(session).toContainText("Aucune session pour l'instant.")
+    await expect(session).not.toContainText('déclare')
     const carte = page.getByRole('region', { name: 'FIJ en Île-de-France' })
     await expect(carte).toContainText("La carte s'affichera quand FIJ aura saisi ses chiffres.")
     await expect(carte.getByTestId('carte-en-attente')).toBeVisible()
@@ -168,7 +169,7 @@ test.describe('Cette semaine, aperçu', () => {
   }) => {
     await ouvrir(page, 'admin_eglise', 'session-jamais-tenue')
     const session = page.getByRole('region', { name: 'Autre session' })
-    await expect(session).toContainText("Aucun autre rassemblement pour l'instant.")
+    await expect(session).toContainText("Aucune autre session pour l'instant.")
     await expect(session.getByRole('link', { name: 'Voir Anti-Dispersion' })).toBeVisible()
   })
 

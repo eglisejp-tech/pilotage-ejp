@@ -7,9 +7,9 @@ import { cn } from '@/lib/utils'
 interface Props {
   /** La situation, parmi les six de T36 : elle dit le rôle du message (annoncé ou non). */
   situation: SituationVide
-  /** Phrase complète qui dit ce qui se passe (« Aucun point ouvert pour votre ministère. »). */
+  /** Phrase complète qui dit ce qui se passe (« Aucun point ouvert. »). */
   children: ReactNode
-  /** Ce qui viendra, ou qui doit agir (« L'administration de l'église déclare les sessions. »). */
+  /** Ce qui viendra (« Vous pourrez saisir une session le jour où elle a lieu. »). */
   suite?: ReactNode
   /** Au plus une action. */
   action?: ActionVide

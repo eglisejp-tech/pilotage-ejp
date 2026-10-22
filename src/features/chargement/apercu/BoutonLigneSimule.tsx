@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 
 interface Props {
-  /** Le libellé au repos (« Valider », « Relancer l'invitation »). */
+  /** Le libellé au repos (« Valider », « Renvoyer l'invitation »). */
   libelle: string
   /** Pendant l'envoi (« Validation en cours », « Envoi en cours »). */
   libelleEnCours: string
