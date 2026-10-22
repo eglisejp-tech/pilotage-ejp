@@ -49,7 +49,7 @@ const TOUS: Ecran[] = [
 
 const PHRASES_ADMIN = [
   '8 indicateurs actifs pour 5 ministères.',
-  "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
+  '1 indicateur attend sa validation depuis plus de 7 jours. Prévenez EJP Tech.',
 ]
 
 test.describe('/indicateurs (aperçu)', () => {
@@ -78,6 +78,7 @@ test.describe('/indicateurs (aperçu)', () => {
     await ouvrir(page, { profil: 'admin_plateforme' })
     await expect(page.getByText(/^8 indicateurs actifs pour 5 ministères\./)).toBeVisible()
     await expect(page.getByText(/Prévenez EJP Tech/)).toHaveCount(0)
+    await expect(page.getByText('1 indicateur à valider.')).toBeVisible()
   })
 
   test('colonne « Prévus » : « 6 à créer », « Créés », « À choisir », « Aucun prévu »', async ({
@@ -94,7 +95,8 @@ test.describe('/indicateurs (aperçu)', () => {
     await expect(ligne('Jeunesse')).toContainText('À choisir')
     await expect(ligne('Protocole')).toContainText('Aucun prévu')
     await expect(ligne('Communication')).toContainText('2 peu saisis')
-    await expect(ligne('Communication')).toContainText('5 sur 30, dont 1 ajouté par Communication')
+    await expect(ligne('Communication')).toContainText('5 sur 30')
+    await expect(ligne('Communication')).not.toContainText('ajouté par')
   })
 
   test('« Créer » : la création est simulée, « 6 indicateurs prévus créés. », la cellule devient « Créés »', async ({
@@ -138,17 +140,18 @@ test.describe('/indicateurs (aperçu)', () => {
     expect(boiteAlerte!.y - boiteBouton!.y).toBeLessThan(200)
   })
 
-  test('aucun ministère : la phrase et l’action vers Ministères et comptes (EJP Tech, T60)', async ({
+  test('aucun ministère : « Aucun ministère. » et « Ajouter un ministère » (EJP Tech, T60, T66)', async ({
     page,
   }) => {
     await ouvrir(page, { vue: 'liste-vide' })
-    await expect(
-      page.getByText("Aucun ministère. Créez d'abord les ministères dans Ministères et comptes."),
-    ).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Ouvrir Ministères et comptes' })).toBeVisible()
+    await expect(page.getByText('Aucun ministère.', { exact: true })).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Ajouter un ministère' })).toHaveAttribute(
+      'href',
+      '/comptes',
+    )
     await ouvrir(page, { vue: 'liste-vide', profil: 'admin_eglise' })
     await expect(page.getByText('Aucun ministère. EJP Tech crée les ministères.')).toBeVisible()
-    await expect(page.getByRole('link', { name: 'Ouvrir Ministères et comptes' })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: 'Ajouter un ministère' })).toHaveCount(0)
   })
 
   test('problème passager : bandeau et « Réessayer »', async ({ page }) => {
@@ -200,14 +203,14 @@ test.describe('administration de l’église, en lecture (T60, aperçu)', () => 
   }) => {
     // Ce qui reste à créer ou à choisir se lit, sans bouton, comme dans la liste.
     const prevus: Record<string, string | null> = {
-      kumi: 'Liste « Kumi » de la coordination : 6 indicateurs à créer.',
-      jeunesse: 'Prévus par la coordination : la liste de ce ministère reste à choisir.',
+      kumi: 'Liste « Kumi » : 6 indicateurs à créer.',
+      jeunesse: 'Indicateurs prévus : la liste de ce ministère reste à choisir.',
       communication: null,
     }
     for (const [vue, phrase] of Object.entries(prevus)) {
       await ouvrir(page, { vue, profil: 'admin_eglise' })
       await expect(page.getByText(LECTURE)).toBeVisible()
-      await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+      await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
       await expect(page.getByRole('combobox')).toHaveCount(0)
       await expect(
         page
@@ -226,7 +229,7 @@ test.describe('administration de l’église, en lecture (T60, aperçu)', () => 
 })
 
 test.describe('/indicateurs/:id (aperçu)', () => {
-  test('Communication : titre, phrase, sections, mentions, usage, « Voir dans À valider »', async ({
+  test('Communication : titre, phrase, sections, mentions, usage, « Ouvrir les indicateurs à valider »', async ({
     page,
   }) => {
     await ouvrir(page, { vue: 'communication' })
@@ -234,11 +237,7 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     await expect(
       page.getByRole('heading', { level: 1, name: 'Indicateurs de Communication' }),
     ).toBeVisible()
-    await expect(
-      page.getByText(
-        'Communication suit 5 indicateurs sur 30 au plus : 4 prévus par la coordination et 1 ajouté par Communication.',
-      ),
-    ).toBeVisible()
+    await expect(page.getByText('5 indicateurs suivis.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Chaque mois',
       'À ce jour',
@@ -246,13 +245,12 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     ])
     await expect(page.getByText('Saisi 4 mois sur 5, dernier le 2 oct.')).toBeVisible()
     await expect(page.getByText('Peu saisi : 1 mois sur 4')).toBeVisible()
-    await expect(page.getByText('Libellé corrigé le 5 oct.')).toBeVisible()
-    await expect(page.getByText(/À valider par EJP Tech depuis 9 jours/)).toBeVisible()
+    await expect(page.getByText('Nom corrigé le 5 oct.')).toBeVisible()
+    await expect(page.getByText(/À valider depuis 9 jours/)).toBeVisible()
     await expect(page.getByText(/calcul : /)).toHaveCount(0)
-    await expect(page.getByRole('link', { name: 'Voir dans À valider' })).toHaveAttribute(
-      'href',
-      '/indicateurs#a-valider',
-    )
+    await expect(
+      page.getByRole('link', { name: 'Ouvrir les indicateurs à valider' }),
+    ).toHaveAttribute('href', '/indicateurs#a-valider')
     await expect(page.getByText('Se calcule tout seul')).toBeVisible()
   })
 
@@ -268,15 +266,13 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     page,
   }) => {
     await ouvrir(page, { vue: 'kumi' })
-    const bloc = page.getByRole('region', { name: 'Prévus par la coordination' })
+    const bloc = page.getByRole('region', { name: 'Indicateurs prévus' })
     await expect(bloc.getByRole('listitem')).toHaveCount(6)
     await expect(bloc.getByRole('combobox')).toHaveCount(0)
     await bloc.getByRole('button', { name: 'Créer ces 6 indicateurs' }).click()
     await expect(page.getByText('6 indicateurs prévus créés.')).toBeVisible()
     await expect(bloc).toHaveCount(0)
-    await expect(
-      page.getByText('Kumi suit 6 indicateurs sur 30 au plus : 6 prévus par la coordination.'),
-    ).toBeVisible()
+    await expect(page.getByText('6 indicateurs suivis.')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Chaque dimanche',
       'Chaque mois',
@@ -285,16 +281,12 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     ])
   })
 
-  test('Jeunesse : nom non reconnu, choix dans la liste de la coordination puis « Créer ces 3 indicateurs »', async ({
+  test('Jeunesse : nom non reconnu, choix dans la liste puis « Créer ces 3 indicateurs »', async ({
     page,
   }) => {
     await ouvrir(page, { vue: 'jeunesse' })
-    await expect(
-      page.getByText(
-        "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite.",
-      ),
-    ).toBeVisible()
-    const choix = page.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+    await expect(page.getByText('Choisissez le nom qui correspond à ce ministère.')).toBeVisible()
+    const choix = page.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
     await expect(choix.locator('option')).toHaveText([
       'Choisissez un ministère de la liste',
       'Communication',
@@ -313,38 +305,33 @@ test.describe('/indicateurs/:id (aperçu)', () => {
   test('Jeunesse : « Aucun prévu » enregistre la réponse, le bloc disparaît', async ({ page }) => {
     await ouvrir(page, { vue: 'jeunesse' })
     await page
-      .getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+      .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
       .selectOption({ label: 'Aucun prévu' })
-    await page.getByRole('button', { name: 'Enregistrer : aucun prévu' }).click()
-    await expect(page.getByText('Noté : aucun indicateur prévu pour Jeunesse.')).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Enregistrer « Aucun prévu »' }).click()
+    await expect(page.getByText('Choix « Aucun prévu » enregistré pour Jeunesse.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
   })
 
-  test('Protocole : « Aucun indicateur pour Protocole. Il saisit les chiffres communs. »', async ({
-    page,
-  }) => {
+  test('Protocole : « Aucun indicateur pour Protocole. »', async ({ page }) => {
     await ouvrir(page, { vue: 'protocole' })
-    await expect(
-      page.getByText('Aucun indicateur pour Protocole. Il saisit les chiffres communs.'),
-    ).toBeVisible()
+    await expect(page.getByText('Aucun indicateur pour Protocole.')).toBeVisible()
   })
 
   test('ministère introuvable : la phrase et le retour', async ({ page }) => {
     await ouvrir(page, { vue: 'introuvable' })
-    await expect(page.getByText("Ce ministère n'existe pas ou n'est plus actif.")).toBeVisible()
+    await expect(page.getByText('Ce ministère est introuvable.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir aux indicateurs' })).toBeVisible()
   })
 
-  test('aides : prévus, choix du modèle, usage', async ({ page }) => {
+  test('aides : prévus et usage ; le choix du modèle porte une indication (T66, t334)', async ({
+    page,
+  }) => {
     await ouvrir(page, { vue: 'jeunesse' })
-    await page
-      .getByRole('button', { name: 'Aide : Choisir dans la liste de la coordination' })
-      .click()
+    await expect(page.getByRole('button', { name: /^Aide : Nom du ministère/ })).toHaveCount(0)
     await expect(
-      page.getByText(
-        'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
-      ),
-    ).toBeVisible()
+      page.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
+    ).toHaveAccessibleDescription('Choisissez le nom qui correspond à ce ministère.')
+    await expect(page.getByRole('button', { name: 'Aide : Indicateurs prévus' })).toHaveCount(1)
     await ouvrir(page, { vue: 'communication' })
     await expect(page.getByRole('button', { name: 'Aide : Usage' })).toHaveCount(1)
   })
@@ -366,7 +353,7 @@ test.describe('accessibilité et petits écrans', () => {
 
   test('axe avec la bulle d’aide ouverte et un message de réussite', async ({ page }) => {
     await ouvrir(page, { vue: 'kumi' })
-    await page.getByRole('button', { name: 'Aide : Prévus par la coordination' }).click()
+    await page.getByRole('button', { name: 'Aide : Indicateurs prévus' }).click()
     await auditer(page)
     await page.getByRole('button', { name: 'Créer ces 6 indicateurs' }).click()
     await expect(page.getByText('6 indicateurs prévus créés.')).toBeVisible()

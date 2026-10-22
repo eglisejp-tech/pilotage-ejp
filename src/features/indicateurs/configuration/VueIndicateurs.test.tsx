@@ -56,16 +56,16 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
     expect(screen.getByText('8 indicateurs actifs pour 5 ministères.')).toBeInTheDocument()
     expect(
       screen.getByText(
-        "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
+        '1 indicateur attend sa validation depuis plus de 7 jours. Prévenez EJP Tech.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('Bloc à valider de L4')).toBeInTheDocument()
   })
 
-  it('EJP Tech ne lit pas le rappel « Prévenez EJP Tech »', () => {
+  it('EJP Tech ne lit pas le rappel « Prévenez EJP Tech » : « 1 indicateur à valider. » (T66)', () => {
     afficher('admin_plateforme')
     expect(screen.queryByText(/Prévenez EJP Tech/)).toBeNull()
-    expect(screen.getByText(/1 ajout attend la validation d'EJP Tech\./)).toBeInTheDocument()
+    expect(screen.getByText('1 indicateur à valider.')).toBeInTheDocument()
   })
 
   it('cinq colonnes, une ligne par ministère actif, chaque nom ouvre son écran', () => {
@@ -134,9 +134,7 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
   it('colonnes « Indicateurs » et « Dernier changement »', () => {
     afficher()
     const ligne = (nom: string) => screen.getByRole('link', { name: nom }).closest('tr')!
-    expect(
-      within(ligne('Communication')).getByText('5 sur 30, dont 1 ajouté par Communication'),
-    ).toBeInTheDocument()
+    expect(within(ligne('Communication')).getByText('5 sur 30')).toBeInTheDocument()
     expect(within(ligne('Communication')).getByText('5 oct.')).toBeInTheDocument()
     expect(within(ligne('Jeunesse')).getByText('Aucun')).toBeInTheDocument()
   })
@@ -144,7 +142,9 @@ describe('VueIndicateurs : tableau des ministères (7.1)', () => {
   it('deux aides sur les en-têtes : « Indicateurs » (30 au plus) et « Prévus »', async () => {
     afficher()
     await userEvent.click(screen.getByRole('button', { name: 'Aide : Indicateurs' }))
-    expect(screen.getByText(/« 8 sur 30 » : 8 suivis, 30 au plus par fiche\./)).toBeInTheDocument()
+    expect(
+      screen.getByText(/« 8 sur 30 » : 8 indicateurs suivis, 30 au plus par ministère\./),
+    ).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Aide : Prévus' })).toBeInTheDocument()
   })
 
@@ -277,12 +277,10 @@ describe('VueIndicateurs : états', () => {
     expect(reessayer).toHaveBeenCalledTimes(1)
   })
 
-  it('aucun ministère : l’état vide dit où les créer, avec l’action pour EJP Tech, qui les crée (T60)', () => {
+  it('aucun ministère : « Aucun ministère. » et « Ajouter un ministère » pour EJP Tech, qui les crée (T60, T66)', () => {
     afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_plateforme')
-    expect(
-      screen.getByText("Aucun ministère. Créez d'abord les ministères dans Ministères et comptes."),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ouvrir Ministères et comptes' })).toHaveAttribute(
+    expect(screen.getByText('Aucun ministère.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Ajouter un ministère' })).toHaveAttribute(
       'href',
       '/comptes',
     )
@@ -291,6 +289,6 @@ describe('VueIndicateurs : états', () => {
   it('aucun ministère, vu par l’administration : la phrase de lecture, sans action', () => {
     afficherEtat({ etat: 'donnees', donnees: { phrases: [], lignes: [] } }, 'admin_eglise')
     expect(screen.getByText('Aucun ministère. EJP Tech crée les ministères.')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Ouvrir Ministères et comptes' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Ajouter un ministère' })).toBeNull()
   })
 })

@@ -126,13 +126,12 @@ export function construireConfiguration(
   const lignes = actifs.map((ministere): LigneMinistereConfiguration => {
     const siens = indicateursParMinistere.get(ministere.id) ?? []
     const suivis = siens.filter(suivi)
-    const ajouts = suivis.filter((indicateur) => indicateur.origine === 'ministere').length
     const dernier = changementParMinistere.get(ministere.id)
     return {
       id: ministere.id,
       nom: ministere.nom,
       href: `/indicateurs/${ministere.id}`,
-      texteIndicateurs: texteIndicateursMinistere(ministere.nom, suivis.length, ajouts),
+      texteIndicateurs: texteIndicateursMinistere(suivis.length),
       prevus: etatPrevus(ministere.nom, siens, modeles, sansPrevu.has(ministere.id)),
       peuSaisis: suivis.filter((indicateur) => estPeuSaisi(usageParId.get(indicateur.id))).length,
       suivis: suivis.length,
@@ -156,9 +155,6 @@ export function construireConfiguration(
     {
       actifs: propres.filter((indicateur) => indicateur.etat === 'actif').length,
       ministeres: actifs.length,
-      ajoutesParMinisteres: propres.filter(
-        (indicateur) => indicateur.etat === 'actif' && indicateur.origine === 'ministere',
-      ).length,
       enAttente: enAttente.length,
       enAttenteLongue: enAttente.filter(
         (indicateur) => (usageParId.get(indicateur.id)?.attente_jours ?? 0) > ATTENTE_LONGUE_JOURS,
@@ -173,16 +169,16 @@ export function construireConfiguration(
 export interface ConfigurationMinistere {
   id: string
   nom: string
-  /** « Kumi suit 7 indicateurs sur 30 au plus : ... » ; `null` : aucun indicateur suivi. */
+  /** « 7 indicateurs suivis. » ; `null` : aucun indicateur suivi. */
   phrase: string | null
   prevus: EtatPrevus
-  /** Tous les modèles du catalogue : le choix de « Choisir dans la liste de la coordination ». */
+  /** Tous les modèles du catalogue : le choix de « Nom du ministère dans la liste ». */
   modeles: ModeleCatalogue[]
   /** Indicateurs saisis, actifs, sans domaine sensible : les sources possibles d'un calcul (L3b). */
   sources: SourceCalcul[]
   sections: SectionConfiguration[]
   retires: LigneRetiree[]
-  /** Aucun indicateur suivi : « Aucun indicateur pour Protocole. Il saisit les chiffres communs. » */
+  /** Aucun indicateur suivi : « Aucun indicateur pour Protocole. » */
   sansIndicateur: boolean
 }
 
@@ -198,29 +194,16 @@ export function construireMinistere(
   const modeles = modelesDuCatalogue(lectures.catalogue)
   const siens = lectures.indicateurs.filter((indicateur) => indicateur.ministere_id === ministereId)
   const usage = new Map(lectures.usage.map((ligne) => [ligne.indicateur_id, ligne]))
-  const codesPrevus = new Set(modeles.flatMap((modele) => modele.prevus.map((prevu) => prevu.code)))
   const suggestions = new Set(
     lectures.catalogue
       .filter((ligne) => ligne.modele === MODELE_SUGGESTION)
       .map((ligne) => ligne.code),
   )
   const suivis = siens.filter(suivi)
-  const sontPrevus = (indicateur: IndicateurConfiguration) =>
-    indicateur.modele_code !== null && codesPrevus.has(indicateur.modele_code)
-  const prevus = suivis.filter(sontPrevus).length
-  const parLeMinistere = suivis.filter(
-    (indicateur) => !sontPrevus(indicateur) && indicateur.origine === 'ministere',
-  ).length
   return {
     id: ministere.id,
     nom: ministere.nom,
-    phrase: phraseMinistere({
-      nom: ministere.nom,
-      suivis: suivis.length,
-      prevus,
-      ajoutesParLeMinistere: parLeMinistere,
-      ajoutesParLEglise: suivis.length - prevus - parLeMinistere,
-    }),
+    phrase: phraseMinistere(suivis.length),
     prevus: etatPrevus(
       ministere.nom,
       siens,

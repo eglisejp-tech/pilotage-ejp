@@ -390,9 +390,7 @@ test.describe('profils', () => {
 
   test('un ministère sans indicateur peut en recevoir un', async ({ page }) => {
     await ouvrir(page, { vue: 'protocole' })
-    await expect(
-      page.getByText('Aucun indicateur pour Protocole. Il saisit les chiffres communs.'),
-    ).toBeVisible()
+    await expect(page.getByText('Aucun indicateur pour Protocole.')).toBeVisible()
     await bouton(page, 'Ajouter un indicateur').click()
     await remplirAjout(page, 'Accueils', 'Personnes accueillies à l’entrée.', /Chaque dimanche/)
     await bouton(page, "Ajouter l'indicateur").click()

@@ -37,7 +37,10 @@ export interface LigneConfiguration {
   enAttente: boolean
   /** Mentions qui commencent par une majuscule : « Ajouté par Kumi le 12 oct. », « En euros »... */
   mentions: string[]
-  /** « À valider par EJP Tech depuis 2 jours », avec le lien « Voir dans À valider » ; sinon null. */
+  /**
+   * « À valider depuis 2 jours », avec le lien « Ouvrir les indicateurs à valider » ; sinon null
+   * (T66, t341 et t342 : sans dire qui valide).
+   */
   aValider: string | null
   /** « Saisi 4 mois sur 5, dernier le 2 oct. » ; null pour un calcul. */
   usage: string | null
@@ -116,12 +119,14 @@ function mentionsDe(
   if (unite !== undefined) mentions.push(unite)
   if (indicateur.sensible) mentions.push('Domaine sensible')
   if (indicateur.modele_code !== null && catalogue.suggestions.has(indicateur.modele_code)) {
-    mentions.push('Suggestion de la coordination')
+    // Glossaire de T66 (t339) : « Indicateur prévu », sans dire qui l'a prévu.
+    mentions.push('Indicateur prévu')
   }
   if (indicateur.origine === 'ministere') {
     mentions.push(`Ajouté par ${nomMinistere} le ${jour(indicateur.cree_le)}`)
   }
-  if (aEteCorrige(indicateur)) mentions.push(`Libellé corrigé le ${jour(indicateur.texte_le)}`)
+  // « Nom », le mot courant (T66, t340).
+  if (aEteCorrige(indicateur)) mentions.push(`Nom corrigé le ${jour(indicateur.texte_le)}`)
   const remplace =
     indicateur.remplace_id === null ? undefined : libellesParId.get(indicateur.remplace_id)
   if (remplace !== undefined) {
@@ -164,7 +169,7 @@ export function construireSections(
       enAttente,
       mentions: mentionsDe(indicateur, nomMinistere, catalogue, parId),
       aValider: enAttente
-        ? `À valider par EJP Tech${usageIndicateur?.attente_jours == null ? '' : ` ${texteDepuisJours(usageIndicateur.attente_jours)}`}`
+        ? `À valider${usageIndicateur?.attente_jours == null ? '' : ` ${texteDepuisJours(usageIndicateur.attente_jours)}`}`
         : null,
       usage: indicateur.calcul === null ? texteUsage(usageIndicateur, indicateur.nature) : null,
       peuSaisi: indicateur.calcul === null && estPeuSaisi(usageIndicateur),

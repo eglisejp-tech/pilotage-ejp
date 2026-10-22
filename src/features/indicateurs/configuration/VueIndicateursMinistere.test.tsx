@@ -67,11 +67,7 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
       'href',
       '/indicateurs',
     )
-    expect(
-      screen.getByText(
-        'Communication suit 5 indicateurs sur 30 au plus : 4 prévus par la coordination et 1 ajouté par Communication.',
-      ),
-    ).toBeInTheDocument()
+    expect(screen.getByText('5 indicateurs suivis.')).toBeInTheDocument()
   })
 
   it('sections « Chaque mois », « À ce jour » et « Calculs », rangées', () => {
@@ -98,7 +94,7 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     const corrigee = screen
       .getByText('Demandes reçues', { selector: 'span.font-semibold' })
       .closest('li')!
-    expect(within(corrigee).getByText('Libellé corrigé le 5 oct.')).toBeInTheDocument()
+    expect(within(corrigee).getByText('Nom corrigé le 5 oct.')).toBeInTheDocument()
     expect(within(corrigee).getByText('Jamais saisi')).toHaveClass('text-attention')
   })
 
@@ -115,26 +111,23 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     const ligne = screen
       .getByText('Projets en cours', { selector: 'span.font-semibold' })
       .closest('li')!
-    const mentions = within(ligne).getByText(/^Suggestion de la coordination/)
+    const mentions = within(ligne).getByText(/^Indicateur prévu/)
     expect(mentions).toHaveClass('text-[14px]')
-    expect(within(ligne).getByText(/^À valider par EJP Tech/)).toHaveClass('text-[14px]')
+    expect(within(ligne).getByText(/^À valider depuis/)).toHaveClass('text-[14px]')
   })
 
-  it('un ajout à valider : mentions, durée, lien « Voir dans À valider » vers le bloc', () => {
+  it('un ajout à valider : mentions, durée, lien « Ouvrir les indicateurs à valider » vers le bloc', () => {
     afficherMinistere(ID_COMMUNICATION)
     const ligne = screen
       .getByText('Projets en cours', { selector: 'span.font-semibold' })
       .closest('li')!
     expect(
-      within(ligne).getByText(
-        /Suggestion de la coordination · Ajouté par Communication le 28 sept\./,
-      ),
+      within(ligne).getByText(/Indicateur prévu · Ajouté par Communication le 28 sept\./),
     ).toBeInTheDocument()
-    expect(within(ligne).getByText(/À valider par EJP Tech depuis 9 jours/)).toBeInTheDocument()
-    expect(within(ligne).getByRole('link', { name: 'Voir dans À valider' })).toHaveAttribute(
-      'href',
-      '/indicateurs#a-valider',
-    )
+    expect(within(ligne).getByText(/À valider depuis 9 jours/)).toBeInTheDocument()
+    expect(
+      within(ligne).getByRole('link', { name: 'Ouvrir les indicateurs à valider' }),
+    ).toHaveAttribute('href', '/indicateurs#a-valider')
   })
 
   it('un calcul : « Se calcule tout seul », jamais d’usage', () => {
@@ -158,9 +151,9 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     expect(screen.getAllByRole('button', { name: 'Aide : Usage' })).toHaveLength(1)
   })
 
-  it('prévus créés : aucun bloc « Prévus par la coordination »', () => {
+  it('prévus créés : aucun bloc « Indicateurs prévus »', () => {
     afficherMinistere(ID_COMMUNICATION)
-    expect(screen.queryByRole('heading', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(screen.queryByRole('heading', { name: 'Indicateurs prévus' })).toBeNull()
   })
 
   it('aucune action tant que le lot L3b ne les pose pas, jamais une valeur', () => {
@@ -170,13 +163,11 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
   })
 })
 
-describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () => {
+describe('VueIndicateursMinistere : bloc « Indicateurs prévus »', () => {
   it('nom reconnu : la liste des 6 prévus et « Créer ces 6 indicateurs »', async () => {
     const creation = afficherMinistere(ID_KUMI)
-    const bloc = screen.getByRole('region', { name: 'Prévus par la coordination' })
-    expect(
-      within(bloc).getByText('Liste « Kumi » de la coordination : 6 indicateurs à créer.'),
-    ).toBeInTheDocument()
+    const bloc = screen.getByRole('region', { name: 'Indicateurs prévus' })
+    expect(within(bloc).getByText('Liste « Kumi » : 6 indicateurs à créer.')).toBeInTheDocument()
     expect(within(bloc).getAllByRole('listitem')).toHaveLength(6)
     expect(within(bloc).getByText('Taux de participation').parentElement).toHaveTextContent(
       'Chaque mois, calcul',
@@ -191,9 +182,9 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
     expect(screen.queryByText(/^Aucun indicateur pour Kumi/)).toBeNull()
   })
 
-  it('nom non reconnu : le choix « Choisir dans la liste de la coordination », « Aucun prévu » en dernier', async () => {
+  it('nom non reconnu : le choix « Nom du ministère dans la liste », « Aucun prévu » en dernier', async () => {
     const creation = afficherMinistere(ID_JEUNESSE)
-    const choix = screen.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+    const choix = screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
     expect(
       within(choix)
         .getAllByRole('option')
@@ -209,9 +200,7 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
     // Rien à créer tant que rien n'est choisi.
     expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
     await userEvent.selectOptions(choix, 'Film')
-    expect(
-      screen.getByText('Liste « Film » de la coordination : 3 indicateurs à créer.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Liste « Film » : 3 indicateurs à créer.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Créer ces 3 indicateurs' }))
     expect(creation.creer).toHaveBeenCalledWith({ id: ID_JEUNESSE, nom: 'Jeunesse' }, 'film')
   })
@@ -219,24 +208,23 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
   it('« Aucun prévu » choisi : la phrase et le bouton qui l’enregistre', async () => {
     const creation = afficherMinistere(ID_JEUNESSE)
     await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' }),
+      screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
       'Aucun prévu',
     )
-    expect(
-      screen.getByText('Aucun indicateur prévu pour ce ministère. Il saisit les chiffres communs.'),
-    ).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer : aucun prévu' }))
+    expect(screen.getByText('Aucun indicateur prévu pour ce ministère.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer « Aucun prévu »' }))
     expect(creation.creer).toHaveBeenCalledWith({ id: ID_JEUNESSE, nom: 'Jeunesse' }, 'aucun')
   })
 
-  it('deux aides : le titre du bloc et le choix du modèle', () => {
+  it('une aide sur le titre du bloc ; le choix porte une indication, plus de bulle (T66, t334)', () => {
     afficherMinistere(ID_JEUNESSE)
+    expect(screen.getByRole('button', { name: 'Aide : Indicateurs prévus' })).toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Aide : Prévus par la coordination' }),
-    ).toBeInTheDocument()
+      screen.queryByRole('button', { name: 'Aide : Nom du ministère dans la liste' }),
+    ).toBeNull()
     expect(
-      screen.getByRole('button', { name: 'Aide : Choisir dans la liste de la coordination' }),
-    ).toBeInTheDocument()
+      screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
+    ).toHaveAccessibleDescription('Choisissez le nom qui correspond à ce ministère.')
   })
 
   it('pendant la création, le bouton dit qu’il travaille et ne se grise pas', () => {
@@ -259,7 +247,7 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
     const refus =
       'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
     afficherMinistere(ID_KUMI, creationDe({ dernier: ID_KUMI, refus }))
-    const bloc = screen.getByRole('region', { name: 'Prévus par la coordination' })
+    const bloc = screen.getByRole('region', { name: 'Indicateurs prévus' })
     const alerte = within(bloc).getByRole('alert')
     expect(alerte).toHaveTextContent(refus)
     const bouton = within(bloc).getByRole('button', { name: 'Créer ces 6 indicateurs' })
@@ -272,14 +260,13 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
-  it('nom non reconnu : une phrase attend le choix, puis disparaît quand il est fait', async () => {
+  it('nom non reconnu : une indication attend le choix, puis disparaît quand il est fait', async () => {
     afficherMinistere(ID_JEUNESSE)
-    const phrase =
-      "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite."
+    const phrase = 'Choisissez le nom qui correspond à ce ministère.'
     expect(screen.getByText(phrase)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
     await userEvent.selectOptions(
-      screen.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' }),
+      screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
       'Film',
     )
     expect(screen.queryByText(phrase)).toBeNull()
@@ -287,18 +274,16 @@ describe('VueIndicateursMinistere : bloc « Prévus par la coordination »', () 
 })
 
 describe('VueIndicateursMinistere : états vides', () => {
-  it('Protocole : « Aucun indicateur pour Protocole. Il saisit les chiffres communs. », sans bloc de prévus', () => {
+  it('Protocole : « Aucun indicateur pour Protocole. », sans bloc de prévus', () => {
     afficherMinistere(ID_PROTOCOLE)
-    expect(
-      screen.getByText('Aucun indicateur pour Protocole. Il saisit les chiffres communs.'),
-    ).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(screen.getByText('Aucun indicateur pour Protocole.')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Indicateurs prévus' })).toBeNull()
     expect(screen.queryByText(/Retirés/)).toBeNull()
   })
 
   it('ministère introuvable : la phrase et le retour aux indicateurs', () => {
     afficherEtat({ etat: 'introuvable' })
-    expect(screen.getByText("Ce ministère n'existe pas ou n'est plus actif.")).toBeInTheDocument()
+    expect(screen.getByText('Ce ministère est introuvable.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir aux indicateurs' })).toHaveAttribute(
       'href',
       '/indicateurs',
@@ -339,11 +324,9 @@ describe('VueIndicateursMinistere : administration de l’église, en lecture (T
 
   it('prévus à créer : ni bloc, ni bouton, mais ce qui reste à créer, comme la liste le dit', () => {
     const creation = afficherMinistere(ID_KUMI, creationDe(), 'admin_eglise')
-    expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Indicateurs prévus' })).toBeNull()
     expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
-    expect(
-      screen.getByText('Liste « Kumi » de la coordination : 6 indicateurs à créer.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Liste « Kumi » : 6 indicateurs à créer.')).toBeInTheDocument()
     // L'état vide ne cache pas les prévus en attente.
     expect(screen.queryByText(/^Aucun indicateur pour Kumi/)).toBeNull()
     expect(creation.creer).not.toHaveBeenCalled()
@@ -353,7 +336,7 @@ describe('VueIndicateursMinistere : administration de l’église, en lecture (T
     afficherMinistere(ID_JEUNESSE, creationDe(), 'admin_eglise')
     expect(screen.queryByRole('combobox')).toBeNull()
     expect(
-      screen.getByText('Prévus par la coordination : la liste de ce ministère reste à choisir.'),
+      screen.getByText('Indicateurs prévus : la liste de ce ministère reste à choisir.'),
     ).toBeInTheDocument()
   })
 
@@ -367,6 +350,6 @@ describe('VueIndicateursMinistere : administration de l’église, en lecture (T
   it('EJP Tech ne lit ni la phrase de lecture ni la phrase des prévus : il a le bloc', () => {
     afficherMinistere(ID_KUMI)
     expect(screen.queryByText(/Adressez-lui vos demandes/)).toBeNull()
-    expect(screen.getByRole('region', { name: 'Prévus par la coordination' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Indicateurs prévus' })).toBeInTheDocument()
   })
 })

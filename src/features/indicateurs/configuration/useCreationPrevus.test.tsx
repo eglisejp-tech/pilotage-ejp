@@ -145,7 +145,7 @@ describe('useCreationPrevus', () => {
       await result.current.creer({ id: 'm-protocole', nom: 'Protocole' }, 'aucun')
     })
     expect(appel.creer).toHaveBeenCalledWith('m-protocole', 'aucun')
-    expect(result.current.reussite).toBe('Noté : aucun indicateur prévu pour Protocole.')
+    expect(result.current.reussite).toBe('Choix « Aucun prévu » enregistré pour Protocole.')
   })
 
   it('un refus de la base : sa phrase traduite, aucune réussite, aucune relecture (m228)', async () => {

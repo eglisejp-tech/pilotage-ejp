@@ -98,10 +98,8 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
         page.getByRole('heading', { level: 1, name: 'Indicateurs de Communication' }),
       ).toBeVisible()
       await attendreLaFinDuChargement(page)
-      await expect(
-        page.getByText(/^Communication suit \d+ indicateurs? sur 30 au plus/),
-      ).toBeVisible()
-      await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+      await expect(page.getByText(/^\d+ indicateurs? suivis?\.$/)).toBeVisible()
+      await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
       // Chaque indicateur suivi (actif ou à valider) a sa ligne, ni plus ni moins.
       const suivis = await lire<{ id: string }>(
         page,
@@ -122,7 +120,7 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
         page.getByRole('heading', { level: 1, name: 'Indicateurs de Jeunesse' }),
       ).toBeVisible()
       await attendreLaFinDuChargement(page)
-      const choix = page.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+      const choix = page.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
       await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
       if (profil === 'admin_eglise') {
         // T60 : l'administration lit l'écran, sans le choix de la liste ni aucun bouton.
@@ -145,7 +143,7 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
       page,
     }) => {
       await page.goto('/indicateurs/10000000-0000-4000-8000-0000000000ff')
-      await expect(page.getByText("Ce ministère n'existe pas ou n'est plus actif.")).toBeVisible()
+      await expect(page.getByText('Ce ministère est introuvable.')).toBeVisible()
       await expect(page.getByRole('alert')).toHaveCount(0)
     })
 

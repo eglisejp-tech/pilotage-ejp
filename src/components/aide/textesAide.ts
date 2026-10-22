@@ -59,20 +59,14 @@ export const TEXTES_AIDE = {
   // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 30 » : la base limite
   // une fiche à 30 lignes, `limites_indicateurs.lignes_max`, décision X7 ; le « 12 » du texte de
   // conception est dépassé).
-  // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Prévus par la
-  // coordination » de /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la
-  // coordination », quand le nom du ministère n'est pas reconnu. `indicateurs.usage` : première
-  // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id. Revu par T66 (t326, t343) : la
-  // bulle définit le chiffre, sans dire qui a prévu la liste. Attendent la fusion de T62 et T64,
-  // dont les tests lisent ces textes : `indicateurs.nombre` (t324, « « 8 sur 30 » : 8 indicateurs
-  // suivis, 30 au plus par ministère. ») et `indicateurs.modele`, qui part (t334) quand son texte
-  // passe dans l'indication du choix.
-  'indicateurs.nombre':
-    'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 30 » : 8 suivis, 30 au plus par fiche.',
+  // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Indicateurs
+  // prévus » de /indicateurs/:id. `indicateurs.usage` : première ligne d'usage (« Saisi 4 mois sur
+  // 5 ») de /indicateurs/:id. Revu par T66 (t324, t326, t343) : la bulle définit le chiffre, sans
+  // dire qui a prévu la liste. `indicateurs.modele` part (t334) : son texte devient l'indication
+  // sous « Nom du ministère dans la liste ».
+  'indicateurs.nombre': '« 8 sur 30 » : 8 indicateurs suivis, 30 au plus par ministère.',
   'indicateurs.prevus':
     "Liste prévue pour ce ministère. Une fois créés, ils s'ajoutent à ses saisies.",
-  'indicateurs.modele':
-    'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
   'indicateurs.usage': "Mois ou dimanches saisis depuis l'ajout. « 4 mois sur 5 » : 1 mois manque.",
 
   // Points d'attention (étape 5) : plus aucune bulle depuis T66. L'attendu et l'échéance d'un

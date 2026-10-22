@@ -114,14 +114,8 @@ test.describe('EJP Tech, qui configure (T60)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Indicateurs de Kumi' })).toBeVisible()
     await attendreLaFinDuChargement(page)
     const n = await nombreDePrevus(page, 'kumi')
-    await expect(
-      page.getByText(
-        new RegExp(
-          `^Kumi suit ${n} indicateurs sur 30 au plus : ${n} prévus par la coordination\\.$`,
-        ),
-      ),
-    ).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+    await expect(page.getByText(new RegExp(`^${n} indicateurs suivis\\.$`))).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
     const sections = await page.getByRole('heading', { level: 2 }).allTextContents()
     expect(sections.length).toBeGreaterThan(0)
     // Un indicateur créé aujourd'hui n'a encore rien de saisi : « Jamais saisi », jamais une valeur.
@@ -148,16 +142,14 @@ test.describe('EJP Tech, qui configure (T60)', () => {
     await page.goto(`/indicateurs/${essaiSansPrevu}`)
     await attendreLaFinDuChargement(page)
     await page
-      .getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+      .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
       .selectOption({ label: 'Aucun prévu' })
-    await page.getByRole('button', { name: 'Enregistrer : aucun prévu' }).click()
+    await page.getByRole('button', { name: 'Enregistrer « Aucun prévu »' }).click()
     await expect(
-      page.getByText('Noté : aucun indicateur prévu pour Essai sans prévu.'),
+      page.getByText('Choix « Aucun prévu » enregistré pour Essai sans prévu.'),
     ).toBeVisible()
-    await expect(
-      page.getByText('Aucun indicateur pour Essai sans prévu. Il saisit les chiffres communs.'),
-    ).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+    await expect(page.getByText('Aucun indicateur pour Essai sans prévu.')).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
     expect(await indicateursDe(page, essaiSansPrevu)).toHaveLength(0)
     const journal = await journalPrevus(page, essaiSansPrevu)
     expect(journal).toHaveLength(1)
@@ -183,7 +175,7 @@ test.describe('EJP Tech, qui configure (T60)', () => {
     const avant = (await indicateursDe(page, MINISTERE_JEUNESSE)).length
     const journalAvant = await journalPrevus(page, MINISTERE_JEUNESSE)
     await page
-      .getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+      .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
       .selectOption({ label: 'Kumi' })
     await page.getByRole('button', { name: /^Créer ces \d+ indicateurs$/ }).click()
     // Le refus de la base, traduit (m228).
@@ -193,7 +185,7 @@ test.describe('EJP Tech, qui configure (T60)', () => {
     // Tout ou rien : aucun indicateur de plus, aucune ligne de journal de plus, le bloc reste.
     expect(await indicateursDe(page, MINISTERE_JEUNESSE)).toHaveLength(avant)
     expect(await journalPrevus(page, MINISTERE_JEUNESSE)).toHaveLength(journalAvant.length)
-    await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toBeVisible()
   })
 
   test('« Essai prévus » : nom non reconnu, EJP Tech choisit « Entretien » dans la liste, puis crée', async ({
@@ -212,16 +204,14 @@ test.describe('EJP Tech, qui configure (T60)', () => {
     await attendreLaFinDuChargement(page)
     const n = await nombreDePrevus(page, 'entretien')
     expect(n).toBeGreaterThan(0)
-    const choix = page.getByRole('combobox', { name: 'Choisir dans la liste de la coordination' })
+    const choix = page.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
     await expect(choix.locator('option').last()).toHaveText('Aucun prévu')
     await choix.selectOption({ label: 'Entretien' })
-    await expect(
-      page.getByText(`Liste « Entretien » de la coordination : ${n} indicateurs à créer.`),
-    ).toBeVisible()
+    await expect(page.getByText(`Liste « Entretien » : ${n} indicateurs à créer.`)).toBeVisible()
     await page.getByRole('button', { name: `Créer ces ${n} indicateurs` }).click()
 
     await expect(page.getByText(`${n} indicateurs prévus créés.`)).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Prévus par la coordination' })).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
     const crees = await indicateursDe(page, essaiPrevus)
     expect(crees).toHaveLength(n)
     expect(crees.every((indicateur) => indicateur.modele_code?.startsWith('entretien_'))).toBe(true)

@@ -141,18 +141,16 @@ describe('construireConfiguration : écran /indicateurs', () => {
   it('phrases : actifs, ministères, ajout à valider, rappel de plus de 7 jours pour l’administration', () => {
     expect(configuration.phrases).toEqual([
       '8 indicateurs actifs pour 5 ministères.',
-      "1 ajout attend la validation d'EJP Tech, depuis plus de 7 jours. Prévenez EJP Tech.",
+      '1 indicateur attend sa validation depuis plus de 7 jours. Prévenez EJP Tech.',
     ])
     expect(construireConfiguration(lecturesExemple(), 'admin_plateforme').phrases).toEqual([
       '8 indicateurs actifs pour 5 ministères.',
-      "1 ajout attend la validation d'EJP Tech.",
+      '1 indicateur à valider.',
     ])
   })
 
-  it('colonne « Indicateurs » : suivis sur 30, et les ajouts du ministère', () => {
-    expect(ligne('Communication')?.texteIndicateurs).toBe(
-      '5 sur 30, dont 1 ajouté par Communication',
-    )
+  it('colonne « Indicateurs » : suivis sur 30, sans le détail des ajouts (T66, t325)', () => {
+    expect(ligne('Communication')?.texteIndicateurs).toBe('5 sur 30')
     expect(ligne('Eagles')?.texteIndicateurs).toBe('2 sur 30')
     expect(ligne('Kumi')?.texteIndicateurs).toBe('0 sur 30')
   })
@@ -223,10 +221,8 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     expect(construireMinistere(ID_ANCIEN, lecturesExemple())).toBeNull()
   })
 
-  it('phrase du ministère : prévus et ajouts', () => {
-    expect(donnees?.phrase).toBe(
-      'Communication suit 5 indicateurs sur 30 au plus : 4 prévus par la coordination et 1 ajouté par Communication.',
-    )
+  it('phrase du ministère : le nombre d’indicateurs suivis (T66, t329)', () => {
+    expect(donnees?.phrase).toBe('5 indicateurs suivis.')
   })
 
   it('sections dans l’ordre : rythmes, puis calculs ; rangées par ordre alphabétique', () => {
@@ -246,7 +242,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
       usage: 'Jamais saisi',
       peuSaisi: true,
       jamaisSaisi: true,
-      mentions: ['Libellé corrigé le 5 oct.'],
+      mentions: ['Nom corrigé le 5 oct.'],
       aValider: null,
     })
     const publications = lignes.find((l) => l.libelle === 'Publications')
@@ -263,8 +259,8 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     const ajout = lignes.find((l) => l.libelle === 'Projets en cours')
     expect(ajout).toMatchObject({
       enAttente: true,
-      aValider: 'À valider par EJP Tech depuis 9 jours',
-      mentions: ['Suggestion de la coordination', 'Ajouté par Communication le 28 sept.'],
+      aValider: 'À valider depuis 9 jours',
+      mentions: ['Indicateur prévu', 'Ajouté par Communication le 28 sept.'],
       peuSaisi: false,
       jamaisSaisi: true,
     })
@@ -297,7 +293,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
     ])
   })
 
-  it('prévus créés : le bloc « Prévus par la coordination » n’a rien à montrer', () => {
+  it('prévus créés : le bloc « Indicateurs prévus » n’a rien à montrer', () => {
     expect(donnees?.prevus.genre).toBe('crees')
     expect(donnees?.sansIndicateur).toBe(false)
   })
@@ -314,9 +310,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
   it('Jeunesse : « À choisir », ses indicateurs de l’église, mentions d’unité', () => {
     const jeunesse = construireMinistere(ID_JEUNESSE, lecturesExemple())
     expect(jeunesse?.prevus.genre).toBe('a_choisir')
-    expect(jeunesse?.phrase).toBe(
-      "Jeunesse suit 2 indicateurs sur 30 au plus : 2 ajoutés par l'administration de l'église ou EJP Tech.",
-    )
+    expect(jeunesse?.phrase).toBe('2 indicateurs suivis.')
     const mentions = jeunesse?.sections.flatMap((s) => s.lignes).map((l) => l.mentions)
     expect(mentions).toEqual([[`Grand nombre, jusqu'à ${nombre(9_999_999)}`], ['Compté en jours']])
   })
@@ -357,9 +351,7 @@ describe('apresCreation (aperçu) : « Créer » comme la base', () => {
     const kumi = construireMinistere(ID_KUMI, lectures)
     expect(kumi?.prevus.genre).toBe('crees')
     expect(kumi?.sansIndicateur).toBe(false)
-    expect(kumi?.phrase).toBe(
-      'Kumi suit 6 indicateurs sur 30 au plus : 6 prévus par la coordination.',
-    )
+    expect(kumi?.phrase).toBe('6 indicateurs suivis.')
     expect(lectures.creations[0]).toMatchObject({
       ministere_id: ID_KUMI,
       action: 'indicateurs_prevus_crees',

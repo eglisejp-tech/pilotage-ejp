@@ -94,21 +94,17 @@ describe.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])('/indicateurs, %
     }
   })
 
-  it('un identifiant mal formé : « Ce ministère n’existe pas », aucune lecture de plus', async () => {
+  it('un identifiant mal formé : « Ce ministère est introuvable. », aucune lecture de plus', async () => {
     const faux = connecte(profil)
     afficher('/indicateurs/pas-un-identifiant')
-    expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Ce ministère est introuvable.')).toBeInTheDocument()
     expect(faux.tables).toEqual(['compte'])
   })
 
   it('un identifiant bien formé mais inconnu : la même phrase, et le retour aux indicateurs', async () => {
     connecte(profil)
     afficher(`/indicateurs/${ID_INCONNU}`)
-    expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif."),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Ce ministère est introuvable.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir aux indicateurs' })).toBeInTheDocument()
   })
 
@@ -195,7 +191,7 @@ describe('/indicateurs, admin_eglise : la lecture seule', () => {
     ).toBeInTheDocument()
     expect(screen.getByText(LECTURE)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Créer|Ajouter/ })).toBeNull()
-    expect(screen.queryByRole('region', { name: 'Prévus par la coordination' })).toBeNull()
+    expect(screen.queryByRole('region', { name: 'Indicateurs prévus' })).toBeNull()
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 })

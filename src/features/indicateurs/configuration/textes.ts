@@ -14,11 +14,14 @@ export const TEXTES_CONFIGURATION = {
     colonnePrevus: 'Prévus',
     colonneSaisie: 'Saisie',
     colonneChangement: 'Dernier changement',
-    /** Aucun ministère actif (7.1). */
-    aucunMinistere: "Aucun ministère. Créez d'abord les ministères dans Ministères et comptes.",
+    /**
+     * Aucun ministère actif (7.1) : le bouton « Ajouter un ministère » porte l'action (T66, t327,
+     * t328 et m224 ; il ouvre Ministères et comptes).
+     */
+    aucunMinistere: 'Aucun ministère.',
     /** Proposé, administration en lecture (T60) : EJP Tech crée les ministères. */
     aucunMinistereLecture: 'Aucun ministère. EJP Tech crée les ministères.',
-    actionMinisteres: 'Ouvrir Ministères et comptes',
+    actionMinisteres: 'Ajouter un ministère',
     /** Colonne « Prévus ». */
     creer: 'Créer',
     choisir: 'Choisir',
@@ -35,22 +38,30 @@ export const TEXTES_CONFIGURATION = {
   },
   ministere: {
     retour: 'Tous les indicateurs',
-    /** Titre du bloc des prévus (7.2). */
-    titrePrevus: 'Prévus par la coordination',
-    choixModele: 'Choisir dans la liste de la coordination',
+    /**
+     * Titre du bloc des prévus (7.2), sans dire qui a prévu la liste (T66, t331 ; glossaire
+     * « Indicateurs prévus »).
+     */
+    titrePrevus: 'Indicateurs prévus',
+    /** Le libellé dit ce qu'on choisit (T66, t333). */
+    choixModele: 'Nom du ministère dans la liste',
     choixModelePlaceholder: 'Choisissez un ministère de la liste',
-    /** Proposé : sous le titre du bloc, tant que rien n'est choisi. */
-    attenteChoix:
-      "Choisissez le nom de ce ministère dans la liste. Les indicateurs prévus s'afficheront ensuite.",
+    /**
+     * Indication sous le choix, tant que rien n'est choisi : elle remplace la bulle
+     * `indicateurs.modele` (T66, t334 et t335).
+     */
+    attenteChoix: 'Choisissez le nom qui correspond à ce ministère.',
     /** Dernier choix de la liste (7.2). */
     aucunPrevu: 'Aucun prévu',
-    /** Proposé : le choix « Aucun prévu » est retenu. */
-    aucunPrevuExplication:
-      'Aucun indicateur prévu pour ce ministère. Il saisit les chiffres communs.',
-    boutonAucunPrevu: 'Enregistrer : aucun prévu',
+    /** Proposé : le choix « Aucun prévu » est retenu (T66, t336). */
+    aucunPrevuExplication: 'Aucun indicateur prévu pour ce ministère.',
+    boutonAucunPrevu: 'Enregistrer « Aucun prévu »',
     titreRetires: 'Retirés',
-    /** Le lien d'un ajout à valider vers le bloc de l'écran Indicateurs (7.2). */
-    voirAValider: 'Voir dans À valider',
+    /**
+     * Le lien d'un ajout à valider vers le bloc de l'écran Indicateurs (7.2) : le même lien que la
+     * modération (T66, t342).
+     */
+    voirAValider: 'Ouvrir les indicateurs à valider',
     /** Proposé : mention d'un calcul, qui ne se saisit pas. */
     calculSansSaisie: 'Se calcule tout seul',
     aucunRetire: 'Aucun indicateur retiré.',
@@ -63,8 +74,8 @@ export const TEXTES_CONFIGURATION = {
   /** Erreurs de page (LISEZMOI, « États »). */
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
-  /** Ministère inconnu ou désactivé, aucune requête de plus. */
-  introuvable: "Ce ministère n'existe pas ou n'est plus actif.",
+  /** Ministère inconnu ou désactivé, aucune requête de plus (formule « introuvable », m224). */
+  introuvable: 'Ce ministère est introuvable.',
   revenir: 'Revenir aux indicateurs',
   /**
    * Sous le titre des deux écrans, pour l'administration de l'église, qui les lit sans aucun
@@ -73,12 +84,12 @@ export const TEXTES_CONFIGURATION = {
   lecture: 'EJP Tech crée, corrige et retire les indicateurs. Adressez-lui vos demandes.',
 } as const
 
-/** État vide d'un ministère sans indicateur suivi (7.2, LISEZMOI « États »). */
+/** État vide d'un ministère sans indicateur suivi (7.2, LISEZMOI « États » ; T66, t330). */
 export function aucunIndicateurPour(nomMinistere: string): string {
-  return `Aucun indicateur pour ${nomMinistere}. Il saisit les chiffres communs.`
+  return `Aucun indicateur pour ${nomMinistere}.`
 }
 
-/** « Créer ces 6 indicateurs » : le bouton du bloc « Prévus par la coordination » (7.2). */
+/** « Créer ces 6 indicateurs » : le bouton du bloc « Indicateurs prévus » (7.2). */
 export function boutonCreerPrevus(n: number): string {
   return `Créer ${n === 1 ? 'cet' : 'ces'} ${nombre(n)} ${accorder(n, 'indicateur', 'indicateurs')}`
 }
@@ -96,9 +107,9 @@ export function texteACreer(n: number): string {
   return `${nombre(n)} à créer`
 }
 
-/** Introduction de la liste des prévus (7.2) : « Liste « Kumi » de la coordination : 12 indicateurs à créer. » Proposé. */
+/** Introduction de la liste des prévus (7.2) : « Liste « Kumi » : 12 indicateurs à créer. » (T66, t332). */
 export function introPrevus(nomModele: string, n: number): string {
-  return `Liste « ${nomModele} » de la coordination : ${nombre(n)} ${accorder(n, 'indicateur', 'indicateurs')} à créer.`
+  return `Liste « ${nomModele} » : ${nombre(n)} ${accorder(n, 'indicateur', 'indicateurs')} à créer.`
 }
 
 /** Messages de réussite (7.2 et 7.7), annoncés pendant 6 secondes. */
@@ -107,20 +118,20 @@ export function reussiteCreationPrevus(n: number, nomMinistere: string): string 
   return `${nombre(n)} ${accorder(n, 'indicateur prévu créé', 'indicateurs prévus créés')}.`
 }
 
-/** Proposé : la réponse « Aucun prévu » est enregistrée. */
+/** Proposé : la réponse « Aucun prévu » est enregistrée (formule « réussite », T66 t338, m226). */
 export function reussiteAucunPrevu(nomMinistere: string): string {
-  return `Noté : aucun indicateur prévu pour ${nomMinistere}.`
+  return `Choix « Aucun prévu » enregistré pour ${nomMinistere}.`
 }
 
 /**
- * En lecture (administration de l'église, T60), à la place du bloc « Prévus par la coordination »
- * de `/indicateurs/:id` : ce qui reste à créer ou à choisir, sans bouton, comme la colonne
- * « Prévus » de la liste. Null quand rien ne reste. Proposé.
+ * En lecture (administration de l'église, T60), à la place du bloc « Indicateurs prévus » de
+ * `/indicateurs/:id` : ce qui reste à créer ou à choisir, sans bouton, comme la colonne « Prévus »
+ * de la liste. Null quand rien ne reste. Proposé ; sans dire qui a prévu la liste (T66, t331).
  */
 export function prevusEnLecture(etat: EtatPrevus): string | null {
   if (etat.genre === 'a_creer') return introPrevus(etat.modele.nom, etat.manquants.length)
   if (etat.genre === 'a_choisir') {
-    return 'Prévus par la coordination : la liste de ce ministère reste à choisir.'
+    return 'Indicateurs prévus : la liste de ce ministère reste à choisir.'
   }
   return null
 }
