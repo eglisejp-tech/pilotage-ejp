@@ -9,9 +9,9 @@ import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 
 interface Props {
   texte: TexteARelire
-  /** « Rien à signaler » : appelle `marquer_relu`. */
+  /** « Marquer relu » : appelle `marquer_relu`. */
   relire: () => Promise<void>
-  /** « Masquer définitivement » : appelle `masquer_texte` pour le champ et le motif choisis. */
+  /** « Masquer le texte » (fenêtre) : appelle `masquer_texte` pour le champ et le motif choisis. */
   masquer: (choix: ChoixMasquage) => Promise<void>
   /** Une décision est écrite : l'écran annonce ce message et rend le focus au titre de la liste. */
   surFait: (message: string) => void
@@ -23,10 +23,10 @@ const boutonPrincipal =
   'inline-flex min-h-cible items-center justify-center bg-encre px-4 text-[15px] font-semibold whitespace-nowrap text-papier aria-disabled:cursor-wait'
 
 /**
- * Une ligne de la file « Champs libres à relire » (maquette 15) : le type et le ministère, puis
- * la date et l'heure de Paris ; tous les champs libres non vides entre guillemets (avec leur nom
- * quand il y en a plusieurs) ; à droite, « Rien à signaler » et « Masquer le texte » pour un texte
- * à relire, ou la décision (« Relu le 29 sept. : rien à signaler », « Masqué le 29 sept. : nom
+ * Une ligne de la file « Textes à relire » (maquette 15) : le type et le ministère, puis la date
+ * et l'heure de Paris ; tous les champs libres non vides entre guillemets (avec leur nom quand il
+ * y en a plusieurs) ; à droite, « Marquer relu » et « Masquer le texte » pour un texte à relire,
+ * ou la décision (« Relu le 29 sept. », « Masqué le 29 sept. : nom
  * d'une personne »). Un texte relu ou masqué qui garde des champs non masqués garde « Masquer le
  * texte » (une donnée personnelle peut être signalée après la relecture). Un champ déjà masqué s'affiche en `--encre-3`. Une précision dit aussi l'indicateur et
  * le mois, jamais la valeur. Un refus de la base se dit sous les boutons.

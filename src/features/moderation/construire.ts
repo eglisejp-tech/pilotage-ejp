@@ -33,7 +33,7 @@ export interface TexteARelire {
   indicateur: string | null
   champs: ChampARelire[]
   etat: EtatTexteARelire
-  /** « Relu le 29 sept. : rien à signaler » ou « Masqué le 29 sept. : nom d'une personne ». */
+  /** « Relu le 29 sept. » ou « Masqué le 29 sept. : nom d'une personne ». */
   decision: string | null
   /** Les champs que « Masquer le texte » peut encore remplacer (les non masqués). */
   masquables: ChampARelire[]

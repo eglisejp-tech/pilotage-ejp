@@ -328,7 +328,7 @@ describe('« Marquer traité » pour un ministère', () => {
       await utilisateur.click(screen.getAllByRole('button', { name: 'Marquer traité' }).at(-1)!)
 
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'La connexion a échoué. Votre commentaire est encore dans le formulaire : réessayez.',
+        'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
       )
       expect(champ).toHaveValue('Réglé avec le propriétaire.')
       expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -366,14 +366,15 @@ describe('« Marquer traité » pour un ministère', () => {
     expect(marquer).not.toHaveBeenCalled()
   })
 
-  it('un titre masqué par EJP Tech s’affiche tel quel, sans guillemets', async () => {
+  it('un titre masqué par EJP Tech s’affiche « [texte masqué] », sans guillemets', async () => {
     const utilisateur = userEvent.setup()
     afficher(ministere(CREATEUR), {
       ...unPoint(),
       titre: { texte: '[texte masqué par EJP Tech]', masque: true },
     })
     await utilisateur.click(screen.getByRole('button', { name: 'Marquer traité' }))
-    expect(screen.getByRole('dialog')).toHaveTextContent('[texte masqué par EJP Tech]')
+    expect(screen.getByRole('dialog')).toHaveTextContent('[texte masqué]')
+    expect(screen.getByRole('dialog')).not.toHaveTextContent('par EJP Tech')
     expect(screen.queryByText(/«/)).toBeNull()
   })
 
@@ -383,10 +384,10 @@ describe('« Marquer traité » pour un ministère', () => {
       titre: { texte: '[texte masqué par EJP Tech]', masque: true },
     })
     expect(screen.getByRole('button', { name: 'Marquer traité' })).toHaveAccessibleDescription(
-      '[texte masqué par EJP Tech]',
+      '[texte masqué]',
     )
     expect(screen.getByRole('button', { name: 'Changer le statut' })).toHaveAccessibleDescription(
-      '[texte masqué par EJP Tech]',
+      '[texte masqué]',
     )
   })
 
@@ -548,7 +549,7 @@ describe('« Changer le statut »', () => {
       await utilisateur.click(screen.getByRole('radio', { name: 'En cours' }))
       await utilisateur.click(screen.getByRole('button', { name: 'Enregistrer le statut' }))
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+        'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
       )
       expect(screen.getByRole('radio', { name: 'En cours' })).toBeChecked()
       await utilisateur.click(screen.getByRole('button', { name: 'Annuler' }))

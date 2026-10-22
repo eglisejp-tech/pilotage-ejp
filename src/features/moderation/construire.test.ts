@@ -32,7 +32,7 @@ describe('construireTextesARelire', () => {
       [ligne({ ecrit_le: '2026-09-29T19:40:00Z' })],
       MINISTERES,
     )
-    expect(texte?.entete).toBe("Point d'attention, Social")
+    expect(texte?.entete).toBe('Point, Social')
     // 19 h 40 UTC, heure d'été : 21 h 40 à Paris.
     expect(texte?.quand).toBe('29 sept., 21 h 40')
   })
@@ -54,7 +54,7 @@ describe('construireTextesARelire', () => {
 
   it('un ministère inconnu de la liste : le libellé du compte', () => {
     const [texte] = construireTextesARelire([ligne({ ministere_id: 'm-autre' })], MINISTERES)
-    expect(texte?.entete).toBe("Point d'attention, Ministère Social")
+    expect(texte?.entete).toBe('Point, Ministère Social')
   })
 
   it('les champs suivent l’ordre du formulaire et passent les champs vides', () => {
@@ -90,12 +90,12 @@ describe('construireTextesARelire', () => {
     expect(texte?.decision).toBe("Masqué le 30 sept. : nom d'une personne")
   })
 
-  it('la décision d’un texte relu dit « rien à signaler »', () => {
+  it('la décision d’un texte relu dit seulement le jour (T66, m217)', () => {
     const [texte] = construireTextesARelire(
       [ligne({ etat: 'relu', decision_le: '2026-09-29T08:50:00+02:00' })],
       MINISTERES,
     )
-    expect(texte?.decision).toBe('Relu le 29 sept. : rien à signaler')
+    expect(texte?.decision).toBe('Relu le 29 sept.')
   })
 
   it('une précision dit l’indicateur et le mois, jamais une valeur', () => {
@@ -155,10 +155,10 @@ describe('libelleMois', () => {
 })
 
 describe('textes de l’écran', () => {
-  it('« N textes en attente » s’accorde', () => {
-    expect(TEXTES_MODERATION.enAttente(0)).toBe('Aucun texte en attente')
-    expect(TEXTES_MODERATION.enAttente(1)).toBe('1 texte en attente')
-    expect(TEXTES_MODERATION.enAttente(2)).toBe('2 textes en attente')
+  it('« N textes à relire » s’accorde', () => {
+    expect(TEXTES_MODERATION.enAttente(0)).toBe('Aucun texte à relire')
+    expect(TEXTES_MODERATION.enAttente(1)).toBe('1 texte à relire')
+    expect(TEXTES_MODERATION.enAttente(2)).toBe('2 textes à relire')
   })
 
   it('« N indicateurs attendent votre validation » dit le plus ancien', () => {

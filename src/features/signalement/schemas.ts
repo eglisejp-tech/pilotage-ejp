@@ -2,7 +2,7 @@ import { z } from 'zod'
 import {
   LONGUEUR_MAX_SIGNALEMENT,
   LONGUEUR_MIN_SIGNALEMENT,
-  MESSAGES_BASE_SIGNALEMENT,
+  TEXTES_BLOC_SIGNALEMENTS,
   TEXTES_SIGNALEMENT,
 } from '@/features/signalement/textes'
 import type { EcranSignalement } from '@/lib/base'
@@ -76,8 +76,8 @@ const schemaCommentaire = z
   .transform((texte) => (texte === '' ? null : texte))
   .pipe(
     texteLibre(
-      MESSAGES_BASE_SIGNALEMENT.commentaireCourt,
-      MESSAGES_BASE_SIGNALEMENT.commentaireLong,
+      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireCourt,
+      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireLong,
     ).nullable(),
   )
 

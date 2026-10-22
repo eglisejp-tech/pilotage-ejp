@@ -102,9 +102,7 @@ describe('VueFiche, berger (04)', () => {
     afficher('berger')
     const precision = screen.getByText(/^Précision de septembre/).closest('p')
     expect(precision).not.toBeNull()
-    expect(within(precision as HTMLElement).getByText('[texte masqué par EJP Tech]')).toHaveClass(
-      'text-encre-3',
-    )
+    expect(within(precision as HTMLElement).getByText('[texte masqué]')).toHaveClass('text-encre-3')
     expect(screen.getByText(/collecte de rentrée, tous orientés/)).toBeInTheDocument()
   })
 

@@ -8,16 +8,19 @@ import { appeler, compter, lire, MINISTERE_COMMUNICATION } from './outils-evenem
 // (textes suffixés, en lettres : 5 chiffres de suite tomberaient dans la famille « données
 // personnelles » de la base) ; EJP Tech relit le premier, masque le titre du second par la
 // fenêtre, puis le texte du signalement par le bloc « Signalements » ; le texte masqué s'affiche
-// « [texte masqué par EJP Tech] » chez Communication. Les autres profils reçoivent la page non
-// disponible, une file vide et un refus de la base (42501). Le journal reçoit une ligne par
-// décision, avec le champ et le motif, jamais le texte.
+// « [texte masqué] » chez Communication (T66), la base garde son marqueur. Les autres profils
+// reçoivent la page non disponible, une file vide et un refus de la base (42501). Le journal reçoit
+// une ligne par décision, avec le champ et le motif, jamais le texte.
 
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
 const TITRE_RELU = `Essai L6 relu ${SUFFIXE}`
 const TITRE_MASQUE = `Essai L6 masque ${SUFFIXE}`
 const DESCRIPTION = `Description du point masque ${SUFFIXE}.`
 const SIGNALEMENT = `Essai L6 ${SUFFIXE} : le bouton reste grisé.`
-const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
+/** Marqueur écrit par `private.masquer_texte`, lu tel quel dans les vues. */
+const TEXTE_MASQUE_BASE = '[texte masqué par EJP Tech]'
+/** Ce que l'écran affiche à la place (T66). */
+const TEXTE_MASQUE = '[texte masqué]'
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
 
 test.describe.configure({ mode: 'serial' })
@@ -40,8 +43,8 @@ const journalDe = (page: Page, action: string, cible: string, id: string) =>
     `journal?select=id,detail&action=eq.${action}&cible=eq.${cible}&cible_id=eq.${id}`,
   )
 
-const file = (page: Page) => page.getByRole('region', { name: 'Champs libres à relire' })
-const fenetre = (page: Page) => page.getByRole('dialog', { name: 'Masquer le texte' })
+const file = (page: Page) => page.getByRole('region', { name: 'Textes à relire' })
+const fenetre = (page: Page) => page.getByRole('dialog', { name: 'Masquer ce texte ?' })
 
 test.describe('Communication écrit ses textes', () => {
   test.use({ storageState: fichierSession('ministere') })
@@ -105,10 +108,10 @@ test.describe('EJP Tech relit et masque', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modération')
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
     await expect(file(page).getByRole('heading', { level: 2 })).toBeVisible()
-    await expect(file(page).getByText(/\d+ textes? en attente/)).toBeVisible()
+    await expect(file(page).getByText(/\d+ textes? à relire/)).toBeVisible()
     const ligneRelu = file(page).getByRole('article').filter({ hasText: TITRE_RELU })
-    await expect(ligneRelu).toContainText("Point d'attention, Communication")
-    await expect(ligneRelu.getByRole('button', { name: 'Rien à signaler' })).toBeVisible()
+    await expect(ligneRelu).toContainText('Point, Communication')
+    await expect(ligneRelu.getByRole('button', { name: 'Marquer relu' })).toBeVisible()
     const ligneMasque = file(page).getByRole('article').filter({ hasText: TITRE_MASQUE })
     await expect(ligneMasque).toContainText(DESCRIPTION)
     // La file ne porte aucune valeur chiffrée : ses colonnes sont celles de la vue.
@@ -118,23 +121,23 @@ test.describe('EJP Tech relit et masque', () => {
     ])
   })
 
-  test('« Rien à signaler » : la ligne passe à « Relu », une ligne de journal sans texte, pas de seconde relecture', async ({
+  test('« Marquer relu » : la ligne passe à « Relu », une ligne de journal sans texte, pas de seconde relecture', async ({
     page,
   }) => {
     await page.goto('/moderation')
     const ligne = file(page).getByRole('article').filter({ hasText: TITRE_RELU })
-    await ligne.getByRole('button', { name: 'Rien à signaler' }).click()
+    await ligne.getByRole('button', { name: 'Marquer relu' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'relu' })).toHaveText(
       'Texte marqué comme relu.',
     )
-    await expect(ligne).toContainText(/Relu le \d{1,2} \S+ : rien à signaler/)
+    await expect(ligne).toContainText(/Relu le \d{1,2} \S+/)
     expect((await dansLaFile(page, pointRelu))[0]?.etat).toBe('relu')
     const journal = await journalDe(page, 'texte_relu', 'point_attention', pointRelu)
     expect(journal).toHaveLength(1)
     expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
     // Un texte relu garde « Masquer le texte » (une donnée personnelle peut être signalée après).
     await expect(ligne.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
-    await expect(ligne.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
+    await expect(ligne.getByRole('button', { name: 'Marquer relu' })).toHaveCount(0)
 
     const encore = await appeler(page, 'marquer_relu', {
       p_cible: 'point_attention',
@@ -153,10 +156,10 @@ test.describe('EJP Tech relit et masque', () => {
     await ligne.getByRole('button', { name: 'Masquer le texte' }).click()
     const boite = fenetre(page)
     await boite.getByRole('radio', { name: /^Titre/ }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(boite.getByText('Choisissez un motif dans la liste.')).toBeVisible()
     await boite.getByRole('radio', { name: "Nom d'une personne" }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(fenetre(page)).toHaveCount(0)
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
 
@@ -173,16 +176,16 @@ test.describe('EJP Tech relit et masque', () => {
       page,
       `v_point?select=titre,description&id=eq.${pointMasque}`,
     )
-    expect(point).toEqual({ titre: TEXTE_MASQUE, description: DESCRIPTION })
+    expect(point).toEqual({ titre: TEXTE_MASQUE_BASE, description: DESCRIPTION })
 
     // Une ligne de journal : le champ et le motif, jamais le texte.
     const journal = await journalDe(page, 'texte_masque', 'point_attention', pointMasque)
     expect(journal).toHaveLength(1)
     expect(journal[0]?.detail).toEqual({ champ: 'titre', motif: 'nom_personne' })
     expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
-    // La description reste à masquer : le bouton demeure, « Rien à signaler » a disparu.
+    // La description reste à masquer : le bouton demeure, « Marquer relu » a disparu.
     await expect(apres.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
-    await expect(apres.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
+    await expect(apres.getByRole('button', { name: 'Marquer relu' })).toHaveCount(0)
   })
 
   test('« Masquer le texte » dans le bloc « Signalements » : le texte du signalement est remplacé', async ({
@@ -194,7 +197,7 @@ test.describe('EJP Tech relit et masque', () => {
     await expect(ligne).toContainText('Communication')
     await ligne.getByRole('button', { name: 'Masquer le texte' }).click()
     await fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }).check()
-    await fenetre(page).getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
     await expect(bloc).not.toContainText(SIGNALEMENT)
 
@@ -202,7 +205,7 @@ test.describe('EJP Tech relit et masque', () => {
       page,
       `v_signalement?select=texte,ouvert&id=eq.${signalementId}`,
     )
-    expect(lu).toEqual({ texte: TEXTE_MASQUE, ouvert: true })
+    expect(lu).toEqual({ texte: TEXTE_MASQUE_BASE, ouvert: true })
     const journal = await journalDe(page, 'texte_masque', 'signalement', signalementId)
     expect(journal).toHaveLength(1)
     expect(journal[0]?.detail).toEqual({ champ: 'texte', motif: 'autre' })
@@ -215,13 +218,14 @@ test.describe('EJP Tech relit et masque', () => {
 test.describe('Communication relit ses textes', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('le titre masqué et le signalement masqué s’affichent « [texte masqué par EJP Tech] »', async ({
+  test('le titre masqué et le signalement masqué s’affichent « [texte masqué] »', async ({
     page,
   }) => {
     // Sur /points : l'article du point d'essai (trouvé par sa description) porte le texte masqué.
     await page.goto('/points')
     const surPoints = page.getByRole('article').filter({ hasText: DESCRIPTION })
     await expect(surPoints).toContainText(TEXTE_MASQUE)
+    await expect(surPoints).not.toContainText(TEXTE_MASQUE_BASE)
     await expect(surPoints).not.toContainText(TITRE_MASQUE)
     await expect(page.getByText(TITRE_MASQUE)).toHaveCount(0)
     await expect(page.getByText(TITRE_RELU).first()).toBeVisible()
@@ -241,14 +245,14 @@ test.describe('Communication relit ses textes', () => {
       page,
       `v_signalement?select=ministere_id,texte&id=eq.${signalementId}`,
     )
-    expect(lu).toEqual({ ministere_id: MINISTERE_COMMUNICATION, texte: TEXTE_MASQUE })
+    expect(lu).toEqual({ ministere_id: MINISTERE_COMMUNICATION, texte: TEXTE_MASQUE_BASE })
   })
 })
 
 test.describe('Le berger lit la fiche de Communication', () => {
   test.use({ storageState: fichierSession('berger') })
 
-  test('le titre masqué s’affiche « [texte masqué par EJP Tech] » sur la fiche du ministère', async ({
+  test('le titre masqué s’affiche « [texte masqué] » sur la fiche du ministère', async ({
     page,
   }) => {
     await page.goto(`/ministeres/${MINISTERE_COMMUNICATION}`)
@@ -268,7 +272,7 @@ for (const profil of ['berger', 'conseil', 'admin_eglise'] as const) {
     }) => {
       await page.goto('/moderation')
       await expect(page.getByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE })).toBeVisible()
-      await expect(page.getByText(/Champs libres à relire/)).toHaveCount(0)
+      await expect(page.getByText(/Textes à relire/)).toHaveCount(0)
       expect(await dansLaFile(page, pointMasque)).toHaveLength(0)
       const relu = await appeler(page, 'marquer_relu', {
         p_cible: 'point_attention',

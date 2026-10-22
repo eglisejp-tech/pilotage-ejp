@@ -9,7 +9,7 @@
 import type { IndicateurCommun } from '@/data/eglise'
 import type { LigneJournal, SessionJournal } from '@/data/journal'
 import { libelleStatut } from '@/features/evenements/textes'
-import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
+import { TEXTE_MASQUE, TEXTE_MASQUE_AFFICHE } from '@/features/fiche/textesFiche'
 import { libelleAction } from '@/features/journal/libellesActions'
 import type { LigneJournalAffichee, SegmentDetail } from '@/features/journal/modeleJournal'
 import { LIBELLES_ECRAN } from '@/features/signalement/textes'
@@ -85,7 +85,8 @@ const MARQUEURS_MASQUES = [TEXTE_MASQUE, TEXTE_RETIRE]
 /**
  * Un texte de la base : le marqueur de la modération ou du retrait, seul (« [texte masqué par EJP
  * Tech] ») ou dans une phrase de la vue (« Précision : [retiré pour confidentialité], octobre
- * 2026 »), se coupe en son propre segment, grisé ; le reste garde la couleur normale.
+ * 2026 »), se coupe en son propre segment, grisé ; le reste garde la couleur normale. Le marqueur
+ * de la modération s'affiche « [texte masqué] » (T66, t356).
  */
 function libre(texte: string): SegmentDetail[] {
   const marqueur = MARQUEURS_MASQUES.find((candidat) => texte.includes(candidat))
@@ -95,7 +96,7 @@ function libre(texte: string): SegmentDetail[] {
   const apres = texte.slice(debut + marqueur.length)
   return [
     ...(avant === '' ? [] : [simple(avant)]),
-    { texte: marqueur, masque: true },
+    { texte: marqueur === TEXTE_MASQUE ? TEXTE_MASQUE_AFFICHE : marqueur, masque: true },
     ...(apres === '' ? [] : libre(apres)),
   ]
 }
@@ -140,22 +141,24 @@ const OBJET_SANS_TEXTE: Readonly<Record<string, string>> = {
 /** Le nom de l'objet d'un texte relu ou masqué : « Point de Social », « Réunion ». */
 const TEXTE_DE_LA_MODERATION: Readonly<Record<string, string>> = {
   point_attention: 'Point',
-  point_suivi: "Suivi d'un point",
+  // Les mots de l'écran Modération (T66, t381).
+  point_suivi: 'Commentaire de traitement',
   evenement: 'Événement',
   reunion: 'Réunion',
   demande_indicateur: "Demande d'indicateur",
   validation: 'Décision sur un indicateur',
-  precision_sensible: "Précision d'un indicateur sensible",
+  precision_sensible: "Précision d'un chiffre",
   signalement: 'Signalement',
   signalement_suivi: "Clôture d'un signalement",
 }
 
 /** Motifs d'un texte masqué (`moderation.motif`, BRIEF section 6) : un code, jamais du texte. */
 const MOTIFS_MASQUAGE: Readonly<Record<string, string>> = {
+  // Les libellés de la fenêtre de masquage (T66, t382).
   nom_personne: "nom d'une personne",
   coordonnees: 'coordonnées',
-  situation_personnelle: 'situation personnelle',
-  autre: 'autre',
+  situation_personnelle: 'santé ou situation personnelle',
+  autre: 'autre information personnelle',
 }
 
 /** Motifs de retrait d'un indicateur (contrat de l'étape 4, section 4). */
@@ -440,7 +443,8 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
       return [simple(ecran === null ? 'Signalement' : `Écran : ${ecran}`)]
     }
     case 'texte_relu':
-      return [simple(`${texteModere(ligne)}, rien à signaler`)]
+      // L'action dit déjà « A relu un texte » (T66, t383).
+      return [simple(texteModere(ligne))]
     case 'texte_masque': {
       const motif = MOTIFS_MASQUAGE[texteDe(detail, 'motif') ?? '']
       return [

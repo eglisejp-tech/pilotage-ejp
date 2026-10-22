@@ -223,7 +223,8 @@ describe('une ligne du journal, en mots', () => {
       }),
       CONTEXTE,
     )
-    expect(construite.detail).toEqual([{ texte: '[texte masqué par EJP Tech]', masque: true }])
+    // Le marqueur de la base s'affiche « [texte masqué] » (T66, t356).
+    expect(construite.detail).toEqual([{ texte: '[texte masqué]', masque: true }])
     const lisible = construireLigne(
       ligne({ action: 'point_traite', cible: 'point_attention', cible_texte: 'Micros' }),
       CONTEXTE,
@@ -304,7 +305,7 @@ describe('une ligne du journal, en mots', () => {
         cible_texte: 'Titre secret',
         ministere_nom: 'Social',
       }),
-    ).toBe('Point de Social, rien à signaler')
+    ).toBe('Point de Social')
     expect(
       texteDe({
         action: 'texte_masque',
@@ -324,7 +325,7 @@ describe('une ligne du journal, en mots', () => {
     ).toBe("Réunion d'Intégration, motif : coordonnées")
     expect(
       texteDe({ action: 'texte_relu', cible: 'precision_sensible', ministere_nom: null }),
-    ).toBe("Précision d'un indicateur sensible, rien à signaler")
+    ).toBe("Précision d'un chiffre")
   })
 
   it('indicateurs : créé en attente, retiré avec son motif', () => {
@@ -392,7 +393,7 @@ describe('une ligne du journal, en mots', () => {
       CONTEXTE,
     )
     expect(construite.detail).toEqual([
-      { texte: '[texte masqué par EJP Tech]', masque: true },
+      { texte: '[texte masqué]', masque: true },
       { texte: ', mentionne Jeunesse', masque: false },
     ])
   })

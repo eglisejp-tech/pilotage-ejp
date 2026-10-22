@@ -304,7 +304,7 @@ describe('routes', () => {
       if (type === 'admin_plateforme') {
         // Lots E8 et L6 : le bloc « Signalements » puis la file « Champs libres à relire ».
         expect(
-          await screen.findByRole('heading', { level: 2, name: 'Champs libres à relire' }),
+          await screen.findByRole('heading', { level: 2, name: 'Textes à relire' }),
         ).toBeInTheDocument()
       } else {
         // « Cette semaine » est construit (étape 3) : plus de page d'attente.
@@ -746,7 +746,7 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
     // Lot L6 : la file « Champs libres à relire », vide ici, sous le bloc.
     expect(
-      await screen.findByRole('heading', { level: 2, name: 'Champs libres à relire' }),
+      await screen.findByRole('heading', { level: 2, name: 'Textes à relire' }),
     ).toBeInTheDocument()
     expect(await screen.findByText('Aucun texte à relire.')).toBeInTheDocument()
     await waitFor(() =>
@@ -804,10 +804,10 @@ describe("adresses de l'étape 4", () => {
       'href',
       '/indicateurs#a-valider',
     )
-    const ligne = await screen.findByRole('article', { name: "Point d'attention, Social" })
-    expect(within(ligne).getByRole('button', { name: 'Rien à signaler' })).toBeInTheDocument()
+    const ligne = await screen.findByRole('article', { name: 'Point, Social' })
+    expect(within(ligne).getByRole('button', { name: 'Marquer relu' })).toBeInTheDocument()
     expect(within(ligne).getByRole('button', { name: 'Masquer le texte' })).toBeInTheDocument()
-    expect(screen.getByText('1 texte en attente')).toBeInTheDocument()
+    expect(screen.getByText('1 texte à relire')).toBeInTheDocument()
   })
 
   it('un ministère sur /signaler : le formulaire, l’écran prérempli, ses seuls signalements lus', async () => {
@@ -1090,7 +1090,7 @@ describe('/sessions, écran 14 (lot L2)', () => {
       })
       afficher('/sessions')
       expect(await screen.findByRole('heading', { level: 1, name: 'Sessions' })).toBeInTheDocument()
-      const liste = await screen.findByRole('region', { name: 'Sessions déclarées' })
+      const liste = await screen.findByRole('region', { name: 'Toutes les sessions' })
       await waitFor(() => expect(liste).toHaveTextContent('Manquent : Intégration et Social'))
       expect(within(navigation()[0]!).getByRole('link', { name: 'Sessions' })).toHaveAttribute(
         'aria-current',

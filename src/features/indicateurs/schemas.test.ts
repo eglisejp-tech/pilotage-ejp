@@ -153,7 +153,9 @@ describe('« Pourquoi » et motif : 10 à 280 caractères après suppression des
     expect(schemaPourquoi.safeParse('a'.repeat(280)).success).toBe(true)
     expect(schemaPourquoi.safeParse(` ${'a'.repeat(280)} `).success).toBe(true)
     expect(message(schemaPourquoi.safeParse('a'.repeat(281)))).toBe('280 caractères au plus.')
-    expect(message(schemaMotif.safeParse('a'.repeat(281)))).toBe('Le motif dépasse 280 caractères.')
+    expect(message(schemaMotif.safeParse('a'.repeat(281)))).toBe(
+      'Raccourcissez le motif : 280 caractères au plus.',
+    )
   })
 
   it('rend la valeur nettoyée : un saut de ligne final est retiré avant l’envoi à la base', () => {

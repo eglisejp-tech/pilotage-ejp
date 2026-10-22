@@ -35,40 +35,53 @@ export type CodeErreurCompte = CodeErreur | 'connexion'
  * Chaque code de réponse des fonctions, en français simple (contrat commun : « traduit en
  * français par le front »). Le type impose une phrase pour chaque code de `_shared/http.ts`.
  * `connexion` : la réponse n'est pas arrivée (réseau, délai de 10 s), mais la fonction a pu
- * aboutir (compte créé, invitation partie). L'écran relit la liste ; la phrase (Proposé) demande
- * de la vérifier avant de réessayer.
+ * aboutir (compte créé, invitation partie). L'écran relit la liste ; la phrase demande de la
+ * vérifier avant de réessayer. Revu par T66 (m183 à m193) : seul EJP Tech appelle ces fonctions
+ * (T60), aucune phrase ne lui dit donc de « prévenir EJP Tech ».
  */
 export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>> = {
-  connexion: "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
-  requete_invalide: 'La demande est incomplète. Vérifiez les champs, puis réessayez.',
+  connexion: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+  /** Refus d'un panneau ; une action de ligne ou de fenêtre dit `REFUS_ACTION_COMPTE` (m186). */
+  requete_invalide: 'Vérifiez les champs, puis réessayez.',
   methode_non_autorisee: "La demande n'a pas pu être envoyée. Réessayez.",
   // Une seule phrase pour une connexion qui a pris fin (T66, m017).
   non_authentifie: 'Votre connexion a expiré. Reconnectez-vous.',
   session_revoquee: 'Votre connexion a expiré. Reconnectez-vous.',
   double_authentification_requise: 'Votre connexion a expiré. Reconnectez-vous.',
-  acces_refuse: 'Seul EJP Tech gère les comptes.',
-  type_interdit: 'Ce type de compte ne se crée pas sur cet écran.',
+  acces_refuse: 'Votre compte ne permet pas de gérer les comptes.',
+  type_interdit: 'Ce compte ne peut pas être créé ici. Rechargez la page.',
   ministere_inconnu: "Ce ministère n'existe plus ou il est désactivé. Rechargez la page.",
   compte_inconnu: 'Ce compte est introuvable. Rechargez la page.',
-  propre_compte: 'Cette action ne se fait pas sur votre propre compte.',
+  propre_compte:
+    'Cette action ne se fait pas sur votre propre compte. Demandez-la à un autre compte EJP Tech.',
   adresse_deja_utilisee: 'Cette adresse a déjà un compte. Choisissez une autre adresse.',
-  ministere_a_deja_un_compte: 'Ce ministère a déjà un compte actif.',
+  ministere_a_deja_un_compte: 'Ce ministère a déjà un compte actif. Rechargez la page.',
   nom_ministere_deja_pris: 'Un ministère porte déjà ce nom. Choisissez un autre nom.',
   berger_deja_actif: "Le berger a déjà un compte actif. Désactivez-le d'abord.",
   compte_desactive: "Ce compte est désactivé. Réactivez-le d'abord.",
-  compte_actif: 'Ce compte est déjà actif.',
+  compte_actif: 'Ce compte est déjà actif. Rechargez la page.',
   invitation_deja_acceptee:
-    "Cette invitation a déjà été acceptée. La personne choisit « Mot de passe oublié » sur l'écran de connexion.",
+    'Cette invitation est déjà acceptée. Dites à la personne de choisir « Mot de passe oublié ».',
   invitation_trop_recente:
     'Une invitation vient de partir vers cette adresse. Attendez une minute, puis réessayez.',
   /** Proposé (m191) : la liste se relit seule ; recharger ferait perdre la saisie du panneau. */
   conflit: "Une autre modification vient d'avoir lieu. Vérifiez la liste, puis réessayez.",
-  invitation_non_envoyee: "L'invitation n'a pas pu partir. Réessayez dans quelques minutes.",
+  invitation_non_envoyee: "L'invitation n'est pas partie. Réessayez dans quelques minutes.",
   /** Proposé (m194) : « Refaire l'activation » interrompue, le compte reste bloqué. */
   activation_incomplete:
     "« Refaire l'activation » n'a pas abouti. Relancez-la avant de prévenir la personne.",
-  erreur_interne: "L'action n'a pas pu se terminer. Réessayez dans quelques minutes.",
+  erreur_interne: "L'action n'a pas abouti. Réessayez dans quelques minutes.",
 }
+
+/**
+ * Réponse absente pendant une fenêtre de confirmation : la liste est cachée derrière la fenêtre
+ * (T66, m183).
+ */
+export const CONNEXION_FENETRE_COMPTE =
+  'La connexion a échoué. Fermez cette fenêtre et vérifiez la liste avant de réessayer.'
+
+/** Demande refusée pour une action sans champ, sur une ligne ou dans une fenêtre (T66, m186). */
+export const REFUS_ACTION_COMPTE = "L'action n'a pas abouti. Rechargez la page, puis réessayez."
 
 /** Refus d'une fonction de comptes : son code et sa phrase en français. */
 export class ErreurCompte extends Error {

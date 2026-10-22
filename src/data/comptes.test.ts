@@ -210,7 +210,7 @@ describe('codes d’erreur traduits en français', () => {
     )
     await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({
       code: 'connexion',
-      message: "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     })
     installer(() => Promise.reject(new Error('délai')))
     await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({ code: 'connexion' })

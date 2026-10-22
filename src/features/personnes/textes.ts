@@ -5,8 +5,9 @@
 import { PRENOM_EFFACE } from '@/lib/metier/declaration'
 import { accorder, nombre } from '@/lib/metier/texte'
 
+// Sans surtitre « Administration de la plateforme » : le menu situe l'écran (T66, intention de
+// t345 pour la modération, appliquée à cet écran né après l'inventaire).
 export const TEXTES_PERSONNES = {
-  surtitre: 'Administration de la plateforme',
   introduction: 'Les prénoms indiqués sur les comptes partagés des ministères.',
   titreActives: 'Actives sur 30 jours',
   colonnes: {

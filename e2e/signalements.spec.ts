@@ -24,6 +24,10 @@ async function ouvrir(page: Page, requete: string) {
 
 const champ = (page: Page) => page.getByLabel('Quelle difficulté rencontrez-vous ?')
 const envoyer = (page: Page) => page.getByRole('button', { name: 'Envoyer le signalement' }).click()
+const REPONSE = 'Réponse au ministère (facultatif)'
+/** Le même libellé ouvre le panneau et confirme (T66) : le bouton qui confirme envoie le formulaire. */
+const confirmerCloture = (page: Page) =>
+  page.locator('button[type="submit"]', { hasText: 'Clore le signalement' })
 
 async function auditer(page: Page) {
   const resultat = await new AxeBuilder({ page })
@@ -83,7 +87,7 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await champ(page).fill('Je ne peux pas choisir la date.')
     await envoyer(page)
     await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(champ(page)).toHaveValue('Je ne peux pas choisir la date.')
   })
@@ -131,7 +135,8 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modération')
     const bloc = page.getByRole('region', { name: 'Signalements', exact: true })
     await expect(bloc.getByText('2 signalements ouverts')).toBeVisible()
-    await expect(bloc.getByText('Difficultés signalées par les ministères')).toBeVisible()
+    // Le sous-titre redisait le titre : retiré par T66 (t361).
+    await expect(bloc.getByText('Difficultés signalées par les ministères')).toHaveCount(0)
     const ouverts = bloc.getByRole('list').first().getByRole('article')
     await expect(ouverts).toHaveCount(2)
     await expect(ouverts.first()).toContainText('Communication')
@@ -139,45 +144,44 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     await expect(ouverts.nth(1)).toContainText('Intégration')
     const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
     await expect(clos).toContainText('Clos le 29 sept.')
-    await expect(clos).toContainText('Commentaire : Réglé avec le ministère')
+    await expect(clos).toContainText('Réponse : Réglé avec le ministère')
     await expect(clos.getByRole('button')).toHaveCount(0)
   })
 
-  test('clore avec un commentaire : la ligne passe dans les clos, « Signalement clos. »', async ({
+  test('clore avec une réponse : la ligne passe dans les clos, « Signalement clos. »', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=admin_plateforme')
     await page.getByRole('button', { name: 'Clore le signalement' }).first().click()
-    const commentaire = page.getByLabel('Commentaire (facultatif)')
+    const commentaire = page.getByLabel(REPONSE)
     await expect(commentaire).toBeFocused()
-    await expect(commentaire).toHaveAccessibleDescription(
-      `Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». Le ministère lira ce commentaire. ${RAPPEL} 0 sur 280`,
-    )
+    // La consigne « transmis à l'administration » a quitté l'écran (T66, point ouvert 10).
+    await expect(commentaire).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
+    await expect(page.getByText('Un signalement clos ne se rouvre pas.')).toBeVisible()
     await commentaire.fill('Court')
-    await page.getByRole('button', { name: 'Clore définitivement' }).click()
+    await confirmerCloture(page).click()
     await expect(
-      page.getByText('Le commentaire fait 10 caractères au moins, ou reste vide.'),
+      page.getByText('Écrivez au moins 10 caractères, ou laissez la réponse vide.'),
     ).toBeVisible()
     await commentaire.fill("transmis à l'administration")
-    await page.getByRole('button', { name: 'Clore définitivement' }).click()
+    await confirmerCloture(page).click()
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
       'Signalement clos.',
     )
     await expect(page.getByText('1 signalement ouvert')).toBeVisible()
     const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
     await expect(clos).toContainText('Clos le 6 oct.')
-    await expect(clos).toContainText("Commentaire : transmis à l'administration")
+    await expect(clos).toContainText("Réponse : transmis à l'administration")
   })
 
   test('états : sans ouvert (titre et clos gardés), rien, chargement, problème passager', async ({
     page,
   }) => {
-    const vide = 'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.'
+    const vide = 'Aucun signalement.'
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-sans-ouvert')
-    await expect(
-      page.getByText('Aucun signalement ouvert. Les prochains arriveront ici.'),
-    ).toBeVisible()
-    await expect(page.getByText(vide)).toHaveCount(0)
+    // Le compteur du titre suffit quand des clos suivent (T66, t363).
+    await expect(page.getByText('Les prochains arriveront ici.')).toHaveCount(0)
+    await expect(page.getByText(vide, { exact: true })).toHaveCount(0)
     await expect(page.getByText('Aucun signalement ouvert', { exact: true })).toBeVisible()
     await expect(page.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toBeVisible()
 
@@ -215,7 +219,7 @@ test.describe('accessibilité et largeurs', () => {
     await auditer(page)
     await ouvrir(page, 'profil=admin_plateforme')
     await page.getByRole('button', { name: 'Clore le signalement' }).first().click()
-    await expect(page.getByLabel('Commentaire (facultatif)')).toBeVisible()
+    await expect(page.getByLabel(REPONSE)).toBeVisible()
     await auditer(page)
   })
 

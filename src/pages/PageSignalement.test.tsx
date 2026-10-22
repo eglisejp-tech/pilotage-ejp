@@ -153,9 +153,10 @@ describe('/moderation, bloc « Signalements »', () => {
     })
     afficher('/moderation')
     await userEvent.click(await screen.findByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.click(screen.getByLabelText('Commentaire (facultatif)'))
+    await userEvent.click(screen.getByLabelText('Réponse au ministère (facultatif)'))
     await userEvent.paste('transmis à l’administration')
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    // Le même libellé ouvre le panneau et confirme (T66) : le bouton du panneau est le dernier.
+    await userEvent.click(screen.getAllByRole('button', { name: 'Clore le signalement' }).at(-1)!)
     expect(await screen.findByText('Signalement clos.')).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('clore_signalement', {
       p_signalement_id: SIGNALEMENT_CLOS.id,
@@ -166,14 +167,10 @@ describe('/moderation, bloc « Signalements »', () => {
     )
   })
 
-  it('EJP Tech sans signalement : « Aucun signalement. ... »', async () => {
+  it('EJP Tech sans signalement : « Aucun signalement. »', async () => {
     connecte('admin_plateforme')
     afficher('/moderation')
-    expect(
-      await screen.findByText(
-        'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.',
-      ),
-    ).toBeInTheDocument()
+    expect(await screen.findByText('Aucun signalement.')).toBeInTheDocument()
   })
 
   it.each<TypeCompte>(['ministere', 'berger', 'conseil', 'admin_eglise'])(

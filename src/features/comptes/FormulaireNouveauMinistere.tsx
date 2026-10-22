@@ -91,7 +91,7 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
         type="email"
         inputMode="email"
         libelle={TEXTES_COMPTES.champEmailMinistere}
-        aide="comptes.emailMinistere"
+        note={TEXTES_COMPTES.indicationEmailMinistere}
         autoComplete="off"
         spellCheck={false}
         erreur={errors.email?.message}
@@ -100,7 +100,7 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
       <BoutonEnregistrer
         libelle={TEXTES_COMPTES.boutonCreerMinistere}
         enCours={isSubmitting}
-        libelleEnCours={TEXTES_COMPTES.enCours}
+        libelleEnCours={TEXTES_COMPTES.enCours.creer}
       />
       <button
         type="button"

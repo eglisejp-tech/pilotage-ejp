@@ -8,8 +8,17 @@ import { nomDuMois } from '@/lib/metier/dates'
 import type { Mois } from '@/lib/metier/periodes'
 import { terminerPhrase } from '@/lib/metier/texte'
 
-/** Texte d'un champ libre masqué par EJP Tech (BRIEF, règle 9). */
+/**
+ * Texte que la base écrit à la place d'un champ libre masqué par EJP Tech (BRIEF, règle 9) : il
+ * sert à reconnaître un texte masqué, jamais à l'afficher.
+ */
 export const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
+
+/**
+ * Ce qui s'affiche à la place d'un texte masqué, devant tous les profils : sans nommer EJP Tech
+ * (T66, t356 et m267).
+ */
+export const TEXTE_MASQUE_AFFICHE = '[texte masqué]'
 
 export const TEXTES_FICHE = {
   /** Surtitre de « Ma fiche » (maquette 12). */

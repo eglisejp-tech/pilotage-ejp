@@ -12,14 +12,14 @@ export const RAPPEL_DONNEES_PERSONNELLES = "N'écrivez aucun nom ni information 
 export const DUREE_REUSSITE_MS = 6000
 
 /**
- * Ce qui reste dans le formulaire après un échec d'envoi : des chiffres, un message (signalement,
- * texte écrit pour quelqu'un) ou une saisie (événement, réunion : T66, t062).
+ * Ce qui reste dans le formulaire après un échec d'envoi : des chiffres, ou une saisie pour tous
+ * les autres formulaires (événement, réunion, point, signalement, clôture, session, indicateur :
+ * T66, t062 et m257, les mêmes mots pour la même situation).
  */
-export type ObjetSaisie = 'chiffres' | 'message' | 'saisie'
+export type ObjetSaisie = 'chiffres' | 'saisie'
 
 const ERREURS_CONNEXION: Record<ObjetSaisie, string> = {
   chiffres: 'La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez.',
-  message: 'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
   saisie: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
 }
 

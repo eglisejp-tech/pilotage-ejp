@@ -26,7 +26,7 @@ export const TEXTES_POINTS = {
   introduction: {
     ministere: 'Vos points et ceux qui mentionnent votre ministère.',
   } satisfies Partial<Record<ProfilPoints, string>>,
-  /** Bouton du ministère, en tête de « Mes points » et dans ses états vides (T66, point ouvert 1). */
+  /** Bouton du ministère, en tête de « Mes points » et dans ses états vides (T66, point ouvert 8). */
   nouveauPoint: 'Nouveau point',
   /** Action d'un filtre sans résultat : revenir à tous les ministères (m163). */
   voirTousLesMinisteres: 'Voir tous les ministères',

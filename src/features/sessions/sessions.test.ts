@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { SessionDeclaree } from '@/data/sessionsAdmin'
 import { construireLignesSessions, designationDeclaration } from '@/features/sessions/construire'
-import { lireRefusSession } from '@/features/sessions/refus'
+import { lireRefusDeclaration, lireRefusSession } from '@/features/sessions/refus'
 import { schemaDeclaration, schemaMinisteresAttendus } from '@/features/sessions/schemas'
 import type { ValeursDeclaration } from '@/features/sessions/schemas'
 import {
@@ -61,13 +61,15 @@ describe('schemaDeclaration', () => {
   it('ignore un nom resté dans le formulaire pour un type sans nom', () => {
     expect(schemaDeclaration.parse({ ...valide, nom: 'Soirée' }).intitule).toBeNull()
   })
-  it('exige un nom pour un autre rassemblement, de 80 caractères au plus, sans espaces autour', () => {
+  it('exige un nom pour une autre session, de 80 caractères au plus, sans espaces autour', () => {
     const autre = { ...valide, type: 'autre' } as const
     expect(schemaDeclaration.safeParse(autre).error?.issues[0]?.message).toBe(
-      'Donnez un nom au rassemblement.',
+      'Donnez un nom à la session.',
     )
     expect(schemaDeclaration.safeParse({ ...autre, nom: '   ' }).success).toBe(false)
-    expect(schemaDeclaration.safeParse({ ...autre, nom: 'a'.repeat(81) }).success).toBe(false)
+    expect(
+      schemaDeclaration.safeParse({ ...autre, nom: 'a'.repeat(81) }).error?.issues[0]?.message,
+    ).toBe('Raccourcissez le nom : 80 caractères au plus.')
     expect(schemaDeclaration.parse({ ...autre, nom: '  Soirée de louange ' }).intitule).toBe(
       'Soirée de louange',
     )
@@ -148,9 +150,14 @@ describe('lireRefusSession', () => {
     const refus = { code: 'P0001', message: 'Cochez au moins un ministère.' }
     expect(lireRefusSession(refus, connexion)).toBe('Cochez au moins un ministère.')
   })
-  it('dit que la session n’est pas accessible pour un refus de droit', () => {
+  it('dit que la session est introuvable pour un refus de droit (m207)', () => {
     expect(lireRefusSession({ code: '42501', message: 'x' }, connexion)).toBe(
-      "Cette session n'existe pas ou vous n'y avez pas accès.",
+      'Cette session est introuvable. Rechargez la page.',
+    )
+  })
+  it('un ajout refusé pour un droit dit que le compte ne le permet pas (m207)', () => {
+    expect(lireRefusDeclaration({ code: '42501', message: 'x' }, connexion, true).message).toBe(
+      "Votre compte ne permet pas d'ajouter une session.",
     )
   })
   it('dit la connexion pour une erreur sans réponse (réseau, délai)', () => {

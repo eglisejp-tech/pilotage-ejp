@@ -45,12 +45,12 @@ describe('motif d’un refus : 10 à 280 caractères après espaces retirés', (
     expect(motif('').success).toBe(false)
   })
 
-  it('accepte 280 caractères et refuse 281, avec le message de la base', () => {
+  it('accepte 280 caractères et refuse 281, dans la forme commune (T66)', () => {
     expect(motif('a'.repeat(280)).success).toBe(true)
     const long = motif('a'.repeat(281))
     expect(long.success).toBe(false)
     if (!long.success) {
-      expect(long.error.issues[0]?.message).toBe('Le motif dépasse 280 caractères.')
+      expect(long.error.issues[0]?.message).toBe('Raccourcissez le motif : 280 caractères au plus.')
     }
   })
 

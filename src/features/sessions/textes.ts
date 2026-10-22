@@ -3,6 +3,7 @@
 // 14 : troisième type, « Modifier » et « Supprimer »). « Proposé » : texte que ni le BRIEF ni la
 // maquette ne donnent (état vide, confirmation, messages de réussite), reporté dans LISEZMOI.md.
 
+import type { TexteConfirmation } from '@/features/comptes/textes'
 import type { TypeSession } from '@/lib/base'
 import { ajouterJours, jourDeLaSemaine } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
@@ -11,11 +12,11 @@ import { accorder, listeNoms, trierNoms } from '@/lib/metier/texte'
 
 export const TEXTES_SESSIONS = {
   titre: 'Sessions',
-  introduction:
-    "Déclarez chaque session de Bâtir l'Église et d'Anti-Dispersion, ou un autre rassemblement. Les ministères attendus y saisiront le nombre de leurs STARs présents.",
-  titreListe: 'Sessions déclarées',
-  /** État vide (T36, « premier usage »). */
-  vide: 'Aucune session déclarée. Déclarez la première avec le panneau.',
+  /** Revu par T66 (t298) : « ajouter » et « session », les mots du glossaire. */
+  introduction: 'Ajoutez chaque session. Les ministères attendus y saisiront leurs STARs présents.',
+  titreListe: 'Toutes les sessions',
+  /** État vide (T36, « premier usage ») : le bouton « Ajouter une session » est à côté (T66). */
+  vide: 'Aucune session.',
   chargement: 'Chargement',
   erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
@@ -27,35 +28,46 @@ export const TEXTES_SESSIONS = {
   colonneActions: 'Actions',
   pasEncoreEuLieu: 'Pas encore eu lieu',
 
-  // Formulaire (maquette 14, colonne « Déclarer une session »)
-  declarer: 'Déclarer une session',
+  // Formulaire (maquette 14, colonne « Déclarer une session », devenue « Ajouter une session »)
+  declarer: 'Ajouter une session',
   surtitre: 'Sessions',
   legendeType: 'Type',
   champDate: 'Date',
-  champNom: 'Nom du rassemblement',
+  champNom: 'Nom de la session',
   titreMinisteres: 'Ministères attendus',
-  boutonDeclarer: 'Déclarer la session',
+  /** Indication sous « Ministères attendus » (ancienne bulle `sessions.attendus`, T66 t305). */
+  indicationMinisteres: 'Décochez les ministères qui ne participent pas.',
+  boutonDeclarer: 'Ajouter la session',
   boutonEnregistrer: 'Enregistrer les ministères attendus',
-  enCours: 'Envoi en cours',
+  /** Règle commune : « Enregistrement en cours » (T66, t309). */
+  enCours: 'Enregistrement en cours',
+  /** Fenêtre « Supprimer la session », pendant l'envoi. */
+  suppressionEnCours: 'Suppression en cours',
   annuler: 'Annuler',
   /** Sous le titre d'une modification : seul le choix des ministères change. */
-  noteModification:
-    'Le type, la date et le nom ne changent plus. Choisissez les ministères attendus.',
-  aucunMinistere: 'Aucun ministère actif.',
+  noteModification: 'Seuls les ministères attendus peuvent changer.',
+  /** « Enregistrer » sans changement : rien ne part (m206). */
+  dejaEnregistres:
+    'Ces ministères attendus sont déjà enregistrés. Cochez ou décochez un ministère.',
+  aucunMinistere: 'Aucun ministère actif. Ajoutez-en dans Ministères et comptes.',
 
   modifier: 'Modifier',
   supprimer: 'Supprimer',
   boutonSupprimer: 'Supprimer la session',
-  erreurConnexion: 'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
-  erreurAcces: "Cette session n'existe pas ou vous n'y avez pas accès.",
+  /** La phrase commune des formulaires (T66, m257). */
+  erreurConnexion: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+  /** Forme commune « introuvable » (T66, t310 et m207). */
+  erreurAcces: 'Cette session est introuvable. Rechargez la page.',
+  /** Refus de droit d'un ajout : il n'y a pas encore de session (T66, m207). */
+  erreurAccesAjout: "Votre compte ne permet pas d'ajouter une session.",
   erreurConnexionSuppression: 'La connexion a échoué. Réessayez.',
 } as const
 
-/** Libellé court d'un type, sur les trois choix du formulaire. */
+/** Libellé court d'un type, sur les trois choix du formulaire (glossaire « session », T66). */
 export const LIBELLES_TYPES: Record<TypeSession, string> = {
   batir: "Bâtir l'Église",
   anti_dispersion: 'Anti-Dispersion',
-  autre: 'Autre rassemblement',
+  autre: 'Autre session',
 }
 
 /** « Manquent : A, B et C », « Manque : A » ; null si personne ne manque. */
@@ -81,17 +93,17 @@ export function prochainSamedi(aujourdhui: DateIso): DateIso {
 }
 
 export const REUSSITES_SESSIONS = {
-  declaree: (session: string) => `Session ${session} déclarée.`,
+  declaree: (session: string) => `Session ${session} ajoutée.`,
   modifiee: (session: string) => `Ministères attendus de ${session} enregistrés.`,
   supprimee: (session: string) => `Session ${session} supprimée.`,
 } as const
 
-/** Confirmation de suppression (texte Proposé). */
-export function confirmationSupprimer(session: string) {
+/** Confirmation de suppression : ce qui se passe, et que c'est définitif (T66, m211). */
+export function confirmationSupprimer(session: string): TexteConfirmation {
   return {
     titre: `Supprimer ${session} ?`,
-    texte:
-      "Aucun ministère n'a encore saisi cette session. Elle quitte la liste et ne peut plus être saisie.",
+    texte: "Les ministères ne pourront plus y saisir leurs présents. C'est définitif.",
     bouton: TEXTES_SESSIONS.boutonSupprimer,
+    enCours: TEXTES_SESSIONS.suppressionEnCours,
   }
 }

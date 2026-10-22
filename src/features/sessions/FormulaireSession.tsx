@@ -3,6 +3,7 @@ import type { FormEvent } from 'react'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
+import { DejaEnregistre } from '@/features/saisie/DejaEnregistre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { ChoixMinisteres } from '@/features/sessions/ChoixMinisteres'
@@ -36,13 +37,20 @@ type Erreurs = Partial<Record<'type' | 'date' | 'nom' | 'ministeres', string>>
 
 function sansAction() {}
 
+/** Les deux listes cochent les mêmes ministères, dans n'importe quel ordre. */
+function memesMinisteres(a: readonly string[], b: readonly string[]): boolean {
+  const ensemble = new Set(a)
+  return ensemble.size === new Set(b).size && b.every((id) => ensemble.has(id))
+}
+
 /**
- * Formulaire de l'écran 14 (maquette 14) : type, date, nom du rassemblement (pour « Autre
- * rassemblement » seulement, avec le rappel sur les données personnelles), ministères attendus
- * cochés par défaut, puis « Déclarer la session ». En mode « modifier », seuls les ministères
- * attendus changent. Une session déjà déclarée à cette date se dit sous le champ date, qui prend le
- * focus (m210) ; les autres messages de la base se disent sous le bouton ; les valeurs restent.
- * Après une déclaration réussie, le formulaire revient à son état de départ.
+ * Formulaire de l'écran 14 (maquette 14) : type, date, nom de la session (pour « Autre session »
+ * seulement, avec le rappel sur les données personnelles), ministères attendus cochés par défaut
+ * avec leur indication, puis « Ajouter la session ». En mode « modifier », seuls les ministères
+ * attendus changent ; les enregistrer sans changement ne part pas et le dit (m206). Une session
+ * déjà déclarée à cette date se dit sous le champ date, qui prend le focus (m210) ; les autres
+ * messages de la base se disent sous le bouton ; les valeurs restent. Après un ajout réussi, le
+ * formulaire revient à son état de départ.
  */
 export function FormulaireSession({
   mode,
@@ -67,6 +75,8 @@ export function FormulaireSession({
   /** Refus de la date par la base (session déjà déclarée ce jour-là), sous le champ date. */
   const [refusDate, setRefusDate] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
+  // Appuis sur « Enregistrer » sans changement (0 : aucun depuis le dernier changement), m206.
+  const [inchange, setInchange] = useState(0)
   const premierMinistere = useRef<HTMLInputElement>(null)
   const declarer = mode === 'declarer'
 
@@ -74,6 +84,7 @@ export function FormulaireSession({
     setValeurs((avant) => ({ ...avant, ...changement }))
     setRefus(null)
     setRefusDate(null)
+    setInchange(0)
   }
 
   const valider = (): Erreurs => {
@@ -111,6 +122,11 @@ export function FormulaireSession({
       else premierMinistere.current?.focus()
       return
     }
+    if (!declarer && coches !== undefined && memesMinisteres(valeurs.ministeres, coches)) {
+      setRefus(null)
+      setInchange((essais) => essais + 1)
+      return
+    }
     setEnCours(true)
     setRefus(null)
     setRefusDate(null)
@@ -118,7 +134,7 @@ export function FormulaireSession({
       await envoyer(valeurs)
       if (declarer) setValeurs(depart())
     } catch (erreur) {
-      const lu = lireRefusDeclaration(erreur, TEXTES_SESSIONS.erreurConnexion)
+      const lu = lireRefusDeclaration(erreur, TEXTES_SESSIONS.erreurConnexion, declarer)
       if (declarer && lu.champ === 'date') {
         setRefusDate(lu.message)
         document.getElementById(`${id}-date`)?.focus()
@@ -171,12 +187,17 @@ export function FormulaireSession({
         valeur={valeurs.ministeres}
         onChange={(ids) => modifier({ ministeres: ids })}
         refPremier={premierMinistere}
+        note={TEXTES_SESSIONS.indicationMinisteres}
         erreur={erreurs.ministeres}
       />
       <BoutonEnregistrer
         libelle={declarer ? TEXTES_SESSIONS.boutonDeclarer : TEXTES_SESSIONS.boutonEnregistrer}
         enCours={enCours}
         libelleEnCours={TEXTES_SESSIONS.enCours}
+      />
+      <DejaEnregistre
+        message={inchange > 0 ? TEXTES_SESSIONS.dejaEnregistres : null}
+        essai={inchange}
       />
       {onAnnuler ? (
         <button

@@ -13,16 +13,19 @@ describe('libellés des actions (BRIEF, section 6)', () => {
     expect(libelleAction('participation_saisie')).toBe('A saisi une présence')
     expect(libelleAction('evenement_ajoute')).toBe('A ajouté un événement')
     expect(libelleAction('evenement_modifie')).toBe('A mis à jour un événement')
-    expect(libelleAction('reunion_saisie')).toBe('A renseigné la prochaine réunion')
+    // Revus par T66 (t377 à t380) : les verbes du glossaire.
+    expect(libelleAction('reunion_saisie')).toBe('A enregistré la prochaine réunion')
     expect(libelleAction('point_cree')).toBe('A créé un point')
     expect(libelleAction('point_statut')).toBe("A changé le statut d'un point")
     expect(libelleAction('point_traite')).toBe('A marqué traité')
-    expect(libelleAction('session_declaree')).toBe('A déclaré une session')
+    expect(libelleAction('point_mention_ajoutee')).toBe('A ajouté une mention')
+    expect(libelleAction('point_mention_retiree')).toBe('A retiré une mention')
+    expect(libelleAction('session_declaree')).toBe('A ajouté une session')
     expect(libelleAction('session_modifiee')).toBe('A modifié une session')
     expect(libelleAction('session_supprimee')).toBe('A supprimé une session')
     expect(libelleAction('ministere_cree')).toBe('A créé un ministère')
     expect(libelleAction('compte_cree')).toBe('A créé un compte')
-    expect(libelleAction('invitation_relancee')).toBe('A relancé une invitation')
+    expect(libelleAction('invitation_relancee')).toBe('A renvoyé une invitation')
     expect(libelleAction('compte_desactive')).toBe('A désactivé un compte')
     expect(libelleAction('compte_reactive')).toBe('A réactivé un compte')
     expect(libelleAction('double_auth_reinitialisee')).toBe("A refait l'activation")
@@ -30,9 +33,9 @@ describe('libellés des actions (BRIEF, section 6)', () => {
     expect(libelleAction('texte_masque')).toBe('A masqué un texte')
   })
 
-  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4', () => {
-    expect(CODES_ACTIONS).toHaveLength(29)
-    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(29)
+  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4, 2 des mentions (T54)', () => {
+    expect(CODES_ACTIONS).toHaveLength(31)
+    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(31)
     for (const code of CODES_ACTIONS) expect(libelleAction(code)).toMatch(/^A /)
   })
 
@@ -54,7 +57,7 @@ describe('actions que chaque profil peut filtrer', () => {
   it('le berger et le conseil ne lisent aucun signalement (T39)', () => {
     for (const profil of ['berger', 'conseil'] as const) {
       const actions = actionsDuProfil(profil)
-      expect(actions).toHaveLength(27)
+      expect(actions).toHaveLength(29)
       expect(actions).not.toContain('difficulte_signalee')
       expect(actions).not.toContain('signalement_clos')
     }
@@ -74,6 +77,8 @@ describe('actions que chaque profil peut filtrer', () => {
       'point_cree',
       'point_statut',
       'point_traite',
+      'point_mention_ajoutee',
+      'point_mention_retiree',
       'evenement_ajoute',
       'evenement_modifie',
       'reunion_saisie',

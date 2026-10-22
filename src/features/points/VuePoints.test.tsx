@@ -144,9 +144,9 @@ describe('écran 05 : le berger', () => {
     expect(screen.queryByRole('region', { name: 'Traités récemment' })).toBeNull()
   })
 
-  it('un texte masqué par EJP Tech reste en encre 3', () => {
+  it('un texte masqué par EJP Tech s’affiche « [texte masqué] » en encre 3', () => {
     afficher('berger', { adresse: '/points?vue=traites' })
-    expect(screen.getByText('[texte masqué par EJP Tech]')).toHaveClass('text-encre-3')
+    expect(screen.getByText('[texte masqué]')).toHaveClass('text-encre-3')
   })
 
   it('Tous : les ouverts, puis les traités', () => {

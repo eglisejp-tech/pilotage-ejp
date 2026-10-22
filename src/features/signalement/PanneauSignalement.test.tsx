@@ -151,7 +151,7 @@ describe('« Signaler une difficulté »', () => {
     await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
     await envoyerLeFormulaire()
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     expect(champ()).toHaveValue('Je ne peux pas choisir la date.')
   })
@@ -223,8 +223,8 @@ describe('« Vos derniers signalements »', () => {
     expect(lignes[1]).toHaveTextContent('Chiffres du dimanche, 27 sept.')
     expect(lignes[1]).toHaveTextContent('Clos le 30 sept.')
     expect(lignes[1]).toHaveTextContent('Réponse : Réglé : le champ attendait un nombre entier.')
-    // Un texte masqué s'affiche en encre 3.
-    expect(within(lignes[1]!).getByText('[texte masqué par EJP Tech]')).toHaveClass('text-encre-3')
+    // Un texte masqué s'affiche « [texte masqué] » en encre 3 (T66).
+    expect(within(lignes[1]!).getByText('[texte masqué]')).toHaveClass('text-encre-3')
   })
 
   it('lecture en échec : « La connexion a échoué. Réessayez. » avec « Réessayer »', async () => {

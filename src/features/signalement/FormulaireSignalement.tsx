@@ -26,7 +26,8 @@ export interface ProprietesFormulaireSignalement {
  * « Écran concerné : ... », remplie par l'outil, puis le texte (10 à 280 caractères, compteur),
  * avec le rappel sur les données personnelles juste en dessous (premier champ libre). Un refus du
  * texte par la base se dit sous le champ ; la connexion perdue sous le bouton, texte gardé. Après
- * l'envoi : « Signalement envoyé. EJP Tech le lira. » pendant 6 secondes, champ vidé.
+ * l'envoi : « Signalement envoyé. La réponse s'affichera sur cette page. » pendant 6 secondes,
+ * champ vidé (T66).
  */
 export function FormulaireSignalement({
   ecran,
@@ -110,7 +111,7 @@ export function FormulaireSignalement({
         {envoye ? TEXTES_SIGNALEMENT.boutonFermer : TEXTES_SIGNALEMENT.boutonAnnuler}
       </button>
       {erreurEcran ? <ErreurFormulaire message={erreurEcran} /> : null}
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}
+      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
       {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
       <MessageReussite message={reussite} envoi={envoi} />
     </form>

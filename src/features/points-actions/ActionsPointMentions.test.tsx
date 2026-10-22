@@ -246,7 +246,7 @@ describe('la fenêtre « Modifier les mentions »', () => {
     await userEvent.click(await within(fenetre).findByRole('checkbox', { name: 'Social' }))
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Enregistrer les mentions' }))
     expect(await within(fenetre).findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     expect(within(fenetre).getByRole('checkbox', { name: 'Social' })).toBeChecked()
     expect(invalider).not.toHaveBeenCalled()

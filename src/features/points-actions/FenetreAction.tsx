@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { TEXTE_MASQUE_AFFICHE } from '@/features/fiche/textesFiche'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 
 interface Props {
@@ -72,7 +73,7 @@ export function FenetreAction({ titre, point, onFermer, children }: Props) {
                 : 'text-[17px] leading-normal font-semibold text-encre-2'
             }
           >
-            {point.masque ? point.texte : `« ${point.texte} »`}
+            {point.masque ? TEXTE_MASQUE_AFFICHE : `« ${point.texte} »`}
           </p>
         </div>
         <div className="flex flex-col gap-5">{children}</div>

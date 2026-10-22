@@ -40,7 +40,7 @@ describe('panneau « Ajouter un ministère » (schéma de creer-compte)', () => 
           email: 'a@exemple.test',
         }),
       ),
-    ).toEqual(['Le nom du ministère tient en 50 caractères au plus.'])
+    ).toEqual(['Raccourcissez le nom : 50 caractères au plus.'])
     expect(
       messages(
         schemaNouveauMinistere.safeParse({
@@ -49,16 +49,17 @@ describe('panneau « Ajouter un ministère » (schéma de creer-compte)', () => 
           email: 'a@exemple.test',
         }),
       ),
-    ).toEqual(['La description tient en 280 caractères au plus.'])
+    ).toEqual(['Raccourcissez la description : 280 caractères au plus.'])
   })
 
-  it('refuse une adresse vide ou fausse', () => {
-    expect(messages(schemaAdresse.safeParse({ email: '' }))).toEqual([
-      'Saisissez une adresse email valide.',
-    ])
+  it('refuse une adresse vide, fausse ou trop longue (T66, m006 et m195)', () => {
+    expect(messages(schemaAdresse.safeParse({ email: '' }))).toEqual(["Saisissez l'adresse email."])
     expect(messages(schemaAdresse.safeParse({ email: 'pas une adresse' }))).toEqual([
-      'Saisissez une adresse email valide.',
+      'Saisissez une adresse email complète, par exemple nom@exemple.fr.',
     ])
+    expect(messages(schemaAdresse.safeParse({ email: `${'a'.repeat(250)}@exemple.test` }))).toEqual(
+      ["Raccourcissez l'adresse : 254 caractères au plus."],
+    )
   })
 
   it('T48 : l’alias « +ministere » de l’adresse d’EJP Tech est une adresse distincte acceptée', () => {

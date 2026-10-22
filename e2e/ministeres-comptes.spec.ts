@@ -39,23 +39,23 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await expect(page).toHaveTitle('Ministères et comptes, Pilotage EJP')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Ministères et comptes')
     const ministeres = section(page, 'Ministères')
-    await expect(ministeres.getByText('8 actifs, un email partagé chacun')).toBeVisible()
+    await expect(ministeres.getByText('8 actifs', { exact: true })).toBeVisible()
     await expect(ministeres).toContainText('communication@exemple.test')
     await expect(ministeres).toContainText('Activée')
     await expect(ministeres).toContainText('À activer')
     await expect(ministeres).toContainText('Désactivé le 2 oct.')
-    await expect(ministeres).toContainText('Pas encore de compte')
+    await expect(ministeres).toContainText('Aucune adresse')
     await expect(bouton(page, 'Créer le compte Coordination')).toBeVisible()
     await expect(bouton(page, 'Réactiver Merch')).toBeVisible()
     await expect(bouton(page, 'Désactiver Social')).toBeVisible()
     await expect(bouton(page, "Refaire l'activation Social")).toHaveCount(0)
     const lien = page.getByRole('link', { name: '2 indicateurs pour Communication' })
     await expect(lien).toHaveAttribute('href', /^\/indicateurs\/10000000-/)
-    await expect(ministeres).toContainText('et FIJ par département')
+    await expect(ministeres).toContainText('et les chiffres par département')
 
     const personnes = section(page, 'Berger et conseil')
     await expect(personnes).toContainText('Invitation envoyée')
-    await expect(bouton(page, "Relancer l'invitation Conseil, compte 3")).toBeVisible()
+    await expect(bouton(page, "Renvoyer l'invitation Conseil, compte 3")).toBeVisible()
     await expect(bouton(page, 'Ajouter le compte du berger')).toHaveCount(0)
     await expect(section(page, 'EJP Tech')).toContainText('ejptech1@exemple.test')
     // Le compte connecté n'a aucun bouton : la base refuse une action sur son propre compte.
@@ -74,17 +74,18 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
       page.getByRole('heading', { level: 1, name: 'Ajouter un ministère' }),
     ).toBeVisible()
     await expect(page.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(1)
-    await bouton(page, "Créer le ministère et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(champ(page, 'Nom du ministère')).toHaveAccessibleDescription(
       'Donnez un nom au ministère.',
     )
+    // L'indication sous le champ, puis l'erreur (T66, t277 et m006).
     await expect(champ(page, 'Email partagé du ministère')).toHaveAccessibleDescription(
-      'Saisissez une adresse email valide.',
+      "Une boîte mail partagée par le ministère, pas l'adresse d'une personne. Saisissez l'adresse email.",
     )
 
     await champ(page, 'Nom du ministère').fill('Tech')
     await champ(page, 'Email partagé du ministère').fill('EJPTech1+ministere@exemple.test')
-    await bouton(page, "Créer le ministère et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(reussite(page)).toHaveText(
       'Ministère Tech créé. Invitation envoyée à ejptech1+ministere@exemple.test.',
     )
@@ -94,10 +95,8 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     } else {
       await expect(bouton(page, 'Ajouter un ministère')).toBeFocused()
     }
-    await expect(
-      section(page, 'Ministères').getByText('9 actifs, un email partagé chacun'),
-    ).toBeVisible()
-    await expect(bouton(page, "Relancer l'invitation Tech")).toBeVisible()
+    await expect(section(page, 'Ministères').getByText('9 actifs', { exact: true })).toBeVisible()
+    await expect(bouton(page, "Renvoyer l'invitation Tech")).toBeVisible()
   })
 
   test('nom déjà pris et adresse déjà utilisée : sous leur champ, valeurs gardées', async ({
@@ -107,15 +106,15 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await bouton(page, 'Ajouter un ministère').click()
     await champ(page, 'Nom du ministère').fill('communication')
     await champ(page, 'Email partagé du ministère').fill('nouveau@exemple.test')
-    await bouton(page, "Créer le ministère et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(champ(page, 'Nom du ministère')).toHaveAccessibleDescription(
       'Un ministère porte déjà ce nom. Choisissez un autre nom.',
     )
     await champ(page, 'Nom du ministère').fill('Accueil')
     await champ(page, 'Email partagé du ministère').fill('social@exemple.test')
-    await bouton(page, "Créer le ministère et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(champ(page, 'Email partagé du ministère')).toHaveAccessibleDescription(
-      'Cette adresse a déjà un compte. Choisissez une autre adresse.',
+      "Une boîte mail partagée par le ministère, pas l'adresse d'une personne. Cette adresse a déjà un compte. Choisissez une autre adresse.",
     )
     await expect(champ(page, 'Nom du ministère')).toHaveValue('Accueil')
   })
@@ -127,11 +126,11 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
       page.getByRole('heading', { level: 1, name: 'Créer le compte de Coordination' }),
     ).toBeVisible()
     await champ(page, 'Email partagé du ministère').fill('coordination@exemple.test')
-    await bouton(page, "Créer le compte et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(reussite(page)).toHaveText(
       'Compte créé. Invitation envoyée à coordination@exemple.test.',
     )
-    await expect(bouton(page, "Relancer l'invitation Coordination")).toBeVisible()
+    await expect(bouton(page, "Renvoyer l'invitation Coordination")).toBeVisible()
   })
 
   test('« Ajouter un membre du conseil » annonce le nom affiché, jamais tapé', async ({ page }) => {
@@ -139,15 +138,15 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await bouton(page, 'Ajouter un membre du conseil').click()
     await expect(page.getByText('Nom affiché : Conseil, compte 5')).toBeVisible()
     await champ(page, 'Email personnel').fill('conseil5@exemple.test')
-    await bouton(page, "Créer le compte et envoyer l'invitation").click()
-    await expect(bouton(page, "Relancer l'invitation Conseil, compte 5")).toBeVisible()
+    await bouton(page, "Créer et envoyer l'invitation").click()
+    await expect(bouton(page, "Renvoyer l'invitation Conseil, compte 5")).toBeVisible()
   })
 
-  test('« Relancer l’invitation » : réussite, puis refus traduit, sous les boutons de la ligne', async ({
+  test('« Renvoyer l’invitation » : réussite, puis refus traduit, sous les boutons de la ligne', async ({
     page,
   }) => {
     await ouvrir(page)
-    const relancer = bouton(page, "Relancer l'invitation Conseil, compte 3")
+    const relancer = bouton(page, "Renvoyer l'invitation Conseil, compte 3")
     await relancer.click()
     await expect(reussite(page)).toHaveText('Invitation renvoyée à conseil3@exemple.test.')
     await expect(reussite(page)).toBeInViewport()
@@ -184,9 +183,7 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await fenetre(page).getByRole('button', { name: 'Désactiver le ministère' }).click()
     await expect(reussite(page)).toHaveText('Ministère Communication désactivé.')
     await expect(section(page, 'Ministères')).toContainText('Désactivé le 7 oct.')
-    await expect(
-      section(page, 'Ministères').getByText('7 actifs, un email partagé chacun'),
-    ).toBeVisible()
+    await expect(section(page, 'Ministères').getByText('7 actifs', { exact: true })).toBeVisible()
     // « Désactiver » a disparu : le focus va au premier bouton de la même ligne (WCAG 2.4.3).
     await expect(bouton(page, 'Réactiver Communication')).toBeFocused()
 
@@ -200,7 +197,7 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await ouvrir(page)
     await bouton(page, "Refaire l'activation Communication").click()
     await expect(fenetre(page)).toContainText(
-      "Changez d'abord le mot de passe de la boîte mail du ministère.",
+      "Le ministère sera déconnecté et devra activer un nouveau code. Changez d'abord le mot de passe de sa boîte mail.",
     )
     await fenetre(page).getByRole('button', { name: "Refaire l'activation" }).click()
     await expect(reussite(page)).toContainText('Activation à refaire pour Ministère Communication.')
@@ -223,16 +220,17 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await bouton(page, 'Désactiver Conseil, compte 1').click()
     await fenetre(page).getByRole('button', { name: 'Désactiver le compte' }).click()
     await expect(fenetre(page).getByRole('alert')).toHaveText(
-      "La réponse n'est pas arrivée. Vérifiez la liste avant de réessayer.",
+      'La connexion a échoué. Fermez cette fenêtre et vérifiez la liste avant de réessayer.',
     )
   })
 
   test('états : premier usage, chargement, problème passager', async ({ page }) => {
     await ouvrir(page, 'vue=premier-usage')
-    await expect(section(page, 'Ministères')).toContainText('Aucun ministère pour le moment.')
-    await expect(section(page, 'Ministères')).not.toContainText('un email partagé chacun')
+    // La phrase seule : le bouton d'ajout est en tête de la section (T66, t273 et t274).
+    await expect(section(page, 'Ministères')).toContainText('Aucun ministère.')
+    await expect(section(page, 'Ministères')).not.toContainText('Ajoutez le premier')
     await expect(section(page, 'Berger et conseil')).toContainText(
-      "Aucun compte pour le berger ni pour le conseil pour l'instant.",
+      'Aucun compte pour le berger ni le conseil.',
     )
     await expect(bouton(page, 'Ajouter le compte du berger')).toBeVisible()
     await ouvrir(page, 'vue=chargement')
@@ -273,9 +271,8 @@ test.describe('Ministères et comptes (administration de l’église, en lecture
       elements.map((element) => element.getAttribute('aria-label') ?? element.textContent ?? ''),
     )
     expect(noms.filter((nom) => !nom.startsWith('Aide'))).toEqual([])
-    await expect(
-      page.getByText('Pour lire les indicateurs de chaque ministère, ouvrez'),
-    ).toBeVisible()
+    // La note vers l'écran Indicateurs est retirée (T66, t266) : le menu y mène.
+    await expect(page.getByText(/Pour lire les indicateurs/)).toHaveCount(0)
     await auditer(page)
   })
 

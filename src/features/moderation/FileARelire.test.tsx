@@ -41,20 +41,18 @@ function afficher(lignes: LigneTexteARelire[]) {
   return { relire, masquer }
 }
 
-describe('file « Champs libres à relire »', () => {
-  it('titre, phrase de présentation et « 2 textes en attente »', () => {
+describe('file « Textes à relire »', () => {
+  it('titre, phrase de présentation et « 2 textes à relire »', () => {
     afficher([ligne({}), ligne({ cible_id: 'c2' })])
-    expect(
-      screen.getByRole('heading', { level: 2, name: 'Champs libres à relire' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/^EJP Tech relit les textes libres/)).toBeInTheDocument()
-    expect(screen.getByText('2 textes en attente')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Textes à relire' })).toBeInTheDocument()
+    expect(screen.getByText(/^Masquez les textes qui contiennent un nom/)).toBeInTheDocument()
+    expect(screen.getByText('2 textes à relire')).toBeInTheDocument()
   })
 
   it('sans texte : « Aucun texte à relire. »', () => {
     afficher([])
     expect(screen.getByText('Aucun texte à relire.')).toBeInTheDocument()
-    expect(screen.getByText('Aucun texte en attente')).toBeInTheDocument()
+    expect(screen.getByText('Aucun texte à relire')).toBeInTheDocument()
   })
 
   it('chargement et problème passager (« Réessayer »)', async () => {
@@ -67,15 +65,13 @@ describe('file « Champs libres à relire »', () => {
     expect(reessayer).toHaveBeenCalledOnce()
   })
 
-  it('« Rien à signaler » appelle la relecture du texte, annonce le message et rend le focus au titre', async () => {
+  it('« Marquer relu » appelle la relecture du texte, annonce le message et rend le focus au titre', async () => {
     const { relire } = afficher([ligne({})])
-    await userEvent.click(screen.getByRole('button', { name: 'Rien à signaler' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Marquer relu' }))
     expect(relire).toHaveBeenCalledOnce()
     expect(await screen.findByText('Texte marqué comme relu.')).toBeInTheDocument()
     await waitFor(() =>
-      expect(
-        screen.getByRole('heading', { level: 2, name: 'Champs libres à relire' }),
-      ).toHaveFocus(),
+      expect(screen.getByRole('heading', { level: 2, name: 'Textes à relire' })).toHaveFocus(),
     )
   })
 
@@ -93,7 +89,7 @@ describe('file « Champs libres à relire »', () => {
         }}
       />,
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Rien à signaler' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Marquer relu' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce texte a déjà été relu.')
     expect(screen.getByRole('button', { name: 'Masquer le texte' })).toBeInTheDocument()
   })
@@ -101,8 +97,8 @@ describe('file « Champs libres à relire »', () => {
   it('« Masquer le texte » : choix du champ et du motif obligatoires, puis l’appel porte la ligne, le champ et le motif', async () => {
     const { masquer } = afficher([ligne({})])
     await userEvent.click(screen.getByRole('button', { name: 'Masquer le texte' }))
-    const fenetre = screen.getByRole('dialog', { name: 'Masquer le texte' })
-    const valider = within(fenetre).getByRole('button', { name: 'Masquer définitivement' })
+    const fenetre = screen.getByRole('dialog', { name: 'Masquer ce texte ?' })
+    const valider = within(fenetre).getByRole('button', { name: 'Masquer le texte' })
     await userEvent.click(valider)
     expect(within(fenetre).getByText('Choisissez le champ à masquer.')).toBeInTheDocument()
     expect(within(fenetre).getByText('Choisissez un motif dans la liste.')).toBeInTheDocument()
@@ -128,7 +124,7 @@ describe('file « Champs libres à relire »', () => {
     await userEvent.click(
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(masquer).toHaveBeenCalledWith(expect.anything(), { champ: 'titre', motif: 'autre' }),
     )
@@ -152,7 +148,9 @@ describe('file « Champs libres à relire »', () => {
     await userEvent.click(
       screen.getByRole('radio', { name: 'Coordonnées (téléphone, adresse, email)' }),
     )
-    await userEvent.click(screen.getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Masquer le texte' }),
+    )
     // Le refus de la base, traduit (m220), jamais son texte brut.
     const alerte = await screen.findByRole('alert')
     expect(alerte).toHaveTextContent('Ce texte est déjà masqué ou vide. Rechargez la page.')
@@ -173,7 +171,7 @@ describe('file « Champs libres à relire »', () => {
     expect(bouton).toHaveFocus()
   })
 
-  it('un texte relu ou masqué ne garde « Masquer le texte » que s’il lui reste un champ, jamais « Rien à signaler »', () => {
+  it('un texte relu ou masqué ne garde « Masquer le texte » que s’il lui reste un champ, jamais « Marquer relu »', () => {
     afficher([
       ligne({ cible_id: 'r', etat: 'relu', decision_le: '2026-09-29T08:50:00+02:00' }),
       ligne({
@@ -196,10 +194,11 @@ describe('file « Champs libres à relire »', () => {
     const avecBoutons = articles.filter((article) => within(article).queryByRole('button'))
     expect(avecBoutons).toHaveLength(2)
     for (const article of avecBoutons) {
-      expect(within(article).queryByRole('button', { name: 'Rien à signaler' })).toBeNull()
+      expect(within(article).queryByRole('button', { name: 'Marquer relu' })).toBeNull()
       expect(within(article).getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
     }
-    expect(screen.getAllByText(MASQUE, { exact: false })).not.toHaveLength(0)
+    // Le texte masqué s'affiche « [texte masqué] » (T66, t356).
+    expect(screen.getAllByText('[texte masqué]', { exact: false })).not.toHaveLength(0)
   })
 })
 
@@ -248,7 +247,9 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
     const masquer = bloc([OUVERT])
     await userEvent.click(screen.getByRole('button', { name: 'Masquer le texte' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Santé ou situation personnelle' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', { name: 'Masquer le texte' }),
+    )
     await waitFor(() =>
       expect(masquer).toHaveBeenCalledWith({
         cible: 'signalement',
@@ -271,7 +272,7 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
     await userEvent.click(
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(masquer).toHaveBeenCalledWith({
         cible: 'signalement_suivi',

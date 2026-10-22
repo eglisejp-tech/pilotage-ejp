@@ -99,7 +99,7 @@ test.describe('écran 05 lu par le berger (aperçu)', () => {
       "Traité le 24 sept. par Conseil, compte 3 « Deux véhicules de l'église assurent le transport jusqu'à fin octobre. »",
     )
     await expect(page.getByRole('region', { name: 'Traités récemment' })).toHaveCount(0)
-    await expect(page.getByText('[texte masqué par EJP Tech]')).toBeVisible()
+    await expect(page.getByText('[texte masqué]', { exact: true })).toBeVisible()
   })
 
   test('le filtre : les points créés par le ministère ou qui le mentionnent, les nombres suivent', async ({

@@ -181,7 +181,7 @@ export function FenetreRefus({
               {isSubmitting ? TEXTES_FENETRE_REFUS.boutonEnCours : TEXTES_FENETRE_REFUS.bouton}
             </button>
           </div>
-          {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}
+          {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
           {refus?.ou === 'formulaire' ? <ErreurFormulaire message={refus.message} /> : null}
         </form>
       </div>

@@ -6,7 +6,14 @@ import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSigna
 import type { ContenuBloc } from '@/features/signalement/ContenuBlocSignalements'
 
 const RAPPEL = "N'écrivez aucun nom ni information personnelle."
-const VIDE = 'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.'
+const VIDE = 'Aucun signalement.'
+const REPONSE = 'Réponse au ministère (facultatif)'
+const CLORE = 'Clore le signalement'
+
+// Le même libellé ouvre le panneau et confirme (T66) : l'ouvreur seul porte `aria-expanded`.
+const tousLesClore = () => screen.getAllByRole('button', { name: CLORE })
+const ouvreurs = () => tousLesClore().filter((bouton) => bouton.hasAttribute('aria-expanded'))
+const confirmer = () => tousLesClore().find((bouton) => !bouton.hasAttribute('aria-expanded'))!
 
 function ligne(numero: number, champs: Partial<LigneSignalement> = {}): LigneSignalement {
   return {
@@ -48,10 +55,11 @@ function liste(signalements: LigneSignalement[], champs: Partial<ContenuBloc> = 
 const blocOuverts = () => screen.getAllByRole('list')[0]!
 
 describe('bloc « Signalements »', () => {
-  it('titre, sous-titre et « 2 signalements ouverts » ; les ouverts du plus ancien au plus récent', () => {
+  it('titre et « 2 signalements ouverts », sans sous-titre ; les ouverts du plus ancien au plus récent', () => {
     liste([CLOS, PLUS_ANCIEN, PLUS_RECENT])
     expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toBeInTheDocument()
-    expect(screen.getByText('Difficultés signalées par les ministères')).toBeInTheDocument()
+    // Le sous-titre est retiré par T66 (t361).
+    expect(screen.queryByText('Difficultés signalées par les ministères')).toBeNull()
     expect(screen.getByText('2 signalements ouverts')).toBeInTheDocument()
     const ouverts = within(blocOuverts()).getAllByRole('article')
     expect(ouverts).toHaveLength(2)
@@ -66,13 +74,13 @@ describe('bloc « Signalements »', () => {
     ).toHaveLength(2)
   })
 
-  it('les clos des 30 derniers jours, sous les ouverts, avec la date et le commentaire, sans bouton', () => {
+  it('les clos des 30 derniers jours, sous les ouverts, avec la date et la réponse, sans bouton', () => {
     liste([CLOS, PLUS_ANCIEN])
     const clos = screen.getByRole('region', { name: 'Clos ces 30 derniers jours' })
     expect(clos).toHaveTextContent('Chiffres du dimanche, 27 sept.')
-    // La date sur une ligne, le commentaire sur la suivante.
+    // La date sur une ligne, la réponse sur la suivante.
     expect(within(clos).getByText('Clos le 29 sept.')).toBeInTheDocument()
-    expect(clos).toHaveTextContent('Commentaire : Réglé avec le ministère.')
+    expect(clos).toHaveTextContent('Réponse : Réglé avec le ministère.')
     expect(within(clos).queryByRole('button')).toBeNull()
   })
 
@@ -91,11 +99,9 @@ describe('bloc « Signalements »', () => {
     expect(lignes[1]).toHaveTextContent('Clos le 29 sept.')
   })
 
-  it('sans ouvert mais avec des clos : « Aucun signalement ouvert. ... », titre et clos gardés', () => {
+  it('sans ouvert mais avec des clos : le compteur du titre suffit, titre et clos gardés', () => {
     liste([CLOS])
-    expect(
-      screen.getByText('Aucun signalement ouvert. Les prochains arriveront ici.'),
-    ).toBeInTheDocument()
+    // T66 (m171) : plus de phrase sous le titre quand des clos suivent.
     expect(screen.queryByText(VIDE)).toBeNull()
     expect(screen.getByText('Aucun signalement ouvert')).toBeInTheDocument()
     expect(screen.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toBeInTheDocument()
@@ -146,41 +152,43 @@ describe('bloc « Signalements »', () => {
 })
 
 describe('« Clore le signalement »', () => {
-  it('ouvre le petit panneau : commentaire facultatif, rappel en dessous, focus dans le champ', async () => {
+  it('ouvre le petit panneau : réponse facultative, rappel en dessous, focus dans le champ', async () => {
     liste([PLUS_ANCIEN])
-    const bouton = screen.getByRole('button', { name: 'Clore le signalement' })
+    const bouton = screen.getByRole('button', { name: CLORE })
     expect(bouton).toHaveAttribute('aria-expanded', 'false')
     await userEvent.click(bouton)
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
-    const commentaire = screen.getByLabelText('Commentaire (facultatif)')
+    const commentaire = screen.getByLabelText(REPONSE)
     expect(commentaire).toHaveFocus()
     expect(commentaire).toHaveAccessibleDescription(
       expect.stringContaining(`${RAPPEL} 0 sur 280`) as string,
     )
-    expect(screen.getByText('Une clôture est définitive.')).toBeInTheDocument()
+    expect(screen.getByText('Un signalement clos ne se rouvre pas.')).toBeInTheDocument()
+    // Le même libellé confirme (T66, t368).
+    expect(confirmer()).toHaveAttribute('type', 'submit')
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
-    expect(screen.queryByLabelText('Commentaire (facultatif)')).toBeNull()
+    expect(screen.queryByLabelText(REPONSE)).toBeNull()
     expect(bouton).toHaveFocus()
   })
 
-  it('sans commentaire : clore avec null, puis « Signalement clos. » et le focus sur le titre', async () => {
+  it('sans réponse : clore avec null, puis « Signalement clos. » et le focus sur le titre', async () => {
     const { cloturer } = liste([PLUS_ANCIEN])
-    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    await userEvent.click(confirmer())
     expect(cloturer).toHaveBeenCalledWith({ signalementId: PLUS_ANCIEN.id, commentaire: null })
     expect(await screen.findByText('Signalement clos.')).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toHaveFocus()
   })
 
-  it('commentaire de 9 caractères : l’erreur sous le champ, rien n’est envoyé', async () => {
+  it('réponse de 9 caractères : l’erreur sous le champ, rien n’est envoyé', async () => {
     const { cloturer } = liste([PLUS_ANCIEN])
-    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.type(screen.getByLabelText('Commentaire (facultatif)'), 'Trop court')
-    await userEvent.clear(screen.getByLabelText('Commentaire (facultatif)'))
-    await userEvent.type(screen.getByLabelText('Commentaire (facultatif)'), 'Neuf lett')
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    await userEvent.type(screen.getByLabelText(REPONSE), 'Trop court')
+    await userEvent.clear(screen.getByLabelText(REPONSE))
+    await userEvent.type(screen.getByLabelText(REPONSE), 'Neuf lett')
+    await userEvent.click(confirmer())
     expect(
-      await screen.findByText('Le commentaire fait 10 caractères au moins, ou reste vide.'),
+      await screen.findByText('Écrivez au moins 10 caractères, ou laissez la réponse vide.'),
     ).toBeInTheDocument()
     expect(cloturer).not.toHaveBeenCalled()
   })
@@ -191,12 +199,9 @@ describe('« Clore le signalement »', () => {
         Promise.reject({ code: 'P0001', message: 'Ce signalement est déjà clos.' }),
       ),
     } as Partial<ContenuBloc>)
-    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.type(
-      screen.getByLabelText('Commentaire (facultatif)'),
-      'transmis à l’administration',
-    )
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    await userEvent.type(screen.getByLabelText(REPONSE), 'transmis à l’administration')
+    await userEvent.click(confirmer())
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce signalement est déjà clos.')
     expect(relire).toHaveBeenCalled()
   })
@@ -207,30 +212,29 @@ describe('« Clore le signalement »', () => {
         Promise.reject({ code: 'P0001', message: 'Ce signalement est déjà clos.' }),
       ),
     } as Partial<ContenuBloc>)
-    const boutons = screen.getAllByRole('button', { name: 'Clore le signalement' })
-    await userEvent.click(boutons[0]!)
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    await userEvent.click(ouvreurs()[0]!)
+    await userEvent.click(confirmer())
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce signalement est déjà clos.')
-    await userEvent.click(screen.getAllByRole('button', { name: 'Clore le signalement' })[1]!)
+    await userEvent.click(ouvreurs()[1]!)
     expect(screen.queryByText('Ce signalement est déjà clos.')).toBeNull()
   })
 
-  it('le panneau dit que le ministère lira le commentaire', async () => {
+  it('le libellé du champ dit que la réponse va au ministère', async () => {
     liste([PLUS_ANCIEN])
-    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
-    expect(screen.getByText(/Le ministère lira ce commentaire\./)).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    expect(screen.getByRole('textbox', { name: REPONSE })).toBeInTheDocument()
   })
 
-  it('connexion perdue : l’erreur sous le bouton, commentaire gardé', async () => {
+  it('connexion perdue : l’erreur sous le bouton, réponse gardée', async () => {
     liste([PLUS_ANCIEN], {
       cloturer: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
     } as Partial<ContenuBloc>)
-    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.type(screen.getByLabelText('Commentaire (facultatif)'), 'Réglé par téléphone.')
-    await userEvent.click(screen.getByRole('button', { name: 'Clore définitivement' }))
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    await userEvent.type(screen.getByLabelText(REPONSE), 'Réglé par téléphone.')
+    await userEvent.click(confirmer())
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
-    expect(screen.getByLabelText('Commentaire (facultatif)')).toHaveValue('Réglé par téléphone.')
+    expect(screen.getByLabelText(REPONSE)).toHaveValue('Réglé par téléphone.')
   })
 })

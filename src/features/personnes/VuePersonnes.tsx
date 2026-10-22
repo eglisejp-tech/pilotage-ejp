@@ -72,7 +72,6 @@ export function VuePersonnes({ titre, resultat, actions }: Props) {
   return (
     <section aria-labelledby="titre-page" className="flex flex-col gap-10">
       <header className="flex flex-col gap-2.5">
-        <p className="text-sm text-encre-2">{TEXTES_PERSONNES.surtitre}</p>
         <h1 id="titre-page" className="font-lecture text-titre leading-tight font-medium">
           {titre}
         </h1>

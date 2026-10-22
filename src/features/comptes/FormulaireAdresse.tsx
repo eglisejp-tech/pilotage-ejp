@@ -1,7 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import type { CodeAide } from '@/components/aide/textesAide'
 import { ChampLigne } from '@/features/comptes/ChampLigne'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { schemaAdresse } from '@/features/comptes/schemas'
@@ -12,9 +11,10 @@ import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 
 interface Props {
-  /** « Email partagé du ministère » ou « Email personnel », avec son aide. */
+  /** « Email partagé du ministère » ou « Email personnel ». */
   libelle: string
-  aide: CodeAide
+  /** Indication sous le champ (l'email d'un ministère seulement, T66). */
+  note?: string
   /** Libellé imposé du futur compte (« Conseil, compte 5 »), affiché sous le champ. */
   nomAffiche?: string
   envoyer: (adresse: Adresse) => Promise<void>
@@ -26,7 +26,7 @@ interface Props {
  * sans compte, le berger, un membre du conseil, un compte EJP Tech. Le nom affiché n'est jamais
  * tapé : la base l'impose, l'écran l'annonce (« Nom affiché : Conseil, compte 5 »).
  */
-export function FormulaireAdresse({ libelle, aide, nomAffiche, envoyer, onAnnuler }: Props) {
+export function FormulaireAdresse({ libelle, note, nomAffiche, envoyer, onAnnuler }: Props) {
   const {
     register,
     handleSubmit,
@@ -68,7 +68,7 @@ export function FormulaireAdresse({ libelle, aide, nomAffiche, envoyer, onAnnule
         type="email"
         inputMode="email"
         libelle={libelle}
-        aide={aide}
+        note={note}
         autoComplete="off"
         spellCheck={false}
         erreur={errors.email?.message}
@@ -80,7 +80,7 @@ export function FormulaireAdresse({ libelle, aide, nomAffiche, envoyer, onAnnule
       <BoutonEnregistrer
         libelle={TEXTES_COMPTES.boutonCreerCompte}
         enCours={isSubmitting}
-        libelleEnCours={TEXTES_COMPTES.enCours}
+        libelleEnCours={TEXTES_COMPTES.enCours.creer}
       />
       <button
         type="button"

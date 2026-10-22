@@ -1,5 +1,4 @@
 import type { Ref } from 'react'
-import { Aide } from '@/components/aide/Aide'
 import { phraseCoches, TEXTES_SESSIONS } from '@/features/sessions/textes'
 
 export interface MinistereAChoisir {
@@ -15,37 +14,56 @@ interface Props {
   valeur: readonly string[]
   onChange: (ids: string[]) => void
   refPremier?: Ref<HTMLInputElement>
+  /**
+   * Indication sous le titre, lue avec le groupe (« Décochez les ministères qui ne participent
+   * pas. ») : ce qu'il faut pour remplir se voit, jamais dans une bulle (T66).
+   */
+  note?: string
   erreur?: string
 }
 
 /**
  * Ministères attendus d'une session (maquette 14) : une case par ministère actif, toutes cochées
- * à la déclaration, avec « 8 sur 8 » en face du titre. Chaque case fait 44 px de haut au moins.
+ * à la déclaration, avec « 8 sur 8 » en face du titre, puis l'indication éventuelle. Chaque case
+ * fait 44 px de haut au moins.
  */
-export function ChoixMinisteres({ id, ministeres, valeur, onChange, refPremier, erreur }: Props) {
+export function ChoixMinisteres({
+  id,
+  ministeres,
+  valeur,
+  onChange,
+  refPremier,
+  note,
+  erreur,
+}: Props) {
   const idTitre = `${id}-titre`
+  const idNote = `${id}-note`
   const idErreur = `${id}-erreur`
   const basculer = (ministere: string, coche: boolean) =>
     onChange(coche ? [...valeur, ministere] : valeur.filter((autre) => autre !== ministere))
   const coches = ministeres.filter((ministere) => valeur.includes(ministere.id)).length
+  const avecNote = note !== undefined && ministeres.length > 0
+  const decritPar = [avecNote ? idNote : '', erreur ? idErreur : ''].filter(Boolean).join(' ')
 
   return (
     <fieldset
       aria-labelledby={idTitre}
-      aria-describedby={erreur ? idErreur : undefined}
+      aria-describedby={decritPar || undefined}
       className="flex min-w-0 flex-col gap-1"
     >
       <div className="flex min-h-cible items-center justify-between gap-3 border-b border-filet">
-        <div className="flex flex-wrap items-center">
-          <p id={idTitre} className="text-[15px] font-semibold">
-            {TEXTES_SESSIONS.titreMinisteres}
-          </p>
-          <Aide code="sessions.attendus" libelle={TEXTES_SESSIONS.titreMinisteres} />
-        </div>
+        <p id={idTitre} className="text-[15px] font-semibold">
+          {TEXTES_SESSIONS.titreMinisteres}
+        </p>
         <p aria-live="polite" className="text-[15px] text-encre-2">
           {phraseCoches(coches, ministeres.length)}
         </p>
       </div>
+      {avecNote ? (
+        <p id={idNote} className="pt-1 text-sm leading-normal text-encre-2">
+          {note}
+        </p>
+      ) : null}
       {ministeres.length === 0 ? (
         <p className="py-2 text-encre-2">{TEXTES_SESSIONS.aucunMinistere}</p>
       ) : (

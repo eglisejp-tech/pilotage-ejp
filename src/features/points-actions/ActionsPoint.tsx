@@ -3,6 +3,7 @@ import type { FunctionComponent, MouseEvent } from 'react'
 import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
+import { TEXTE_MASQUE_AFFICHE } from '@/features/fiche/textesFiche'
 import { annoncerReussite } from '@/features/points-actions/annonce'
 import { useEcrituresPoint } from '@/features/points-actions/ecritures'
 import { PanneauChangerStatut } from '@/features/points-actions/PanneauChangerStatut'
@@ -215,7 +216,7 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
   return (
     <div className="flex flex-wrap gap-2">
       <span id={idTitre} hidden>
-        {point.titre.texte}
+        {point.titre.masque ? TEXTE_MASQUE_AFFICHE : point.titre.texte}
       </span>
       {peutStatut ? (
         <button

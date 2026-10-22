@@ -35,12 +35,12 @@ interface Props {
 
 /**
  * Bloc « Signalements » de l'accueil d'EJP Tech (T39 ; BRIEF, « Modération »), au-dessus du reste
- * de l'écran : titre avec « N signalements ouverts », sous-titre ; les ouverts, du plus ancien au
- * plus récent, chacun avec « Clore le signalement » ; puis les clos des 30 derniers jours (jour de
- * Paris, calculé par la base), les derniers clos en premier. Sans ouvert : « Aucun signalement.
- * ... » (tout est fait), ou « Aucun signalement ouvert. ... » quand des clos suivent ; le titre
- * et les clos gardés. Après une clôture, « Signalement clos. » est annoncé et le focus revient au
- * titre du bloc (la ligne a quitté les ouverts).
+ * de l'écran : titre avec « N signalements ouverts » ; les ouverts, du plus ancien au plus récent,
+ * chacun avec « Clore le signalement » ; puis les clos des 30 derniers jours (jour de Paris,
+ * calculé par la base), les derniers clos en premier. Sans ouvert : « Aucun signalement. » (tout
+ * est fait), ou rien de plus que le compteur du titre quand des clos suivent (T66). Après une
+ * clôture, « Signalement clos. » est annoncé et le focus revient au titre du bloc (la ligne a
+ * quitté les ouverts).
  */
 export function ContenuBlocSignalements({ contenu }: Props) {
   const idTitre = useId()
@@ -103,17 +103,14 @@ export function ContenuBlocSignalements({ contenu }: Props) {
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b-2 border-encre pb-3">
-        <div className="flex flex-col gap-1">
-          <h2
-            id={idTitre}
-            ref={titre}
-            tabIndex={-1}
-            className="font-lecture text-section leading-tight font-medium outline-hidden"
-          >
-            {TEXTES_SIGNALEMENT.bloc.titre}
-          </h2>
-          <p className="text-sm text-encre-2">{TEXTES_SIGNALEMENT.bloc.sousTitre}</p>
-        </div>
+        <h2
+          id={idTitre}
+          ref={titre}
+          tabIndex={-1}
+          className="font-lecture text-section leading-tight font-medium outline-hidden"
+        >
+          {TEXTES_SIGNALEMENT.bloc.titre}
+        </h2>
         {contenu.etat === 'liste' ? (
           <p className="text-note text-encre-2">
             {TEXTES_BLOC_SIGNALEMENTS.ouverts(ouverts.length)}
@@ -144,12 +141,11 @@ export function ContenuBlocSignalements({ contenu }: Props) {
 
       {contenu.etat === 'liste' ? (
         <>
+          {/* Sans ouvert, quand des clos suivent, le compteur du titre suffit (T66, m171). */}
           {ouverts.length === 0 ? (
-            <EtatVide situation="tout_est_fait">
-              {clos.length > 0
-                ? TEXTES_BLOC_SIGNALEMENTS.videAvecClos
-                : TEXTES_SIGNALEMENT.bloc.vide}
-            </EtatVide>
+            clos.length > 0 ? null : (
+              <EtatVide situation="tout_est_fait">{TEXTES_SIGNALEMENT.bloc.vide}</EtatVide>
+            )
           ) : (
             <ol>
               {ouverts.map((signalement) => (

@@ -169,16 +169,17 @@ describe('actions et textes d’une ligne', () => {
     expect(libelleEtat('activee', null)).toBe('Activée')
     expect(libelleEtat('a_activer', null)).toBe('À activer')
     expect(libelleEtat('invitation_envoyee', null)).toBe('Invitation envoyée')
-    expect(complementMinisteres(8)).toBe('8 actifs, un email partagé chacun')
-    expect(complementMinisteres(1)).toBe('1 actif, un email partagé chacun')
+    expect(complementMinisteres(8)).toBe('8 actifs')
+    expect(complementMinisteres(1)).toBe('1 actif')
   })
 
-  it('confirmation de désactivation d’un ministère : le texte du BRIEF', () => {
+  it('confirmation de désactivation d’un ministère : ce qui se passe, en deux phrases (T66)', () => {
     expect(confirmationDesactiverMinistere('Communication', 'communication@exemple.test')).toEqual({
       titre: 'Désactiver Communication ?',
       texte:
-        "Plus personne ne pourra se connecter avec communication@exemple.test. À partir d'aujourd'hui, Communication ne compte plus dans les totaux ni dans la complétude. Ses saisies et son historique restent.",
+        "Plus personne ne pourra se connecter avec communication@exemple.test. Dès aujourd'hui, Communication ne compte plus dans les totaux.",
       bouton: 'Désactiver le ministère',
+      enCours: 'Désactivation en cours',
     })
   })
 })

@@ -59,14 +59,7 @@ export function TableauComptes({
           ) : null}
           {ministeres ? (
             <th scope="col" className={entete}>
-              <span className="inline-flex items-center">
-                {TEXTES_COMPTES.colonneIndicateurs}
-                <Aide
-                  code="comptes.indicateurs"
-                  libelle={TEXTES_COMPTES.colonneIndicateurs}
-                  placement="flottante"
-                />
-              </span>
+              {TEXTES_COMPTES.colonneIndicateurs}
             </th>
           ) : (
             <td />

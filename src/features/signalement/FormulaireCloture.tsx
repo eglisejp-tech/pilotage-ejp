@@ -26,10 +26,11 @@ export interface ProprietesFormulaireCloture {
 }
 
 /**
- * Petit panneau « Clore le signalement » (BRIEF, « Modération ») : commentaire facultatif (10 à
- * 280 caractères, rappel en dessous, premier champ libre), « Une clôture est définitive. », puis
- * « Clore définitivement ». Un refus du commentaire se dit sous le champ ; la connexion perdue
- * sous le bouton, commentaire gardé.
+ * Petit panneau « Clore le signalement » (BRIEF, « Modération ») : « Réponse au ministère
+ * (facultatif) » (10 à 280 caractères, rappel en dessous, premier champ libre), « Un signalement
+ * clos ne se rouvre pas. », puis « Clore le signalement », le même libellé que le bouton qui
+ * ouvre le panneau (T66). La consigne « transmis à l'administration » est sur la page d'aide. Un
+ * refus de la réponse se dit sous le champ ; la connexion perdue sous le bouton, réponse gardée.
  */
 export function FormulaireCloture({
   id,
@@ -87,7 +88,6 @@ export function FormulaireCloture({
       <ChampTexteLibre
         id={id}
         libelle={TEXTES_BLOC_SIGNALEMENTS.libelleCommentaire}
-        note={TEXTES_BLOC_SIGNALEMENTS.noteCommentaire}
         longueur={longueurEnCaracteres(commentaire)}
         avecRappel
         autoComplete="off"
@@ -113,7 +113,7 @@ export function FormulaireCloture({
           {TEXTES_BLOC_SIGNALEMENTS.boutonAnnuler}
         </button>
       </div>
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="message" /> : null}
+      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
       {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
     </form>
   )

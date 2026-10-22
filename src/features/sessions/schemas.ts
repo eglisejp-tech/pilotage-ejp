@@ -15,8 +15,9 @@ export const LONGUEUR_MAX_NOM_RASSEMBLEMENT = 80
 export const MESSAGES_SESSIONS = {
   type: 'Choisissez le type de la session.',
   date: 'Choisissez la date de la session.',
-  nom: 'Donnez un nom au rassemblement.',
-  nomTropLong: 'Le nom du rassemblement fait 80 caractères au plus.',
+  // Glossaire « session » et forme « Raccourcissez » (T66, t313 et t314).
+  nom: 'Donnez un nom à la session.',
+  nomTropLong: 'Raccourcissez le nom : 80 caractères au plus.',
   ministeres: 'Cochez au moins un ministère.',
 } as const
 

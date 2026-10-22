@@ -12,8 +12,8 @@ import { accorder, nombre } from '@/lib/metier/texte'
 
 export const TEXTES_COMPTES = {
   titre: 'Ministères et comptes',
-  introduction:
-    "Les comptes sont créés ici, personne ne peut s'inscrire seul. Chacun se connecte avec Google ou un mot de passe, puis un code de double authentification. Désactiver un compte garde tout son historique.",
+  /** Ce que fait l'écran, sans le fonctionnement interne (T66, t264 ; guide, exemple 7). */
+  introduction: 'Chaque compte créé reçoit une invitation par email.',
   /** Administration de l'église, en lecture (décision T60) : la phrase remplace l'introduction. */
   introductionLecture:
     'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
@@ -31,28 +31,23 @@ export const TEXTES_COMPTES = {
   // Colonnes
   colonneMinistere: 'Ministère',
   colonneEmailMinistere: 'Email de connexion',
-  colonneIndicateurs: 'Indicateurs',
+  colonneIndicateurs: 'Indicateurs propres',
   colonneEtat: 'Double authentification',
   colonneCompte: 'Compte',
   colonneEmailPersonnel: 'Email personnel',
   colonneActions: 'Actions',
 
-  /** Sous le tableau des ministères (configuration-indicateurs.md, 7.1). */
-  noteIndicateurs: 'Pour ajouter ou retirer un indicateur propre, ouvrez',
-  /** En lecture (administration, T60) : l'écran Indicateurs se lit sans rien changer. */
-  noteIndicateursLecture: 'Pour lire les indicateurs de chaque ministère, ouvrez',
-  lienIndicateurs: "l'écran Indicateurs",
-  /** Le ministère FIJ saisit aussi ses chiffres par département (BRIEF, colonne de 13). */
-  fijParDepartement: 'et FIJ par département',
+  /** Le ministère FIJ saisit aussi ses chiffres par département (BRIEF, colonne de 13 ; T66). */
+  fijParDepartement: 'et les chiffres par département',
 
   // Listes (maquette 13)
   statutsEvenement: "Statuts d'événement",
-  noteStatuts: "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
+  noteStatuts: 'Pour changer cette liste, demandez à EJP Tech.',
   /** Pour EJP Tech, qui gère l'écran (T60, Proposé) : il ne se demande rien à lui-même. */
   noteStatutsGestion: "Liste commune à toute l'église.",
 
-  // Pas de compte pour un ministère actif (FIJ, Coordination en production)
-  pasDeCompte: 'Pas encore de compte',
+  // Pas de compte pour un ministère actif (FIJ, Coordination en production) : colonne Email (T66)
+  pasDeCompte: 'Aucune adresse',
 
   // Boutons
   ajouterMinistere: 'Ajouter un ministère',
@@ -60,12 +55,22 @@ export const TEXTES_COMPTES = {
   ajouterBerger: 'Ajouter le compte du berger',
   ajouterEjpTech: 'Ajouter un compte EJP Tech',
   creerCompte: 'Créer le compte',
-  relancer: "Relancer l'invitation",
+  relancer: "Renvoyer l'invitation",
   refaireActivation: "Refaire l'activation",
   desactiver: 'Désactiver',
   reactiver: 'Réactiver',
   annuler: 'Annuler',
-  enCours: 'Envoi en cours',
+  /**
+   * Pendant l'envoi, le bouton dit ce qui se fait (T66, m202) : une entrée par action d'une
+   * ligne (`ActionLigne`), la création servant aussi aux panneaux d'ajout.
+   */
+  enCours: {
+    creer: 'Création en cours',
+    relancer: 'Envoi en cours',
+    refaire: 'Réinitialisation en cours',
+    desactiver: 'Désactivation en cours',
+    reactiver: 'Réactivation en cours',
+  },
   /** À la place des boutons, sur la ligne du compte connecté (T60, Proposé). */
   votreCompte: 'Votre compte',
 
@@ -79,14 +84,15 @@ export const TEXTES_COMPTES = {
   champNom: 'Nom du ministère',
   champDescription: 'Description (facultatif)',
   champEmailMinistere: 'Email partagé du ministère',
+  /** Indication sous l'email d'un ministère (ancienne bulle `comptes.emailMinistere`, T66 t277). */
+  indicationEmailMinistere:
+    "Une boîte mail partagée par le ministère, pas l'adresse d'une personne.",
   champEmailPersonnel: 'Email personnel',
   /** Libellé imposé du compte, jamais tapé (BRIEF, section 6). */
   nomAffiche: (libelle: string) => `Nom affiché : ${libelle}`,
-  boutonCreerMinistere: "Créer le ministère et envoyer l'invitation",
-  boutonCreerCompte: "Créer le compte et envoyer l'invitation",
-  /** Ce qui se passe après l'envoi, sous le titre du panneau (Proposé). */
-  phraseInvitation:
-    "L'adresse reçoit une invitation par email. Le compte choisit son mot de passe, puis active sa double authentification.",
+  /** Un seul libellé pour le ministère et le compte (T66, t279). */
+  boutonCreerMinistere: "Créer et envoyer l'invitation",
+  boutonCreerCompte: "Créer et envoyer l'invitation",
 
   // Confirmations (BRIEF, section 9)
   boutonDesactiverMinistere: 'Désactiver le ministère',
@@ -110,9 +116,9 @@ export function libelleEtat(etat: EtatCompte | 'sans_compte', desactiveLe: DateI
   }
 }
 
-/** En-tête de la section des ministères : « 8 actifs, un email partagé chacun ». */
+/** En-tête de la section des ministères : « 8 actifs » (T66, t265). */
 export function complementMinisteres(nbActifs: number): string {
-  return `${nombre(nbActifs)} ${accorder(nbActifs, 'actif', 'actifs')}, un email partagé chacun`
+  return `${nombre(nbActifs)} ${accorder(nbActifs, 'actif', 'actifs')}`
 }
 
 /** Colonne « Indicateurs » : « Aucun », « 1 indicateur », « 3 indicateurs ». */
@@ -121,22 +127,22 @@ export function libelleIndicateurs(nombreIndicateurs: number): string {
   return `${nombre(nombreIndicateurs)} ${accorder(nombreIndicateurs, 'indicateur', 'indicateurs')}`
 }
 
-/** États vides des trois sections (T36 ; Proposé, notés dans LISEZMOI.md). */
+/**
+ * États vides des trois sections (T36 ; T66, t273 à t275) : la phrase seule pour EJP Tech, qui a
+ * le bouton d'ajout en tête de la section ; l'administration de l'église, qui lit (T60), garde
+ * la phrase qui dit qui ajoute.
+ */
 export const VIDES_COMPTES = {
-  ministeres: 'Aucun ministère pour le moment.',
-  ministeresSuite: 'Ajoutez le premier : son email partagé reçoit une invitation.',
+  ministeres: 'Aucun ministère.',
   /** En lecture (administration, T60). */
   ministeresSuiteLecture: 'EJP Tech ajoute les ministères.',
-  bergerConseil: "Aucun compte pour le berger ni pour le conseil pour l'instant.",
-  bergerConseilSuite: 'Chaque compte reçoit une invitation à son email personnel.',
-  ejpTech: "Aucun compte EJP Tech pour l'instant.",
+  bergerConseil: 'Aucun compte pour le berger ni le conseil.',
+  ejpTech: 'Aucun compte EJP Tech.',
   /**
    * En lecture (administration, T60) : EJP Tech crée les comptes ; son premier compte se crée à
    * l'installation.
    */
   ejpTechSuite: "Le premier compte EJP Tech se crée à l'installation de l'outil.",
-  /** Pour EJP Tech, qui gère (T60) : ce que fait l'ajout, sans le renvoyer vers lui-même. */
-  ejpTechSuiteGestion: 'Chaque compte reçoit une invitation à son email personnel.',
 } as const
 
 /** Messages de réussite, affichés 6 secondes (Proposé). */
@@ -147,15 +153,20 @@ export const REUSSITES_COMPTES = {
   invitationRelancee: (email: string) => `Invitation renvoyée à ${email}.`,
   desactive: (nom: string) => `${nom} désactivé.`,
   reactive: (nom: string) => `${nom} réactivé.`,
+  /** La consigne à transmettre, en une phrase : le message disparaît après 6 s (T66, m182). */
   activationARefaire: (nom: string) =>
-    `Activation à refaire pour ${nom}. La personne choisit « Mot de passe oublié », puis active un nouveau code.`,
+    `Activation à refaire pour ${nom}. Dites-lui de choisir « Mot de passe oublié ».`,
 } as const
 
-/** Contenu d'une fenêtre de confirmation : titre, texte et bouton d'action. */
+/**
+ * Contenu d'une fenêtre de confirmation : titre, texte, bouton d'action et ce que le bouton dit
+ * pendant l'envoi (« Désactivation en cours », T66 m202).
+ */
 export interface TexteConfirmation {
   titre: string
   texte: string
   bouton: string
+  enCours: string
 }
 
 /** « Désactiver Communication ? » (BRIEF, section 9). */
@@ -166,8 +177,9 @@ export function confirmationDesactiverMinistere(
   const qui = email === null ? 'cette adresse' : email
   return {
     titre: `Désactiver ${nom} ?`,
-    texte: `Plus personne ne pourra se connecter avec ${qui}. À partir d'aujourd'hui, ${nom} ne compte plus dans les totaux ni dans la complétude. Ses saisies et son historique restent.`,
+    texte: `Plus personne ne pourra se connecter avec ${qui}. Dès aujourd'hui, ${nom} ne compte plus dans les totaux.`,
     bouton: TEXTES_COMPTES.boutonDesactiverMinistere,
+    enCours: TEXTES_COMPTES.enCours.desactiver,
   }
 }
 
@@ -176,8 +188,9 @@ export function confirmationDesactiverCompte(nom: string, email: string | null):
   const qui = email === null ? 'cette adresse' : email
   return {
     titre: `Désactiver ${nom} ?`,
-    texte: `Plus personne ne pourra se connecter avec ${qui}. Son historique reste.`,
+    texte: `Plus personne ne pourra se connecter avec ${qui}. Vous pourrez le réactiver.`,
     bouton: TEXTES_COMPTES.boutonDesactiverCompte,
+    enCours: TEXTES_COMPTES.enCours.desactiver,
   }
 }
 
@@ -188,9 +201,11 @@ export function confirmationDesactiverCompte(nom: string, email: string | null):
 export function confirmationRefaireActivation(nom: string, ministere: boolean): TexteConfirmation {
   return {
     titre: `Refaire l'activation de ${nom} ?`,
+    // Ce qui va se passer, dont la déconnexion (T66, m200 et m201).
     texte: ministere
-      ? "À faire quand une personne quitte ou rejoint le ministère, ou perd son téléphone. Changez d'abord le mot de passe de la boîte mail du ministère."
-      : 'À faire quand la personne perd son téléphone. Elle choisit ensuite « Mot de passe oublié », puis active un nouveau code.',
+      ? "Le ministère sera déconnecté et devra activer un nouveau code. Changez d'abord le mot de passe de sa boîte mail."
+      : 'La personne sera déconnectée. Elle devra choisir « Mot de passe oublié », puis activer un nouveau code.',
     bouton: TEXTES_COMPTES.boutonRefaireActivation,
+    enCours: TEXTES_COMPTES.enCours.refaire,
   }
 }

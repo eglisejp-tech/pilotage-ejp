@@ -95,7 +95,7 @@ for (const profil of ['berger', 'conseil'] as const) {
       await expect(
         page.getByRole('article', { name: 'Transport des Prodiges Junior' }),
       ).toContainText("« Deux véhicules de l'église assurent le transport jusqu'à fin octobre. »")
-      await expect(page.getByText('[texte masqué par EJP Tech]')).toBeVisible()
+      await expect(page.getByText('[texte masqué]', { exact: true })).toBeVisible()
       await expect(page.getByRole('region', { name: 'Traités récemment' })).toHaveCount(0)
     })
 

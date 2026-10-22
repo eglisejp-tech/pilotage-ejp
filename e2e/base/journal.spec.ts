@@ -23,7 +23,7 @@ const ACTIONS_HORS_ADMINISTRATION = [
   'A saisi les chiffres par département',
   'A ajouté un événement',
   'A mis à jour un événement',
-  'A renseigné la prochaine réunion',
+  'A enregistré la prochaine réunion',
   'A créé un point',
   "A changé le statut d'un point",
   'A marqué traité',
@@ -112,7 +112,7 @@ test.describe('le ministère Communication', () => {
     await expect(page.getByRole('combobox', { name: 'Compte' })).toHaveCount(0)
     await expect(page.getByRole('combobox')).toHaveCount(2)
     // Il ne déclare aucune session : le filtre ne propose pas ces actions.
-    await expect(actions(page).filter({ hasText: 'A déclaré une session' })).toHaveCount(0)
+    await expect(actions(page).filter({ hasText: 'A ajouté une session' })).toHaveCount(0)
 
     // Par l'API : toute ligne lue est celle de son ministère, ou écrite par son compte (le seul
     // compte qui apparaisse hors de son ministère).
@@ -153,7 +153,7 @@ test.describe("l'administration de l'église", () => {
       await expect(actions(page).filter({ hasText: libelle }), libelle).toHaveCount(0)
     }
     await expect(actions(page).filter({ hasText: 'A saisi des chiffres' })).toHaveCount(1)
-    await expect(actions(page).filter({ hasText: 'A déclaré une session' })).toHaveCount(1)
+    await expect(actions(page).filter({ hasText: 'A ajouté une session' })).toHaveCount(1)
 
     const total = await compter(page, 'v_journal?select=id')
     await expect(lignes(page)).toHaveCount(Math.min(total, TAILLE_PAGE))

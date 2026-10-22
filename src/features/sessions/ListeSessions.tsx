@@ -1,4 +1,3 @@
-import { Aide } from '@/components/aide/Aide'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { CelluleSaisies } from '@/features/sessions/CelluleSaisies'
 import type { LigneSession } from '@/features/sessions/construire'
@@ -105,14 +104,7 @@ export function ListeSessions({ lignes, idTitre, onModifier, onSupprimer }: Prop
             {TEXTES_SESSIONS.colonneAttendus}
           </th>
           <th scope="col" className={entete}>
-            <span className="inline-flex items-center">
-              {TEXTES_SESSIONS.colonneSaisies}
-              <Aide
-                code="sessions.saisies"
-                libelle={TEXTES_SESSIONS.colonneSaisies}
-                placement="flottante"
-              />
-            </span>
+            {TEXTES_SESSIONS.colonneSaisies}
           </th>
           <th scope="col" className={`${entete} pr-0`}>
             <span className="sr-only">{TEXTES_SESSIONS.colonneActions}</span>

@@ -123,13 +123,13 @@ test.describe('le berger lit le journal (aperçu)', () => {
     await expect(lignes(page).last()).toContainText('24 sept., 15 h')
   })
 
-  test('le ministère de l’adresse : « Ministère : Jeunesse » et « Retirer le filtre »', async ({
+  test('le ministère de l’adresse : « Ministère : Jeunesse » et « Voir tous les ministères »', async ({
     page,
   }) => {
     await ouvrir(page, { profil: 'berger', ministere: 'min-jeunesse', periode: '7j' })
     await expect(page.getByText('Ministère : Jeunesse')).toBeVisible()
     await expect(lignes(page).first()).toContainText('Ministère Jeunesse')
-    await page.getByRole('button', { name: 'Retirer le filtre' }).click()
+    await page.getByRole('button', { name: 'Voir tous les ministères' }).click()
     await expect(page).not.toHaveURL(/ministere=/)
     await expect(page.getByText('Ministère : Jeunesse')).toHaveCount(0)
     await expect(lignes(page).first()).toContainText('Berger')
@@ -137,7 +137,7 @@ test.describe('le berger lit le journal (aperçu)', () => {
 
   test('un texte masqué par EJP Tech s’affiche en --encre-3', async ({ page }) => {
     await ouvrir(page, { profil: 'berger', periode: '7j', action: 'point_cree' })
-    const masque = page.getByText('[texte masqué par EJP Tech]')
+    const masque = page.getByText('[texte masqué]', { exact: true })
     await expect(masque).toBeVisible()
     await expect(masque).toHaveCSS('color', 'rgb(95, 107, 126)')
     const lisible = page.getByText('Visuels pour Welcome Prodiges, mentionne Communication')
@@ -188,13 +188,13 @@ test.describe('les autres profils (aperçu)', () => {
     await ouvrir(page, { profil: 'admin_eglise', periode: 'tout' })
     await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
     const liste = page.getByRole('list', { name: 'Lignes du journal' })
-    await expect(liste).toContainText('A déclaré une session')
+    await expect(liste).toContainText('A ajouté une session')
     await expect(liste).not.toContainText(/signal|Précision|Soirée de louange|Point|point/)
     await expect(liste).not.toContainText("1 chiffre d'indicateurs du ministère")
     const actions = page.getByRole('combobox', { name: 'Action' }).getByRole('option')
     await expect(actions.filter({ hasText: 'A signalé une difficulté' })).toHaveCount(0)
     await expect(actions.filter({ hasText: 'A créé un point' })).toHaveCount(0)
-    await expect(actions.filter({ hasText: 'A déclaré une session' })).toHaveCount(1)
+    await expect(actions.filter({ hasText: 'A ajouté une session' })).toHaveCount(1)
   })
 
   test('EJP Tech : « Journal technique », tout le journal, signalements compris', async ({
@@ -227,7 +227,7 @@ test.describe('les autres profils (aperçu)', () => {
 test.describe('états (T36)', () => {
   test('journal vide : une phrase de premier usage', async ({ page }) => {
     await ouvrir(page, { profil: 'berger', etat: 'vide', periode: 'tout' })
-    await expect(page.getByText("Le journal est vide pour l'instant.")).toBeVisible()
+    await expect(page.getByText('Aucune ligne.', { exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: 'Retirer les filtres' })).toHaveCount(0)
   })
 

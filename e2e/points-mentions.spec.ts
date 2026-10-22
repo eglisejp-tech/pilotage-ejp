@@ -166,7 +166,7 @@ test.describe('la fenêtre', () => {
     await basculer(page, boite, 'Social')
     await boite.getByRole('button', { name: 'Enregistrer les mentions' }).click()
     await expect(boite.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(boite.getByRole('checkbox', { name: 'Social' })).toBeChecked()
     await auditer(page)

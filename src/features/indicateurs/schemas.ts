@@ -119,7 +119,8 @@ export const schemaPourquoi = schemaTexteLibre(
 /** Motif d'un refus ou d'une décision : 10 à 280 caractères (validation-metier.md 5.4). */
 export const schemaMotif = schemaTexteLibre(
   'Expliquez le refus (10 caractères au moins).',
-  'Le motif dépasse 280 caractères.',
+  // Forme « Raccourcissez » (T66, t344) ; le refus de la base garde son texte (messagesBase.ts).
+  'Raccourcissez le motif : 280 caractères au plus.',
 )
 
 export type ValeurIndicateur = z.infer<ReturnType<typeof schemaValeur>>

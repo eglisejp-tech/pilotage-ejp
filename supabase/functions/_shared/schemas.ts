@@ -7,12 +7,16 @@ import { z } from 'zod'
 export const LONGUEUR_MAX_NOM_MINISTERE = 50
 export const LONGUEUR_MAX_DESCRIPTION_MINISTERE = 280
 
+// Messages revus par T66 (m006, m195, m196) : les fonctions ne renvoient qu'un code
+// (`requete_invalide`), ces phrases ne se lisent que dans les panneaux de l'écran 13. Même texte
+// que l'écran de connexion pour une adresse incomplète.
 const email = z
   .string()
   .trim()
   .toLowerCase()
-  .max(254, 'Cette adresse email est trop longue.')
-  .pipe(z.email('Saisissez une adresse email valide.'))
+  .min(1, "Saisissez l'adresse email.")
+  .max(254, "Raccourcissez l'adresse : 254 caractères au plus.")
+  .pipe(z.email('Saisissez une adresse email complète, par exemple nom@exemple.fr.'))
 
 const ministereExistant = z.strictObject({
   id: z.uuid('Choisissez un ministère dans la liste.'),
@@ -23,11 +27,14 @@ const nouveauMinistere = z.strictObject({
     .string()
     .trim()
     .min(1, 'Donnez un nom au ministère.')
-    .max(LONGUEUR_MAX_NOM_MINISTERE, 'Le nom du ministère tient en 50 caractères au plus.'),
+    .max(LONGUEUR_MAX_NOM_MINISTERE, 'Raccourcissez le nom : 50 caractères au plus.'),
   description: z
     .string()
     .trim()
-    .max(LONGUEUR_MAX_DESCRIPTION_MINISTERE, 'La description tient en 280 caractères au plus.')
+    .max(
+      LONGUEUR_MAX_DESCRIPTION_MINISTERE,
+      'Raccourcissez la description : 280 caractères au plus.',
+    )
     .optional(),
 })
 

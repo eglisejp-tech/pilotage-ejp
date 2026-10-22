@@ -150,7 +150,7 @@ test.describe('Marquer traité', () => {
     await champ.fill('Salle confirmée pour le 10 octobre.')
     await boite.getByRole('button', { name: 'Marquer traité' }).click()
     await expect(boite.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre commentaire est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(champ).toHaveValue('Salle confirmée pour le 10 octobre.')
     await auditer(page)
@@ -175,7 +175,8 @@ test.describe('Marquer traité', () => {
   test('titre masqué par EJP Tech : rappelé tel quel, sans guillemets', async ({ page }) => {
     await ouvrir(page, 'profil=berger&titre=masque')
     await page.getByRole('button', { name: 'Marquer traité' }).click()
-    await expect(fenetre(page)).toContainText('[texte masqué par EJP Tech]')
+    await expect(fenetre(page)).toContainText('[texte masqué]')
+    await expect(fenetre(page)).not.toContainText('par EJP Tech')
     await expect(fenetre(page)).not.toContainText('«')
   })
 })
@@ -240,7 +241,7 @@ test.describe('Changer le statut', () => {
     await boite.getByText('En cours', { exact: true }).click()
     await boite.getByRole('button', { name: 'Enregistrer le statut' }).click()
     await expect(boite.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre choix est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(boite.getByRole('radio', { name: 'En cours' })).toBeChecked()
   })

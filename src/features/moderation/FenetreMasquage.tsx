@@ -35,9 +35,9 @@ const classeRadioChamp = `mt-0.5 ${classeRadioBase}`
 const classeRadioMotif = classeRadioBase
 
 /**
- * Fenêtre « Masquer le texte » (BRIEF, « Modération » ; écran 15) : le choix du champ (seulement
+ * Fenêtre « Masquer ce texte ? » (BRIEF, « Modération » ; écran 15) : le choix du champ (seulement
  * les champs non vides et pas déjà masqués), le motif par boutons radio, la phrase « Le texte sera
- * remplacé par ... Cette action ne peut pas être annulée. », puis « Masquer définitivement ». Il
+ * remplacé par « [texte masqué] ». C'est définitif. », puis « Masquer le texte » (T66). Il
  * n'y a aucun champ libre : ni rappel sur les données personnelles, ni compteur. Fenêtre modale :
  * le focus y reste, Échap annule, le focus revient au bouton d'origine (ou au titre de la ligne,
  * quand ce bouton a disparu). Avec un seul champ, il est déjà choisi et se lit en citation.

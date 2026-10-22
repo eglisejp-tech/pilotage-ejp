@@ -149,7 +149,7 @@ test.describe('Nouveau point (maquette 10), aperçu', () => {
     await mentionner(page, 'Intégration')
     await creer(page).click()
     await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre point est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(titre(page)).toHaveValue('Salle pour la soirée de louange')
     await expect(page.getByRole('checkbox', { name: 'Intégration' })).toBeChecked()

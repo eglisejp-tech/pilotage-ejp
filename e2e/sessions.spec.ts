@@ -17,7 +17,7 @@ async function ouvrir(page: Page, requete = '') {
 const largeur = (page: Page) => page.viewportSize()?.width ?? 0
 const bouton = (page: Page, nom: string) => page.getByRole('button', { name: nom, exact: true })
 const reussite = (page: Page) => page.getByRole('status').filter({ hasText: /\S/ })
-const liste = (page: Page) => page.getByRole('region', { name: 'Sessions déclarées' })
+const liste = (page: Page) => page.getByRole('region', { name: 'Toutes les sessions' })
 
 async function auditer(page: Page) {
   const resultat = await new AxeBuilder({ page })
@@ -28,7 +28,7 @@ async function auditer(page: Page) {
 
 /** Le formulaire de déclaration : la colonne à partir de 1024 px, sinon le panneau du bouton. */
 async function ouvrirDeclaration(page: Page): Promise<Locator> {
-  if (largeur(page) < 1024) await bouton(page, 'Déclarer une session').click()
+  if (largeur(page) < 1024) await bouton(page, 'Ajouter une session').click()
   const formulaire = page.locator('form')
   await expect(formulaire).toHaveCount(1)
   return formulaire
@@ -56,19 +56,19 @@ test.describe('Sessions (administration), aperçu', () => {
     await expect(page.getByRole('button', { name: /^Modifier / })).toHaveCount(6)
   })
 
-  test('à partir de 1024 px, la colonne « Déclarer une session » ; en dessous, un bouton', async ({
+  test('à partir de 1024 px, la colonne « Ajouter une session » ; en dessous, un bouton', async ({
     page,
   }) => {
     await ouvrir(page)
-    const colonne = page.getByRole('complementary', { name: 'Déclarer une session' })
+    const colonne = page.getByRole('complementary', { name: 'Ajouter une session' })
     if (largeur(page) >= 1024) {
       await expect(colonne).toBeVisible()
-      await expect(bouton(page, 'Déclarer une session')).toHaveCount(0)
+      await expect(bouton(page, 'Ajouter une session')).toHaveCount(0)
       await expect(colonne.getByText('8 sur 8')).toBeVisible()
       await expect(colonne.getByLabel('Date', { exact: true })).toHaveValue('2026-10-10')
     } else {
       await expect(colonne).toHaveCount(0)
-      await expect(bouton(page, 'Déclarer une session')).toBeVisible()
+      await expect(bouton(page, 'Ajouter une session')).toBeVisible()
     }
   })
 
@@ -84,8 +84,8 @@ test.describe('Sessions (administration), aperçu', () => {
     await expect(formulaire.getByText('samedi 17 octobre 2026')).toBeVisible()
     await formulaire.getByRole('checkbox', { name: 'Social' }).uncheck()
     await expect(formulaire.getByText('7 sur 8')).toBeVisible()
-    await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
-    await expect(reussite(page)).toHaveText("Session Bâtir l'Église du 17 oct. déclarée.")
+    await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
+    await expect(reussite(page)).toHaveText("Session Bâtir l'Église du 17 oct. ajoutée.")
     await expect(liste(page)).toContainText('Sam. 17 oct.')
     await expect(
       page.getByRole('button', { name: "Modifier Bâtir l'Église du 17 oct." }),
@@ -99,7 +99,7 @@ test.describe('Sessions (administration), aperçu', () => {
     const formulaire = await ouvrirDeclaration(page)
     await formulaire.locator('label').filter({ hasText: 'Anti-Dispersion' }).click()
     await formulaire.getByRole('checkbox', { name: 'Social' }).uncheck()
-    await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
+    await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
     // Le refus de la base, traduit (m210), sous le champ date qui prend le focus.
     const date = formulaire.getByLabel('Date', { exact: true })
     await expect(date).toBeFocused()
@@ -110,21 +110,21 @@ test.describe('Sessions (administration), aperçu', () => {
     await expect(formulaire.getByText('7 sur 8')).toBeVisible()
   })
 
-  test('« Autre rassemblement » : le nom est obligatoire, le rappel s’affiche une fois', async ({
+  test('« Autre session » : le nom est obligatoire, le rappel s’affiche une fois', async ({
     page,
   }) => {
     await ouvrir(page)
     const formulaire = await ouvrirDeclaration(page)
-    await expect(formulaire.getByLabel('Nom du rassemblement')).toHaveCount(0)
-    await formulaire.locator('label').filter({ hasText: 'Autre rassemblement' }).click()
+    await expect(formulaire.getByLabel('Nom de la session')).toHaveCount(0)
+    await formulaire.locator('label').filter({ hasText: 'Autre session' }).click()
     await expect(page.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(1)
-    await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
-    await expect(formulaire.getByLabel('Nom du rassemblement')).toHaveAccessibleDescription(
-      /Donnez un nom au rassemblement\./,
+    await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
+    await expect(formulaire.getByLabel('Nom de la session')).toHaveAccessibleDescription(
+      /Donnez un nom à la session\./,
     )
-    await formulaire.getByLabel('Nom du rassemblement').fill('Soirée de louange')
-    await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
-    await expect(reussite(page)).toHaveText('Session Soirée de louange du 10 oct. déclarée.')
+    await formulaire.getByLabel('Nom de la session').fill('Soirée de louange')
+    await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
+    await expect(reussite(page)).toHaveText('Session Soirée de louange du 10 oct. ajoutée.')
     await expect(liste(page)).toContainText('Soirée de louange')
   })
 
@@ -173,11 +173,10 @@ test.describe('Sessions (administration), aperçu', () => {
     await expect(liste(page)).not.toContainText('Sam. 10 oct.')
   })
 
-  test('état vide : la phrase et la déclaration possible', async ({ page }) => {
+  test('état vide : la phrase et l’ajout possible', async ({ page }) => {
     await ouvrir(page, 'vue=vide')
-    await expect(
-      page.getByText('Aucune session déclarée. Déclarez la première avec le panneau.'),
-    ).toBeVisible()
+    // Le bouton ou la colonne « Ajouter une session » est à côté (T66, t300).
+    await expect(page.getByText('Aucune session.', { exact: true })).toBeVisible()
     await expect(page.getByRole('table')).toHaveCount(0)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Sessions')
     await auditer(page)
@@ -186,9 +185,9 @@ test.describe('Sessions (administration), aperçu', () => {
   test('connexion perdue : l’erreur de formulaire garde les choix', async ({ page }) => {
     await ouvrir(page, 'envoi=echec')
     const formulaire = await ouvrirDeclaration(page)
-    await formulaire.getByRole('button', { name: 'Déclarer la session' }).click()
+    await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
     await expect(formulaire.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Vos choix sont encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     await expect(formulaire.getByText('8 sur 8')).toBeVisible()
   })
@@ -197,7 +196,7 @@ test.describe('Sessions (administration), aperçu', () => {
     for (const profil of ['ministere', 'berger', 'conseil']) {
       await page.goto(`/apercu/sessions?profil=${profil}`)
       await expect(page.getByText(PAGE_NON_DISPONIBLE)).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Déclarer la session' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Ajouter la session' })).toHaveCount(0)
     }
   })
 
@@ -208,14 +207,18 @@ test.describe('Sessions (administration), aperçu', () => {
     // Avant le formulaire : sous 600 px, il s'ouvre en page entière, par-dessus la liste.
     await expect(bouton(page, "Modifier Bâtir l'Église du 3 oct.")).toBeVisible()
     const formulaire = await ouvrirDeclaration(page)
-    await expect(formulaire.getByRole('button', { name: 'Déclarer la session' })).toBeVisible()
+    await expect(formulaire.getByRole('button', { name: 'Ajouter la session' })).toBeVisible()
   })
 
-  test('aide : la bulle de « Ministères attendus »', async ({ page }) => {
+  test('« Ministères attendus » : une indication sous le titre, sans bulle (T66)', async ({
+    page,
+  }) => {
     await ouvrir(page)
     const formulaire = await ouvrirDeclaration(page)
-    await formulaire.getByRole('button', { name: 'Aide : Ministères attendus' }).click()
-    await expect(formulaire.getByText('Gardez cochés ceux qui y participent.')).toBeVisible()
+    await expect(formulaire.getByRole('button', { name: /^Aide : / })).toHaveCount(0)
+    await expect(
+      formulaire.getByText('Décochez les ministères qui ne participent pas.'),
+    ).toBeVisible()
   })
 
   test('aucun défaut d’accessibilité : page, panneau et fenêtre', async ({ page }) => {
@@ -243,7 +246,7 @@ test.describe('Sessions (administration), aperçu', () => {
       const boite = await cible.boundingBox()
       expect(boite?.height ?? 0, (await cible.textContent()) ?? '').toBeGreaterThanOrEqual(43.5)
     }
-    await bouton(page, 'Déclarer une session').click()
+    await bouton(page, 'Ajouter une session').click()
     const debordPanneau = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     )
@@ -256,7 +259,7 @@ test.describe('Sessions (administration), aperçu', () => {
     await ouvrir(page)
     await page.screenshot({ path: `${dossier}/sessions-page-${taille}.png`, fullPage: true })
     if (taille < 1024) {
-      await bouton(page, 'Déclarer une session').click()
+      await bouton(page, 'Ajouter une session').click()
       await page.screenshot({ path: `${dossier}/sessions-declarer-${taille}.png`, fullPage: true })
       await page.keyboard.press('Escape')
       if (taille < 600) await page.getByRole('button', { name: 'Retour' }).click()

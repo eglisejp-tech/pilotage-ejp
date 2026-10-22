@@ -59,6 +59,7 @@ export const TEXTES_REUNION_FICHE = {
   renseigner: 'Ajouter la réunion',
   modifier: 'Modifier la réunion',
   decisionAttendue: 'Décision attendue',
-  erreur: 'La connexion a échoué.',
+  /** La phrase commune d'une lecture impossible, à côté de « Réessayer » (T66, m251). */
+  erreur: 'La connexion a échoué. Réessayez.',
   reessayer: 'Réessayer',
 } as const

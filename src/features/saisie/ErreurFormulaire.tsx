@@ -2,7 +2,7 @@ import { erreurDeConnexion } from '@/features/saisie/textes'
 import type { ObjetSaisie } from '@/features/saisie/textes'
 
 interface Props {
-  /** Ce qui reste dans le formulaire : « Vos chiffres » ou « Votre message ». */
+  /** Ce qui reste dans le formulaire : « Vos chiffres » ou « Votre saisie ». */
   objet?: ObjetSaisie
   /** Message précis du serveur, à la place de la phrase de connexion. */
   message?: string

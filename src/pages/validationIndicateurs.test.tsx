@@ -158,11 +158,11 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(faux.tables).toContain('v_a_valider')
   })
 
-  it('un « Pourquoi » masqué s’affiche tel quel, sans bouton de plus', async () => {
+  it('un « Pourquoi » masqué s’affiche « [texte masqué] », sans bouton de plus', async () => {
     connecte('admin_plateforme')
     afficher('/indicateurs')
     await bloc()
-    expect(ligne('Intégration').getByText('[texte masqué par EJP Tech]')).toBeInTheDocument()
+    expect(ligne('Intégration').getByText('[texte masqué]')).toBeInTheDocument()
   })
 
   it('chaque ligne a « Valider » et « Refuser », nommés par l’indicateur et le ministère', async () => {
@@ -290,7 +290,9 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     await userEvent.paste('a'.repeat(281))
     expect(within(fenetre).getByText('281 sur 280')).toBeInTheDocument()
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Refuser' }))
-    expect(await within(fenetre).findByText('Le motif dépasse 280 caractères.')).toBeInTheDocument()
+    expect(
+      await within(fenetre).findByText('Raccourcissez le motif : 280 caractères au plus.'),
+    ).toBeInTheDocument()
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
@@ -489,14 +491,14 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(screen.getAllByRole('button', { name: 'Masquer le texte' })).toHaveLength(2)
     expect(ligne('Intégration').queryByRole('button', { name: 'Masquer le texte' })).toBeNull()
     await userEvent.click(ligne('Kumi').getByRole('button', { name: 'Masquer le texte' }))
-    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer ce texte ?' })
     expect(within(fenetre).getByText('Indicateur à valider, Kumi')).toBeInTheDocument()
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     expect(
       await within(fenetre).findByText('Choisissez un motif dans la liste.'),
     ).toBeInTheDocument()
     await userEvent.click(within(fenetre).getByRole('radio', { name: "Nom d'une personne" }))
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
         p_cible: 'demande_indicateur',
@@ -519,12 +521,12 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     const boutons = decidees.getAllByRole('button', { name: 'Masquer le texte' })
     expect(boutons).toHaveLength(1)
     await userEvent.click(boutons[0]!)
-    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer ce texte ?' })
     expect(within(fenetre).getByText('Indicateur refusé, Kumi')).toBeInTheDocument()
     await userEvent.click(
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     await waitFor(() =>
       expect(faux.rpc).toHaveBeenCalledWith('masquer_texte', {
         p_cible: 'validation',
@@ -544,11 +546,11 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     afficher('/indicateurs')
     await bloc()
     await userEvent.click(ligne('Kumi').getByRole('button', { name: 'Masquer le texte' }))
-    const fenetre = await screen.findByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = await screen.findByRole('dialog', { name: 'Masquer ce texte ?' })
     await userEvent.click(
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Masquer le texte' }))
     // Le refus de la base, traduit (m220).
     expect(
       await within(fenetre).findByText('Ce texte est déjà masqué ou vide. Rechargez la page.'),

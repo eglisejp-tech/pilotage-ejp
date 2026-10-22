@@ -17,10 +17,10 @@ import type { IndicateursAValider } from '@/features/moderation/indicateurs'
 const CLE_MODERATION = ['moderation'] as const
 
 /**
- * Lectures et écritures de la file « Champs libres à relire » : `v_textes_a_relire` et les noms des
+ * Lectures et écritures de la file « Textes à relire » : `v_textes_a_relire` et les noms des
  * ministères (même clé que les autres écrans). Une lecture en échec donne « Réessayer » ; sans
- * les noms, la ligne garde le libellé du compte auteur. « Rien à signaler » passe par
- * `marquer_relu`, « Masquer définitivement » par `masquer_texte` ; après chaque écriture, toutes les
+ * les noms, la ligne garde le libellé du compte auteur. « Marquer relu » passe par
+ * `marquer_relu`, « Masquer le texte » par `masquer_texte` ; après chaque écriture, toutes les
  * lectures sont relues (la file, mais aussi les fiches et les points qui montrent le texte masqué).
  */
 export function useFileModeration(): ContenuFile {

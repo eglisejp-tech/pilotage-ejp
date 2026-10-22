@@ -11,14 +11,15 @@ import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 
 interface Props {
   titre: string
-  /** À droite du titre : un total (« 8 actifs... ») ou les boutons d'ajout de la section. */
+  /** À droite du titre : un total (« 8 actifs ») ou les boutons d'ajout de la section. */
   complement?: ReactNode
   lignes: LigneCompte[]
   variante: 'ministeres' | 'personnes'
-  /** État vide (T36) : ce qui se passe, puis qui agit. La section garde son titre et son filet. */
-  vide: { texte: string; suite: string }
-  /** Sous le tableau (lien vers l'écran Indicateurs). */
-  note?: ReactNode
+  /**
+   * État vide (T36) : ce qui se passe ; en lecture, qui agit (T60). La section garde son titre,
+   * son filet et son bouton d'ajout.
+   */
+  vide: { texte: string; suite?: string }
   /** Null en lecture (administration de l'église, T60) : aucun bouton de ligne. */
   onAction: ((ligne: LigneCompte, action: ActionLigne) => void) | null
   enCours: { cle: string; action: ActionLigne } | null
@@ -38,7 +39,6 @@ export function SectionComptes({
   lignes,
   variante,
   vide,
-  note,
   onAction,
   enCours,
   resultat,
@@ -73,7 +73,6 @@ export function SectionComptes({
           moi={moi}
         />
       )}
-      {note && lignes.length > 0 ? <p className="mt-3 text-sm text-encre-3">{note}</p> : null}
     </section>
   )
 }

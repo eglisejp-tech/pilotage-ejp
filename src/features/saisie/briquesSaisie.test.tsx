@@ -50,10 +50,10 @@ describe('ErreurFormulaire', () => {
     )
   })
 
-  it('parle du message pour un champ libre, ou donne le message du serveur', () => {
-    const { rerender } = render(<ErreurFormulaire objet="message" />)
+  it('parle de la saisie pour les autres formulaires (T66, m257), ou donne le message du serveur', () => {
+    const { rerender } = render(<ErreurFormulaire objet="saisie" />)
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre message est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     rerender(<ErreurFormulaire message="Rien n'a changé." />)
     expect(screen.getByRole('alert')).toHaveTextContent("Rien n'a changé.")

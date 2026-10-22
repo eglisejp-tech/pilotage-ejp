@@ -37,8 +37,8 @@ function titreDu(panneau: PanneauOuvert): string {
 
 /**
  * Panneaux d'ajout de l'écran 13, dérivés de la colonne « Déclarer une session » de 14 : page
- * entière sous 600 px, panneau de 460 px au-delà (`PanneauSaisie`). Sous le titre, la phrase qui
- * dit ce que reçoit l'adresse ; puis le formulaire.
+ * entière sous 600 px, panneau de 460 px au-delà (`PanneauSaisie`). Sous le titre, le formulaire :
+ * son bouton « Créer et envoyer l'invitation » dit ce qui se passe (T66, t276).
  */
 export function PanneauCompte({ panneau, creer, onCree, onFermer }: Props) {
   const contenu =
@@ -57,10 +57,10 @@ export function PanneauCompte({ panneau, creer, onCree, onFermer }: Props) {
             ? TEXTES_COMPTES.champEmailMinistere
             : TEXTES_COMPTES.champEmailPersonnel
         }
-        aide={
+        note={
           panneau.genre === 'ministere_existant'
-            ? 'comptes.emailMinistere'
-            : 'comptes.emailPersonnel'
+            ? TEXTES_COMPTES.indicationEmailMinistere
+            : undefined
         }
         nomAffiche={
           panneau.genre === 'conseil' || panneau.genre === 'admin_plateforme'
@@ -92,7 +92,6 @@ export function PanneauCompte({ panneau, creer, onCree, onFermer }: Props) {
       surtitre={TEXTES_COMPTES.surtitrePanneau}
       onFermer={onFermer}
     >
-      <p className="leading-normal text-encre-2">{TEXTES_COMPTES.phraseInvitation}</p>
       {contenu}
     </PanneauSaisie>
   )

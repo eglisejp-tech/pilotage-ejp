@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { Link } from 'react-router'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { FenetreConfirmation } from '@/features/comptes/FenetreConfirmation'
 import { ListesEglise } from '@/features/comptes/ListesEglise'
@@ -138,21 +137,8 @@ export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi 
             variante="ministeres"
             vide={{
               texte: VIDES_COMPTES.ministeres,
-              suite: lectureSeule
-                ? VIDES_COMPTES.ministeresSuiteLecture
-                : VIDES_COMPTES.ministeresSuite,
+              suite: lectureSeule ? VIDES_COMPTES.ministeresSuiteLecture : undefined,
             }}
-            note={
-              <>
-                {lectureSeule
-                  ? TEXTES_COMPTES.noteIndicateursLecture
-                  : TEXTES_COMPTES.noteIndicateurs}{' '}
-                <Link to="/indicateurs" className="text-nuit underline underline-offset-4">
-                  {TEXTES_COMPTES.lienIndicateurs}
-                </Link>
-                .
-              </>
-            }
             onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}
@@ -183,7 +169,7 @@ export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi 
             }
             lignes={donnees.donnees.bergerConseil}
             variante="personnes"
-            vide={{ texte: VIDES_COMPTES.bergerConseil, suite: VIDES_COMPTES.bergerConseilSuite }}
+            vide={{ texte: VIDES_COMPTES.bergerConseil }}
             onAction={onAction}
             enCours={ecran.enCours}
             resultat={resultat}
@@ -208,7 +194,7 @@ export function VueComptes({ titre, donnees, actions, lectureSeule = false, moi 
             variante="personnes"
             vide={{
               texte: VIDES_COMPTES.ejpTech,
-              suite: lectureSeule ? VIDES_COMPTES.ejpTechSuite : VIDES_COMPTES.ejpTechSuiteGestion,
+              suite: lectureSeule ? VIDES_COMPTES.ejpTechSuite : undefined,
             }}
             onAction={onAction}
             enCours={ecran.enCours}

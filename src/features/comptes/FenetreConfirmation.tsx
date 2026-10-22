@@ -24,7 +24,7 @@ export function FenetreConfirmation({
   confirmation,
   onConfirmer,
   onAnnuler,
-  lireMessage = (refus) => lireRefusCompte(refus).message,
+  lireMessage = (refus) => lireRefusCompte(refus, 'fenetre').message,
 }: Props) {
   const idTitre = useId()
   const idTexte = useId()
@@ -82,7 +82,7 @@ export function FenetreConfirmation({
             aria-disabled={enCours ? true : undefined}
             className="inline-flex min-h-cible items-center justify-center bg-lumiere px-4.5 text-[15px] font-bold text-encre aria-disabled:cursor-wait"
           >
-            {enCours ? TEXTES_COMPTES.enCours : confirmation.bouton}
+            {enCours ? confirmation.enCours : confirmation.bouton}
           </button>
         </div>
         {erreur !== null ? <ErreurFormulaire message={erreur} /> : null}

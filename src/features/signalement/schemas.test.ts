@@ -91,16 +91,16 @@ describe('schemaCloture', () => {
     expect(schemaFormulaireCloture.parse({ commentaire: '    ' })).toEqual({ commentaire: null })
   })
 
-  it('10 et 280 caractères acceptés ; 9 et 281 refusés avec les messages de la base', () => {
+  it('10 et 280 caractères acceptés ; 9 et 281 refusés avec les textes de T66 (t369, t370)', () => {
     expect(schemaFormulaireCloture.parse({ commentaire: ' 0123456789 ' })).toEqual({
       commentaire: '0123456789',
     })
     expect(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(280) }).success).toBe(true)
     expect(erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(9) }))).toEqual([
-      'Le commentaire fait 10 caractères au moins, ou reste vide.',
+      'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
     ])
     expect(erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(281) }))).toEqual([
-      'Le commentaire dépasse 280 caractères.',
+      'Raccourcissez la réponse : 280 caractères au plus.',
     ])
   })
 

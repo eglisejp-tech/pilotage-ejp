@@ -70,7 +70,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
   test('EJP Tech lit le « Pourquoi », y compris masqué', async ({ page }) => {
     await ouvrir(page)
     await expect(ligne(page, 'Kumi')).toContainText('Pourquoi : « Suivre les demandes')
-    await expect(ligne(page, 'Intégration')).toContainText('[texte masqué par EJP Tech]')
+    await expect(ligne(page, 'Intégration')).toContainText('[texte masqué]')
   })
 
   test('« Valider » décide en un clic, sans fenêtre : la ligne disparaît, la décision s’annonce', async ({
@@ -108,7 +108,9 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await champ.fill('a'.repeat(281))
     await expect(fenetre.getByText('281 sur 280')).toBeVisible()
     await fenetre.getByRole('button', { name: 'Refuser' }).click()
-    await expect(fenetre.getByText('Le motif dépasse 280 caractères.')).toBeVisible()
+    await expect(
+      fenetre.getByText('Raccourcissez le motif : 280 caractères au plus.'),
+    ).toBeVisible()
 
     await champ.fill('Ce chiffre existe déjà sur votre fiche.')
     await fenetre.getByRole('button', { name: 'Refuser' }).click()
@@ -220,15 +222,15 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
       ligne(page, 'Intégration').getByRole('button', { name: 'Masquer le texte' }),
     ).toHaveCount(0)
     await ligne(page, 'Kumi').getByRole('button', { name: 'Masquer le texte' }).click()
-    const fenetre = page.getByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
     await expect(fenetre.getByText('Indicateur à valider, Kumi')).toBeVisible()
-    await fenetre.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(fenetre.getByText('Choisissez un motif dans la liste.')).toBeVisible()
     await fenetre.getByRole('radio', { name: "Nom d'une personne" }).check()
-    await fenetre.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(reussite(page)).toHaveText('Texte masqué.')
-    await expect(ligne(page, 'Kumi')).toContainText('[texte masqué par EJP Tech]')
+    await expect(ligne(page, 'Kumi')).toContainText('[texte masqué]')
     await expect(ligne(page, 'Kumi')).not.toContainText('Suivre les demandes')
     await expect(ligne(page, 'Kumi').getByRole('button', { name: 'Masquer le texte' })).toHaveCount(
       0,
@@ -243,13 +245,13 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     const decidees = page.locator('details', { hasText: 'Décidées ces 30 derniers jours' })
     await expect(decidees.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)
     await decidees.getByRole('button', { name: 'Masquer le texte' }).click()
-    const fenetre = page.getByRole('dialog', { name: 'Masquer le texte' })
+    const fenetre = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
     await expect(fenetre.getByText('Indicateur refusé, Jeunesse')).toBeVisible()
     await fenetre.getByRole('radio', { name: 'Autre information personnelle' }).check()
-    await fenetre.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(reussite(page)).toHaveText('Texte masqué.')
     await expect(decidees.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(0)
-    await expect(decidees.getByText('[texte masqué par EJP Tech]')).toHaveCount(2)
+    await expect(decidees.getByText('[texte masqué]')).toHaveCount(2)
   })
 
   test('les décisions des 30 derniers jours sont repliées : jour, motif en citation, motif masqué', async ({
@@ -269,7 +271,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
         /Refusée le 5 oct\. : «.*Ce chiffre existe déjà sur la fiche sous un autre nom\..*»/,
       ),
     ).toBeVisible()
-    await expect(page.getByText('[texte masqué par EJP Tech]').last()).toBeVisible()
+    await expect(page.getByText('[texte masqué]').last()).toBeVisible()
   })
 })
 
@@ -335,7 +337,7 @@ test.describe('accessibilité et petits écrans', () => {
     await auditer(page)
     await page.keyboard.press('Escape')
     await ligne(page, 'Kumi').getByRole('button', { name: 'Masquer le texte' }).click()
-    await expect(page.getByRole('dialog', { name: 'Masquer le texte' })).toBeVisible()
+    await expect(page.getByRole('dialog', { name: 'Masquer ce texte ?' })).toBeVisible()
     await auditer(page)
   })
 

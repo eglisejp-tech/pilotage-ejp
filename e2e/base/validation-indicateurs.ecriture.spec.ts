@@ -367,14 +367,16 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
         .last(),
     ).toBeVisible()
     await ligne.getByRole('button', { name: 'Masquer le texte' }).click()
-    const boite = page.getByRole('dialog', { name: 'Masquer le texte' })
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    const boite = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(boite.getByText('Choisissez un motif dans la liste.')).toBeVisible()
     await boite.getByRole('radio', { name: "Nom d'une personne" }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     await expect(page.getByText('Texte masqué.')).toBeVisible()
-    await expect(ligne).toContainText('[texte masqué par EJP Tech]')
+    // L'écran affiche « [texte masqué] » (T66) ; la base garde son marqueur.
+    await expect(ligne).toContainText('[texte masqué]')
+    await expect(ligne).not.toContainText('par EJP Tech')
     await expect(ligne).not.toContainText(SUGGESTIONS[2].pourquoi)
     await expect(ligne.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(0)
     // La décision reste possible sur une ligne dont le texte est masqué.

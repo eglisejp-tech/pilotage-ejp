@@ -57,7 +57,7 @@ describe('VueComptes (écran 13), administration de l’église en lecture', () 
         'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
       ),
     ).toBeInTheDocument()
-    expect(screen.queryByText(/Les comptes sont créés ici/)).toBeNull()
+    expect(screen.queryByText(/Chaque compte créé reçoit une invitation/)).toBeNull()
     for (const nom of ['Ministères', 'Berger et conseil', 'EJP Tech', 'Listes']) {
       expect(screen.getByRole('region', { name: nom })).toBeInTheDocument()
     }
@@ -73,19 +73,14 @@ describe('VueComptes (écran 13), administration de l’église en lecture', () 
     for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled()
     // « Listes » : la demande de changement va à EJP Tech.
     expect(screen.getByRole('region', { name: 'Listes' })).toHaveTextContent(
-      "Liste commune à toute l'église. Pour la changer, faites une demande à EJP Tech.",
+      'Pour changer cette liste, demandez à EJP Tech.',
     )
   })
 
-  it('la note renvoie à l’écran Indicateurs pour lire, pas pour changer', () => {
+  it('plus de note vers l’écran Indicateurs sous les ministères (T66, t271)', () => {
     afficherEnLecture(donnees())
-    expect(
-      screen.getByText(/Pour lire les indicateurs de chaque ministère, ouvrez/),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: "l'écran Indicateurs" })).toHaveAttribute(
-      'href',
-      '/indicateurs',
-    )
+    expect(screen.queryByText(/ouvrez/)).toBeNull()
+    expect(screen.queryByRole('link', { name: "l'écran Indicateurs" })).toBeNull()
   })
 
   it('premier usage : qui agit, sans bouton', () => {
@@ -104,9 +99,7 @@ describe('VueComptes (écran 13), administration de l’église en lecture', () 
     const actions = afficherEnLecture(donnees())
     expect(screen.queryByRole('table')).toBeNull()
     // Coordination n'a pas de compte : en gestion, son bloc aurait « Créer le compte ».
-    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent(
-      'Pas encore de compte',
-    )
+    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent('Aucune adresse')
     seulementDesAides()
     for (const action of Object.values(actions)) expect(action).not.toHaveBeenCalled()
   })

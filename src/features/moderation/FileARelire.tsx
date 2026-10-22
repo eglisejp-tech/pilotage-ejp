@@ -9,7 +9,7 @@ import type { ChoixMasquage } from '@/features/moderation/schemas'
 import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
 
-/** Ce que montre la file « Champs libres à relire ». */
+/** Ce que montre la file « Textes à relire ». */
 export type ContenuFile =
   | { etat: 'chargement' }
   | { etat: 'probleme'; reessayer: () => void }
@@ -27,8 +27,8 @@ interface Props {
 
 /**
  * La file de relecture de l'écran Modération (maquette 15), sous le bloc « Signalements » : le
- * titre « Champs libres à relire » avec « N textes en attente », la phrase qui dit ce que fait
- * EJP Tech, puis une ligne par texte (`LigneARelire`). Sans texte : « Aucun texte à relire. ».
+ * titre « Textes à relire » avec « N textes à relire », la phrase qui dit quoi masquer, puis une
+ * ligne par texte (`LigneARelire`). Sans texte : « Aucun texte à relire. » (T66).
  * Après une décision, le message est annoncé et le focus revient au titre (la ligne a changé de
  * place : à relire d'abord, puis les décisions).
  */

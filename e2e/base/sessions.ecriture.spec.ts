@@ -5,7 +5,7 @@ import { aujourdhuiDeLaBase, appeler, compter, lire } from './outils-evenements.
 
 // Écran 14, « Sessions » (lot L2), avec la base locale (job « e2e » de la CI, E2E_BASE=1), dans
 // le projet « ecritures » : en série, à 1440 px, après les parcours de lecture. L'administration
-// de l'église déclare une session du jour (« Autre rassemblement », au nom suffixé pour ne
+// de l'église déclare une session du jour (« Autre session », au nom suffixé pour ne
 // jamais heurter le jeu d'exemple), corrige ses ministères attendus, un ministère attendu
 // (Communication) la voit dans « Choisir la session », puis l'administration la supprime : la
 // base ne garde rien. EJP Tech, qui gère aussi les sessions (décision T60), en déclare une par
@@ -23,12 +23,12 @@ test.skip(!AVEC_BASE, 'Parcours avec la base locale seulement (E2E_BASE=1).')
 
 const reussite = (page: Page) => page.getByRole('status').filter({ hasText: /\S/ })
 const ligneDe = (page: Page) =>
-  page.getByRole('region', { name: 'Sessions déclarées' }).locator('tr').filter({ hasText: NOM })
+  page.getByRole('region', { name: 'Toutes les sessions' }).locator('tr').filter({ hasText: NOM })
 
 async function ouvrirSessions(page: Page) {
   await page.goto('/sessions')
   await expect(page.getByRole('heading', { level: 1, name: 'Sessions' })).toBeVisible()
-  await expect(page.getByRole('region', { name: 'Sessions déclarées' })).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Toutes les sessions' })).toBeVisible()
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
 }
 
@@ -59,15 +59,15 @@ test.describe("l'administration déclare, modifie et supprime une session", () =
     await ouvrirSessions(page)
     const aujourdhui = await aujourdhuiDeLaBase(page)
     const journalAvant = await compter(page, 'journal?select=id&action=eq.session_declaree')
-    const colonne = page.getByRole('complementary', { name: 'Déclarer une session' })
-    await colonne.locator('label').filter({ hasText: 'Autre rassemblement' }).click()
+    const colonne = page.getByRole('complementary', { name: 'Ajouter une session' })
+    await colonne.locator('label').filter({ hasText: 'Autre session' }).click()
     await colonne.getByLabel('Date', { exact: true }).fill(aujourdhui)
-    await colonne.getByLabel('Nom du rassemblement').fill(NOM)
+    await colonne.getByLabel('Nom de la session').fill(NOM)
     const cases = colonne.getByRole('checkbox')
     const nombreDeMinisteres = await cases.count()
     expect(nombreDeMinisteres).toBeGreaterThanOrEqual(8)
     await expect(colonne.getByText(`${nombreDeMinisteres} sur ${nombreDeMinisteres}`)).toBeVisible()
-    await colonne.getByRole('button', { name: 'Déclarer la session' }).click()
+    await colonne.getByRole('button', { name: 'Ajouter la session' }).click()
     await expect(reussite(page)).toContainText(`Session ${NOM} du`)
     await expect(ligneDe(page)).toHaveCount(1)
     await expect(ligneDe(page)).toContainText('Manquent :')
@@ -82,11 +82,11 @@ test.describe("l'administration déclare, modifie et supprime une session", () =
   }) => {
     await ouvrirSessions(page)
     const aujourdhui = await aujourdhuiDeLaBase(page)
-    const colonne = page.getByRole('complementary', { name: 'Déclarer une session' })
-    await colonne.locator('label').filter({ hasText: 'Autre rassemblement' }).click()
+    const colonne = page.getByRole('complementary', { name: 'Ajouter une session' })
+    await colonne.locator('label').filter({ hasText: 'Autre session' }).click()
     await colonne.getByLabel('Date', { exact: true }).fill(aujourdhui)
-    await colonne.getByLabel('Nom du rassemblement').fill(NOM)
-    await colonne.getByRole('button', { name: 'Déclarer la session' }).click()
+    await colonne.getByLabel('Nom de la session').fill(NOM)
+    await colonne.getByRole('button', { name: 'Ajouter la session' }).click()
     // Le refus de la base, traduit (m210), sous le champ date.
     const date = colonne.getByLabel('Date', { exact: true })
     await expect(date).toHaveAttribute('aria-invalid', 'true')
@@ -174,16 +174,16 @@ test.describe('EJP Tech déclare et supprime une session (T60)', () => {
   test('l’écran Sessions : déclarer, puis supprimer une session sans saisie', async ({ page }) => {
     await ouvrirSessions(page)
     const aujourdhui = await aujourdhuiDeLaBase(page)
-    const colonne = page.getByRole('complementary', { name: 'Déclarer une session' })
-    await colonne.locator('label').filter({ hasText: 'Autre rassemblement' }).click()
+    const colonne = page.getByRole('complementary', { name: 'Ajouter une session' })
+    await colonne.locator('label').filter({ hasText: 'Autre session' }).click()
     await colonne.getByLabel('Date', { exact: true }).fill(aujourdhui)
-    await colonne.getByLabel('Nom du rassemblement').fill(NOM_TECH)
-    await colonne.getByRole('button', { name: 'Déclarer la session' }).click()
+    await colonne.getByLabel('Nom de la session').fill(NOM_TECH)
+    await colonne.getByRole('button', { name: 'Ajouter la session' }).click()
     await expect(reussite(page)).toContainText(`Session ${NOM_TECH} du`)
     expect(await sessionsDeTech(page)).toHaveLength(1)
 
     const ligne = page
-      .getByRole('region', { name: 'Sessions déclarées' })
+      .getByRole('region', { name: 'Toutes les sessions' })
       .locator('tr')
       .filter({ hasText: NOM_TECH })
     await ligne.getByRole('button', { name: /^Supprimer / }).click()
@@ -203,7 +203,7 @@ for (const profil of ['ministere', 'berger'] as const) {
     test('la page non disponible, et aucune fonction de session ne répond', async ({ page }) => {
       await page.goto('/sessions')
       await expect(page.getByText(NON_DISPONIBLE)).toBeVisible()
-      await expect(page.getByRole('button', { name: 'Déclarer la session' })).toHaveCount(0)
+      await expect(page.getByRole('button', { name: 'Ajouter la session' })).toHaveCount(0)
       const reponse = await appeler(page, 'declarer_session', {
         p_type: 'batir',
         p_date: '2031-01-04',

@@ -9,21 +9,21 @@ import { accorder, nombre } from '@/lib/metier/texte'
 /** Remplace tout le champ masqué (`private.masquer_texte`). */
 export { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 
+// Revu par T66 (t345 à t355) : l'écran parle à EJP Tech, sans se décrire à la troisième personne
+// (guide, exemple 8).
 export const TEXTES_MODERATION = {
-  surtitre: 'Administration de la plateforme',
-  titreFile: 'Champs libres à relire',
-  intro:
-    "EJP Tech relit les textes libres pour retirer toute information personnelle. Masquer un texte garde une trace dans le journal, avec le motif. EJP Tech ne crée pas de compte et ne décide d'aucun accès.",
-  /** À droite du titre de la liste : « 2 textes en attente ». */
+  titreFile: 'Textes à relire',
+  intro: 'Masquez les textes qui contiennent un nom ou une information personnelle.',
+  /** À droite du titre de la liste : « 2 textes à relire ». */
   enAttente: (n: number) =>
     n === 0
-      ? 'Aucun texte en attente'
-      : `${nombre(n)} ${accorder(n, 'texte en attente', 'textes en attente')}`,
+      ? 'Aucun texte à relire'
+      : `${nombre(n)} ${accorder(n, 'texte à relire', 'textes à relire')}`,
   vide: 'Aucun texte à relire.',
-  boutonRelu: 'Rien à signaler',
+  boutonRelu: 'Marquer relu',
   boutonMasquer: 'Masquer le texte',
-  /** « Relu le 29 sept. : rien à signaler » */
-  relu: (decisionLe: string) => `Relu le ${jourDecision(decisionLe)} : rien à signaler`,
+  /** « Relu le 29 sept. » */
+  relu: (decisionLe: string) => `Relu le ${jourDecision(decisionLe)}`,
   /** « Masqué le 29 sept. : nom d'une personne » */
   masque: (decisionLe: string, motif: MotifMasquage | null) =>
     motif === null
@@ -54,9 +54,9 @@ export const MOTIFS_RADIO: readonly { code: MotifMasquage; libelle: string }[] =
   { code: 'autre', libelle: 'Autre information personnelle' },
 ]
 
-/** Nom du type d'élément, en tête de ligne : « Point d'attention, Social ». */
+/** Nom du type d'élément, en tête de ligne : « Point, Social » (glossaire, T66 t352). */
 export const LIBELLES_CIBLE: Readonly<Record<CibleMasquable, string>> = {
-  point_attention: "Point d'attention",
+  point_attention: 'Point',
   point_suivi: 'Commentaire de traitement',
   evenement: 'Événement',
   reunion: 'Réunion',
@@ -98,13 +98,13 @@ export function libelleChamp(cible: CibleMasquable, champ: string): string {
 
 /** La fenêtre « Masquer le texte » (BRIEF, « Modération »). */
 export const TEXTES_FENETRE_MASQUAGE = {
-  titre: 'Masquer le texte',
+  /** Une question, et un bouton qui ne double pas la phrase (T66, t353 à t355). */
+  titre: 'Masquer ce texte ?',
   legendeChamp: 'Champ à masquer',
   legendeMotif: 'Motif',
   /** Sous les choix : ce que le masquage fait, et qu'il est définitif. */
-  avertissement:
-    'Le texte sera remplacé par « [texte masqué par EJP Tech] ». Cette action ne peut pas être annulée.',
-  bouton: 'Masquer définitivement',
+  avertissement: "Le texte sera remplacé par « [texte masqué] ». C'est définitif.",
+  bouton: 'Masquer le texte',
   boutonEnCours: 'Masquage en cours',
   annuler: 'Annuler',
   erreurChamp: 'Choisissez le champ à masquer.',
@@ -117,8 +117,8 @@ export const MESSAGES_BASE_MODERATION = {
   dejaRelu: 'Ce texte a déjà été relu.',
   motif: 'Choisissez un motif dans la liste.',
   champ: 'Ce champ ne peut pas être masqué.',
-  /** Refus de droit (42501), commun à toutes les fonctions de l'API. */
-  acces: "Cet élément n'existe pas ou vous n'y avez pas accès.",
+  /** Phrase de l'écran pour un refus de droit (42501) : la forme commune (T66, t360). */
+  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 /** En tête de l'écran : « 2 indicateurs attendent votre validation, le plus ancien depuis 4 jours. » */

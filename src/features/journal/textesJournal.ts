@@ -5,15 +5,14 @@
 import { TAILLE_PAGE_JOURNAL } from '@/data/journal'
 import type { TypeCompte } from '@/lib/base'
 
-const COMMUN =
-  'Chaque saisie, création et changement de statut laisse une ligne ici, avec la date et le compte. Personne ne peut modifier ni effacer le journal.'
+// Ce que contient le journal, sans dire qu'il ne se modifie pas (T66, t372 et t373 ; guide,
+// exemple 6) : l'inaltérabilité est sur la page d'aide.
+const COMMUN = 'Ce que chaque compte a saisi ou modifié, avec la date.'
 
 export const TEXTES_JOURNAL = {
   /** Phrase sous le titre (maquette 06). Le ministère lit les lignes de son ministère (Proposé). */
   introduction: (profil: TypeCompte): string =>
-    profil === 'ministere'
-      ? 'Chaque saisie, création et changement de statut de votre ministère laisse une ligne ici, avec la date et le compte. Personne ne peut modifier ni effacer le journal.'
-      : COMMUN,
+    profil === 'ministere' ? 'Ce que votre ministère a saisi ou modifié, avec la date.' : COMMUN,
   filtres: {
     groupe: 'Filtres du journal',
     compte: 'Compte',
@@ -21,9 +20,9 @@ export const TEXTES_JOURNAL = {
     action: 'Action',
     toutesLesActions: 'Toutes les actions',
     periode: 'Période',
-    /** Sous les filtres : « Ministère : Communication », avec « Retirer le filtre ». */
+    /** Sous les filtres : « Ministère : Communication », avec « Voir tous les ministères » (t375). */
     ministere: (nom: string) => `Ministère : ${nom}`,
-    retirerMinistere: 'Retirer le filtre',
+    retirerMinistere: 'Voir tous les ministères',
   },
   /** Ajouté au nom d'un compte ou d'un ministère désactivé. */
   desactive: '(désactivé)',
@@ -35,8 +34,11 @@ export const TEXTES_JOURNAL = {
     /** Situation « aucun résultat » (T36) : un filtre est choisi. */
     pourCesFiltres: 'Aucune ligne pour ces filtres.',
     retirer: 'Retirer les filtres',
-    /** Situation « premier usage » : aucun filtre, aucune ligne (Proposé). */
-    sansFiltre: "Le journal est vide pour l'instant. Chaque saisie y laissera une ligne.",
+    /**
+     * Situation « premier usage » : aucun filtre, aucune ligne. Forme de m238, qui corrige t376 :
+     * un état vide ne dit pas « pour l'instant » (guide, 10.5).
+     */
+    sansFiltre: 'Aucune ligne.',
   },
   plus: `Afficher ${TAILLE_PAGE_JOURNAL} lignes de plus`,
   /** Sous la liste, annoncé à voix haute après « Afficher 50 lignes de plus » (Proposé). */

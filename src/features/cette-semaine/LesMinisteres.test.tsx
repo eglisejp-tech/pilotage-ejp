@@ -140,6 +140,6 @@ describe('LesMinisteres', () => {
     expect(vide).toHaveTextContent('Aucun événement prévu')
     expect(vide).toHaveTextContent('Non renseignée')
     expect(within(vide!).getByText('Aucun')).toHaveClass('text-encre-3')
-    expect(within(masque!).getByText('[texte masqué par EJP Tech]')).toHaveClass('text-encre-3')
+    expect(within(masque!).getByText('[texte masqué]')).toHaveClass('text-encre-3')
   })
 })

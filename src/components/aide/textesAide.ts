@@ -47,19 +47,13 @@ export const TEXTES_AIDE = {
   // responsable (question Q7 du plan), avec les règles de aides-contextuelles.md, section 2.
   // Le catalogue de ce document les reprend au lot d'intégration.
 
-  // Ministères et comptes (écran 13, lot L1, BRIEF section 9). Panneaux : `comptes.emailMinistere`
-  // sur « Email partagé du ministère » (remplace le texte du BRIEF, écrit en négatif, règle 3) et
-  // `comptes.emailPersonnel` sur « Email personnel » (berger, conseil, EJP Tech). Tableau : en-tête
-  // « Double authentification » (`comptes.etat`, états de `v_etat_comptes`) et colonne des
-  // indicateurs (`comptes.indicateurs`, un nombre et un lien vers /indicateurs, 7.1).
-  'comptes.emailMinistere':
-    "La boîte mail que partage l'équipe du ministère. Toutes les personnes du ministère se connectent avec elle.",
-  'comptes.emailPersonnel':
-    "L'adresse de la personne qui utilisera ce compte. L'invitation à se connecter part à cette adresse.",
+  // Ministères et comptes (écran 13, lot L1, BRIEF section 9). Tableau : en-tête « Double
+  // authentification » (`comptes.etat`, états de `v_etat_comptes`). T66 : l'email d'un ministère
+  // porte une indication visible sous le champ, l'email personnel et la colonne « Indicateurs
+  // propres » se comprennent seuls. T66 (t268) proposait « le lien n'est pas encore ouvert » : la
+  // règle du catalogue (dit en positif) garde « reste à ouvrir », le sens est le même.
   'comptes.etat':
-    '« Invitation envoyée » : la personne doit encore ouvrir le lien reçu. « À activer » : elle doit encore activer son code.',
-  'comptes.indicateurs':
-    'Indicateurs que le ministère suit en plus des chiffres communs, calculs compris.',
+    '« Invitation envoyée » : le lien reste à ouvrir. « À activer » : le code reste à activer.',
 
   // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
   // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 30 » : la base limite
@@ -68,27 +62,26 @@ export const TEXTES_AIDE = {
   // `indicateurs.prevus` : colonne « Prévus » de /indicateurs et titre du bloc « Prévus par la
   // coordination » de /indicateurs/:id. `indicateurs.modele` : choix « Choisir dans la liste de la
   // coordination », quand le nom du ministère n'est pas reconnu. `indicateurs.usage` : première
-  // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id.
+  // ligne d'usage (« Saisi 4 mois sur 5 ») de /indicateurs/:id. Revu par T66 (t326, t343) : la
+  // bulle définit le chiffre, sans dire qui a prévu la liste. Attendent la fusion de T62 et T64,
+  // dont les tests lisent ces textes : `indicateurs.nombre` (t324, « « 8 sur 30 » : 8 indicateurs
+  // suivis, 30 au plus par ministère. ») et `indicateurs.modele`, qui part (t334) quand son texte
+  // passe dans l'indication du choix.
   'indicateurs.nombre':
     'Indicateurs du ministère, actifs ou à valider, calculs compris. « 8 sur 30 » : 8 suivis, 30 au plus par fiche.',
   'indicateurs.prevus':
-    'Indicateurs que la coordination a choisis pour ce ministère. Une fois créés, ils entrent dans ses saisies et sa fiche.',
+    "Liste prévue pour ce ministère. Une fois créés, ils s'ajoutent à ses saisies.",
   'indicateurs.modele':
     'La liste de la coordination nomme les ministères à sa façon. Choisissez le nom qui correspond à ce ministère.',
-  'indicateurs.usage':
-    "Périodes saisies depuis l'ajout de l'indicateur. « 4 mois sur 5 » : un mois attendu reste sans saisie.",
+  'indicateurs.usage': "Mois ou dimanches saisis depuis l'ajout. « 4 mois sur 5 » : 1 mois manque.",
 
   // Points d'attention (étape 5) : plus aucune bulle depuis T66. L'attendu et l'échéance d'un
   // nouveau point portent une indication visible sous le champ, le statut « En attente de
   // décision » est défini par la note sous les statuts ; la priorité et le filtre de l'écran 05 se
   // comprennent seuls (l'ordre de tri et le fonctionnement d'un filtre ne s'expliquent pas).
 
-  // Sessions (écran 14, lot L2, statut Proposé) : sessions.attendus sur « Ministères attendus » du
-  // formulaire, sessions.saisies sur la colonne « Saisies » de la liste.
-  'sessions.attendus':
-    'Les ministères qui saisissent leurs STARs présents à cette session. Gardez cochés ceux qui y participent.',
-  'sessions.saisies':
-    'Les ministères attendus qui ont saisi leurs présents. « 6 sur 8 » : 2 ministères restent à saisir.',
+  // Sessions (écran 14) : plus de bulle depuis T66. « Ministères attendus » porte une indication
+  // visible sous son titre, la colonne « Saisies » (« 6 sur 8 ») se comprend seule.
 
   // Panneaux de la configuration des indicateurs (lot L3b, statut Proposé) : indicateurs.domaine sur
   // la case « Domaine sensible » du panneau d'ajout, indicateurs.calcul sur « Chiffre du haut » du

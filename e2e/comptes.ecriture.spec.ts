@@ -145,9 +145,9 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     await bouton(page, 'Ajouter un ministère').click()
     await page.getByRole('textbox', { name: 'Nom du ministère', exact: true }).fill(NOM)
     await page.getByRole('textbox', { name: 'Email partagé du ministère', exact: true }).fill(EMAIL)
-    await bouton(page, "Créer le ministère et envoyer l'invitation").click()
+    await bouton(page, "Créer et envoyer l'invitation").click()
     await expect(reussite(page)).toHaveText(`Ministère ${NOM} créé. Invitation envoyée à ${EMAIL}.`)
-    await expect(bouton(page, `Relancer l'invitation ${NOM}`)).toBeVisible()
+    await expect(bouton(page, `Renvoyer l'invitation ${NOM}`)).toBeVisible()
 
     const compte = await compteDuTest(page)
     expect(compte.etat).toBe('invitation_envoyee')
@@ -177,7 +177,7 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     // Auth espace deux envois vers la même adresse ; un refus « trop récent » se réessaie une fois.
     for (let essai = 1; essai <= 2; essai += 1) {
       await page.waitForTimeout(essai === 1 ? 2_000 : 61_000)
-      await bouton(page, `Relancer l'invitation ${NOM}`).click()
+      await bouton(page, `Renvoyer l'invitation ${NOM}`).click()
       const resultat = page
         .getByRole('status')
         .or(page.getByRole('alert'))
@@ -203,7 +203,7 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
 
     await bouton(page, `Réactiver ${NOM}`).click()
     await expect(reussite(page)).toHaveText(`Ministère ${NOM} réactivé.`)
-    await expect(bouton(page, `Relancer l'invitation ${NOM}`)).toBeVisible()
+    await expect(bouton(page, `Renvoyer l'invitation ${NOM}`)).toBeVisible()
     expect((await compteDuTest(page)).etat).toBe('invitation_envoyee')
   })
 
@@ -250,9 +250,7 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     expect((await compteDuTest(page)).etat).toBe('activee')
     await bouton(page, `Refaire l'activation ${NOM}`).click()
     const fenetre = page.getByRole('alertdialog', { name: `Refaire l'activation de ${NOM} ?` })
-    await expect(fenetre).toContainText(
-      "Changez d'abord le mot de passe de la boîte mail du ministère.",
-    )
+    await expect(fenetre).toContainText("Changez d'abord le mot de passe de sa boîte mail.")
     await fenetre.getByRole('button', { name: "Refaire l'activation" }).click()
     await expect(reussite(page)).toContainText(`Activation à refaire pour Ministère ${NOM}.`)
     expect((await compteDuTest(page)).etat).toBe('a_activer')

@@ -252,7 +252,7 @@ describe('« Nouveau point » (maquette 10)', () => {
     expect(alerte).not.toHaveTextContent('Autre refus.')
     await userEvent.click(bouton())
     expect(await screen.findByText(/La connexion a échoué/)).toHaveTextContent(
-      'La connexion a échoué. Votre point est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     )
     expect(titre()).toHaveValue('  Salle pour la soirée de louange ')
     expect(screen.getByRole('radio', { name: 'Haute' })).toBeChecked()

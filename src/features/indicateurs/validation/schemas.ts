@@ -3,6 +3,7 @@ import {
   LONGUEUR_MAX_MOTIF,
   LONGUEUR_MIN_MOTIF,
   MESSAGES_BASE_VALIDATION,
+  MOTIF_TROP_LONG,
 } from '@/features/indicateurs/validation/textes'
 import { longueurEnCaracteres } from '@/lib/metier/texte'
 
@@ -20,7 +21,7 @@ const motifRefus = z
     error: MESSAGES_BASE_VALIDATION.motifCourt,
   })
   .refine((motif) => longueurEnCaracteres(motif) <= LONGUEUR_MAX_MOTIF, {
-    error: MESSAGES_BASE_VALIDATION.motifLong,
+    error: MOTIF_TROP_LONG,
   })
 
 /** Le formulaire de la fenêtre « Refuser » : le motif seul (la demande est celle de la ligne). */

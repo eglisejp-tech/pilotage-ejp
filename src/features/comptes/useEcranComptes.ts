@@ -57,7 +57,7 @@ export function useEcranComptes(actions: ActionsComptes) {
       await appel(ligne.userId)
       noterResultat(ligne.cle, true, message)
     } catch (erreur) {
-      noterResultat(ligne.cle, false, lireRefusCompte(erreur).message)
+      noterResultat(ligne.cle, false, lireRefusCompte(erreur, 'ligne').message)
     } finally {
       setEnCours(null)
     }

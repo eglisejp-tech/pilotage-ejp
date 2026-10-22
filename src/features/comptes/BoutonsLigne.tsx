@@ -7,7 +7,10 @@ import { cn } from '@/lib/utils'
 interface Props {
   ligne: LigneCompte
   onAction: (ligne: LigneCompte, action: ActionLigne) => void
-  /** Action en cours sur cette ligne (relance, réactivation) : son bouton dit « Envoi en cours ». */
+  /**
+   * Action en cours sur cette ligne (relance, réactivation) : son bouton dit ce qui se fait
+   * (« Envoi en cours », « Réactivation en cours »).
+   */
   enCours: ActionLigne | null
   /** Sous 600 px : boutons en pleine largeur, l'un sous l'autre (BRIEF, section 9). */
   pleineLargeur?: boolean
@@ -41,7 +44,7 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
           key={action}
           type="button"
           // Le nom visible d'abord, puis le compte : « Désactiver Communication » (WCAG 2.5.3).
-          aria-label={`${enCours === action ? TEXTES_COMPTES.enCours : LIBELLES_ACTIONS[action]} ${ligne.nom}`}
+          aria-label={`${enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]} ${ligne.nom}`}
           aria-disabled={enCours !== null ? true : undefined}
           onClick={() => {
             if (enCours === null) onAction(ligne, action)
@@ -51,7 +54,7 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
             pleineLargeur && 'w-full',
           )}
         >
-          {enCours === action ? TEXTES_COMPTES.enCours : LIBELLES_ACTIONS[action]}
+          {enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]}
         </button>
       ))}
     </div>

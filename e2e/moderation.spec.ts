@@ -14,17 +14,18 @@ const VUES = [
   'file-probleme',
   'lien-long',
 ] as const
-const TEXTE_MASQUE = '[texte masqué par EJP Tech]'
+// Ce que l'écran affiche à la place d'un texte masqué (T66) ; la base garde son propre marqueur.
+const TEXTE_MASQUE = '[texte masqué]'
 
 async function ouvrir(page: Page, requete = '') {
   await page.goto(`/apercu/moderation?profil=admin_plateforme${requete}`)
   await page.evaluate(() => document.fonts.ready)
 }
 
-const file = (page: Page) => page.getByRole('region', { name: 'Champs libres à relire' })
+const file = (page: Page) => page.getByRole('region', { name: 'Textes à relire' })
 const signalements = (page: Page) => page.getByRole('region', { name: 'Signalements', exact: true })
 const ligne = (page: Page, entete: string) => file(page).getByRole('article', { name: entete })
-const fenetre = (page: Page) => page.getByRole('dialog', { name: 'Masquer le texte' })
+const fenetre = (page: Page) => page.getByRole('dialog', { name: 'Masquer ce texte ?' })
 
 async function auditer(page: Page) {
   const resultat = await new AxeBuilder({ page })
@@ -38,7 +39,8 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await ouvrir(page)
     await expect(page).toHaveTitle('Modération, Pilotage EJP')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modération')
-    await expect(page.getByText('Administration de la plateforme')).toBeVisible()
+    // Le surtitre est retiré par T66 (t345).
+    await expect(page.getByText('Administration de la plateforme')).toHaveCount(0)
     await expect(
       page.getByText('2 indicateurs attendent votre validation, le plus ancien depuis 4 jours.'),
     ).toBeVisible()
@@ -48,10 +50,14 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await expect(signalements(page).getByText('2 signalements ouverts')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Signalements',
-      'Champs libres à relire',
+      'Textes à relire',
     ])
-    await expect(file(page).getByText('4 textes en attente')).toBeVisible()
-    await expect(file(page).getByText(/^EJP Tech relit les textes libres/)).toBeVisible()
+    await expect(file(page).getByText('4 textes à relire')).toBeVisible()
+    await expect(
+      file(page).getByText(
+        'Masquez les textes qui contiennent un nom ou une information personnelle.',
+      ),
+    ).toBeVisible()
   })
 
   test("les textes à relire d'abord (précisions en tête, puis du plus ancien au plus récent), puis les décisions", async ({
@@ -61,33 +67,32 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     const entetes = file(page).getByRole('article').getByRole('heading', { level: 3 })
     await expect(entetes).toHaveText([
       "Précision d'un chiffre, Social",
-      "Point d'attention, Intégration",
+      'Point, Intégration',
       'Événement, Jeunesse',
-      "Point d'attention, Communication",
-      "Point d'attention, Social",
+      'Point, Communication',
+      'Point, Social',
       'Réunion, Berger',
-      "Point d'attention, Coordination",
+      'Point, Coordination',
     ])
     const jeunesse = ligne(page, 'Événement, Jeunesse')
     await expect(jeunesse).toContainText('29 sept., 18 h 20')
     await expect(jeunesse).toContainText('« Sortie jeunesse au parc de Sceaux, départ 10 h. »')
-    await expect(jeunesse.getByRole('button', { name: 'Rien à signaler' })).toBeVisible()
+    await expect(jeunesse.getByRole('button', { name: 'Marquer relu' })).toBeVisible()
     await expect(jeunesse.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
-    await expect(ligne(page, "Point d'attention, Social")).toContainText(
+    await expect(ligne(page, 'Point, Social')).toContainText(
       "Masqué le 30 sept. : nom d'une personne",
     )
-    await expect(ligne(page, "Point d'attention, Coordination")).toContainText(
-      'Relu le 29 sept. : rien à signaler',
-    )
-    // Un texte relu garde « Masquer le texte », jamais « Rien à signaler ».
-    const coordination = ligne(page, "Point d'attention, Coordination")
+    await expect(ligne(page, 'Point, Coordination')).toContainText('Relu le 29 sept.')
+    await expect(ligne(page, 'Point, Coordination')).not.toContainText('rien à signaler')
+    // Un texte relu garde « Masquer le texte », jamais « Marquer relu ».
+    const coordination = ligne(page, 'Point, Coordination')
     await expect(coordination.getByRole('button')).toHaveCount(1)
     await expect(coordination.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
   })
 
   test('un point montre tous ses champs libres, avec leur nom', async ({ page }) => {
     await ouvrir(page)
-    const point = ligne(page, "Point d'attention, Communication")
+    const point = ligne(page, 'Point, Communication')
     await expect(point.getByText('Titre', { exact: true })).toBeVisible()
     await expect(point.getByText('Ce qui se passe', { exact: true })).toBeVisible()
     await expect(point.getByText('Ce qui est attendu', { exact: true })).toBeVisible()
@@ -104,19 +109,19 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     expect(texte.replace(/2026/, '')).not.toMatch(/\d/)
   })
 
-  test('« Rien à signaler » : la ligne passe à « Relu », le compte baisse, le message est annoncé', async ({
+  test('« Marquer relu » : la ligne passe à « Relu », le compte baisse, le message est annoncé', async ({
     page,
   }) => {
     await ouvrir(page)
     const jeunesse = ligne(page, 'Événement, Jeunesse')
-    await jeunesse.getByRole('button', { name: 'Rien à signaler' }).click()
+    await jeunesse.getByRole('button', { name: 'Marquer relu' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'relu' })).toHaveText(
       'Texte marqué comme relu.',
     )
-    await expect(jeunesse).toContainText('Relu le 6 oct. : rien à signaler')
-    await expect(jeunesse.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
+    await expect(jeunesse).toContainText('Relu le 6 oct.')
+    await expect(jeunesse.getByRole('button', { name: 'Marquer relu' })).toHaveCount(0)
     await expect(jeunesse.getByRole('button', { name: 'Masquer le texte' })).toBeVisible()
-    await expect(file(page).getByText('3 textes en attente')).toBeVisible()
+    await expect(file(page).getByText('3 textes à relire')).toBeVisible()
     await expect(file(page).getByRole('heading', { level: 2 })).toBeFocused()
   })
 
@@ -124,54 +129,54 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     page,
   }) => {
     await ouvrir(page)
-    const integration = ligne(page, "Point d'attention, Intégration")
+    const integration = ligne(page, 'Point, Intégration')
     await integration.getByRole('button', { name: 'Masquer le texte' }).click()
     const boite = fenetre(page)
     await expect(boite).toBeVisible()
-    await expect(boite.getByText("Point d'attention, Intégration")).toBeVisible()
+    await expect(boite.getByText('Point, Intégration')).toBeVisible()
     await expect(boite.getByRole('radio')).toHaveCount(4)
     await expect(boite.getByRole('radio').first()).toHaveAccessibleName("Nom d'une personne")
     await expect(boite.getByText('Coordonnées (téléphone, adresse, email)')).toBeVisible()
     await expect(boite.getByText('Santé ou situation personnelle')).toBeVisible()
     await expect(boite.getByText('Autre information personnelle')).toBeVisible()
-    await expect(boite.getByText(`Le texte sera remplacé par « ${TEXTE_MASQUE} ».`)).toContainText(
-      'Cette action ne peut pas être annulée.',
-    )
+    await expect(
+      boite.getByText(`Le texte sera remplacé par « ${TEXTE_MASQUE} ». C'est définitif.`),
+    ).toBeVisible()
     // Un seul champ : cité, déjà choisi.
     await expect(boite.getByText("« Affiche et flyer de l'accueil du 15 octobre. »")).toBeVisible()
 
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(boite.getByText('Choisissez un motif dans la liste.')).toBeVisible()
 
     await boite.getByRole('radio', { name: "Nom d'une personne" }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(fenetre(page)).toHaveCount(0)
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
     await expect(integration).toContainText(`« ${TEXTE_MASQUE} »`)
     await expect(integration).toContainText("Masqué le 6 oct. : nom d'une personne")
     await expect(integration.getByRole('button')).toHaveCount(0)
-    await expect(file(page).getByText('3 textes en attente')).toBeVisible()
+    await expect(file(page).getByText('3 textes à relire')).toBeVisible()
   })
 
   test('plusieurs champs : le choix du champ, puis seuls les autres restent à masquer', async ({
     page,
   }) => {
     await ouvrir(page)
-    const point = ligne(page, "Point d'attention, Communication")
+    const point = ligne(page, 'Point, Communication')
     await point.getByRole('button', { name: 'Masquer le texte' }).click()
     const boite = fenetre(page)
     await expect(
       boite.getByRole('group', { name: 'Champ à masquer' }).getByRole('radio'),
     ).toHaveCount(3)
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(boite.getByText('Choisissez le champ à masquer.')).toBeVisible()
     await boite.getByRole('radio', { name: /Ce qui se passe/ }).check()
     await boite.getByRole('radio', { name: 'Coordonnées (téléphone, adresse, email)' }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(point).toContainText('Masqué le 6 oct. : coordonnées')
     await expect(point.getByText(TEXTE_MASQUE)).toHaveCount(1)
-    // Les deux autres champs restent : « Masquer le texte » reste là, sans « Rien à signaler ».
-    await expect(point.getByRole('button', { name: 'Rien à signaler' })).toHaveCount(0)
+    // Les deux autres champs restent : « Masquer le texte » reste là, sans « Marquer relu ».
+    await expect(point.getByRole('button', { name: 'Marquer relu' })).toHaveCount(0)
     await point.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(
       fenetre(page).getByRole('group', { name: 'Champ à masquer' }).getByRole('radio'),
@@ -200,9 +205,7 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     page,
   }) => {
     await ouvrir(page, '&envoi=echec')
-    await ligne(page, 'Événement, Jeunesse')
-      .getByRole('button', { name: 'Rien à signaler' })
-      .click()
+    await ligne(page, 'Événement, Jeunesse').getByRole('button', { name: 'Marquer relu' }).click()
     await expect(ligne(page, 'Événement, Jeunesse').getByRole('alert')).toHaveText(
       'La connexion a échoué. Réessayez.',
     )
@@ -210,7 +213,7 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
       .getByRole('button', { name: 'Masquer le texte' })
       .click()
     await fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }).check()
-    await fenetre(page).getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(fenetre(page).getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await expect(
       fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }),
@@ -224,7 +227,7 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     const ouvert = signalements(page).getByRole('article', { name: 'Intégration' })
     await ouvert.getByRole('button', { name: 'Masquer le texte' }).click()
     await fenetre(page).getByRole('radio', { name: "Nom d'une personne" }).check()
-    await fenetre(page).getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
     await expect(ouvert).toContainText(`« ${TEXTE_MASQUE} »`)
     // Plus rien à masquer sur ce signalement : le bouton a disparu, « Clore » reste.
@@ -239,15 +242,15 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await expect(boite.getByRole('radio', { name: /Signalement/ })).toBeVisible()
     await boite.getByRole('radio', { name: /Commentaire de clôture/ }).check()
     await boite.getByRole('radio', { name: 'Autre information personnelle' }).check()
-    await boite.getByRole('button', { name: 'Masquer définitivement' }).click()
-    await expect(clos).toContainText(`Commentaire : ${TEXTE_MASQUE}`)
+    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
+    await expect(clos).toContainText(`Réponse : ${TEXTE_MASQUE}`)
     await expect(clos).toContainText('Le bouton Envoyer reste grisé')
   })
 
   test('états : file vide, chargement, problème passager, sans indicateur', async ({ page }) => {
     await ouvrir(page, '&vue=file-vide')
-    await expect(file(page).getByText('Aucun texte à relire.')).toBeVisible()
-    await expect(file(page).getByText('Aucun texte en attente')).toBeVisible()
+    await expect(file(page).getByText('Aucun texte à relire.', { exact: true })).toBeVisible()
+    await expect(file(page).getByText('Aucun texte à relire', { exact: true })).toBeVisible()
 
     await ouvrir(page, '&vue=file-chargement')
     await expect(file(page).getByText('Chargement')).toBeVisible()
@@ -296,10 +299,10 @@ test.describe('accessibilité et largeurs', () => {
     await expect(fenetre(page)).toBeVisible()
     await auditer(page)
     await page.keyboard.press('Escape')
-    await ligne(page, "Point d'attention, Communication")
+    await ligne(page, 'Point, Communication')
       .getByRole('button', { name: 'Masquer le texte' })
       .click()
-    await fenetre(page).getByRole('button', { name: 'Masquer définitivement' }).click()
+    await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(fenetre(page).getByText('Choisissez le champ à masquer.')).toBeVisible()
     await auditer(page)
   })
@@ -311,7 +314,7 @@ test.describe('accessibilité et largeurs', () => {
       const boite = await bouton.boundingBox()
       expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
     }
-    await ligne(page, "Point d'attention, Communication")
+    await ligne(page, 'Point, Communication')
       .getByRole('button', { name: 'Masquer le texte' })
       .click()
     for (const choix of await fenetre(page).locator('label').all()) {
@@ -361,13 +364,13 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
     await capturer(vue)
   }
   await ouvrir(page)
-  await ligne(page, "Point d'attention, Communication")
+  await ligne(page, 'Point, Communication')
     .getByRole('button', { name: 'Masquer le texte' })
     .click()
   await capturer('fenetre-champs')
   await page.keyboard.press('Escape')
   await ligne(page, 'Événement, Jeunesse').getByRole('button', { name: 'Masquer le texte' }).click()
-  await fenetre(page).getByRole('button', { name: 'Masquer définitivement' }).click()
+  await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
   await capturer('fenetre-erreur')
   await ouvrir(page)
   await signalements(page).getByRole('button', { name: 'Masquer le texte' }).first().click()

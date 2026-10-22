@@ -48,7 +48,7 @@ describe('VueSessions (écran 14)', () => {
   it('liste les sessions déclarées avec leur complétude et les ministères qui manquent', () => {
     afficher(donnees())
     expect(screen.getByRole('heading', { level: 1, name: 'Sessions' })).toBeInTheDocument()
-    const liste = screen.getByRole('region', { name: 'Sessions déclarées' })
+    const liste = screen.getByRole('region', { name: 'Toutes les sessions' })
     expect(within(liste).getByText('Pas encore eu lieu')).toBeInTheDocument()
     expect(within(liste).getByText('6 sur 8')).toBeInTheDocument()
     expect(within(liste).getByText('Manquent : Intégration et Social')).toBeInTheDocument()
@@ -57,9 +57,7 @@ describe('VueSessions (écran 14)', () => {
 
   it('état vide : la phrase, sans tableau', () => {
     afficher(donnees(true))
-    expect(
-      screen.getByText('Aucune session déclarée. Déclarez la première avec le panneau.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Aucune session.')).toBeInTheDocument()
     expect(screen.queryByRole('table')).toBeNull()
   })
 
@@ -74,14 +72,14 @@ describe('VueSessions (écran 14)', () => {
 
   it('déclare : Bâtir l’Église et les 8 ministères cochés par défaut, puis le message de réussite', async () => {
     const actions = afficher(donnees(true))
-    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
+    const colonne = screen.getByRole('complementary', { name: 'Ajouter une session' })
     expect(within(colonne).getByText('8 sur 8')).toBeInTheDocument()
     expect(within(colonne).getByRole('radio', { name: "Bâtir l'Église" })).toBeChecked()
     expect(within(colonne).getAllByRole('checkbox')).toHaveLength(8)
     expect(within(colonne).getByLabelText(/^Date/)).toHaveValue('2026-10-10')
     await userEvent.click(within(colonne).getByRole('checkbox', { name: 'Social' }))
     expect(within(colonne).getByText('7 sur 8')).toBeInTheDocument()
-    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Ajouter la session' }))
     await waitFor(() => expect(actions.declarer).toHaveBeenCalledTimes(1))
     expect(actions.declarer).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -90,30 +88,30 @@ describe('VueSessions (écran 14)', () => {
         ministeres: MINISTERES_APERCU.slice(0, 7).map(({ id }) => id),
       }),
     )
-    expect(await screen.findByText("Session Bâtir l'Église du 10 oct. déclarée.")).toBeVisible()
+    expect(await screen.findByText("Session Bâtir l'Église du 10 oct. ajoutée.")).toBeVisible()
     // Le formulaire revient à son état de départ.
     expect(within(colonne).getByText('8 sur 8')).toBeInTheDocument()
   })
 
-  it('« Autre rassemblement » demande un nom, avec le rappel une seule fois', async () => {
+  it('« Autre session » demande un nom, avec le rappel une seule fois', async () => {
     const actions = afficher(donnees(true))
-    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
-    expect(within(colonne).queryByLabelText('Nom du rassemblement')).toBeNull()
-    await userEvent.click(within(colonne).getByRole('radio', { name: 'Autre rassemblement' }))
-    expect(within(colonne).getByLabelText('Nom du rassemblement')).toBeInTheDocument()
+    const colonne = screen.getByRole('complementary', { name: 'Ajouter une session' })
+    expect(within(colonne).queryByLabelText('Nom de la session')).toBeNull()
+    await userEvent.click(within(colonne).getByRole('radio', { name: 'Autre session' }))
+    expect(within(colonne).getByLabelText('Nom de la session')).toBeInTheDocument()
     expect(screen.getAllByText(/N'écrivez aucun nom ni information personnelle/)).toHaveLength(1)
-    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
-    expect(await within(colonne).findByText('Donnez un nom au rassemblement.')).toBeInTheDocument()
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Ajouter la session' }))
+    expect(await within(colonne).findByText('Donnez un nom à la session.')).toBeInTheDocument()
     expect(actions.declarer).not.toHaveBeenCalled()
   })
 
   it('refuse sans ministère coché, sans appeler la base', async () => {
     const actions = afficher(donnees(true))
-    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
+    const colonne = screen.getByRole('complementary', { name: 'Ajouter une session' })
     for (const caseACocher of within(colonne).getAllByRole('checkbox')) {
       await userEvent.click(caseACocher)
     }
-    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Ajouter la session' }))
     expect(await within(colonne).findByText('Cochez au moins un ministère.')).toBeInTheDocument()
     expect(actions.declarer).not.toHaveBeenCalled()
   })
@@ -125,9 +123,9 @@ describe('VueSessions (écran 14)', () => {
       message: "Une session Bâtir l'Église est déjà déclarée le samedi 10 octobre.",
     })
     afficher(donnees(true), actions)
-    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
+    const colonne = screen.getByRole('complementary', { name: 'Ajouter une session' })
     await userEvent.click(within(colonne).getByRole('checkbox', { name: 'Social' }))
-    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Ajouter la session' }))
     const phrase =
       "Une session Bâtir l'Église existe déjà le samedi 10 octobre. Choisissez une autre date."
     const date = within(colonne).getByLabelText('Date')
@@ -146,8 +144,8 @@ describe('VueSessions (écran 14)', () => {
     const actions = actionsFausses()
     actions.declarer.mockRejectedValueOnce({ code: '23505', message: 'duplicate key value' })
     afficher(donnees(true), actions)
-    const colonne = screen.getByRole('complementary', { name: 'Déclarer une session' })
-    await userEvent.click(within(colonne).getByRole('button', { name: 'Déclarer la session' }))
+    const colonne = screen.getByRole('complementary', { name: 'Ajouter une session' })
+    await userEvent.click(within(colonne).getByRole('button', { name: 'Ajouter la session' }))
     expect(await within(colonne).findByRole('alert')).toHaveTextContent(
       "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
     )
@@ -248,7 +246,7 @@ describe('VueSessions (écran 14)', () => {
       name: "Modifier Bâtir l'Église du 3 oct.",
     })
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      "Cette session n'existe pas ou vous n'y avez pas accès.",
+      'Cette session est introuvable. Rechargez la page.',
     )
     expect(within(panneau).queryByRole('button', { name: 'Réessayer' })).toBeNull()
   })
@@ -275,7 +273,7 @@ describe('VueSessions : passage du palier de 600 px pendant une saisie', () => {
       )
       const { rerender } = render(ecran())
       const utilisateur = userEvent.setup()
-      await utilisateur.click(screen.getByRole('button', { name: 'Déclarer une session' }))
+      await utilisateur.click(screen.getByRole('button', { name: 'Ajouter une session' }))
       const [caseMinistere] = screen.getAllByRole('checkbox')
       if (caseMinistere === undefined) throw new Error('aucun ministère proposé')
       expect(caseMinistere).toBeChecked()

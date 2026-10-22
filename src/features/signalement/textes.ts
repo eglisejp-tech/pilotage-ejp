@@ -49,9 +49,8 @@ export const TEXTES_SIGNALEMENT = {
   ligneIdentique: "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
   bloc: {
     titre: 'Signalements',
-    sousTitre: 'Difficultés signalées par les ministères',
-    /** Situation « tout est fait » : le bloc garde sa place. */
-    vide: 'Aucun signalement. Les difficultés signalées par les ministères arriveront ici.',
+    /** Situation « tout est fait » : le bloc garde sa place (T66, t362). */
+    vide: 'Aucun signalement.',
   },
 } as const
 
@@ -124,17 +123,21 @@ export const TEXTES_BLOC_SIGNALEMENTS = {
     `${LIBELLES_ECRAN[ecran]}, ${jourDuSignalement(saisiLe)}`,
   /** Un signalement clos : « Clos le 8 oct. », puis le commentaire sur la ligne suivante. */
   clos: (closLe: string) => `Clos le ${jourDuSignalement(closLe)}`,
-  /** Devant le commentaire de clôture d'une ligne close. */
-  commentaireClos: 'Commentaire :',
-  /** Sans ouvert, quand des clos suivent : le titre dit déjà « aucun ouvert ». */
-  videAvecClos: 'Aucun signalement ouvert. Les prochains arriveront ici.',
+  /** Devant la réponse de clôture d'une ligne close, le même mot que pour le ministère (t364). */
+  commentaireClos: 'Réponse :',
   boutonClore: 'Clore le signalement',
-  libelleCommentaire: 'Commentaire (facultatif)',
-  /** Sous le libellé : ce que dit le commentaire quand EJP Tech a transmis, et qui le lit (T39). */
-  noteCommentaire:
-    "Vous avez transmis ce qui concerne l'administration ? Écrivez « transmis à l'administration ». Le ministère lira ce commentaire.",
-  noteDefinitive: 'Une clôture est définitive.',
-  boutonConfirmer: 'Clore définitivement',
+  /**
+   * La réponse que lira le ministère (t365). La consigne « transmis à l'administration » (T39)
+   * n'est plus sous le champ : elle est dans le guide d'EJP Tech, `docs/exploitation.md`, en
+   * attendant une page d'aide (T66, point ouvert 10).
+   */
+  libelleCommentaire: 'Réponse au ministère (facultatif)',
+  noteDefinitive: 'Un signalement clos ne se rouvre pas.',
+  /** Le même libellé ouvre le panneau et confirme (T66, point ouvert 9). */
+  boutonConfirmer: 'Clore le signalement',
+  /** Contrôles avant l'envoi de la réponse (T66, t369 et t370). */
+  erreurCommentaireCourt: 'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+  erreurCommentaireLong: 'Raccourcissez la réponse : 280 caractères au plus.',
   boutonEnCours: 'Clôture en cours',
   boutonAnnuler: 'Annuler',
   reussite: 'Signalement clos.',

@@ -69,17 +69,19 @@ describe('VueComptes (écran 13)', () => {
     expect(reessayer).toHaveBeenCalled()
   })
 
-  it('premier usage : chaque section garde son titre et dit qui agit', () => {
+  it('premier usage : chaque section garde son titre, sa phrase courte et son bouton d’ajout', () => {
     afficher({
       etat: 'donnees',
       donnees: construireComptes([], [], []),
     })
-    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent(
-      'Aucun ministère pour le moment.',
-    )
+    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent('Aucun ministère.')
     expect(screen.getByRole('region', { name: 'EJP Tech' })).toHaveTextContent(
-      "Aucun compte EJP Tech pour l'instant.",
+      'Aucun compte EJP Tech.',
     )
+    expect(screen.getByRole('region', { name: 'Berger et conseil' })).toHaveTextContent(
+      'Aucun compte pour le berger ni le conseil.',
+    )
+    expect(bouton('Ajouter un compte EJP Tech')).toBeInTheDocument()
     // EJP Tech, qui gère (T60), n'est pas renvoyé vers lui-même.
     expect(screen.getByRole('region', { name: 'EJP Tech' })).not.toHaveTextContent(
       'Le premier compte EJP Tech',
@@ -87,13 +89,13 @@ describe('VueComptes (écran 13)', () => {
     expect(bouton('Ajouter le compte du berger')).toBeInTheDocument()
   })
 
-  it('« Relancer l’invitation » : appel avec l’identifiant, puis le message de réussite', async () => {
+  it('« Renvoyer l’invitation » : appel avec l’identifiant, puis le message de réussite', async () => {
     const actions = afficher(donnees())
-    await userEvent.click(bouton("Relancer l'invitation Conseil, compte 3"))
+    await userEvent.click(bouton("Renvoyer l'invitation Conseil, compte 3"))
     expect(actions.relancer).toHaveBeenCalledWith('20000000-0000-4000-8000-000000000014')
     const message = await screen.findByText('Invitation renvoyée à conseil3@exemple.test.')
     // Dans la ligne du compte, sous ses boutons : visible là où la personne a cliqué.
-    expect(ligneDe(message)).toContainElement(bouton("Relancer l'invitation Conseil, compte 3"))
+    expect(ligneDe(message)).toContainElement(bouton("Renvoyer l'invitation Conseil, compte 3"))
   })
 
   it('un refus d’une action directe se dit en français, sous les boutons de sa ligne', async () => {
@@ -102,7 +104,7 @@ describe('VueComptes (écran 13)', () => {
     afficher(donnees(), actions)
     await userEvent.click(bouton('Réactiver Merch'))
     const refus = await screen.findByRole('alert')
-    expect(refus).toHaveTextContent('Ce ministère a déjà un compte actif.')
+    expect(refus).toHaveTextContent('Ce ministère a déjà un compte actif. Rechargez la page.')
     expect(ligneDe(refus)).toContainElement(bouton('Réactiver Merch'))
     expect(bouton('Réactiver Merch')).toHaveFocus()
   })
@@ -121,9 +123,7 @@ describe('VueComptes (écran 13)', () => {
 
   it('sans ministère, l’en-tête de la section ne compte pas « 0 actif »', () => {
     afficher({ etat: 'donnees', donnees: construireComptes([], [], []) })
-    expect(screen.getByRole('region', { name: 'Ministères' })).not.toHaveTextContent(
-      'un email partagé chacun',
-    )
+    expect(screen.getByRole('region', { name: 'Ministères' })).not.toHaveTextContent('0 actif')
   })
 
   it('désactiver passe par la fenêtre ; « Annuler » n’appelle rien', async () => {
@@ -149,7 +149,7 @@ describe('VueComptes (écran 13)', () => {
     const fenetre = screen.getByRole('alertdialog', { name: "Refaire l'activation de Berger ?" })
     await userEvent.click(within(fenetre).getByRole('button', { name: "Refaire l'activation" }))
     expect(await within(fenetre).findByRole('alert')).toHaveTextContent(
-      'Cette action ne se fait pas sur votre propre compte.',
+      'Cette action ne se fait pas sur votre propre compte. Demandez-la à un autre compte EJP Tech.',
     )
   })
 
@@ -161,7 +161,13 @@ describe('VueComptes (écran 13)', () => {
       screen.getByRole('textbox', { name: 'Email partagé du ministère' }),
       'ejptech1+ministere@exemple.test',
     )
-    await userEvent.click(bouton("Créer le ministère et envoyer l'invitation"))
+    // L'email d'un ministère porte son indication visible (T66, t277).
+    expect(
+      screen.getByRole('textbox', { name: 'Email partagé du ministère' }),
+    ).toHaveAccessibleDescription(
+      "Une boîte mail partagée par le ministère, pas l'adresse d'une personne.",
+    )
+    await userEvent.click(bouton("Créer et envoyer l'invitation"))
     expect(actions.creer).toHaveBeenCalledWith({
       type: 'ministere',
       nom: 'Tech',
@@ -211,7 +217,7 @@ describe('VueComptes (écran 13)', () => {
     expect(screen.getByText('Nom affiché : Conseil, compte 5')).toBeInTheDocument()
     const champ = screen.getByRole('textbox', { name: 'Email personnel' })
     await userEvent.type(champ, 'conseil1@exemple.test')
-    await userEvent.click(bouton("Créer le compte et envoyer l'invitation"))
+    await userEvent.click(bouton("Créer et envoyer l'invitation"))
     expect(actions.creer).toHaveBeenCalledWith({ type: 'conseil', email: 'conseil1@exemple.test' })
     expect(champ).toHaveAccessibleDescription(
       'Cette adresse a déjà un compte. Choisissez une autre adresse.',

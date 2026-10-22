@@ -16,6 +16,12 @@ export const JOURS_AVANT_RETARD = 7
 export const LONGUEUR_MIN_MOTIF = 10
 export const LONGUEUR_MAX_MOTIF = 280
 
+/**
+ * Motif trop long, dit avant l'envoi (T66, t344 et m236). Le refus de la base garde son texte
+ * (`motifLong`, clé de la table de traduction) jusqu'à la fusion de T62 et T64.
+ */
+export const MOTIF_TROP_LONG = 'Raccourcissez le motif : 280 caractères au plus.'
+
 /** Messages de la base (`valider_indicateur`), repris tels quels par l'écran. */
 export const MESSAGES_BASE_VALIDATION = {
   motifCourt: 'Expliquez le refus (10 caractères au moins).',

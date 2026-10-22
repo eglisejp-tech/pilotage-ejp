@@ -36,7 +36,7 @@ describe('écran 06 lu par le berger', () => {
     afficher('/apercu/journal')
     expect(screen.getByRole('heading', { level: 1, name: 'Journal' })).toBeInTheDocument()
     expect(
-      screen.getByText(/Personne ne peut modifier ni effacer le journal\./),
+      screen.getByText('Ce que chaque compte a saisi ou modifié, avec la date.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Compte' })).toHaveValue('')
     expect(screen.getByRole('combobox', { name: 'Action' })).toHaveValue('')
@@ -99,12 +99,12 @@ describe('écran 06 lu par le berger', () => {
     expect(lignes()).toHaveLength(1)
   })
 
-  it('« Ministère : Jeunesse » avec « Retirer le filtre »', async () => {
+  it('« Ministère : Jeunesse » avec « Voir tous les ministères »', async () => {
     const utilisateur = userEvent.setup()
     afficher('/apercu/journal?ministere=min-jeunesse')
     expect(screen.getByText('Ministère : Jeunesse')).toBeInTheDocument()
     for (const ligne of lignes()) expect(ligne.textContent).toBeTruthy()
-    await utilisateur.click(screen.getByRole('button', { name: 'Retirer le filtre' }))
+    await utilisateur.click(screen.getByRole('button', { name: 'Voir tous les ministères' }))
     expect(adresse()).toBe('')
     expect(screen.queryByText('Ministère : Jeunesse')).toBeNull()
   })
@@ -121,7 +121,7 @@ describe('écran 06 lu par le berger', () => {
 
   it('un journal vide sans filtre : une phrase de premier usage, sans bouton', () => {
     afficher('/apercu/journal?periode=tout&etat=vide')
-    expect(screen.getByText(/Le journal est vide pour l'instant/)).toBeInTheDocument()
+    expect(screen.getByText('Aucune ligne.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Retirer les filtres' })).toBeNull()
   })
 
@@ -153,7 +153,9 @@ describe('les autres profils', () => {
         (l) => Date.parse(l.le) >= Date.parse('2026-08-31T22:00:00Z'),
       ).length,
     )
-    expect(screen.getByText(/de votre ministère/)).toBeInTheDocument()
+    expect(
+      screen.getByText('Ce que votre ministère a saisi ou modifié, avec la date.'),
+    ).toBeInTheDocument()
   })
 
   it('EJP Tech : « Journal technique », tout le journal, signalements compris', () => {
@@ -174,7 +176,7 @@ describe('les autres profils', () => {
     afficher('/apercu/journal?profil=admin_eglise&periode=tout')
     const texte = screen.getByRole('list', { name: 'Lignes du journal' }).textContent ?? ''
     expect(texte).not.toMatch(/signal|Précision|point|Point|Soirée de louange|lundi 5 oct/)
-    expect(texte).toContain('A déclaré une session')
+    expect(texte).toContain('A ajouté une session')
     expect(screen.queryByRole('option', { name: 'A créé un point' })).toBeNull()
     expect(screen.queryByRole('option', { name: 'A signalé une difficulté' })).toBeNull()
     expect(screen.getByRole('option', { name: 'A saisi des chiffres' })).toBeInTheDocument()
