@@ -46,13 +46,18 @@ export const TEXTES_PERSONNES = {
       : `${nombre(n)} ${accorder(n, 'prénom effacé', 'prénoms effacés')}.`,
 } as const
 
+/**
+ * Fenêtre de confirmation, sur le modèle de « Masquer ce texte ? » (T66, m218 ; guide 10.7) : un
+ * titre en question, la conséquence suivie de « C'est définitif. », un bouton qui reprend le verbe.
+ */
 export const TEXTES_FENETRE_EFFACEMENT = {
-  titreUn: 'Effacer ce prénom',
-  titreAnciens: 'Effacer les prénoms de plus de 12 mois',
-  avertissementUn: `Ce prénom sera remplacé par « ${PRENOM_EFFACE} » partout. Cette action ne peut pas être annulée.`,
-  avertissementAnciens: `Ces prénoms seront remplacés par « ${PRENOM_EFFACE} » partout. Cette action ne peut pas être annulée.`,
+  titreUn: 'Effacer ce prénom ?',
+  titreAnciens: 'Effacer les prénoms de plus de 12 mois ?',
+  avertissementUn: `Ce prénom sera remplacé par « ${PRENOM_EFFACE} » partout. C'est définitif.`,
+  avertissementAnciens: `Ces prénoms seront remplacés par « ${PRENOM_EFFACE} » partout. C'est définitif.`,
   annuler: 'Annuler',
-  bouton: 'Effacer définitivement',
+  boutonUn: 'Effacer le prénom',
+  boutonAnciens: 'Effacer les prénoms',
   boutonEnCours: 'Effacement en cours',
   erreur: 'La connexion a échoué. Réessayez.',
 } as const

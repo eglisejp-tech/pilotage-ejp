@@ -233,12 +233,13 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
     await actives
       .getByRole('button', { name: 'Effacer ce prénom (Marie D., Ministère Communication)' })
       .click()
-    const fenetre = page.getByRole('dialog', { name: 'Effacer ce prénom' })
+    // Le modèle de « Masquer ce texte ? » (T66, m218).
+    const fenetre = page.getByRole('dialog', { name: 'Effacer ce prénom ?' })
     await expect(fenetre).toContainText(
-      'Ce prénom sera remplacé par « [prénom effacé] » partout. Cette action ne peut pas être annulée.',
+      "Ce prénom sera remplacé par « [prénom effacé] » partout. C'est définitif.",
     )
     await auditer(page)
-    await fenetre.getByRole('button', { name: 'Effacer définitivement' }).click()
+    await fenetre.getByRole('button', { name: 'Effacer le prénom' }).click()
     await expect(page.getByText('Prénom effacé.')).toBeVisible()
     await expect(fenetre).toHaveCount(0)
   })
@@ -248,8 +249,8 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
     await expect(page.getByText('2 prénoms ont plus de 12 mois.')).toBeVisible()
     await page.getByRole('button', { name: 'Effacer les prénoms de plus de 12 mois' }).click()
     await page
-      .getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois' })
-      .getByRole('button', { name: 'Effacer définitivement' })
+      .getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois ?' })
+      .getByRole('button', { name: 'Effacer les prénoms' })
       .click()
     await expect(page.getByText('2 prénoms effacés.')).toBeVisible()
   })
@@ -265,8 +266,8 @@ test.describe('onglet « Personnes » d’EJP Tech (aperçu)', () => {
     expect((await bouton.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
     await bouton.click()
     await page
-      .getByRole('dialog', { name: 'Effacer ce prénom' })
-      .getByRole('button', { name: 'Effacer définitivement' })
+      .getByRole('dialog', { name: 'Effacer ce prénom ?' })
+      .getByRole('button', { name: 'Effacer le prénom' })
       .click()
     await expect(page.getByText('Prénom effacé.')).toBeVisible()
     await expect(sansActivite).toHaveCount(0)

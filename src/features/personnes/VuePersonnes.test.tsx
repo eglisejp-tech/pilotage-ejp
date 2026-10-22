@@ -56,19 +56,19 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
     expect(screen.queryByRole('button', { name: 'Afficher 50 de plus' })).not.toBeInTheDocument()
   })
 
-  it('« Effacer ce prénom » : la fenêtre, puis « Effacer définitivement » et « Prénom effacé. »', async () => {
+  it('« Effacer ce prénom » : la fenêtre, puis « Effacer le prénom » et « Prénom effacé. » (T66)', async () => {
     apercu()
     await userEvent.click(
       screen.getByRole('button', {
         name: 'Effacer ce prénom (Marie D., Ministère Communication)',
       }),
     )
-    const fenetre = screen.getByRole('dialog', { name: 'Effacer ce prénom' })
+    const fenetre = screen.getByRole('dialog', { name: 'Effacer ce prénom ?' })
     expect(fenetre).toHaveTextContent('Marie D., Ministère Communication')
     expect(fenetre).toHaveTextContent(
-      'Ce prénom sera remplacé par « [prénom effacé] » partout. Cette action ne peut pas être annulée.',
+      "Ce prénom sera remplacé par « [prénom effacé] » partout. C'est définitif.",
     )
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer définitivement' }))
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer le prénom' }))
     expect(await screen.findByText('Prénom effacé.')).toBeInTheDocument()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(
@@ -94,8 +94,8 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
     await userEvent.click(
       screen.getByRole('button', { name: 'Effacer les prénoms de plus de 12 mois' }),
     )
-    const fenetre = screen.getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois' })
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer définitivement' }))
+    const fenetre = screen.getByRole('dialog', { name: 'Effacer les prénoms de plus de 12 mois ?' })
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer les prénoms' }))
     expect(await screen.findByText('2 prénoms effacés.')).toBeInTheDocument()
     expect(screen.queryByText('2 prénoms ont plus de 12 mois.')).not.toBeInTheDocument()
   })
@@ -112,8 +112,8 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
         name: 'Effacer ce prénom (Ancien, Ministère Intégration)',
       }),
     )
-    const fenetre = screen.getByRole('dialog', { name: 'Effacer ce prénom' })
-    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer définitivement' }))
+    const fenetre = screen.getByRole('dialog', { name: 'Effacer ce prénom ?' })
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Effacer le prénom' }))
     expect(await screen.findByText('Prénom effacé.')).toBeInTheDocument()
     expect(
       screen.queryByRole('region', { name: 'Sans activité depuis 30 jours' }),
@@ -181,7 +181,7 @@ describe('onglet « Personnes » d’EJP Tech (T56)', () => {
       )
       expect(screen.getByText('Aucune connexion pour le moment.')).toBeInTheDocument()
       await userEvent.click(screen.getByRole('button', { name: /Effacer ce prénom/ }))
-      await userEvent.click(screen.getByRole('button', { name: 'Effacer définitivement' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Effacer le prénom' }))
       expect(await screen.findByRole('alert')).toHaveTextContent(phrase)
       expect(screen.getByRole('dialog')).toBeInTheDocument()
     },

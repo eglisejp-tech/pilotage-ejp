@@ -15,9 +15,9 @@ interface Props {
 }
 
 /**
- * Fenêtre « Effacer ce prénom » (T56), sur le modèle de « Masquer le texte » : ce qui sera
- * effacé, la phrase « ... sera remplacé par « [prénom effacé] » partout. Cette action ne peut pas
- * être annulée. », puis « Effacer définitivement ». Fenêtre modale : le focus y reste, Échap
+ * Fenêtre « Effacer ce prénom ? » (T56), sur le modèle de « Masquer ce texte ? » (T66) : ce qui
+ * sera effacé, la phrase « ... sera remplacé par « [prénom effacé] » partout. C'est définitif. »,
+ * puis « Effacer le prénom » (« Effacer les prénoms »). Fenêtre modale : le focus y reste, Échap
  * annule, le focus revient au bouton d'origine.
  */
 export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
@@ -108,7 +108,7 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
               enCours={enCours}
               libelleEnCours={TEXTES_FENETRE_EFFACEMENT.boutonEnCours}
             >
-              {TEXTES_FENETRE_EFFACEMENT.bouton}
+              {un ? TEXTES_FENETRE_EFFACEMENT.boutonUn : TEXTES_FENETRE_EFFACEMENT.boutonAnciens}
             </LibelleEnvoi>
           </button>
         </div>
