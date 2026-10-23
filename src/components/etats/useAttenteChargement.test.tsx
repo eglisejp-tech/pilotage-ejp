@@ -15,10 +15,10 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-function monter(enChargement: boolean, dureeMin?: number) {
+function monter(enChargement: boolean, dureeMin?: number, immediat = false) {
   return renderHook(
     ({ lecture, duree }: { lecture: boolean; duree?: number }) =>
-      useAttenteChargement(lecture, duree),
+      useAttenteChargement(lecture, duree, { immediat }),
     { initialProps: { lecture: enChargement, duree: dureeMin } },
   )
 }
@@ -31,10 +31,10 @@ function avancer(ms: number) {
 }
 
 describe('useAttenteChargement (T65, règle de temps)', () => {
-  it('les valeurs de la décision : 300 ms, 600 ms, 1,2 s pour l’ouverture', () => {
+  it('les valeurs des décisions : 300 ms, 600 ms (T65), 2,5 s pour l’ouverture (T67)', () => {
     expect(DELAI_INDICATEUR_MS).toBe(300)
     expect(DUREE_MIN_INDICATEUR_MS).toBe(600)
-    expect(DUREE_OUVERTURE_MS).toBe(1200)
+    expect(DUREE_OUVERTURE_MS).toBe(2500)
   })
 
   it('réponse en moins de 300 ms : rien ne reste, le contenu arrive aussitôt, en fondu', () => {
@@ -94,13 +94,56 @@ describe('useAttenteChargement (T65, règle de temps)', () => {
     expect(result.current.attente).toBe(false)
   })
 
-  it('l’ouverture de l’outil tient 1,2 s, même si la durée demandée change ensuite', () => {
+  it('la durée demandée à l’apparition tient, même si elle change ensuite', () => {
     const { result, rerender } = monter(true, DUREE_OUVERTURE_MS)
     avancer(350)
     rerender({ lecture: false, duree: DUREE_MIN_INDICATEUR_MS })
-    avancer(1100)
+    // Montré à 300 ms, l'indicateur tient 2,5 s : jusqu'à 2,8 s.
+    avancer(2400)
     expect(result.current.attente).toBe(true)
-    avancer(100)
+    avancer(50)
+    expect(result.current.attente).toBe(false)
+  })
+})
+
+describe('useAttenteChargement, indicateur immédiat (T67, l’ouverture de l’outil)', () => {
+  it('montré dès l’arrivée, il tient 2,5 s même si la lecture finit à 50 ms', () => {
+    const { result, rerender } = monter(true, DUREE_OUVERTURE_MS, true)
+    expect(result.current).toEqual({ attente: true, fondu: true })
+    avancer(50)
+    rerender({ lecture: false, duree: DUREE_OUVERTURE_MS })
+    expect(result.current.attente).toBe(true)
+    // Les 300 ms de la règle commune ne relancent pas la tenue : elle finit à 2,5 s exactement.
+    avancer(2400)
+    expect(result.current.attente).toBe(true)
+    act(() => vi.advanceTimersByTime(49))
+    expect(result.current.attente).toBe(true)
+    act(() => vi.advanceTimersByTime(1))
+    expect(result.current).toEqual({ attente: false, fondu: true })
+  })
+
+  it('lecture plus longue que 2,5 s : le contenu arrive dès la réponse', () => {
+    const { result, rerender } = monter(true, DUREE_OUVERTURE_MS, true)
+    avancer(3000)
+    expect(result.current.attente).toBe(true)
+    rerender({ lecture: false, duree: DUREE_OUVERTURE_MS })
+    expect(result.current.attente).toBe(false)
+  })
+
+  it('sans lecture à l’arrivée : ni attente, ni fondu', () => {
+    const { result } = monter(false, DUREE_OUVERTURE_MS, true)
+    expect(result.current).toEqual({ attente: false, fondu: false })
+  })
+
+  it('une lecture suivante suit la règle commune : rien pendant 300 ms', () => {
+    const { result, rerender } = monter(true, DUREE_MIN_INDICATEUR_MS, true)
+    avancer(50)
+    rerender({ lecture: false, duree: DUREE_MIN_INDICATEUR_MS })
+    avancer(600)
+    expect(result.current.attente).toBe(false)
+    rerender({ lecture: true, duree: DUREE_MIN_INDICATEUR_MS })
+    avancer(200)
+    rerender({ lecture: false, duree: DUREE_MIN_INDICATEUR_MS })
     expect(result.current.attente).toBe(false)
   })
 })

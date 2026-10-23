@@ -23,8 +23,11 @@ type Proprietes = {
  * Garde d'une zone d'adresses (BRIEF section 8, règle 7). Tant que l'état n'est pas lu, rien
  * d'autre ne s'affiche ni ne se charge ; ensuite, redirection ou affichage des écrans enfants.
  * Le routage ne remplace pas la RLS : il évite seulement d'afficher un écran interdit.
- * L'attente suit la règle de temps de T65 : rien pendant 300 ms, l'ouverture (la première fois)
- * ou la flamme au moins 600 ms une fois montrée, puis les écrans en fondu.
+ * La première vérification depuis le chargement de l'application joue l'ouverture de l'outil
+ * (T67) : tout de suite et en entier (2,5 s), même si la session est lue avant ; puis les écrans
+ * en fondu, ou la flamme vivante si la lecture continue. Les suivantes, et toutes avec moins
+ * d'animations, suivent la règle de temps de T65 : rien pendant 300 ms, la flamme au moins 600 ms
+ * une fois montrée, puis les écrans en fondu.
  */
 export function Garde({ zone, children }: Proprietes) {
   const requete = useEtatSession()
@@ -33,10 +36,12 @@ export function Garde({ zone, children }: Proprietes) {
   const enChargement = requete.data === undefined && !requete.isError
   const ouverture = useOuverture(enChargement)
   const moinsDAnimations = useMoinsDAnimations()
-  // Une ouverture commencée va jusqu'au bout (1,2 s) ; sinon, 600 ms au moins.
+  // Avec moins d'animations, rien n'est forcé : l'ouverture ne joue pas, la règle commune reste.
+  const ouvertureJouee = ouverture && !moinsDAnimations
   const { attente, fondu } = useAttenteChargement(
     enChargement,
-    ouverture && !moinsDAnimations ? DUREE_OUVERTURE_MS : DUREE_MIN_INDICATEUR_MS,
+    ouvertureJouee ? DUREE_OUVERTURE_MS : DUREE_MIN_INDICATEUR_MS,
+    { immediat: ouvertureJouee },
   )
 
   if (attente) return <EcranChargement ouverture={ouverture} />

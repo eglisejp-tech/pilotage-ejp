@@ -1,9 +1,9 @@
-import { act, render, renderHook, screen } from '@testing-library/react'
+import { act, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FlammeVivante } from '@/components/etats/FlammeVivante'
-import { oublierOuverture, useOuverture } from '@/components/etats/ouverture'
 import { OuvertureOutil, TEXTE_OUVERTURE } from '@/components/etats/OuvertureOutil'
 import { DUREE_OUVERTURE_MS } from '@/components/etats/tempsChargement'
+import { MESSAGES_COMMUNS } from '@/data/messagesBase'
 
 /** « Réduire les animations » demandé par l'appareil, ou non. */
 function moinsDAnimations(demande: boolean) {
@@ -32,7 +32,6 @@ function horlogeSmil() {
 
 beforeEach(() => {
   vi.useFakeTimers()
-  oublierOuverture()
 })
 
 afterEach(() => {
@@ -44,38 +43,53 @@ afterEach(() => {
   delete prototype.setCurrentTime
 })
 
-describe('OuvertureOutil (T65, moment 1 : vérification de la session)', () => {
-  it('rien pendant 300 ms, puis le monogramme se dessine et la flamme s’allume, puis elle vit', () => {
+describe('OuvertureOutil (T65, moment 1 ; T67 : vérification de la session)', () => {
+  it('l’ouverture tout de suite : le monogramme se dessine, la flamme s’allume, 2,5 s, puis elle vit', () => {
     const { container } = render(<OuvertureOutil ouverture />)
-    const zone = screen.getByRole('status')
-    expect(zone).toBeEmptyDOMElement()
-    act(() => vi.advanceTimersByTime(300))
-    // Le texte est lu ; le dessin et le nom de l'outil, qui le répète, ne le sont pas.
-    expect(zone).toHaveTextContent(TEXTE_OUVERTURE)
+    // Le dessin est là dès l'arrivée, sans les 300 ms de vide ; la zone lue existe, vide.
     const dessin = container.querySelector('svg')
     expect(dessin).toHaveAttribute('aria-hidden', 'true')
     expect(dessin).toHaveAttribute('data-ouverture', 'dessin')
     expect(container.querySelectorAll('.ouverture-trace')).toHaveLength(4)
     expect(container.querySelector('.ouverture-allumage')).not.toBeNull()
-    expect(screen.getByText('Pilotage EJP')).toHaveAttribute('aria-hidden', 'true')
-    act(() => vi.advanceTimersByTime(DUREE_OUVERTURE_MS - 1))
+    const nom = screen.getByText('Pilotage EJP')
+    expect(nom).toHaveAttribute('aria-hidden', 'true')
+    expect(nom).toHaveClass('ouverture-nom')
+    const zone = screen.getByRole('status')
+    expect(zone).toBeEmptyDOMElement()
+    // Le texte lu arrive à 300 ms, comme dans toute attente : il est annoncé à son arrivée. Le nom
+    // de l'outil, qui le répète, n'est pas lu.
+    act(() => vi.advanceTimersByTime(300))
+    expect(zone).toHaveTextContent(TEXTE_OUVERTURE)
+    act(() => vi.advanceTimersByTime(DUREE_OUVERTURE_MS - 301))
     expect(dessin).toHaveAttribute('data-ouverture', 'dessin')
     act(() => vi.advanceTimersByTime(1))
     expect(dessin).toHaveAttribute('data-ouverture', 'vivante')
     expect(dessin?.querySelector('animate')).not.toBeNull()
+    expect(screen.getByText('Pilotage EJP')).not.toHaveClass('ouverture-nom')
   })
 
-  it('les fois suivantes : le monogramme est déjà là, la flamme vit tout de suite', () => {
+  it('« Chargement plus long que d’habitude » garde son temps : 4 s', () => {
+    render(<OuvertureOutil ouverture />)
+    act(() => vi.advanceTimersByTime(3999))
+    expect(screen.getByRole('status')).toHaveTextContent(TEXTE_OUVERTURE)
+    act(() => vi.advanceTimersByTime(1))
+    expect(screen.getByRole('status')).toHaveTextContent(MESSAGES_COMMUNS.chargementLong)
+  })
+
+  it('les fois suivantes : rien pendant 300 ms, puis le monogramme entier et la flamme vivante', () => {
     const { container } = render(<OuvertureOutil ouverture={false} />)
+    expect(container.querySelector('svg')).toBeNull()
     act(() => vi.advanceTimersByTime(300))
     expect(container.querySelector('svg')).toHaveAttribute('data-ouverture', 'vivante')
     expect(container.querySelector('.ouverture-allumage')).toBeNull()
   })
 
-  it('moins d’animations : pas d’ouverture, le dessin entier et immobile (SMIL en pause)', () => {
+  it('moins d’animations : rien pendant 300 ms, puis le dessin entier et immobile (SMIL en pause)', () => {
     moinsDAnimations(true)
     const smil = horlogeSmil()
     const { container } = render(<OuvertureOutil ouverture />)
+    expect(container.querySelector('svg')).toBeNull()
     act(() => vi.advanceTimersByTime(300))
     const dessin = container.querySelector('svg')
     expect(dessin).toHaveAttribute('data-ouverture', 'vivante')
@@ -83,13 +97,6 @@ describe('OuvertureOutil (T65, moment 1 : vérification de la session)', () => {
     expect(smil.pause).toHaveBeenCalled()
     expect(smil.temps).toHaveBeenCalledWith(0)
     expect(screen.getByRole('status')).toHaveTextContent(TEXTE_OUVERTURE)
-  })
-
-  it('useOuverture : l’ouverture ne joue qu’une fois par chargement de l’application', () => {
-    const premiere = renderHook(() => useOuverture(true))
-    expect(premiere.result.current).toBe(true)
-    const suivante = renderHook(() => useOuverture(true))
-    expect(suivante.result.current).toBe(false)
   })
 })
 

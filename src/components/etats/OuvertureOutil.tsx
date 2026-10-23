@@ -20,11 +20,12 @@ interface Props {
 }
 
 /**
- * Vérification de la session, plein écran (T65, moment 1). Rien pendant 300 ms. Puis, la première
- * fois depuis le chargement de l'application, l'ouverture : le monogramme « ejp » se dessine et
- * la flamme s'allume (1,2 s), puis la flamme vit si l'attente continue ; les fois suivantes, le
- * monogramme est déjà là et la flamme vit tout de suite. Après 4 s, « Chargement plus long que
- * d'habitude » s'affiche sous le nom (m248). Avec moins d'animations : tout est immobile.
+ * Vérification de la session, plein écran (T65, moment 1 ; T67). La première fois depuis le
+ * chargement de l'application, l'ouverture s'affiche tout de suite : le monogramme « ejp » se
+ * dessine, la flamme s'allume, le nom apparaît (2,5 s), puis la flamme vit si l'attente continue.
+ * Les fois suivantes, et avec moins d'animations, rien pendant 300 ms, puis le monogramme entier
+ * et la flamme vivante (immobile avec moins d'animations). Le texte lu arrive à 300 ms ; après
+ * 4 s, « Chargement plus long que d'habitude » s'affiche sous le nom (m248).
  */
 export function OuvertureOutil({ ouverture }: Props) {
   const mot = useMotChargement(TEXTE_OUVERTURE)
@@ -32,17 +33,21 @@ export function OuvertureOutil({ ouverture }: Props) {
   const [phase, setPhase] = useState<'dessin' | 'vivante'>(() =>
     ouverture && !moinsDAnimations ? 'dessin' : 'vivante',
   )
-  const visible = mot !== null
-  // Le dessin n'apparaît qu'après 300 ms : la ref de rappel le suit dès qu'il est là.
+  // L'ouverture se montre dès l'arrivée ; la flamme vivante seule, après 300 ms, avec le texte.
+  const visible = phase === 'dessin' || mot !== null
+  // Le dessin peut n'apparaître qu'après 300 ms : la ref de rappel le suit dès qu'il est là.
   const { ref: dessin, immobile } = useSvgImmobile()
   const idFlamme = useIdDessin()
 
-  // L'ouverture commence quand le dessin apparaît (300 ms) et dure 1,2 s.
+  // L'ouverture commence à l'arrivée de l'écran et dure 2,5 s. Effet ordinaire : sa minuterie
+  // part après celle de la garde (`useAttenteChargement`, effet de mise en page), qui finit donc
+  // la première quand la session est déjà lue : les écrans remplacent le logo complet, sans
+  // flamme vivante entre les deux.
   useEffect(() => {
-    if (!visible || phase !== 'dessin') return
+    if (phase !== 'dessin') return
     const minuterie = window.setTimeout(() => setPhase('vivante'), DUREE_OUVERTURE_MS)
     return () => window.clearTimeout(minuterie)
-  }, [visible, phase])
+  }, [phase])
 
   const long = mot === MESSAGES_COMMUNS.chargementLong
   // `aria-busy` marque l'attente sur le dessin ; la zone `status`, à côté, n'est jamais dans un
@@ -51,7 +56,7 @@ export function OuvertureOutil({ ouverture }: Props) {
   return (
     <div className="flex flex-col items-center gap-3 text-center">
       <div aria-busy="true" className="contents">
-        {mot === null ? null : (
+        {!visible ? null : (
           <>
             <svg
               ref={dessin}
