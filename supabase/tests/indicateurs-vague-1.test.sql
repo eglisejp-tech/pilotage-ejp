@@ -2,9 +2,10 @@
 -- docs/conception/vague-1-decisions.md, section 4 ; réponse de la personne responsable du
 -- 6 octobre 2026 sur les parts, question 1).
 --
--- 1. Catalogue : nombres par modèle et totaux (162 saisis, dont le chiffre d'affaires de Merch à
---    la semaine ajouté par T64, 41 calculs, 11 sensibles, 19 parts, unités, 11 suggestions,
---    21 modèles), 29 calculs de la V1 et 12 calculs étendus, aucun
+-- 1. Catalogue : nombres par modèle et totaux (161 saisis, dont le chiffre d'affaires de Merch à
+--    la semaine ajouté par T64 et sans « Événements commencés à l'heure » retiré par T68,
+--    40 calculs, 11 sensibles, 18 parts, unités, 11 suggestions, 21 modèles), 29 calculs de la
+--    V1 et 11 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
 --    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts ; T64 : le
 --    prévu de Merch à la semaine et les KPI que Merch a retirés de son document, gardés.
@@ -28,7 +29,7 @@ create temp table attendu (modele text primary key, saisis integer, calculs inte
                            v1 integer);
 insert into attendu values
   ('integration', 8, 4, 0, 0, 1),
-  ('coordination', 6, 4, 0, 2, 1),
+  ('coordination', 5, 3, 0, 1, 1),
   ('communication', 10, 4, 0, 1, 2),
   ('social', 7, 0, 3, 0, 0),
   ('film', 8, 2, 0, 1, 2),
@@ -49,12 +50,12 @@ insert into attendu values
   ('mds', 8, 0, 0, 0, 0),
   ('prodiges junior', 4, 1, 2, 1, 1);
 
--- Les dix-neuf parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
--- nature ajoutés par EJP Tech) et les onze sensibles.
+-- Les dix-huit parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
+-- nature ajoutés par EJP Tech, moins la part des événements à l'heure, retirée par T68 : la
+-- ponctualité se calcule sur les heures des événements) et les onze sensibles.
 create temp table parts_attendues (modele text, libelle text);
 insert into parts_attendues values
   ('coordination', 'Taux de réalisation des événements'),
-  ('coordination', 'Part des événements à l''heure'),
   ('kumi', 'Taux de participation'),
   ('eagles', 'Taux de participation'),
   ('prodiges junior', 'Taux de présence'),
@@ -125,8 +126,8 @@ select results_eq($$
          count(*) filter (where p.modele = 'suggestion')::int,
          count(distinct p.modele) filter (where p.modele <> 'suggestion')::int
     from private.indicateur_prevu p
-$$, $$ values (162, 41, 11, 19, 5, 2, 4, 11, 21) $$,
-  '162 indicateurs saisis, 41 calculs, 11 sensibles, 19 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
+$$, $$ values (161, 40, 11, 18, 5, 2, 4, 11, 21) $$,
+  '161 indicateurs saisis, 40 calculs, 11 sensibles, 18 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
 select results_eq($$
   select count(*) filter (where v1)::int, count(*) filter (where not v1)::int
     from (select p.calcul in ('taux', 'moyenne')
@@ -134,7 +135,7 @@ select results_eq($$
                                   where t.prevu_code = p.code
                                     and (t.source_code is null or t.agregat <> 'periode' or t.decalage <> 0)) as v1
             from private.indicateur_prevu p where p.calcul is not null) as x
-$$, $$ values (29, 12) $$, '29 calculs lus dès la V1 (taux et moyennes), 12 calculs étendus lus au lot L1');
+$$, $$ values (29, 11) $$, '29 calculs lus dès la V1 (taux et moyennes), 11 calculs étendus lus au lot L1');
 select results_eq($$ select modele, v1 from attendu order by modele $$,
   $$ select p.modele, (count(*) filter (where p.calcul in ('taux', 'moyenne')
                        and not exists (select 1 from private.indicateur_prevu_terme t
@@ -171,7 +172,7 @@ select is_empty($$
 $$, 'chaque calcul a ses termes');
 select set_eq($$ select p.modele, p.libelle from private.indicateur_prevu p where p.part $$,
   $$ select modele, libelle from parts_attendues $$,
-  'les dix-neuf parts du catalogue sont marquées part, et elles seules (liste de P49)');
+  'les dix-huit parts du catalogue sont marquées part, et elles seules (liste de P49, moins T68)');
 select is_empty($$
   select p.code from private.indicateur_prevu p where p.part and p.calcul is distinct from 'taux'
 $$, 'part seulement pour un taux');
@@ -283,8 +284,8 @@ select is_empty($$
 $$, 'tous actifs dès leur création, sensibles compris (P42), origine église, avec leur code de prévu');
 select is((select count(*)::int from essai e
              join public.indicateur c on c.ministere_id = e.ministere
-             join public.indicateur_terme t on t.calcul_id = c.id), 83,
-  'les 41 calculs reçoivent leurs 83 termes');
+             join public.indicateur_terme t on t.calcul_id = c.id), 81,
+  'les 40 calculs reçoivent leurs 81 termes');
 select is_empty($$
   select t.calcul_id from essai e
     join public.indicateur c on c.ministere_id = e.ministere
@@ -307,7 +308,7 @@ $$, $$ select a.modele, jsonb_build_object('modele', a.modele, 'nombre', a.saisi
   'une ligne de journal par fiche : le modèle et le nombre, sans texte');
 select is(tests.compter((select berger from ctx), 'aal2',
     'select 1 from public.v_calcul where ministere_id in (select ministere from essai)'), 29,
-  'le berger lit les 29 calculs de la V1 dans v_calcul, les 12 calculs étendus restent invisibles');
+  'le berger lit les 29 calculs de la V1 dans v_calcul, les 11 calculs étendus restent invisibles');
 select results_eq($$
   select (select count(*)::int from public.v_suggestions s join essai e on e.ministere = s.ministere_id where e.modele = 'kumi'),
          (select count(*)::int from public.v_suggestions s join essai e on e.ministere = s.ministere_id where e.modele = 'eagles')

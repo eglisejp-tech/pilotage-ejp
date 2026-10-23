@@ -3,7 +3,7 @@
 -- Lecture par le berger en aal2, à travers les vues (RLS comprise).
 begin;
 
-select plan(27);
+select plan(29);
 
 select tests.se_connecter(tests.compte('Berger'), 'aal2');
 
@@ -13,8 +13,8 @@ select results_eq($$ select count(*)::int from public.ministere where desactive_
 select results_eq($$ select count(*)::int from public.compte where desactive_le is null $$, $$ values (13) $$,
   '13 comptes : un par ministère, le berger, deux membres du conseil, l''administration, EJP Tech');
 select results_eq($$ select count(*)::int from public.session $$, $$ values (8) $$, '8 sessions');
-select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (12) $$,
-  '12 événements (11 de seed.sql, la réunion des responsables de seed/42-evenements.sql)');
+select results_eq($$ select count(*)::int from public.v_evenement $$, $$ values (21) $$,
+  '21 événements (11 de seed.sql, la réunion des responsables de seed/42-evenements.sql, 9 de seed/45-ponctualite.sql)');
 select results_eq($$ select count(*)::int from public.reunion $$, $$ values (7) $$, '7 réunions');
 select results_eq($$ select count(*) filter (where statut <> 'traite')::int, count(*) filter (where statut = 'traite')::int
                       from public.v_point $$,
@@ -117,7 +117,27 @@ select results_eq($$ select count(*)::int, max((detail ->> 'total')::int) from p
 select results_eq($$
   select count(*) filter (where action = 'evenement_ajoute')::int, count(*) filter (where action = 'evenement_modifie')::int
     from public.journal
-$$, $$ values (12, 5) $$, '12 événements ajoutés, 5 mises à jour (dont le report de la réunion des responsables)');
+$$, $$ values (21, 13) $$,
+  '21 événements ajoutés, 13 mises à jour (dont le report de la réunion des responsables et 8 états finals de seed/45)');
+
+-- Ponctualité (seed/45-ponctualite.sql, T68) : chiffres sûrs du mois écoulé quand aujourd'hui
+-- est le 4 du mois ou plus tard (sinon les événements des trois derniers jours y tombent).
+select ok(extract(day from private.aujourdhui()) < 4
+          or (select (avec_heures, a_l_heure, retard_cumule) = (4, 2, 50)
+                from public.evenements_eglise_mois()
+               where mois = (private.mois_courant() - interval '1 month')::date),
+  'mois écoulé : 4 réalisés avec leurs heures, 2 à l''heure, 50 minutes de retard cumulé');
+select results_eq($$
+  select titre, heure_prevue::int, heure_debut::int, retard, a_l_heure from public.v_evenement
+   where id::text like '45000000-%' and statut = 'termine' order by id
+$$, $$ values ('Soirée jeunesse'::text, 1140, 1152, 12, false),
+              ('Atelier photo', 870, 873, 3, true),
+              ('Accueil des nouveaux', 1200, 1195, -5, true),
+              ('Maraude', 1170, null, null, null),
+              ('Veillée de prière', 1410, 5, 35, false),
+              ('Tournoi de foot', 1140, 1143, 3, true),
+              ('Pique-nique', 1110, null, null, null) $$,
+  'événements terminés de seed/45 : heures, retard signé (avance, passage de minuit) et « à l''heure »');
 
 -- Modération : un point de Social masqué, un point de Coordination relu
 select results_eq($$

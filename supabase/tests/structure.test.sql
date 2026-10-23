@@ -68,8 +68,10 @@ select views_are('public', array[
   -- étape 5 (T54)
   'v_point_mention',
   -- étape 8 (T56)
-  'v_ma_declaration', 'v_personnes', 'v_journal_intervenant'
-]::name[], 'public contient les 35 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 3 de l''étape 8), rien de plus');
+  'v_ma_declaration', 'v_personnes', 'v_journal_intervenant',
+  -- étape 4 bis (L2, T68)
+  'v_evenements_mois'
+]::name[], 'public contient les 36 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 3 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind in ('m', 'p', 'f')
@@ -325,7 +327,7 @@ select is_empty($$
 $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
 -- Listes exhaustives des fonctions : (nom, nombre d'arguments, security definer, exécutable par
 -- authenticated, exécutable par service_role). Le nombre d'arguments distingue les surcharges
--- (ajouter_evenement à 3 et à 4 arguments). L'API des ministères et du conseil est l'ensemble
+-- (ajouter_evenement à 3, 4 et 5 arguments). L'API des ministères et du conseil est l'ensemble
 -- des fonctions de public exécutables par authenticated (security invoker) ; chacune a sa partie
 -- private security definer du même nom. Les fonctions serveur des comptes sont les seules à
 -- l'être par service_role.
@@ -339,6 +341,7 @@ $$, $$ values
   ('accepter_conditions', 1, false, true, false),
   ('ajouter_evenement', 3, false, true, false),
   ('ajouter_evenement', 4, false, true, false),
+  ('ajouter_evenement', 5, false, true, false),
   ('ajouter_mention_point', 2, false, true, false),
   ('ajouter_suggestion', 3, false, true, false),
   ('changer_statut_point', 2, false, true, false),
@@ -353,6 +356,7 @@ $$, $$ values
   ('declarer_session', 4, false, true, false),
   ('effacer_prenom', 1, false, true, false),
   ('effacer_prenoms_anciens', 0, false, true, false),
+  ('evenements_eglise_mois', 0, false, true, false),
   ('limites_indicateurs', 1, false, true, false),
   ('marquer_relu', 2, false, true, false),
   ('marquer_traite', 2, false, true, false),
@@ -378,7 +382,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 42 fonctions de public : 32 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 44 fonctions de public : 34 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -391,6 +395,7 @@ $$, $$ values
   ('attribuer_intervenant', 0, true, false, false),
   ('ajouter_evenement', 3, true, true, false),
   ('ajouter_evenement', 4, true, true, false),
+  ('ajouter_evenement', 5, true, true, false),
   ('ajouter_mention_point', 2, true, true, false),
   ('ajouter_suggestion', 3, true, true, false),
   ('ajouts_fiche', 1, false, false, false),
@@ -400,6 +405,7 @@ $$, $$ values
   ('changer_statut_point', 2, true, true, false),
   ('clore_signalement', 2, true, true, false),
   ('communs_de_fiche', 0, true, true, false),
+  ('comptages_evenements_mois', 1, false, true, false),
   ('conditions_acceptees', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
   ('controler_appelant', 1, false, false, false),
@@ -435,6 +441,7 @@ $$, $$ values
   ('effacer_prenoms_anciens', 0, true, true, false),
   ('est_decideur', 0, true, true, false),
   ('etat_comptes', 0, true, true, false),
+  ('evenements_eglise_mois', 0, true, true, false),
   ('evenements_mentionnant_mon_ministere', 0, true, true, false),
   ('executer_controler_cible', 2, true, false, false),
   ('executer_controler_creation_compte', 5, true, false, false),
@@ -488,6 +495,7 @@ $$, $$ values
   ('refuser_modification', 0, false, false, false),
   ('refuser_modification_sauf_effacement', 0, false, false, false),
   ('refuser_modification_sauf_masquage', 0, false, false, false),
+  ('retard_minutes', 2, false, true, false),
   ('retirer_calculs_de', 1, false, false, false),
   ('retirer_indicateur', 2, true, true, false),
   ('retirer_mention_point', 2, true, true, false),
@@ -513,6 +521,7 @@ $$, $$ values
   ('texte_libre_refuse', 1, false, false, false),
   ('texte_refuse', 5, false, false, false),
   ('textes_a_relire', 0, true, true, false),
+  ('tolerance_ponctualite', 0, false, true, false),
   ('usage_indicateurs', 0, true, true, false),
   ('valider_indicateur', 3, true, true, false),
   ('ventilations_sensibles', 0, true, true, false),
@@ -523,7 +532,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 137 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 142 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

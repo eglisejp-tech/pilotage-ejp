@@ -4,6 +4,9 @@
 -- porteur, le ministère mentionné, un autre ministère, le berger, le conseil, l'administration
 -- de l'église et EJP Tech, en aal2 ; puis, par tests.verifier_matrice (000-outils.test.sql),
 -- chaque ligne en aal1 (rien lu, tout refusé) et l'anonyme (42501 partout).
+-- Heures des événements (T68) : aucune ligne nouvelle de la matrice du BRIEF, les colonnes
+-- suivent leur table et leur vue ; les essais 10 à 12 le vérifient (heures de v_evenement,
+-- ajout d'un état avec une heure, ajouter_evenement à cinq arguments).
 begin;
 
 -- Jeu d'essai : A porte l'événement et mentionne B ; C est un autre ministère ; D, actif, sert
@@ -65,7 +68,15 @@ cross join lateral (values
              ctx.ev, private.aujourdhui() + 12, 'valide')),
   (9, 'ajouter_evenement', 'appeler', '{ok, ok, ok, 42501, 42501, 42501, 42501}'::text[],
       format('select public.ajouter_evenement(%L, %L, %L, array[%L]::uuid[])',
-             'Matrice B6, essai', private.aujourdhui() + 5, 'brouillon', ctx.d_m))
+             'Matrice B6, essai', private.aujourdhui() + 5, 'brouillon', ctx.d_m)),
+  (10, 'v_evenement (heures)', 'lire', '{1, 1, 0, 1, 1, 0, 1}'::text[],
+      format('select heure_prevue, heure_debut, retard, a_l_heure from public.v_evenement where id = %L', ctx.ev)),
+  (11, 'evenement_etat (heure prévue)', 'ajouter', '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
+      format('insert into public.evenement_etat (evenement_id, date, statut, heure_prevue) values (%L, %L, %L, %s)',
+             ctx.ev, private.aujourdhui() + 12, 'valide', 1140)),
+  (12, 'ajouter_evenement à 5 arguments', 'appeler', '{ok, ok, ok, 42501, 42501, 42501, 42501}'::text[],
+      format('select public.ajouter_evenement(%L, %L, %L, array[%L]::uuid[], %s::smallint)',
+             'Matrice B6, essai à 19 h', private.aujourdhui() + 5, 'brouillon', ctx.d_m, 1140))
 ) as o(rang, objet, action, attendus, requete)
 cross join profil p;
 grant select on matrice, profil to authenticated, anon;

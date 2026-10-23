@@ -229,7 +229,8 @@ select i.id, f.ministere, v.date_ref, v.valeur, v.saisi_le, f.compte
       ('coo', 'coordination_bapteme_baptises', pg_temp.mois(1), 7, pg_temp.envoi(1)),
       ('coo', 'coordination_bapteme_sessions', pg_temp.mois(1), 2, pg_temp.envoi(1)),
       ('coo', 'coordination_bapteme_baptises_a_la_derniere_session_du_mois', pg_temp.mois(1), 4, pg_temp.envoi(1)),
-      ('coo', 'coordination_evenements_commences_a_l_heure', pg_temp.mois(1), 3, pg_temp.envoi(1)),
+      -- « Événements commencés à l'heure » a quitté le catalogue (T68) : la ponctualité se
+      -- calcule sur les heures des événements (seed/45-ponctualite.sql).
       -- Social : le sensible (6, 1, 0, puis 2 au dernier mois fini), des euros, un « à ce jour »
       ('soc', 'social_beneficiaires_passages', pg_temp.mois(4), 6, pg_temp.envoi(4)),
       ('soc', 'social_beneficiaires_passages', pg_temp.mois(3), 1, pg_temp.envoi(3)),
