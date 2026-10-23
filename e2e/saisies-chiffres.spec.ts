@@ -17,7 +17,8 @@ async function ouvrir(page: Page, ecran: Ecran) {
   await page.evaluate(() => document.fonts.ready)
 }
 
-const REFUS_PRECISION = "N'écrivez aucun nom ni information personnelle."
+/** Le refus de la base, traduit : ce qu'elle détecte, puis quoi faire (T66, m268). */
+const REFUS_PRECISION = 'Retirez de votre texte les emails, liens, numéros et noms de personnes.'
 
 const boutonsAide = (page: Page) => page.getByRole('button', { name: /^Aide : / })
 

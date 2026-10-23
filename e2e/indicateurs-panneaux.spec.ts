@@ -164,7 +164,7 @@ test.describe('ajouter, corriger et remplacer un indicateur', () => {
     await bouton(page, 'Enregistrer la correction').click()
     await expect(page.getByText('Correction enregistrée.')).toBeVisible()
     await expect(page.getByText('Demandes reçues par mail', { exact: true })).toBeVisible()
-    await expect(page.getByText(/Libellé corrigé le \d+ /).first()).toBeVisible()
+    await expect(page.getByText(/Nom corrigé le \d+ /).first()).toBeVisible()
 
     await page.getByRole('button', { name: 'Remplacer « Publications »' }).click()
     await expect(titre(page, "Remplacer l'indicateur")).toBeVisible()
@@ -603,7 +603,8 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
 // l'indicateur vient d'être retiré (sous le bouton de la fenêtre).
 const DOUBLON_TOURNAGES = 'Cette fiche a déjà un indicateur « Tournages ». Choisissez un autre nom.'
 const MESSAGES_RETRAIT = {
-  refus: 'Cet indicateur est déjà retiré.',
+  // Formule « changé entre-temps » de la table de traduction (T66, m235).
+  refus: 'Cet indicateur est déjà retiré. Rechargez la page.',
   echec: /^La connexion a échoué\./,
 } as const
 

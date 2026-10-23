@@ -152,9 +152,12 @@ test.describe('Communication', () => {
     await page.getByLabel('Titre', { exact: true }).fill(TITRE_REFUSE)
     await page.getByLabel('Échéance (facultatif)', { exact: true }).fill(plusJours(aujourdhui, -1))
     await bouton(page).click()
+    // L'indication du champ, puis la phrase commune de la date passée (T66, t239 et m125).
     await expect(
       page.getByLabel('Échéance (facultatif)', { exact: true }),
-    ).toHaveAccessibleDescription("L'échéance ne peut pas être passée.")
+    ).toHaveAccessibleDescription(
+      "Le dernier jour où une réponse vous est utile. Cette date est passée. Choisissez aujourd'hui ou une date à venir.",
+    )
     await expect(page.getByLabel('Titre', { exact: true })).toHaveValue(TITRE_REFUSE)
     expect(await pointsTitres(page, TITRE_REFUSE)).toHaveLength(0)
     expect(await compter(page, requeteJournalDuMinistere)).toBe(journalAvant)

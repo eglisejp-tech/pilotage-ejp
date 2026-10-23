@@ -58,10 +58,9 @@ test.describe('le berger lit le journal (aperçu)', () => {
   test('titre, phrase, trois filtres, 30 derniers jours et 50 lignes', async ({ page }) => {
     await ouvrir(page, { profil: 'berger' })
     await expect(page.getByRole('heading', { level: 1, name: 'Journal' })).toBeVisible()
+    // Ce que contient le journal, sans son fonctionnement (T66, t373 ; guide, exemple 6).
     await expect(
-      page.getByText(
-        'Chaque saisie, création et changement de statut laisse une ligne ici, avec la date et le compte.',
-      ),
+      page.getByText('Ce que chaque compte a saisi ou modifié, avec la date.'),
     ).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Compte' })).toHaveValue('')
     await expect(page.getByRole('combobox', { name: 'Action' })).toHaveValue('')
@@ -175,7 +174,9 @@ test.describe('les autres profils (aperçu)', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Mon journal' })).toBeVisible()
     await expect(page.getByRole('combobox', { name: 'Compte' })).toHaveCount(0)
     await expect(page.getByRole('combobox')).toHaveCount(2)
-    await expect(page.getByText('de votre ministère')).toBeVisible()
+    await expect(
+      page.getByText('Ce que votre ministère a saisi ou modifié, avec la date.'),
+    ).toBeVisible()
     // Il lit ses signalements (T39) et le jeu d'exemple ne lui donne ni point de Social ni FIJ.
     await expect(page.getByText('Écran : Chiffres du dimanche')).toBeVisible()
     await expect(page.getByText('Point de Social')).toHaveCount(0)

@@ -391,7 +391,10 @@ test.describe('T62 : retrait d’un ajout par le ministère, aperçu', () => {
     fenetre = await ouvrirLeRetrait(page, RETIRER_DEMANDES)
     await fenetre.getByRole('textbox').fill('Ce chiffre ne nous sert plus.')
     await fenetre.getByRole('button', { name: 'Retirer' }).click()
-    await expect(fenetre.getByRole('alert')).toHaveText('Cet indicateur est déjà retiré.')
+    // Formule « changé entre-temps » (T66, m235).
+    await expect(fenetre.getByRole('alert')).toHaveText(
+      'Cet indicateur est déjà retiré. Rechargez la page.',
+    )
   })
 
   test('la source d’un calcul : pas de bouton, la ligne dit qui peut la retirer', async ({

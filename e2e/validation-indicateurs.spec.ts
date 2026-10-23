@@ -151,9 +151,13 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await fenetre.getByRole('textbox').fill('Écrire à quelqu’un pour voir.')
     await fenetre.getByRole('button', { name: 'Refuser' }).click()
     await expect(fenetre.getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
+    // Le rappel sous le champ, puis le refus de la base traduit (T66, m268).
     await expect(fenetre.getByText("N'écrivez aucun nom ni information personnelle.")).toHaveCount(
-      2,
+      1,
     )
+    await expect(
+      fenetre.getByText('Retirez de votre texte les emails, liens, numéros et noms de personnes.'),
+    ).toBeVisible()
     await expect(page.getByRole('dialog')).toBeVisible()
   })
 
