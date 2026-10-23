@@ -124,8 +124,10 @@ select results_eq($$
    where table_schema = 'public' and table_name = 'v_evenement' order by ordinal_position
 $$, $$ values ('id', 'uuid'), ('ministere_id', 'uuid'), ('titre', 'text'), ('date', 'date'),
               ('statut', 'USER-DEFINED'), ('mis_a_jour_le', 'timestamp with time zone'),
-              ('jours', 'integer'), ('a_confirmer', 'boolean'), ('reporte_du', 'date') $$,
-  'v_evenement : les six colonnes de l''étape 3, puis jours, a_confirmer et reporte_du');
+              ('jours', 'integer'), ('a_confirmer', 'boolean'), ('reporte_du', 'date'),
+              ('heure_prevue', 'smallint'), ('heure_debut', 'smallint'), ('retard', 'integer'),
+              ('a_l_heure', 'boolean') $$,
+  'v_evenement : les six colonnes de l''étape 3, puis jours, a_confirmer et reporte_du, puis les heures, le retard et « à l''heure » (T68)');
 select ok(coalesce((select c.reloptions @> array['security_invoker=true'] from pg_class c
                      where c.oid = 'public.v_evenement'::regclass), false),
   'v_evenement reste security_invoker');

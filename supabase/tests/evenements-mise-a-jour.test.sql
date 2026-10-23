@@ -144,11 +144,13 @@ select ok((select p.prosrc from pg_proc p where p.oid = 'private.controler_evene
           and (select p.prosrc from pg_proc p where p.oid = 'private.controler_evenement_etat()'::regprocedure)
                 !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
   'le trigger compare la nouvelle date à private.aujourdhui(), jamais à current_date ni à now()');
+-- Depuis T68, la version à quatre arguments délègue à celle à cinq (heure prévue), qui porte le
+-- contrôle de la date.
 select ok((select p.prosrc from pg_proc p
-            where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[])'::regprocedure)
+            where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[], smallint)'::regprocedure)
             like '%p_date < private.aujourdhui()%'
           and (select p.prosrc from pg_proc p
-                where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[])'::regprocedure)
+                where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[], smallint)'::regprocedure)
                 !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
   'à l''ajout, la date est comparée à private.aujourdhui(), jamais à current_date ni à now()');
 select ok(pg_get_viewdef('public.v_evenement'::regclass) like '%private.aujourdhui()%'
