@@ -226,6 +226,111 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
   })
 })
 
+/** Les blocs « Événements de l'église » et « Ponctualité » de la fiche de Coordination (L2, T68). */
+const COMPTAGES: Ecran[] = [
+  { ecran: 'comptages', profil: 'berger' },
+  { ecran: 'comptages', profil: 'admin_plateforme' },
+  { ecran: 'comptages', profil: 'ministere' },
+  { ecran: 'comptages-premier-mois', profil: 'conseil' },
+  { ecran: 'comptages-vide', profil: 'berger' },
+  { ecran: 'comptages-erreur', profil: 'berger' },
+]
+
+const ligneComptage = (page: Page, cle: string) => page.locator(`[data-comptage="${cle}"]`)
+const resumeRetards = (page: Page) => page.getByText(/^Voir les \d+ événements commencés en retard/)
+
+test.describe('comptages et ponctualité de la fiche de Coordination (aperçu)', () => {
+  test('mois écoulé, mois en cours à part, depuis le départ ; complétude toujours là', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'comptages' })
+    await expect(
+      page.getByRole('heading', { level: 2, name: "Événements de l'église" }),
+    ).toBeVisible()
+    const realises = ligneComptage(page, 'realises')
+    await expect(realises).toContainText('Réalisés')
+    await expect(realises).toContainText('Octobre en cours : 2')
+    await expect(realises).toContainText('Depuis le 21 août : 11')
+    await expect(page.getByText(/comptés depuis le 21 août\./)).toBeVisible()
+
+    await expect(page.getByRole('heading', { level: 2, name: 'Ponctualité' })).toBeVisible()
+    const ecoule = ligneComptage(page, 'principal')
+    await expect(ecoule).toContainText('Septembre 2026')
+    await expect(ecoule).toContainText('Retard moyen : 8 min')
+    await expect(ecoule).toContainText('8 sur 10 ont leurs heures')
+    await expect(ecoule.getByText(/^Cultes : \d+ sur \d+$/)).toBeVisible()
+    await expect(ecoule.getByText(/^Autres événements : \d+ sur \d+$/)).toBeVisible()
+    await expect(ligneComptage(page, 'en_cours')).toContainText('Octobre en cours')
+    await expect(ligneComptage(page, 'depuis')).toContainText('Depuis le 21 août')
+  })
+
+  test('berger et EJP Tech : la liste repliée des retards, au clavier', async ({ page }) => {
+    for (const profil of ['berger', 'admin_plateforme']) {
+      await ouvrir(page, { ecran: 'comptages', profil })
+      const resume = resumeRetards(page)
+      const retard = page.getByText('12 min de retard')
+      await expect(retard).toBeHidden()
+      await resume.focus()
+      await page.keyboard.press('Enter')
+      await expect(retard).toBeVisible()
+      await expect(page.getByText(/Soirée jeunesse \(Jeunesse\)/)).toBeVisible()
+      await expect(resume).toBeFocused()
+    }
+  })
+
+  test('Coordination : les totaux seulement, aucun titre ni ministère d’événement (K11)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'comptages', profil: 'ministere' })
+    await expect(ligneComptage(page, 'principal')).toContainText('Retard moyen : 8 min')
+    await expect(resumeRetards(page)).toHaveCount(0)
+    await expect(page.getByText(/Soirée jeunesse|Veillée de prière/)).toHaveCount(0)
+  })
+
+  test('premier mois : le mois en cours nommé, « Non calculé » avec sa complétude', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'comptages-premier-mois', profil: 'conseil' })
+    const ligne = ligneComptage(page, 'principal')
+    await expect(ligne).toContainText('Octobre en cours')
+    await expect(ligne).toContainText('Non calculé')
+    await expect(ligne).toContainText('0 sur 2 a ses heures')
+    await expect(ligneComptage(page, 'depuis')).toHaveCount(0)
+  })
+
+  test('premier usage, problème passager, chargement', async ({ page }) => {
+    await ouvrir(page, { ecran: 'comptages-vide' })
+    await expect(page.getByText("Pas encore d'événement déclaré.")).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Ponctualité' })).toHaveCount(0)
+    await ouvrir(page, { ecran: 'comptages-erreur' })
+    await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(1)
+    await ouvrir(page, { ecran: 'comptages-chargement' })
+    for (const titre of ["Événements de l'église", 'Ponctualité']) {
+      await expect(page.getByRole('heading', { level: 2, name: titre })).toBeVisible()
+    }
+  })
+
+  // Les cinq écrans, repliés, passent l'audit transversal (e2e/accessibilite.spec.ts : axe, 360 px,
+  // 200 %, cibles, clavier). Ici, la liste des retards ouverte, que ce catalogue ne déplie pas.
+  test('liste des retards ouverte : audit axe, cible de 44 px, 360 px sans défilement', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'comptages' })
+    const resume = resumeRetards(page)
+    expect((await resume.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await resume.click()
+    const resultat = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze()
+    expect(resultat.violations).toEqual([])
+    await page.setViewportSize({ width: 360, height: 800 })
+    const debord = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )
+    expect(debord).toBeLessThanOrEqual(0)
+  })
+})
+
 test.describe('accessibilité', () => {
   for (const ecran of TOUS) {
     test(`audit axe : ${nomDe(ecran)}`, async ({ page }) => {
@@ -288,6 +393,14 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
     if ((ecran.ecran ?? 'fiche') === 'fiche' && ecran.profil !== 'admin_eglise') {
       await ouvrirRepartition(page)
     }
+    await page.screenshot({
+      path: `test-results/captures/fiche-${nomDe(ecran)}-${largeur}.png`,
+      fullPage: true,
+    })
+  }
+  for (const ecran of COMPTAGES) {
+    await ouvrir(page, ecran)
+    if ((await resumeRetards(page).count()) > 0) await resumeRetards(page).click()
     await page.screenshot({
       path: `test-results/captures/fiche-${nomDe(ecran)}-${largeur}.png`,
       fullPage: true,
