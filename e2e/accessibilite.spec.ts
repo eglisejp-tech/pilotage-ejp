@@ -123,6 +123,15 @@ const FICHE: Ecran[] = [
   },
   { nom: 'ministères vide', adresse: '/apercu/fiche?ecran=ministeres-vide&profil=conseil' },
   { nom: 'ministères erreur', adresse: '/apercu/fiche?ecran=ministeres-erreur&profil=berger' },
+  // Lot L2 et T68 : « Événements de l'église » et « Ponctualité » de la fiche de Coordination.
+  { nom: 'comptages berger', adresse: '/apercu/fiche?ecran=comptages&profil=berger' },
+  { nom: 'comptages coordination', adresse: '/apercu/fiche?ecran=comptages&profil=ministere' },
+  {
+    nom: 'comptages premier mois',
+    adresse: '/apercu/fiche?ecran=comptages-premier-mois&profil=conseil',
+  },
+  { nom: 'comptages vide', adresse: '/apercu/fiche?ecran=comptages-vide&profil=berger' },
+  { nom: 'comptages erreur', adresse: '/apercu/fiche?ecran=comptages-erreur&profil=berger' },
 ]
 
 // Lot E3 : saisie du dimanche (maquette 08) et « Chiffres du mois », chacune dans ses états
