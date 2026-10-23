@@ -1,9 +1,9 @@
 import { useId } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
 import type { ActionVide, SituationVide } from '@/components/etats/situations'
-import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { FiltreMinistere } from '@/features/points/FiltreMinistere'
+import { LienNouveauPoint, VERS_NOUVEAU_POINT } from '@/features/points/LienNouveauPoint'
 import { ListePoints } from '@/features/points/ListePoints'
 import type { DonneesPoints } from '@/features/points/modelePoints'
 import { OngletsPoints } from '@/features/points/OngletsPoints'
@@ -20,9 +20,6 @@ interface Props {
   donnees: DonneesPoints
   compte: CompteDesActions
 }
-
-/** Adresse du formulaire « Nouveau point » (maquette 10), pour le ministère seulement. */
-const VERS_NOUVEAU_POINT = '/saisir/point'
 
 /**
  * État vide de la vue : la phrase, sa situation (T36) et au plus une action (T66, m159 à m163) :
@@ -99,13 +96,7 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
         {introduction !== null ? (
           <p className="max-w-[720px] leading-relaxed text-encre-2">{introduction}</p>
         ) : null}
-        {profil === 'ministere' ? (
-          <p className="mt-2">
-            <Link to={VERS_NOUVEAU_POINT} className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
-              {TEXTES_POINTS.nouveauPoint}
-            </Link>
-          </p>
-        ) : null}
+        {profil === 'ministere' ? <LienNouveauPoint /> : null}
       </header>
 
       <section aria-labelledby={idListe} className="flex min-w-0 flex-col">

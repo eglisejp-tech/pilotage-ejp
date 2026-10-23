@@ -21,6 +21,8 @@ interface Props {
   /** Écriture réussie : le panneau se ferme et la page affiche ce message. */
   onFait: (message: string) => void
   onFermer: () => void
+  /** EJP Tech, qui ajoute les ministères (T60) : voir `ChoixMinisteres`. */
+  gestionMinisteres?: boolean
 }
 
 type Attendus =
@@ -68,6 +70,7 @@ function Modification({
   actions,
   onFait,
   onFermer,
+  gestionMinisteres,
 }: Omit<Props, 'panneau'> & { ligne: LigneSession }) {
   const { attendus, relire } = useAttendus(actions.lireAttendus, ligne.id)
   // T65 : la flamme reste au moins 600 ms une fois montrée, puis le formulaire arrive en fondu.
@@ -104,6 +107,7 @@ function Modification({
           onFait(REUSSITES_SESSIONS.modifiee(ligne.designation))
         }}
         onAnnuler={onFermer}
+        gestionMinisteres={gestionMinisteres}
       />
     </Arrivee>
   )
@@ -113,7 +117,14 @@ function Modification({
  * Panneaux de l'écran 14 sous 1024 px (« Déclarer une session ») et à toute largeur
  * (« Modifier ») : page entière sous 600 px, panneau de 460 px au-delà (`PanneauSaisie`).
  */
-export function PanneauSession({ panneau, donnees, actions, onFait, onFermer }: Props) {
+export function PanneauSession({
+  panneau,
+  donnees,
+  actions,
+  onFait,
+  onFermer,
+  gestionMinisteres,
+}: Props) {
   if (panneau.genre === 'modifier') {
     return (
       <PanneauSaisie
@@ -127,6 +138,7 @@ export function PanneauSession({ panneau, donnees, actions, onFait, onFermer }: 
           actions={actions}
           onFait={onFait}
           onFermer={onFermer}
+          gestionMinisteres={gestionMinisteres}
         />
       </PanneauSaisie>
     )
@@ -147,6 +159,7 @@ export function PanneauSession({ panneau, donnees, actions, onFait, onFermer }: 
           onFait(REUSSITES_SESSIONS.declaree(designationDeclaration(valeurs)))
         }}
         onAnnuler={onFermer}
+        gestionMinisteres={gestionMinisteres}
       />
     </PanneauSaisie>
   )

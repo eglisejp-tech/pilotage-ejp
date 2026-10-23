@@ -285,7 +285,7 @@ archivage du dépôt du code.
     reconnaît la vérification des textes. Il n'est lu que par le ministère qui l'a écrit et par EJP
     Tech (ni le berger, ni le conseil, ni l'administration de l'église, ni les autres ministères),
     n'est jamais recopié dans le journal (qui note l'action seulement), et EJP Tech peut le masquer
-    (« [texte masqué par EJP Tech] »), hors de la file de la Modération, depuis la liste des retraits
+    (« [texte masqué] » à l'écran), hors de la file de la Modération, depuis la liste des retraits
     des 30 derniers jours relue chaque lundi. Ajout seulement : seule la valeur masquée remplace le
     texte. Durée : celle des autres textes, toute la vie de l'outil ;
   - répartition par catégories des indicateurs sensibles : nombres entiers par catégorie et par mois,
@@ -398,11 +398,13 @@ archivage du dépôt du code.
 - **Durées** : toute la vie de l'outil. Un texte masqué reste dans les exports
   hebdomadaires jusqu'à leur suppression (4 semaines au plus).
 - **Mesures propres** :
-  - rappel sous le premier champ libre de chaque formulaire : « N'écrivez aucun nom ni information
-    personnelle. Les champs libres sont relus par EJP Tech. » ;
+  - rappel sous le premier champ libre de chaque formulaire, en une phrase depuis la refonte des
+    textes (T66) : « N'écrivez aucun nom ni information personnelle. » ; la relecture des champs
+    libres par EJP Tech est expliquée dans la page Confidentialité ;
   - limites de 80 et 280 caractères, fixées dans la base ;
   - textes affichés comme du texte simple (jamais interprétés comme du HTML ou du Markdown) ;
-  - masquage du champ entier, remplacé par « [texte masqué par EJP Tech] », définitif ;
+  - masquage du champ entier, définitif : la base le remplace par « [texte masqué par EJP Tech] »,
+    l'écran affiche « [texte masqué] » (T66) ;
   - le journal garde l'identifiant de l'objet, jamais son texte : un texte masqué est donc masqué
     partout ;
   - un point traité ne se rouvre pas ; un événement ne change pas de nom.

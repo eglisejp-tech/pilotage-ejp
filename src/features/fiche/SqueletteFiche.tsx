@@ -2,11 +2,14 @@ import { useId } from 'react'
 import { IndicateurChargement } from '@/components/etats/IndicateurChargement'
 import { PlaceReservee } from '@/components/etats/PlaceReservee'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
-import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
+import type { ProfilFiche } from '@/features/fiche/modeleFiche'
+import { TEXTES_FICHE, titrePointsFiche } from '@/features/fiche/textesFiche'
 
 interface Props {
   /** Titre de l'écran (« Ma fiche », « Fiche du ministère »), avant que le nom soit connu. */
   titre: string
+  /** Qui lit : le bloc des points s'appelle « Mes points » pour le ministère (T66). */
+  profil?: ProfilFiche
 }
 
 /** Une section qui attend son contenu : `aria-busy` (la zone `status` de la fiche n'y est pas). */
@@ -28,7 +31,7 @@ function SectionEnChargement({ titre }: { titre: string }) {
  * attendent, jamais autour de la zone `status` : certains lecteurs d'écran n'annoncent pas ce qui
  * change dans une zone occupée.
  */
-export function SqueletteFiche({ titre }: Props) {
+export function SqueletteFiche({ titre, profil = 'berger' }: Props) {
   return (
     <div className="flex flex-col gap-12">
       <header className="flex flex-col gap-4">
@@ -38,7 +41,7 @@ export function SqueletteFiche({ titre }: Props) {
       <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16">
         <SectionEnChargement titre={TEXTES_FICHE.titreChiffres} />
         <div className="flex min-w-0 flex-col gap-12">
-          <SectionEnChargement titre={TEXTES_FICHE.titrePoints} />
+          <SectionEnChargement titre={titrePointsFiche(profil)} />
           <SectionEnChargement titre={TEXTES_FICHE.titreDernieresSaisies} />
         </div>
       </div>

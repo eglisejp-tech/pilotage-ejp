@@ -22,7 +22,9 @@
   `dimanche.actifs`, `dimanche.enFij`, `session.presents`, `fij.completudeDep`, `evenement.statut`,
   `reunion.decision`, `fiche.sommeAnnee`, `fiche.courbe`, `eglise.completude`, `eglise.ecart`,
   `eglise.courbe`, `comptes.etat`, `indicateurs.nombre`, `indicateurs.prevus`, `indicateurs.usage`,
-  `indicateurs.domaine`, `indicateurs.calcul`, `indicateurs.pourquoi`. Les autres sont retirées ou
+  `indicateurs.domaine`, `indicateurs.calcul`, `indicateurs.pourquoi`. **15 s'affichent** :
+  `eglise.completude`, `eglise.ecart` et `eglise.courbe` sont au catalogue depuis W0 (6 octobre),
+  mais aucun écran ne les pose (la vue de l'église n'a pas de bouton « ? »). Les autres sont retirées ou
   deviennent une **indication visible sous le champ** (prop `note` de `ChampTexteCourt`, `ChampDate`,
   `ChampLigne` et `ChoixMinisteres`) : l'attendu et l'échéance d'un point, la période d'un mois,
   l'email d'un ministère, les ministères attendus d'une session, le choix de la liste des indicateurs
@@ -347,8 +349,8 @@ référence et ne reçoit aucun token nouveau.
 
 ## 6. Catalogue
 
-**État au 19 octobre 2026 (T66)** : 18 aides, validées avec la refonte des textes (liste en tête de
-ce document) ; leurs textes sont dans `src/components/aide/textesAide.ts`, que le test
+**État au 19 octobre 2026 (T66)** : 18 aides au catalogue, dont 15 affichées, validées avec la
+refonte des textes (liste en tête de ce document) ; leurs textes sont dans `src/components/aide/textesAide.ts`, que le test
 `textesAide.test.ts` compte. Le catalogue ci-dessous est celui du 7 octobre, gardé pour l'historique.
 
 Statut de tous les textes (7 octobre) : **Proposé, réécrit le 7 octobre 2026 après les remarques de

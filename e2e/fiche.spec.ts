@@ -154,6 +154,9 @@ test.describe('fiche 12 du ministère (aperçu)', () => {
     await expect(page.getByText('moins de 3', { exact: true })).toHaveCount(0)
     await expect(page.getByText('masqué', { exact: true })).toHaveCount(0)
     await expect(page.getByText('Mentionné par Intégration.')).toBeVisible()
+    // Le bloc des points reprend le mot du menu du ministère (T66, décision 3 et t210).
+    await expect(page.getByRole('region', { name: 'Mes points' })).toBeVisible()
+    await expect(page.getByRole('region', { name: "Points d'attention" })).toHaveCount(0)
   })
 
   test('l’administration de l’église n’a pas de fiche', async ({ page }) => {
@@ -202,7 +205,7 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
 
   test('ministère inconnu : la phrase et « Revenir aux ministères »', async ({ page }) => {
     await ouvrir(page, { ecran: 'introuvable' })
-    await expect(page.getByText("Ce ministère n'existe pas ou n'est plus actif.")).toBeVisible()
+    await expect(page.getByText('Ce ministère est introuvable.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir aux ministères' })).toBeVisible()
   })
 
@@ -215,10 +218,10 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
     )
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'conseil' })
     await expect(page.getByText('Aucun ministère actif.', { exact: true })).toBeVisible()
-    // EJP Tech, qui crée les ministères (T60), n'est pas renvoyé vers lui-même.
+    // EJP Tech, qui ajoute les ministères (T60), n'est pas renvoyé vers lui-même (T66, t306).
     await ouvrir(page, { ecran: 'ministeres-vide', profil: 'admin_plateforme' })
     await expect(
-      page.getByText('Aucun ministère actif. Créez-les dans Ministères et comptes.'),
+      page.getByText('Aucun ministère actif. Ajoutez-en dans Ministères et comptes.'),
     ).toBeVisible()
   })
 })

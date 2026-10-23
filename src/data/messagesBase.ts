@@ -169,8 +169,9 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   },
   'Ce mois est trop ancien pour être saisi.': {},
   'Saisissez au moins un chiffre.': {},
-  'Un envoi compte 30 chiffres au plus.': {},
-  "Un indicateur ne se saisit qu'une fois par envoi.": {},
+  // Filets que le formulaire ne déclenche pas : le message de repli (T66, m098).
+  'Un envoi compte 30 chiffres au plus.': REPLI,
+  "Un indicateur ne se saisit qu'une fois par envoi.": REPLI,
   // Un seul texte pour 1 à 9 caractères et au-delà de 280 : l'écran contrôle les deux cas avant
   // l'envoi (precisionTropCourte, precisionTropLongue) ; la base ne dit pas lequel.
   'La précision doit faire entre 10 et 280 caractères.': { champ: 'precision' },
@@ -664,10 +665,13 @@ export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): E
   )
 
   // Contrôle de la couche data (schémas partagés avec les formulaires) : sa consigne, sous son
-  // champ. Un message par défaut de Zod (en anglais) trahit un contrôle imprévu : le repli.
+  // champ. Un message par défaut de Zod (en anglais) trahit un contrôle imprévu : le repli. Un
+  // schéma qui reprend le texte d'un filet de la base (« Chaque rubrique d'un département ne se
+  // saisit qu'une fois par envoi. ») prend le repli comme la base (T66, m098).
   if (erreur instanceof z.ZodError) {
     const probleme = erreur.issues[0]
     if (!probleme || MESSAGE_ZOD_PAR_DEFAUT.test(probleme.message)) return repli
+    if (REFUS_DE_SAISIE[probleme.message] === REPLI) return repli
     return phrase('refus', probleme.message, champDuChemin(probleme.path))
   }
   if (typeof erreur !== 'object' || erreur === null) return repli

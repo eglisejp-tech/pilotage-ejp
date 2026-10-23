@@ -1,4 +1,4 @@
-import { useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { LigneSignalement } from '@/data/signalements'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { FenetreMasquage } from '@/features/moderation/FenetreMasquage'
@@ -52,8 +52,11 @@ function champsMasquables(signalement: LigneSignalement): ChampMasquable[] {
  * l'écran et la date d'envoi ; le texte entre guillemets ; à droite, « Clore le signalement »
  * pour un ouvert, ou « Clos le 8 oct. » et le commentaire d'EJP Tech pour un clos, et « Masquer
  * le texte » (ouvert ou clos, tant qu'un champ n'est pas masqué). Le bouton de clôture déplie
- * sous la ligne le petit panneau de clôture ; « Annuler » le replie et rend le focus. « Masquer
- * le texte » ouvre la fenêtre de l'écran Modération (`masquer_texte`).
+ * sous la ligne le petit panneau de clôture et laisse sa place au bouton du panneau, qui porte le
+ * même libellé (T66, point 9) : un seul « Clore le signalement » à l'écran pour la ligne, et un
+ * second clic ne replie jamais le panneau avec la réponse saisie. « Annuler » le replie (après
+ * « Fermer sans enregistrer ? » si une réponse est écrite) et rend le focus au bouton de la ligne.
+ * « Masquer le texte » ouvre la fenêtre de l'écran Modération (`masquer_texte`).
  */
 export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) {
   const idTitre = useId()
@@ -61,10 +64,18 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
   const [ouvert, setOuvert] = useState(false)
   const [fenetre, setFenetre] = useState(false)
   const bouton = useRef<HTMLButtonElement>(null)
+  // Le bouton de la ligne revient au repli du panneau : il reprend le focus une fois affiché.
+  const rendreFocus = useRef(false)
+
+  useEffect(() => {
+    if (ouvert || !rendreFocus.current) return
+    rendreFocus.current = false
+    bouton.current?.focus()
+  }, [ouvert])
 
   const replier = () => {
+    rendreFocus.current = true
     setOuvert(false)
-    bouton.current?.focus()
   }
 
   const masquables = masquage ? champsMasquables(signalement) : []
@@ -100,6 +111,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
     ) : null
 
   const peutClore = (signalement.ouvert || signalement.clos_le === null) && cloture
+  const boutonClore = peutClore && !ouvert
 
   return (
     <article aria-labelledby={idTitre} className="flex flex-col gap-3 py-[18px]">
@@ -131,18 +143,16 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
               ) : null}
             </>
           )}
-          {peutClore || boutonMasquer ? (
+          {boutonClore || boutonMasquer ? (
             <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col min-[1024px]:justify-end">
-              {peutClore ? (
+              {boutonClore ? (
                 <button
                   ref={bouton}
                   type="button"
-                  aria-expanded={ouvert}
-                  aria-controls={ouvert ? idPanneau : undefined}
                   aria-describedby={idTitre}
                   onClick={() => {
-                    if (!ouvert) cloture.surOuverture?.()
-                    setOuvert((precedent) => !precedent)
+                    cloture.surOuverture?.()
+                    setOuvert(true)
                   }}
                   className={boutonSecondaire}
                 >

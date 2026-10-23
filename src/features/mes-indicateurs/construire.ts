@@ -60,11 +60,11 @@ export interface LigneMonIndicateur {
   /** Un calcul ne se saisit pas : « Se calcule tout seul ». */
   calcul: boolean
   enAttente: boolean
-  /** « Prévu par la coordination », « Suggestion ajoutée par vous le 12 oct. »... */
+  /** « Indicateur prévu », « Suggestion ajoutée par vous le 12 oct. »... */
   origine: string
-  /** « À valider par EJP Tech depuis 2 jours. » ; sinon null. */
+  /** « En attente de validation depuis 2 jours. » ; sinon null. */
   attente: string | null
-  /** « Vous pouvez déjà le saisir. », dite sous l'attente ; sinon null. */
+  /** « Vos chiffres compteront dès qu'il sera validé. », dite sous l'attente ; sinon null. */
   attenteSuite: string | null
   /** « Dernière saisie le 2 oct. », « Jamais saisi » ; null pour un calcul. */
   usage: string | null

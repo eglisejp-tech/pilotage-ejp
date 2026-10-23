@@ -50,7 +50,8 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
   double_authentification_requise: 'Votre connexion a expiré. Reconnectez-vous.',
   acces_refuse: 'Votre compte ne permet pas de gérer les comptes.',
   type_interdit: 'Ce compte ne peut pas être créé ici. Rechargez la page.',
-  ministere_inconnu: "Ce ministère n'existe plus ou il est désactivé. Rechargez la page.",
+  // Formule commune « introuvable » (guide 10.10 ; T66), comme la fiche et l'écran Indicateurs.
+  ministere_inconnu: 'Ce ministère est introuvable. Rechargez la page.',
   compte_inconnu: 'Ce compte est introuvable. Rechargez la page.',
   propre_compte:
     'Cette action ne se fait pas sur votre propre compte. Demandez-la à un autre compte EJP Tech.',

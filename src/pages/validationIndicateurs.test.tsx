@@ -177,7 +177,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     const faux = connecte('admin_plateforme')
     afficher('/indicateurs')
     const lu = await bloc()
-    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+    expect(lu.getByText('3 indicateurs à valider')).toBeInTheDocument()
     const noms = screen
       .getAllByRole('heading', { level: 3 })
       .map((titre) => titre.textContent ?? '')
@@ -187,7 +187,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(ligne('Kumi').getByText('en retard')).toBeInTheDocument()
     expect(ligne('Communication').queryByText('en retard')).toBeNull()
     expect(ligne('Kumi').getByText(/Suivre les demandes de l'équipe/)).toBeInTheDocument()
-    expect(ligne('Kumi').getByText('2 valeurs déjà saisies')).toBeInTheDocument()
+    expect(ligne('Kumi').getByText('2 chiffres déjà saisis')).toBeInTheDocument()
     expect(
       ligne('Kumi').getByText(/Nouvel indicateur\s*: «\s*Demandes reçues\s*» \(chaque mois\)/),
     ).toBeInTheDocument()
@@ -473,7 +473,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     afficher('/indicateurs')
     const section = await screen.findByRole('region', { name: 'À valider' })
     expect(await within(section).findByText(/^Rien à valider\./)).toBeInTheDocument()
-    expect(within(section).getByText('Aucun ajout en attente')).toBeInTheDocument()
+    expect(within(section).getByText('Aucun indicateur à valider')).toBeInTheDocument()
     expect(within(section).queryByRole('button')).toBeNull()
     // L'introduction dirait le contraire de « Rien à valider. » : elle n'est pas là.
     expect(within(section).queryByText(/Les ministères envoient leurs ajouts ici/)).toBeNull()
@@ -516,7 +516,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
     expect(alerte).toHaveTextContent('La connexion a échoué. Réessayez.')
     expect(lu.getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
     expect(lu.queryByText(/Décidées ces 30 derniers jours/)).toBeNull()
-    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+    expect(lu.getByText('3 indicateurs à valider')).toBeInTheDocument()
   })
 
   it('la file qui ne se lit pas : le bandeau seul, aucun compte de décisions à côté', async () => {
@@ -710,12 +710,12 @@ describe('/indicateurs, bloc « À valider » pour l’administration de l’ég
     const faux = connecte('admin_eglise')
     afficher('/indicateurs')
     const lu = await bloc()
-    expect(lu.getByText('3 ajouts en attente')).toBeInTheDocument()
+    expect(lu.getByText('3 indicateurs à valider')).toBeInTheDocument()
     expect(lu.getByText(/Ces ajouts attendent EJP Tech\. Vous les lisez ici/)).toBeInTheDocument()
     expect(lu.queryByRole('button')).toBeNull()
     expect(lu.queryByText(/Pourquoi/)).toBeNull()
     expect(lu.queryByText(/Suivre les demandes/)).toBeNull()
-    expect(lu.queryByText(/valeurs? déjà saisies?/)).toBeNull()
+    expect(lu.queryByText(/chiffres? déjà saisis?/)).toBeNull()
     expect(ligne('Kumi').getByText(/depuis 9 jours/)).toBeInTheDocument()
     expect(ligne('Kumi').getByText('en retard')).toBeInTheDocument()
     expect(

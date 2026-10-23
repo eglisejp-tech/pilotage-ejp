@@ -5,7 +5,7 @@ import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { CartePointFiche } from '@/features/fiche/CartePointFiche'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import type { EtatBloc, PointFiche, ProfilFiche } from '@/features/fiche/modeleFiche'
-import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
+import { TEXTES_FICHE, titrePointsFiche } from '@/features/fiche/textesFiche'
 import type { CompteDesActions } from '@/features/points-actions/ActionsPoint'
 
 interface Props {
@@ -32,9 +32,10 @@ function compteDeLaFiche(profil: ProfilFiche, ministereId: string): CompteDesAct
 }
 
 /**
- * « Points d'attention » de la fiche (maquettes 04 et 12) : points créés par le ministère ou qui
- * le mentionnent, ouverts puis traités depuis 7 jours. Tout est fait : « Aucun point ouvert pour
- * votre ministère. » (ministère) ou « Aucun point ouvert pour Social. » (berger, conseil, EJP Tech).
+ * « Points d'attention » de la fiche 04 (berger, conseil, EJP Tech), « Mes points » sur Ma fiche
+ * 12 (ministère) : le mot du menu de celui qui lit (T66, décisions 3 et 4). Points créés par le
+ * ministère ou qui le mentionnent, ouverts puis traités depuis 7 jours. Tout est fait : « Aucun
+ * point ouvert. » (ministère) ou « Aucun point ouvert pour Social. » (berger, conseil, EJP Tech).
  * Lu à part : son problème passager garde le titre et propose « Réessayer ».
  */
 export function BlocPointsFiche({ bloc, profil, ministereId, nomMinistere }: Props) {
@@ -44,7 +45,7 @@ export function BlocPointsFiche({ bloc, profil, ministereId, nomMinistere }: Pro
     <section aria-labelledby={idTitre} data-repli-focus className="flex min-w-0 flex-col">
       <TitreSection
         id={idTitre}
-        titre={TEXTES_FICHE.titrePoints}
+        titre={titrePointsFiche(profil)}
         complement={<span className="text-note text-encre-3">{TEXTES_FICHE.complementPoints}</span>}
       />
       <ApresChargement

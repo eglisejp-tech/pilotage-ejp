@@ -40,7 +40,7 @@ export interface LigneAValider {
   enRetard: boolean
   /** Le « Pourquoi », pour EJP Tech seulement ; null pour l'administration. */
   pourquoi: string | null
-  /** « 2 valeurs déjà saisies », pour EJP Tech seulement ; null sinon. */
+  /** « 2 chiffres déjà saisis », pour EJP Tech seulement ; null sinon. */
   nbValeurs: number | null
 }
 

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { FenetreFermerSansEnregistrer } from '@/features/saisie/FenetreFermerSansEnregistrer'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { estDejaClos, lireRefusSignalement } from '@/features/signalement/refus'
 import type { RefusSignalement } from '@/features/signalement/refus'
@@ -33,6 +34,8 @@ export interface ProprietesFormulaireCloture {
  * ouvre le panneau (T66). La consigne « transmis à l'administration » est dans le guide d'EJP
  * Tech (`docs/exploitation.md`, section 11), en attendant la page Aide (T66, point 10). Un
  * refus de la réponse se dit sous le champ ; la connexion perdue sous le bouton, réponse gardée.
+ * « Annuler » avec une réponse écrite demande d'abord « Fermer sans enregistrer ? » (guide 10.7),
+ * comme un panneau de saisie.
  */
 export function FormulaireCloture({
   id,
@@ -55,6 +58,12 @@ export function FormulaireCloture({
   })
   const commentaire = useWatch({ control, name: 'commentaire' })
   const [refus, setRefus] = useState<RefusSignalement | null>(null)
+  const [garde, setGarde] = useState(false)
+
+  const annuler = () => {
+    if (commentaire.trim() === '') onAnnuler()
+    else setGarde(true)
+  }
 
   // Le panneau s'ouvre sur le commentaire : le focus y va tout de suite.
   useEffect(() => {
@@ -112,7 +121,7 @@ export function FormulaireCloture({
         </button>
         <button
           type="button"
-          onClick={onAnnuler}
+          onClick={annuler}
           className="inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
         >
           {TEXTES_BLOC_SIGNALEMENTS.boutonAnnuler}
@@ -120,6 +129,15 @@ export function FormulaireCloture({
       </div>
       {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
       {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+      {garde ? (
+        <FenetreFermerSansEnregistrer
+          onFermer={() => {
+            setGarde(false)
+            onAnnuler()
+          }}
+          onContinuer={() => setGarde(false)}
+        />
+      ) : null}
     </form>
   )
 }

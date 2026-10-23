@@ -2,6 +2,7 @@ import { useId } from 'react'
 import type { ReactNode } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import type { CodeAide } from '@/components/aide/textesAide'
+import { cn } from '@/lib/utils'
 
 interface Props {
   libelle: string
@@ -15,14 +16,24 @@ interface Props {
   aide?: CodeAide
 }
 
-/** Case à cocher d'un panneau de configuration : une ligne de 44 px, sa conséquence dessous. */
+/**
+ * Case à cocher d'un panneau de configuration : une ligne de 44 px, sa conséquence dessous. Le
+ * libellé laisse toujours la place du « ? » (44 px) : sur téléphone, il passe sur deux lignes et
+ * le « ? » reste à côté de lui, au lieu de tomber seul sous la case. La bulle ouverte prend toute
+ * la largeur, sous la ligne.
+ */
 export function CaseACocher({ libelle, coche, onChange, verrouillee = false, note, aide }: Props) {
   const id = useId()
   const idNote = `${id}-note`
   return (
     <div className="flex flex-col gap-0.5">
       <div className="flex flex-wrap items-center">
-        <label className="flex min-h-cible cursor-pointer items-center gap-3 py-1 has-disabled:cursor-default">
+        <label
+          className={cn(
+            'flex min-h-cible cursor-pointer items-center gap-3 py-1 has-disabled:cursor-default',
+            aide && 'max-w-[calc(100%-var(--spacing-cible))]',
+          )}
+        >
           <input
             type="checkbox"
             checked={coche}

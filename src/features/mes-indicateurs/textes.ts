@@ -55,7 +55,7 @@ export const TEXTES_PANNEAU_AJOUT = {
   titreSuggestions: 'Suggestions',
   /**
    * Proposé : sous le titre des suggestions. La vérification d'EJP Tech ne se dit qu'une fois,
-   * sous le « Pourquoi » (T66 ; guide, section 6).
+   * dans l'aide du « Pourquoi » (T66 ; guide, section 6).
    */
   introSuggestions: "Choisissez l'indicateur que vous voulez suivre.",
   choisir: 'Choisir',
@@ -64,8 +64,13 @@ export const TEXTES_PANNEAU_AJOUT = {
   /** Au lot 1, sous la liste : le chiffre qui manque se demande à EJP Tech (T59). */
   rienNeConvient: 'Rien ne convient ? Demandez un indicateur à EJP Tech.',
   libellePourquoi: 'Pourquoi cet indicateur ?',
-  /** Sous le champ, pas de rappel sur les données personnelles (exception T30). */
-  phraseVerification: 'EJP Tech vérifie chaque ajout. En attendant, vous pouvez déjà le saisir.',
+  /**
+   * Avant « Envoyer pour validation » : ce qui arrive aux chiffres, la phrase de la ligne en
+   * attente (`SUITE_EN_ATTENTE`, T66 t080). Qui valide n'est dit qu'une fois, dans l'aide du
+   * « Pourquoi » (guide, section 6). Sous le champ, pas de rappel sur les données personnelles
+   * (exception T30).
+   */
+  phraseVerification: "Vos chiffres compteront dès qu'il sera validé.",
   envoyer: 'Envoyer pour validation',
   envoiEnCours: 'Envoi en cours',
   autreSuggestion: 'Choisir une autre suggestion',
@@ -98,18 +103,14 @@ export function rythmeEnPhrase(nature: NatureIndicateur): string {
   }
 }
 
-/** Où se saisit l'indicateur : « vos chiffres du mois » ou « le formulaire du dimanche ». */
-function ouSeSaisit(nature: NatureIndicateur): string {
-  return nature === 'mois' ? 'vos chiffres du mois' : 'le formulaire du dimanche'
-}
-
 /**
- * Message après l'envoi, selon le rythme (7.3) : « « Demandes reçues » envoyé pour validation :
- * vous pouvez déjà le saisir dans vos chiffres du mois. », ou « ... dans le formulaire du
- * dimanche. » (un indicateur du dimanche ou « à ce jour » se saisit avec les chiffres du dimanche).
+ * Message après l'envoi (guide 10.2 : l'objet, puis le participe) : « « Demandes reçues » envoyé
+ * pour validation. ». La suite (« Vos chiffres compteront dès qu'il sera validé. ») est sur la
+ * ligne de l'indicateur ; l'ancienne fin « vous pouvez déjà le saisir » est retirée comme sur la
+ * fiche (T66, t080 ; guide, exemple 4).
  */
-export function reussiteSuggestion(libelle: string, nature: NatureIndicateur): string {
-  return `«${NBSP}${libelle}${NBSP}» envoyé pour validation : vous pouvez déjà le saisir dans ${ouSeSaisit(nature)}.`
+export function reussiteSuggestion(libelle: string): string {
+  return `«${NBSP}${libelle}${NBSP}» envoyé pour validation.`
 }
 
 /** Nom accessible de « Choisir » : « Choisir « Demandes reçues » ». Il commence par le texte visible. */
@@ -120,12 +121,13 @@ export function nomBoutonChoisir(libelle: string): string {
 /**
  * « Ajoutée par vous le 12 oct. » et ses variantes, selon l'origine de la ligne. Un indicateur de
  * la liste prévue se dit « Indicateur prévu », sans nommer la coordination sur l'écran d'un
- * ministère (T66, t339 ; glossaire).
+ * ministère (T66, t339 ; glossaire). Un ajout de l'église pour ce ministère ne nomme pas non plus
+ * qui l'a fait (guide, section 3). Proposé.
  */
 export const MENTIONS_ORIGINE = {
   prevu: 'Indicateur prévu',
   suggestionEglise: 'Indicateur prévu',
-  ajoutEglise: "Ajouté par l'administration de l'église ou EJP Tech",
+  ajoutEglise: 'Ajouté pour votre ministère',
   suggestionMinistere: (jour: string) => `Suggestion ajoutée par vous le ${jour}`,
   ajoutMinistere: (jour: string) => `Ajouté par vous le ${jour}`,
 } as const
@@ -233,9 +235,11 @@ export const TEXTES_RETRAIT = {
   annuler: 'Annuler',
   /** Le nom de l'action, suivi de « en cours » (m231). */
   enCours: 'Retrait en cours',
-  /** Proposé : ce qui arrive à une demande à valider, avant de confirmer. */
-  consequenceDemande:
-    "EJP Tech n'aura plus à le valider et il ne sera plus proposé à la saisie. Vos saisies restent enregistrées.",
+  /**
+   * Proposé : ce qui arrive à une demande à valider, avant de confirmer. Sans dire qui ne la
+   * validera plus (guide, section 3) : le titre dit déjà que la demande est retirée.
+   */
+  consequenceDemande: 'Il ne sera plus proposé à la saisie. Vos saisies restent enregistrées.',
   /** Proposé : ce qui arrive à un ajout validé, avant de confirmer. */
   consequenceAjout: 'Il ne sera plus proposé à la saisie. Vos saisies restent enregistrées.',
   /** Proposé : qui lit le motif (T62 : le retrait apparaît chez EJP Tech). */

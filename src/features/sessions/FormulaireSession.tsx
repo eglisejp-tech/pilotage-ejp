@@ -31,6 +31,8 @@ interface Props {
   envoyer: (valeurs: ValeursDeclaration) => Promise<void>
   /** Présent dans un panneau : bouton « Annuler » sous le bouton principal. */
   onAnnuler?: () => void
+  /** EJP Tech, qui ajoute les ministères : la phrase sans ministère actif le lui dit (T60). */
+  gestionMinisteres?: boolean
 }
 
 type Erreurs = Partial<Record<'type' | 'date' | 'nom' | 'ministeres', string>>
@@ -60,6 +62,7 @@ export function FormulaireSession({
   coches,
   envoyer,
   onAnnuler,
+  gestionMinisteres = false,
 }: Props) {
   const depart = (): ValeursDeclaration => ({
     type: 'batir',
@@ -189,6 +192,7 @@ export function FormulaireSession({
         refPremier={premierMinistere}
         note={TEXTES_SESSIONS.indicationMinisteres}
         erreur={erreurs.ministeres}
+        gestionMinisteres={gestionMinisteres}
       />
       <BoutonEnregistrer
         libelle={declarer ? TEXTES_SESSIONS.boutonDeclarer : TEXTES_SESSIONS.boutonEnregistrer}

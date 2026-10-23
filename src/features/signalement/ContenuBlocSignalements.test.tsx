@@ -10,10 +10,10 @@ const VIDE = 'Aucun signalement.'
 const REPONSE = 'Réponse au ministère (facultatif)'
 const CLORE = 'Clore le signalement'
 
-// Le même libellé ouvre le panneau et confirme (T66) : l'ouvreur seul porte `aria-expanded`.
+// Le même libellé ouvre le panneau et confirme (T66) : le bouton de la ligne laisse sa place au
+// bouton du panneau, qui envoie le formulaire.
 const tousLesClore = () => screen.getAllByRole('button', { name: CLORE })
-const ouvreurs = () => tousLesClore().filter((bouton) => bouton.hasAttribute('aria-expanded'))
-const confirmer = () => tousLesClore().find((bouton) => !bouton.hasAttribute('aria-expanded'))!
+const confirmer = () => tousLesClore().find((bouton) => bouton.getAttribute('type') === 'submit')!
 
 function ligne(numero: number, champs: Partial<LigneSignalement> = {}): LigneSignalement {
   return {
@@ -154,21 +154,39 @@ describe('bloc « Signalements »', () => {
 describe('« Clore le signalement »', () => {
   it('ouvre le petit panneau : réponse facultative, rappel en dessous, focus dans le champ', async () => {
     liste([PLUS_ANCIEN])
-    const bouton = screen.getByRole('button', { name: CLORE })
-    expect(bouton).toHaveAttribute('aria-expanded', 'false')
-    await userEvent.click(bouton)
-    expect(bouton).toHaveAttribute('aria-expanded', 'true')
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
     const commentaire = screen.getByLabelText(REPONSE)
     expect(commentaire).toHaveFocus()
     expect(commentaire).toHaveAccessibleDescription(
       expect.stringContaining(`${RAPPEL} 0 sur 280`) as string,
     )
     expect(screen.getByText('Un signalement clos ne se rouvre pas.')).toBeInTheDocument()
-    // Le même libellé confirme (T66, t368).
-    expect(confirmer()).toHaveAttribute('type', 'submit')
+    // Le même libellé confirme (T66, t368) : un seul « Clore le signalement » pour la ligne, celui
+    // du panneau ; un second clic ne peut pas replier le panneau ni effacer la réponse.
+    expect(screen.getByRole('button', { name: CLORE })).toHaveAttribute('type', 'submit')
     await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
     expect(screen.queryByLabelText(REPONSE)).toBeNull()
-    expect(bouton).toHaveFocus()
+    expect(screen.getByRole('button', { name: CLORE })).toHaveAttribute('type', 'button')
+    expect(screen.getByRole('button', { name: CLORE })).toHaveFocus()
+  })
+
+  it('« Annuler » avec une réponse écrite : « Fermer sans enregistrer ? » d’abord', async () => {
+    const { cloturer } = liste([PLUS_ANCIEN])
+    await userEvent.click(screen.getByRole('button', { name: CLORE }))
+    await userEvent.type(screen.getByLabelText(REPONSE), 'Réglé par téléphone.')
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+    expect(fenetre).toHaveAccessibleDescription('Ce que vous avez saisi sera perdu.')
+    // « Continuer la saisie » : la réponse reste.
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Continuer la saisie' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(screen.getByLabelText(REPONSE)).toHaveValue('Réglé par téléphone.')
+    // « Fermer sans enregistrer » : le panneau se replie, rien n'est envoyé.
+    await userEvent.click(screen.getByRole('button', { name: 'Annuler' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Fermer sans enregistrer' }))
+    expect(screen.queryByLabelText(REPONSE)).toBeNull()
+    expect(screen.getByRole('button', { name: CLORE })).toHaveFocus()
+    expect(cloturer).not.toHaveBeenCalled()
   })
 
   it('sans réponse : clore avec null, puis « Signalement clos. » et le focus sur le titre', async () => {
@@ -212,10 +230,11 @@ describe('« Clore le signalement »', () => {
         Promise.reject({ code: 'P0001', message: 'Ce signalement est déjà clos.' }),
       ),
     } as Partial<ContenuBloc>)
-    await userEvent.click(ouvreurs()[0]!)
+    const [premiere, seconde] = within(blocOuverts()).getAllByRole('article')
+    await userEvent.click(within(premiere!).getByRole('button', { name: CLORE }))
     await userEvent.click(confirmer())
     expect(await screen.findByRole('alert')).toHaveTextContent('Ce signalement est déjà clos.')
-    await userEvent.click(ouvreurs()[1]!)
+    await userEvent.click(within(seconde!).getByRole('button', { name: CLORE }))
     expect(screen.queryByText('Ce signalement est déjà clos.')).toBeNull()
   })
 

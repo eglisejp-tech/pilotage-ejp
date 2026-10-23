@@ -32,7 +32,9 @@ type GenreLigne = Extract<
  * Actions d'une ligne d'indicateur (7.2) : « Corriger » (tant que rien n'est saisi, jamais sur une
  * suggestion), « Remplacer », « Retirer » et « Retirer pour confidentialité ». Chacune ouvre son
  * panneau ou sa fenêtre ; le nom accessible cite l'indicateur. Sans écriture (écran en lecture
- * seule), la ligne n'a aucune action.
+ * seule), la ligne n'a aucune action. Chaque bouton fait 44 px de haut (`min-h-cible`) ; la
+ * marge négative compense leur retrait de 8 px, pour que le texte du premier s'aligne sur celui
+ * de la ligne (à gauche sous 600 px, à droite au-delà).
  */
 export const ActionsLigne: FunctionComponent<ProprietesActionsLigne> = ({ ligne }) => {
   const controleur = usePanneaux()
@@ -46,7 +48,7 @@ export const ActionsLigne: FunctionComponent<ProprietesActionsLigne> = ({ ligne 
     { genre: 'confidentialite', libelle: TEXTES_PANNEAUX.actions.retirerConfidentialite },
   ]
   return (
-    <div className="flex flex-wrap gap-x-1 gap-y-2 min-[600px]:justify-end">
+    <div className="-mx-2 flex flex-wrap gap-x-1 gap-y-2 min-[600px]:justify-end">
       {actions.map((action) => (
         <button
           key={action.genre}

@@ -137,8 +137,8 @@ test.describe('EJP Tech', () => {
     await expect(ligne).toContainText('Ajouter un événement')
     await ligne.getByRole('button', { name: 'Clore le signalement' }).click()
     await page.getByLabel('Réponse au ministère (facultatif)').fill(COMMENTAIRE)
-    // Le même libellé confirme (T66) : le bouton qui envoie le panneau.
-    await page.locator('button[type="submit"]', { hasText: 'Clore le signalement' }).click()
+    // Le même libellé confirme (T66) : le bouton de la ligne a laissé sa place à celui du panneau.
+    await ligne.getByRole('button', { name: 'Clore le signalement' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
       'Signalement clos.',
     )

@@ -34,9 +34,9 @@ interface Props {
  * Formulaire d'envoi d'une suggestion (configuration-indicateurs.md, 7.3 ; validation-metier.md,
  * 2.2 et 5.2) : le libellé, le rythme et la définition de la suggestion en lecture, puis « Pourquoi
  * cet indicateur ? » (10 à 280 caractères, compteur, aide), sans aucun rappel sur les données
- * personnelles dessous (exception voulue, T30), la phrase « EJP Tech vérifie chaque ajout... » et
- * « Envoyer pour validation ». Un refus du texte par la base se dit sous le champ ; une limite ou
- * la connexion perdue sous le bouton, texte gardé.
+ * personnelles dessous (exception voulue, T30), la phrase « Vos chiffres compteront dès qu'il sera
+ * validé. » (T66) et « Envoyer pour validation ». Un refus du texte par la base se dit sous le
+ * champ ; une limite ou la connexion perdue sous le bouton, texte gardé.
  */
 export function FormulaireSuggestion({ suggestion, envoyer, onFait, onAutre }: Props) {
   const idChamp = useId()
@@ -60,7 +60,7 @@ export function FormulaireSuggestion({ suggestion, envoyer, onFait, onAutre }: P
     setRefus(null)
     try {
       await envoyer(formulaire)
-      onFait(reussiteSuggestion(suggestion.libelle, suggestion.nature))
+      onFait(reussiteSuggestion(suggestion.libelle))
     } catch (erreur) {
       const lu = lireRefusSuggestion(erreur)
       if (lu.ou === 'champ') setError('pourquoi', { message: lu.message }, { shouldFocus: true })

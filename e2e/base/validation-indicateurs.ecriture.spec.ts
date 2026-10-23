@@ -98,10 +98,13 @@ const lignesDeCommunication = (page: Page) =>
     has: page.getByRole('heading', { level: 3, name: 'Communication', exact: true }),
   })
 
-/** « 3 ajouts en attente » : la phrase du titre du bloc pour un nombre de lignes. */
+/**
+ * « 3 indicateurs à valider » : la phrase du titre du bloc pour un nombre de lignes, le même mot
+ * que la phrase de tête de l'écran (T66), cherchée mot pour mot (`exact`).
+ */
 function phraseEnAttente(nombre: number): string {
-  if (nombre === 0) return 'Aucun ajout en attente'
-  return `${nombre} ${nombre === 1 ? 'ajout' : 'ajouts'} en attente`
+  if (nombre === 0) return 'Aucun indicateur à valider'
+  return `${nombre} ${nombre === 1 ? 'indicateur' : 'indicateurs'} à valider`
 }
 
 test.describe('Communication envoie ses suggestions', () => {
@@ -138,11 +141,7 @@ test.describe('Communication envoie ses suggestions', () => {
       await champ.fill(suggestion.pourquoi)
       await panneau.getByRole('button', { name: 'Envoyer pour validation' }).click()
       await expect(
-        page.getByText(
-          new RegExp(
-            `«\\s*${suggestion.libelle}\\s*» envoyé pour validation : vous pouvez déjà le saisir dans vos chiffres du mois\\.`,
-          ),
-        ),
+        page.getByText(new RegExp(`^«\\s*${suggestion.libelle}\\s*» envoyé pour validation\\.$`)),
       ).toBeVisible()
       await expect(page.getByRole('dialog')).toHaveCount(0)
       expect(await indicateursDeCommunication(page)).toHaveLength(rang + 1)
@@ -271,7 +270,9 @@ test.describe('l’administration de l’église lit le bloc « À valider »', 
     // Les trois de Communication, plus « Participants » de Jeunesse, laissé à valider par le jeu
     // d'exemple : le titre dit le nombre de lignes, quelles qu'elles soient.
     await expect(lignesDeCommunication(page)).toHaveCount(3)
-    await expect(bloc.getByText(phraseEnAttente(await lignesDuBloc(page).count()))).toBeVisible()
+    await expect(
+      bloc.getByText(phraseEnAttente(await lignesDuBloc(page).count()), { exact: true }),
+    ).toBeVisible()
     for (const suggestion of SUGGESTIONS) {
       await expect(
         bloc.getByText(new RegExp(`Nouvel indicateur\\s*: «\\s*${suggestion.libelle}`)),
@@ -280,7 +281,7 @@ test.describe('l’administration de l’église lit le bloc « À valider »', 
     }
     await expect(bloc.getByRole('button')).toHaveCount(0)
     await expect(bloc.getByText(/Pourquoi/)).toHaveCount(0)
-    await expect(bloc.getByText(/valeurs? déjà saisies?/)).toHaveCount(0)
+    await expect(bloc.getByText(/chiffres? déjà saisis?/)).toHaveCount(0)
     await expect(bloc.getByText(/Ces ajouts attendent EJP Tech/)).toBeVisible()
   })
 
@@ -308,7 +309,7 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
     const bloc = page.getByRole('region', { name: 'À valider' })
     await expect(lignesDeCommunication(page)).toHaveCount(3)
     const avant = await lignesDuBloc(page).count()
-    await expect(bloc.getByText(phraseEnAttente(avant))).toBeVisible()
+    await expect(bloc.getByText(phraseEnAttente(avant), { exact: true })).toBeVisible()
     for (const suggestion of SUGGESTIONS) {
       await expect(ligneAValider(page, suggestion.libelle)).toContainText(suggestion.pourquoi)
     }
@@ -318,7 +319,7 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
     await expect(page.getByText('Indicateur validé.')).toBeVisible()
     await expect(ligneAValider(page, 'Événements couverts')).toHaveCount(0)
     await expect(lignesDeCommunication(page)).toHaveCount(2)
-    await expect(bloc.getByText(phraseEnAttente(avant - 1))).toBeVisible()
+    await expect(bloc.getByText(phraseEnAttente(avant - 1), { exact: true })).toBeVisible()
     const indicateurs = await indicateursDeCommunication(page)
     expect(
       indicateurs.find((indicateur) => indicateur.libelle === 'Événements couverts')?.etat,
@@ -358,7 +359,7 @@ test.describe('EJP Tech valide une suggestion et en refuse une', () => {
     ).toBeVisible()
     await expect(lignesDeCommunication(page)).toHaveCount(1)
     await expect(ligneAValider(page, 'Personnes formées')).toBeVisible()
-    await expect(bloc.getByText(phraseEnAttente(avant - 1))).toBeVisible()
+    await expect(bloc.getByText(phraseEnAttente(avant - 1), { exact: true })).toBeVisible()
   })
 
   test('masque le « Pourquoi » d’une demande : le texte est remplacé, le bouton disparaît', async ({

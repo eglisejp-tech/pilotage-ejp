@@ -111,10 +111,10 @@ describe('textes du bloc', () => {
     expect(texteAttente(9)).toBe('depuis 9 jours')
   })
 
-  it('le nombre d’ajouts en attente s’accorde', () => {
-    expect(texteNombreEnAttente(0)).toBe('Aucun ajout en attente')
-    expect(texteNombreEnAttente(1)).toBe('1 ajout en attente')
-    expect(texteNombreEnAttente(3)).toBe('3 ajouts en attente')
+  it('le nombre d’indicateurs à valider s’accorde, avec le mot de la phrase de tête (T66)', () => {
+    expect(texteNombreEnAttente(0)).toBe('Aucun indicateur à valider')
+    expect(texteNombreEnAttente(1)).toBe('1 indicateur à valider')
+    expect(texteNombreEnAttente(3)).toBe('3 indicateurs à valider')
   })
 
   it('le jour d’envoi est celui de Paris, jamais celui du navigateur', () => {
@@ -140,8 +140,9 @@ describe('textes du bloc', () => {
     expect(espaces(texteNouvelIndicateur('Demandes reçues', 'chaque mois'))).toBe(
       'Nouvel indicateur : « Demandes reçues » (chaque mois)',
     )
-    expect(texteValeursSaisies(1)).toBe('1 valeur déjà saisie')
-    expect(texteValeursSaisies(2)).toBe('2 valeurs déjà saisies')
+    // « chiffre », le mot du glossaire pour une valeur saisie (T66).
+    expect(texteValeursSaisies(1)).toBe('1 chiffre déjà saisi')
+    expect(texteValeursSaisies(2)).toBe('2 chiffres déjà saisis')
   })
 })
 

@@ -93,7 +93,7 @@ export function ApercuFiche() {
       return (
         <>
           <title>Aperçu, Fiche du ministère, Pilotage EJP</title>
-          <SqueletteFiche titre={TITRE_FICHE} />
+          <SqueletteFiche titre={TITRE_FICHE} profil={profil} />
         </>
       )
     case 'erreur':

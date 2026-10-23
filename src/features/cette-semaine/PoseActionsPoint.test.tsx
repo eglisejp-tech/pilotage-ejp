@@ -233,9 +233,8 @@ describe('les points de la fiche (04 et 12)', () => {
   it('le ministère lit sa fiche : son compte porte son ministère', () => {
     lire('ministere')
     expect(posees().map((recue) => recue.compte)).toEqual([MINISTERE, MINISTERE])
-    expect(screen.getByRole('region', { name: "Points d'attention" })).toHaveAttribute(
-      'data-repli-focus',
-    )
+    // Le bloc reprend le mot du menu du ministère (T66, décision 3).
+    expect(screen.getByRole('region', { name: 'Mes points' })).toHaveAttribute('data-repli-focus')
   })
 
   it.each(['berger', 'conseil'] as const)(
@@ -278,7 +277,9 @@ describe('la vue de la fiche pose un bouton par point, pour chaque profil qui pe
     '%s : un bouton par point de la fiche, avec le bon compte',
     (profil) => {
       lireFiche(profil)
-      const region = screen.getByRole('region', { name: "Points d'attention" })
+      const region = screen.getByRole('region', {
+        name: profil === 'ministere' ? 'Mes points' : "Points d'attention",
+      })
       const recues = posees(region)
       expect(recues).toHaveLength(within(region).getAllByRole('article').length)
       expect(recues).toHaveLength(3)

@@ -34,5 +34,5 @@ insert into public.signalement (id, ministere_id, ecran, texte, saisi_le, saisi_
 
 insert into public.signalement_suivi (id, signalement_id, commentaire, saisi_le, saisi_par) values
   ('43000000-0000-4000-8000-000000000011', '43000000-0000-4000-8000-000000000002',
-   'Réglé avec le ministère : le champ attendait un nombre entier.',
+   'Réglé avec le ministère, le champ attendait un nombre entier.',
    pg_temp.h('2026-09-22 10:00'), '20000000-0000-4000-8000-000000000031');          -- EJP Tech, compte 1

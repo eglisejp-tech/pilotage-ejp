@@ -14,7 +14,7 @@ import {
 } from '@/data/messagesBase'
 import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import { TEXTES_EVENEMENT } from '@/features/evenements/textes'
-import { schemaPourquoi } from '@/features/indicateurs/schemas'
+import { MESSAGES_MOIS, schemaPourquoi } from '@/features/indicateurs/schemas'
 import { MOTIF_TROP_LONG } from '@/features/indicateurs/validation/textes'
 import {
   explicationLimiteAjouts,
@@ -303,6 +303,27 @@ describe('lireErreurBase : le code décide d’abord', () => {
       nature: 'repli',
     })
   })
+
+  it('un schéma qui reprend un filet de la base prend le repli, comme la base (m098)', () => {
+    const doublon = z.object({
+      valeurs: z.array(z.string()).refine((liste) => new Set(liste).size === liste.length, {
+        message: MESSAGES_FIJ.doublon,
+      }),
+    })
+    expect(lireErreurBase(doublon.safeParse({ valeurs: ['a', 'a'] }).error)).toMatchObject({
+      nature: 'repli',
+    })
+  })
+
+  it.each([
+    'Un envoi compte 30 chiffres au plus.',
+    "Un indicateur ne se saisit qu'une fois par envoi.",
+  ])('filet « %s » : le repli, jamais le texte de la base (m098)', (message) => {
+    expect(lireErreurBase(refus(message))).toMatchObject({
+      nature: 'repli',
+      message: MESSAGES_COMMUNS.repliSaisie,
+    })
+  })
 })
 
 describe('le même texte avant l’envoi et après le refus de la base (guide, 10.8 et 10.9)', () => {
@@ -362,7 +383,9 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
     ],
     // Sessions (T66, t313 et m124) et événements (m124).
     ["Un ministère coché n'est pas actif.", TEXTES_EVENEMENT.erreurMention],
-    ["Ce mois n'est pas encore commencé.", "Ce mois n'a pas encore commencé."],
+    ["Ce mois n'est pas encore commencé.", MESSAGES_MOIS.futur],
+    ['Un mois se saisit à la date de son 1er jour.', MESSAGES_MOIS.invalide],
+    ['Ce mois est trop ancien pour être saisi.', MESSAGES_MOIS.trop_ancien],
     ['Indiquez votre prénom.', MESSAGES_PRENOM.vide],
     ['30 caractères au plus.', MESSAGES_PRENOM.long],
     ['Écrivez seulement votre prénom, en lettres.', MESSAGES_PRENOM.lettres],

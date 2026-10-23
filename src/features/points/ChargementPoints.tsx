@@ -1,5 +1,6 @@
 import { IndicateurChargement } from '@/components/etats/IndicateurChargement'
 import { PlaceReservee } from '@/components/etats/PlaceReservee'
+import { LienNouveauPoint } from '@/features/points/LienNouveauPoint'
 import { TEXTES_POINTS } from '@/features/points/textesPoints'
 import type { ProfilPoints } from '@/features/points/textesPoints'
 
@@ -10,10 +11,11 @@ interface Props {
 
 /**
  * Chargement de l'écran 05 (LISEZMOI, « États » ; T65, moment 2) : le titre, la phrase du
- * ministère (T66) et le filet des onglets tout de suite ; après 300 ms, la flamme vivante et
- * « Chargement des points » à la place de la liste, puis deux lignes réservées en gris immobile,
- * avec `aria-busy` (sur les lignes, jamais autour de la zone `status`) ; après 4 s, « Chargement
- * plus long que d'habitude » (m248). Les 10 s et l'erreur viennent de `usePoints`.
+ * ministère et son bouton « Nouveau point » (T66) et le filet des onglets tout de suite ; après
+ * 300 ms, la flamme vivante et « Chargement des points » à la place de la liste, puis deux lignes
+ * réservées en gris immobile, avec `aria-busy` (sur les lignes, jamais autour de la zone
+ * `status`) ; après 4 s, « Chargement plus long que d'habitude » (m248). Les 10 s et l'erreur
+ * viennent de `usePoints`.
  */
 export function ChargementPoints({ titre, profil }: Props) {
   return (
@@ -21,9 +23,12 @@ export function ChargementPoints({ titre, profil }: Props) {
       <header className="flex flex-col gap-2.5">
         <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
         {profil === 'ministere' ? (
-          <p className="max-w-[720px] leading-relaxed text-encre-2">
-            {TEXTES_POINTS.introduction.ministere}
-          </p>
+          <>
+            <p className="max-w-[720px] leading-relaxed text-encre-2">
+              {TEXTES_POINTS.introduction.ministere}
+            </p>
+            <LienNouveauPoint />
+          </>
         ) : null}
       </header>
       <div className="flex flex-col gap-2.5">

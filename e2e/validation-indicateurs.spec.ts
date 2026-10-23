@@ -55,7 +55,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await ouvrir(page)
     const bloc = page.getByRole('region', { name: 'À valider' })
     await expect(bloc.getByRole('heading', { level: 2, name: 'À valider' })).toBeVisible()
-    await expect(bloc.getByText('3 ajouts en attente')).toBeVisible()
+    await expect(bloc.getByText('3 indicateurs à valider')).toBeVisible()
     await expect(bloc.getByRole('heading', { level: 3 })).toHaveText([
       'Kumi',
       'Communication',
@@ -65,7 +65,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await expect(ligne(page, 'Kumi')).toContainText('depuis 9 jours')
     await expect(ligne(page, 'Kumi').getByText('en retard')).toBeVisible()
     await expect(ligne(page, 'Communication').getByText('en retard')).toHaveCount(0)
-    await expect(ligne(page, 'Kumi')).toContainText('2 valeurs déjà saisies')
+    await expect(ligne(page, 'Kumi')).toContainText('2 chiffres déjà saisis')
     await expect(ligne(page, 'Kumi')).toContainText(
       /Nouvel indicateur\s*: «\s*Demandes reçues\s*» \(chaque mois\)/,
     )
@@ -85,7 +85,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await bouton(page, /^Valider «\s*Demandes reçues\s*» de Kumi$/).click()
     await expect(reussite(page)).toHaveText('Indicateur validé.')
     await expect(page.getByRole('heading', { level: 3, name: 'Kumi' })).toHaveCount(0)
-    await expect(page.getByText('2 ajouts en attente')).toBeVisible()
+    await expect(page.getByText('2 indicateurs à valider')).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     // La décision rejoint la liste repliée.
     await page.getByText(/Décidées ces 30 derniers jours \(4\)/).click()
@@ -139,7 +139,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await refuser.click()
     await page.keyboard.press('Escape')
     await expect(page.getByRole('dialog')).toHaveCount(0)
-    await expect(page.getByText('3 ajouts en attente')).toBeVisible()
+    await expect(page.getByText('3 indicateurs à valider')).toBeVisible()
   })
 
   test('un refus du motif par la base se dit sous le champ, la fenêtre reste ouverte', async ({
@@ -195,7 +195,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await ouvrir(page, { vue: 'vide' })
     const bloc = page.getByRole('region', { name: 'À valider' })
     await expect(bloc.getByText(/^Rien à valider\./)).toBeVisible()
-    await expect(bloc.getByText('Aucun ajout en attente')).toBeVisible()
+    await expect(bloc.getByText('Aucun indicateur à valider')).toBeVisible()
     await expect(bloc.getByText(/Les ministères envoient leurs ajouts ici/)).toHaveCount(0)
     await expect(bloc.getByRole('button')).toHaveCount(0)
   })
@@ -218,7 +218,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await ouvrir(page, { vue: 'decisions-probleme' })
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await expect(bouton(page, 'Réessayer')).toBeVisible()
-    await expect(page.getByText('3 ajouts en attente')).toBeVisible()
+    await expect(page.getByText('3 indicateurs à valider')).toBeVisible()
     await expect(page.getByText(/Décidées ces 30 derniers jours/)).toHaveCount(0)
   })
 
@@ -364,7 +364,7 @@ test.describe('bloc « À valider » (administration de l’église), aperçu', 
   }) => {
     await ouvrir(page, { profil: 'admin_eglise' })
     const bloc = page.getByRole('region', { name: 'À valider' })
-    await expect(bloc.getByText('3 ajouts en attente')).toBeVisible()
+    await expect(bloc.getByText('3 indicateurs à valider')).toBeVisible()
     await expect(
       bloc.getByText(
         'Ces ajouts attendent EJP Tech. Vous les lisez ici : seul EJP Tech les valide ou les refuse.',

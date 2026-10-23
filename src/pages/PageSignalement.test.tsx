@@ -155,8 +155,9 @@ describe('/moderation, bloc « Signalements »', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Clore le signalement' }))
     await userEvent.click(screen.getByLabelText('Réponse au ministère (facultatif)'))
     await userEvent.paste('transmis à l’administration')
-    // Le même libellé ouvre le panneau et confirme (T66) : le bouton du panneau est le dernier.
-    await userEvent.click(screen.getAllByRole('button', { name: 'Clore le signalement' }).at(-1)!)
+    // Le même libellé ouvre le panneau et confirme (T66) : le bouton de la ligne a laissé sa
+    // place à celui du panneau.
+    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
     expect(await screen.findByText('Signalement clos.')).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('clore_signalement', {
       p_signalement_id: SIGNALEMENT_CLOS.id,

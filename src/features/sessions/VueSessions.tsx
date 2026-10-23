@@ -32,6 +32,11 @@ interface Props {
   titre: string
   donnees: EtatBloc<DonneesSessions>
   actions: ActionsSessions
+  /**
+   * EJP Tech, qui ajoute les ministères (T60) : sans ministère actif, le formulaire lui dit où
+   * les ajouter ; l'administration de l'église lit qu'EJP Tech les crée.
+   */
+  gestionMinisteres?: boolean
 }
 
 /** Le focus n'est plus nulle part : son élément a disparu (bouton supprimé, panneau fermé). */
@@ -48,7 +53,12 @@ function focusPerdu(): boolean {
  * un panneau ; « Supprimer » passe par une fenêtre de confirmation. La réussite s'affiche en haut
  * de la page, 6 secondes. Quand le bouton qui avait le focus disparaît, le focus va au titre.
  */
-export function VueSessions({ titre, donnees: lecture, actions }: Props) {
+export function VueSessions({
+  titre,
+  donnees: lecture,
+  actions,
+  gestionMinisteres = false,
+}: Props) {
   // T65 : « Déclarer une session » et la liste arrivent ensemble, après la tenue de la flamme.
   const donnees = useLectureAffichee(lecture).lecture
   const idListe = useId()
@@ -105,6 +115,7 @@ export function VueSessions({ titre, donnees: lecture, actions }: Props) {
             await actions.declarer(valeurs)
             annoncer(REUSSITES_SESSIONS.declaree(designationDeclaration(valeurs)))
           }}
+          gestionMinisteres={gestionMinisteres}
         />
       </aside>
     ) : null
@@ -179,6 +190,7 @@ export function VueSessions({ titre, donnees: lecture, actions }: Props) {
           actions={actions}
           onFait={apresPanneau}
           onFermer={fermerPanneau}
+          gestionMinisteres={gestionMinisteres}
         />
       ) : null}
 

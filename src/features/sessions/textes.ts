@@ -54,7 +54,16 @@ export const TEXTES_SESSIONS = {
   /** « Enregistrer » sans changement : rien ne part (m206). */
   dejaEnregistres:
     'Ces ministères attendus sont déjà enregistrés. Cochez ou décochez un ministère.',
+  /**
+   * Aucun ministère actif, lu par EJP Tech, qui les ajoute dans Ministères et comptes (T66, t306 ;
+   * le bouton y dit « Ajouter un ministère »).
+   */
   aucunMinistere: 'Aucun ministère actif. Ajoutez-en dans Ministères et comptes.',
+  /**
+   * Le même cas pour l'administration de l'église, qui ne crée plus de ministère depuis T60 : la
+   * phrase de l'écran Indicateurs (`aucunMinistereLecture`).
+   */
+  aucunMinistereLecture: 'Aucun ministère actif. EJP Tech crée les ministères.',
 
   modifier: 'Modifier',
   supprimer: 'Supprimer',

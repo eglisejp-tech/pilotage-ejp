@@ -150,9 +150,9 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     const champ = panneau.getByRole('textbox', { name: 'Pourquoi cet indicateur ?' })
     await expect(panneau.getByText('0 sur 280')).toBeVisible()
     await expect(panneau.getByText(/N'écrivez aucun nom/)).toHaveCount(0)
-    await expect(
-      panneau.getByText('EJP Tech vérifie chaque ajout. En attendant, vous pouvez déjà le saisir.'),
-    ).toBeVisible()
+    // Qui valide n'est dit qu'une fois, dans l'aide du « Pourquoi » (T66).
+    await expect(panneau.getByText("Vos chiffres compteront dès qu'il sera validé.")).toBeVisible()
+    await expect(panneau.getByText(/EJP Tech vérifie/)).toHaveCount(0)
 
     await champ.fill('Neuf cara')
     await bouton(page, 'Envoyer pour validation').click()
@@ -168,9 +168,7 @@ test.describe('Mes indicateurs (ministère), aperçu', () => {
     await champ.fill('Voir ce que le ministère a mené à terme.')
     await bouton(page, 'Envoyer pour validation').click()
     await expect(
-      reussite(page).getByText(
-        /«\s*Demandes traitées\s*» envoyé pour validation : vous pouvez déjà le saisir dans vos chiffres du mois\./,
-      ),
+      reussite(page).getByText(/^«\s*Demandes traitées\s*» envoyé pour validation\.$/),
     ).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
     // La suggestion rejoint la liste, à valider ; il ne reste plus d'ajout permis.

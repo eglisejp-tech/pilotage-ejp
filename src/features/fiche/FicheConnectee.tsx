@@ -26,7 +26,7 @@ export function FicheConnectee({ ministereId, profil, titre }: Props) {
   useTitrePage(titre)
   const resultat = useFiche(ministereId, { profil })
   const { attente, fondu } = useAttenteChargement(resultat.etat === 'chargement')
-  if (attente) return <SqueletteFiche titre={titre} />
+  if (attente) return <SqueletteFiche titre={titre} profil={profil} />
   switch (resultat.etat) {
     case 'pret':
       return (
@@ -40,7 +40,7 @@ export function FicheConnectee({ ministereId, profil, titre }: Props) {
         </Arrivee>
       )
     case 'chargement':
-      return <SqueletteFiche titre={titre} />
+      return <SqueletteFiche titre={titre} profil={profil} />
     case 'erreur':
       return (
         <>

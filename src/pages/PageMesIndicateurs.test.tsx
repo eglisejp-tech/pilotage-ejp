@@ -281,11 +281,11 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     expect(
       within(panneau).getByRole('button', { name: 'Aide : Pourquoi cet indicateur ?' }),
     ).toBeInTheDocument()
+    // Qui valide n'est dit qu'une fois, dans l'aide ; la phrase dit ce qui arrive aux chiffres (T66).
     expect(
-      within(panneau).getByText(
-        'EJP Tech vérifie chaque ajout. En attendant, vous pouvez déjà le saisir.',
-      ),
+      within(panneau).getByText("Vos chiffres compteront dès qu'il sera validé."),
     ).toBeInTheDocument()
+    expect(within(panneau).queryByText(/EJP Tech vérifie/)).toBeNull()
     // Exception voulue (T30) : aucun rappel sur les données personnelles sous ce champ.
     expect(within(panneau).queryByText(/N'écrivez aucun nom/)).toBeNull()
     await userEvent.type(champ, 'Voir ce que le ministère a mené à terme.')
@@ -346,9 +346,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
       }),
     )
     expect(
-      await screen.findByText(
-        /«\s*Demandes traitées\s*» envoyé pour validation : vous pouvez déjà le saisir dans vos chiffres du mois\./,
-      ),
+      await screen.findByText(/^«\s*Demandes traitées\s*» envoyé pour validation\.$/),
     ).toBeInTheDocument()
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
   })

@@ -14,7 +14,7 @@ import type { ProprietesPage } from '@/pages/proprietesPage'
  * `/indicateurs/:id` (lot L3a ; configuration-indicateurs.md, 7.2) : les indicateurs d'un
  * ministère et ses prévus à créer, pour EJP Tech, qui configure, et l'administration de l'église,
  * qui lit sans aucun bouton (décision T60 : aucune écriture ne lui est branchée). Un identifiant
- * mal formé donne « Ce ministère n'existe pas ou n'est plus actif. », sans requête. Les autres
+ * mal formé donne « Ce ministère est introuvable. », sans requête. Les autres
  * profils reçoivent la page non disponible, sans requête.
  */
 export function PageIndicateursMinistere({ titre }: ProprietesPage) {

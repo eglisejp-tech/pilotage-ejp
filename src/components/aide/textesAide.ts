@@ -35,12 +35,12 @@ export const TEXTES_AIDE = {
   'fiche.sommeAnnee': 'Total depuis la date indiquée. « 8 mois sur 9 » : 1 mois manque au total.',
   'fiche.courbe': 'Les 10 derniers dimanches ou les 12 derniers mois. Trou : aucune saisie.',
 
-  // Vue de l'église (écrans 01 à 03, branchée par le lot I)
+  // Vue de l'église (écrans 01 à 03). Ces trois aides sont au catalogue depuis W0 (6 octobre),
+  // mais aucun écran ne les affiche : la vue de l'église n'a pas de bouton « ? ». T66 (t195) :
+  // la négation courte est permise depuis le guide (section 9, règle 3 assouplie).
   'eglise.completude': "Ministères qui ont saisi ce chiffre. Le total n'additionne que ceux-là.",
   'eglise.ecart': 'Écart avec dimanche dernier, sur les ministères qui ont saisi les deux fois.',
-  // T66 (t195) proposait « des ministères n'ont pas saisi » : la règle du catalogue (dit en
-  // positif) garde « manquent », le sens est le même.
-  'eglise.courbe': 'Cercle vide : des ministères manquent. Trou : aucune saisie.',
+  'eglise.courbe': "Cercle vide : des ministères n'ont pas saisi. Trou : aucune saisie.",
 
   // ÉTAPES 5 ET 6 (lot C0, plan des étapes 5 à 8, section 3.0). Ajoutées à la fin du catalogue
   // seulement ; statut « Proposé, écrit le 7 octobre 2026 », à valider par la personne
@@ -50,10 +50,9 @@ export const TEXTES_AIDE = {
   // Ministères et comptes (écran 13, lot L1, BRIEF section 9). Tableau : en-tête « Double
   // authentification » (`comptes.etat`, états de `v_etat_comptes`). T66 : l'email d'un ministère
   // porte une indication visible sous le champ, l'email personnel et la colonne « Indicateurs
-  // propres » se comprennent seuls. T66 (t268) proposait « le lien n'est pas encore ouvert » : la
-  // règle du catalogue (dit en positif) garde « reste à ouvrir », le sens est le même.
+  // propres » se comprennent seuls. Texte de T66 (t268), tel qu'accepté.
   'comptes.etat':
-    '« Invitation envoyée » : le lien reste à ouvrir. « À activer » : le code reste à activer.',
+    "« Invitation envoyée » : le lien n'est pas encore ouvert. « À activer » : le code reste à activer.",
 
   // Configuration des indicateurs (configuration-indicateurs.md, 7.1 et 7.2, lot L3a).
   // `indicateurs.nombre` : colonne « Indicateurs » de /indicateurs (« 8 sur 30 » : la base limite

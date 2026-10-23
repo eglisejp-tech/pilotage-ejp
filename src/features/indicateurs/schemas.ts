@@ -70,8 +70,9 @@ export const schemaHeure = z
   })
   .transform(({ heures, minutes }) => heures * 60 + minutes)
 
-// T66 (t085, m082, m083) : le refus dit ce qui ne va pas ; le bouton dessous donne l'action.
-const MESSAGES_MOIS: Readonly<Record<RefusMois, string>> = {
+// T66 (t085, m082, m083) : le refus dit ce qui ne va pas ; le bouton dessous donne l'action. La
+// table de traduction donne les mêmes textes aux refus de la base (messagesBase.test).
+export const MESSAGES_MOIS: Readonly<Record<RefusMois, string>> = {
   invalide: "Ce mois n'est pas proposé à la saisie.",
   futur: "Ce mois n'a pas encore commencé.",
   trop_ancien: 'Ce mois est trop ancien pour être saisi.',

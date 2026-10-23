@@ -129,7 +129,8 @@ describe('/ma-fiche', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Social' }, ATTENTE),
     ).toBeInTheDocument()
-    const points = await screen.findByRole('region', { name: "Points d'attention" }, ATTENTE)
+    // Ma fiche : le bloc reprend le mot du menu du ministère (T66).
+    const points = await screen.findByRole('region', { name: 'Mes points' }, ATTENTE)
     expect(within(points).getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
     expect(within(points).getByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
     expect(screen.getByText('Octobre en cours : 7')).toBeInTheDocument()
@@ -168,11 +169,11 @@ describe('/ministeres/:id', () => {
     }
   })
 
-  it('un identifiant inconnu : « Ce ministère n’existe pas ou n’est plus actif. »', async () => {
+  it('un identifiant inconnu : « Ce ministère est introuvable. » (formule commune, T66)', async () => {
     installer('berger', { ...lignesFiche(), ministere: [] })
     afficher('/ministeres/10000000-0000-4000-8000-000000000099')
     expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif.", {}, ATTENTE),
+      await screen.findByText('Ce ministère est introuvable.', {}, ATTENTE),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir aux ministères' })).toHaveAttribute(
       'href',
@@ -184,7 +185,7 @@ describe('/ministeres/:id', () => {
     const faux = installer('conseil')
     afficher('/ministeres/pas-un-identifiant')
     expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif.", {}, ATTENTE),
+      await screen.findByText('Ce ministère est introuvable.', {}, ATTENTE),
     ).toBeInTheDocument()
     expect(faux.tables).toEqual(['compte'])
   })
@@ -202,7 +203,7 @@ describe('/ministeres/:id', () => {
     })
     afficher(`/ministeres/${SOCIAL}`)
     expect(
-      await screen.findByText("Ce ministère n'existe pas ou n'est plus actif.", {}, ATTENTE),
+      await screen.findByText('Ce ministère est introuvable.', {}, ATTENTE),
     ).toBeInTheDocument()
   })
 })
@@ -235,12 +236,12 @@ describe('/ministeres', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
-  it('aucun ministère actif, lu par EJP Tech : il les crée lui-même (T60)', async () => {
+  it('aucun ministère actif, lu par EJP Tech : il les ajoute lui-même (T60, T66)', async () => {
     installer('admin_plateforme', { v_semaine: [SEMAINE], v_tableau_ministeres: [] })
     afficher('/ministeres')
     expect(
       await screen.findByText(
-        'Aucun ministère actif. Créez-les dans Ministères et comptes.',
+        'Aucun ministère actif. Ajoutez-en dans Ministères et comptes.',
         {},
         ATTENTE,
       ),

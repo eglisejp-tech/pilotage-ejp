@@ -39,6 +39,7 @@ const TOUS: Ecran[] = [
   { profil: 'berger', etat: 'vide', vue: 'traites' },
   { profil: 'ministere', etat: 'vide', vue: 'tous' },
   { profil: 'berger', etat: 'chargement' },
+  { profil: 'ministere', etat: 'chargement' },
   { profil: 'berger', etat: 'erreur' },
 ]
 
@@ -216,6 +217,19 @@ test.describe('états vides et problèmes (T36)', () => {
     await expect(page.getByRole('heading', { level: 1, name: "Points d'attention" })).toBeVisible()
     await expect(page.getByText('Chargement des points', { exact: true })).toBeVisible()
     await expect(page.locator('[aria-busy="true"]')).toHaveCount(1)
+    await expect(page.getByRole('link', { name: 'Nouveau point' })).toHaveCount(0)
+  })
+
+  test('chargement de « Mes points » : « Nouveau point » est déjà dans l’en-tête (T65, T66)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'ministere', etat: 'chargement' })
+    const lien = page.getByRole('link', { name: 'Nouveau point' })
+    await expect(lien).toBeVisible()
+    const avant = await lien.boundingBox()
+    // Le bouton garde sa place une fois la liste lue : la page ne se décale pas.
+    await ouvrir(page, { profil: 'ministere' })
+    expect((await lien.boundingBox())?.y ?? -1).toBeCloseTo(avant?.y ?? 0, 0)
   })
 
   test('problème passager : le bandeau et « Réessayer »', async ({ page }) => {

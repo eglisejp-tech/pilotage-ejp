@@ -80,20 +80,12 @@ describe('« Pourquoi cet indicateur ? » : 10 à 280 caractères après espaces
   })
 })
 
-describe('message après l’envoi, selon le rythme', () => {
-  it('un indicateur du mois se saisit dans les chiffres du mois', () => {
-    expect(espaces(reussiteSuggestion('Demandes reçues', 'mois'))).toBe(
-      '« Demandes reçues » envoyé pour validation : vous pouvez déjà le saisir dans vos chiffres du mois.',
+describe('message après l’envoi', () => {
+  it('l’objet, puis le participe, sans « vous pouvez déjà le saisir » (T66, t080)', () => {
+    expect(espaces(reussiteSuggestion('Demandes reçues'))).toBe(
+      '« Demandes reçues » envoyé pour validation.',
     )
-  })
-
-  it('un indicateur du dimanche ou « à ce jour » se saisit dans le formulaire du dimanche', () => {
-    expect(espaces(reussiteSuggestion('Directs assurés', 'dimanche'))).toBe(
-      '« Directs assurés » envoyé pour validation : vous pouvez déjà le saisir dans le formulaire du dimanche.',
-    )
-    expect(espaces(reussiteSuggestion('Projets en cours', 'a_ce_jour'))).toBe(
-      '« Projets en cours » envoyé pour validation : vous pouvez déjà le saisir dans le formulaire du dimanche.',
-    )
+    expect(reussiteSuggestion('Directs assurés')).not.toMatch(/déjà le saisir|EJP Tech/)
   })
 
   it('le rythme se dit dans une phrase', () => {

@@ -101,6 +101,21 @@ describe('PagePoints', () => {
     )
   })
 
+  it('chargement de « Mes points » : « Nouveau point » est déjà dans l’en-tête (T65, T66)', () => {
+    connecter('ministere')
+    afficher('Mes points')
+    expect(screen.getByRole('link', { name: 'Nouveau point' })).toHaveAttribute(
+      'href',
+      '/saisir/point',
+    )
+  })
+
+  it('chargement de l’écran 05 du berger : pas de « Nouveau point »', () => {
+    connecter('berger')
+    afficher("Points d'attention")
+    expect(screen.queryByRole('link', { name: 'Nouveau point' })).toBeNull()
+  })
+
   it('erreur : le bandeau « La connexion a échoué. Réessayez. » et « Réessayer »', async () => {
     connecter('berger')
     hook.mockReturnValue({ etat: 'erreur', reessayer })

@@ -25,9 +25,20 @@ async function ouvrir(page: Page, requete: string) {
 const champ = (page: Page) => page.getByLabel('Quelle difficulté rencontrez-vous ?')
 const envoyer = (page: Page) => page.getByRole('button', { name: 'Envoyer le signalement' }).click()
 const REPONSE = 'Réponse au ministère (facultatif)'
-/** Le même libellé ouvre le panneau et confirme (T66) : le bouton qui confirme envoie le formulaire. */
-const confirmerCloture = (page: Page) =>
-  page.locator('button[type="submit"]', { hasText: 'Clore le signalement' })
+const CLORE = 'Clore le signalement'
+/** Le premier signalement ouvert du bloc d'EJP Tech (Communication, dans l'aperçu). */
+const premierOuvert = (page: Page) =>
+  page
+    .getByRole('region', { name: 'Signalements', exact: true })
+    .getByRole('list')
+    .first()
+    .getByRole('article')
+    .first()
+/**
+ * Le même libellé ouvre le panneau et confirme (T66) : le bouton de la ligne laisse sa place au
+ * bouton du panneau, la ligne n'a donc jamais qu'un « Clore le signalement ».
+ */
+const cloreLePremier = (page: Page) => premierOuvert(page).getByRole('button', { name: CLORE })
 
 async function auditer(page: Page) {
   const resultat = await new AxeBuilder({ page })
@@ -152,19 +163,21 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     page,
   }) => {
     await ouvrir(page, 'profil=admin_plateforme')
-    await page.getByRole('button', { name: 'Clore le signalement' }).first().click()
+    await cloreLePremier(page).click()
     const commentaire = page.getByLabel(REPONSE)
     await expect(commentaire).toBeFocused()
+    // Un seul « Clore le signalement » sur la ligne ouverte : celui qui envoie le panneau.
+    await expect(cloreLePremier(page)).toHaveAttribute('type', 'submit')
     // La consigne « transmis à l'administration » a quitté l'écran (T66, point ouvert 10).
     await expect(commentaire).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
     await expect(page.getByText('Un signalement clos ne se rouvre pas.')).toBeVisible()
     await commentaire.fill('Court')
-    await confirmerCloture(page).click()
+    await cloreLePremier(page).click()
     await expect(
       page.getByText('Écrivez au moins 10 caractères, ou laissez la réponse vide.'),
     ).toBeVisible()
     await commentaire.fill("transmis à l'administration")
-    await confirmerCloture(page).click()
+    await cloreLePremier(page).click()
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
       'Signalement clos.',
     )
@@ -218,9 +231,26 @@ test.describe('accessibilité et largeurs', () => {
     await expect(page.getByText('Décrivez la difficulté (10 caractères au moins).')).toBeVisible()
     await auditer(page)
     await ouvrir(page, 'profil=admin_plateforme')
-    await page.getByRole('button', { name: 'Clore le signalement' }).first().click()
+    await cloreLePremier(page).click()
     await expect(page.getByLabel(REPONSE)).toBeVisible()
     await auditer(page)
+  })
+
+  test('« Annuler » avec une réponse écrite : « Fermer sans enregistrer ? », puis le focus revient', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=admin_plateforme')
+    await cloreLePremier(page).click()
+    await page.getByLabel(REPONSE).fill('Réglé par téléphone.')
+    await premierOuvert(page).getByRole('button', { name: 'Annuler' }).click()
+    const fenetre = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
+    await fenetre.getByRole('button', { name: 'Continuer la saisie' }).click()
+    await expect(page.getByLabel(REPONSE)).toHaveValue('Réglé par téléphone.')
+    await premierOuvert(page).getByRole('button', { name: 'Annuler' }).click()
+    await fenetre.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
+    await expect(page.getByLabel(REPONSE)).toHaveCount(0)
+    await expect(cloreLePremier(page)).toBeFocused()
+    await expect(cloreLePremier(page)).toHaveAttribute('type', 'button')
   })
 
   test('à 360 px, aucun défilement horizontal', async ({ page }, testInfo) => {
@@ -279,6 +309,6 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
     await capturer(vue)
   }
   await ouvrir(page, 'profil=admin_plateforme')
-  await page.getByRole('button', { name: 'Clore le signalement' }).first().click()
+  await cloreLePremier(page).click()
   await capturer('bloc-cloture')
 })

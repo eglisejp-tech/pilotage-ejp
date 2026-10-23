@@ -50,7 +50,7 @@ export function estIdentifiantMinistere(id: string | undefined): id is string {
 export type ResultatFiche =
   | { etat: 'chargement' }
   | { etat: 'erreur'; reessayer: () => void }
-  /** Identifiant inconnu, ou ministère désactivé : « Ce ministère n'existe pas ou n'est plus actif. » */
+  /** Identifiant inconnu, ou ministère désactivé : « Ce ministère est introuvable. » */
   | { etat: 'introuvable' }
   | {
       etat: 'pret'

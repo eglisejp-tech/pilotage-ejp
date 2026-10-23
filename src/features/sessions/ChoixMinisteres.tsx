@@ -20,6 +20,11 @@ interface Props {
    */
   note?: string
   erreur?: string
+  /**
+   * EJP Tech, qui ajoute les ministères (T60) : sans ministère actif, la phrase lui dit où les
+   * ajouter. L'administration de l'église lit à la place qu'EJP Tech les crée.
+   */
+  gestionMinisteres?: boolean
 }
 
 /**
@@ -35,6 +40,7 @@ export function ChoixMinisteres({
   refPremier,
   note,
   erreur,
+  gestionMinisteres = false,
 }: Props) {
   const idTitre = `${id}-titre`
   const idNote = `${id}-note`
@@ -65,7 +71,11 @@ export function ChoixMinisteres({
         </p>
       ) : null}
       {ministeres.length === 0 ? (
-        <p className="py-2 text-encre-2">{TEXTES_SESSIONS.aucunMinistere}</p>
+        <p className="py-2 text-encre-2">
+          {gestionMinisteres
+            ? TEXTES_SESSIONS.aucunMinistere
+            : TEXTES_SESSIONS.aucunMinistereLecture}
+        </p>
       ) : (
         <ul className="flex flex-col">
           {ministeres.map((ministere, rang) => (

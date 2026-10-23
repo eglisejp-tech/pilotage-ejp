@@ -46,9 +46,9 @@ function focusPerdu(): boolean {
 
 /**
  * `/ma-fiche/indicateurs`, « Mes indicateurs » (configuration-indicateurs.md, 7.3) : la phrase du
- * ministère (« Communication suit 7 indicateurs : ... Vous pouvez en ajouter 1 autre. »), « Ajouter
- * un indicateur », puis les indicateurs par rythme avec leur origine, leur usage et leur état (« À
- * valider par EJP Tech depuis 2 jours. Vous pouvez déjà le saisir... »), et « Retirés » avec le
+ * ministère (« 7 indicateurs suivis, dont 2 ajoutés par vous. Vous pouvez en ajouter 1 autre. »),
+ * « Ajouter un indicateur », puis les indicateurs par rythme avec leur origine, leur usage et leur
+ * état (« En attente de validation depuis 2 jours. Vos chiffres compteront... »), et « Retirés » avec le
  * motif d'un refus. Aucune valeur n'est lue. Le bouton « Ajouter un indicateur » ouvre un panneau
  * de 460 px (page entière sous 600 px) ; il reste actif à la limite, le panneau dit alors quoi
  * faire. Un envoi réussi ferme le panneau et s'annonce 6 secondes ; le focus revient au titre

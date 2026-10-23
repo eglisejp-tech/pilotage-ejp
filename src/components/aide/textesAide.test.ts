@@ -28,9 +28,20 @@ describe('catalogue des aides (T38)', () => {
     expect(ENTREES).toHaveLength(18)
   })
 
-  // Règle 3 : on dit ce qu'est le chiffre, pas ce que la personne ne doit pas savoir ni faire.
-  it.each(ENTREES)('%s : dit ce que c’est, sans tournure négative', (code, texte) => {
-    expect(texte, code).not.toMatch(/\b(pas|jamais|ne peut|ne comptent)\b/i)
+  // Règle 3 : on dit ce qu'est le chiffre, pas ce que la personne ne doit pas savoir ni faire. Le
+  // guide de T66 (section 9) l'assouplit. Deux textes validés mot pour mot par la personne
+  // responsable avec T66 (t195, t268) gardent une courte négation.
+  const NEGATION_ACCEPTEE: ReadonlySet<string> = new Set(['eglise.courbe', 'comptes.etat'])
+  it.each(ENTREES.filter(([code]) => !NEGATION_ACCEPTEE.has(code)))(
+    '%s : dit ce que c’est, sans tournure négative',
+    (code, texte) => {
+      expect(texte, code).not.toMatch(/\b(pas|jamais|ne peut|ne comptent)\b/i)
+    },
+  )
+  it.each([...NEGATION_ACCEPTEE])('%s : une seule négation courte, « pas »', (code) => {
+    const texte = TEXTES_AIDE[code as keyof typeof TEXTES_AIDE]
+    expect(texte.match(/\bpas\b/gi), code).toHaveLength(1)
+    expect(texte, code).not.toMatch(/\b(jamais|ne peut|ne comptent)\b/i)
   })
 
   it('nomme chaque code « écran.sujet », sans doublon', () => {

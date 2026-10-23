@@ -14,7 +14,7 @@ const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const TEXTE_OUVERT =
   "Le formulaire refuse la date de notre soirée de louange, alors qu'elle est bien à venir."
 const TEXTE_CLOS = 'Le bouton Envoyer reste grisé après la saisie des STARs au service.'
-const COMMENTAIRE_CLOS = 'Réglé avec le ministère : le champ attendait un nombre entier.'
+const COMMENTAIRE_CLOS = 'Réglé avec le ministère, le champ attendait un nombre entier.'
 
 async function attendreLaFinDuChargement(page: Page) {
   await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })

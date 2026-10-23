@@ -73,7 +73,8 @@ const CLOS_COMMUNICATION: LigneSignalement = {
   texte: 'Le bouton Envoyer reste grisé après la saisie des STARs au service.',
   saisi_le: '2026-09-27T13:10:00+02:00',
   suivi_id: '43000000-0000-4000-8000-000000000011',
-  commentaire: 'Réglé avec le ministère : le champ attendait un nombre entier.',
+  // Sans deux-points : la ligne close l'affiche après « Réponse : ».
+  commentaire: 'Réglé avec le ministère, le champ attendait un nombre entier.',
   clos_le: '2026-09-29T10:00:00+02:00',
   ouvert: false,
   clos_recent: true,

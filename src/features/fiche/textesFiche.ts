@@ -4,6 +4,7 @@
 // Les textes des indicateurs (« Pas encore de saisie », « à valider », « Indicateurs propres »,
 // « Retirés », « Dernières saisies ») sont ceux de `src/features/indicateurs/textesVides.ts` (E1).
 
+import type { ProfilFiche } from '@/features/fiche/modeleFiche'
 import { nomDuMois } from '@/lib/metier/dates'
 import type { Mois } from '@/lib/metier/periodes'
 import { terminerPhrase } from '@/lib/metier/texte'
@@ -29,7 +30,13 @@ export const TEXTES_FICHE = {
   titreChiffres: 'Les chiffres du ministère',
   complementChiffres: 'Dernière saisie',
   colonneCourbe: 'Courbe',
+  /**
+   * Titre du bloc des points : le mot du menu de celui qui lit (T66, décision 3). Le berger et le
+   * conseil gardent « Points d'attention » dans leur menu (décision 4) ; le ministère lit « Mes
+   * points », comme son menu et Ma semaine (t210, appliquée ainsi).
+   */
   titrePoints: "Points d'attention",
+  titrePointsMinistere: 'Mes points',
   complementPoints: 'Créés ou mentionnés',
   titreDernieresSaisies: 'Dernières saisies',
   toutLeJournal: 'Tout le journal',
@@ -78,8 +85,11 @@ export const TEXTES_FICHE = {
       terminerPhrase(auteur === null ? `Traité le ${jour}` : `Traité le ${jour} par ${auteur}`),
   },
 
-  /** `/ministeres/:id` d'un identifiant inconnu ou d'un ministère désactivé. Proposé (E2). */
-  introuvable: "Ce ministère n'existe pas ou n'est plus actif.",
+  /**
+   * `/ministeres/:id` d'un identifiant inconnu ou d'un ministère désactivé : la formule commune
+   * « introuvable », avec le bouton de retour (guide 10.10 ; T66, m224 pour l'écran Indicateurs).
+   */
+  introuvable: 'Ce ministère est introuvable.',
   revenirAuxMinisteres: 'Revenir aux ministères',
 
   /** Problème passager d'un écran ou d'un bloc (LISEZMOI, « États »). */
@@ -96,8 +106,11 @@ export const TEXTES_FICHE = {
     chargement: 'Chargement des ministères',
     /** Premier usage, sans dire qui crée les ministères (T66, t227). */
     aucun: 'Aucun ministère actif.',
-    /** Premier usage, lu par EJP Tech, qui crée les ministères (T60). Proposé. */
-    aucunGestion: 'Aucun ministère actif. Créez-les dans Ministères et comptes.',
+    /**
+     * Premier usage, lu par EJP Tech, qui ajoute les ministères (T60) : la phrase des sessions
+     * (T66, t306), avec le mot du bouton « Ajouter un ministère ».
+     */
+    aucunGestion: 'Aucun ministère actif. Ajoutez-en dans Ministères et comptes.',
     colonneMinistere: 'Ministère',
     colonneMiseAJour: 'Mise à jour',
     colonneEvenement: 'Prochain événement',
@@ -109,6 +122,11 @@ export const TEXTES_FICHE = {
     aucunPointOuvert: 'Aucun',
   },
 } as const
+
+/** Titre du bloc des points pour celui qui lit la fiche : « Mes points » pour le ministère. */
+export function titrePointsFiche(profil: ProfilFiche): string {
+  return profil === 'ministere' ? TEXTES_FICHE.titrePointsMinistere : TEXTES_FICHE.titrePoints
+}
 
 const VOYELLE = /^[aeiouyàâéèêëîïôöûüh]/i
 

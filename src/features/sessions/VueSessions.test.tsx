@@ -61,6 +61,30 @@ describe('VueSessions (écran 14)', () => {
     expect(screen.queryByRole('table')).toBeNull()
   })
 
+  it.each([
+    [false, 'Aucun ministère actif. EJP Tech crée les ministères.'],
+    [true, 'Aucun ministère actif. Ajoutez-en dans Ministères et comptes.'],
+  ])(
+    'aucun ministère actif (gestion des ministères : %s) : une phrase que ce compte peut suivre (T60, T66)',
+    (gestionMinisteres, phrase) => {
+      const sansMinistere: EtatBloc<DonneesSessions> = {
+        etat: 'donnees',
+        donnees: { lignes: [], ministeres: [], aujourdhui: AUJOURDHUI_APERCU },
+      }
+      render(
+        <MemoryRouter>
+          <VueSessions
+            titre="Sessions"
+            donnees={sansMinistere}
+            actions={actionsFausses()}
+            gestionMinisteres={gestionMinisteres}
+          />
+        </MemoryRouter>,
+      )
+      expect(screen.getByText(phrase)).toBeInTheDocument()
+    },
+  )
+
   it('« Supprimer » n’est proposé que pour une session sans saisie', () => {
     afficher(donnees())
     expect(screen.getAllByRole('button', { name: /^Supprimer / })).toHaveLength(1)

@@ -85,10 +85,13 @@ export const TEXTES_A_VALIDER = {
   validationEnCours: 'Validation en cours',
 } as const
 
-/** « 2 ajouts en attente », « Aucun ajout en attente » : à droite du titre du bloc. */
+/**
+ * « 2 indicateurs à valider », « Aucun indicateur à valider » : à droite du titre du bloc. Le même
+ * nom que la phrase de tête de l'écran (« 2 indicateurs à valider. », T66) : un nombre, un mot.
+ */
 export function texteNombreEnAttente(n: number): string {
-  if (n === 0) return 'Aucun ajout en attente'
-  return `${nombre(n)} ${accorder(n, 'ajout en attente', 'ajouts en attente')}`
+  if (n === 0) return 'Aucun indicateur à valider'
+  return `${nombre(n)} ${accorder(n, 'indicateur à valider', 'indicateurs à valider')}`
 }
 
 /** « Envoyé le 2 oct. » : le jour de Paris de l'envoi (jamais la date du navigateur). */
@@ -107,9 +110,12 @@ export function estEnRetard(jours: number | null): boolean {
   return jours !== null && jours > JOURS_AVANT_RETARD
 }
 
-/** « 2 valeurs déjà saisies » : EJP Tech seulement, le nombre de périodes, jamais une valeur. */
+/**
+ * « 2 chiffres déjà saisis » : EJP Tech seulement, le nombre de périodes, jamais une valeur. Le mot
+ * du glossaire pour une valeur saisie (T66).
+ */
 export function texteValeursSaisies(n: number): string {
-  return `${nombre(n)} ${accorder(n, 'valeur déjà saisie', 'valeurs déjà saisies')}`
+  return `${nombre(n)} ${accorder(n, 'chiffre déjà saisi', 'chiffres déjà saisis')}`
 }
 
 /** « Nouvel indicateur : « Demandes reçues » (chaque mois) » : ce que le ministère a envoyé. */
