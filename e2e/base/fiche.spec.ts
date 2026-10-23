@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { fichierSession, seConnecter, suivreRequetesDeDonnees } from '../comptes.ts'
+import { aujourdhuiDeLaBase } from './outils-evenements.ts'
 
 // Fiche d'un ministère (04, 12) et liste des ministères (lot E2) avec la base locale (job « e2e »
 // de la CI, E2E_BASE=1), en lecture seulement. Jeux d'exemple : seed/40 (le sensible de Social à
@@ -133,5 +134,60 @@ test.describe('ministère Social, sur sa fiche', () => {
       'Malaise : 4',
     )
     await expect(ligne.getByText(PRECISION)).toBeVisible()
+  })
+})
+
+// Comptages de l'église et ponctualité sur la fiche de Coordination (T68, seed/45). Chiffres sûrs
+// du mois écoulé à partir du 4 du mois (contrat, section 5) : 4 événements avec leurs heures dont
+// 2 à l'heure ; retards de 12 min (Soirée jeunesse) et de 35 min (Veillée de prière, minuit).
+// Les lignes des cultes et le mois en cours dépendent du jour : seule leur forme est vérifiée.
+const lignePonctualite = (page: Page) => page.locator('[data-comptage="principal"]')
+const resumeRetards = (page: Page) => page.getByText(/^Voir les \d+ événements commencés en retard/)
+const AVANT_LE_4 = "Avant le 4 du mois, les événements d'aujourd'hui tombent dans le mois écoulé."
+
+/** Jour du mois (Paris) lu dans la base, jamais sur la machine. */
+async function jourDuMois(page: Page): Promise<number> {
+  return Number((await aujourdhuiDeLaBase(page)).slice(8, 10))
+}
+
+test.describe('berger, fiche de Coordination : comptages et ponctualité (T68)', () => {
+  test.use({ storageState: fichierSession('berger') })
+
+  test('les totaux du mois écoulé, puis la liste repliée des retards', async ({ page }) => {
+    await page.goto('/ministeres')
+    await attendreLaFiche(page)
+    await page.getByRole('link', { name: 'Coordination', exact: true }).click()
+    await attendreLaFiche(page)
+    await expect(
+      page.getByRole('heading', { level: 2, name: "Événements de l'église" }),
+    ).toBeVisible()
+    await expect(page.getByRole('heading', { level: 2, name: 'Ponctualité' })).toBeVisible()
+    const ligne = lignePonctualite(page)
+    await expect(ligne.getByText(/^Cultes : \d+ sur \d+$/)).toBeVisible()
+    test.skip((await jourDuMois(page)) < 4, AVANT_LE_4)
+    await expect(ligne.getByText('Autres événements : 2 sur 4', { exact: true })).toBeVisible()
+    const resume = resumeRetards(page)
+    await expect(resume).toHaveText(/^Voir les 2 événements commencés en retard en /)
+    await resume.click()
+    await expect(page.getByText(/Soirée jeunesse \(Jeunesse\) :/)).toBeVisible()
+    await expect(page.getByText(/Veillée de prière \(Coordination\) :/)).toBeVisible()
+    await expect(page.getByText('35 min de retard', { exact: true })).toBeVisible()
+  })
+})
+
+test.describe('ministère Coordination, sur sa fiche (K11)', () => {
+  test('les totaux seulement, sans la liste des retards', async ({ page }, infos) => {
+    // Une seule connexion de plus (vérification des codes limitée, BRIEF section 8).
+    test.skip(infos.project.name !== 'ordinateur', 'Connexion vérifiée une fois, à 1440 px.')
+    test.setTimeout(120_000)
+    await seConnecter(page, 'coordination@exemple.test')
+    await expect(page).toHaveURL((url) => url.pathname === '/')
+    await page.goto('/ma-fiche')
+    await attendreLaFiche(page)
+    await expect(page.getByRole('heading', { level: 2, name: 'Ponctualité' })).toBeVisible()
+    const ligne = lignePonctualite(page)
+    await expect(ligne.getByText(/^Autres événements : \d+ sur \d+$/)).toBeVisible()
+    await expect(resumeRetards(page)).toHaveCount(0)
+    await expect(page.getByText(/Soirée jeunesse/)).toHaveCount(0)
   })
 })

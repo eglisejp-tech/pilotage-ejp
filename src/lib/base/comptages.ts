@@ -47,24 +47,11 @@ export type LigneComptagesEglise = ComptagesMois & {
   depuis: string
 }
 
-/**
- * Colonnes de ponctualité de `v_evenement` (dernier état) que la lecture des retards demande.
- * Doublon temporaire : le chantier de saisie les ajoute à `v_evenement` dans `evenements.ts` ;
- * l'intersection des deux déclarations donne le même type. À retirer à l'assemblage.
- */
-type PonctualiteEvenement = {
-  heure_prevue: number | null
-  heure_debut: number | null
-  /** Minutes signées (négatif : avance), null sans les deux heures ou hors « Terminé ». */
-  retard: number | null
-  /** `retard` au plus 5 minutes, null quand `retard` est null. */
-  a_l_heure: boolean | null
-}
-
+// Les colonnes de ponctualité de `v_evenement` (heure_prevue, heure_debut, retard, a_l_heure) sont
+// déclarées avec la vue dans `evenements.ts`.
 export type VuesComptages = {
   /** Comptages par ministère porteur et par mois, sous la RLS de `evenement` (X10). */
   v_evenements_mois: Vue<LigneEvenementsMois>
-  v_evenement: Vue<PonctualiteEvenement>
 }
 
 export type FonctionsComptages = {
