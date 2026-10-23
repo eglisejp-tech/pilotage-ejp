@@ -250,7 +250,8 @@ test.describe('ministère Communication : les attentes de l’outil, animations 
     await expect(page.getByText('Chargement de Ma semaine', { exact: true })).toHaveCount(0)
     await expect(page).toHaveTitle('Ma semaine, Pilotage EJP')
     await expect(page.getByRole('heading', { level: 2, name: 'Vos saisies' })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: 'Vos points' })).toBeVisible()
+    // Le bloc reprend le mot du menu (T66).
+    await expect(page.getByRole('heading', { level: 2, name: 'Mes points' })).toBeVisible()
   })
 })
 

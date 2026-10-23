@@ -578,7 +578,8 @@ test.describe('T62 : EJP Tech lit le retrait', () => {
     // La demande a quitté la file : son « Pourquoi » se lit ici, déjà masqué plus haut dans ce
     // parcours, donc sans second « Masquer le texte ».
     await expect(
-      liste.getByText(/^Pourquoi : «\s*\[texte masqué par EJP Tech\]\s*»$/),
+      // Le marqueur de la base s'affiche « [texte masqué] » (T66, t356).
+      liste.getByText(/^Pourquoi : «\s*\[texte masqué\]\s*»$/),
     ).toBeVisible()
     await expect(liste.getByText(SUGGESTIONS[2].pourquoi)).toHaveCount(0)
     await expect(liste.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(1)

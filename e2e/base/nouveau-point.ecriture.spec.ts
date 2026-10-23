@@ -168,8 +168,9 @@ test.describe('Communication', () => {
   }) => {
     await page.goto('/saisir/point')
     await bouton(page).click()
+    // Le contrôle avant l'envoi : un message par situation (T66, m137).
     await expect(page.getByLabel('Titre', { exact: true })).toHaveAccessibleDescription(
-      /Donnez un titre au point \(80 caractères au plus\)\./,
+      /Donnez un titre au point\./,
     )
 
     const aujourdhui = await aujourdhuiDeLaBase(page)
