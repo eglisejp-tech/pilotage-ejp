@@ -5,7 +5,9 @@ import {
   LIGNE_DIMANCHE_A_FAIRE,
   LIGNE_DIMANCHE_FAIT,
   LIGNE_EVENEMENT_A_CONFIRMER,
+  LIGNE_EVENEMENT_HEURE_DEBUT,
   LIGNE_EVENEMENT_MENTIONNE,
+  LIGNE_EVENEMENT_SANS_ETAT_FINAL,
   LIGNE_REUNION_A_FAIRE,
   LIGNE_REUNION_FAITE,
 } from '@/features/accueil-ministere/exempleAccueil'
@@ -82,6 +84,39 @@ describe('saisieDeLaLigne', () => {
     expect(saisieDeLaLigne(LIGNE_EVENEMENT_A_CONFIRMER, CONTEXTE_EXEMPLE)).toEqual({
       type: 'evenement',
       fait: false,
+    })
+  })
+
+  it('T68 : un passé sans état final compte comme un statut, un Terminé sans heure à part', () => {
+    expect(saisieDeLaLigne(LIGNE_EVENEMENT_SANS_ETAT_FINAL, CONTEXTE_EXEMPLE)).toEqual({
+      type: 'evenement',
+      fait: false,
+    })
+    expect(saisieDeLaLigne(LIGNE_EVENEMENT_HEURE_DEBUT, CONTEXTE_EXEMPLE)).toEqual({
+      type: 'evenement',
+      fait: false,
+      quoi: 'heure_debut',
+    })
+  })
+
+  it('T68 : la phrase compte les statuts et les heures de début, le bouton ouvre le premier', () => {
+    const ouverture = construireOuverture(
+      [
+        LIGNE_DIMANCHE_FAIT,
+        LIGNE_BATIR_FAITE,
+        LIGNE_REUNION_FAITE,
+        LIGNE_EVENEMENT_SANS_ETAT_FINAL,
+        LIGNE_EVENEMENT_HEURE_DEBUT,
+        LIGNE_EVENEMENT_A_CONFIRMER,
+      ],
+      CONTEXTE_EXEMPLE,
+    )
+    expect(ouverture.phrase.map((segment) => segment.texte).join('')).toBe(
+      "Vos chiffres sont à jour. Il reste le statut de 2 événements et l'heure de début d'un événement.",
+    )
+    expect(ouverture.principal).toEqual({
+      libelle: "Mettre à jour l'événement",
+      vers: '/saisir/evenement/concert',
     })
   })
 })

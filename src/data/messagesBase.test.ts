@@ -179,6 +179,35 @@ describe('lireErreurBase : le code décide d’abord', () => {
     expect(
       lireErreurBase(refus("Cet élément n'existe pas ou vous n'y avez pas accès.", '42501')),
     ).toEqual({ genre: 'acces' })
+    // Comptages de l'église lus par un autre ministère (T68, E4).
+    expect(
+      lireErreurBase(
+        refus(
+          "Seuls Coordination, le berger, le conseil et EJP Tech lisent les comptages de l'église.",
+          '42501',
+        ),
+      ),
+    ).toEqual({ genre: 'acces' })
+  })
+
+  it('P0001 sur une heure d’événement (T68) : sa phrase sous le champ de l’heure', () => {
+    expect(lireErreurBase(refus("L'heure prévue est invalide."))).toEqual({
+      genre: 'message',
+      nature: 'refus',
+      message: 'Choisissez une heure valide.',
+      champ: 'heure_prevue',
+    })
+    expect(
+      lireErreurBase(refus("L'heure de début se saisit le jour de l'événement ou après.")),
+    ).toMatchObject({
+      message: "L'heure de début se saisit le jour de l'événement ou après.",
+      champ: 'heure_debut',
+    })
+    // Un contrôle Zod de la couche data sur une heure : sous son champ.
+    const verification = z
+      .object({ heure_debut: z.number().max(1439, 'Choisissez une heure valide.') })
+      .safeParse({ heure_debut: 1440 })
+    expect(lireErreurBase(verification.error)).toMatchObject({ champ: 'heure_debut' })
   })
 
   it('42501 d’un garde-fou technique : le repli, jamais le texte de la base (m274)', () => {
@@ -383,6 +412,16 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
     ],
     // Sessions (T66, t313 et m124) et événements (m124).
     ["Un ministère coché n'est pas actif.", TEXTES_EVENEMENT.erreurMention],
+    // Heures d'un événement (T68) : E2 et E3 reprennent les consignes du contrôle avant l'envoi.
+    [
+      "L'heure de début se saisit pour un événement terminé.",
+      TEXTES_EVENEMENT.erreurHeureDebutSansTermine,
+    ],
+    ["L'heure prévue est invalide.", TEXTES_EVENEMENT.erreurHeure],
+    [
+      "L'heure de début se saisit le jour de l'événement ou après.",
+      "L'heure de début se saisit le jour de l'événement ou après.",
+    ],
     ["Ce mois n'est pas encore commencé.", MESSAGES_MOIS.futur],
     ['Un mois se saisit à la date de son 1er jour.', MESSAGES_MOIS.invalide],
     ['Ce mois est trop ancien pour être saisi.', MESSAGES_MOIS.trop_ancien],

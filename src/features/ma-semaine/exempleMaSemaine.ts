@@ -5,8 +5,14 @@
 
 import {
   exempleAccueil,
+  LIGNE_BATIR_FAITE,
   LIGNE_DIMANCHE_A_FAIRE,
+  LIGNE_DIMANCHE_FAIT,
+  LIGNE_EVENEMENT_A_CONFIRMER,
+  LIGNE_EVENEMENT_HEURE_DEBUT,
+  LIGNE_EVENEMENT_SANS_ETAT_FINAL,
   LIGNE_REUNION_A_FAIRE,
+  LIGNE_REUNION_FAITE,
   MINISTERE_EXEMPLE,
 } from '@/features/accueil-ministere/exempleAccueil'
 import type { DonneesAccueilMinistere } from '@/features/accueil-ministere/types'
@@ -194,4 +200,22 @@ export function lecturesFijExemple(): LecturesMaSemaine {
 /** Le ministère FIJ : sa carte et ses chiffres par département s'ajoutent à ses chiffres. */
 export function exempleFij(): DonneesMaSemaine {
   return exempleMaSemaine(lecturesFijExemple())
+}
+
+/**
+ * Chiffres, session et réunion faits ; trois événements du ministère attendent (T31, T68) : un à
+ * confirmer, un passé sans état final et un Terminé sans heure de début.
+ */
+export function exempleEvenements(): DonneesMaSemaine {
+  return exempleMaSemaine(
+    lecturesExemple(),
+    exempleAccueil([
+      LIGNE_DIMANCHE_FAIT,
+      LIGNE_BATIR_FAITE,
+      LIGNE_REUNION_FAITE,
+      LIGNE_EVENEMENT_SANS_ETAT_FINAL,
+      LIGNE_EVENEMENT_HEURE_DEBUT,
+      LIGNE_EVENEMENT_A_CONFIRMER,
+    ]),
+  )
 }

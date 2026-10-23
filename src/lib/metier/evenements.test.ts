@@ -6,12 +6,81 @@ import {
   LIGNES_VISIBLES_ALERTE,
 } from './alerteEvenements'
 import {
+  commenceA,
   dansLeCalendrier,
+  estEtatFinal,
+  FENETRE_A_RENSEIGNER_JOURS,
   FENETRE_PASSE_JOURS,
+  heureDuJournal,
+  resteARenseigner,
   texteDesJours,
+  texteDuDebut,
   tonDesJours,
   trierEvenements,
 } from './evenements'
+
+describe('heures et ponctualité (T68)', () => {
+  it('Terminé et Annulé sont les états finals', () => {
+    expect(estEtatFinal('termine')).toBe(true)
+    expect(estEtatFinal('annule')).toBe(true)
+    for (const statut of ['brouillon', 'attente_validation', 'valide', 'preparation'] as const) {
+      expect(estEtatFinal(statut), statut).toBe(false)
+    }
+  })
+
+  it('resteARenseigner : passé sans état final, ou Terminé sans heure de début, 30 jours au plus', () => {
+    expect(FENETRE_A_RENSEIGNER_JOURS).toBe(30)
+    const reste = (
+      statut: Parameters<typeof estEtatFinal>[0],
+      jours: number,
+      debut: number | null = null,
+    ) => resteARenseigner({ statut, jours, heure_debut: debut })
+    expect(reste('valide', -1)).toBe('statut')
+    expect(reste('preparation', -30)).toBe('statut')
+    expect(reste('valide', -31)).toBeNull()
+    // Un événement du jour qui n'est pas terminé n'est pas en retard.
+    expect(reste('valide', 0)).toBeNull()
+    expect(reste('valide', 3)).toBeNull()
+    expect(reste('annule', -2)).toBeNull()
+    expect(reste('termine', 0)).toBe('heure_debut')
+    expect(reste('termine', -30)).toBe('heure_debut')
+    expect(reste('termine', -31)).toBeNull()
+    expect(reste('termine', -2, 1152)).toBeNull()
+    // Terminé à une date à venir : la base refuserait l'heure de début.
+    expect(reste('termine', 1)).toBeNull()
+  })
+
+  it('texteDuDebut : la vue décide du retard et de « à l’heure », l’écran les écrit', () => {
+    expect(texteDuDebut({ heure_debut: 1152, retard: 12, a_l_heure: false })).toBe(
+      'Commencé à 19 h 12, 12 min de retard',
+    )
+    expect(texteDuDebut({ heure_debut: 1143, retard: 3, a_l_heure: true })).toBe(
+      "Commencé à 19 h 03, à l'heure",
+    )
+    expect(texteDuDebut({ heure_debut: 1135, retard: -5, a_l_heure: true })).toBe(
+      "Commencé à 18 h 55, à l'heure",
+    )
+    // Passage de minuit, calculé par la base : 23 h 30 puis 0 h 05.
+    expect(texteDuDebut({ heure_debut: 5, retard: 35, a_l_heure: false })).toBe(
+      'Commencé à 0 h 05, 35 min de retard',
+    )
+    expect(texteDuDebut({ heure_debut: 1140, retard: null, a_l_heure: null })).toBe(
+      'Commencé à 19 h',
+    )
+    expect(texteDuDebut({ heure_debut: null, retard: null, a_l_heure: null })).toBeNull()
+  })
+
+  it('heures du journal : minutes lisibles en « 19 h 12 », sinon rien', () => {
+    expect(heureDuJournal(1152)).toBe('19 h 12')
+    expect(heureDuJournal(1140)).toBe('19 h')
+    expect(heureDuJournal(0)).toBe('0 h')
+    for (const valeur of [undefined, null, 1440, -1, 19.5, '1152']) {
+      expect(heureDuJournal(valeur), String(valeur)).toBeNull()
+    }
+    expect(commenceA(1152)).toBe('commencé à 19 h 12')
+    expect(commenceA(undefined)).toBeNull()
+  })
+})
 
 afterEach(() => {
   vi.useRealTimers()

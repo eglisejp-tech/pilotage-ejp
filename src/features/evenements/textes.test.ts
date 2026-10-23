@@ -43,7 +43,29 @@ describe('textes des saisies d’événement et de réunion', () => {
       datePasseeAjout: 'La date ne peut pas être passée.',
       datePasseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
       ligneIdentique: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+      // Heures (T68, contrat de la ponctualité, E1 à E3).
+      heureDebutAVenir: "L'heure de début se saisit le jour de l'événement ou après.",
+      heureDebutSansTermine: "L'heure de début se saisit pour un événement terminé.",
+      heurePrevueInvalide: "L'heure prévue est invalide.",
     })
+  })
+
+  it('heures (T68) : libellés « (facultatif) », indications et consignes du guide', () => {
+    expect(TEXTES_EVENEMENT.libelleHeurePrevue).toBe('Heure prévue (facultatif)')
+    expect(TEXTES_EVENEMENT.libelleHeureDebut).toBe('Heure de début (facultatif)')
+    expect(TEXTES_EVENEMENT.noteHeurePrevue).toBe('Les cultes du dimanche ne se déclarent pas ici.')
+    expect(TEXTES_EVENEMENT.noteHeureDebut).toBe(
+      "Une heure enregistrée se corrige, elle ne s'efface pas.",
+    )
+    // Une indication sous un champ : 80 caractères au plus (guide, section 4).
+    for (const note of [TEXTES_EVENEMENT.noteHeurePrevue, TEXTES_EVENEMENT.noteHeureDebut]) {
+      expect(note.length).toBeLessThanOrEqual(80)
+    }
+    // Consignes qui commencent par le verbe, sans « invalide » (guide, 2 et 10.8).
+    expect(TEXTES_EVENEMENT.erreurHeure).toBe('Choisissez une heure valide.')
+    expect(TEXTES_EVENEMENT.erreurHeureDebutSansTermine).toBe(
+      "Choisissez « Terminé » pour indiquer l'heure de début.",
+    )
   })
 
   it('aucun tiret cadratin ni demi-cadratin, aucun point d’exclamation', () => {

@@ -5,7 +5,8 @@ import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 // Lecture d'un refus de la base après un envoi (contrat de l'étape 4, section 7), par la table de
 // traduction de `src/data/messagesBase.ts` : un refus de la base prend sa phrase, sous le champ
 // date quand il porte sur la date (avec le lien « Signaler une difficulté », T37, T39), sinon sous
-// le bouton ; un refus de droit (42501) dit seulement que l'élément n'est pas accessible ; une
+// le bouton ; un refus sur une heure d'événement (T68) va sous son champ ; un refus de droit
+// (42501) dit seulement que l'élément n'est pas accessible ; une
 // connexion expirée, un compte désactivé ou un refus inattendu ont chacun leur phrase. Seule une
 // erreur sans réponse est un problème de connexion (valeurs gardées, LISEZMOI « Erreur de
 // formulaire ») ; après 10 s sans réponse à un ajout, l'événement est peut-être enregistré : la
@@ -14,6 +15,11 @@ import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 export type Refus =
   /** Sous le champ date : texte de aides-contextuelles.md, section 7, suivi du lien. */
   | { ou: 'date'; message: string }
+  /**
+   * Sous un champ heure d'un événement (T68) ; le formulaire le dit sous le bouton quand le champ
+   * n'est pas affiché (heure de début d'un événement qui n'est pas Terminé ou pas encore passé).
+   */
+  | { ou: 'heure_prevue' | 'heure_debut'; message: string }
   /** Sous le bouton d'enregistrement, tel quel. */
   | { ou: 'bouton'; message: string }
   /** Erreur de formulaire de LISEZMOI (connexion), sous le bouton. */
@@ -42,9 +48,11 @@ export function lireRefus(
         ? { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
         : { ou: 'bouton', message: MESSAGE_ACCES_EVENEMENT }
     case 'message':
-      return lue.champ === 'date'
-        ? { ou: 'date', message: lue.message }
-        : { ou: 'bouton', message: lue.message }
+      if (lue.champ === 'date') return { ou: 'date', message: lue.message }
+      if (saisie !== 'reunion' && (lue.champ === 'heure_prevue' || lue.champ === 'heure_debut')) {
+        return { ou: lue.champ, message: lue.message }
+      }
+      return { ou: 'bouton', message: lue.message }
   }
 }
 

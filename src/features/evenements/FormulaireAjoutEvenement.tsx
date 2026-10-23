@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
+import { ChampHeure } from '@/features/evenements/ChampHeure'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
 import { ChoixMentions } from '@/features/evenements/ChoixMentions'
 import type { MinistreAMentionner } from '@/features/evenements/ChoixMentions'
@@ -27,15 +28,21 @@ export interface ProprietesAjoutEvenement {
   envoyer: (evenement: AjoutEvenement) => Promise<void>
 }
 
-const VIDE: ValeursAjoutEvenement = { date: '', titre: '', statut: '', mentions: [] }
+const VIDE: ValeursAjoutEvenement = {
+  date: '',
+  heure_prevue: '',
+  titre: '',
+  statut: '',
+  mentions: [],
+}
 
 /**
  * Formulaire « Ajouter un événement » (maquette 11, BRIEF section 9) : date (aujourd'hui ou plus
- * tard), nom (80 caractères, rappel sur les données personnelles), statut, mentions facultatives.
- * Pas d'heure ni de lieu. Trois aides : date, statut et mentions. Une date passée est refusée avant
- * l'envoi, puis par la base, sous le champ date avec le lien « Signaler une difficulté ». Après
- * un ajout réussi, le formulaire se vide pour un autre événement et dit « Événement ajouté au
- * calendrier. » ; après un échec, les valeurs restent.
+ * tard), heure prévue facultative (T68, avec l'indication sur les cultes du dimanche), nom
+ * (80 caractères, rappel sur les données personnelles), statut, mentions facultatives. Pas de
+ * lieu. Une date passée est refusée avant l'envoi, puis par la base, sous le champ date avec le
+ * lien « Signaler une difficulté ». Après un ajout réussi, le formulaire se vide pour un autre
+ * événement et dit « Événement ajouté au calendrier. » ; après un échec, les valeurs restent.
  */
 export function FormulaireAjoutEvenement({
   aujourdhui,
@@ -75,8 +82,12 @@ export function FormulaireAjoutEvenement({
     } catch (erreur) {
       // Un ajout : après 10 s sans réponse, l'événement est peut-être enregistré (m259).
       const lu = lireRefus(erreur, 'ajout')
-      if (lu.ou === 'date') setError('date', { message: lu.message }, { shouldFocus: true })
-      else setRefus(lu)
+      if (lu.ou === 'date' || lu.ou === 'heure_prevue') {
+        setError(lu.ou, { message: lu.message }, { shouldFocus: true })
+      } else if (lu.ou === 'heure_debut') {
+        // Jamais d'heure de début à l'ajout : un tel refus se dit sous le bouton.
+        setRefus({ ou: 'bouton', message: lu.message })
+      } else setRefus(lu)
     }
   })
 
@@ -100,6 +111,13 @@ export function FormulaireAjoutEvenement({
         erreur={errors.date?.message}
         ecran="saisie_evenement"
         {...register('date')}
+      />
+      <ChampHeure
+        id="evenement-heure-prevue"
+        libelle={TEXTES_EVENEMENT.libelleHeurePrevue}
+        note={TEXTES_EVENEMENT.noteHeurePrevue}
+        erreur={errors.heure_prevue?.message}
+        {...register('heure_prevue')}
       />
       <ChampTexteCourt
         id="evenement-nom"

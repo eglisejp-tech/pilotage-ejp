@@ -206,6 +206,8 @@ export interface DerniereSaisieFiche {
   texte: string
   /** Titre d'un point ou d'un événement visé (texte libre) : masqué, il s'affiche en `--encre-3`. */
   objet: TexteLibre | null
+  /** Après l'objet, sans texte libre : « commencé à 19 h 12 » pour un événement (T68). */
+  suite?: string | null
 }
 
 /** État d'un bloc lu à part : chargement, problème passager, ou ses données. */

@@ -32,6 +32,13 @@ describe('aperçu des saisies d’événement et de réunion', () => {
     },
   )
 
+  it('termine : la mise à jour d’un événement passé, avec « Heure de début (facultatif) » (T68)', () => {
+    afficher('?ecran=termine')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Mettre à jour l'événement")
+    expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveValue('19:00')
+    expect(screen.getByLabelText('Heure de début (facultatif)')).toHaveValue('')
+  })
+
   it('profil ministère : le panneau, comme sans profil', () => {
     afficher('?profil=ministere&ecran=reunion')
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Prochaine réunion')

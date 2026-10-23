@@ -65,6 +65,24 @@ export const LIGNE_EVENEMENT_A_CONFIRMER: LigneVosSaisies = {
   action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/louange' },
 }
 
+/** Un événement du ministère passé sans état final (T68) : son statut reste à mettre à jour. */
+export const LIGNE_EVENEMENT_SANS_ETAT_FINAL: LigneVosSaisies = {
+  cle: 'evenement:concert',
+  libelle: 'Événement « Concert de rentrée », samedi 26 sept.',
+  etat: 'a_faire',
+  detail: 'À faire : statut à mettre à jour, date passée depuis 3 jours',
+  action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/concert' },
+}
+
+/** Un événement du ministère Terminé sans heure de début (T68). */
+export const LIGNE_EVENEMENT_HEURE_DEBUT: LigneVosSaisies = {
+  cle: 'heure-debut:atelier',
+  libelle: 'Événement « Atelier photo », lundi 28 sept.',
+  etat: 'a_faire',
+  detail: 'À faire : heure de début à indiquer',
+  action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/atelier' },
+}
+
 /** Un événement d'Intégration qui mentionne le ministère : rien à faire, pas de bouton. */
 export const LIGNE_EVENEMENT_MENTIONNE: LigneVosSaisies = {
   cle: 'evenement:welcome',

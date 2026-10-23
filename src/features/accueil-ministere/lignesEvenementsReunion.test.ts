@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { EvenementLu } from '@/data/evenements'
 import { lignesEvenements } from '@/features/accueil-ministere/lignesEvenements'
+import type { EvenementARappeler } from '@/features/accueil-ministere/lignesEvenements'
 import { lignesReunion } from '@/features/accueil-ministere/lignesReunion'
 
 const MOI = 'm-com'
@@ -65,6 +66,77 @@ describe('lignesEvenements', () => {
 
   it('rien à confirmer : aucune ligne', () => {
     expect(lignesEvenements([], MOI, noms)).toEqual([])
+  })
+})
+
+describe('lignesEvenements : sans état final ou sans heure de début (T68)', () => {
+  const aRenseigner = (
+    surcharge: Partial<EvenementARappeler> & { id: string },
+  ): EvenementARappeler => ({
+    ...evenement({
+      statut: 'valide',
+      a_confirmer: false,
+      date: '2026-10-03',
+      jours: -3,
+      ...surcharge,
+    }),
+    heure_debut: surcharge.heure_debut ?? null,
+  })
+  // Guillemets français suivis et précédés d'une espace insécable, comme le libellé.
+  const nbsp = String.fromCodePoint(0xa0)
+  const libelle3Oct = `Événement «${nbsp}Soirée de louange${nbsp}», samedi 3 oct.`
+
+  it('passé sans état final : « À faire : statut à mettre à jour », bouton « Mettre à jour »', () => {
+    expect(lignesEvenements([], MOI, noms, [aRenseigner({ id: 'c' })])).toEqual([
+      {
+        cle: 'evenement:c',
+        libelle: libelle3Oct,
+        etat: 'a_faire',
+        detail: 'À faire : statut à mettre à jour, date passée depuis 3 jours',
+        action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/c' },
+      },
+    ])
+  })
+
+  it('Terminé sans heure de début : « À faire : heure de début à indiquer », sa propre clé', () => {
+    expect(
+      lignesEvenements([], MOI, noms, [aRenseigner({ id: 't', statut: 'termine', jours: 0 })]),
+    ).toEqual([
+      {
+        cle: 'heure-debut:t',
+        libelle: libelle3Oct,
+        etat: 'a_faire',
+        detail: 'À faire : heure de début à indiquer',
+        action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/t' },
+      },
+    ])
+  })
+
+  it('rien pour un autre ministère, un Terminé qui a son heure, un événement à venir ou trop ancien', () => {
+    expect(
+      lignesEvenements([], MOI, noms, [
+        aRenseigner({ id: 'autre', ministere_id: AUTRE }),
+        aRenseigner({ id: 'tenu', statut: 'termine', heure_debut: 1152 }),
+        aRenseigner({ id: 'jour', jours: 0 }),
+        aRenseigner({ id: 'vieux', jours: -31 }),
+        aRenseigner({ id: 'annule', statut: 'annule' }),
+      ]),
+    ).toEqual([])
+  })
+
+  it('un événement à confirmer garde sa seule ligne ; tout se range par date', () => {
+    const aConfirmer = evenement({ id: 'a', date: '2026-10-02', jours: -4 })
+    const lignes = lignesEvenements([aConfirmer], MOI, noms, [
+      aRenseigner({ id: 't', statut: 'termine', date: '2026-10-05', jours: -1 }),
+      { ...aConfirmer, heure_debut: null },
+      aRenseigner({ id: 'c', date: '2026-10-01', jours: -5 }),
+    ])
+    expect(lignes.map((ligne) => ligne.cle)).toEqual([
+      'evenement:c',
+      'evenement:a',
+      'heure-debut:t',
+    ])
+    expect(lignes[1]?.detail).toBe('À faire : en attente de validation, date passée depuis 4 jours')
   })
 })
 

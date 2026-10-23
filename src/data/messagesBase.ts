@@ -61,6 +61,8 @@ export type ChampRefus =
   | 'repartition'
   | 'en_fij'
   | 'prenom'
+  | 'heure_prevue'
+  | 'heure_debut'
 
 /**
  * Une entrée de la table. `texte` absent : la phrase de la base est déjà écrite pour la personne
@@ -209,6 +211,14 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   'Choisissez une date.': { champ: 'date' },
   "Donnez un nom à l'événement (80 caractères au plus).": { champ: 'nom' },
   'Choisissez un statut.': {},
+  // Heures d'un événement (T68). L'heure de début sur une date à venir se dit telle quelle ; les
+  // deux autres reprennent les phrases du contrôle avant l'envoi (TEXTES_EVENEMENT).
+  "L'heure de début se saisit le jour de l'événement ou après.": { champ: 'heure_debut' },
+  "L'heure de début se saisit pour un événement terminé.": {
+    texte: "Choisissez « Terminé » pour indiquer l'heure de début.",
+    champ: 'heure_debut',
+  },
+  "L'heure prévue est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_prevue' },
 
   // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions). Les textes
   // des contrôles avant l'envoi (MESSAGES_POINT.controle ; T66, t240 à t262 et m137 à m151).
@@ -492,6 +502,9 @@ const REFUS_DE_DROIT: Readonly<
   'Seul un compte de ministère peut créer un point.': {
     texte: 'Votre compte ne permet pas de créer un point.',
   },
+  // Comptages et ponctualité des événements de l'église (T68, K11) : un refus d'accès.
+  "Seuls Coordination, le berger, le conseil et EJP Tech lisent les comptages de l'église.":
+    'acces',
   // Garde-fous de la base (inaltérabilité, indicateurs, catégories) : le repli (m274).
   "Ce changement d'état n'est pas permis.": REPLI,
   'Cette catégorie sert déjà dans une répartition : elle ne change plus, elle se retire seulement.':
@@ -594,6 +607,8 @@ const CHAMPS: ReadonlySet<string> = new Set<ChampRefus>([
   'repartition',
   'en_fij',
   'prenom',
+  'heure_prevue',
+  'heure_debut',
 ])
 
 /** Nom d'un champ de schéma Zod vers le champ de la table (« pourquoi », « motif » : un texte). */

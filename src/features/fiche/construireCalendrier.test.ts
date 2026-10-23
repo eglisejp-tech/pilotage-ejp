@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { EvenementLu } from '@/data/evenements'
+import type { EvenementDuCalendrier } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { construireCalendrier, phrasesBandeau } from '@/features/fiche/construireCalendrier'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
@@ -14,7 +14,9 @@ const ministeres: MinistereListe[] = [
   { id: SOCIAL, code: 'social', nom: 'Social', desactive_le: '2026-09-01T10:00:00Z' },
 ]
 
-function evenement(surcharge: Partial<EvenementLu> & { id: string }): EvenementLu {
+function evenement(
+  surcharge: Partial<EvenementDuCalendrier> & { id: string },
+): EvenementDuCalendrier {
   return {
     ministere_id: COMMUNICATION,
     titre: 'Soirée de louange',
@@ -23,12 +25,16 @@ function evenement(surcharge: Partial<EvenementLu> & { id: string }): EvenementL
     jours: 4,
     a_confirmer: false,
     reporte_du: null,
+    heure_prevue: null,
+    heure_debut: null,
+    retard: null,
+    a_l_heure: null,
     ...surcharge,
   }
 }
 
 const lectures = (
-  evenements: EvenementLu[],
+  evenements: EvenementDuCalendrier[],
   mentions: { evenement_id: string; ministere_id: string }[] = [],
 ) => ({
   evenements,
@@ -164,8 +170,81 @@ describe('construireCalendrier', () => {
   })
 })
 
+describe('construireCalendrier : heures (T68)', () => {
+  const termine = (surcharge: Partial<EvenementDuCalendrier> & { id: string }) =>
+    evenement({
+      statut: 'termine',
+      date: '2026-10-03',
+      jours: -1,
+      heure_prevue: 1140,
+      ...surcharge,
+    })
+
+  it('l’heure prévue suit la date : « Sam. 10 oct., 19 h », « Sam. 10 oct., 19 h 30 »', () => {
+    const lignes = construireCalendrier(
+      lectures([
+        evenement({ id: 'a', titre: 'A', heure_prevue: 1140 }),
+        evenement({ id: 'b', titre: 'B', heure_prevue: 1170 }),
+        evenement({ id: 'c', titre: 'C' }),
+      ]),
+      { ministereId: COMMUNICATION, profil: 'berger' },
+    )
+    expect(lignes.map((l) => l.jour)).toEqual([
+      'Sam. 10 oct., 19 h',
+      'Sam. 10 oct., 19 h 30',
+      'Sam. 10 oct.',
+    ])
+  })
+
+  it('sous un Terminé : le retard et « à l’heure » lus dans la vue, jamais recalculés', () => {
+    const lignes = construireCalendrier(
+      lectures([
+        termine({ id: 'a', titre: 'A', heure_debut: 1152, retard: 12, a_l_heure: false }),
+        termine({ id: 'b', titre: 'B', heure_debut: 1143, retard: 3, a_l_heure: true }),
+        // Avance : à l'heure.
+        termine({ id: 'c', titre: 'C', heure_debut: 1135, retard: -5, a_l_heure: true }),
+        // Sans heure prévue : l'heure de début seule.
+        termine({ id: 'd', titre: 'D', heure_prevue: null, heure_debut: 1152 }),
+        // La vue décide : un retard de 12 dit « à l'heure » s'affiche tel quel.
+        termine({ id: 'e', titre: 'E', heure_debut: 1152, retard: 12, a_l_heure: true }),
+      ]),
+      { ministereId: COMMUNICATION, profil: 'berger' },
+    )
+    expect(lignes.map((l) => l.debut)).toEqual([
+      'Commencé à 19 h 12, 12 min de retard',
+      "Commencé à 19 h 03, à l'heure",
+      "Commencé à 18 h 55, à l'heure",
+      'Commencé à 19 h 12',
+      "Commencé à 19 h 12, à l'heure",
+    ])
+    expect(lignes.every((l) => !l.heureDebutAIndiquer)).toBe(true)
+  })
+
+  it('« Heure de début à indiquer » : le porteur seul, Terminé du jour ou passé, sans heure de début', () => {
+    const evenements = [
+      termine({ id: 'propre', titre: 'A' }),
+      termine({ id: 'jour', titre: 'B', jours: 0 }),
+      // Terminé à une date à venir : la base refuserait l'heure de début (E1).
+      termine({ id: 'avenir', titre: 'C', jours: 2, date: '2026-10-12' }),
+      termine({ id: 'autre', titre: 'D', ministere_id: COORDINATION }),
+      evenement({ id: 'pas-termine', titre: 'E', jours: -1, date: '2026-10-03' }),
+    ]
+    const indiquer = (profil: 'ministere' | 'berger') =>
+      construireCalendrier(lectures(evenements), { ministereId: COMMUNICATION, profil })
+        .filter((l) => l.heureDebutAIndiquer)
+        .map((l) => l.id)
+    expect(indiquer('ministere')).toEqual(['propre', 'jour'])
+    expect(indiquer('berger')).toEqual([])
+    const lignes = construireCalendrier(lectures(evenements), {
+      ministereId: COMMUNICATION,
+      profil: 'ministere',
+    })
+    expect(lignes.every((l) => l.debut === null)).toBe(true)
+  })
+})
+
 describe('phrasesBandeau', () => {
-  const lignesAlerte = (profil: 'ministere' | 'berger', evenements: EvenementLu[]) =>
+  const lignesAlerte = (profil: 'ministere' | 'berger', evenements: EvenementDuCalendrier[]) =>
     construireCalendrier(lectures(evenements), { ministereId: COMMUNICATION, profil })
   const aConfirmer = (id: string, ministere = COMMUNICATION) =>
     evenement({

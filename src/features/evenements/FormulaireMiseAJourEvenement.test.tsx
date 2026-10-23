@@ -11,6 +11,26 @@ import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
 const EN_PREPARATION: EtatEvenement = {
   date: '2026-10-10',
   statut: 'preparation',
+  heurePrevue: null,
+  heureDebut: null,
+  aConfirmer: false,
+}
+
+/** Un événement à confirmer, sans heure. */
+const A_CONFIRMER = (date: string): EtatEvenement => ({
+  date,
+  statut: 'attente_validation',
+  heurePrevue: null,
+  heureDebut: null,
+  aConfirmer: true,
+})
+
+/** Un événement passé (aujourd'hui : 6 oct.), prévu à 19 h, Terminé sans heure de début. */
+const TERMINE_SANS_DEBUT: EtatEvenement = {
+  date: '2026-10-03',
+  statut: 'termine',
+  heurePrevue: 1140,
+  heureDebut: null,
   aConfirmer: false,
 }
 
@@ -91,7 +111,7 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
   })
 
   it('date actuelle passée : le champ n’est pas invalide à l’ouverture (plancher sur la date actuelle)', () => {
-    afficher({ date: '2026-10-01', statut: 'attente_validation', aConfirmer: true })
+    afficher(A_CONFIRMER('2026-10-01'))
     expect(champDate()).toHaveAttribute('min', '2026-10-01')
     expect(champDate()).toBeValid()
   })
@@ -110,7 +130,7 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
   })
 
   it('événement à confirmer : la ligne au-dessus du statut, lue avec le groupe', () => {
-    afficher({ date: '2026-10-08', statut: 'attente_validation', aConfirmer: true })
+    afficher(A_CONFIRMER('2026-10-08'))
     const groupe = screen.getByRole('group', { name: 'Statut' })
     expect(within(groupe).getByText(TEXTES_EVENEMENT.aConfirmer)).toBeInTheDocument()
     expect(groupe).toHaveAccessibleDescription(TEXTES_EVENEMENT.aConfirmer)
@@ -123,11 +143,16 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
 
   it('date passée inchangée : le statut se reporte quand même (T37)', async () => {
     const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
-    afficher({ date: '2026-10-01', statut: 'attente_validation', aConfirmer: true }, envoyer)
+    afficher(A_CONFIRMER('2026-10-01'), envoyer)
     await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))
     await userEvent.click(bouton())
     expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
-    expect(envoyer).toHaveBeenCalledWith({ date: '2026-10-01', statut: 'termine' })
+    expect(envoyer).toHaveBeenCalledWith({
+      date: '2026-10-01',
+      statut: 'termine',
+      heure_prevue: null,
+      heure_debut: null,
+    })
     // L'état enregistré change : la ligne « à confirmer » disparaît.
     expect(screen.queryByText(TEXTES_EVENEMENT.aConfirmer)).toBeNull()
   })
@@ -215,5 +240,134 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     )
     expect(champDate()).toHaveValue('2026-10-17')
     expect(screen.getByRole('radio', { name: 'Validé' })).toBeChecked()
+  })
+})
+
+describe("« Mettre à jour l'événement » : heures (T68)", () => {
+  const champHeurePrevue = () => screen.getByLabelText('Heure prévue (facultatif)')
+  const champHeureDebut = () => screen.queryByLabelText('Heure de début (facultatif)')
+
+  async function saisirHeure(champ: HTMLElement, heure: string) {
+    const utilisateur = userEvent.setup()
+    await utilisateur.clear(champ)
+    if (heure !== '') await utilisateur.type(champ, heure)
+  }
+
+  it('l’heure prévue est préremplie ; pas d’heure de début avant Terminé', () => {
+    afficher({ ...EN_PREPARATION, heurePrevue: 1140 })
+    expect(champHeurePrevue()).toHaveValue('19:00')
+    expect(champHeurePrevue()).toHaveAttribute('type', 'time')
+    expect(champHeureDebut()).toBeNull()
+  })
+
+  it('Terminé à une date passée : « Heure de début (facultatif) » paraît, avec son indication', async () => {
+    afficher({ ...TERMINE_SANS_DEBUT, statut: 'valide' })
+    expect(champHeureDebut()).toBeNull()
+    await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))
+    const champ = champHeureDebut()
+    expect(champ).not.toBeNull()
+    expect(champ).toHaveAccessibleDescription(
+      "Une heure enregistrée se corrige, elle ne s'efface pas.",
+    )
+  })
+
+  it('Terminé à une date à venir : pas d’heure de début (la base la refuserait)', async () => {
+    afficher()
+    await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))
+    expect(champHeureDebut()).toBeNull()
+  })
+
+  it('l’heure de début part en minutes, l’heure prévue préremplie aussi', async () => {
+    const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher(TERMINE_SANS_DEBUT, envoyer)
+    const champ = champHeureDebut()
+    expect(champ).toHaveValue('')
+    await saisirHeure(champ as HTMLElement, '19:12')
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    expect(envoyer).toHaveBeenCalledWith({
+      date: '2026-10-03',
+      statut: 'termine',
+      heure_prevue: 1140,
+      heure_debut: 1152,
+    })
+    // L'état enregistré fait foi : un second appui ne renvoie rien.
+    expect(champHeureDebut()).toHaveValue('19:12')
+  })
+
+  it('seule l’heure prévue change : la mise à jour part', async () => {
+    const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher({ ...EN_PREPARATION, heurePrevue: 1140 }, envoyer)
+    await saisirHeure(champHeurePrevue(), '19:30')
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    expect(envoyer).toHaveBeenCalledWith({
+      date: '2026-10-10',
+      statut: 'preparation',
+      heure_prevue: 1170,
+      heure_debut: null,
+    })
+  })
+
+  it('heure prévue vidée : l’heure enregistrée reste, donc rien n’a changé (m134)', async () => {
+    const envoyer = vi.fn(() => Promise.resolve())
+    afficher({ ...EN_PREPARATION, heurePrevue: 1140 }, envoyer)
+    await saisirHeure(champHeurePrevue(), '')
+    await userEvent.click(bouton())
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
+    )
+    expect(envoyer).not.toHaveBeenCalled()
+  })
+
+  it('heure de début cachée (statut changé) : elle ne part pas', async () => {
+    const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher({ ...TERMINE_SANS_DEBUT, heureDebut: 1152 }, envoyer)
+    expect(champHeureDebut()).toHaveValue('19:12')
+    await userEvent.click(screen.getByRole('radio', { name: 'Annulé' }))
+    expect(champHeureDebut()).toBeNull()
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    expect(envoyer).toHaveBeenCalledWith(
+      expect.objectContaining({ statut: 'annule', heure_debut: null }),
+    )
+  })
+
+  it('refus de la base sur l’heure de début (E1) : sous le champ quand il est affiché', async () => {
+    afficher(TERMINE_SANS_DEBUT, () =>
+      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heureDebutAVenir }),
+    )
+    const champ = champHeureDebut() as HTMLElement
+    await saisirHeure(champ, '19:12')
+    await userEvent.click(bouton())
+    expect(
+      await screen.findByText("L'heure de début se saisit le jour de l'événement ou après."),
+    ).toBeInTheDocument()
+    expect(champHeureDebut()).toHaveAttribute('aria-invalid', 'true')
+    expect(champHeureDebut()).toHaveValue('19:12')
+  })
+
+  it('refus de la base sur l’heure de début, champ caché : sous le bouton', async () => {
+    // Terminé avec une heure, reporté à une date à venir : la base reprend l'heure et refuse (E1).
+    afficher({ ...TERMINE_SANS_DEBUT, heureDebut: 1152 }, () =>
+      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heureDebutAVenir }),
+    )
+    await changerDate('2026-10-17')
+    expect(champHeureDebut()).toBeNull()
+    await userEvent.click(bouton())
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      "L'heure de début se saisit le jour de l'événement ou après.",
+    )
+  })
+
+  it('refus de la base sur l’heure prévue (E3) : la phrase du guide, sous le champ', async () => {
+    afficher(EN_PREPARATION, () =>
+      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heurePrevueInvalide }),
+    )
+    await saisirHeure(champHeurePrevue(), '19:00')
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Choisissez une heure valide.')).toBeInTheDocument()
+    expect(champHeurePrevue()).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.queryByText(/invalide/)).toBeNull()
   })
 })

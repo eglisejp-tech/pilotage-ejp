@@ -4,7 +4,7 @@
 // calcule (date moins aujourd'hui ; en attente de validation à 3 jours ou moins). Données
 // fictives, sans aucune donnée personnelle.
 
-import type { EvenementLu } from '@/data/evenements'
+import type { EvenementDuCalendrier, EvenementLu } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { SOCIAL } from '@/features/fiche/apercu/exemplesFiche'
 import type { LigneTable, StatutEvenement } from '@/lib/base'
@@ -49,6 +49,15 @@ export const MINISTERES_EXEMPLE: MinistereListe[] = [
   { id: PRODIGES_JUNIOR, code: 'prodiges_junior', nom: 'Prodiges Junior', desactive_le: null },
 ]
 
+/** Heures d'un événement d'exemple (T68), en minutes depuis minuit. */
+interface HeuresExemple {
+  prevue?: number
+  debut?: number
+}
+
+/** Tolérance de la base (`private.tolerance_ponctualite()`, K22b) : 5 minutes. */
+const TOLERANCE_EXEMPLE = 5
+
 function evenement(
   id: number,
   ministere: string,
@@ -56,8 +65,13 @@ function evenement(
   date: string,
   statut: StatutEvenement,
   reporteDu: string | null = null,
-): EvenementLu {
+  heures: HeuresExemple = {},
+): EvenementDuCalendrier {
   const jours = joursEntre(AUJOURDHUI_EXEMPLE, date)
+  const prevue = heures.prevue ?? null
+  const debut = statut === 'termine' ? (heures.debut ?? null) : null
+  // Ce que la vue calcule (`private.retard_minutes`), sans passage de minuit dans ces exemples.
+  const retard = prevue !== null && debut !== null ? debut - prevue : null
   return {
     id: `e0000000-0000-4000-8000-${String(id).padStart(12, '0')}`,
     ministere_id: ministere,
@@ -67,15 +81,30 @@ function evenement(
     jours,
     a_confirmer: statut === 'attente_validation' && jours <= 3,
     reporte_du: reporteDu,
+    heure_prevue: prevue,
+    heure_debut: debut,
+    retard,
+    a_l_heure: retard === null ? null : retard <= TOLERANCE_EXEMPLE,
   }
 }
 
 const id = (numero: number) => `e0000000-0000-4000-8000-${String(numero).padStart(12, '0')}`
 
-/** Le calendrier de Social (maquettes 04 et 12) : aucun événement à confirmer. */
-const CALENDRIER_SANS_ALERTE: EvenementLu[] = [
+/**
+ * Le calendrier de Social (maquettes 04 et 12) : aucun événement à confirmer. Heures (T68) : un
+ * Terminé commencé 12 minutes après l'heure prévue, un Terminé sans heure de début (« Heure de
+ * début à indiquer » pour Social seulement) et une heure prévue sur un événement à venir.
+ */
+const CALENDRIER_SANS_ALERTE: EvenementDuCalendrier[] = [
   evenement(1, SOCIAL, 'Distribution alimentaire', '2026-10-03', 'valide'),
-  evenement(2, SOCIAL, 'Soirée de partage', '2026-10-17', 'attente_validation'),
+  evenement(9, SOCIAL, 'Repas solidaire', '2026-10-05', 'termine', null, {
+    prevue: 1140,
+    debut: 1152,
+  }),
+  evenement(10, SOCIAL, 'Atelier couture', '2026-10-06', 'termine', null, { prevue: 870 }),
+  evenement(2, SOCIAL, 'Soirée de partage', '2026-10-17', 'attente_validation', null, {
+    prevue: 1170,
+  }),
   evenement(3, SOCIAL, 'Collecte de vêtements, tri', '2026-10-24', 'preparation'),
   evenement(4, SOCIAL, 'Maraude de Noël', '2026-11-07', 'brouillon', '2026-11-01'),
   evenement(5, SOCIAL, "Collecte d'hiver", '2026-11-14', 'annule'),
@@ -85,7 +114,7 @@ const CALENDRIER_SANS_ALERTE: EvenementLu[] = [
  * Avec l'alerte : un événement de Social à 3 jours, un autre dont la date est passée de plus de
  * 7 jours (il reste au calendrier, 4.4), un événement de Coordination qui mentionne Social.
  */
-const CALENDRIER_AVEC_ALERTE: EvenementLu[] = [
+const CALENDRIER_AVEC_ALERTE: EvenementDuCalendrier[] = [
   evenement(6, SOCIAL, 'Maraude de la rentrée', '2026-09-26', 'attente_validation'),
   evenement(1, SOCIAL, 'Distribution alimentaire', '2026-10-03', 'valide'),
   evenement(7, COORDINATION, 'Planning du trimestre', '2026-10-09', 'attente_validation'),

@@ -321,9 +321,10 @@ export function phraseDeLaFiche(d: DonneesPhraseFiche): Phrase {
 
 /**
  * Une ligne de « Vos saisies », dans l'ordre de l'écran. `mois` : numéro du mois écoulé (1 à 12).
- * `evenement` : un événement du ministère à confirmer (T31), `fait` faux tant qu'il attend sa
- * validation. Un événement qui mentionne seulement le ministère n'en est pas un : le ministère n'a
- * rien à y faire.
+ * `evenement` : un événement du ministère à confirmer (T31) ou passé sans état final (T68), `fait`
+ * faux tant que son statut attend ; `quoi: 'heure_debut'` : un Terminé sans heure de début (T68).
+ * Un événement qui mentionne seulement le ministère n'en est pas un : le ministère n'a rien à y
+ * faire.
  */
 export type SaisieDeLaSemaine =
   | { type: 'dimanche'; dimanche: DateIso; fait: boolean }
@@ -332,7 +333,7 @@ export type SaisieDeLaSemaine =
   | { type: 'reunion'; fait: boolean }
   | { type: 'carte_fij'; fait: boolean }
   | { type: 'fij_statistiques'; fait: boolean }
-  | { type: 'evenement'; fait: boolean }
+  | { type: 'evenement'; fait: boolean; quoi?: 'statut' | 'heure_debut' }
 
 /** « de septembre », « d'août », « d'octobre ». */
 function duMois(mois: number): string {
@@ -364,12 +365,20 @@ function statutDesEvenements(nombreEvenements: number): string {
     : `le statut de ${nombre(nombreEvenements)} événements`
 }
 
+/** « l'heure de début d'un événement », « l'heure de début de 2 événements » (T68). */
+function heureDebutDesEvenements(nombreEvenements: number): string {
+  return nombreEvenements === 1
+    ? "l'heure de début d'un événement"
+    : `l'heure de début de ${nombre(nombreEvenements)} événements`
+}
+
 /**
  * « Vos chiffres sont à jour. » si les chiffres (dimanche et mois) et les sessions sont faits,
  * puis, surligné, ce qui reste (« Il reste la date de la prochaine réunion. »). Les événements à
  * confirmer viennent en dernier, comptés et sans leur titre (« Il reste les chiffres du dimanche
- * 4 oct. et le statut de 2 événements. »). Tout est fait et aucun événement n'attend : « Tout est
- * à jour pour la semaine 39. »
+ * 4 oct. et le statut de 2 événements. »), puis les heures de début à indiquer (T68 : « et l'heure
+ * de début d'un événement »). Tout est fait et aucun événement n'attend : « Tout est à jour pour
+ * la semaine 39. »
  */
 export function phraseDAccueil(
   saisies: readonly SaisieDeLaSemaine[],
@@ -385,8 +394,11 @@ export function phraseDAccueil(
   const restes = aFaire.flatMap((saisie) =>
     saisie.type === 'evenement' ? [] : [ceQuiReste(saisie)],
   )
-  const evenements = aFaire.filter((saisie) => saisie.type === 'evenement').length
-  if (evenements > 0) restes.push(statutDesEvenements(evenements))
+  const evenements = aFaire.filter((saisie) => saisie.type === 'evenement')
+  const heures = evenements.filter((saisie) => saisie.quoi === 'heure_debut').length
+  const statuts = evenements.length - heures
+  if (statuts > 0) restes.push(statutDesEvenements(statuts))
+  if (heures > 0) restes.push(heureDebutDesEvenements(heures))
   return assembler([
     chiffresFaits ? normal('Vos chiffres sont à jour. ') : null,
     ...surligneFinDePhrase(`Il reste ${listeNoms(restes)}`),

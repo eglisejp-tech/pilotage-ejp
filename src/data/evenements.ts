@@ -6,7 +6,7 @@
 // aucune date du navigateur : le filtre « au plus 7 jours dans le passé » lit `jours`. Les saisies
 // et la lecture du panneau de mise à jour sont dans `evenementsEcriture.ts` (lot E5).
 
-import { FENETRE_PASSE_JOURS } from '@/lib/metier/evenements'
+import { FENETRE_A_RENSEIGNER_JOURS, FENETRE_PASSE_JOURS } from '@/lib/metier/evenements'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
@@ -16,7 +16,19 @@ export type EvenementLu = Pick<
   'id' | 'ministere_id' | 'titre' | 'date' | 'statut' | 'jours' | 'a_confirmer' | 'reporte_du'
 >
 
+/**
+ * Un événement du calendrier, avec ses heures (T68) : heure prévue, heure de début, et le retard
+ * et « à l'heure » calculés par la base (jamais recalculés à l'écran).
+ */
+export type EvenementDuCalendrier = EvenementLu &
+  Pick<LigneVue<'v_evenement'>, 'heure_prevue' | 'heure_debut' | 'retard' | 'a_l_heure'>
+
 const COLONNES_EVENEMENT = 'id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du'
+const COLONNES_CALENDRIER =
+  'id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure'
+
+/** Statuts qui ne sont pas un état final (K10 : Terminé et Annulé le sont). */
+const STATUTS_SANS_ETAT_FINAL = 'brouillon,attente_validation,valide,preparation'
 
 /**
  * Événements du calendrier d'un ministère : les siens et ceux qui le mentionnent, datés d'au plus
@@ -24,7 +36,9 @@ const COLONNES_EVENEMENT = 'id, ministere_id, titre, date, statut, jours, a_conf
  * événements qui mentionnent le ministère (`evenement_mention`), puis `v_evenement`, par date puis
  * titre.
  */
-export async function lireEvenementsMinistere(ministereId: string): Promise<EvenementLu[]> {
+export async function lireEvenementsMinistere(
+  ministereId: string,
+): Promise<EvenementDuCalendrier[]> {
   const lectureMentions = await supabase()
     .from('evenement_mention')
     .select('evenement_id, ministere_id')
@@ -38,9 +52,31 @@ export async function lireEvenementsMinistere(ministereId: string): Promise<Even
       : `ministere_id.eq.${ministereId},id.in.(${mentionnant.join(',')})`
   const { data, error } = await supabase()
     .from('v_evenement')
-    .select(COLONNES_EVENEMENT)
+    .select(COLONNES_CALENDRIER)
     .or(duMinistere)
     .or(`jours.gte.${-FENETRE_PASSE_JOURS},a_confirmer.is.true`)
+    .order('date', { ascending: true })
+    .order('titre', { ascending: true })
+  if (error) throw error
+  return data
+}
+
+/**
+ * Événements du ministère qui attendent encore une saisie (« Vos saisies », T68) : datés
+ * d'aujourd'hui ou des 30 derniers jours (`jours`, heure de Paris), sans état final, ou Terminés
+ * sans heure de début. Seulement ceux qu'il porte : un ministère mentionné n'a rien à y faire.
+ * Par date puis titre ; `lignesEvenements` choisit les lignes.
+ */
+export async function lireEvenementsARenseigner(
+  ministereId: string,
+): Promise<EvenementDuCalendrier[]> {
+  const { data, error } = await supabase()
+    .from('v_evenement')
+    .select(COLONNES_CALENDRIER)
+    .eq('ministere_id', ministereId)
+    .gte('jours', -FENETRE_A_RENSEIGNER_JOURS)
+    .lte('jours', 0)
+    .or(`statut.in.(${STATUTS_SANS_ETAT_FINAL}),and(statut.eq.termine,heure_debut.is.null)`)
     .order('date', { ascending: true })
     .order('titre', { ascending: true })
   if (error) throw error
