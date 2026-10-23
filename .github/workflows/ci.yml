@@ -52,18 +52,40 @@ jobs:
   # 30 minutes d'un seul job (8 octobre 2026). Chaque job a sa base locale neuve.
   # Pas d'attente du job « qualite » : chaque job installe tout lui-même, et attendre coûtait
   # 3 minutes à chaque run (mesuré le 12 octobre 2026).
+  # Le 23 octobre 2026, le 1440 px (26 minutes, captures comprises) a dépassé trois fois ses
+  # 30 minutes : l'installation du navigateur, d'habitude sous 30 secondes, en a pris 5 à 7.
+  # Il est coupé en deux moitiés (--shard), et chaque job a 40 minutes de marge.
   e2e:
     name: Parcours Playwright (${{ matrix.partie.nom }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
         partie:
-          - { nom: '1440 px', projet: ordinateur, ecritures_seules: '0' }
-          - { nom: '834 px', projet: tablette, ecritures_seules: '0' }
-          - { nom: '390 px', projet: telephone, ecritures_seules: '0' }
-          - { nom: 'écritures', projet: ecritures, ecritures_seules: '1' }
+          - {
+              nom: '1440 px, 1 sur 2',
+              projet: ordinateur,
+              morceau: '1/2',
+              suffixe: '-1',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '1440 px, 2 sur 2',
+              projet: ordinateur,
+              morceau: '2/2',
+              suffixe: '-2',
+              ecritures_seules: '0',
+            }
+          - { nom: '834 px', projet: tablette, morceau: '1/1', suffixe: '', ecritures_seules: '0' }
+          - { nom: '390 px', projet: telephone, morceau: '1/1', suffixe: '', ecritures_seules: '0' }
+          - {
+              nom: 'écritures',
+              projet: ecritures,
+              morceau: '1/1',
+              suffixe: '',
+              ecritures_seules: '1',
+            }
     env:
       E2E_BASE: '1'
       E2E_ECRITURES_SEULES: ${{ matrix.partie.ecritures_seules }}
@@ -95,17 +117,17 @@ jobs:
           echo "E2E_CLE_SECRETE_LOCALE=$SECRET_KEY" >> "$GITHUB_ENV"
       - run: npx playwright install --with-deps chromium
       # Le projet choisi entraîne la connexion (dépendance) ; les écritures, seules, n'attendent qu'elle.
-      - run: npm run e2e -- --project=${{ matrix.partie.projet }}
+      - run: npm run e2e -- --project=${{ matrix.partie.projet }} --shard=${{ matrix.partie.morceau }}
       - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: rapport-playwright-${{ matrix.partie.projet }}
+          name: rapport-playwright-${{ matrix.partie.projet }}${{ matrix.partie.suffixe }}
           path: playwright-report/
           retention-days: 7
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: captures-playwright-${{ matrix.partie.projet }}
+          name: captures-playwright-${{ matrix.partie.projet }}${{ matrix.partie.suffixe }}
           path: test-results/captures/
           retention-days: 7
           if-no-files-found: ignore
