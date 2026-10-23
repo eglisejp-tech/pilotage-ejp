@@ -101,8 +101,9 @@ export type VuesEvenements = {
 export type FonctionsEvenements = {
   /**
    * Ajoute un événement du ministère connecté avec ses mentions (B6) : rend son identifiant. Refus
-   * repris tels quels : « La date ne peut pas être passée. », « Ce ministère ne peut pas être
-   * mentionné. ». La version à trois arguments de l'étape 3 délègue à celle-ci.
+   * de la base (clés de `src/data/messagesBase.ts`) : « La date ne peut pas être passée. », « Ce
+   * ministère ne peut pas être mentionné. ». La version à trois arguments de l'étape 3 délègue à
+   * celle-ci.
    */
   ajouter_evenement: {
     Args: {

@@ -2,7 +2,8 @@
 // docs/plan-etape-4.md, E5 ; docs/conception/validation-metier.md, 4.5). Les aides en bulle sont
 // dans `src/components/aide/textesAide.ts`, les messages de date refusée et le lien « Signaler une
 // difficulté » dans `src/features/signalement/textes.ts` : ils ne sont pas réécrits ici. Les
-// messages de la base sont repris tels quels (docs/conception/contrat-etape-4.md, section 7).
+// messages de la base (docs/conception/contrat-etape-4.md, section 7) passent par la table de
+// traduction `src/data/messagesBase.ts` (T66).
 // « Proposé » : texte que ni le BRIEF ni LISEZMOI ne donnent encore.
 
 import type { StatutEvenement } from '@/lib/base'

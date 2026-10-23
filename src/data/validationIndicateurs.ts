@@ -29,7 +29,7 @@ const LIMITE_DECISIONS = 100
  * Envoie une suggestion du catalogue au nom du ministère connecté, avec son « Pourquoi » : elle
  * naît « à valider ». Rend l'identifiant de l'indicateur créé. La base refuse au-delà de 3 ajouts
  * ou de 30 lignes, un « Pourquoi » trop court ou trop long, une donnée personnelle, un libellé déjà
- * pris : son message est repris tel quel par l'écran.
+ * pris : l'écran dit son message par la table de traduction (`src/data/messagesBase.ts`).
  */
 export async function ajouterSuggestion(brut: SuggestionEnvoyee): Promise<string> {
   const suggestion = schemaSuggestion.parse(brut)

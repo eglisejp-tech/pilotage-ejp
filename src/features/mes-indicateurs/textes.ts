@@ -209,7 +209,10 @@ export function debutRetraitParVous(jour: string | null, demande: boolean): stri
 export const LONGUEUR_MIN_MOTIF_RETRAIT = 10
 export const LONGUEUR_MAX_MOTIF_RETRAIT = 280
 
-/** Messages de la base (`retirer_mon_indicateur`), repris tels quels avant l'envoi. */
+/**
+ * Contrôles du motif avant l'envoi : les mêmes phrases que la table de traduction donne aux refus
+ * de `retirer_mon_indicateur` (`src/data/messagesBase.ts`).
+ */
 export const MESSAGES_BASE_RETRAIT = {
   motifCourt: 'Expliquez pourquoi vous le retirez (10 caractères au moins).',
   /** Forme commune « Raccourcissez », la même que la table de traduction (T66, t344). */

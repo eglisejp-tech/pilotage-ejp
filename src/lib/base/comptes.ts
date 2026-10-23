@@ -50,8 +50,9 @@ export type VuesComptes = {
 export type FonctionsComptes = {
   /**
    * Déclare une session et ses ministères attendus (administration de l'église) : rend son
-   * identifiant. Refus repris tels quels : « Une session ... est déjà déclarée le ... », « Cochez
-   * au moins un ministère. », « Donnez un nom au rassemblement (80 caractères au plus). ».
+   * identifiant. Refus de la base (clés de `src/data/messagesBase.ts`) : « Une session ... est
+   * déjà déclarée le ... », « Cochez au moins un ministère. », « Donnez un nom au rassemblement
+   * (80 caractères au plus). ».
    */
   declarer_session: {
     Args: { p_type: TypeSession; p_date: string; p_intitule: string | null; p_ministeres: string[] }

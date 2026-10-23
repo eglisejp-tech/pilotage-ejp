@@ -29,8 +29,9 @@ export type FonctionsPoints = {
   /**
    * Crée un point du ministère connecté (seul un compte de ministère le peut) : il naît « À
    * traiter », avec ses mentions, une ligne de journal sans texte. Rend l'identifiant du point.
-   * Refus repris tels quels : « Donnez un titre au point (80 caractères au plus). », « L'échéance
-   * ne peut pas être passée. », « Ce ministère ne peut pas être mentionné. ».
+   * Refus de la base (clés de `src/data/messagesBase.ts`) : « Donnez un titre au point
+   * (80 caractères au plus). », « L'échéance ne peut pas être passée. », « Ce ministère ne peut
+   * pas être mentionné. ».
    */
   creer_point: {
     Args: {
@@ -62,9 +63,9 @@ export type FonctionsPoints = {
   }
   /**
    * Ajoute un ministère mentionné sur un point non traité (ministère créateur, berger ou conseil).
-   * Refus repris tels quels : « Ce ministère ne peut pas être mentionné. » (créateur, désactivé ou
-   * inconnu), « Ce ministère est déjà mentionné sur ce point. », « Ce point est traité : ses
-   * mentions ne changent plus. ».
+   * Refus de la base (clés de `src/data/messagesBase.ts`) : « Ce ministère ne peut pas être
+   * mentionné. » (créateur, désactivé ou inconnu), « Ce ministère est déjà mentionné sur ce
+   * point. », « Ce point est traité : ses mentions ne changent plus. ».
    */
   ajouter_mention_point: {
     Args: { p_point_id: string; p_ministere_id: string }

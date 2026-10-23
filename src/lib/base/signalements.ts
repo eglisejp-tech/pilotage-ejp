@@ -68,7 +68,8 @@ export type VuesSignalements = {
 export type FonctionsSignalements = {
   /**
    * Ministère actif seulement (le ministère vient de la session) : rend l'identifiant du
-   * signalement. Refus repris tels quels (contrat de l'étape 4, section 7).
+   * signalement. Refus de la base (contrat de l'étape 4, section 7), traduits par
+   * `src/data/messagesBase.ts`.
    */
   signaler_difficulte: {
     Args: { p_ecran: EcranSignalement; p_texte: string }
