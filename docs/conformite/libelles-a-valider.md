@@ -53,7 +53,7 @@ Pour la plupart des chiffres du dimanche, de la semaine et du mois, l'outil ajou
 Un chiffre calculé n'est jamais saisi. L'outil le tire des chiffres saisis par le même ministère (un taux, une moyenne, une différence, une somme, une évolution) ou des événements déclarés dans le calendrier. Dans ce document, ces lignes portent la mention « Rien » dans la colonne « À saisir ».
 
 - **Taux** : un chiffre divisé par un autre, affiché en pourcentage. Sur l'année, l'outil divise la somme des chiffres du haut par la somme des chiffres du bas, sur les périodes où les deux existent. Jamais une moyenne de pourcentages.
-- **Plafonné à 100 %** : si le résultat devait dépasser 100 %, l'outil affiche « Non calculé, à vérifier » (décision P49 : jamais un 100 % plafonné) plutôt qu'un pourcentage au-dessus de 100 %. Quatre taux de même nature, ajoutés par EJP Tech (Réalisation des événements, Taux de participation de Kumi et d'Eagles, Taux de présence de Prodiges Junior), suivent la même règle sans que leur définition le dise : 19 parts en tout.
+- **Plafonné à 100 %** : si le résultat devait dépasser 100 %, l'outil affiche « Non calculé, à vérifier » (décision P49 : jamais un 100 % plafonné) plutôt qu'un pourcentage au-dessus de 100 %. Quatre taux de même nature, ajoutés par EJP Tech (Réalisation des événements, Taux de participation de Kumi et d'Eagles, Taux de présence de Prodiges Junior), suivent la même règle sans que leur définition le dise : 18 parts en tout (19 avant T68, qui retire la part des événements à l'heure : la ponctualité se calcule sur les heures des événements).
 - **Non calculé** : l'outil affiche aussi « Non calculé » quand le chiffre du bas manque ou vaut 0.
 - **Rien, affiché plus tard** : le calcul sera visible dans les 4 semaines qui suivent l'ouverture. Les chiffres qui le nourrissent se saisissent dès le premier jour, rien n'est perdu.
 
@@ -262,14 +262,15 @@ Question de la relecture : la « présence au culte » est celle de l'équipe d'
 
 ### Ce que le ministère saisit
 
-| Indicateur tel qu'il apparaîtra                  | Ce qu'on compte exactement                                                                                          | Quand           | Unité  | Sensible | Votre réponse |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | --------------- | ------ | -------- | ------------- |
-| Baptême : baptisés                               | Personnes baptisées dans le mois, toutes sessions de baptême additionnées.                                          | Chaque mois     | Nombre | non      |               |
-| Baptême : sessions                               | Sessions de baptême tenues dans le mois. Si aucune, enregistrez 0.                                                  | Chaque mois     | Nombre | non      |               |
-| Baptême : baptisés à la dernière session du mois | Personnes baptisées à la dernière session de baptême du mois. Si aucune session, enregistrez 0.                     | Chaque mois     | Nombre | non      |               |
-| Heure de début du culte                          | Heure réelle à laquelle le culte de ce dimanche a commencé.                                                         | Chaque dimanche | Heure  | non      |               |
-| Heure prévue du culte                            | Heure de début prévue du culte du dimanche, à la date de la saisie.                                                 | À ce jour       | Heure  | non      |               |
-| Événements commencés à l'heure                   | Parmi les événements terminés du mois déclarés dans l'outil, ceux commencés au plus 5 minutes après l'heure prévue. | Chaque mois     | Nombre | non      |               |
+| Indicateur tel qu'il apparaîtra                  | Ce qu'on compte exactement                                                                      | Quand           | Unité  | Sensible | Votre réponse |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- | --------------- | ------ | -------- | ------------- |
+| Baptême : baptisés                               | Personnes baptisées dans le mois, toutes sessions de baptême additionnées.                      | Chaque mois     | Nombre | non      |               |
+| Baptême : sessions                               | Sessions de baptême tenues dans le mois. Si aucune, enregistrez 0.                              | Chaque mois     | Nombre | non      |               |
+| Baptême : baptisés à la dernière session du mois | Personnes baptisées à la dernière session de baptême du mois. Si aucune session, enregistrez 0. | Chaque mois     | Nombre | non      |               |
+| Heure de début du culte                          | Heure réelle à laquelle le culte de ce dimanche a commencé.                                     | Chaque dimanche | Heure  | non      |               |
+| Heure prévue du culte                            | Heure de début prévue du culte du dimanche, à la date de la saisie.                             | À ce jour       | Heure  | non      |               |
+
+« Événements commencés à l'heure » ne se saisit plus (décision T68 du 23 octobre 2026) : l'outil le calcule sur les heures que chaque ministère donne à ses événements (« Ce que l'outil compte dans les événements », plus bas). Les chiffres déjà saisis restent.
 
 ### Ce que l'outil calcule
 
@@ -278,20 +279,21 @@ Question de la relecture : la « présence au culte » est celle de l'équipe d'
 | Baptême : baptisés par session     | Moyenne du mois : « Baptême : baptisés » divisés par « Baptême : sessions ».                                                                                                                                                    | Rien                    |               |
 | Retard du début du culte           | Écart en minutes entre « Heure de début du culte » et l'« Heure prévue du culte » en vigueur ce dimanche. Positif : le culte a commencé en retard. Négatif : il a commencé en avance (« 7 min de retard », « 3 min d'avance »). | Rien, affiché plus tard |               |
 | Taux de réalisation des événements | Événements réalisés, divisés par la somme des réalisés, des annulés et des passés sans état final. Calculé sur les mois finis, avec le nombre (« 9 sur 10 »). Les reportés s'affichent à côté, hors du taux.                    | Rien, affiché plus tard |               |
-| Part des événements à l'heure      | « Événements commencés à l'heure » divisés par « Événements réalisés (église) » du même mois. Plafonné à 100 %.                                                                                                                 | Rien, affiché plus tard |               |
 
 ### Ce que l'outil compte dans les événements
 
 Ces totaux portent sur les événements de toute l'église, par mois, sans titre, sans date d'événement et sans détail par ministère. Ils sont lus par Coordination, le berger, le conseil et EJP Tech seulement. Ils partent de la mise en service : l'écran nomme ce départ (« Depuis la mise en service, le ... ») jusqu'au 1er janvier 2027.
 
-| Indicateur                        | Ce que l'outil compte                                                                                                                                                                                                                                                             | À saisir                | Votre réponse |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | ------------- |
-| Événements prévus (église)        | Événements dont le dernier état est « Validé » ou « En préparation », datés d'aujourd'hui ou après. Pour un mois passé : événements datés de ce mois dont l'historique a atteint « Validé ». Les « En attente de validation » se comptent à part ; un brouillon ne compte jamais. | Rien, affiché plus tard |               |
-| Événements réalisés (église)      | Événements dont le dernier état est « Terminé » et dont la date tombe dans le mois.                                                                                                                                                                                               | Rien, affiché plus tard |               |
-| Événements annulés (église)       | Événements dont le dernier état est « Annulé » et dont la date tombe dans le mois.                                                                                                                                                                                                | Rien, affiché plus tard |               |
-| Événements reportés (église)      | Événements dont la date a été repoussée. Un report compte dans le mois de la date quittée ; l'événement compte ensuite comme prévu dans son nouveau mois.                                                                                                                         | Rien, affiché plus tard |               |
-| Événements en attente (église)    | Événements dont le dernier état est « En attente de validation ».                                                                                                                                                                                                                 | Rien, affiché plus tard |               |
-| Événements passés sans état final | Événements dont la date est passée et dont le dernier état est encore « Validé » ou « En préparation ».                                                                                                                                                                           | Rien, affiché plus tard |               |
+| Indicateur                          | Ce que l'outil compte                                                                                                                                                                                                                                                                                                         | À saisir                                                | Votre réponse |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------- |
+| Événements prévus (église)          | Événements dont le dernier état est « Validé » ou « En préparation », datés d'aujourd'hui ou après. Pour un mois passé : événements datés de ce mois dont l'historique a atteint « Validé ». Les « En attente de validation » se comptent à part ; un brouillon ne compte jamais.                                             | Rien, affiché plus tard                                 |               |
+| Événements réalisés (église)        | Événements dont le dernier état est « Terminé » et dont la date tombe dans le mois.                                                                                                                                                                                                                                           | Rien, affiché plus tard                                 |               |
+| Événements annulés (église)         | Événements dont le dernier état est « Annulé » et dont la date tombe dans le mois.                                                                                                                                                                                                                                            | Rien, affiché plus tard                                 |               |
+| Événements reportés (église)        | Événements dont la date a été repoussée. Un report compte dans le mois de la date quittée ; l'événement compte ensuite comme prévu dans son nouveau mois.                                                                                                                                                                     | Rien, affiché plus tard                                 |               |
+| Événements en attente (église)      | Événements dont le dernier état est « En attente de validation ».                                                                                                                                                                                                                                                             | Rien, affiché plus tard                                 |               |
+| Événements passés sans état final   | Événements dont la date est passée et dont le dernier état est encore « Validé » ou « En préparation ».                                                                                                                                                                                                                       | Rien, affiché plus tard                                 |               |
+| Ponctualité des événements (église) | Parmi les événements réalisés du mois qui ont leur heure prévue et leur heure de début, ceux commencés au plus 5 minutes après l'heure prévue (« 2 sur 4 à l'heure »), et le retard moyen en minutes. Une avance compte « à l'heure » et 0 minute. La complétude dit combien ont leurs heures (« 4 sur 6 ont leurs heures »). | Les heures de chaque événement, par son ministère (T68) |               |
+| Ponctualité des cultes              | Chaque dimanche du mois dont l'« Heure de début du culte » est saisie, comparée à l'« Heure prévue du culte » en vigueur ce dimanche (« Cultes : 3 sur 5 »). Les cultes comptent sur une ligne à part, puis dans le total.                                                                                                    | Rien de plus                                            |               |
 
 ### Graphiques
 
@@ -299,7 +301,7 @@ Ces totaux portent sur les événements de toute l'église, par mois, sans titre
 | --- | ----------------------------------- | ----------------------------------------- | --------------- | -------------------- | ------------- |
 | G4  | Prévus, réalisés, annulés, reportés | Quatre comptages d'événements de l'église | barres groupées | Les 12 derniers mois |               |
 
-Question de la relecture : une tolérance de 5 minutes après l'heure prévue, pour dire qu'un événement a commencé « à l'heure », vous convient-elle ?
+Question de la relecture : une tolérance de 5 minutes après l'heure prévue, pour dire qu'un événement a commencé « à l'heure », vous convient-elle ? Depuis T68, la même tolérance vaut pour les heures des événements et pour les cultes ; chaque événement terminé montre aussi son retard à ceux qui le voient (« Commencé à 19 h 12, 12 min de retard »), et Coordination lit les totaux seulement.
 
 **Remarques du ministère :**
 
@@ -1039,7 +1041,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | Ministère        | Chiffres saisis | dont sensibles | Chiffres calculés | Comptages d'événements | Graphiques |
 | ---------------- | --------------- | -------------- | ----------------- | ---------------------- | ---------- |
 | Intégration      | 8               | 0              | 4                 | 0                      | 3          |
-| Coordination     | 6               | 0              | 4                 | 6                      | 1          |
+| Coordination     | 5               | 0              | 3                 | 7                      | 1          |
 | Communication    | 10              | 0              | 4                 | 0                      | 1          |
 | Social           | 7               | 3              | 0                 | 0                      | 0          |
 | Film             | 8               | 0              | 2                 | 0                      | 0          |
@@ -1061,7 +1063,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | MDS              | 8               | 0              | 0                 | 1                      | 1          |
 | Prodiges Junior  | 4               | 2              | 1                 | 0                      | 0          |
 | Prodiges Academy | 0               | 0              | 0                 | 0                      | 0          |
-| **Total**        | **162**         | **11**         | **41**            | **7**                  | **12**     |
+| **Total**        | **161**         | **11**         | **40**            | **8**                  | **12**     |
 
 À ces totaux s'ajoutent :
 
@@ -1069,7 +1071,7 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 - les **4 rubriques par département** de Coordo FIJ, saisies chaque semaine pour 8 départements (32 valeurs par semaine) ;
 - 2 points d'attention de départ (Production et Entretien) et 3 valeurs de départ de Production.
 
-Au total : **162 chiffres saisis** (dont 11 sensibles ; 161 avant l'ajout du chiffre d'affaires de Merch à la semaine, T64), **41 chiffres calculés** et **7 comptages d'événements** par l'outil, **12 graphiques**. Sur les 48 chiffres calculés ou comptés, 29 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
+Au total : **161 chiffres saisis** (dont 11 sensibles ; 162 après l'ajout du chiffre d'affaires de Merch à la semaine, T64, puis 161 depuis T68, qui remplace « Événements commencés à l'heure » par un calcul sur les heures des événements), **40 chiffres calculés** et **8 comptages d'événements** par l'outil (dont la ponctualité des événements et des cultes, T68), **12 graphiques**. Sur les 48 chiffres calculés ou comptés, 29 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
 
 ## Sources et contrôle
 

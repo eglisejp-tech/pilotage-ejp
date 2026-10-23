@@ -178,7 +178,8 @@ ont été rapprochées (section 8).
   (Formation) ; Interactions et Demandes reçues, traitées dans les délais (Communication) ; NA
   revenus au culte, Sans nouvelles après 3 mois (Intégration) ; Coût d'achat des articles vendus
   (Merch) ; jours de production, de résolution et d'attente (Film, Tech, Entretien) ; Événements
-  commencés à l'heure (Coordination). « Non calculé » si le bas manque ou vaut 0. _Raison_ : un taux
+  commencés à l'heure (Coordination, retiré par T68 : la ponctualité se calcule sur les heures des
+  événements). « Non calculé » si le bas manque ou vaut 0. _Raison_ : un taux
   ne se saisit jamais, il lui faut ses deux comptes.
 - **K5a. Un total par mois (révisé P45) pour Santé, Social, Call your sister, la plate-forme d'écoute ?**
   Oui, et pour les nouveaux enfants et les enfants déjà venus de Prodiges Junior : nature « mois »,
@@ -347,6 +348,13 @@ ont été rapprochées (section 8).
 - **K22b. Tolérance ?** 5 minutes après l'heure prévue. Coordination saisit chaque mois les
   événements commencés à l'heure **parmi les événements déclarés dans l'outil et terminés dans le
   mois** ; la part se calcule sur les réalisés de l'église du même mois (une seule population).
+  **Revu par T68** (23 octobre 2026) : le chiffre ne se saisit plus, il se calcule. Le ministère
+  porteur saisit l'heure prévue et l'heure de début de ses événements (facultatives) ; parmi les
+  réalisés du mois qui ont leurs deux heures, « à l'heure » si le retard est de 5 minutes au plus,
+  une avance comptant « à l'heure » et 0 minute ; retard moyen et part des événements à l'heure par
+  mois, cultes compris (ligne à part, lue dans les heures du dimanche de K22a), dans
+  `evenements_eglise_mois()` (K11). « Événements commencés à l'heure » et sa part quittent le
+  catalogue ; les valeurs déjà saisies restent.
 - **K23. Dernière période ?** Le dernier mois écoulé ; le mois en cours s'affiche à part.
 - **K24. Publications, contenus, campagnes ?** Publication : une mise en ligne sur un compte de
   l'église (la même sur deux plateformes compte une fois). Contenu produit : visuel, vidéo ou texte
@@ -499,7 +507,10 @@ ont été rapprochées (section 8).
   ministère ne voit que sa fiche » : des totaux, jamais un détail. Comme `ajouter_evenement` refuse
   une date passée, les comptages partent de la mise en service, et l'écran nomme ce départ
   par sa date (« Depuis la mise en service, le ... ») jusqu'au 1er janvier 2027. Fraîcheur à la place d'une complétude :
-  « 3 événements passés sans état final ».
+  « 3 événements passés sans état final ». **T68** (23 octobre 2026) : les mêmes totaux portent la
+  ponctualité, cultes compris, en totaux (réalisés avec leurs heures, à l'heure, retard cumulé ;
+  cultes, avec heures, à l'heure, retard cumulé), avec la même règle de lecture ; la liste des
+  événements en retard n'est jamais montrée à Coordination.
 - **K12. Chiffres d'un ministère sur la vue de l'église ?** Non : la vue de l'église garde les
   chiffres communs, les sessions et la carte. Les chiffres propres se lisent sur les fiches.
 - **K57. Complétude des activités ?** Sans objet : aucune nature « activité » ; tout se saisit au
@@ -584,19 +595,19 @@ le premier jour.
 
 ### Coordination (11 demandes, annexe : 11)
 
-| Ligne | Demande                                         | Mécanisme             | Indicateur ou source                                           | Rythme, unité   | Formule                                                                        | Sensible | Lot             |
-| ----- | ----------------------------------------------- | --------------------- | -------------------------------------------------------------- | --------------- | ------------------------------------------------------------------------------ | -------- | --------------- |
-| 33    | Événements réalisés depuis janvier              | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier état « Terminé », somme depuis la mise en service, puis janvier        | non      | V1+4            |
-| 34    | Événements prévus                               | Dérivé des événements | Événements prévus (église)                                     | Mois, nombre    | K10a                                                                           | non      | V1+4            |
-| 35    | Événements réalisés, dernière période           | Dérivé des événements | Événements réalisés (église)                                   | Mois, nombre    | dernier mois écoulé, mois en cours à part (K23)                                | non      | V1+4            |
-| 36    | Baptisés à la dernière session                  | Saisi                 | Baptême : baptisés à la dernière session du mois               | Mois, nombre    | valeur du dernier mois qui a une session                                       | non      | V1              |
-| 37    | Baptisés depuis janvier                         | Somme de l'année      | Baptême : baptisés                                             | Mois, nombre    | somme des mois depuis le départ                                                | non      | V1              |
-| 38    | Événements annulés                              | Dérivé des événements | Événements annulés (église)                                    | Mois, nombre    | dernier état « Annulé », date dans le mois                                     | non      | V1+4            |
-| 39    | Événements reportés                             | Dérivé des événements | Événements reportés (église)                                   | Mois, nombre    | date repoussée dans l'historique, mois de la date quittée (K10b)               | non      | V1+4            |
-| 40    | Taux de réalisation des événements              | Calcul                | Taux de réalisation des événements                             | Mois, %         | réalisés ÷ (réalisés + annulés + passés sans état final)                       | non      | V1+4            |
-| 41    | Événements commencés à l'heure                  | Saisi et calcul       | Événements commencés à l'heure ; Part des événements à l'heure | Mois, %         | commencés à l'heure ÷ réalisés de l'église du mois, part, jamais plus de 100 % | non      | V1, calcul V1+4 |
-| 42    | Heure de début de culte                         | Saisi                 | Heure de début du culte (et Heure prévue du culte)             | Dimanche, heure | valeur ; retard = différence signée (calcul V1+4)                              | non      | V1              |
-| 43    | Graphique : prévus, réalisés, annulés, reportés | Graphique             | G4                                                             | 12 mois         | quatre séries d'événements                                                     | non      | V1+4            |
+| Ligne | Demande                                         | Mécanisme                   | Indicateur ou source                                | Rythme, unité   | Formule                                                                                               | Sensible | Lot                            |
+| ----- | ----------------------------------------------- | --------------------------- | --------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------- | -------- | ------------------------------ |
+| 33    | Événements réalisés depuis janvier              | Dérivé des événements       | Événements réalisés (église)                        | Mois, nombre    | dernier état « Terminé », somme depuis la mise en service, puis janvier                               | non      | V1+4                           |
+| 34    | Événements prévus                               | Dérivé des événements       | Événements prévus (église)                          | Mois, nombre    | K10a                                                                                                  | non      | V1+4                           |
+| 35    | Événements réalisés, dernière période           | Dérivé des événements       | Événements réalisés (église)                        | Mois, nombre    | dernier mois écoulé, mois en cours à part (K23)                                                       | non      | V1+4                           |
+| 36    | Baptisés à la dernière session                  | Saisi                       | Baptême : baptisés à la dernière session du mois    | Mois, nombre    | valeur du dernier mois qui a une session                                                              | non      | V1                             |
+| 37    | Baptisés depuis janvier                         | Somme de l'année            | Baptême : baptisés                                  | Mois, nombre    | somme des mois depuis le départ                                                                       | non      | V1                             |
+| 38    | Événements annulés                              | Dérivé des événements       | Événements annulés (église)                         | Mois, nombre    | dernier état « Annulé », date dans le mois                                                            | non      | V1+4                           |
+| 39    | Événements reportés                             | Dérivé des événements       | Événements reportés (église)                        | Mois, nombre    | date repoussée dans l'historique, mois de la date quittée (K10b)                                      | non      | V1+4                           |
+| 40    | Taux de réalisation des événements              | Calcul                      | Taux de réalisation des événements                  | Mois, %         | réalisés ÷ (réalisés + annulés + passés sans état final)                                              | non      | V1+4                           |
+| 41    | Événements commencés à l'heure                  | Dérivé des événements (T68) | Ponctualité des événements (église), cultes compris | Mois, %         | à l'heure ÷ réalisés qui ont leurs heures, retard moyen, cultes à part puis total (K22b revu par T68) | non      | V1+4 (avant T68 : saisi en V1) |
+| 42    | Heure de début de culte                         | Saisi                       | Heure de début du culte (et Heure prévue du culte)  | Dimanche, heure | valeur ; retard = différence signée (calcul V1+4)                                                     | non      | V1                             |
+| 43    | Graphique : prévus, réalisés, annulés, reportés | Graphique                   | G4                                                  | 12 mois         | quatre séries d'événements                                                                            | non      | V1+4                           |
 
 ### Communication (9 demandes, annexe : 9)
 
@@ -968,27 +979,31 @@ Commun affiché : « Équipe présente au culte » (STARs au service).
 
 ### Coordination
 
-| Libellé                                          | Ce qu'on compte exactement                                                                                          | Rythme    | Unité, borne         | Rubrique | Sensible | Somme |
-| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | --------- | -------------------- | -------- | -------- | ----- |
-| Baptême : baptisés                               | Personnes baptisées dans le mois, toutes sessions de baptême additionnées.                                          | Mois      | nombre, 9 999        | Baptême  | non      | oui   |
-| Baptême : sessions                               | Sessions de baptême tenues dans le mois. Si aucune, enregistrez 0.                                                  | Mois      | nombre, 9 999        | Baptême  | non      | oui   |
-| Baptême : baptisés à la dernière session du mois | Personnes baptisées à la dernière session de baptême du mois. Si aucune session, enregistrez 0.                     | Mois      | nombre, 9 999        | Baptême  | non      | non   |
-| Heure de début du culte                          | Heure réelle à laquelle le culte de ce dimanche a commencé.                                                         | Dimanche  | heure, 0 h à 23 h 59 | aucune   | non      | non   |
-| Heure prévue du culte                            | Heure de début prévue du culte du dimanche, à la date de la saisie.                                                 | À ce jour | heure, 0 h à 23 h 59 | aucune   | non      | non   |
-| Événements commencés à l'heure                   | Parmi les événements terminés du mois déclarés dans l'outil, ceux commencés au plus 5 minutes après l'heure prévue. | Mois      | nombre, 9 999        | aucune   | non      | oui   |
+| Libellé                                          | Ce qu'on compte exactement                                                                      | Rythme    | Unité, borne         | Rubrique | Sensible | Somme |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------- | --------- | -------------------- | -------- | -------- | ----- |
+| Baptême : baptisés                               | Personnes baptisées dans le mois, toutes sessions de baptême additionnées.                      | Mois      | nombre, 9 999        | Baptême  | non      | oui   |
+| Baptême : sessions                               | Sessions de baptême tenues dans le mois. Si aucune, enregistrez 0.                              | Mois      | nombre, 9 999        | Baptême  | non      | oui   |
+| Baptême : baptisés à la dernière session du mois | Personnes baptisées à la dernière session de baptême du mois. Si aucune session, enregistrez 0. | Mois      | nombre, 9 999        | Baptême  | non      | non   |
+| Heure de début du culte                          | Heure réelle à laquelle le culte de ce dimanche a commencé.                                     | Dimanche  | heure, 0 h à 23 h 59 | aucune   | non      | non   |
+| Heure prévue du culte                            | Heure de début prévue du culte du dimanche, à la date de la saisie.                             | À ce jour | heure, 0 h à 23 h 59 | aucune   | non      | non   |
 
-| Calcul ou série                    | Type                  | Formule (sources)                                                          | Lot  |
-| ---------------------------------- | --------------------- | -------------------------------------------------------------------------- | ---- |
-| Baptême : baptisés par session     | moyenne               | Baptême : baptisés ÷ Baptême : sessions, moyenne du mois                   | V1   |
-| Retard du début du culte           | différence signée     | Heure de début du culte moins Heure prévue du culte en vigueur, en minutes | V1+4 |
-| Événements prévus (église)         | comptage d'événements | K10a                                                                       | V1+4 |
-| Événements réalisés (église)       | comptage d'événements | dernier état « Terminé », date dans le mois                                | V1+4 |
-| Événements annulés (église)        | comptage d'événements | dernier état « Annulé », date dans le mois                                 | V1+4 |
-| Événements reportés (église)       | comptage d'événements | date repoussée, mois de la date quittée (K10b)                             | V1+4 |
-| Événements en attente (église)     | comptage d'événements | dernier état « En attente de validation »                                  | V1+4 |
-| Événements passés sans état final  | comptage d'événements | date passée, dernier état « Validé » ou « En préparation »                 | V1+4 |
-| Taux de réalisation des événements | taux, part            | réalisés ÷ (réalisés + annulés + passés sans état final)                   | V1+4 |
-| Part des événements à l'heure      | taux, part            | Événements commencés à l'heure ÷ Événements réalisés (église)              | V1+4 |
+« Événements commencés à l'heure » (« Parmi les événements terminés du mois déclarés dans l'outil,
+ceux commencés au plus 5 minutes après l'heure prévue. », mois, nombre) a quitté le catalogue
+(T68, 23 octobre 2026) : la ponctualité se calcule sur les heures des événements ; les valeurs
+déjà saisies restent.
+
+| Calcul ou série                     | Type                             | Formule (sources)                                                                      | Lot  |
+| ----------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------- | ---- |
+| Baptême : baptisés par session      | moyenne                          | Baptême : baptisés ÷ Baptême : sessions, moyenne du mois                               | V1   |
+| Retard du début du culte            | différence signée                | Heure de début du culte moins Heure prévue du culte en vigueur, en minutes             | V1+4 |
+| Événements prévus (église)          | comptage d'événements            | K10a                                                                                   | V1+4 |
+| Événements réalisés (église)        | comptage d'événements            | dernier état « Terminé », date dans le mois                                            | V1+4 |
+| Événements annulés (église)         | comptage d'événements            | dernier état « Annulé », date dans le mois                                             | V1+4 |
+| Événements reportés (église)        | comptage d'événements            | date repoussée, mois de la date quittée (K10b)                                         | V1+4 |
+| Événements en attente (église)      | comptage d'événements            | dernier état « En attente de validation »                                              | V1+4 |
+| Événements passés sans état final   | comptage d'événements            | date passée, dernier état « Validé » ou « En préparation »                             | V1+4 |
+| Taux de réalisation des événements  | taux, part                       | réalisés ÷ (réalisés + annulés + passés sans état final)                               | V1+4 |
+| Ponctualité des événements (église) | `evenements_eglise_mois()` (T68) | à l'heure ÷ réalisés qui ont leurs heures, retard moyen ; cultes à part, puis le total | V1+4 |
 
 ### Communication
 
@@ -1382,17 +1397,17 @@ le ministère dans le mois »).
 
 ### Taille de la vague 1
 
-| Élément                                    | Nombre                                                                                                                       |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| Indicateurs saisis (prévus)                | 162 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine), dont 11 sensibles, 5 en euros, 2 en heure, 4 en jours |
-| Calculs                                    | 41 : 29 en V1 (taux et moyennes de T35), 12 en V1+4 (calculs étendus et événements)                                          |
-| Séries dérivées des événements             | 7 (6 de l'église pour Coordination, 1 de MDS), V1+4                                                                          |
-| Statistiques FIJ par département           | 4 rubriques × 8 départements, V1                                                                                             |
-| Communs affichés sous le nom de la demande | 13 (dont 2 lignes de référence de l'église pour MDS)                                                                         |
-| Graphiques déclarés                        | 12, V1+4                                                                                                                     |
-| Points d'attention de départ               | 2 (Production, Entretien)                                                                                                    |
-| Ministères                                 | 23, dont 21 avec des prévus, Protocole et Prodiges Academy sans                                                              |
-| Plus grande fiche                          | MCAD, 21 lignes sur 30                                                                                                       |
+| Élément                                    | Nombre                                                                                                                                                                                 |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Indicateurs saisis (prévus)                | 161 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine, moins « Événements commencés à l'heure », retiré par T68), dont 11 sensibles, 5 en euros, 2 en heure, 4 en jours |
+| Calculs                                    | 40 : 29 en V1 (taux et moyennes de T35), 11 en V1+4 (calculs étendus et événements) ; la part des événements à l'heure, retirée par T68, se lit dans `evenements_eglise_mois()`        |
+| Séries dérivées des événements             | 7 (6 de l'église pour Coordination, 1 de MDS), V1+4                                                                                                                                    |
+| Statistiques FIJ par département           | 4 rubriques × 8 départements, V1                                                                                                                                                       |
+| Communs affichés sous le nom de la demande | 13 (dont 2 lignes de référence de l'église pour MDS)                                                                                                                                   |
+| Graphiques déclarés                        | 12, V1+4                                                                                                                                                                               |
+| Points d'attention de départ               | 2 (Production, Entretien)                                                                                                                                                              |
+| Ministères                                 | 23, dont 21 avec des prévus, Protocole et Prodiges Academy sans                                                                                                                        |
+| Plus grande fiche                          | MCAD, 21 lignes sur 30                                                                                                                                                                 |
 
 Charge de saisie la plus lourde : MPI, 7 chiffres chaque dimanche ; Coordo FIJ, 32 valeurs par
 semaine dans un seul formulaire ; MCAD, 13 chiffres par mois. Tous les comptes mensuels se saisissent
@@ -1424,17 +1439,18 @@ T30.
 
 ### Dans les 4 semaines après la mise en service (ce qui lit)
 
-| N°  | Extension                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             | Sert à                                                | Coût      |
-| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------- |
-| X9  | Calculs étendus sur `indicateur_terme` : différence signée, somme (2 à 4 termes), évolution (écart à la période précédente et depuis janvier, en nombre et en %) ; agrégat « somme des dimanches du mois » ; décalage de 0 à 3 mois ; terme « comptage d'événements ». Sources jamais sensibles, jamais un chiffre commun. pgTAP                                                                                                                                                                                                                      | Intégration, Coordination, Communication, MCAD, Merch | 3 jours   |
-| X10 | Comptages d'événements : vue `v_evenements_mois` (ministère, mois, prévus, réalisés, annulés, reportés lus dans l'historique de `evenement_etat`, en attente, passés sans état final) sous la RLS de l'événement ; fonction `private` en `security definer` derrière une fonction `public` en `security invoker` pour les totaux de l'église, réservée à `coordination`, au berger, au conseil et à EJP Tech. pgTAP : report détecté, dernier état gagnant, minuit à Paris, un autre ministère et l'administration ne reçoivent rien                  | Coordination, MDS                                     | 2 jours   |
-| X11 | Graphiques déclarés : `private.graphique_prevu` (modèle, titre de 60 caractères au plus, forme : courbes, barres groupées, barres triées ou totaux côte à côte ; étendue : 12 mois, 10 à 26 dimanches, 12 semaines) et `private.graphique_serie` (1 à 4 séries : indicateur, calcul, comptage d'événements, rubrique FIJ, série de l'église), écrites par la migration de la vague 1 ; vue `v_graphique` en `security_invoker` ; un composant avec équivalent texte, trous gardés, cercle vide pour une période incomplète ; jamais de série sensible | 9 ministères                                          | 2,5 jours |
-| X12 | `v_stock_mois` : valeur en vigueur à la fin de chaque mois d'un « à ce jour » (heure de Paris), trou si aucune saisie ; pas pour les sensibles                                                                                                                                                                                                                                                                                                                                                                                                        | stocks et relevés de plateformes                      | 0,5 jour  |
-| X13 | `v_serie_eglise` : total de l'église d'un chiffre commun à la fin de chaque mois (règle 3), avec sa complétude par point ; lisible par qui lit la vue de l'église                                                                                                                                                                                                                                                                                                                                                                                     | MDS                                                   | 0,5 jour  |
-| X14 | Colonne « dimanches avec une valeur au-dessus de 0 » par mois dans la vue de suivi, affichée sous `libelle_sessions`                                                                                                                                                                                                                                                                                                                                                                                                                                  | Prodiges Junior                                       | 0,25 jour |
+| N°  | Extension                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Sert à                                                | Coût      |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | --------- |
+| X9  | Calculs étendus sur `indicateur_terme` : différence signée, somme (2 à 4 termes), évolution (écart à la période précédente et depuis janvier, en nombre et en %) ; agrégat « somme des dimanches du mois » ; décalage de 0 à 3 mois ; terme « comptage d'événements ». Sources jamais sensibles, jamais un chiffre commun. pgTAP                                                                                                                                                                                                                                                                                          | Intégration, Coordination, Communication, MCAD, Merch | 3 jours   |
+| X10 | Comptages d'événements : vue `v_evenements_mois` (ministère, mois, prévus, réalisés, annulés, reportés lus dans l'historique de `evenement_etat`, en attente, passés sans état final) sous la RLS de l'événement ; fonction `private` en `security definer` derrière une fonction `public` en `security invoker` pour les totaux de l'église, réservée à `coordination`, au berger, au conseil et à EJP Tech. pgTAP : report détecté, dernier état gagnant, minuit à Paris, un autre ministère et l'administration ne reçoivent rien. T68 : livré avec les heures des événements et la ponctualité (événements et cultes) | Coordination, MDS                                     | 2 jours   |
+| X11 | Graphiques déclarés : `private.graphique_prevu` (modèle, titre de 60 caractères au plus, forme : courbes, barres groupées, barres triées ou totaux côte à côte ; étendue : 12 mois, 10 à 26 dimanches, 12 semaines) et `private.graphique_serie` (1 à 4 séries : indicateur, calcul, comptage d'événements, rubrique FIJ, série de l'église), écrites par la migration de la vague 1 ; vue `v_graphique` en `security_invoker` ; un composant avec équivalent texte, trous gardés, cercle vide pour une période incomplète ; jamais de série sensible                                                                     | 9 ministères                                          | 2,5 jours |
+| X12 | `v_stock_mois` : valeur en vigueur à la fin de chaque mois d'un « à ce jour » (heure de Paris), trou si aucune saisie ; pas pour les sensibles                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | stocks et relevés de plateformes                      | 0,5 jour  |
+| X13 | `v_serie_eglise` : total de l'église d'un chiffre commun à la fin de chaque mois (règle 3), avec sa complétude par point ; lisible par qui lit la vue de l'église                                                                                                                                                                                                                                                                                                                                                                                                                                                         | MDS                                                   | 0,5 jour  |
+| X14 | Colonne « dimanches avec une valeur au-dessus de 0 » par mois dans la vue de suivi, affichée sous `libelle_sessions`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Prodiges Junior                                       | 0,25 jour |
 
 Total dans les 4 semaines : **environ 9 jours**. Ensemble : environ 17 jours, à confirmer au mode
-plan de l'étape 4a. Plusieurs pièces servent plus d'une demande : X9 en sert 12, X11 en sert 12.
+plan de l'étape 4a. Plusieurs pièces servent plus d'une demande : X9 en sert 12 (11 depuis T68, la
+part des événements à l'heure passant à X10), X11 en sert 12.
 
 ### Retiré des propositions précédentes
 
