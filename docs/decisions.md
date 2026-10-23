@@ -1057,6 +1057,7 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Quand** : après l'ouverture, lot `etape-7-avancement` (environ 7 h), compté dans la limite de 4 lots en parallèle.
 - **Maquettes** : toile de design « Pilotage EJP : logo et bandeau » (option A sur ordinateur et téléphone, option D).
 - **Texte revu par T66** : la région s'appelle « Avancement de Pilotage EJP » ; le panneau dit « Mis à jour le 14 oct. Les dates à venir peuvent changer. » ; le carré devant « En ligne » est dessiné, plus écrit (un lecteur d'écran ne le lit plus).
+- **Tout en ligne (livraison du 23 octobre 2026)** : les 8 étapes sont en ligne. La ligne dit seulement « 8 étapes sur 8 en ligne. », sans phrase « Prochaine » ni phrase qui le redise ; le panneau dit « Mis à jour le 23 oct. », sans « Les dates à venir peuvent changer. » puisqu'il n'en reste aucune ; aucune étape n'est marquée comme courante.
 - **Origine** : validation écrite de la personne responsable (7 octobre 2026)
 - **Statut** : Décidé par la personne responsable le 7 octobre 2026
 - **BRIEF** : section 9 (en-tête des pages connectées) et section 10 (exception d'animation), à reporter avec le lot

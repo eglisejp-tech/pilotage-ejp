@@ -60,12 +60,13 @@ export function BandeauAvancement() {
         <p className="text-sm text-encre-2">
           <span className="font-chiffres font-extrabold text-encre">{resume.enLigne}</span>{' '}
           {phraseEnLigne(resume.enLigne, resume.total)}
-          <span className="hidden lg:inline">
-            {' '}
-            {resume.prochaine
-              ? phraseProchaine(resume.prochaine.partie.quoi, resume.prochaine.partie.date)
-              : TEXTES.toutEnLigne}
-          </span>
+          {/* Tout en ligne : « 8 étapes sur 8 en ligne. » suffit, aucune phrase ne le redit. */}
+          {resume.prochaine && (
+            <span className="hidden lg:inline">
+              {' '}
+              {phraseProchaine(resume.prochaine.partie.quoi, resume.prochaine.partie.date)}
+            </span>
+          )}
         </p>
         <SegmentsAvancement etapes={ETAPES} anime={anime} />
         <div className="ml-auto flex items-center gap-x-4">
@@ -97,7 +98,9 @@ export function BandeauAvancement() {
         className="animate-in duration-200 ease-out fade-in slide-in-from-top-1"
       >
         <div className="mx-auto box-content max-w-contenu space-y-4 px-marge pt-2 pb-6">
-          <p className="text-note text-encre-3">{notePanneau(MISE_A_JOUR)}</p>
+          <p className="text-note text-encre-3">
+            {notePanneau(MISE_A_JOUR, resume.prochaine !== null)}
+          </p>
           <ListeEtapes etapes={ETAPES} numeroProchaine={resume.prochaine?.numero ?? null} />
         </div>
       </div>

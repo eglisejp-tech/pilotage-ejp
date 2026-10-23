@@ -12,19 +12,18 @@ test.describe("bandeau d'avancement", () => {
     await page.goto(ADRESSE)
     const bandeau = page.getByRole('region', { name: 'Avancement de Pilotage EJP' })
     await expect(bandeau).toBeVisible()
-    await expect(bandeau).toContainText('7 étapes sur 8 en ligne.')
-    await expect(bandeau).toContainText(
-      'Prochaine : Textes et messages revus, prévue vendredi 16 oct.',
-    )
+    await expect(bandeau).toContainText('8 étapes sur 8 en ligne.')
+    await expect(bandeau).not.toContainText('Prochaine')
 
     const voir = bandeau.getByRole('button', { name: 'Voir les étapes' })
     await voir.click()
     const etapes = bandeau.getByRole('listitem')
     await expect(etapes).toHaveCount(8)
-    await expect(bandeau).toContainText('Mis à jour le 14 oct. Les dates à venir peuvent changer.')
-    // Étape courante : la 7, avec ses 5 parties en ligne sur 6 (livraison du 14 octobre).
-    await expect(etapes.nth(6)).toHaveAttribute('aria-current', 'step')
-    await expect(etapes.nth(6)).toContainText('En partie : 5 parties sur 6 en ligne.')
+    // Livraison du 23 octobre : les 8 étapes sont en ligne, aucune n'est l'étape courante.
+    await expect(bandeau).toContainText('Mis à jour le 23 oct.')
+    await expect(bandeau).not.toContainText('Les dates à venir')
+    await expect(bandeau.locator('[aria-current]')).toHaveCount(0)
+    await expect(etapes.nth(6)).toContainText('En ligne')
     await expect(etapes.nth(5)).toContainText('En ligne')
     await expect(bandeau.getByRole('button', { name: 'Masquer les étapes' })).toBeVisible()
     await page.keyboard.press('Escape')

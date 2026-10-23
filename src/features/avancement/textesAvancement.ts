@@ -11,7 +11,6 @@ export const TEXTES = {
   masquer: 'Masquer les étapes',
   fermer: 'Fermer',
   fermerSuite: "le bandeau d'avancement",
-  toutEnLigne: 'Toutes les étapes sont en ligne.',
 }
 
 export function phraseEnLigne(enLigne: number, total: number): string {
@@ -22,10 +21,12 @@ export function phraseProchaine(quoi: string, date: DateIso): string {
   return `Prochaine : ${quoi}, prévue ${formaterJourSemaine(date)}`
 }
 
-export function notePanneau(miseAJour: DateIso): string {
+/** Quand plus rien n'est prévu, il n'y a plus de date à venir : la seconde phrase tombe. */
+export function notePanneau(miseAJour: DateIso, resteAVenir: boolean): string {
   const jour = formaterJourCourt(miseAJour)
+  const miseAJourLe = `Mis à jour le ${jour}${jour.endsWith('.') ? '' : '.'}`
   // T66 (t055) : « point » et « plan » prêtaient à confusion.
-  return `Mis à jour le ${jour}${jour.endsWith('.') ? '' : '.'} Les dates à venir peuvent changer.`
+  return resteAVenir ? `${miseAJourLe} Les dates à venir peuvent changer.` : miseAJourLe
 }
 
 export function prevueLe(date: DateIso): string {
