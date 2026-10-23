@@ -9,6 +9,7 @@ import type { LigneDerniereSaisie } from '@/data/fiche'
 import type { DerniereSaisieFiche, TexteLibre } from '@/features/fiche/modeleFiche'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import { estDateIso, formaterHorodatage, formaterRendezVous } from '@/lib/metier/dates'
+import { commenceA } from '@/lib/metier/evenements'
 import { accorder, nombre } from '@/lib/metier/texte'
 
 /** « STARs au service : 10, STARs actifs : 14, dont 11 en FIJ » (maquettes 04 et 12). */
@@ -71,9 +72,22 @@ function chiffresCommuns(
 interface TexteDeLigne {
   texte: string
   objet: TexteLibre | null
+  /** Après l'objet : « commencé à 19 h 12 » (T68). */
+  suite?: string
 }
 
 const SANS_OBJET = (texte: string): TexteDeLigne => ({ texte, objet: null })
+
+/**
+ * Un événement ajouté ou mis à jour : son titre, puis « commencé à 19 h 12 » quand la ligne porte
+ * une heure de début (T68) ; sans titre lisible, « Événement mis à jour, commencé à 19 h 12 ».
+ */
+function ligneEvenement(libelle: string, ligne: LigneDerniereSaisie): TexteDeLigne {
+  const dite = avecObjet(libelle, ligne.cible_texte)
+  const debut = commenceA(ligne.detail?.['heure_debut'])
+  if (debut === null) return dite
+  return dite.objet === null ? SANS_OBJET(`${libelle}, ${debut}`) : { ...dite, suite: debut }
+}
 
 /** Le titre d'un point ou d'un événement : masqué par EJP Tech, il s'affiche en `--encre-3`. */
 function avecObjet(libelle: string, objet: string | null): TexteDeLigne {
@@ -114,6 +128,7 @@ function texteLigne(ligne: LigneDerniereSaisie, codes: ReadonlyMap<string, strin
     }
     case 'evenement_ajoute':
     case 'evenement_modifie':
+      return ligneEvenement(libelle, ligne)
     case 'point_cree':
     case 'point_statut':
     case 'point_traite':

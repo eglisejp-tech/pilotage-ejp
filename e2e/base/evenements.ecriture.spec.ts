@@ -48,6 +48,8 @@ test.describe('Communication', () => {
     )
 
     await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, 10))
+    // Heure prévue (T68) : « 19:00 » part en minutes depuis minuit.
+    await page.getByLabel('Heure prévue (facultatif)').fill('19:00')
     await page.getByLabel("Nom de l'événement").fill(NOM)
     await page.getByText('Brouillon', { exact: true }).click()
     await page.getByRole('checkbox', { name: 'Coordination' }).check()
@@ -56,9 +58,16 @@ test.describe('Communication', () => {
       'Événement ajouté au calendrier.',
     )
 
-    const lignes = await lire<{ id: string; ministere_id: string; date: string; statut: string }>(
+    const lignes = await lire<{
+      id: string
+      ministere_id: string
+      date: string
+      statut: string
+      heure_prevue: number | null
+      heure_debut: number | null
+    }>(
       page,
-      `v_evenement?select=id,ministere_id,date,statut&titre=eq.${encodeURIComponent(NOM)}`,
+      `v_evenement?select=id,ministere_id,date,statut,heure_prevue,heure_debut&titre=eq.${encodeURIComponent(NOM)}`,
     )
     expect(lignes).toHaveLength(1)
     const [ligne] = lignes
@@ -67,6 +76,8 @@ test.describe('Communication', () => {
       ministere_id: MINISTERE_COMMUNICATION,
       date: plusJours(aujourdhui, 10),
       statut: 'brouillon',
+      heure_prevue: 1140,
+      heure_debut: null,
     })
     const mentions = await lire<{ ministere_id: string }>(
       page,
@@ -154,6 +165,82 @@ test.describe('Communication', () => {
     )
   })
 
+  // T68 : un événement du jour, Terminé sans heure de début, puis avec. La base calcule le retard ;
+  // l'écran le lit dans `v_evenement`, sur la fiche, dans « Vos saisies » et au journal.
+  test('heures (T68) : Terminé du jour, « Heure de début à indiquer », puis « Commencé à »', async ({
+    page,
+  }) => {
+    const nomDuJour = `${NOM} du jour`
+    await page.goto('/saisir/evenement')
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    await page.getByLabel('Date', { exact: true }).fill(aujourdhui)
+    await page.getByLabel('Heure prévue (facultatif)').fill('10:00')
+    await page.getByLabel("Nom de l'événement").fill(nomDuJour)
+    await page.getByText('Validé', { exact: true }).click()
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement ajouté au calendrier.',
+    )
+    const [cree] = await lire<{ id: string }>(
+      page,
+      `v_evenement?select=id&titre=eq.${encodeURIComponent(nomDuJour)}`,
+    )
+    const id = cree?.id ?? ''
+    expect(id).not.toBe('')
+
+    // Terminé, sans heure de début : le champ paraît, vide ; l'heure prévue est préremplie.
+    await page.goto(`/saisir/evenement/${id}`)
+    await expect(page.getByLabel('Heure prévue (facultatif)')).toHaveValue('10:00')
+    await expect(page.getByLabel('Heure de début (facultatif)')).toHaveCount(0)
+    await page.getByText('Terminé', { exact: true }).click()
+    await expect(page.getByLabel('Heure de début (facultatif)')).toHaveValue('')
+    await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement mis à jour.',
+    )
+
+    // « Vos saisies » et le calendrier du porteur rappellent l'heure de début.
+    await page.goto('/')
+    const saisies = page.getByRole('region', { name: 'Vos saisies' })
+    await expect(saisies.getByRole('listitem').filter({ hasText: nomDuJour })).toContainText(
+      'Heure de début à indiquer',
+    )
+    await page.goto('/ma-fiche')
+    const calendrier = page.getByRole('region', { name: 'Calendrier prévisionnel' })
+    const ligne = calendrier.getByRole('listitem').filter({ hasText: nomDuJour })
+    await expect(ligne).toContainText(', 10 h')
+    await expect(ligne).toContainText('Heure de début à indiquer')
+
+    // L'heure de début : 10 h 12, soit 12 minutes de retard, calculées par la base.
+    await page.goto(`/saisir/evenement/${id}`)
+    await page.getByLabel('Heure de début (facultatif)').fill('10:12')
+    await page.getByRole('button', { name: 'Enregistrer la mise à jour' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement mis à jour.',
+    )
+    const [lue] = await lire<{ heure_debut: number; retard: number; a_l_heure: boolean }>(
+      page,
+      `v_evenement?select=heure_debut,retard,a_l_heure&id=eq.${id}`,
+    )
+    expect(lue).toEqual({ heure_debut: 612, retard: 12, a_l_heure: false })
+    await page.goto('/ma-fiche')
+    await expect(
+      page
+        .getByRole('region', { name: 'Calendrier prévisionnel' })
+        .getByRole('listitem')
+        .filter({ hasText: nomDuJour }),
+    ).toContainText('Commencé à 10 h 12, 12 min de retard')
+    await expect(
+      page.getByRole('region', { name: 'Dernières saisies' }).getByText(/commencé à 10 h 12/),
+    ).toBeVisible()
+    await page.goto('/')
+    await expect(
+      page.getByRole('region', { name: 'Vos saisies' }).getByRole('listitem').filter({
+        hasText: nomDuJour,
+      }),
+    ).toHaveCount(0)
+  })
+
   test('la prochaine réunion, renseignée puis modifiée : deux déclarations, deux lignes de journal', async ({
     page,
   }) => {
@@ -236,6 +323,16 @@ test.describe('EJP Tech, lecture seule', () => {
         p_date: plusJours(aujourdhui, 3),
         p_statut: 'brouillon',
         p_mentions: [],
+      }),
+    )
+    // La version à cinq arguments (T68), celle de l'écran, refuse de même.
+    await refuse(
+      await appeler(page, 'ajouter_evenement', {
+        p_titre: `${NOM} EJP Tech`,
+        p_date: plusJours(aujourdhui, 3),
+        p_statut: 'brouillon',
+        p_mentions: [],
+        p_heure_prevue: 1140,
       }),
     )
     await refuse(

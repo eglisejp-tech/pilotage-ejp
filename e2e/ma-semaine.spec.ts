@@ -5,7 +5,7 @@ import { expect, test, type Page } from '@playwright/test'
 // développement avec les données d'exemple (aucune base). Trois formats par les projets
 // Playwright : 1440, 834 et 390 px.
 
-type Etat = 'semaine' | 'premier-dimanche' | 'fij' | 'chargement' | 'erreur'
+type Etat = 'semaine' | 'premier-dimanche' | 'fij' | 'evenements' | 'chargement' | 'erreur'
 
 const adresse = (etat: Etat = 'semaine') =>
   `/apercu/cette-semaine?profil=ministere${etat === 'semaine' ? '' : `&etat=${etat}`}`
@@ -173,7 +173,39 @@ test.describe('Ma semaine, aperçu', () => {
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
   })
 
-  for (const etat of ['semaine', 'premier-dimanche', 'fij', 'chargement', 'erreur'] as const) {
+  test('événements (T68) : statut à mettre à jour et heure de début à indiquer, dans la phrase', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'evenements')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      "Vos chiffres sont à jour. Il reste le statut de 2 événements et l'heure de début d'un événement.",
+    )
+    await expect(page.getByRole('link', { name: "Mettre à jour l'événement" })).toHaveAttribute(
+      'href',
+      '/saisir/evenement/concert',
+    )
+    // « À faire » devient l'étiquette de la ligne, le reste le détail.
+    const saisies = page.getByRole('region', { name: 'Vos saisies' })
+    const concert = saisies.getByRole('listitem').filter({ hasText: 'Concert de rentrée' })
+    await expect(concert).toContainText('À faire')
+    await expect(concert).toContainText('Statut à mettre à jour, date passée depuis 3 jours')
+    const atelier = saisies.getByRole('listitem').filter({ hasText: 'Atelier photo' })
+    await expect(atelier).toContainText('Heure de début à indiquer')
+    await expect(atelier.getByRole('link', { name: /^Mettre à jour/ })).toHaveAttribute(
+      'href',
+      '/saisir/evenement/atelier',
+    )
+    await expect(saisies.getByRole('link', { name: /^Mettre à jour/ })).toHaveCount(3)
+  })
+
+  for (const etat of [
+    'semaine',
+    'premier-dimanche',
+    'fij',
+    'evenements',
+    'chargement',
+    'erreur',
+  ] as const) {
     test(`${etat} : aucune violation d'accessibilité détectée par axe`, async ({ page }) => {
       await ouvrir(page, etat)
       const resultat = await new AxeBuilder({ page })
@@ -217,7 +249,14 @@ test.describe('Ma semaine, aperçu', () => {
   test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
     test.setTimeout(90_000)
     const largeur = page.viewportSize()?.width ?? 0
-    for (const etat of ['semaine', 'premier-dimanche', 'fij', 'chargement', 'erreur'] as const) {
+    for (const etat of [
+      'semaine',
+      'premier-dimanche',
+      'fij',
+      'evenements',
+      'chargement',
+      'erreur',
+    ] as const) {
       await ouvrir(page, etat)
       if (etat === 'chargement') {
         await page

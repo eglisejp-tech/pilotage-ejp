@@ -405,6 +405,24 @@ describe('phraseDAccueil et libelleBoutonPrincipal (accueil du ministère)', () 
     expect(libelleBoutonPrincipal(saisies)).toBe("Mettre à jour l'événement")
   })
 
+  it("T68 : « l'heure de début d'un événement », après les statuts, jamais le titre", () => {
+    const heure = (fait: boolean) => ({
+      type: 'evenement' as const,
+      fait,
+      quoi: 'heure_debut' as const,
+    })
+    expect(texteDePhrase(phraseDAccueil([dimanche(true), heure(false)], 39))).toBe(
+      "Vos chiffres sont à jour. Il reste l'heure de début d'un événement.",
+    )
+    expect(texteDePhrase(phraseDAccueil([heure(false), evenement(false), heure(false)], 39))).toBe(
+      "Vos chiffres sont à jour. Il reste le statut d'un événement et l'heure de début de 2 événements.",
+    )
+    expect(libelleBoutonPrincipal([heure(false)])).toBe("Mettre à jour l'événement")
+    expect(texteDePhrase(phraseDAccueil([dimanche(true), heure(true)], 39))).toBe(
+      'Tout est à jour pour la semaine 39.',
+    )
+  })
+
   it('compte les événements à confirmer après le reste', () => {
     const saisies = [evenement(false), dimanche(false), evenement(false), reunion(true)]
     expect(texteDePhrase(phraseDAccueil(saisies, 40))).toBe(

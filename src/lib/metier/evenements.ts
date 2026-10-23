@@ -3,10 +3,82 @@
 // vue `v_evenement` (`jours` = date moins `private.aujourdhui()`, heure de Paris). Rien ici ne lit
 // l'horloge du navigateur : l'alerte ne peut pas se tromper la nuit ni sur un poste mal réglé.
 
-import { comparerNoms } from './texte'
+import type { StatutEvenement } from '@/lib/base'
+import { comparerNoms, nombre } from './texte'
+import { formaterHeureEnMinutes, valeurPermise } from './unites'
 
 /** Un événement daté d'au plus 7 jours dans le passé reste au calendrier (BRIEF, section 9). */
 export const FENETRE_PASSE_JOURS = 7
+
+/**
+ * « Vos saisies » rappelle un événement du ministère daté d'au plus 30 jours avant aujourd'hui
+ * qui attend son état final ou son heure de début (T68).
+ */
+export const FENETRE_A_RENSEIGNER_JOURS = 30
+
+/** Terminé et Annulé sont les états finals d'un événement (K10). */
+export function estEtatFinal(statut: StatutEvenement): boolean {
+  return statut === 'termine' || statut === 'annule'
+}
+
+/** Ce que « Vos saisies » lit d'un événement du ministère (T68). */
+export interface EvenementARenseigner {
+  statut: StatutEvenement
+  jours: number
+  heure_debut: number | null
+}
+
+/**
+ * Ce qui reste à saisir pour un événement du ministère (T68), d'après `jours` (heure de Paris) :
+ * `statut` pour un événement passé depuis 30 jours au plus sans état final ; `heure_debut` pour un
+ * Terminé du jour ou des 30 derniers jours sans heure de début ; null sinon. Un événement du jour
+ * qui n'est pas terminé n'est pas en retard.
+ */
+export function resteARenseigner(evenement: EvenementARenseigner): 'statut' | 'heure_debut' | null {
+  const { statut, jours } = evenement
+  if (jours > 0 || jours < -FENETRE_A_RENSEIGNER_JOURS) return null
+  if (statut === 'termine') return evenement.heure_debut === null ? 'heure_debut' : null
+  if (!estEtatFinal(statut) && jours < 0) return 'statut'
+  return null
+}
+
+/** Ce que la phrase du début lit d'un événement terminé : les valeurs de `v_evenement`. */
+export interface DebutEvenement {
+  heure_debut: number | null
+  retard: number | null
+  a_l_heure: boolean | null
+}
+
+/**
+ * « Commencé à 19 h 12, 12 min de retard », « Commencé à 19 h 03, à l'heure », ou « Commencé à
+ * 19 h 12 » sans heure prévue ; null sans heure de début. Le retard et « à l'heure » viennent de
+ * la base (`v_evenement`, tolérance de 5 minutes, avance comprise) : rien n'est recalculé ici.
+ */
+export function texteDuDebut(evenement: DebutEvenement): string | null {
+  if (evenement.heure_debut === null) return null
+  const commence = `Commencé à ${formaterHeureEnMinutes(evenement.heure_debut)}`
+  if (evenement.a_l_heure === true) return `${commence}, à l'heure`
+  if (evenement.a_l_heure === false && evenement.retard !== null && evenement.retard > 0) {
+    return `${commence}, ${nombre(evenement.retard)} min de retard`
+  }
+  return commence
+}
+
+/**
+ * Une heure du détail du journal (`heure_prevue`, `heure_debut` : minutes depuis minuit) en
+ * « 19 h 12 » ; null si la valeur manque ou n'est pas une heure (la ligne reste lisible).
+ */
+export function heureDuJournal(valeur: unknown): string | null {
+  return typeof valeur === 'number' && valeurPermise(valeur, 'heure')
+    ? formaterHeureEnMinutes(valeur)
+    : null
+}
+
+/** « commencé à 19 h 12 » (journal, « Dernières saisies »), ou null sans heure de début lisible. */
+export function commenceA(valeur: unknown): string | null {
+  const heure = heureDuJournal(valeur)
+  return heure === null ? null : `commencé à ${heure}`
+}
 
 /** Ce que les règles lisent d'un événement de `v_evenement`. */
 export interface EvenementDatable {

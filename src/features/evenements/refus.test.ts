@@ -42,6 +42,28 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     })
   })
 
+  it('heures (T68) : sous le champ de l’heure, la phrase traduite ou celle de la base', () => {
+    expect(lireRefus(erreurBase(MESSAGES_BASE.heureDebutAVenir))).toEqual({
+      ou: 'heure_debut',
+      message: "L'heure de début se saisit le jour de l'événement ou après.",
+    })
+    expect(lireRefus(erreurBase(MESSAGES_BASE.heureDebutSansTermine))).toEqual({
+      ou: 'heure_debut',
+      message: "Choisissez « Terminé » pour indiquer l'heure de début.",
+    })
+    expect(lireRefus(erreurBase(MESSAGES_BASE.heurePrevueInvalide), 'ajout')).toEqual({
+      ou: 'heure_prevue',
+      message: 'Choisissez une heure valide.',
+    })
+  })
+
+  it('réunion : un refus sur une heure d’événement reste sous le bouton', () => {
+    expect(lireRefus(erreurBase(MESSAGES_BASE.heurePrevueInvalide), 'reunion')).toEqual({
+      ou: 'bouton',
+      message: 'Choisissez une heure valide.',
+    })
+  })
+
   it('un refus absent de la table : le repli, jamais le texte de la base (m270)', () => {
     expect(lireRefus(erreurBase('Un refus que la table ne connaît pas.'))).toEqual({
       ou: 'bouton',

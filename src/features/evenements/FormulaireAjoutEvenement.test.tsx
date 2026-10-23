@@ -105,9 +105,49 @@ describe('« Ajouter un événement » (maquette 11)', () => {
       titre: 'Soirée de louange',
       statut: 'attente_validation',
       mentions: ['10000000-0000-4000-8000-000000000002'],
+      heure_prevue: null,
     })
     expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('')
     expect(screen.getByRole('checkbox', { name: 'Coordination' })).not.toBeChecked()
+  })
+
+  it('heure prévue (T68) : facultative, sous la date, avec l’indication sur les cultes', () => {
+    afficher()
+    const champ = screen.getByLabelText('Heure prévue (facultatif)')
+    expect(champ).toHaveAttribute('type', 'time')
+    expect(champ).toHaveValue('')
+    expect(champ).toHaveAccessibleDescription('Les cultes du dimanche ne se déclarent pas ici.')
+    // Jamais d'heure de début à l'ajout.
+    expect(screen.queryByLabelText('Heure de début (facultatif)')).toBeNull()
+    // Sous la date, avant le nom : l'ordre du formulaire.
+    const date = screen.getByLabelText('Date')
+    const nom = screen.getByLabelText("Nom de l'événement")
+    expect(date.compareDocumentPosition(champ) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(champ.compareDocumentPosition(nom) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('heure prévue saisie : elle part en minutes depuis minuit, puis le champ se vide', async () => {
+    const envoyer = vi.fn<(evenement: AjoutEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher(envoyer)
+    const utilisateur = await remplir('2026-10-10')
+    await utilisateur.type(screen.getByLabelText('Heure prévue (facultatif)'), '19:05')
+    await utilisateur.click(bouton())
+    expect(await screen.findByText('Événement ajouté au calendrier.')).toBeInTheDocument()
+    expect(envoyer).toHaveBeenCalledWith(expect.objectContaining({ heure_prevue: 1145 }))
+    expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveValue('')
+  })
+
+  it('refus de la base sur l’heure prévue (E3) : la phrase du guide, sous le champ', async () => {
+    afficher(() => Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heurePrevueInvalide }))
+    const utilisateur = await remplir('2026-10-10')
+    await utilisateur.type(screen.getByLabelText('Heure prévue (facultatif)'), '19:05')
+    await utilisateur.click(bouton())
+    expect(await screen.findByText('Choisissez une heure valide.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    )
+    expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveFocus()
   })
 
   it('refus de la base sur la date : sous le champ, avec le lien, valeurs gardées', async () => {

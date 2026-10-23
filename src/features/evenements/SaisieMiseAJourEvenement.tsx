@@ -91,6 +91,8 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
       actuel: {
         date: evenement.data.date,
         statut: evenement.data.statut,
+        heurePrevue: evenement.data.heure_prevue,
+        heureDebut: evenement.data.heure_debut,
         aConfirmer: evenement.data.a_confirmer,
       },
       envoyer,

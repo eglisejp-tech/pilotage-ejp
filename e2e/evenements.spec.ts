@@ -12,6 +12,8 @@ const ECRANS = [
   'sans-mention',
   'mise-a-jour',
   'a-confirmer',
+  // Un événement passé, Terminé sans heure de début (T68).
+  'termine',
   'pas-porteur',
   'introuvable',
   'probleme',
@@ -29,6 +31,54 @@ async function ouvrir(page: Page, ecran: Ecran, envoi?: 'echec') {
 
 const titre = (page: Page) => page.getByRole('heading', { level: 1 })
 const date = (page: Page) => page.getByLabel('Date', { exact: true })
+const heurePrevue = (page: Page) => page.getByLabel('Heure prévue (facultatif)')
+const heureDebut = (page: Page) => page.getByLabel('Heure de début (facultatif)')
+
+test.describe('heures d’un événement (T68), aperçu', () => {
+  test('ajout : « Heure prévue (facultatif) » sous la date, avec l’indication sur les cultes', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'ajout')
+    await expect(heurePrevue(page)).toHaveAttribute('type', 'time')
+    await expect(heurePrevue(page)).toHaveAccessibleDescription(
+      'Les cultes du dimanche ne se déclarent pas ici.',
+    )
+    await expect(heureDebut(page)).toHaveCount(0)
+    const bas = async (champ: ReturnType<Page['getByLabel']>) =>
+      (await champ.boundingBox())?.y ?? Number.NaN
+    expect(await bas(date(page))).toBeLessThan(await bas(heurePrevue(page)))
+    expect(await bas(heurePrevue(page))).toBeLessThan(
+      await bas(page.getByLabel("Nom de l'événement")),
+    )
+  })
+
+  test('mise à jour d’un Terminé passé : heure prévue préremplie, heure de début, puis réussite', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'termine')
+    await expect(heurePrevue(page)).toHaveValue('19:00')
+    await expect(heureDebut(page)).toHaveValue('')
+    await expect(heureDebut(page)).toHaveAccessibleDescription(
+      "Une heure enregistrée se corrige, elle ne s'efface pas.",
+    )
+    await heureDebut(page).fill('19:12')
+    const bouton = page.getByRole('button', { name: 'Enregistrer la mise à jour' })
+    await bouton.click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement mis à jour.',
+    )
+    await expect(heureDebut(page)).toHaveValue('19:12')
+  })
+
+  test('mise à jour d’un événement à venir : pas d’heure de début, même Terminé', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'mise-a-jour')
+    await expect(heurePrevue(page)).toHaveValue('19:00')
+    await page.getByText('Terminé', { exact: true }).click()
+    await expect(heureDebut(page)).toHaveCount(0)
+  })
+})
 
 test.describe('Ajouter un événement (maquette 11), aperçu', () => {
   test('champs dans l’ordre de la maquette, rappel sous le nom, mentions et lien', async ({

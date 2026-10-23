@@ -29,6 +29,8 @@ interface Props {
  * jamais seule), puis « Mettre à jour » pour le seul ministère porteur. Un événement à confirmer
  * ajoute le texte de sa date au statut (« En attente de validation, dans 2 jours »). Sous le nom :
  * le report, les ministères mentionnés (« @Coordination ») ou « Mentionné par Communication ».
+ * Sous un Terminé (T68) : « Commencé à 19 h 12, 12 min de retard », ou, pour son porteur, « Heure
+ * de début à indiquer ». L'heure prévue suit la date (« Sam. 10 oct., 19 h »).
  */
 export function LigneEvenement({ ligne, avecAction }: Props) {
   const aDesNotes =
@@ -41,7 +43,15 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
         'border-b border-filet py-3.5 text-base',
       )}
     >
-      <span className="text-encre-2 tabular-nums">{ligne.jour}</span>
+      <span className="text-encre-2 tabular-nums">
+        {ligne.jour}
+        {/* L'heure ne se coupe jamais : « Sam. 17 oct., » puis « 19 h 30 » sur une colonne étroite. */}
+        {ligne.heure !== null ? (
+          <>
+            , <span className="whitespace-nowrap">{ligne.heure}</span>
+          </>
+        ) : null}
+      </span>
       <div className="flex min-w-0 flex-col gap-1">
         <span className="break-words">
           <Libre texte={ligne.titre} />
@@ -58,23 +68,31 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
           </p>
         ) : null}
       </div>
-      <span className={cn('font-medium', ligne.ton !== null && 'font-semibold')}>
-        <span className={ligne.ton !== null ? COULEUR_STATUT[ligne.ton] : 'text-encre'}>
-          {ligne.ton !== null ? (
-            <span aria-hidden="true" className="mr-2 inline-block size-2 bg-current" />
+      <div className="flex min-w-0 flex-col gap-1">
+        <span className={cn('font-medium', ligne.ton !== null && 'font-semibold')}>
+          <span className={ligne.ton !== null ? COULEUR_STATUT[ligne.ton] : 'text-encre'}>
+            {ligne.ton !== null ? (
+              <span aria-hidden="true" className="mr-2 inline-block size-2 bg-current" />
+            ) : null}
+            {ligne.libelleStatut}
+            {ligne.texteDate !== null ? ',' : null}
+          </span>
+          {ligne.texteDate !== null ? (
+            <>
+              {' '}
+              <span className={cn('text-[15px]', COULEUR_STATUT[ligne.texteDate.ton])}>
+                {ligne.texteDate.texte}
+              </span>
+            </>
           ) : null}
-          {ligne.libelleStatut}
-          {ligne.texteDate !== null ? ',' : null}
         </span>
-        {ligne.texteDate !== null ? (
-          <>
-            {' '}
-            <span className={cn('text-[15px]', COULEUR_STATUT[ligne.texteDate.ton])}>
-              {ligne.texteDate.texte}
-            </span>
-          </>
+        {ligne.debut !== null ? (
+          <span className="text-note text-encre-2">{ligne.debut}</span>
         ) : null}
-      </span>
+        {ligne.heureDebutAIndiquer ? (
+          <span className="text-note text-encre-2">{TEXTES_CALENDRIER.heureDebutAIndiquer}</span>
+        ) : null}
+      </div>
       {avecAction ? (
         <span className="mt-1 md:mt-0 md:justify-self-end">
           {ligne.versMiseAJour !== null ? (

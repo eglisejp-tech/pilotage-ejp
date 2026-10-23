@@ -16,13 +16,22 @@ import { supabase } from '@/lib/supabase'
 
 export type EvenementAMettreAJour = Pick<
   LigneVue<'v_evenement'>,
-  'id' | 'ministere_id' | 'titre' | 'date' | 'statut' | 'a_confirmer' | 'reporte_du'
+  | 'id'
+  | 'ministere_id'
+  | 'titre'
+  | 'date'
+  | 'statut'
+  | 'a_confirmer'
+  | 'reporte_du'
+  | 'heure_prevue'
+  | 'heure_debut'
 >
 
 /**
- * Ajoute un événement du ministère connecté, avec ses mentions : la base refuse une date passée
- * (« La date ne peut pas être passée. ») et un ministère qu'on ne peut pas mentionner. Rend
- * l'identifiant de l'événement.
+ * Ajoute un événement du ministère connecté, avec ses mentions et son heure prévue (null : sans
+ * heure), par la version à cinq arguments de `ajouter_evenement` (T68) : la base refuse une date
+ * passée (« La date ne peut pas être passée. »), un ministère qu'on ne peut pas mentionner et une
+ * heure hors de la journée. Rend l'identifiant de l'événement.
  */
 export async function ajouterEvenement(brut: AjoutEvenement): Promise<string> {
   const evenement = schemaBaseAjoutEvenement.parse(brut)
@@ -31,14 +40,17 @@ export async function ajouterEvenement(brut: AjoutEvenement): Promise<string> {
     p_date: evenement.date,
     p_statut: evenement.statut,
     p_mentions: evenement.mentions,
+    p_heure_prevue: evenement.heure_prevue,
   })
   if (error) throw error
   return data
 }
 
 /**
- * Reporte la date et le statut d'un événement du ministère : une nouvelle ligne d'état. La base
- * refuse une nouvelle date passée et une ligne identique au dernier état (T37).
+ * Reporte la date, le statut et les heures d'un événement du ministère : une nouvelle ligne
+ * d'état. Une heure nulle laisse la base reprendre celle du dernier état (T68). La base refuse une
+ * nouvelle date passée, une heure de début sans Terminé ou sur une date à venir, et une ligne
+ * identique au dernier état (T37).
  */
 export async function mettreAJourEvenement(
   evenementId: string,
@@ -50,6 +62,8 @@ export async function mettreAJourEvenement(
     evenement_id: identifiant,
     date: miseAJour.date,
     statut: miseAJour.statut,
+    heure_prevue: miseAJour.heure_prevue,
+    heure_debut: miseAJour.heure_debut,
   })
   if (error) throw error
 }
@@ -61,7 +75,9 @@ export async function mettreAJourEvenement(
 export async function lireEvenementAMettreAJour(id: string): Promise<EvenementAMettreAJour | null> {
   const { data, error } = await supabase()
     .from('v_evenement')
-    .select('id, ministere_id, titre, date, statut, a_confirmer, reporte_du')
+    .select(
+      'id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut',
+    )
     .eq('id', id)
     .maybeSingle()
   if (error) throw error

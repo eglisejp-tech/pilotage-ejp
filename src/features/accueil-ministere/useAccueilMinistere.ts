@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { UseQueryResult } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { lireCarteFij, lireSemaine, lireTotauxSessionsPassees } from '@/data/eglise'
-import { lireEvenementsMinistere } from '@/data/evenements'
+import { lireEvenementsARenseigner, lireEvenementsMinistere } from '@/data/evenements'
 import { lirePointsMinistere } from '@/data/fiche'
 import { CODE_MINISTERE_FIJ, lireCodeMinistere, lireStatistiquesFij } from '@/data/fij'
 import { lireMesuresPeriode } from '@/data/indicateurs'
@@ -109,6 +109,12 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     queryFn: () => lireEvenementsMinistere(id),
     enabled: actif,
   })
+  // Événements du ministère sans état final ou sans heure de début, 30 jours au plus (T68).
+  const aRenseigner = useQuery({
+    queryKey: ['evenements', 'a-renseigner', id],
+    queryFn: () => lireEvenementsARenseigner(id),
+    enabled: actif,
+  })
   const code = useQuery({
     queryKey: ['eglise', 'accueil', 'code', id],
     queryFn: () => lireCodeMinistere(id),
@@ -146,6 +152,7 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     participations,
     reunion,
     evenements,
+    aRenseigner,
     code,
     ministeres,
   ]
@@ -185,7 +192,8 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
     !indicateurs.data ||
     !sessions.data ||
     !ministeres.data ||
-    !evenements.data
+    !evenements.data ||
+    !aRenseigner.data
   ) {
     return { etat: 'chargement' }
   }
@@ -218,7 +226,7 @@ export function useAccueilMinistere(ministereId: string | null): ResultatAccueil
       carte: carte.data ?? [],
       statistiques: statistiques.data ?? [],
     }),
-    evenements: lignesEvenements(evenements.data, id, noms),
+    evenements: lignesEvenements(evenements.data, id, noms, aRenseigner.data),
   })
 
   const vosPoints: EtatBloc<PointFiche[]> = points.isError

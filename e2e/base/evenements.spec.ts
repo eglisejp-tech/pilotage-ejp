@@ -36,6 +36,10 @@ test.describe('ministère Communication', () => {
       'min',
       semaine?.aujourdhui ?? '',
     )
+    // Heure prévue facultative (T68), avec son indication visible, sans bulle.
+    await expect(page.getByLabel('Heure prévue (facultatif)')).toHaveAccessibleDescription(
+      'Les cultes du dimanche ne se déclarent pas ici.',
+    )
   })
 
   test('mise à jour de son événement : nom en lecture seule, date et statut préremplis', async ({

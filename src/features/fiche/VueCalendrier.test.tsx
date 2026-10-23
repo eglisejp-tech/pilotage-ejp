@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it } from 'vitest'
-import type { EvenementLu } from '@/data/evenements'
+import type { EvenementDuCalendrier } from '@/data/evenements'
 import { construireCalendrier } from '@/features/fiche/construireCalendrier'
 import { VueCalendrier } from '@/features/fiche/VueCalendrier'
 import type { EtatCalendrier } from '@/features/fiche/VueCalendrier'
@@ -14,7 +14,9 @@ const ministeres = [
   { id: AUTRE, code: 'coordination', nom: 'Coordination', desactive_le: null },
 ]
 
-function evenement(surcharge: Partial<EvenementLu> & { id: string }): EvenementLu {
+function evenement(
+  surcharge: Partial<EvenementDuCalendrier> & { id: string },
+): EvenementDuCalendrier {
   return {
     ministere_id: MOI,
     titre: 'Soirée de louange',
@@ -23,11 +25,19 @@ function evenement(surcharge: Partial<EvenementLu> & { id: string }): EvenementL
     jours: 4,
     a_confirmer: false,
     reporte_du: null,
+    heure_prevue: null,
+    heure_debut: null,
+    retard: null,
+    a_l_heure: null,
     ...surcharge,
   }
 }
 
-function afficher(profil: TypeCompte, evenements: EvenementLu[], mentions = [] as never[]) {
+function afficher(
+  profil: TypeCompte,
+  evenements: EvenementDuCalendrier[],
+  mentions = [] as never[],
+) {
   const etat: EtatCalendrier = {
     etat: 'donnees',
     lignes: construireCalendrier(
@@ -104,6 +114,47 @@ describe('VueCalendrier', () => {
   it('rien à confirmer : aucun bandeau', () => {
     const { container } = afficher('ministere', [mentionnant])
     expect(container.querySelector('[data-alerte-fiche]')).toBeNull()
+  })
+
+  it('heures (T68) : la date et l’heure prévue, puis le début sous le statut Terminé', () => {
+    const passe = { statut: 'termine' as const, date: '2026-10-03', jours: -3, heure_prevue: 1140 }
+    afficher('ministere', [
+      evenement({
+        id: 't',
+        titre: 'Tenu',
+        heure_debut: 1152,
+        retard: 12,
+        a_l_heure: false,
+        ...passe,
+      }),
+      evenement({ id: 's', titre: 'Sans heure', ...passe }),
+    ])
+    const tenu = screen.getByText('Tenu').closest('li') as HTMLElement
+    expect(tenu).toHaveTextContent('Sam. 3 oct., 19 h')
+    expect(within(tenu).getByText('Commencé à 19 h 12, 12 min de retard')).toBeInTheDocument()
+    const sansHeure = screen.getByText('Sans heure').closest('li') as HTMLElement
+    expect(within(sansHeure).getByText('Heure de début à indiquer')).toBeInTheDocument()
+    expect(within(sansHeure).getByRole('link', { name: /^Mettre à jour/ })).toHaveAttribute(
+      'href',
+      '/saisir/evenement/s',
+    )
+  })
+
+  it('heures (T68), berger : le début se lit, jamais « Heure de début à indiquer »', () => {
+    const passe = { statut: 'termine' as const, date: '2026-10-03', jours: -3, heure_prevue: 1140 }
+    afficher('berger', [
+      evenement({
+        id: 't',
+        titre: 'Tenu',
+        heure_debut: 1143,
+        retard: 3,
+        a_l_heure: true,
+        ...passe,
+      }),
+      evenement({ id: 's', titre: 'Sans heure', ...passe }),
+    ])
+    expect(screen.getByText("Commencé à 19 h 03, à l'heure")).toBeInTheDocument()
+    expect(screen.queryByText('Heure de début à indiquer')).toBeNull()
   })
 
   it('une date passée s’écrit avec les mots « date passée »', () => {

@@ -30,13 +30,14 @@ beforeEach(() => {
 })
 
 describe('ajouterEvenement', () => {
-  it('appelle ajouter_evenement avec ses quatre arguments, rend l’identifiant', async () => {
+  it('appelle ajouter_evenement avec ses cinq arguments (heure prévue comprise), rend l’identifiant', async () => {
     const faux = installer({}, { data: '20000000-0000-4000-8000-000000000001', error: null })
     const id = await ajouterEvenement({
       date: '2026-10-10',
       titre: 'Soirée de louange',
       statut: 'attente_validation',
       mentions: ['10000000-0000-4000-8000-000000000002'],
+      heure_prevue: 1140,
     })
     expect(id).toBe('20000000-0000-4000-8000-000000000001')
     expect(faux.rpc).toHaveBeenCalledWith('ajouter_evenement', {
@@ -44,29 +45,66 @@ describe('ajouterEvenement', () => {
       p_date: '2026-10-10',
       p_statut: 'attente_validation',
       p_mentions: ['10000000-0000-4000-8000-000000000002'],
+      p_heure_prevue: 1140,
     })
     // Jamais d'ajout direct dans `evenement` ni dans `evenement_mention`.
     expect(faux.from).not.toHaveBeenCalled()
+  })
+
+  it('sans heure prévue : la version à cinq arguments, avec null (jamais deux candidates)', async () => {
+    const faux = installer({}, { data: '20000000-0000-4000-8000-000000000001', error: null })
+    await ajouterEvenement({
+      date: '2026-10-10',
+      titre: 'Soirée de louange',
+      statut: 'brouillon',
+      mentions: [],
+      heure_prevue: null,
+    })
+    expect(faux.rpc).toHaveBeenCalledWith(
+      'ajouter_evenement',
+      expect.objectContaining({ p_heure_prevue: null }),
+    )
   })
 
   it('un refus de la base est relancé tel quel', async () => {
     const refus = { code: 'P0001', message: 'La date ne peut pas être passée.' }
     installer({}, { data: null, error: refus })
     await expect(
-      ajouterEvenement({ date: '2026-10-01', titre: 'Essai', statut: 'brouillon', mentions: [] }),
+      ajouterEvenement({
+        date: '2026-10-01',
+        titre: 'Essai',
+        statut: 'brouillon',
+        mentions: [],
+        heure_prevue: null,
+      }),
     ).rejects.toBe(refus)
   })
 })
 
 describe('mettreAJourEvenement', () => {
-  it('ajoute une ligne d’état, jamais une mise à jour', async () => {
+  it('ajoute une ligne d’état avec ses deux heures, jamais une mise à jour', async () => {
     const faux = installer()
     await mettreAJourEvenement('20000000-0000-4000-8000-000000000001', {
       date: '2026-10-17',
       statut: 'valide',
+      heure_prevue: 1140,
+      heure_debut: null,
     })
     expect(appelsDe(faux.de('evenement_etat')[0])).toEqual([
-      'insert({"evenement_id":"20000000-0000-4000-8000-000000000001","date":"2026-10-17","statut":"valide"})',
+      'insert({"evenement_id":"20000000-0000-4000-8000-000000000001","date":"2026-10-17","statut":"valide","heure_prevue":1140,"heure_debut":null})',
+    ])
+  })
+
+  it('Terminé avec son heure de début : les deux heures partent en minutes', async () => {
+    const faux = installer()
+    await mettreAJourEvenement('20000000-0000-4000-8000-000000000001', {
+      date: '2026-10-03',
+      statut: 'termine',
+      heure_prevue: null,
+      heure_debut: 1152,
+    })
+    expect(appelsDe(faux.de('evenement_etat')[0])).toEqual([
+      'insert({"evenement_id":"20000000-0000-4000-8000-000000000001","date":"2026-10-03","statut":"termine","heure_prevue":null,"heure_debut":1152})',
     ])
   })
 
@@ -80,6 +118,8 @@ describe('mettreAJourEvenement', () => {
       mettreAJourEvenement('20000000-0000-4000-8000-000000000001', {
         date: '2026-10-10',
         statut: 'preparation',
+        heure_prevue: null,
+        heure_debut: null,
       }),
     ).rejects.toBe(refus)
   })
@@ -91,6 +131,13 @@ describe('validation avant tout appel à la base (Zod partagé avec les formulai
     titre: 'Soirée de louange',
     statut: 'brouillon' as const,
     mentions: [],
+    heure_prevue: null,
+  }
+  const miseAJour = {
+    date: '2026-10-10',
+    statut: 'valide' as const,
+    heure_prevue: null,
+    heure_debut: null,
   }
   const reunion = { date: '2026-10-12', heure: null, objet: null, decision: null }
   const MINISTERE = '10000000-0000-4000-8000-000000000001'
@@ -102,6 +149,10 @@ describe('validation avant tout appel à la base (Zod partagé avec les formulai
       ajouterEvenement({ ...evenement, statut: 'reporte' as unknown as 'brouillon' }),
     ).rejects.toThrow()
     await expect(ajouterEvenement({ ...evenement, mentions: ['pas-un-uuid'] })).rejects.toThrow()
+    // Heure prévue hors de la journée ou pas entière (T68, E3).
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: 1440 })).rejects.toThrow()
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: -1 })).rejects.toThrow()
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: 19.5 })).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
     expect(faux.from).not.toHaveBeenCalled()
   })
@@ -110,15 +161,24 @@ describe('validation avant tout appel à la base (Zod partagé avec les formulai
     const faux = installer()
     const id = '20000000-0000-4000-8000-000000000001'
     await expect(
-      mettreAJourEvenement(id, { date: '2026-10-10', statut: '' as unknown as 'valide' }),
+      mettreAJourEvenement(id, { ...miseAJour, statut: '' as unknown as 'valide' }),
     ).rejects.toThrow()
-    await expect(
-      mettreAJourEvenement(id, { date: '10/10/2026', statut: 'valide' }),
-    ).rejects.toThrow()
-    await expect(
-      mettreAJourEvenement('e-1', { date: '2026-10-10', statut: 'valide' }),
-    ).rejects.toThrow()
+    await expect(mettreAJourEvenement(id, { ...miseAJour, date: '10/10/2026' })).rejects.toThrow()
+    await expect(mettreAJourEvenement('e-1', miseAJour)).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
+    expect(faux.from).not.toHaveBeenCalled()
+  })
+
+  it('mettreAJourEvenement : heure de début sans Terminé (E2), heure hors de la journée', async () => {
+    const faux = installer()
+    const id = '20000000-0000-4000-8000-000000000001'
+    await expect(mettreAJourEvenement(id, { ...miseAJour, heure_debut: 1152 })).rejects.toThrow(
+      "Choisissez « Terminé » pour indiquer l'heure de début.",
+    )
+    await expect(
+      mettreAJourEvenement(id, { ...miseAJour, statut: 'termine', heure_debut: 1440 }),
+    ).rejects.toThrow()
+    await expect(mettreAJourEvenement(id, { ...miseAJour, heure_prevue: 2000 })).rejects.toThrow()
     expect(faux.from).not.toHaveBeenCalled()
   })
 
@@ -144,7 +204,7 @@ describe('lectures de la mise à jour', () => {
     const faux = installer({ v_evenement: { data: ligne, error: null } })
     expect(await lireEvenementAMettreAJour('20000000-0000-4000-8000-000000000001')).toBe(ligne)
     expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
-      'select("id, ministere_id, titre, date, statut, a_confirmer, reporte_du")',
+      'select("id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut")',
       'eq("id", "20000000-0000-4000-8000-000000000001")',
       'maybeSingle()',
     ])

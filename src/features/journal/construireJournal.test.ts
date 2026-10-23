@@ -173,6 +173,34 @@ describe('une ligne du journal, en mots', () => {
     ).toBe('Soirée de louange, 24 oct., En préparation')
   })
 
+  it('événement (T68) : l’heure prévue suit la date, « commencé à 19 h 12 » en dernier', () => {
+    expect(
+      texteDe({
+        action: 'evenement_ajoute',
+        cible: 'evenement',
+        cible_texte: 'Soirée jeunesse',
+        detail: { date: '2026-10-17', statut: 'valide', mentions: [], heure_prevue: 1140 },
+      }),
+    ).toBe('Soirée jeunesse, 17 oct., 19 h, Validé')
+    expect(
+      texteDe({
+        action: 'evenement_modifie',
+        cible: 'evenement',
+        cible_texte: 'Soirée jeunesse',
+        detail: { date: '2026-10-17', statut: 'termine', heure_debut: 1152 },
+      }),
+    ).toBe('Soirée jeunesse, 17 oct., Terminé, commencé à 19 h 12')
+    // Une heure illisible ne casse pas la ligne.
+    expect(
+      texteDe({
+        action: 'evenement_modifie',
+        cible: 'evenement',
+        cible_texte: 'Soirée jeunesse',
+        detail: { date: '2026-10-17', statut: 'termine', heure_debut: 1440, heure_prevue: 'x' },
+      }),
+    ).toBe('Soirée jeunesse, 17 oct., Terminé')
+  })
+
   it('réunion : « lundi 5 oct., 20 h »', () => {
     expect(
       texteDe({ action: 'reunion_saisie', detail: { date: '2026-10-05', heure: '20:00:00' } }),

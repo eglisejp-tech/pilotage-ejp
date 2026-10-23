@@ -62,6 +62,29 @@ test.describe('calendrier de la fiche (aperçu)', () => {
     await expect(page.getByText('Décision attendue : Choisir le lieu de stockage')).toBeVisible()
   })
 
+  test('heures (T68), berger : l’heure prévue après la date, le début sous Terminé', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'berger' })
+    const calendrier = page.getByRole('region', { name: 'Calendrier prévisionnel' })
+    const repas = calendrier.getByRole('listitem').filter({ hasText: 'Repas solidaire' })
+    await expect(repas).toContainText('Lun. 5 oct., 19 h')
+    await expect(repas).toContainText('Commencé à 19 h 12, 12 min de retard')
+    const partage = calendrier.getByRole('listitem').filter({ hasText: 'Soirée de partage' })
+    await expect(partage).toContainText('Sam. 17 oct., 19 h 30')
+    // « Heure de début à indiquer » : le porteur seul.
+    await expect(calendrier.getByText('Heure de début à indiquer')).toHaveCount(0)
+  })
+
+  test('heures (T68), ministère porteur : « Heure de début à indiquer » sous son Terminé', async ({
+    page,
+  }) => {
+    await ouvrir(page, { profil: 'ministere' })
+    const atelier = page.getByRole('listitem').filter({ hasText: 'Atelier couture' })
+    await expect(atelier).toContainText('Heure de début à indiquer')
+    await expect(atelier.getByRole('link', { name: /^Mettre à jour/ })).toBeVisible()
+  })
+
   test('le ministère : « Ajouter un événement », « Modifier la réunion »', async ({ page }) => {
     await ouvrir(page, { profil: 'ministere' })
     await expect(page.getByRole('link', { name: 'Ajouter un événement' })).toHaveAttribute(

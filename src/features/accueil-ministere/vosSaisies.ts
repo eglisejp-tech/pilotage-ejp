@@ -9,6 +9,7 @@ import type {
   LigneVosSaisies,
   OuvertureAccueil,
 } from '@/features/accueil-ministere/types'
+import { PREFIXE_HEURE_DEBUT } from '@/features/accueil-ministere/lignesEvenements'
 import { TEXTES_ACCUEIL } from '@/features/accueil-ministere/textesAccueil'
 import { adresseSaisirUneSession } from '@/features/saisie-session/session'
 import type { DateIso } from '@/lib/metier/dates'
@@ -26,7 +27,10 @@ export interface PartiesVosSaisies {
   reunion: readonly LigneVosSaisies[]
   /** `lignesFij` (E4), ministère `fij` seulement. */
   fij: readonly LigneVosSaisies[]
-  /** `lignesEvenements` (E6) : à confirmer, du ministère ou qui le mentionnent. */
+  /**
+   * `lignesEvenements` (E6, T68) : à confirmer, du ministère ou qui le mentionnent, puis ceux du
+   * ministère sans état final ou sans heure de début.
+   */
   evenements: readonly LigneVosSaisies[]
 }
 
@@ -68,7 +72,8 @@ const PREFIXE_EVENEMENT = 'evenement:'
 
 /**
  * Ce qu'une ligne devient dans la phrase et pour le bouton principal. Un événement compte
- * seulement s'il attend une action du ministère (le sien, à confirmer : `a_faire` avec un bouton) ;
+ * seulement s'il attend une action du ministère (le sien, à confirmer ou sans état final :
+ * `a_faire` avec un bouton ; Terminé sans heure de début : `quoi: 'heure_debut'`, T68) ;
  * un événement qui le mentionne n'a rien à faire. Null : ligne inconnue, laissée hors de la phrase.
  */
 export function saisieDeLaLigne(
@@ -100,6 +105,9 @@ export function saisieDeLaLigne(
   }
   if (ligne.cle.startsWith(PREFIXE_EVENEMENT)) {
     return { type: 'evenement', fait: fait || ligne.action === null }
+  }
+  if (ligne.cle.startsWith(PREFIXE_HEURE_DEBUT)) {
+    return { type: 'evenement', fait, quoi: 'heure_debut' }
   }
   return null
 }

@@ -115,4 +115,44 @@ describe('construireDernieresSaisies', () => {
     ])
     expect(lignes.every((l) => l.objet === null)).toBe(true)
   })
+
+  it('événement terminé (T68) : « commencé à 19 h 12 » après le titre', () => {
+    const base = { le: '2026-10-05T18:00:00Z', cible: 'evenement', cible_id: 'e1' }
+    const [avecTitre, sansTitre, sansHeure] = construireDernieresSaisies(
+      [
+        {
+          ...base,
+          id: 1,
+          action: 'evenement_modifie',
+          cible_texte: 'Soirée jeunesse',
+          detail: { date: '2026-10-03', statut: 'termine', heure_debut: 1152 },
+        },
+        {
+          ...base,
+          id: 2,
+          action: 'evenement_modifie',
+          cible_texte: null,
+          detail: { date: '2026-10-03', statut: 'termine', heure_debut: 1152 },
+        },
+        {
+          ...base,
+          id: 3,
+          action: 'evenement_modifie',
+          cible_texte: 'Soirée jeunesse',
+          detail: { date: '2026-10-03', statut: 'termine', heure_debut: 'x' },
+        },
+      ],
+      COMMUNS_EXEMPLE,
+    )
+    expect(avecTitre).toMatchObject({
+      texte: 'Événement mis à jour :',
+      objet: { texte: 'Soirée jeunesse', masque: false },
+      suite: 'commencé à 19 h 12',
+    })
+    expect(sansTitre).toMatchObject({
+      texte: 'Événement mis à jour, commencé à 19 h 12',
+      objet: null,
+    })
+    expect(sansHeure?.suite).toBeUndefined()
+  })
 })

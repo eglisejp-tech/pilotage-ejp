@@ -52,6 +52,9 @@ function evenement(ministereId: string) {
     statut: 'attente_validation',
     a_confirmer: true,
     reporte_du: '2026-09-24',
+    // Heures (T68) : prévue à 19 h, pas encore de début.
+    heure_prevue: 1140,
+    heure_debut: null,
   }
 }
 
@@ -154,6 +157,7 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(screen.getByText('Réunion des responsables')).toBeInTheDocument()
     expect(screen.getByText(/^Ministères mentionnés : Coordination\./)).toBeInTheDocument()
     expect(screen.getByLabelText('Date')).toHaveValue('2026-09-26')
+    expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveValue('19:00')
     expect(screen.getByRole('radio', { name: 'En attente de validation' })).toBeChecked()
     expect(screen.getByText(/^Cet événement attend toujours sa validation\./)).toBeInTheDocument()
   })

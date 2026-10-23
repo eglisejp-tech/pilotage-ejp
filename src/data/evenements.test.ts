@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import {
   lireEvenementsAConfirmer,
+  lireEvenementsARenseigner,
   lireEvenementsMinistere,
   lireMentionsDesEvenements,
 } from './evenements'
@@ -30,7 +31,7 @@ describe('lireEvenementsMinistere', () => {
       'eq("ministere_id", "m1")',
     ])
     expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
-      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du")',
+      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure")',
       'or("ministere_id.eq.m1")',
       'or("jours.gte.-7,a_confirmer.is.true")',
       'order("date", {"ascending":true})',
@@ -57,6 +58,29 @@ describe('lireEvenementsMinistere', () => {
     await expect(lireEvenementsMinistere('m1')).rejects.toMatchObject({ code: '42501' })
     client({ v_evenement: ECHEC })
     await expect(lireEvenementsMinistere('m1')).rejects.toMatchObject({ code: '42501' })
+  })
+})
+
+describe('lireEvenementsARenseigner (T68)', () => {
+  it('ceux du ministère, du jour ou des 30 derniers jours, sans état final ou sans heure de début', async () => {
+    const faux = client({})
+    await lireEvenementsARenseigner('m1')
+    expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
+      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure")',
+      'eq("ministere_id", "m1")',
+      'gte("jours", -30)',
+      'lte("jours", 0)',
+      'or("statut.in.(brouillon,attente_validation,valide,preparation),and(statut.eq.termine,heure_debut.is.null)")',
+      'order("date", {"ascending":true})',
+      'order("titre", {"ascending":true})',
+    ])
+    // Aucune lecture des mentions : un ministère mentionné n'a rien à y faire.
+    expect(faux.de('evenement_mention')).toHaveLength(0)
+  })
+
+  it('une erreur de la base remonte', async () => {
+    client({ v_evenement: ECHEC })
+    await expect(lireEvenementsARenseigner('m1')).rejects.toMatchObject({ code: '42501' })
   })
 })
 

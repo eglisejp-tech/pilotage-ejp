@@ -30,6 +30,14 @@
   l'email d'un ministère, les ministères attendus d'une session, le choix de la liste des indicateurs
   prévus. Les textes à jour sont dans `src/components/aide/textesAide.ts` (seule source) ; les
   sections 6 et 7 ci-dessous gardent l'historique du 7 octobre.
+- **Changement du 23 octobre 2026 (T68, ponctualité des événements)** : les deux champs d'heure
+  d'un événement n'ont **pas de bulle**. Leurs textes sont nécessaires pour bien remplir (test de
+  décision de la section 1, question 1) : ce sont des **indications visibles sous le champ** (prop
+  `note` de `ChampHeure`, textes dans `src/features/evenements/textes.ts`). Sous « Heure prévue
+  (facultatif) » (ajout) : « Les cultes du dimanche ne se déclarent pas ici. » (un culte déclaré
+  en événement serait compté deux fois). Sous « Heure de début (facultatif) » (mise à jour, statut
+  Terminé, date au plus aujourd'hui) : « Une heure enregistrée se corrige, elle ne s'efface pas. »
+  (un champ vidé garde l'heure enregistrée). Le catalogue reste à 18 aides.
 - **Sources** : `docs/plan-etape-4.md` (lots E2 à E7), `BRIEF.md` (sections 3, 4 et 9),
   `docs/reference/maquettes/LISEZMOI.md`, maquettes 04, 07, 08, 09, 11 et 12,
   `src/styles/tokens.css`, composants de `src/features/cette-semaine/`.

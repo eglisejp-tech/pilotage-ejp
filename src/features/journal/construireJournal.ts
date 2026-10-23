@@ -21,6 +21,7 @@ import {
   formaterRendezVous,
 } from '@/lib/metier/dates'
 import type { StatutEvenement } from '@/lib/base'
+import { commenceA, heureDuJournal } from '@/lib/metier/evenements'
 import { LIBELLE_STATUT } from '@/lib/metier/points'
 import { LIBELLE_TYPE_SESSION, nomSession } from '@/lib/metier/phrases'
 import type { TypeSession } from '@/lib/metier/phrases'
@@ -329,12 +330,16 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
     }
     case 'evenement_ajoute':
     case 'evenement_modifie': {
+      // Heures (T68) : présentes au détail seulement quand elles sont nouvelles ou changées.
       const jour = jourDe(detail, 'date')
       const statut = texteDe(detail, 'statut')
+      const heurePrevue = heureDuJournal(detail?.['heure_prevue'])
       return avecSuite(
         objet(ligne),
         jour === null ? null : formaterJourCourt(jour),
+        heurePrevue,
         statut === null ? null : libelleStatutEvenement(statut),
+        commenceA(detail?.['heure_debut']),
       )
     }
     case 'reunion_saisie': {

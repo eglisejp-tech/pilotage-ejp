@@ -34,6 +34,12 @@ export const MESSAGES_BASE = {
   datePasseeAjout: 'La date ne peut pas être passée.',
   datePasseeMiseAJour: "La nouvelle date doit être aujourd'hui ou plus tard.",
   ligneIdentique: "Rien n'a changé : ce statut et cette date sont déjà enregistrés.",
+  /** Heure de début sur une date à venir (T68, E1) : la phrase se dit telle quelle. */
+  heureDebutAVenir: "L'heure de début se saisit le jour de l'événement ou après.",
+  /** Heure de début sans le statut Terminé (T68, E2). */
+  heureDebutSansTermine: "L'heure de début se saisit pour un événement terminé.",
+  /** Heure prévue hors de 0 h à 23 h 59 (T68, E3). */
+  heurePrevueInvalide: "L'heure prévue est invalide.",
 } as const
 
 /** Refus de droit (42501) : la forme commune d'un élément introuvable (T66, t137). */
@@ -73,6 +79,26 @@ export const TEXTES_EVENEMENT = {
   erreurStatut: 'Choisissez un statut.',
   /** Un ministère coché a été désactivé entre l'ouverture et l'envoi (T66, m124). */
   erreurMention: 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.',
+  /**
+   * Heures de l'événement (T68), en minutes depuis minuit à l'heure de Paris. Libellés au
+   * glossaire : « (facultatif) » pour un champ qui peut rester vide.
+   */
+  libelleHeurePrevue: 'Heure prévue (facultatif)',
+  libelleHeureDebut: 'Heure de début (facultatif)',
+  /**
+   * Indications visibles sous le champ, nécessaires pour bien remplir (guide, section 4 ;
+   * aides-contextuelles.md, section 1) : un culte déclaré ici serait compté deux fois, et un
+   * champ vidé garde l'heure enregistrée.
+   */
+  noteHeurePrevue: 'Les cultes du dimanche ne se déclarent pas ici.',
+  noteHeureDebut: "Une heure enregistrée se corrige, elle ne s'efface pas.",
+  /** Heure illisible (T68, E3) : même phrase avant l'envoi et après le refus de la base. */
+  erreurHeure: 'Choisissez une heure valide.',
+  /**
+   * Heure de début sans Terminé (T68, E2) : contrôle de la couche data et traduction du refus de
+   * la base. Une heure de début sur une date à venir (E1) garde la phrase de la base.
+   */
+  erreurHeureDebutSansTermine: "Choisissez « Terminé » pour indiquer l'heure de début.",
   /** États de la mise à jour (plan de l'étape 4, E5 ; T66, t143 : le bouton donne l'action). */
   introuvable: 'Cet événement est introuvable.',
   revenirFiche: 'Revenir à ma fiche',

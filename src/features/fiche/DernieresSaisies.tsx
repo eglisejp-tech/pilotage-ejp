@@ -70,6 +70,7 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
                         <Libre texte={ligne.objet} />
                       </>
                     ) : null}
+                    {ligne.suite ? `, ${ligne.suite}` : null}
                   </span>
                 </li>
               ))}

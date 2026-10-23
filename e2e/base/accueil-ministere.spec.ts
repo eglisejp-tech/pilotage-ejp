@@ -73,6 +73,18 @@ test.describe('ministère Communication : accueil 07', () => {
     ).toHaveAttribute('href', /^\/saisir\/session\/[0-9a-f-]+$/)
     // Pas de ligne FIJ pour un autre ministère que FIJ.
     await expect(lignes.filter({ hasText: 'Carte des FIJ' })).toHaveCount(0)
+    // T68, seed/45 : « Concert » de Communication, 3 jours avant aujourd'hui, toujours Validé.
+    const concert = lignes.filter({ hasText: /«\s*Concert\s*»/ })
+    await expect(concert).toHaveCount(1)
+    await expect(concert).toContainText('Statut à mettre à jour, date passée depuis 3 jours')
+    await expect(concert.getByRole('link', { name: /^Mettre à jour/ })).toHaveAttribute(
+      'href',
+      /^\/saisir\/evenement\/45000000-0000-4000-8000-000000000009$/,
+    )
+    await expect(phrase).toContainText('le statut d')
+    // Les événements des autres ministères du jeu (seed/45) n'y sont jamais.
+    await expect(lignes.filter({ hasText: 'Pique-nique' })).toHaveCount(0)
+    await expect(lignes.filter({ hasText: 'Tournoi de foot' })).toHaveCount(0)
 
     // « Mes points » : ses points et ceux qui le mentionnent, jamais ceux des autres.
     const points = page.getByRole('region', { name: 'Mes points' })

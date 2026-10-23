@@ -6,6 +6,7 @@ import type { DonneesCetteSemaine, ProfilVue } from '@/features/cette-semaine/ty
 import { VueCetteSemaine } from '@/features/cette-semaine/VueCetteSemaine'
 import { ChargementMaSemaine } from '@/features/ma-semaine/ChargementMaSemaine'
 import {
+  exempleEvenements,
   exempleFij,
   exempleMaSemaine,
   exemplePremierDimanche as exemplePremierDimancheMinistere,
@@ -23,7 +24,13 @@ const profils: { valeur: ProfilVue; libelle: string }[] = [
 ]
 
 type EtatApercu =
-  'semaine' | 'premier-dimanche' | 'session-jamais-tenue' | 'fij' | 'chargement' | 'erreur'
+  | 'semaine'
+  | 'premier-dimanche'
+  | 'session-jamais-tenue'
+  | 'fij'
+  | 'evenements'
+  | 'chargement'
+  | 'erreur'
 
 const etatsEglise: { valeur: EtatApercu; libelle: string }[] = [
   { valeur: 'semaine', libelle: 'Semaine 39' },
@@ -38,6 +45,8 @@ const etatsMinistere: { valeur: EtatApercu; libelle: string }[] = [
   { valeur: 'semaine', libelle: 'Semaine 39' },
   { valeur: 'premier-dimanche', libelle: 'Premier dimanche' },
   { valeur: 'fij', libelle: 'Ministère FIJ' },
+  // Événements à mettre à jour : à confirmer, sans état final, sans heure de début (T68).
+  { valeur: 'evenements', libelle: 'Événements' },
   { valeur: 'chargement', libelle: 'Chargement' },
   { valeur: 'erreur', libelle: 'Erreur' },
 ]
@@ -92,6 +101,8 @@ export function ApercuCetteSemaine() {
         return <VueMaSemaine donnees={exemplePremierDimancheMinistere()} />
       case 'fij':
         return <VueMaSemaine donnees={exempleFij()} />
+      case 'evenements':
+        return <VueMaSemaine donnees={exempleEvenements()} />
       case 'chargement':
         return <ChargementMaSemaine />
       case 'erreur':
@@ -122,6 +133,7 @@ export function ApercuCetteSemaine() {
       case 'chargement':
         return <ChargementCetteSemaine profil={profil} />
       case 'fij':
+      case 'evenements':
       case 'erreur':
         return (
           <>

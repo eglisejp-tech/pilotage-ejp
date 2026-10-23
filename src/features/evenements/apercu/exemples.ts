@@ -1,3 +1,6 @@
+import { etatApresEnvoi, memeEtat } from '@/features/evenements/etatEvenement'
+import type { EtatEnregistre } from '@/features/evenements/etatEvenement'
+import type { EtatEvenement } from '@/features/evenements/FormulaireMiseAJourEvenement'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauReunion } from '@/features/evenements/PanneauReunion'
 import { MESSAGES_BASE } from '@/features/evenements/textes'
@@ -28,6 +31,8 @@ export const ECRANS_APERCU = [
   'sans-mention',
   'mise-a-jour',
   'a-confirmer',
+  // Un événement passé, Terminé sans heure de début : le champ « Heure de début » paraît (T68).
+  'termine',
   'pas-porteur',
   'introuvable',
   'chargement',
@@ -43,6 +48,31 @@ export type EcranApercu = (typeof ECRANS_APERCU)[number]
 
 export function lireEcranApercu(valeur: string | null): EcranApercu {
   return ECRANS_APERCU.find((ecran) => ecran === valeur) ?? 'ajout'
+}
+
+/** Dernier état des événements à mettre à jour, heures en minutes depuis minuit (T68). */
+const ACTUELS: Record<'mise-a-jour' | 'a-confirmer' | 'termine', EtatEvenement> = {
+  'mise-a-jour': {
+    date: '2026-10-10',
+    statut: 'preparation',
+    heurePrevue: 1140,
+    heureDebut: null,
+    aConfirmer: false,
+  },
+  'a-confirmer': {
+    date: '2026-10-08',
+    statut: 'attente_validation',
+    heurePrevue: null,
+    heureDebut: null,
+    aConfirmer: true,
+  },
+  termine: {
+    date: '2026-10-03',
+    statut: 'termine',
+    heurePrevue: 1140,
+    heureDebut: null,
+    aConfirmer: false,
+  },
 }
 
 /** Erreur de la base telle que PostgREST la rend (code SQL et message). */
@@ -78,30 +108,33 @@ export function contenuEvenement(ecran: EcranApercu, echec: boolean): ContenuPan
         envoyer: envoiSimule(echec),
       }
     case 'mise-a-jour':
-    case 'a-confirmer': {
-      const actuel =
-        ecran === 'a-confirmer'
-          ? { date: '2026-10-08', statut: 'attente_validation' as const, aConfirmer: true }
-          : { date: '2026-10-10', statut: 'preparation' as const, aConfirmer: false }
-      let enregistre: { date: string; statut: string } = actuel
+    case 'a-confirmer':
+    case 'termine': {
+      const actuel = ACTUELS[ecran]
+      let enregistre: EtatEnregistre = actuel
       return {
         etat: 'mise_a_jour',
         evenementId: ecran,
         aujourdhui: AUJOURDHUI_EXEMPLE,
-        titre: 'Soirée de louange',
+        titre: ecran === 'termine' ? 'Soirée jeunesse' : 'Soirée de louange',
         mentions: ['Coordination'],
         actuel,
         envoyer: async (miseAJour) => {
+          const apres = etatApresEnvoi(enregistre, miseAJour)
           await envoiSimule(echec, () => {
             if (miseAJour.date !== enregistre.date && miseAJour.date < AUJOURDHUI_EXEMPLE) {
               return MESSAGES_BASE.datePasseeMiseAJour
             }
-            if (miseAJour.date === enregistre.date && miseAJour.statut === enregistre.statut) {
-              return MESSAGES_BASE.ligneIdentique
+            if (miseAJour.heure_debut !== null && miseAJour.statut !== 'termine') {
+              return MESSAGES_BASE.heureDebutSansTermine
             }
+            if (apres.heureDebut !== null && apres.date > AUJOURDHUI_EXEMPLE) {
+              return MESSAGES_BASE.heureDebutAVenir
+            }
+            if (memeEtat(apres, enregistre)) return MESSAGES_BASE.ligneIdentique
             return null
           })()
-          enregistre = miseAJour
+          enregistre = apres
         },
       }
     }

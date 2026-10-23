@@ -5,7 +5,8 @@
 // E5 (saisies) : les deux tables où le ministère ajoute directement une ligne (`evenement_etat`
 // pour une mise à jour, `reunion`), la fonction `ajouter_evenement` (B6, avec ses mentions) et
 // les lectures du formulaire. Sources : supabase/migrations/20260930163150_types_et_tables.sql,
-// 20261007120000_evenements_mentions.sql et 20261007120500_evenements_alerte_report.sql.
+// 20261007120000_evenements_mentions.sql et 20261007120500_evenements_alerte_report.sql ; heures
+// et ponctualité (T68) : 20261023120000_evenements_heures.sql.
 
 import type { Aucun, TableEnLecture, Vue } from './communs'
 
@@ -34,7 +35,12 @@ export type TablesEvenements = {
     saisi_le: string
     saisi_par: string
   }>
-  /** États successifs : la ligne la plus récente fait foi (règle 14, T37). */
+  /**
+   * États successifs : la ligne la plus récente fait foi (règle 14, T37). Les deux heures (T68)
+   * sont en minutes depuis minuit, heure de Paris (0 à 1439), comme l'unité « heure » d'une
+   * mesure. Une heure absente de l'ajout reprend celle du dernier état (`controler_evenement_etat`) :
+   * une heure enregistrée se corrige, elle ne s'efface pas. L'heure de début ne va qu'avec Terminé.
+   */
   evenement_etat: TableEnAjout<
     {
       id: number
@@ -43,8 +49,16 @@ export type TablesEvenements = {
       statut: StatutEvenement
       saisi_le: string
       saisi_par: string
+      heure_prevue: number | null
+      heure_debut: number | null
     },
-    { evenement_id: string; date: string; statut: StatutEvenement }
+    {
+      evenement_id: string
+      date: string
+      statut: StatutEvenement
+      heure_prevue?: number | null
+      heure_debut?: number | null
+    }
   >
   /** Mentions fixées à la création (T32), écrites par `ajouter_evenement` seulement. */
   evenement_mention: TableEnLecture<{ evenement_id: string; ministere_id: string }>
@@ -86,6 +100,18 @@ export type VuesEvenements = {
     a_confirmer: boolean
     /** Date de l'état précédent si la date a changé au dernier état, sinon null (K10b). */
     reporte_du: string | null
+    /** Heure prévue du dernier état, en minutes depuis minuit (T68), ou null. */
+    heure_prevue: number | null
+    /** Heure de début du dernier état (Terminé seulement), en minutes depuis minuit, ou null. */
+    heure_debut: number | null
+    /**
+     * Retard en minutes, calculé par la base (`private.retard_minutes`) pour un Terminé qui a ses
+     * deux heures, sinon null. Négatif : en avance. Passage de minuit compris (23 h 30 puis 0 h 05
+     * donnent 35).
+     */
+    retard: number | null
+    /** Retard d'au plus 5 minutes (K22b, avance comprise) ; null quand `retard` l'est. */
+    a_l_heure: boolean | null
   }>
   /** Déclaration la plus récente de chaque ministère, si sa date n'est pas passée. */
   v_prochaine_reunion: Vue<{
@@ -100,10 +126,11 @@ export type VuesEvenements = {
 
 export type FonctionsEvenements = {
   /**
-   * Ajoute un événement du ministère connecté avec ses mentions (B6) : rend son identifiant. Refus
-   * de la base (clés de `src/data/messagesBase.ts`) : « La date ne peut pas être passée. », « Ce
-   * ministère ne peut pas être mentionné. ». La version à trois arguments de l'étape 3 délègue à
-   * celle-ci.
+   * Ajoute un événement du ministère connecté avec ses mentions (B6) et son heure prévue (T68) :
+   * rend son identifiant. Refus de la base (clés de `src/data/messagesBase.ts`) : « La date ne
+   * peut pas être passée. », « Ce ministère ne peut pas être mentionné. », « L'heure prévue est
+   * invalide. ». L'écran appelle toujours la version à cinq arguments, sans valeur par défaut :
+   * celles à quatre et trois arguments délèguent avec une heure nulle.
    */
   ajouter_evenement: {
     Args: {
@@ -111,6 +138,7 @@ export type FonctionsEvenements = {
       p_date: string
       p_statut: StatutEvenement
       p_mentions: string[]
+      p_heure_prevue: number | null
     }
     Returns: string
   }

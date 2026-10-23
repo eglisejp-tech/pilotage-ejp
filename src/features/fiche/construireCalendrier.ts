@@ -1,8 +1,8 @@
 // Construit le calendrier de la fiche (maquettes 04 et 12, lot E6) et la phrase de son bandeau
 // d'alerte (T31) à partir des lectures de `src/data/evenements.ts`. Fonctions pures : le nombre de
-// jours vient de `v_evenement`, aucune date du navigateur.
+// jours, le retard et « à l'heure » (T68) viennent de `v_evenement`, aucune date du navigateur.
 
-import type { EvenementLu } from '@/data/evenements'
+import type { EvenementDuCalendrier } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { libelleStatut } from '@/features/evenements/textes'
 import type { TexteLibre } from '@/features/cette-semaine/types'
@@ -13,9 +13,11 @@ import { formaterJourAbrege } from '@/lib/metier/dates'
 import {
   dansLeCalendrier,
   texteDesJours,
+  texteDuDebut,
   tonDesJours,
   trierEvenements,
 } from '@/lib/metier/evenements'
+import { formaterHeureEnMinutes } from '@/lib/metier/unites'
 
 /** Couleur d'un statut : un carré, toujours doublé du mot (BRIEF, section 9). Null : sans couleur. */
 export type TonStatut = 'bien' | 'attention' | 'alerte'
@@ -32,8 +34,23 @@ export interface LigneCalendrier {
   titre: TexteLibre
   /** « Sam. 3 oct. ». */
   jour: string
+  /**
+   * Heure prévue (T68), « 19 h » ou « 19 h 30 », écrite après le jour : « Sam. 3 oct., 19 h ».
+   * Null sans heure prévue.
+   */
+  heure: string | null
   /** Le statut en mots : « En attente de validation ». */
   libelleStatut: string
+  /**
+   * Sous un Terminé qui a son heure de début (T68) : « Commencé à 19 h 12, 12 min de retard »,
+   * « Commencé à 19 h 03, à l'heure », lus dans `retard` et `a_l_heure` de la vue. Sinon null.
+   */
+  debut: string | null
+  /**
+   * Terminé sans heure de début, daté au plus aujourd'hui, sur la fiche de son porteur : « Heure
+   * de début à indiquer » (T68). Faux pour un autre lecteur.
+   */
+  heureDebutAIndiquer: boolean
   ton: TonStatut | null
   /** Un événement à confirmer : « dans 2 jours », « date passée depuis 3 jours ». */
   texteDate: { texte: string; ton: 'attention' | 'alerte' } | null
@@ -54,7 +71,7 @@ export interface LigneCalendrier {
 }
 
 export interface LecturesCalendrier {
-  evenements: readonly EvenementLu[]
+  evenements: readonly EvenementDuCalendrier[]
   mentions: readonly LigneTable<'evenement_mention'>[]
   ministeres: readonly MinistereListe[]
 }
@@ -88,7 +105,15 @@ export function construireCalendrier(
         id: evenement.id,
         titre: { texte: evenement.titre, masque: evenement.titre === TEXTE_MASQUE },
         jour: formaterJourAbrege(evenement.date),
+        heure:
+          evenement.heure_prevue === null ? null : formaterHeureEnMinutes(evenement.heure_prevue),
         libelleStatut: libelleStatut(evenement.statut),
+        debut: evenement.statut === 'termine' ? texteDuDebut(evenement) : null,
+        heureDebutAIndiquer:
+          peutMettreAJour &&
+          evenement.statut === 'termine' &&
+          evenement.heure_debut === null &&
+          evenement.jours <= 0,
         ton: TON_DU_STATUT[evenement.statut] ?? null,
         texteDate: evenement.a_confirmer
           ? { texte: texteDesJours(evenement.jours), ton: tonDesJours(evenement.jours) }
