@@ -310,30 +310,24 @@ test.describe('comptages et ponctualité de la fiche de Coordination (aperçu)',
     }
   })
 
-  for (const ecran of COMPTAGES) {
-    test(`audit axe : ${nomDe(ecran)}`, async ({ page }) => {
-      await ouvrir(page, ecran)
-      if ((await resumeRetards(page).count()) > 0) await resumeRetards(page).click()
-      const resultat = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
-        .analyze()
-      expect(resultat.violations).toEqual([])
-    })
-  }
-
-  test('cibles de 44 px, et à 360 px aucun défilement horizontal', async ({ page }) => {
+  // Les cinq écrans, repliés, passent l'audit transversal (e2e/accessibilite.spec.ts : axe, 360 px,
+  // 200 %, cibles, clavier). Ici, la liste des retards ouverte, que ce catalogue ne déplie pas.
+  test('liste des retards ouverte : audit axe, cible de 44 px, 360 px sans défilement', async ({
+    page,
+  }) => {
     await ouvrir(page, { ecran: 'comptages' })
-    const boite = await resumeRetards(page).boundingBox()
-    expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
+    const resume = resumeRetards(page)
+    expect((await resume.boundingBox())?.height ?? 0).toBeGreaterThanOrEqual(44)
+    await resume.click()
+    const resultat = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
+      .analyze()
+    expect(resultat.violations).toEqual([])
     await page.setViewportSize({ width: 360, height: 800 })
-    for (const ecran of COMPTAGES) {
-      await ouvrir(page, ecran)
-      if ((await resumeRetards(page).count()) > 0) await resumeRetards(page).click()
-      const debord = await page.evaluate(
-        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-      )
-      expect(debord, nomDe(ecran)).toBeLessThanOrEqual(0)
-    }
+    const debord = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    )
+    expect(debord).toBeLessThanOrEqual(0)
   })
 })
 
