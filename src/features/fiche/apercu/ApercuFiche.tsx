@@ -9,6 +9,7 @@ import {
   lireEcranApercuFiche,
   TABLEAU_EXEMPLE,
 } from '@/features/fiche/apercu/exemplesFiche'
+import { ApercuComptages } from '@/features/fiche/apercu/ApercuComptages'
 import { rendreCadreEmplacement } from '@/features/fiche/apercu/CadreEmplacement'
 import { FicheIntrouvable } from '@/features/fiche/FicheIntrouvable'
 import type { ProfilFiche } from '@/features/fiche/modeleFiche'
@@ -40,7 +41,10 @@ const reessayer = () => undefined
  *   `fiche-erreur-points` (les points en échec), `fiche-erreur-details` (le détail des sensibles
  *   en échec), `chargement`, `erreur`, `introuvable` ;
  * - `ministeres`, `ministeres-vide`, `ministeres-erreur`, `ministeres-chargement` (T65) : la liste
- *   (berger, conseil, EJP Tech).
+ *   (berger, conseil, EJP Tech) ;
+ * - `comptages`, `comptages-premier-mois`, `comptages-vide`, `comptages-erreur`,
+ *   `comptages-chargement` (L2, T68) : « Événements de l'église » et « Ponctualité » de la fiche
+ *   de Coordination (`ministere` : Coordination, totaux seulement).
  * Enregistrée seulement en développement.
  */
 export function ApercuFiche() {
@@ -89,6 +93,12 @@ export function ApercuFiche() {
       return <VueMinisteres liste={{ etat: 'erreur', reessayer }} />
     case 'ministeres-chargement':
       return <VueMinisteres liste={{ etat: 'chargement' }} />
+    case 'comptages':
+    case 'comptages-premier-mois':
+    case 'comptages-vide':
+    case 'comptages-erreur':
+    case 'comptages-chargement':
+      return <ApercuComptages ecran={ecran} profil={profil} />
     case 'chargement':
       return (
         <>

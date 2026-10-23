@@ -7,6 +7,7 @@
 // de ce poste.
 
 import type { Aucun, EnumsCommuns, TablesCommunes, VuesCommunes } from './base/communs'
+import type { FonctionsComptages, VuesComptages } from './base/comptages'
 import type { FonctionsComptes, TablesComptes, VuesComptes } from './base/comptes'
 import type { FonctionsConditions, TablesConditions } from './base/conditions'
 import type { FonctionsEvenements, TablesEvenements, VuesEvenements } from './base/evenements'
@@ -24,6 +25,7 @@ import type {
 } from './base/signalements'
 
 export type * from './base/communs'
+export type * from './base/comptages'
 export type * from './base/comptes'
 export type * from './base/conditions'
 export type * from './base/evenements'
@@ -55,6 +57,7 @@ export type Database = {
       VuesFiche &
       VuesFij &
       VuesEvenements &
+      VuesComptages &
       VuesSignalements &
       VuesPoints &
       VuesComptes &
@@ -65,6 +68,7 @@ export type Database = {
       FonctionsFiche &
       FonctionsFij &
       FonctionsEvenements &
+      FonctionsComptages &
       FonctionsSignalements &
       FonctionsConditions &
       FonctionsPoints &

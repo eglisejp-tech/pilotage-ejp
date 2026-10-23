@@ -30,6 +30,11 @@ export const ECRANS_APERCU_FICHE = [
   'ministeres-vide',
   'ministeres-erreur',
   'ministeres-chargement',
+  'comptages',
+  'comptages-premier-mois',
+  'comptages-vide',
+  'comptages-erreur',
+  'comptages-chargement',
 ] as const
 
 export type EcranApercuFiche = (typeof ECRANS_APERCU_FICHE)[number]
