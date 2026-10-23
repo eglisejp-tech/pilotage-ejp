@@ -191,14 +191,14 @@ test.describe('« Chiffres du mois » (aperçu)', () => {
     const precision = page.getByLabel('Précision (facultatif)', { exact: true })
     await precision.fill('Texte modifié pour ce mois.')
     await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
-    // Le rappel sous le champ contient la même phrase : on vise l'erreur elle-même (son id).
+    // L'erreur elle-même, par son id.
     await expect(page.locator('[id^="precision-"][id$="-erreur"]')).toHaveText(REFUS_PRECISION)
     await expect(page.getByRole('alert')).toHaveCount(0)
     await expect(precision).toHaveValue('Texte modifié pour ce mois.')
-    // Le focus va au champ, qui référence l'erreur : le lecteur d'écran la lit.
+    // Le focus va au champ, qui référence l'erreur en dernier : le lecteur d'écran la lit.
     await expect(precision).toBeFocused()
     await expect(precision).toHaveAccessibleDescription(
-      /N'écrivez aucun nom ni information personnelle\.$/,
+      /Retirez de votre texte les emails, liens, numéros et noms de personnes\.$/,
     )
     // Modifier le champ retire l'erreur de la base.
     await precision.fill('Texte modifié pour ce mois, version 2.')
