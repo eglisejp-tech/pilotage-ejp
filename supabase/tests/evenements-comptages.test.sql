@@ -13,12 +13,13 @@
 --    (un état écrit le 31 décembre à 23 h 30 UTC part du 1er janvier), cultes du dimanche
 --    (dernière saisie du dimanche, heure prévue en vigueur, à l'heure, cumul), cultes à 0 sans
 --    leur indicateur ; lecteurs : Coordination, berger, conseil, EJP Tech ; refus (42501) pour un
---    autre ministère, l'administration, l'aal1 et l'anonyme.
+--    autre ministère, l'administration, l'aal1, l'anonyme, et Coordination quand son ministère
+--    ou son compte est désactivé.
 -- 4. Structure : sources à l'heure de Paris, colonnes de la fonction (aucun titre, aucune date
 --    d'événement, aucun ministère).
 begin;
 
-select plan(30);
+select plan(32);
 
 create temp table ctx as
 select tests.creer_ministere('Comptages A') as a_m,
@@ -239,6 +240,21 @@ select tests.deconnecter();
 select tests.anonyme();
 select throws_ok($$ select * from public.evenements_eglise_mois() $$, '42501', null, 'anonyme : refusé');
 select tests.deconnecter();
+
+-- Coordination désactivée : le ministère, puis le compte (private.mon_type() rend null, donc
+-- exige_aal2() refuse). Chacun est réactivé après son essai, pour la suite du fichier.
+update public.ministere set desactive_le = now() where id = (select coo_m from ctx);
+select tests.se_connecter((select coo from ctx), 'aal2');
+select throws_ok($$ select * from public.evenements_eglise_mois() $$, '42501', 'Compte inactif ou inconnu.',
+  'ministère Coordination désactivé : son compte est refusé');
+select tests.deconnecter();
+update public.ministere set desactive_le = null where id = (select coo_m from ctx);
+update public.compte set desactive_le = now() where user_id = (select coo from ctx);
+select tests.se_connecter((select coo from ctx), 'aal2');
+select throws_ok($$ select * from public.evenements_eglise_mois() $$, '42501', 'Compte inactif ou inconnu.',
+  'compte de Coordination désactivé : refusé');
+select tests.deconnecter();
+update public.compte set desactive_le = null where user_id = (select coo from ctx);
 
 -- Cultes sans leur indicateur : EJP Tech retire « Heure de début du culte », les colonnes des
 -- cultes valent 0.

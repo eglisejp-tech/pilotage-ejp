@@ -88,12 +88,20 @@ describe('BlocPonctualite', () => {
     expect(screen.queryByText(/^Voir /)).not.toBeInTheDocument()
   })
 
-  it('problème passager et premier usage : rien, le bloc des événements parle seul', () => {
-    const { container, rerender } = render(
-      <BlocPonctualite bloc={{ etat: 'erreur', reessayer: () => undefined }} retards={null} />,
+  it('problème passager : le titre reste, le problème et « Réessayer » sont dits ici aussi', async () => {
+    const reessayer = vi.fn()
+    render(<BlocPonctualite bloc={{ etat: 'erreur', reessayer }} retards={null} />)
+    const bloc = within(screen.getByRole('region', { name: 'Ponctualité' }))
+    expect(bloc.getByText('La connexion a échoué. Réessayez.')).toBeInTheDocument()
+    await userEvent.setup().click(bloc.getByRole('button', { name: 'Réessayer' }))
+    expect(reessayer).toHaveBeenCalledOnce()
+    expect(screen.queryByText(/au plus 5 minutes/)).not.toBeInTheDocument()
+  })
+
+  it('premier usage : rien, le bloc des événements parle seul', () => {
+    const { container } = render(
+      <BlocPonctualite bloc={{ etat: 'premier_usage' }} retards={null} />,
     )
-    expect(container).toBeEmptyDOMElement()
-    rerender(<BlocPonctualite bloc={{ etat: 'premier_usage' }} retards={null} />)
     expect(container).toBeEmptyDOMElement()
   })
 })
@@ -178,9 +186,12 @@ describe('ComptagesEvenements (emplacement)', () => {
     expect(faux.de('v_evenement')).toHaveLength(1)
   })
 
-  it('un refus de la base : le problème passager, une seule fois', async () => {
+  it('un refus de la base : le problème passager dans chaque bloc, titres gardés', async () => {
     afficher('coordination', 'conseil', { data: null, error: { code: '42501', message: 'non' } })
-    expect(await screen.findByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Ponctualité' })).not.toBeInTheDocument()
+    for (const titre of ["Événements de l'église", 'Ponctualité']) {
+      const region = within(await screen.findByRole('region', { name: titre }))
+      expect(await region.findByRole('button', { name: 'Réessayer' })).toBeInTheDocument()
+      expect(region.getByText('La connexion a échoué. Réessayez.')).toBeInTheDocument()
+    }
   })
 })

@@ -99,6 +99,15 @@ export function FormulaireMiseAJourEvenement({
   const date = useWatch({ control, name: 'date' })
   const statut = useWatch({ control, name: 'statut' })
   const avecHeureDebut = heureDebutPossible({ statut, date, aujourdhui })
+  // Quand le champ « Heure de début » paraît (« Terminé » choisi), une région polie, toujours
+  // dans la page, le dit aux lecteurs d'écran ; le focus reste sur « Terminé ». Rien à
+  // l'ouverture : le champ déjà là se lit dans l'ordre du formulaire.
+  const [heureDebutAffichee, setHeureDebutAffichee] = useState(avecHeureDebut)
+  const [annonce, setAnnonce] = useState('')
+  if (avecHeureDebut !== heureDebutAffichee) {
+    setHeureDebutAffichee(avecHeureDebut)
+    setAnnonce(avecHeureDebut ? TEXTES_EVENEMENT.annonceHeureDebut : '')
+  }
   const [refus, setRefus] = useState<Refus | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
@@ -202,6 +211,9 @@ export function FormulaireMiseAJourEvenement({
           />
         )}
       />
+      <p aria-live="polite" className="sr-only" data-annonce-heure-debut>
+        {annonce}
+      </p>
       {avecHeureDebut ? (
         <ChampHeure
           id="evenement-heure-debut"

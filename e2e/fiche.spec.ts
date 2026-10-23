@@ -6,10 +6,14 @@ import type { Page } from '@playwright/test'
 // base ni écriture : la fiche de Social, lue par chaque profil, et ses états vides. Trois formats
 // par les projets Playwright. Les parcours avec la base sont dans e2e/base/fiche.spec.ts.
 
-type Ecran = { ecran?: string; profil?: string }
+/** `suite` : paramètres de l'en-tête de l'aperçu (`&compte=Coordination&onglet=/ma-fiche`). */
+type Ecran = { ecran?: string; profil?: string; suite?: string }
 
-const adresse = ({ ecran = 'fiche', profil = 'berger' }: Ecran) =>
-  `/apercu/fiche?ecran=${ecran}&profil=${profil}`
+const adresse = ({ ecran = 'fiche', profil = 'berger', suite = '' }: Ecran) =>
+  `/apercu/fiche?ecran=${ecran}&profil=${profil}${suite}`
+
+/** Coordination lit sa propre fiche : son nom en haut, « Ma fiche » actif. */
+const COORDINATION = '&compte=Coordination&onglet=/ma-fiche'
 
 async function ouvrir(page: Page, ecran: Ecran) {
   await page.goto(adresse(ecran))
@@ -230,7 +234,7 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
 const COMPTAGES: Ecran[] = [
   { ecran: 'comptages', profil: 'berger' },
   { ecran: 'comptages', profil: 'admin_plateforme' },
-  { ecran: 'comptages', profil: 'ministere' },
+  { ecran: 'comptages', profil: 'ministere', suite: COORDINATION },
   { ecran: 'comptages-premier-mois', profil: 'conseil' },
   { ecran: 'comptages-vide', profil: 'berger' },
   { ecran: 'comptages-erreur', profil: 'berger' },
@@ -281,7 +285,16 @@ test.describe('comptages et ponctualité de la fiche de Coordination (aperçu)',
   test('Coordination : les totaux seulement, aucun titre ni ministère d’événement (K11)', async ({
     page,
   }) => {
-    await ouvrir(page, { ecran: 'comptages', profil: 'ministere' })
+    await ouvrir(page, { ecran: 'comptages', profil: 'ministere', suite: COORDINATION })
+    // Le compte de Coordination sur sa propre fiche : son nom en haut, « Ma fiche » actif.
+    await expect(page.getByRole('banner')).toContainText('Ministère Coordination')
+    const menu = page.getByRole('button', { name: 'Ouvrir le menu' })
+    if (await menu.isVisible()) await menu.click()
+    await expect(
+      page
+        .getByRole('navigation', { name: 'Menu principal' })
+        .getByRole('link', { name: 'Ma fiche' }),
+    ).toHaveAttribute('aria-current', 'page')
     await expect(ligneComptage(page, 'principal')).toContainText('Retard moyen : 8 min')
     await expect(resumeRetards(page)).toHaveCount(0)
     await expect(page.getByText(/Soirée jeunesse|Veillée de prière/)).toHaveCount(0)
@@ -302,8 +315,12 @@ test.describe('comptages et ponctualité de la fiche de Coordination (aperçu)',
     await ouvrir(page, { ecran: 'comptages-vide' })
     await expect(page.getByText("Pas encore d'événement déclaré.")).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Ponctualité' })).toHaveCount(0)
+    // Une seule lecture pour les deux blocs : chacun garde son titre et dit le problème.
     await ouvrir(page, { ecran: 'comptages-erreur' })
-    await expect(page.getByRole('button', { name: 'Réessayer' })).toHaveCount(1)
+    for (const titre of ["Événements de l'église", 'Ponctualité']) {
+      const bloc = page.getByRole('region', { name: titre })
+      await expect(bloc.getByRole('button', { name: 'Réessayer' })).toHaveCount(1)
+    }
     await ouvrir(page, { ecran: 'comptages-chargement' })
     for (const titre of ["Événements de l'église", 'Ponctualité']) {
       await expect(page.getByRole('heading', { level: 2, name: titre })).toBeVisible()

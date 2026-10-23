@@ -56,10 +56,12 @@ export const LIGNE_REUNION_FAITE: LigneVosSaisies = {
   action: { libelle: 'Corriger', vers: '/saisir/reunion' },
 }
 
+// Les dates des lignes d'événement se lisent au jour de CONTEXTE_EXEMPLE, mardi 29 sept.
+
 /** Un événement du ministère à confirmer (T31). */
 export const LIGNE_EVENEMENT_A_CONFIRMER: LigneVosSaisies = {
   cle: 'evenement:louange',
-  libelle: 'Événement « Soirée de louange », samedi 10 oct.',
+  libelle: 'Événement « Soirée de louange », vendredi 2 oct.',
   etat: 'a_faire',
   detail: 'À faire : en attente de validation, dans 3 jours',
   action: { libelle: 'Mettre à jour', vers: '/saisir/evenement/louange' },
@@ -86,9 +88,9 @@ export const LIGNE_EVENEMENT_HEURE_DEBUT: LigneVosSaisies = {
 /** Un événement d'Intégration qui mentionne le ministère : rien à faire, pas de bouton. */
 export const LIGNE_EVENEMENT_MENTIONNE: LigneVosSaisies = {
   cle: 'evenement:welcome',
-  libelle: 'Événement « Welcome Prodiges », jeudi 15 oct.',
+  libelle: 'Événement « Welcome Prodiges », mercredi 30 sept.',
   etat: 'fait',
-  detail: 'Mentionné par Intégration : en attente de validation, dans 2 jours',
+  detail: 'Mentionné par Intégration : en attente de validation, demain',
   action: null,
 }
 

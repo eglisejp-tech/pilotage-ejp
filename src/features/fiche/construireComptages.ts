@@ -33,10 +33,11 @@ export interface LigneComptage {
   cle: string
   libelle: string
   valeur: ValeurFiche
-  /** Colonne de droite : mois en cours, départ, retard moyen, complétude. */
+  /**
+   * À droite de la grande valeur : mois en cours et départ ; pour la ponctualité, la complétude
+   * d'abord, puis le retard moyen, les cultes et les autres événements.
+   */
   details: string[]
-  /** Sous la ligne : cultes, autres événements. */
-  sousLignes: string[]
 }
 
 /** Les événements commencés en retard du mois des grandes valeurs (liste repliée). */
@@ -132,7 +133,6 @@ function ligneEvenements(
     libelle: TEXTES_COMPTAGES.lignes[cle],
     valeur: valeurNombre(principal[cle]),
     details,
-    sousLignes: [],
   }
 }
 
@@ -150,14 +150,13 @@ function lignePonctualite(
       part === null
         ? { etat: 'non_calcule', texte: NON_CALCULE }
         : { etat: 'saisie', texte: nombre(part), unite: '%' },
+    // La complétude d'abord, au plus près de la part qu'elle qualifie.
     details: [
-      `${TEXTES_COMPTAGES.retardMoyen} : ${formaterRetardMoyen(total)}`,
       TEXTES_COMPTAGES.ontLeursHeures(
         libelleCompletude(total.avecHeures, total.tenus),
         total.avecHeures,
       ),
-    ],
-    sousLignes: [
+      `${TEXTES_COMPTAGES.retardMoyen} : ${formaterRetardMoyen(total)}`,
       `${TEXTES_COMPTAGES.cultes} : ${libelleCompletude(cultes.aLHeure, cultes.avecHeures)}`,
       `${TEXTES_COMPTAGES.autres} : ${libelleCompletude(evenements.aLHeure, evenements.avecHeures)}`,
     ],

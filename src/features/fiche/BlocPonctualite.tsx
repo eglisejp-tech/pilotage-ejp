@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { ApresChargement } from '@/components/etats/ApresChargement'
+import { EtatVide } from '@/components/etats/EtatVide'
 import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
@@ -19,16 +20,18 @@ interface Props {
 
 /**
  * Bloc « Ponctualité » de la fiche de Coordination (T68) : pour le mois écoulé, le mois en cours
- * à part, puis depuis le départ, la part des événements et des cultes commencés à l'heure, le
- * retard moyen et la complétude (« 4 sur 6 ont leurs heures ») ; dessous, « Cultes : 3 sur 5 »
- * et « Autres événements : 4 sur 4 ». « Non calculé » quand aucun n'a ses heures. Sous le mois
- * des grandes valeurs, la liste repliée des retards pour les lecteurs qui la voient. Sans
- * chiffres (problème passager, premier usage), le bloc « Événements de l'église » parle seul.
+ * à part, puis depuis le départ, la part des événements et des cultes commencés à l'heure ; à
+ * côté, la complétude (« 4 sur 6 ont leurs heures »), le retard moyen, « Cultes : 3 sur 5 » et
+ * « Autres événements : 4 sur 4 ». « Non calculé » quand aucun n'a ses heures. Sous le mois
+ * des grandes valeurs, la liste repliée des retards pour les lecteurs qui la voient. Les deux
+ * blocs viennent de la même lecture : un problème passager se dit dans chacun, avec son
+ * « Réessayer » qui relit les deux, pour que la ponctualité ne disparaisse pas sans un mot. Au
+ * premier usage (aucun événement), le bloc « Événements de l'église » parle seul.
  */
 export function BlocPonctualite({ bloc: lecture, retards }: Props) {
   const bloc = useLectureAffichee(lecture).lecture
   const idTitre = useId()
-  if (bloc.etat === 'erreur' || bloc.etat === 'premier_usage') return null
+  if (bloc.etat === 'premier_usage') return null
   const listeRetards = bloc.etat === 'donnees' ? bloc.donnees.retards : null
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
@@ -45,6 +48,14 @@ export function BlocPonctualite({ bloc: lecture, retards }: Props) {
         enChargement={bloc.etat === 'chargement'}
         indicateur={<ChargementBloc texte={TEXTES_COMPTAGES.chargementPonctualite} />}
       >
+        {bloc.etat === 'erreur' ? (
+          <EtatVide
+            situation="probleme_passager"
+            action={{ libelle: 'Réessayer', surClic: bloc.reessayer }}
+          >
+            {TEXTES_COMPTAGES.probleme}
+          </EtatVide>
+        ) : null}
         {bloc.etat === 'donnees' ? (
           <>
             <ul className="flex flex-col">

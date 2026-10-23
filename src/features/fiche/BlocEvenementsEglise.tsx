@@ -16,8 +16,8 @@ interface Props {
  * Bloc « Événements de l'église » de la fiche de Coordination (L2, X10 ; K10a à K11) : prévus,
  * réalisés, annulés, reportés, en attente et passés sans état final du mois écoulé, le mois en
  * cours à droite (K23), les réalisés depuis le départ, toujours nommé. Totaux de l'église
- * seulement, sans titre ni ministère. Il porte aussi le problème passager et le premier usage
- * des deux blocs : « Ponctualité » ne se montre qu'avec des chiffres.
+ * seulement, sans titre ni ministère. Il porte le premier usage des deux blocs : sans événement,
+ * « Ponctualité » ne se montre pas. Un problème passager se dit dans chacun des deux blocs.
  */
 export function BlocEvenementsEglise({ bloc: lecture }: Props) {
   const bloc = useLectureAffichee(lecture).lecture

@@ -271,6 +271,25 @@ describe("« Mettre à jour l'événement » : heures (T68)", () => {
     )
   })
 
+  it('le champ qui paraît est annoncé (région polie), le focus reste sur « Terminé »', async () => {
+    afficher({ ...TERMINE_SANS_DEBUT, statut: 'valide' })
+    const annonce = document.querySelector('[data-annonce-heure-debut]')
+    expect(annonce).toHaveAttribute('aria-live', 'polite')
+    expect(annonce).toBeEmptyDOMElement()
+    const termine = screen.getByRole('radio', { name: 'Terminé' })
+    await userEvent.click(termine)
+    expect(annonce).toHaveTextContent('Le champ « Heure de début » apparaît sous le statut.')
+    expect(termine).toHaveFocus()
+    await userEvent.click(screen.getByRole('radio', { name: 'Annulé' }))
+    expect(annonce).toBeEmptyDOMElement()
+  })
+
+  it('Terminé déjà enregistré : le champ est là dès l’ouverture, sans annonce', () => {
+    afficher(TERMINE_SANS_DEBUT)
+    expect(champHeureDebut()).not.toBeNull()
+    expect(document.querySelector('[data-annonce-heure-debut]')).toBeEmptyDOMElement()
+  })
+
   it('Terminé à une date à venir : pas d’heure de début (la base la refuserait)', async () => {
     afficher()
     await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))

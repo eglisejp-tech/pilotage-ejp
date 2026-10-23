@@ -60,7 +60,7 @@ describe('etatAffiche', () => {
   it('une ligne sans bouton (mentionné) n’a pas de mot d’état', () => {
     expect(etatAffiche(LIGNE_EVENEMENT_MENTIONNE)).toEqual({
       mot: null,
-      texte: 'Mentionné par Intégration : en attente de validation, dans 2 jours',
+      texte: 'Mentionné par Intégration : en attente de validation, demain',
     })
   })
 })

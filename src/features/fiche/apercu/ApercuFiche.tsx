@@ -44,7 +44,8 @@ const reessayer = () => undefined
  *   (berger, conseil, EJP Tech) ;
  * - `comptages`, `comptages-premier-mois`, `comptages-vide`, `comptages-erreur`,
  *   `comptages-chargement` (L2, T68) : « Événements de l'église » et « Ponctualité » de la fiche
- *   de Coordination (`ministere` : Coordination, totaux seulement).
+ *   de Coordination (`ministere` : Coordination, totaux seulement ; `&compte=Coordination` et
+ *   `&onglet=/ma-fiche` mettent son nom dans l'en-tête et « Ma fiche » actif).
  * Enregistrée seulement en développement.
  */
 export function ApercuFiche() {

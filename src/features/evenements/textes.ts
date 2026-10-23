@@ -92,6 +92,11 @@ export const TEXTES_EVENEMENT = {
    */
   noteHeurePrevue: 'Les cultes du dimanche ne se déclarent pas ici.',
   noteHeureDebut: "Une heure enregistrée se corrige, elle ne s'efface pas.",
+  /**
+   * Annonce aux lecteurs d'écran, invisible, quand « Terminé » fait paraître le champ (le focus
+   * reste sur « Terminé »).
+   */
+  annonceHeureDebut: 'Le champ « Heure de début » apparaît sous le statut.',
   /** Heure illisible (T68, E3) : même phrase avant l'envoi et après le refus de la base. */
   erreurHeure: 'Choisissez une heure valide.',
   /**

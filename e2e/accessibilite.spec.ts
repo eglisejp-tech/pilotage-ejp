@@ -125,7 +125,10 @@ const FICHE: Ecran[] = [
   { nom: 'ministères erreur', adresse: '/apercu/fiche?ecran=ministeres-erreur&profil=berger' },
   // Lot L2 et T68 : « Événements de l'église » et « Ponctualité » de la fiche de Coordination.
   { nom: 'comptages berger', adresse: '/apercu/fiche?ecran=comptages&profil=berger' },
-  { nom: 'comptages coordination', adresse: '/apercu/fiche?ecran=comptages&profil=ministere' },
+  {
+    nom: 'comptages coordination',
+    adresse: '/apercu/fiche?ecran=comptages&profil=ministere&compte=Coordination&onglet=/ma-fiche',
+  },
   {
     nom: 'comptages premier mois',
     adresse: '/apercu/fiche?ecran=comptages-premier-mois&profil=conseil',

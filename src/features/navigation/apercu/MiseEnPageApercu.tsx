@@ -35,9 +35,12 @@ export function MiseEnPageApercu() {
   )
   // ?vous=Marie%20D. : la personne déclarée sur l'appareil (T56), pour un ministère seulement.
   const vous = profil === 'ministere' ? parametres.get('vous') : null
+  // ?compte=Coordination : le ministère du compte, quand l'écran est la fiche d'un autre que
+  // Communication (la fiche de Coordination lue par Coordination, avec ?onglet=/ma-fiche).
+  const compte = profil === 'ministere' ? parametres.get('compte') : null
   return (
     <MiseEnPage
-      libelleCompte={LIBELLES_EXEMPLE[profil]}
+      libelleCompte={compte ? `Ministère ${compte}` : LIBELLES_EXEMPLE[profil]}
       onglets={onglets}
       accueil={ici}
       personne={

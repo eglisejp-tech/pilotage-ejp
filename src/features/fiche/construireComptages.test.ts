@@ -66,21 +66,32 @@ describe('construireComptages', () => {
     expect(construit([...COMPTAGES_EXEMPLE].reverse())).toEqual(construit())
   })
 
-  it('ponctualité : mois écoulé, mois en cours, depuis le départ ; cultes puis autres', () => {
+  it('ponctualité : mois écoulé, mois en cours, depuis le départ ; complétude d’abord, cultes puis autres', () => {
     const [ecoule, enCours, depuis] = construit().ponctualite
     expect(ecoule).toEqual({
       cle: 'principal',
       libelle: 'Septembre 2026',
       valeur: { etat: 'saisie', texte: '63', unite: '%' },
-      details: ['Retard moyen : 8 min', '8 sur 10 ont leurs heures'],
-      sousLignes: ['Cultes : 3 sur 4', 'Autres événements : 2 sur 4'],
+      details: [
+        '8 sur 10 ont leurs heures',
+        'Retard moyen : 8 min',
+        'Cultes : 3 sur 4',
+        'Autres événements : 2 sur 4',
+      ],
     })
     expect(enCours?.libelle).toBe('Octobre en cours')
-    expect(enCours?.details).toEqual(['Retard moyen : 4 min', '3 sur 3 ont leurs heures'])
+    expect(enCours?.details.slice(0, 2)).toEqual([
+      '3 sur 3 ont leurs heures',
+      'Retard moyen : 4 min',
+    ])
     expect(depuis?.libelle).toBe('Depuis le 21 août')
     expect(depuis?.valeur).toEqual({ etat: 'saisie', texte: '64', unite: '%' })
-    expect(depuis?.details).toEqual(['Retard moyen : 7 min', '14 sur 18 ont leurs heures'])
-    expect(depuis?.sousLignes).toEqual(['Cultes : 5 sur 7', 'Autres événements : 4 sur 7'])
+    expect(depuis?.details).toEqual([
+      '14 sur 18 ont leurs heures',
+      'Retard moyen : 7 min',
+      'Cultes : 5 sur 7',
+      'Autres événements : 4 sur 7',
+    ])
   })
 
   it('retards à lister : le mois écoulé, du 1er au dernier jour, leur nombre', () => {
@@ -106,8 +117,12 @@ describe('construireComptages', () => {
     expect(donnees.ponctualite[0]).toMatchObject({
       libelle: 'Octobre en cours',
       valeur: { etat: 'non_calcule', texte: 'Non calculé' },
-      details: ['Retard moyen : Non calculé', '0 sur 2 a ses heures'],
-      sousLignes: ['Cultes : 0 sur 0', 'Autres événements : 0 sur 0'],
+      details: [
+        '0 sur 2 a ses heures',
+        'Retard moyen : Non calculé',
+        'Cultes : 0 sur 0',
+        'Autres événements : 0 sur 0',
+      ],
     })
     expect(donnees.retards).toBeNull()
   })
