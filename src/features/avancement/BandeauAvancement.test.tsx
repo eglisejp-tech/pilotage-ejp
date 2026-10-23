@@ -4,6 +4,8 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { BandeauAvancement } from '@/features/avancement/BandeauAvancement'
 import { MISE_A_JOUR } from '@/features/avancement/etapes'
+import type { Etape } from '@/features/avancement/etapes'
+import { ListeEtapes } from '@/features/avancement/ListeEtapes'
 import { CLE_FERMETURE, oublierMemoire } from '@/features/avancement/memoire'
 
 function afficher(chemin = '/') {
@@ -27,15 +29,14 @@ describe('BandeauAvancement', () => {
     const { container } = afficher()
     const region = screen.getByRole('region', { name: 'Avancement de Pilotage EJP' })
     expect(region.querySelector('[role="status"]')).toBeNull()
-    expect(region).toHaveTextContent('7 étapes sur 8 en ligne.')
-    expect(region).toHaveTextContent(
-      'Prochaine : Textes et messages revus, prévue vendredi 16 oct.',
-    )
+    expect(region).toHaveTextContent('8 étapes sur 8 en ligne.')
+    // Tout est en ligne : aucune phrase « Prochaine », et rien qui redise le compte.
+    expect(region).not.toHaveTextContent('Prochaine')
+    expect(region).not.toHaveTextContent('Toutes les étapes')
     const cases = container.querySelectorAll('[data-statut]')
     expect(cases).toHaveLength(8)
     expect(cases[0]?.parentElement).toHaveAttribute('aria-hidden', 'true')
-    expect(container.querySelectorAll('[data-statut="en-ligne"]')).toHaveLength(7)
-    expect(container.querySelectorAll('[data-statut="en-partie"]')).toHaveLength(1)
+    expect(container.querySelectorAll('[data-statut="en-ligne"]')).toHaveLength(8)
   })
 
   it("nomme ses boutons, avec le suffixe réservé aux lecteurs d'écran", () => {
@@ -60,7 +61,7 @@ describe('BandeauAvancement', () => {
     }
   })
 
-  it("ouvre le panneau des 8 étapes, avec l'étape suivante marquée", async () => {
+  it('ouvre le panneau des 8 étapes, toutes en ligne, sans étape courante', async () => {
     afficher()
     const bouton = screen.getByRole('button', { name: 'Voir les étapes' })
     const panneau = document.getElementById(bouton.getAttribute('aria-controls') ?? '')
@@ -69,16 +70,16 @@ describe('BandeauAvancement', () => {
     expect(bouton).toHaveAccessibleName('Masquer les étapes')
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
     expect(panneau).not.toHaveAttribute('hidden')
-    expect(panneau).toHaveTextContent('Mis à jour le 14 oct. Les dates à venir peuvent changer.')
+    // Plus aucune date à venir : la note ne parle plus de dates qui peuvent changer.
+    expect(panneau).toHaveTextContent(/^Mis à jour le 23 oct\./)
+    expect(panneau).not.toHaveTextContent('Les dates à venir')
     const etapes = screen.getAllByRole('listitem')
     expect(etapes).toHaveLength(8)
-    expect(etapes[6]).toHaveAttribute('aria-current', 'step')
-    expect(etapes[0]).toHaveTextContent('En ligne')
-    // Étape 6 : la gestion par EJP Tech la complète, elle reste en ligne.
-    expect(etapes[5]).toHaveTextContent('En ligne')
-    expect(etapes[6]).toHaveTextContent('En partie : 5 parties sur 6 en ligne.')
+    for (const etape of etapes) expect(etape).not.toHaveAttribute('aria-current')
+    // Étape 7 : les textes et messages revus la complètent (livraison du 23 octobre).
+    expect(etapes[6]).toHaveTextContent('En ligne')
     // Le carré est un dessin caché aux lecteurs d'écran (T66, t056).
-    expect(screen.getAllByText('En ligne')).toHaveLength(7)
+    expect(screen.getAllByText('En ligne')).toHaveLength(8)
     expect(panneau?.textContent).not.toContain('■')
   })
 
@@ -120,5 +121,21 @@ describe('BandeauAvancement', () => {
   it('reste visible sur les autres pages', () => {
     afficher('/points')
     expect(screen.getByRole('region')).toBeInTheDocument()
+  })
+})
+
+describe('ListeEtapes, quand une prochaine partie existe', () => {
+  const partie = { quoi: 'x', date: '2026-10-09' }
+  const etapes: Etape[] = [
+    { numero: 1, titre: 'Base', pourQui: 'Tous', livre: [partie], prevu: [] },
+    { numero: 2, titre: 'Sessions', pourQui: 'Tous', livre: [partie], prevu: [partie] },
+  ]
+
+  it("marque l'étape qui porte la prochaine partie, et elle seule", () => {
+    render(<ListeEtapes etapes={etapes} numeroProchaine={2} />)
+    const items = screen.getAllByRole('listitem')
+    expect(items[0]).not.toHaveAttribute('aria-current')
+    expect(items[1]).toHaveAttribute('aria-current', 'step')
+    expect(items[1]).toHaveTextContent('En partie : 1 partie sur 2 en ligne.')
   })
 })
