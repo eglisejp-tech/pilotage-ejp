@@ -215,9 +215,10 @@ test.describe('ministère Communication : accueil 07', () => {
 })
 
 // Les attentes réelles de l'outil (T65), avec les animations : les autres parcours les réduisent
-// (playwright.config.ts). Chaque lecture de l'API de données attend 800 ms : la vérification de
-// la session dépasse 300 ms (l'ouverture de l'outil joue), puis Ma semaine lit ses données (sa
-// flamme), puis le contenu arrive. Aucun audit axe ici : il tomberait pendant un fondu.
+// (playwright.config.ts). Chaque lecture de l'API de données attend 800 ms. L'ouverture de l'outil
+// joue dès l'arrivée et en entier (2,5 s, T67), puis la flamme vivante si la session n'est pas
+// encore lue ; puis Ma semaine lit ses données (sa flamme), puis le contenu arrive. Aucun audit
+// axe ici : il tomberait pendant un fondu.
 test.describe('ministère Communication : les attentes de l’outil, animations comprises (T65)', () => {
   test.use({
     storageState: fichierSession('ministere'),
