@@ -43,7 +43,15 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
         'border-b border-filet py-3.5 text-base',
       )}
     >
-      <span className="text-encre-2 tabular-nums">{ligne.jour}</span>
+      <span className="text-encre-2 tabular-nums">
+        {ligne.jour}
+        {/* L'heure ne se coupe jamais : « Sam. 17 oct., » puis « 19 h 30 » sur une colonne étroite. */}
+        {ligne.heure !== null ? (
+          <>
+            , <span className="whitespace-nowrap">{ligne.heure}</span>
+          </>
+        ) : null}
+      </span>
       <div className="flex min-w-0 flex-col gap-1">
         <span className="break-words">
           <Libre texte={ligne.titre} />

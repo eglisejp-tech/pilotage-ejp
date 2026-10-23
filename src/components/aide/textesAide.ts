@@ -24,7 +24,9 @@ export const TEXTES_AIDE = {
   'fij.completudeDep':
     "Départements qui ont un chiffre cette semaine. Le total n'additionne que ceux-là.",
 
-  // Ajouter et mettre à jour un événement (maquette 11, lot E5)
+  // Ajouter et mettre à jour un événement (maquette 11, lot E5). Les heures prévue et de début
+  // (T68) n'ont pas de bulle : leurs textes sont nécessaires pour remplir, ils s'écrivent sous le
+  // champ (`TEXTES_EVENEMENT.noteHeurePrevue` et `noteHeureDebut`, aides-contextuelles.md).
   'evenement.statut': 'Mettez le statut à jour dès que vous connaissez la décision.',
 
   // Prochaine réunion (lot E5)

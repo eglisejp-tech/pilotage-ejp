@@ -189,10 +189,10 @@ describe('construireCalendrier : heures (T68)', () => {
       ]),
       { ministereId: COMMUNICATION, profil: 'berger' },
     )
-    expect(lignes.map((l) => l.jour)).toEqual([
-      'Sam. 10 oct., 19 h',
-      'Sam. 10 oct., 19 h 30',
-      'Sam. 10 oct.',
+    expect(lignes.map((l) => [l.jour, l.heure])).toEqual([
+      ['Sam. 10 oct.', '19 h'],
+      ['Sam. 10 oct.', '19 h 30'],
+      ['Sam. 10 oct.', null],
     ])
   })
 

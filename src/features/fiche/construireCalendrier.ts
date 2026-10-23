@@ -32,8 +32,13 @@ const TON_DU_STATUT: Partial<Record<StatutEvenement, TonStatut>> = {
 export interface LigneCalendrier {
   id: string
   titre: TexteLibre
-  /** « Sam. 3 oct. », ou « Sam. 3 oct., 19 h » avec l'heure prévue (T68). */
+  /** « Sam. 3 oct. ». */
   jour: string
+  /**
+   * Heure prévue (T68), « 19 h » ou « 19 h 30 », écrite après le jour : « Sam. 3 oct., 19 h ».
+   * Null sans heure prévue.
+   */
+  heure: string | null
   /** Le statut en mots : « En attente de validation ». */
   libelleStatut: string
   /**
@@ -96,14 +101,12 @@ export function construireCalendrier(
     (evenement): LigneCalendrier => {
       const duMinistere = evenement.ministere_id === contexte.ministereId
       const peutMettreAJour = duMinistere && contexte.profil === 'ministere'
-      const jour = formaterJourAbrege(evenement.date)
       return {
         id: evenement.id,
         titre: { texte: evenement.titre, masque: evenement.titre === TEXTE_MASQUE },
-        jour:
-          evenement.heure_prevue === null
-            ? jour
-            : `${jour}, ${formaterHeureEnMinutes(evenement.heure_prevue)}`,
+        jour: formaterJourAbrege(evenement.date),
+        heure:
+          evenement.heure_prevue === null ? null : formaterHeureEnMinutes(evenement.heure_prevue),
         libelleStatut: libelleStatut(evenement.statut),
         debut: evenement.statut === 'termine' ? texteDuDebut(evenement) : null,
         heureDebutAIndiquer:
