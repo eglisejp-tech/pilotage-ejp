@@ -276,7 +276,6 @@
       "src/features/mes-indicateurs/VueMesIndicateurs.tsx": 1,
       "src/features/moderation/FileARelire.tsx": 1,
       "src/features/personnes/VuePersonnes.tsx": 1,
-      "src/features/points/ChargementPoints.tsx": 1,
       "src/features/sessions/VueSessions.tsx": 1,
       "src/pages/PageAVenir.tsx": 1,
       "src/pages/PageIntrouvable.tsx": 1,
