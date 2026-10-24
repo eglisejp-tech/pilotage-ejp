@@ -51,6 +51,7 @@ export const REGLES = [
     conseil:
       'FenetreConfirmation, ou useFenetreModale pour une fenêtre à champs (src/components/ui) ; PanneauSaisie pour un panneau',
     permis: ['src/components/ui/FenetreConfirmation.tsx'],
+    fondation: /\buseFenetreModale\(/,
   },
   {
     code: 'barre-bord',
@@ -97,13 +98,15 @@ function sansCommentaires(ligne) {
 
 /**
  * Nombre de motifs de chaque règle dans un fichier, et leurs lignes. Le composant de fondation
- * d'une règle (`permis`) en est exempté : c'est lui qui porte l'élément natif.
+ * d'une règle (`permis`) en est exempté : c'est lui qui porte l'élément natif ; de même un fichier
+ * qui se sert de la fondation (`fondation`, par exemple une fenêtre à champs sur useFenetreModale).
  */
 export function compter(texte, fichier = '') {
   const resultat = {}
   const lignes = texte.split('\n')
   for (const regle of REGLES) {
     if (regle.permis?.includes(fichier)) continue
+    if (regle.fondation?.test(texte)) continue
     const trouvees = []
     lignes.forEach((ligne, index) => {
       if (estCommentaire(ligne)) return

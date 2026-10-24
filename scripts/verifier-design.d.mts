@@ -4,6 +4,7 @@ export interface Regle {
   motif: RegExp
   conseil: string
   permis?: string[]
+  fondation?: RegExp
 }
 
 /** Lignes où chaque règle trouve un motif, par code de règle. */

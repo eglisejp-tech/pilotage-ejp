@@ -51,6 +51,12 @@ describe('verifier-design', () => {
       compter('<dialog role="alertdialog">', 'src/components/ui/FenetreConfirmation.tsx'),
     ).toEqual({})
     expect(compter('<select>', 'src/features/x/Liste.tsx')).toEqual({ 'liste-native': [1] })
+    // Une fenêtre à champs construite sur la fondation n'est pas une fenêtre recopiée.
+    const surFondation = 'useFenetreModale(fenetre, annuler)\n<dialog ref={fenetre} role="dialog">'
+    expect(compter(surFondation, 'src/features/x/FenetreMotif.tsx')).toEqual({})
+    expect(compter('<div role="dialog">', 'src/features/x/FenetreMotif.tsx')).toEqual({
+      'fenetre-recopiee': [1],
+    })
   })
 
   it('refuse toute hausse au-dessus du plafond, et signale les plafonds à baisser', () => {
