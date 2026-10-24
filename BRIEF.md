@@ -1289,7 +1289,7 @@ Sous l'en-tête de toutes les pages connectées, une ligne « N étapes sur 8 en
 
 ### Formats
 
-Heure de Paris pour tous les calculs et affichages, par `Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris' })` ; l'interface lit `v_semaine` au lieu de recalculer. « 27 sept. », « Dimanche 27 sept. », « Sam. 3 oct. », « lundi 5 oct., 20 h », « lundi 5 oct., 20 h 30 » ; journal « 27 sept., 12 h 41 » ; fraîcheur « Aujourd'hui », « Hier », « Il y a 3 jours ». Mois abrégés : janv., févr., mars, avr., mai, juin, juil., août, sept., oct., nov., déc. Un écart s'écrit « +2 » ou avec le signe moins U+2212 suivi du nombre, jamais avec un tiret.
+Heure de Paris pour tous les calculs et affichages, par `Intl.DateTimeFormat('fr-FR', { timeZone: 'Europe/Paris' })` ; l'interface lit `v_semaine` au lieu de recalculer. « 27 sept. », « Dimanche 27 sept. », « Sam. 3 oct. », « lundi 5 oct., 20 h », « lundi 5 oct., 20 h 30 » ; journal « 27 sept., 12 h 41 » ; fraîcheur « Aujourd'hui », « Hier », « Il y a 3 jours ». Mois abrégés : janv., févr., mars, avr., mai, juin, juil., août, sept., oct., nov., déc. Un écart s'écrit « +2 » ou avec le signe moins U+2212 suivi du nombre, jamais avec un tiret. Le premier jour du mois s'écrit « 1er » (« 1er oct. », « du 1er au 7 juin », T69, une seule fonction : `quantieme`). Les milliers et les unités se séparent par l'espace insécable U+00A0 (« 1 250 € », « 12 480 », « 77 % »), et non par l'espace fine U+202F d'Intl, qu'aucune des trois polices ne dessine (T69).
 
 ## 10. Design et UX (direction C, validée)
 
