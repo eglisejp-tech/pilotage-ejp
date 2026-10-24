@@ -159,3 +159,107 @@ jobs:
       - name: Journal de l'edge runtime
         if: failure()
         run: docker logs "$(docker ps -q --filter name=supabase_edge_runtime)" 2>&1 | tail -n 200
+
+  # Mise en ligne sur Cloudflare Pages (T70) : seulement sur main, et seulement quand tous les
+  # autres jobs sont verts (needs). Le build prend les valeurs publiques de production dans les
+  # variables du dépôt (vars, jamais un secret dans le navigateur), puis wrangler publie dist sur
+  # le projet pilotage-ejp, branche de production main. Tant que le secret CLOUDFLARE_API_TOKEN
+  # n'existe pas, le job s'arrête au vert avec un avertissement et ne publie rien
+  # (docs/exploitation.md, section 3.1). Relancer une mise en ligne : Actions, CI, « Run
+  # workflow » sur main.
+  deploiement:
+    name: Mise en ligne (Cloudflare Pages)
+    needs: [qualite, base, e2e, fonctions]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Une mise en ligne à la fois : la suivante attend la fin de celle en cours.
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v7
+      # Seule la présence des secrets est lue ici (vrai ou faux), jamais leur valeur.
+      - name: Vérifier les réglages de la mise en ligne
+        id: reglages
+        env:
+          JETON_PRESENT: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          COMPTE_PRESENT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          if [ "$JETON_PRESENT" != "true" ]; then
+            echo "::warning title=Mise en ligne non faite::Le secret CLOUDFLARE_API_TOKEN n'existe pas encore : rien n'est publié (docs/exploitation.md, section 3.1)."
+            echo "pret=non" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          manque=""
+          [ "$COMPTE_PRESENT" = "true" ] || manque="$manque secret CLOUDFLARE_ACCOUNT_ID,"
+          [ -n "$VITE_SUPABASE_URL" ] || manque="$manque variable VITE_SUPABASE_URL,"
+          [ -n "$VITE_SUPABASE_PUBLISHABLE_KEY" ] || manque="$manque variable VITE_SUPABASE_PUBLISHABLE_KEY,"
+          [ -n "$VITE_SITE_URL" ] || manque="$manque variable VITE_SITE_URL,"
+          if [ -n "$manque" ]; then
+            echo "::error title=Mise en ligne arrêtée::Il manque :${manque%,} (docs/exploitation.md, section 3.1)."
+            exit 1
+          fi
+          case "$VITE_SUPABASE_PUBLISHABLE_KEY" in
+            sb_publishable_*) ;;
+            *)
+              echo "::error title=Mise en ligne arrêtée::VITE_SUPABASE_PUBLISHABLE_KEY doit être la clé publique (sb_publishable_...), jamais la clé secrète."
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "$VITE_SUPABASE_URL" | grep -Eq '^https://[a-z]{20}\.supabase\.co$'; then
+            echo "::error title=Mise en ligne arrêtée::VITE_SUPABASE_URL doit être de la forme https://<identifiant>.supabase.co."
+            exit 1
+          fi
+          if ! grep -F -- "$VITE_SUPABASE_URL" public/_headers | grep -q '^  Content-Security-Policy:'; then
+            echo "::error title=Mise en ligne arrêtée::$VITE_SUPABASE_URL n'est pas dans connect-src de public/_headers : le navigateur bloquerait l'outil."
+            exit 1
+          fi
+          case "$VITE_SITE_URL" in
+            https://*) ;;
+            *)
+              echo "::error title=Mise en ligne arrêtée::VITE_SITE_URL doit commencer par https://."
+              exit 1
+              ;;
+          esac
+          echo "pret=oui" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v7
+        if: steps.reglages.outputs.pret == 'oui'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: steps.reglages.outputs.pret == 'oui'
+        run: npm ci
+      - if: steps.reglages.outputs.pret == 'oui'
+        run: npm run build
+      # Le dossier publié : _headers et _redirects copiés, 404 de /assets/ seulement, aperçu des
+      # liens à la bonne adresse, aucune clé secrète.
+      - name: Contrôler le dossier dist
+        if: steps.reglages.outputs.pret == 'oui'
+        run: |
+          test -f dist/_headers
+          test -f dist/_redirects
+          test -f dist/assets/404.html
+          test ! -e dist/404.html
+          grep -qF "content=\"${VITE_SITE_URL%/}/apercu-lien.png\"" dist/index.html
+          ! grep -rEq 'sb_secret_[A-Za-z0-9_-]{20,}|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEYS' dist
+      - name: Publier sur Cloudflare Pages
+        id: publication
+        if: steps.reglages.outputs.pret == 'oui'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.148.0'
+          command: pages deploy dist --project-name=pilotage-ejp --branch=main --commit-dirty=true
+      - name: Adresse de la mise en ligne
+        if: steps.reglages.outputs.pret == 'oui'
+        env:
+          ADRESSE: ${{ steps.publication.outputs.deployment-url }}
+        run: |
+          echo "Mise en ligne faite : $ADRESSE (site : $VITE_SITE_URL)" >> "$GITHUB_STEP_SUMMARY"
