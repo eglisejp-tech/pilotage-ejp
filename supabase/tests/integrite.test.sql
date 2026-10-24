@@ -55,9 +55,11 @@ select throws_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
   select ctx.service, ctx.com_m, private.dimanche_reference() - 1, 10 from ctx
 $$, 'P0001', 'La date doit être un dimanche passé ou aujourd''hui.', 'un samedi est refusé');
+-- + 14 : le dimanche matin (heure de Paris, avant midi), le dimanche de référence est celui
+-- d'avant, et + 7 tombe sur aujourd'hui, qui est accepté. + 14 est toujours à venir.
 select throws_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
-  select ctx.service, ctx.com_m, private.dimanche_reference() + 7, 10 from ctx
+  select ctx.service, ctx.com_m, private.dimanche_reference() + 14, 10 from ctx
 $$, 'P0001', 'La date doit être un dimanche passé ou aujourd''hui.', 'un dimanche futur est refusé');
 select lives_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
