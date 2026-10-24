@@ -931,7 +931,7 @@ Questions de la relecture : le sigle « PCNC » est gardé tel quel ; une répon
 
 ## 20. Protocole
 
-La liste de la coordination ne demande aucun indicateur à Protocole. Ajout du 24 octobre 2026 (T71) : la responsable du Protocole a donné quatre domaines à suivre, et la personne responsable y a choisi huit indicateurs saisis et un calcul. Libellés et définitions proposés, à relire par la responsable du Protocole avant la création en production. Protocole saisit aussi les trois chiffres communs, pour que les totaux de l'église restent complets.
+La liste de la coordination ne demande aucun indicateur à Protocole. Ajout du 24 octobre 2026 (T71) : la responsable du Protocole a donné quatre domaines à suivre, et la personne responsable y a choisi sept indicateurs saisis et un calcul. Libellés et définitions proposés, à relire par la responsable du Protocole avant la création en production. Protocole saisit aussi les trois chiffres communs, pour que les totaux de l'église restent complets.
 
 ### Chiffres communs
 
@@ -1080,11 +1080,11 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | Multilingue      | 8               | 0              | 2                 | 0                      | 0          |
 | Sécurité         | 7               | 0              | 2                 | 0                      | 0          |
 | Formation        | 6               | 0              | 3                 | 0                      | 0          |
-| Protocole        | 8               | 1              | 1                 | 0                      | 0          |
+| Protocole        | 7               | 1              | 1                 | 0                      | 0          |
 | MDS              | 8               | 0              | 0                 | 1                      | 1          |
 | Prodiges Junior  | 4               | 2              | 1                 | 0                      | 0          |
 | Prodiges Academy | 0               | 0              | 0                 | 0                      | 0          |
-| **Total**        | **169**         | **12**         | **41**            | **8**                  | **12**     |
+| **Total**        | **168**         | **12**         | **41**            | **8**                  | **12**     |
 
 À ces totaux s'ajoutent :
 
@@ -1092,8 +1092,8 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 - les **4 rubriques par département** de Coordo FIJ, saisies chaque semaine pour 8 départements (32 valeurs par semaine) ;
 - 2 points d'attention de départ (Production et Entretien) et 3 valeurs de départ de Production.
 
-Au total : **169 chiffres saisis** (dont 12 sensibles ; 162 après l'ajout du chiffre d'affaires de Merch à la semaine, T64, puis 161 depuis T68, qui remplace « Événements commencés à l'heure » par un calcul sur les heures des événements, puis 169 depuis T71, avec les 8 de Protocole), **41 chiffres calculés** (dont la part des demandes traitées de Protocole, T71) et **8 comptages d'événements** par l'outil (dont la ponctualité des événements et des cultes, T68), **12 graphiques**. Sur les 49 chiffres calculés ou comptés, 30 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
+Au total : **168 chiffres saisis** (dont 12 sensibles ; 162 après l'ajout du chiffre d'affaires de Merch à la semaine, T64, puis 161 depuis T68, qui remplace « Événements commencés à l'heure » par un calcul sur les heures des événements, puis 168 depuis T71, avec les 7 de Protocole), **41 chiffres calculés** (dont la part des demandes traitées de Protocole, T71) et **8 comptages d'événements** par l'outil (dont la ponctualité des événements et des cultes, T68), **12 graphiques**. Sur les 49 chiffres calculés ou comptés, 30 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
 
 ## Sources et contrôle
 
-Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 162 chiffres saisis (depuis T64), 41 calculs, 7 comptages d'événements, 12 graphiques ; depuis T71, 169 chiffres saisis et 41 calculs (migration `20261024211427_protocole_catalogue.sql`, test `indicateurs-vague-1.test.sql`).
+Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 162 chiffres saisis (depuis T64), 41 calculs, 7 comptages d'événements, 12 graphiques ; depuis T71, 168 chiffres saisis et 41 calculs (migration `20261024211427_protocole_catalogue.sql`, test `indicateurs-vague-1.test.sql`).

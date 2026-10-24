@@ -2,9 +2,9 @@
 -- docs/conception/vague-1-decisions.md, section 4 ; réponse de la personne responsable du
 -- 6 octobre 2026 sur les parts, question 1).
 --
--- 1. Catalogue : nombres par modèle et totaux (169 saisis, dont le chiffre d'affaires de Merch à
+-- 1. Catalogue : nombres par modèle et totaux (168 saisis, dont le chiffre d'affaires de Merch à
 --    la semaine ajouté par T64, sans « Événements commencés à l'heure » retiré par T68, et les
---    8 saisis de Protocole ajoutés par T71 ; 41 calculs, 12 sensibles, 19 parts, unités,
+--    7 saisis de Protocole ajoutés par T71 ; 41 calculs, 12 sensibles, 19 parts, unités,
 --    11 suggestions, 22 modèles), 30 calculs de la V1 et 11 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
 --    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts ; T64 : le
@@ -51,7 +51,7 @@ insert into attendu values
   ('formation', 6, 3, 0, 3, 3),
   ('mds', 8, 0, 0, 0, 0),
   ('prodiges junior', 4, 1, 2, 1, 1),
-  ('protocole', 8, 1, 1, 1, 1);
+  ('protocole', 7, 1, 1, 1, 1);
 
 -- Les dix-neuf parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
 -- nature ajoutés par EJP Tech, moins la part des événements à l'heure, retirée par T68 : la
@@ -135,8 +135,8 @@ select results_eq($$
          count(*) filter (where p.modele = 'suggestion')::int,
          count(distinct p.modele) filter (where p.modele <> 'suggestion')::int
     from private.indicateur_prevu p
-$$, $$ values (169, 41, 12, 19, 5, 2, 4, 11, 22) $$,
-  '169 indicateurs saisis, 41 calculs, 12 sensibles, 19 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 22 modèles');
+$$, $$ values (168, 41, 12, 19, 5, 2, 4, 11, 22) $$,
+  '168 indicateurs saisis, 41 calculs, 12 sensibles, 19 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 22 modèles');
 select results_eq($$
   select count(*) filter (where v1)::int, count(*) filter (where not v1)::int
     from (select p.calcul in ('taux', 'moyenne')
@@ -273,7 +273,7 @@ $$, $$ values
   ('protocole_part_des_demandes_traitees', 'Part des demandes traitées',
    '« Demandes traitées » divisées par « Demandes reçues ». Plafonné à 100 %.',
    'mois', 'nombre', false, 'taux', true, false, false, false, 8) $$,
-  'T71 : Protocole, 8 saisis dans l''ordre (le plan du dimanche avec la somme de l''année, un sensible), puis la part');
+  'T71 : Protocole, 7 saisis dans l''ordre (le plan du dimanche avec la somme de l''année, un sensible), puis la part');
 select results_eq($$
   select t.ordre::int, t.role, t.source_code, t.comptage, t.agregat, t.decalage::int
     from private.indicateur_prevu_terme t where t.prevu_code = 'protocole_part_des_demandes_traitees' order by t.ordre
@@ -316,8 +316,8 @@ select is(public.creer_indicateurs_prevus((select academy from ctx), 'aucun'), 0
 -- T71 : la fiche Protocole de production a pu recevoir « Aucun prévu » avant cette migration.
 select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'aucun'), 0,
   'T71 : une fiche Protocole reçoit d''abord la réponse « Aucun prévu », comme avant T71');
-select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole'), 9,
-  'T71 : la même fiche reçoit ensuite les 9 prévus du modèle Protocole');
+select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole'), 8,
+  'T71 : la même fiche reçoit ensuite les 8 prévus du modèle Protocole');
 select is(tests.lire((select tech from ctx), 'aal2',
     format('select ajouts, ajouts_max, lignes, lignes_max from public.limites_indicateurs(%L)',
            (select e.ministere from essai e where e.modele = 'mcad'))),
@@ -329,8 +329,8 @@ select results_eq($$
   select j.detail from public.journal j
    where j.ministere_id = (select protocole_aucun from ctx) and j.action = 'indicateurs_prevus_crees'
    order by (j.detail ->> 'nombre')::int
-$$, $$ values ('{"modele": "aucun", "nombre": 0}'::jsonb), ('{"modele": "protocole", "nombre": 9}'::jsonb) $$,
-  'T71 : le journal de la fiche garde la réponse « Aucun prévu » et ajoute la création des 9 prévus');
+$$, $$ values ('{"modele": "aucun", "nombre": 0}'::jsonb), ('{"modele": "protocole", "nombre": 8}'::jsonb) $$,
+  'T71 : le journal de la fiche garde la réponse « Aucun prévu » et ajoute la création des 8 prévus');
 
 select lives_ok($$ set constraints all immediate $$, 'chaque calcul créé a tous ses termes (contrôle différé du lot B1)');
 set constraints all deferred;

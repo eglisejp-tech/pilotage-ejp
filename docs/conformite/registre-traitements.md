@@ -258,7 +258,7 @@ archivage du dépôt du code.
 - **Finalité** : suivre les chiffres des ministères pour le berger et le conseil : chiffres communs
   (STARs au service, STARs actifs, dont en FIJ), carte des FIJ et statistiques par département,
   présences aux sessions, indicateurs propres de chaque ministère (vague 1 : 162 indicateurs saisis
-  depuis T64, dont 11 sensibles ; 169 depuis T71, dont 12 sensibles, avec les manquements à la
+  depuis T64, dont 11 sensibles ; 168 depuis T71, dont 12 sensibles, avec les manquements à la
   confidentialité constatés de Protocole). Calculer les totaux de l'église avec leur complétude et montrer
   l'évolution.
 - **Base légale** : intérêt légitime de l'association (article 6.1.f). Les chiffres sont des

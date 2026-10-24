@@ -470,7 +470,7 @@ ont été rapprochées (section 8).
   anonymes (réponses, réponses satisfaites). Sans questionnaire : « Non calculé ».
 - **K51. Protocole ?** Les chiffres communs seulement ; modèle « aucun ». **Révisé le 24 octobre
   2026 (T71, choix de la personne responsable sur les domaines donnés par la responsable du
-  Protocole)** : modèle « protocole », huit indicateurs saisis, dont un sensible, et une part
+  Protocole)** : modèle « protocole », sept indicateurs saisis, dont un sensible, et une part
   (section 4, « Protocole »).
 - **K52a. Total de registre de MDS ?** Non : la fiche de MDS affiche les totaux de l'église « STARs
   actifs » et « STARs au service » en lignes de référence, avec leur complétude.
@@ -1436,7 +1436,7 @@ le ministère dans le mois »).
 
 | Élément                                    | Nombre                                                                                                                                                                                                                                |
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Indicateurs saisis (prévus)                | 169 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine, moins « Événements commencés à l'heure », retiré par T68, plus les 8 de Protocole, T71), dont 12 sensibles, 5 en euros, 2 en heure, 4 en jours                  |
+| Indicateurs saisis (prévus)                | 168 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine, moins « Événements commencés à l'heure », retiré par T68, plus les 7 de Protocole, T71), dont 12 sensibles, 5 en euros, 2 en heure, 4 en jours                  |
 | Calculs                                    | 41 : 30 en V1 (taux et moyennes de T35, dont la part des demandes traitées de Protocole, T71), 11 en V1+4 (calculs étendus et événements) ; la part des événements à l'heure, retirée par T68, se lit dans `evenements_eglise_mois()` |
 | Séries dérivées des événements             | 7 (6 de l'église pour Coordination, 1 de MDS), V1+4                                                                                                                                                                                   |
 | Statistiques FIJ par département           | 4 rubriques × 8 départements, V1                                                                                                                                                                                                      |
