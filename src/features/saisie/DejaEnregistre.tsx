@@ -15,7 +15,7 @@ export function DejaEnregistre({ message, essai }: Props) {
   return (
     <div role="status" className="-mt-5 has-[p]:mt-0">
       {message !== null ? (
-        <p key={essai} className="text-[15px] leading-normal text-encre-3">
+        <p key={essai} className="text-interface leading-normal text-encre-3">
           {message}
         </p>
       ) : null}

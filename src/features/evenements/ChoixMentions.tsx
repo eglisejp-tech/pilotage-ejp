@@ -51,7 +51,7 @@ export function ChoixMentions({
       className="flex min-w-0 flex-col gap-1.5"
     >
       <div className="flex min-h-cible flex-wrap items-center">
-        <p id={idTitre} className="text-[15px] font-semibold">
+        <p id={idTitre} className="text-interface font-semibold">
           {TEXTES_EVENEMENT.titreMentions}
         </p>
       </div>
@@ -61,7 +61,7 @@ export function ChoixMentions({
         <ul className="flex flex-col">
           {ministeres.map((ministere, rang) => (
             <li key={ministere.id}>
-              <label className="inline-flex min-h-cible items-center gap-3 text-base">
+              <label className="inline-flex min-h-cible items-center gap-3 text-texte">
                 <input
                   ref={rang === 0 ? refPremier : undefined}
                   type="checkbox"
@@ -81,13 +81,13 @@ export function ChoixMentions({
         </ul>
       )}
       {vide ? null : (
-        <div id={idNote} className="flex flex-col gap-1 text-sm leading-normal text-encre-3">
+        <div id={idNote} className="flex flex-col gap-1 text-detail leading-normal text-encre-3">
           <p>{TEXTES_EVENEMENT.noteMentions}</p>
           <p>{TEXTES_EVENEMENT.mentionsFigees}</p>
         </div>
       )}
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

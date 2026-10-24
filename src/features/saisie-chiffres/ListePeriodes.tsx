@@ -34,7 +34,7 @@ export function ListePeriodes({ libelle, periodes }: Props) {
         aria-expanded={ouverte}
         aria-controls={ouverte ? idListe : undefined}
         onClick={() => setOuverte((precedent) => !precedent)}
-        className="inline-flex min-h-cible items-center self-start text-[15px] text-nuit underline underline-offset-4"
+        className="inline-flex min-h-cible items-center self-start text-interface text-nuit underline underline-offset-4"
       >
         {libelle}
       </button>
@@ -47,7 +47,7 @@ export function ListePeriodes({ libelle, periodes }: Props) {
                 replace
                 aria-current={periode.courante ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-12 items-center py-2 text-[15px] text-encre underline underline-offset-4 hover:bg-fond',
+                  'retour-appui flex min-h-12 items-center py-2 text-interface text-encre underline underline-offset-4',
                   periode.courante && 'font-semibold',
                 )}
               >

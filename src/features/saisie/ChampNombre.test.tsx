@@ -196,6 +196,15 @@ describe('ChampNombre', () => {
     expect(screen.getByLabelText('STARs au service ce dimanche')).toHaveClass('text-[64px]')
   })
 
+  it('le grand champ se voit même vide : un trait gris sous le chiffre, foncé au focus (T69)', () => {
+    const { rerender } = render(<ChampNombre {...proprietes('')} />)
+    const champ = () => screen.getByLabelText('STARs au service ce dimanche')
+    expect(champ()).toHaveValue('')
+    expect(champ()).toHaveClass('border-b-2', 'border-encre-3', 'focus:border-encre')
+    rerender(<ChampNombre {...proprietes('10')} />)
+    expect(champ()).toHaveClass('border-b-2', 'border-encre-3')
+  })
+
   it('un texte à corriger se réduit pour tenir entre les boutons, à 360 px comme à 390 px', () => {
     const { rerender } = render(<ChampNombre {...proprietes('12,5')} />)
     const champ = () => screen.getByLabelText('STARs au service ce dimanche')

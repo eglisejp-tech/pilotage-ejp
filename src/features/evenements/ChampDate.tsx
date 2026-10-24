@@ -1,4 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react'
+import { Champ } from '@/components/ui/Champ'
 import { appelleUnSignalement } from '@/features/evenements/refus'
 import { dateEnToutesLettres } from '@/features/evenements/textes'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
@@ -60,29 +61,28 @@ export function ChampDate({
     .join(' ')
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[15px] font-semibold">
+      <label htmlFor={id} className="text-interface font-semibold">
         {libelle}
       </label>
-      <input
+      <Champ
         {...proprietes}
         id={id}
         type="date"
         aria-invalid={erreur ? true : undefined}
         aria-describedby={decritPar || undefined}
-        className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
       {note ? (
-        <p id={idNote} className="text-sm leading-normal text-encre-2">
+        <p id={idNote} className="text-detail leading-normal text-encre-2">
           {note}
         </p>
       ) : null}
-      <p aria-live="polite" className="text-[15px] text-encre-2">
+      <p aria-live="polite" className="text-interface text-encre-2">
         {dateChoisie !== undefined && estDateIso(dateChoisie)
           ? dateEnToutesLettres(dateChoisie)
           : null}
       </p>
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
           {ecran && appelleUnSignalement(erreur) ? (
             <>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import {
   messageDeRefusPoint,
   schemaBaseCommentaireTraite,
@@ -88,7 +89,7 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
           }}
           erreur={erreurChamp ?? undefined}
         />
-        <p className="text-[15px] leading-normal font-semibold text-encre-2">
+        <p className="text-interface leading-normal font-semibold text-encre-2">
           {TEXTES_ACTIONS_POINT.traite.nonRouvert}
         </p>
         <BoutonEnregistrer
@@ -97,13 +98,9 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
           libelleEnCours={TEXTES_ACTIONS_POINT.traite.boutonEnCours}
         />
         {refus ? <ErreurFormulaire message={refus} /> : null}
-        <button
-          type="button"
-          onClick={onFermer}
-          className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-        >
+        <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.traite.annuler}
-        </button>
+        </Bouton>
       </form>
     </FenetreAction>
   )

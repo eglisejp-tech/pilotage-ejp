@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import { ZoneDeTexte } from '@/components/ui/ZoneDeTexte'
 import { LONGUEUR_MAX_SIGNALEMENT } from '@/features/signalement/textes'
 import { Compteur } from '@/features/saisie/Compteur'
 import { RappelDonneesPersonnelles } from '@/features/saisie/RappelDonneesPersonnelles'
@@ -48,26 +49,26 @@ export function ChampTexteLibre({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[15px] font-semibold">
+      <label htmlFor={id} className="text-interface font-semibold">
         {libelle}
       </label>
       {note ? (
-        <p id={idNote} className="text-sm leading-normal text-encre-2">
+        <p id={idNote} className="text-detail leading-normal text-encre-2">
           {note}
         </p>
       ) : null}
-      <textarea
+      <ZoneDeTexte
         {...proprietes}
         id={id}
         rows={4}
         aria-invalid={erreur ? true : undefined}
         aria-describedby={decritPar}
-        className="min-h-28 w-full min-w-0 resize-y border border-encre bg-papier px-3.5 py-3 text-base leading-normal text-encre aria-invalid:border-2 aria-invalid:border-alerte"
+        className="min-h-28 resize-y py-3"
       />
       {avecRappel ? <RappelDonneesPersonnelles id={idRappel} /> : null}
       <Compteur id={idCompteur} valeur={longueur} max={LONGUEUR_MAX_SIGNALEMENT} />
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

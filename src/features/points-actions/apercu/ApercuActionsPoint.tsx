@@ -134,15 +134,13 @@ export function ApercuActionsPoint() {
     <QueryClientProvider client={clientRequetes}>
       <ContexteEcrituresPoint value={ecritures}>
         <section aria-labelledby="apercu-titre" data-repli-focus className="flex flex-col gap-5">
-          <h1 id="apercu-titre" className="font-lecture text-[32px] leading-[1.1] font-medium">
+          <h1 id="apercu-titre" className="font-lecture text-titre-panneau">
             Points d'attention
           </h1>
           <article className="flex flex-col gap-3 border-t border-filet py-4">
-            <h2 className="font-lecture text-[22px] leading-tight font-medium">
-              {point.titre.texte}
-            </h2>
+            <h2 className="font-lecture text-titre-point">{point.titre.texte}</h2>
             <p className="text-encre-2">{LIBELLE_STATUT[statut]}</p>
-            <p className="text-sm text-encre-3">
+            <p className="text-detail text-encre-3">
               Communication, mentions :{' '}
               {mentions.length === 0
                 ? 'aucune'

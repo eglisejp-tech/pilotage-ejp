@@ -1,5 +1,6 @@
 import type { Ref } from 'react'
 import { PRIORITES_POINT, TEXTES_POINT } from '@/features/nouveau-point/textes'
+import { ChoixSegmente } from '@/features/saisie/ChoixSegmente'
 import type { Priorite } from '@/lib/base'
 
 interface Props {
@@ -16,7 +17,8 @@ interface Props {
 
 /**
  * Choix de la priorité (maquette 10) : trois vrais boutons radio côte à côte, le choix en fond
- * `--encre` et en gras (jamais la couleur seule). Le titre « Priorité », sans bulle (l'ordre de
+ * `--encre` et en gras (jamais la couleur seule), en un seul bloc de 48 px (proposition 9, T69 :
+ * le même que les types de session et les statuts). Le titre « Priorité », sans bulle (l'ordre de
  * tri n'est pas à expliquer, T66 t237), est lu par `aria-labelledby`, comme le statut d'un
  * événement.
  */
@@ -29,32 +31,20 @@ export function ChoixPriorite({ id, valeur, onChange, onBlur, refPremier, erreur
       aria-describedby={erreur ? idErreur : undefined}
       className="flex min-w-0 flex-col gap-1.5"
     >
-      <p id={idTitre} className="text-[15px] font-semibold">
+      <p id={idTitre} className="text-interface font-semibold">
         {TEXTES_POINT.libellePriorite}
       </p>
-      <div className="flex pl-px">
-        {PRIORITES_POINT.map((priorite, rang) => (
-          <label key={priorite.valeur} className="relative -ml-px flex flex-1">
-            <input
-              ref={rang === 0 ? refPremier : undefined}
-              type="radio"
-              name={id}
-              value={priorite.valeur}
-              checked={valeur === priorite.valeur}
-              onChange={() => onChange(priorite.valeur)}
-              onBlur={onBlur}
-              aria-invalid={erreur ? true : undefined}
-              aria-describedby={erreur ? idErreur : undefined}
-              className="peer sr-only"
-            />
-            <span className="flex min-h-12 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
-              {priorite.libelle}
-            </span>
-          </label>
-        ))}
-      </div>
+      <ChoixSegmente
+        nom={id}
+        choix={PRIORITES_POINT}
+        valeur={valeur}
+        onChange={onChange}
+        onBlur={onBlur}
+        refPremier={refPremier}
+        idErreur={erreur ? idErreur : undefined}
+      />
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

@@ -164,7 +164,7 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
           // Côte à côte dans le panneau (maquette 08), champs alignés en bas de leur cellule ;
           // l'un sous l'autre sous 600 px, pour que la bulle d'aide en flux prenne toute la
           // largeur de la colonne (T38, section 3).
-          <div className="grid grid-cols-1 gap-3 min-[600px]:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 tablette:grid-cols-2">
             {autresCommuns.map((element) =>
               champ(element, element.code === 'en_fij' ? pourcentage : undefined),
             )}
@@ -172,7 +172,7 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
         ) : null}
         {champs.propres.length > 0 ? (
           <div className="flex flex-col gap-4">
-            <p className="text-[15px] font-semibold">{TEXTES_CHIFFRES.groupePropres}</p>
+            <p className="text-interface font-semibold">{TEXTES_CHIFFRES.groupePropres}</p>
             {champs.propres.map((element) => champ(element))}
           </div>
         ) : null}

@@ -12,7 +12,7 @@ interface Props {
  */
 export function RappelDonneesPersonnelles({ id }: Props) {
   return (
-    <p id={id} className="text-sm leading-normal text-encre-3">
+    <p id={id} className="text-detail leading-normal text-encre-3">
       {RAPPEL_DONNEES_PERSONNELLES}
     </p>
   )

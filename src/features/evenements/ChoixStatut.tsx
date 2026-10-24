@@ -1,6 +1,13 @@
 import type { Ref } from 'react'
 import { Aide } from '@/components/aide/Aide'
 import { STATUTS_EVENEMENT, TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { ChoixSegmente } from '@/features/saisie/ChoixSegmente'
+import type { StatutEvenement } from '@/lib/base'
+
+/** Le statut du formulaire (texte libre du schéma), s'il est l'un des six ; sinon aucun. */
+function valeurChoisie(valeur: string): StatutEvenement | '' {
+  return STATUTS_EVENEMENT.find((statut) => statut.valeur === valeur)?.valeur ?? ''
+}
 
 interface Props {
   /** Préfixe des identifiants et nom du groupe de boutons radio. */
@@ -18,7 +25,8 @@ interface Props {
 
 /**
  * Choix du statut d'un événement (maquette 11) : six boutons radio en deux colonnes, le choix en
- * fond `--encre`. Le titre « Statut » et son aide sont hors d'une `<legend>` (le nom du groupe
+ * fond `--encre`, en un seul bloc aux bordures communes de 48 px (proposition 9, T69) ; « En
+ * attente de validation » passe à la ligne entre deux mots, comme dans la maquette. Le titre « Statut » et son aide sont hors d'une `<legend>` (le nom du groupe
  * garderait « Aide : ... ») : le groupe le lit par `aria-labelledby`. Plus de note sous les
  * statuts : « Ici, on reporte seulement le statut » faisait parler l'outil de lui (T66, t131).
  */
@@ -43,7 +51,7 @@ export function ChoixStatut({
       className="flex min-w-0 flex-col gap-1.5"
     >
       <div className="flex min-h-cible flex-wrap items-center">
-        <p id={idTitre} className="text-[15px] font-semibold">
+        <p id={idTitre} className="text-interface font-semibold">
           {TEXTES_EVENEMENT.libelleStatut}
         </p>
         <Aide code="evenement.statut" libelle={TEXTES_EVENEMENT.libelleStatut} />
@@ -51,34 +59,23 @@ export function ChoixStatut({
       {ligneAuDessus ? (
         <p
           id={idLigne}
-          className="border border-filet bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre"
+          className="border border-filet bg-papier px-3.5 py-3 text-interface leading-normal text-encre"
         >
           {ligneAuDessus}
         </p>
       ) : null}
-      <div className="grid grid-cols-2 gap-2">
-        {STATUTS_EVENEMENT.map((statut, rang) => (
-          <label key={statut.valeur} className="relative flex">
-            <input
-              ref={rang === 0 ? refPremier : undefined}
-              type="radio"
-              name={id}
-              value={statut.valeur}
-              checked={valeur === statut.valeur}
-              onChange={() => onChange(statut.valeur)}
-              onBlur={onBlur}
-              aria-invalid={erreur ? true : undefined}
-              aria-describedby={erreur ? idErreur : undefined}
-              className="peer sr-only"
-            />
-            <span className="flex min-h-12 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
-              {statut.libelle}
-            </span>
-          </label>
-        ))}
-      </div>
+      <ChoixSegmente
+        nom={id}
+        choix={STATUTS_EVENEMENT}
+        valeur={valeurChoisie(valeur)}
+        onChange={onChange}
+        onBlur={onBlur}
+        refPremier={refPremier}
+        idErreur={erreur ? idErreur : undefined}
+        disposition="grille"
+      />
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

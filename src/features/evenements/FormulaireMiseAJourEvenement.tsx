@@ -166,10 +166,10 @@ export function FormulaireMiseAJourEvenement({
       }}
     >
       <div className="flex flex-col gap-1.5">
-        <p className="text-[15px] font-semibold">{TEXTES_EVENEMENT.libelleNom}</p>
-        <p className="text-base break-words">{titre}</p>
+        <p className="text-interface font-semibold">{TEXTES_EVENEMENT.libelleNom}</p>
+        <p className="text-texte break-words">{titre}</p>
         {/* Rien à faire ici sur les mentions : la phrase sur les mentions figées part (t138). */}
-        <p className="text-sm leading-normal text-encre-3">{ligneMentions(mentions)}</p>
+        <p className="text-detail leading-normal text-encre-3">{ligneMentions(mentions)}</p>
       </div>
       <ChampDate
         id="evenement-date"
@@ -183,7 +183,7 @@ export function FormulaireMiseAJourEvenement({
         idsDecrits={report ? [ID_REPORT] : []}
         apres={
           report ? (
-            <p id={ID_REPORT} className="text-[15px] text-encre-2">
+            <p id={ID_REPORT} className="text-interface text-encre-2">
               {report}
             </p>
           ) : null

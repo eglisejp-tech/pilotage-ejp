@@ -1,3 +1,4 @@
+import { ChoixSegmente } from '@/features/saisie/ChoixSegmente'
 import { TYPES_SESSION } from '@/features/sessions/schemas'
 import type { ValeursDeclaration } from '@/features/sessions/schemas'
 import { LIBELLES_TYPES, TEXTES_SESSIONS } from '@/features/sessions/textes'
@@ -9,33 +10,20 @@ interface Props {
   onChange: (type: ValeursDeclaration['type']) => void
 }
 
+const CHOIX = TYPES_SESSION.map((type) => ({ valeur: type, libelle: LIBELLES_TYPES[type] }))
+
 /**
- * Choix du type d'une session (maquette 14, ajout du troisième type : « Autre rassemblement »).
- * Trois boutons radio côte à côte quand la place le permet, le choix en fond `--encre`.
+ * Choix du type d'une session (maquette 14, ajout du troisième type : « Autre session »). Un
+ * seul bloc de trois boutons radio (proposition 9, T69) : côte à côte quand chaque libellé tient
+ * sur une ligne, sinon les uns sous les autres, comme dans le panneau (écart 3).
  */
 export function ChoixType({ id, valeur, onChange }: Props) {
   return (
     <fieldset className="flex min-w-0 flex-col gap-1.5">
-      <legend className="flex min-h-cible items-center text-[15px] font-semibold">
+      <legend className="flex min-h-cible items-center text-interface font-semibold">
         {TEXTES_SESSIONS.legendeType}
       </legend>
-      <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-3">
-        {TYPES_SESSION.map((type) => (
-          <label key={type} className="relative flex">
-            <input
-              type="radio"
-              name={id}
-              value={type}
-              checked={valeur === type}
-              onChange={() => onChange(type)}
-              className="peer sr-only"
-            />
-            <span className="flex min-h-13 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
-              {LIBELLES_TYPES[type]}
-            </span>
-          </label>
-        ))}
-      </div>
+      <ChoixSegmente nom={id} choix={CHOIX} valeur={valeur} onChange={onChange} />
     </fieldset>
   )
 }
