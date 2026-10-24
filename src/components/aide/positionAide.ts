@@ -71,19 +71,24 @@ export function positionnerBulle(
 
     // Sous la ligne entière (ligne de liste ou de tableau), ou au-dessus d'elle : jamais sur le
     // chiffre qu'elle explique, même quand la ligne passe sur deux lignes au téléphone.
+    // La zone de 44 px du bouton peut dépasser d'une ligne basse (proposition 18) : la bulle
+    // s'écarte aussi de cette zone, jamais posée dessus.
     const ligne = racine.closest<HTMLElement>('li, tr, [data-ligne-aide]') ?? racine
     const rectLigne = ligne.getBoundingClientRect()
-    const dessous = window.innerHeight - rectLigne.bottom
-    const dessus = rectLigne.top
+    const rectBouton = bouton.getBoundingClientRect()
+    const haut = Math.min(rectLigne.top, rectBouton.top)
+    const bas = Math.max(rectLigne.bottom, rectBouton.bottom)
+    const dessous = window.innerHeight - bas
+    const dessus = haut
     const hauteur = bulle.offsetHeight
     const auDessus = dessous < hauteur + ECART * 2 && dessus > dessous
     bulle.dataset.cote = auDessus ? 'haut' : 'bas'
     if (auDessus) {
       bulle.style.top = 'auto'
-      bulle.style.bottom = `${rectRacine.bottom - rectLigne.top + ECART}px`
+      bulle.style.bottom = `${rectRacine.bottom - haut + ECART}px`
     } else {
       bulle.style.bottom = 'auto'
-      bulle.style.top = `${rectLigne.bottom - rectRacine.top + ECART}px`
+      bulle.style.top = `${bas - rectRacine.top + ECART}px`
     }
   }
 
