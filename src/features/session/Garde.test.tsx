@@ -6,9 +6,11 @@ import { oublierOuverture } from '@/components/etats/ouverture'
 import type { EtatSession } from '@/features/session/etat'
 import { Garde } from '@/features/session/Garde'
 
-// La garde et la règle de temps de T65 : rien pendant 300 ms, puis l'ouverture de l'outil (1,2 s,
-// jouée jusqu'au bout) la première fois, ou la flamme au moins 600 ms les fois suivantes et avec
-// « Réduire les animations » ; l'écran de la zone, ou l'écran d'erreur, seulement ensuite.
+// La garde et ses attentes. La première vérification depuis le chargement de l'application joue
+// l'ouverture de l'outil (T67) : tout de suite et en entier (2,5 s), même si la session est lue
+// avant. Les fois suivantes, et avec « Réduire les animations », la règle de temps de T65 : rien
+// pendant 300 ms, puis la flamme au moins 600 ms. L'écran de la zone, ou l'écran d'erreur,
+// seulement ensuite.
 
 type Lecture = { data: EtatSession | undefined; isError: boolean; error: unknown }
 
@@ -65,6 +67,8 @@ function repondre(rerender: (ui: ReactNode) => void, reponse: 'session' | 'erreu
 const ecranDeLaZone = () => screen.queryByRole('heading', { name: 'Écran de connexion' })
 const ecranDErreur = () => screen.queryByRole('alert')
 const attente = () => screen.queryByText('Chargement de Pilotage EJP')
+const dessin = () => document.querySelector('svg[data-ouverture="dessin"]')
+const flammeVivante = () => document.querySelector('svg[data-ouverture="vivante"]')
 
 /** Une première vérification a déjà eu lieu depuis le chargement de l'application. */
 function ouvertureDejaJouee() {
@@ -83,69 +87,121 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-describe('Garde (T65 : l’attente de la session)', () => {
-  it('réponse en moins de 300 ms : l’écran tout de suite, sans ouverture', () => {
+describe('Garde, première vérification : l’ouverture de l’outil (T67)', () => {
+  it('session lue en 50 ms : l’ouverture tout de suite, 2,5 s en entier, puis l’écran en fondu', () => {
     const { rerender } = render(<Application />)
-    avancer(200)
-    expect(attente()).toBeNull()
+    // Pas de 300 ms de vide : le monogramme commence à se dessiner dès l'arrivée.
+    expect(dessin()).not.toBeNull()
+    avancer(50)
     repondre(rerender, 'session')
-    expect(ecranDeLaZone()).not.toBeNull()
-    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
-  })
-
-  it('première ouverture, session lente : l’ouverture joue ses 1,2 s, l’écran vient à 1,5 s', () => {
-    const { rerender } = render(<Application />)
-    avancer(300)
+    // La session est connue, l'ouverture continue jusqu'au bout.
+    avancer(2400)
+    expect(dessin()).not.toBeNull()
     expect(attente()).not.toBeNull()
-    expect(document.querySelector('svg[data-ouverture="dessin"]')).not.toBeNull()
-    avancer(200)
-    // La session répond à 500 ms : l'ouverture, commencée à 300 ms, va jusqu'à 1,5 s.
-    repondre(rerender, 'session')
-    avancer(950)
     expect(ecranDeLaZone()).toBeNull()
+    act(() => vi.advanceTimersByTime(49))
+    expect(ecranDeLaZone()).toBeNull()
+    // À 2,5 s, la garde et l'ouverture finissent au même instant : la minuterie de la garde part
+    // la première. Une minuterie à la fois, comme un navigateur : l'écran remplace le logo
+    // complet, sans flamme vivante entre les deux.
+    act(() => vi.advanceTimersToNextTimer())
+    expect(flammeVivante()).toBeNull()
+    expect(dessin()).toBeNull()
+    expect(ecranDeLaZone()).not.toBeNull()
+    expect(document.querySelector('[data-arrivee="contenu"]')).not.toBeNull()
+  })
+
+  it('session lue en 3 s : l’ouverture 2,5 s, puis la flamme vivante, puis l’écran à la réponse', () => {
+    const { rerender } = render(<Application />)
+    avancer(2450)
+    expect(dessin()).not.toBeNull()
+    avancer(50)
+    expect(dessin()).toBeNull()
+    expect(flammeVivante()).not.toBeNull()
     expect(attente()).not.toBeNull()
-    avancer(50)
-    expect(ecranDeLaZone()).not.toBeNull()
-    expect(attente()).toBeNull()
-  })
-
-  it('les fois suivantes : la flamme vivante, l’écran 600 ms après son apparition', () => {
-    ouvertureDejaJouee()
-    const { rerender } = render(<Application />)
-    avancer(300)
-    expect(document.querySelector('svg[data-ouverture="vivante"]')).not.toBeNull()
-    avancer(100)
+    avancer(500)
     repondre(rerender, 'session')
-    avancer(450)
-    expect(ecranDeLaZone()).toBeNull()
-    avancer(50)
+    // L'ouverture est finie depuis longtemps : l'écran arrive dès la réponse, en fondu.
     expect(ecranDeLaZone()).not.toBeNull()
+    expect(document.querySelector('[data-arrivee="contenu"]')).not.toBeNull()
   })
 
-  it('« Réduire les animations » : pas d’ouverture, la flamme immobile tient 600 ms (900 ms)', () => {
-    moinsDAnimations()
+  it('session en échec à 50 ms : l’écran d’erreur seulement après l’ouverture, à 2,5 s', () => {
     const { rerender } = render(<Application />)
-    avancer(300)
-    expect(document.querySelector('svg[data-ouverture="vivante"]')).not.toBeNull()
-    expect(document.querySelector('svg[data-ouverture="dessin"]')).toBeNull()
-    avancer(100)
-    repondre(rerender, 'session')
-    avancer(450)
-    expect(ecranDeLaZone()).toBeNull()
     avancer(50)
-    expect(ecranDeLaZone()).not.toBeNull()
-  })
-
-  it('première ouverture, session en échec : l’écran d’erreur seulement après l’ouverture', () => {
-    const { rerender } = render(<Application />)
-    avancer(400)
     repondre(rerender, 'erreur')
-    avancer(1050)
+    avancer(2400)
     expect(ecranDErreur()).toBeNull()
-    expect(attente()).not.toBeNull()
+    expect(dessin()).not.toBeNull()
     avancer(50)
     expect(ecranDErreur()).toHaveTextContent('La connexion a échoué. Réessayez.')
     expect(ecranDeLaZone()).toBeNull()
+  })
+
+  it('une seconde garde (autre zone, nouvelle connexion) ne rejoue pas l’ouverture', () => {
+    const premiere = render(<Application />)
+    avancer(50)
+    repondre(premiere.rerender, 'session')
+    avancer(2500)
+    expect(ecranDeLaZone()).not.toBeNull()
+    premiere.unmount()
+    session.courant = { data: undefined, isError: false, error: null }
+    render(<Application />)
+    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
+    avancer(300)
+    expect(flammeVivante()).not.toBeNull()
+    expect(dessin()).toBeNull()
+  })
+})
+
+describe('Garde, vérifications suivantes et moins d’animations : la règle de T65', () => {
+  it('réponse en moins de 300 ms : l’écran tout de suite, rien entre les deux', () => {
+    ouvertureDejaJouee()
+    const { rerender } = render(<Application />)
+    avancer(200)
+    expect(attente()).toBeNull()
+    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
+    repondre(rerender, 'session')
+    expect(ecranDeLaZone()).not.toBeNull()
+  })
+
+  it('les fois suivantes : rien pendant 300 ms, la flamme vivante, l’écran 600 ms après elle', () => {
+    ouvertureDejaJouee()
+    const { rerender } = render(<Application />)
+    avancer(250)
+    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
+    avancer(50)
+    expect(flammeVivante()).not.toBeNull()
+    avancer(100)
+    repondre(rerender, 'session')
+    avancer(450)
+    expect(ecranDeLaZone()).toBeNull()
+    avancer(50)
+    expect(ecranDeLaZone()).not.toBeNull()
+  })
+
+  it('« Réduire les animations », première vérification : rien n’est forcé, 300 ms puis 600 ms', () => {
+    moinsDAnimations()
+    const { rerender } = render(<Application />)
+    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
+    avancer(300)
+    expect(flammeVivante()).not.toBeNull()
+    expect(dessin()).toBeNull()
+    avancer(100)
+    repondre(rerender, 'session')
+    avancer(450)
+    expect(ecranDeLaZone()).toBeNull()
+    avancer(50)
+    expect(ecranDeLaZone()).not.toBeNull()
+  })
+
+  it('« Réduire les animations », réponse en moins de 300 ms : l’écran tout de suite', () => {
+    moinsDAnimations()
+    const { rerender } = render(<Application />)
+    avancer(50)
+    repondre(rerender, 'session')
+    expect(ecranDeLaZone()).not.toBeNull()
+    expect(document.querySelector('svg[data-ouverture]')).toBeNull()
   })
 
   it('les fois suivantes, session en échec : l’écran d’erreur 600 ms après la flamme', () => {

@@ -4,8 +4,10 @@ import { auditerAxe, decrireFautes } from './outils/axe.ts'
 import { debordementHorizontal, LARGEUR_MINIMALE } from './outils/controles.ts'
 
 // Animations de chargement (T65), sur les aperçus de développement, sans base : l'ouverture de
-// l'outil (moment 1), une page et une liste qui chargent (moment 2), un bloc qui se relit
-// (moment 3) et un envoi (moment 4). Les aperçus restent dans leur attente : rien ne la finit.
+// l'outil (moment 1, 2,5 s depuis T67), une page et une liste qui chargent (moment 2), un bloc qui
+// se relit (moment 3) et un envoi (moment 4). Les aperçus restent dans leur attente : rien ne la
+// finit. L'ouverture est aussi vérifiée sur la vraie garde de /connexion, où la session (aucune,
+// sans base) est lue tout de suite.
 
 const OUVERTURE = '/apercu/ouverture'
 const MOMENTS = {
@@ -24,6 +26,69 @@ async function ouvrir(page: Page, adresse: string) {
 /** Les animations CSS en cours dans la page (les formes SMIL n'en font pas partie). */
 function animationsCss(page: Page) {
   return page.evaluate(() => document.getAnimations().length)
+}
+
+/** Ce que la page a montré pendant l'attente de la session, et quand (ms, `performance.now`). */
+interface Moments {
+  /** Le monogramme qui se dessine (`data-ouverture="dessin"`). */
+  dessin?: number
+  /** La flamme vivante (`data-ouverture="vivante"`). */
+  vivante?: number
+  /** « Chargement de Pilotage EJP » dans la zone lue. */
+  texte?: number
+  /** L'écran de connexion (son titre de niveau 1). */
+  ecran?: number
+}
+
+/**
+ * Note, dès le début de la page, le premier instant où chaque état de l'attente apparaît : la
+ * chronologie se lit ensuite sans dépendre de la vitesse de Playwright.
+ */
+async function suivreAttente(page: Page) {
+  await page.addInitScript(() => {
+    const moments: Record<string, number> = {}
+    Object.assign(window, { momentsAttente: moments })
+    const noter = (nom: string, present: boolean) => {
+      if (present && !(nom in moments)) moments[nom] = performance.now()
+    }
+    new MutationObserver(() => {
+      noter('dessin', document.querySelector('svg[data-ouverture="dessin"]') !== null)
+      noter('vivante', document.querySelector('svg[data-ouverture="vivante"]') !== null)
+      noter(
+        'texte',
+        document
+          .querySelector('#contenu [role="status"]')
+          ?.textContent?.includes('Chargement de Pilotage EJP') ?? false,
+      )
+      noter('ecran', document.querySelector('h1') !== null)
+    }).observe(document, { subtree: true, childList: true, characterData: true, attributes: true })
+  })
+}
+
+function lireMoments(page: Page): Promise<Moments> {
+  return page.evaluate(() => (window as unknown as { momentsAttente: Moments }).momentsAttente)
+}
+
+/**
+ * Place l'ouverture à un instant donné (ms depuis son début), pour une capture nette : ses
+ * animations CSS repartent de zéro, puis s'arrêtent à cet instant. L'horloge de la page est
+ * arrêtée (`page.clock`) : l'ouverture ne passe pas à la flamme vivante pendant ce temps.
+ */
+async function placerOuverture(page: Page, instant: number) {
+  await page.evaluate((temps) => {
+    const elements = document.querySelectorAll<SVGElement | HTMLElement>(
+      '.ouverture-trace, .ouverture-allumage, .ouverture-nom',
+    )
+    for (const element of elements) {
+      element.style.animation = 'none'
+      void getComputedStyle(element).animationName
+      element.style.animation = ''
+    }
+    for (const animation of document.getAnimations()) {
+      animation.pause()
+      animation.currentTime = temps
+    }
+  }, instant)
 }
 
 /**
@@ -48,7 +113,7 @@ async function annonceHorsZoneOccupee(page: Page, texte: string) {
   expect(await page.locator('[aria-busy="true"]').count()).toBeGreaterThan(0)
 }
 
-test.describe('animations de chargement (T65)', () => {
+test.describe('animations de chargement (T65, T67)', () => {
   // Les autres parcours réduisent les animations (playwright.config.ts) : ici, on les veut.
   test.use({ contextOptions: { reducedMotion: 'no-preference' } })
 
@@ -67,10 +132,48 @@ test.describe('animations de chargement (T65)', () => {
     const dessin = page.locator('svg[data-ouverture]')
     await expect(dessin).toHaveAttribute('aria-hidden', 'true')
     await expect(dessin.locator('.ouverture-trace')).toHaveCount(4)
-    // L'ouverture dure 1,2 s, puis la flamme vit (trois formes en boucle, lueur).
-    await expect(dessin).toHaveAttribute('data-ouverture', 'vivante', { timeout: 5_000 })
+    // L'ouverture dure 2,5 s (T67), puis la flamme vit (trois formes en boucle, lueur).
+    await expect(dessin).toHaveAttribute('data-ouverture', 'vivante', { timeout: 6_000 })
     await expect(dessin.locator('animate[attributeName="d"]')).toHaveCount(1)
     expect(await animationsCss(page)).toBeGreaterThan(0)
+  })
+
+  test('1. ouverture, chargement rapide : l’ouverture se joue quand même en entier', async ({
+    page,
+  }) => {
+    // La vraie garde de /connexion : sans base, aucune session enregistrée, elle est lue tout de
+    // suite. L'ouverture se montre dès l'arrivée et dure 2,5 s, puis l'écran de connexion
+    // remplace le logo complet, sans flamme vivante entre les deux (T67).
+    await suivreAttente(page)
+    await page.goto('/connexion')
+    await expect(page.getByRole('heading', { level: 1, name: 'Pilotage EJP' })).toBeVisible({
+      timeout: 10_000,
+    })
+    const { dessin, vivante, texte, ecran } = await lireMoments(page)
+    expect(dessin, 'le monogramme qui se dessine').toBeDefined()
+    expect(ecran, 'l’écran de connexion').toBeDefined()
+    expect(vivante, 'aucune flamme vivante entre le logo et l’écran').toBeUndefined()
+    // Pas de 300 ms de vide : le dessin est là bien avant le texte lu, qui arrive à 300 ms.
+    expect(texte, 'le texte lu').toBeDefined()
+    expect((texte ?? 0) - (dessin ?? 0)).toBeGreaterThanOrEqual(250)
+    // L'ouverture entière : l'écran arrive 2,5 s après le début du dessin, pas avant.
+    const duree = (ecran ?? 0) - (dessin ?? 0)
+    expect(duree).toBeGreaterThanOrEqual(2_450)
+    expect(duree).toBeLessThan(4_000)
+  })
+
+  test('1. ouverture, moins d’animations : rien n’est forcé sur la vraie garde', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await suivreAttente(page)
+    await page.goto('/connexion')
+    await expect(page.getByRole('heading', { level: 1, name: 'Pilotage EJP' })).toBeVisible({
+      timeout: 10_000,
+    })
+    // La règle commune : rien pendant 300 ms, puis la flamme immobile ; jamais le dessin animé.
+    const { dessin } = await lireMoments(page)
+    expect(dessin).toBeUndefined()
   })
 
   test('1. ouverture, les fois suivantes : la flamme vit tout de suite', async ({ page }) => {
@@ -217,7 +320,7 @@ test.describe('animations de chargement (T65)', () => {
         await expect(page.locator('svg[data-ouverture]')).toHaveAttribute(
           'data-ouverture',
           'vivante',
-          { timeout: 5_000 },
+          { timeout: 6_000 },
         )
       expect(decrireFautes(await auditerAxe(page)), 'axe : WCAG 2.1 A et AA').toEqual([])
       await page.setViewportSize({ width: LARGEUR_MINIMALE, height: 800 })
@@ -235,7 +338,7 @@ test.describe('animations de chargement (T65)', () => {
     // L'ouverture une fois jouée (le monogramme dessiné, la flamme allumée et vivante).
     await ouvrir(page, OUVERTURE)
     await expect(page.locator('svg[data-ouverture]')).toHaveAttribute('data-ouverture', 'vivante', {
-      timeout: 5_000,
+      timeout: 6_000,
     })
     await page.screenshot({ path: `test-results/captures/chargement-ouverture-${largeur}.png` })
     for (const [nom, adresse] of Object.entries(MOMENTS)) {
@@ -248,6 +351,30 @@ test.describe('animations de chargement (T65)', () => {
       })
     }
   })
+
+  test(
+    'captures de l’ouverture (T67) : début, milieu et fin, en 1440, 834 et 390 px',
+    { tag: '@captures' },
+    async ({ page }) => {
+      const largeur = page.viewportSize()?.width ?? 0
+      // L'horloge de la page est arrêtée avant son chargement : l'ouverture reste à son dessin.
+      await page.clock.install()
+      await page.clock.pauseAt(Date.now() + 1_000)
+      await ouvrir(page, OUVERTURE)
+      const dessin = page.locator('svg[data-ouverture]')
+      await expect(dessin).toHaveAttribute('data-ouverture', 'dessin')
+      // Début : les traits se tracent. Milieu : le tracé fini, la flamme s'allume. Fin : le logo
+      // complet et son nom, tel que l'écran le garde jusqu'à 2,5 s.
+      const instants = { debut: 600, milieu: 1_700, fin: 2_400 } as const
+      for (const [nom, instant] of Object.entries(instants)) {
+        await placerOuverture(page, instant)
+        await page.screenshot({
+          path: `test-results/captures/chargement-ouverture-${nom}-${largeur}.png`,
+        })
+      }
+      await expect(dessin).toHaveAttribute('data-ouverture', 'dessin')
+    },
+  )
 })
 
 // L'attente de chaque écran touché par T65, sur son aperçu figé dans son chargement, aux trois

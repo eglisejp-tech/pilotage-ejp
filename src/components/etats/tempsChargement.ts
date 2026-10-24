@@ -20,7 +20,10 @@ export const DUREE_FONDU_MS = 180
 export const FIN_DU_FONDU_MS = 2 * DUREE_FONDU_MS
 
 /**
- * Ouverture de l'outil : le monogramme se dessine, puis la flamme s'allume, en 1,2 s. Une fois
- * commencée, l'ouverture va jusqu'au bout (au moins 600 ms, comme tout indicateur).
+ * Ouverture de l'outil (T67) : le monogramme se dessine, puis la flamme s'allume, puis le nom
+ * apparaît, en 2,5 s. Elle s'affiche tout de suite (sans les 300 ms de vide) et se joue en entier,
+ * même quand la session est lue avant. Les durées des classes `ouverture-*` de src/index.css
+ * suivent cette constante : tracé de 0 à 1,6 s, flamme de 1,45 s à 2,05 s, nom de 1,8 s à 2,3 s,
+ * puis le logo complet jusqu'à 2,5 s.
  */
-export const DUREE_OUVERTURE_MS = 1200
+export const DUREE_OUVERTURE_MS = 2500
