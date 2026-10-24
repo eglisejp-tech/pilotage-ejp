@@ -7,7 +7,7 @@ import type { CalculIndicateur, NatureIndicateur } from '@/lib/base'
 import type { LigneCatalogue } from '@/data/indicateursConfiguration'
 import { comparerNoms, majusculeInitiale } from '@/lib/metier/texte'
 
-/** Valeur de `creer_indicateurs_prevus` pour un ministère qui n'a aucun prévu (Protocole). */
+/** Valeur de `creer_indicateurs_prevus` pour un ministère qui n'a aucun prévu (Prodiges Academy). */
 export const MODELE_AUCUN = 'aucun'
 
 /** Modèle des suggestions communes : jamais créé par « Créer ». */
@@ -51,6 +51,7 @@ const NOMS_MODELES: Readonly<Record<string, string>> = {
   'prodiges junior': 'Prodiges Junior',
   'prodiges musique': 'Prodiges Musique',
   production: 'Production',
+  protocole: 'Protocole',
   sante: 'Santé',
   securite: 'Sécurité',
   social: 'Social',

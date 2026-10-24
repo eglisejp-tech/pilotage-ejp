@@ -19,7 +19,7 @@ export type EtatPrevus =
   | { genre: 'a_creer'; modele: ModeleCatalogue; manquants: PrevuCatalogue[] }
   /** Tous les prévus du modèle sont sur la fiche : « Créés ». */
   | { genre: 'crees'; modele: ModeleCatalogue }
-  /** La réponse « Aucun prévu » a été enregistrée (Protocole, Prodiges Academy). */
+  /** La réponse « Aucun prévu » a été enregistrée et aucun modèle ne porte le nom du ministère (Prodiges Academy). */
   | { genre: 'aucun' }
   /** Le nom du ministère n'est pas reconnu : « À choisir » dans la liste de la coordination. */
   | { genre: 'a_choisir' }
@@ -46,13 +46,14 @@ export function ministeresSansPrevu(
 
 /**
  * Modèle d'un ministère, dans cet ordre : celui de ses prévus déjà créés (le plus représenté),
- * puis, sans prévu créé, celui dont le nom normalisé égale le sien, sauf si la réponse « Aucun
- * prévu » a été enregistrée. `null` : à choisir.
+ * puis, sans prévu créé, celui dont le nom normalisé égale le sien. `null` : à choisir, ou
+ * « Aucun prévu » si cette réponse a été enregistrée. Un modèle au nom du ministère l'emporte sur
+ * la réponse « Aucun prévu » (T71) : elle a été donnée quand le catalogue n'avait pas ce modèle
+ * (Protocole, avant le 24 octobre 2026), car l'écran ne la propose qu'à un nom non reconnu.
  */
 function modeleDuMinistere(
   nom: string,
   codesCrees: ReadonlySet<string>,
-  aucunEnregistre: boolean,
   modeles: readonly ModeleCatalogue[],
 ): ModeleCatalogue | null {
   let meilleur: ModeleCatalogue | null = null
@@ -65,7 +66,6 @@ function modeleDuMinistere(
     }
   }
   if (meilleur !== null) return meilleur
-  if (aucunEnregistre) return null
   const nomNormalise = normaliser(nom)
   return modeles.find((modele) => modele.code === nomNormalise) ?? null
 }
@@ -96,7 +96,7 @@ export function etatPrevus(
 ): EtatPrevus {
   const codesSuivis = codesDe(indicateurs.filter((indicateur) => indicateur.etat !== 'retire'))
   const codesCrees = codesDe(indicateurs)
-  const modele = modeleDuMinistere(nom, codesSuivis, aucunEnregistre, modeles)
+  const modele = modeleDuMinistere(nom, codesSuivis, modeles)
   if (modele === null) return aucunEnregistre ? { genre: 'aucun' } : { genre: 'a_choisir' }
   const manquants = modele.prevus.filter((prevu) => !codesCrees.has(prevu.code))
   return manquants.length > 0 ? { genre: 'a_creer', modele, manquants } : { genre: 'crees', modele }

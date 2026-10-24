@@ -2,16 +2,18 @@
 -- docs/conception/vague-1-decisions.md, section 4 ; réponse de la personne responsable du
 -- 6 octobre 2026 sur les parts, question 1).
 --
--- 1. Catalogue : nombres par modèle et totaux (161 saisis, dont le chiffre d'affaires de Merch à
---    la semaine ajouté par T64 et sans « Événements commencés à l'heure » retiré par T68,
---    40 calculs, 11 sensibles, 18 parts, unités, 11 suggestions, 21 modèles), 29 calculs de la
---    V1 et 11 calculs étendus, aucun
+-- 1. Catalogue : nombres par modèle et totaux (169 saisis, dont le chiffre d'affaires de Merch à
+--    la semaine ajouté par T64, sans « Événements commencés à l'heure » retiré par T68, et les
+--    8 saisis de Protocole ajoutés par T71 ; 41 calculs, 12 sensibles, 19 parts, unités,
+--    11 suggestions, 22 modèles), 30 calculs de la V1 et 11 calculs étendus, aucun
 --    libellé normalisé en double dans un modèle ni avec un chiffre commun, sources des calculs
 --    existantes et non sensibles, chaque part marquée, drapeaux, textes exacts ; T64 : le
---    prévu de Merch à la semaine et les KPI que Merch a retirés de son document, gardés.
+--    prévu de Merch à la semaine et les KPI que Merch a retirés de son document, gardés ; T71 :
+--    le modèle de Protocole, ses textes, sa part et ses termes, le lexique.
 -- 2. Création par EJP Tech (T60) pour un ministère d'essai par modèle : comptes, état actif
 --    (sensibles compris), termes complets, journal, aucune validation ni ajout, MCAD 21 lignes
---    sur 30, second appel sans doublon, « aucun » pour Protocole, suggestions déjà prévues
+--    sur 30, second appel sans doublon, « aucun » pour Prodiges Academy, une fiche Protocole
+--    qui avait la réponse « Aucun prévu » reçoit ses prévus (T71), suggestions déjà prévues
 --    écartées, aucun calcul sur un sensible ou un commun.
 -- 3. Parts : un haut au-dessus du bas donne « Non calculé, à vérifier » (haut_depasse_bas) ;
 --    sur l'année, la règle porte sur les sommes (annee_resultat null si Σ haut > Σ bas, aucune
@@ -23,7 +25,7 @@
 --    retiré avec saisies.
 begin;
 
-select plan(53);
+select plan(59);
 
 create temp table attendu (modele text primary key, saisis integer, calculs integer, sensibles integer, parts integer,
                            v1 integer);
@@ -48,11 +50,13 @@ insert into attendu values
   ('securite', 7, 2, 0, 1, 2),
   ('formation', 6, 3, 0, 3, 3),
   ('mds', 8, 0, 0, 0, 0),
-  ('prodiges junior', 4, 1, 2, 1, 1);
+  ('prodiges junior', 4, 1, 2, 1, 1),
+  ('protocole', 8, 1, 1, 1, 1);
 
--- Les dix-huit parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
+-- Les dix-neuf parts du catalogue (P49 : les quinze « plafond 100 % » et les quatre taux de même
 -- nature ajoutés par EJP Tech, moins la part des événements à l'heure, retirée par T68 : la
--- ponctualité se calcule sur les heures des événements) et les onze sensibles.
+-- ponctualité se calcule sur les heures des événements ; plus la part des demandes traitées de
+-- Protocole, T71) et les douze sensibles (dont les manquements à la confidentialité de Protocole).
 create temp table parts_attendues (modele text, libelle text);
 insert into parts_attendues values
   ('coordination', 'Taux de réalisation des événements'),
@@ -72,7 +76,8 @@ insert into parts_attendues values
   ('securite', 'Taux de couverture des postes'),
   ('formation', 'Taux de présence'),
   ('formation', 'Taux de complétion'),
-  ('formation', 'Taux de satisfaction');
+  ('formation', 'Taux de satisfaction'),
+  ('protocole', 'Part des demandes traitées');
 
 create temp table sensibles_attendus (modele text, libelle text);
 insert into sensibles_attendus values
@@ -86,13 +91,17 @@ insert into sensibles_attendus values
   ('kumi', 'Call your sister : prises en charge'),
   ('eagles', 'La plate-forme d''écoute : prises en charge'),
   ('prodiges junior', 'Nouveaux enfants'),
-  ('prodiges junior', 'Enfants déjà venus');
+  ('prodiges junior', 'Enfants déjà venus'),
+  ('protocole', 'Manquements à la confidentialité constatés');
 
+-- academy : un ministère sans prévu (modèle « aucun ») ; protocole_aucun : une fiche Protocole qui
+-- a reçu la réponse « Aucun prévu » avant T71, comme en production avant cette migration.
 create temp table ctx as
 select tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech,
        tests.compte('Berger') as berger,
-       tests.creer_ministere('Essai vague 1, Protocole') as protocole,
+       tests.creer_ministere('Essai vague 1, Prodiges Academy') as academy,
+       tests.creer_ministere('Essai vague 1, Protocole avant T71') as protocole_aucun,
        private.dimanche_reference() as ref,
        (private.mois_courant() - interval '1 month')::date as m1,
        private.periode_de('dimanche', make_date(extract(year from private.aujourdhui())::integer, 1, 1)) as debut_dim,
@@ -126,8 +135,8 @@ select results_eq($$
          count(*) filter (where p.modele = 'suggestion')::int,
          count(distinct p.modele) filter (where p.modele <> 'suggestion')::int
     from private.indicateur_prevu p
-$$, $$ values (161, 40, 11, 18, 5, 2, 4, 11, 21) $$,
-  '161 indicateurs saisis, 40 calculs, 11 sensibles, 18 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 21 modèles');
+$$, $$ values (169, 41, 12, 19, 5, 2, 4, 11, 22) $$,
+  '169 indicateurs saisis, 41 calculs, 12 sensibles, 19 parts ; 5 en euros, 2 en heure, 4 en jours ; 11 suggestions ; 22 modèles');
 select results_eq($$
   select count(*) filter (where v1)::int, count(*) filter (where not v1)::int
     from (select p.calcul in ('taux', 'moyenne')
@@ -135,7 +144,7 @@ select results_eq($$
                                   where t.prevu_code = p.code
                                     and (t.source_code is null or t.agregat <> 'periode' or t.decalage <> 0)) as v1
             from private.indicateur_prevu p where p.calcul is not null) as x
-$$, $$ values (29, 11) $$, '29 calculs lus dès la V1 (taux et moyennes), 11 calculs étendus lus au lot L1');
+$$, $$ values (30, 11) $$, '30 calculs lus dès la V1 (taux et moyennes), 11 calculs étendus lus au lot L1');
 select results_eq($$ select modele, v1 from attendu order by modele $$,
   $$ select p.modele, (count(*) filter (where p.calcul in ('taux', 'moyenne')
                        and not exists (select 1 from private.indicateur_prevu_terme t
@@ -144,8 +153,8 @@ select results_eq($$ select modele, v1 from attendu order by modele $$,
        from private.indicateur_prevu p where p.modele <> 'suggestion' group by p.modele order by p.modele $$,
   'calculs de la V1 par modèle');
 select is_empty($$
-  select p.modele from private.indicateur_prevu p where p.modele in ('protocole', 'prodiges academy', 'aucun')
-$$, 'Protocole et Prodiges Academy n''ont aucun prévu');
+  select p.modele from private.indicateur_prevu p where p.modele in ('prodiges academy', 'aucun')
+$$, 'Prodiges Academy n''a aucun prévu (Protocole en a depuis T71)');
 select is_empty($$
   select p.modele, private.normaliser(p.libelle) from private.indicateur_prevu p
    group by p.modele, private.normaliser(p.libelle) having count(*) > 1
@@ -172,7 +181,7 @@ select is_empty($$
 $$, 'chaque calcul a ses termes');
 select set_eq($$ select p.modele, p.libelle from private.indicateur_prevu p where p.part $$,
   $$ select modele, libelle from parts_attendues $$,
-  'les dix-huit parts du catalogue sont marquées part, et elles seules (liste de P49, moins T68)');
+  'les dix-neuf parts du catalogue sont marquées part, et elles seules (liste de P49, moins T68, plus T71)');
 select is_empty($$
   select p.code from private.indicateur_prevu p where p.part and p.calcul is distinct from 'taux'
 $$, 'part seulement pour un taux');
@@ -182,7 +191,7 @@ select throws_ok($$
 $$, '23514', 'new row for relation "indicateur_prevu" violates check constraint "indicateur_prevu_part_check"',
   'une moyenne du catalogue n''est pas une part');
 select set_eq($$ select p.modele, p.libelle from private.indicateur_prevu p where p.sensible $$,
-  $$ select modele, libelle from sensibles_attendus $$, 'les onze indicateurs sensibles du catalogue');
+  $$ select modele, libelle from sensibles_attendus $$, 'les douze indicateurs sensibles du catalogue');
 select is_empty($$
   select p.code from private.indicateur_prevu p
    where p.sensible and (p.nature <> 'mois' or p.unite <> 'nombre' or p.calcul is not null or p.saisi_dimanche_matin)
@@ -234,6 +243,49 @@ select is_empty($$
                        union all select * from private.verifier_texte(p.definition, false)) as v
    where p.code = 'merch_chiffre_d_affaires_a_la_semaine'
 $$, 'T64 : le libellé et la définition passent le lexique (ni période, ni donnée personnelle)');
+-- T71 : le modèle de Protocole (choix de la personne responsable du 24 octobre 2026).
+select results_eq($$
+  select p.code, p.libelle, p.definition, p.nature, p.unite, p.sensible, p.calcul, p.part, p.sans_somme,
+         p.saisi_dimanche_matin, p.libelle_sessions, p.ordre::int
+    from private.indicateur_prevu p where p.modele = 'protocole' order by p.ordre
+$$, $$ values
+  ('protocole_plan_de_service_pret_la_veille'::text, 'Plan de service prêt la veille'::text,
+   'Enregistrez 1 si le plan du service (placement, accueil, répartition des STARs) était prêt la veille du culte, sinon 0.'::text,
+   'dimanche'::text, 'nombre'::text, false, null::text, false, false, false, false, 1),
+  ('protocole_evenements_prepares_une_semaine_avant', 'Événements préparés une semaine avant',
+   'Événements tenus dans le mois, hors cultes, dont le Protocole avait son plan au moins une semaine avant.',
+   'mois', 'nombre', false, null, false, false, false, false, 2),
+  ('protocole_ecarts_aux_consignes_releves', 'Écarts aux consignes relevés',
+   'Cas où une consigne n''a pas été respectée (horaires, tenue, placement, accès réservés), sans nom ni détail. Si aucun, enregistrez 0.',
+   'mois', 'nombre', false, null, false, false, false, false, 3),
+  ('protocole_demandes_recues', 'Demandes reçues',
+   'Demandes adressées au Protocole par les autres ministères ou l''équipe pastorale, reçues dans le mois.',
+   'mois', 'nombre', false, null, false, false, false, false, 4),
+  ('protocole_demandes_traitees', 'Demandes traitées',
+   'Parmi les demandes reçues dans le mois, celles que le Protocole a menées à terme.',
+   'mois', 'nombre', false, null, false, false, false, false, 5),
+  ('protocole_points_d_equipe_tenus', 'Points d''équipe tenus',
+   'Réunions ou points d''équipe du Protocole tenus dans le mois. Si aucun, enregistrez 0.',
+   'mois', 'nombre', false, null, false, false, false, false, 6),
+  ('protocole_manquements_a_la_confidentialite_constates', 'Manquements à la confidentialité constatés',
+   'Manquements à la confidentialité constatés dans le mois, comptés sans nom ni détail. Si aucun, enregistrez 0.',
+   'mois', 'nombre', true, null, false, false, false, false, 7),
+  ('protocole_part_des_demandes_traitees', 'Part des demandes traitées',
+   '« Demandes traitées » divisées par « Demandes reçues ». Plafonné à 100 %.',
+   'mois', 'nombre', false, 'taux', true, false, false, false, 8) $$,
+  'T71 : Protocole, 8 saisis dans l''ordre (le plan du dimanche avec la somme de l''année, un sensible), puis la part');
+select results_eq($$
+  select t.ordre::int, t.role, t.source_code, t.comptage, t.agregat, t.decalage::int
+    from private.indicateur_prevu_terme t where t.prevu_code = 'protocole_part_des_demandes_traitees' order by t.ordre
+$$, $$ values (1, 'haut'::text, 'protocole_demandes_traitees'::text, null::text, 'periode'::text, 0),
+              (2, 'bas', 'protocole_demandes_recues', null, 'periode', 0) $$,
+  'T71 : la part des demandes traitées divise les traitées par les reçues du même mois, comme les parts de la V1');
+select is_empty($$
+  select p.code, v.famille from private.indicateur_prevu p
+   cross join lateral (select * from private.verifier_texte(p.libelle, true)
+                       union all select * from private.verifier_texte(p.definition, false) where p.calcul is null) as v
+   where p.modele = 'protocole'
+$$, 'T71 : les libellés de Protocole et les définitions de ses saisis passent le lexique');
 select results_eq($$ select p.code, p.libelle, p.nature from private.indicateur_prevu p where p.modele = 'suggestion' order by p.ordre $$,
   $$ values ('suggestion_evenements_couverts'::text, 'Événements couverts'::text, 'mois'::text),
             ('suggestion_evenements_a_couvrir', 'Événements à couvrir', 'mois'),
@@ -256,17 +308,29 @@ $$, $$ values (13, 2, true) $$, '13 communs affichés sous le nom de la demande,
 
 select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select count(public.creer_indicateurs_prevus(e.ministere, e.modele)) from essai e $$,
-  'EJP Tech crée les prévus d''un ministère d''essai pour chacun des 21 modèles');
+  'EJP Tech crée les prévus d''un ministère d''essai pour chacun des 22 modèles');
 select is(public.creer_indicateurs_prevus((select e.ministere from essai e where e.modele = 'mcad'), 'mcad'), 0,
   'un second appel ne crée aucun doublon');
-select is(public.creer_indicateurs_prevus((select protocole from ctx), 'aucun'), 0,
-  'Protocole : modèle « aucun », aucun indicateur');
+select is(public.creer_indicateurs_prevus((select academy from ctx), 'aucun'), 0,
+  'Prodiges Academy : modèle « aucun », aucun indicateur');
+-- T71 : la fiche Protocole de production a pu recevoir « Aucun prévu » avant cette migration.
+select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'aucun'), 0,
+  'T71 : une fiche Protocole reçoit d''abord la réponse « Aucun prévu », comme avant T71');
+select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole'), 9,
+  'T71 : la même fiche reçoit ensuite les 9 prévus du modèle Protocole');
 select is(tests.lire((select tech from ctx), 'aal2',
     format('select ajouts, ajouts_max, lignes, lignes_max from public.limites_indicateurs(%L)',
            (select e.ministere from essai e where e.modele = 'mcad'))),
   '[{"ajouts": 0, "ajouts_max": 3, "lignes": 21, "lignes_max": 30}]'::jsonb,
   'MCAD : 21 lignes sur 30, aucun ajout du ministère compté');
 select tests.deconnecter();
+
+select results_eq($$
+  select j.detail from public.journal j
+   where j.ministere_id = (select protocole_aucun from ctx) and j.action = 'indicateurs_prevus_crees'
+   order by (j.detail ->> 'nombre')::int
+$$, $$ values ('{"modele": "aucun", "nombre": 0}'::jsonb), ('{"modele": "protocole", "nombre": 9}'::jsonb) $$,
+  'T71 : le journal de la fiche garde la réponse « Aucun prévu » et ajoute la création des 9 prévus');
 
 select lives_ok($$ set constraints all immediate $$, 'chaque calcul créé a tous ses termes (contrôle différé du lot B1)');
 set constraints all deferred;
@@ -284,8 +348,8 @@ select is_empty($$
 $$, 'tous actifs dès leur création, sensibles compris (P42), origine église, avec leur code de prévu');
 select is((select count(*)::int from essai e
              join public.indicateur c on c.ministere_id = e.ministere
-             join public.indicateur_terme t on t.calcul_id = c.id), 81,
-  'les 40 calculs reçoivent leurs 81 termes');
+             join public.indicateur_terme t on t.calcul_id = c.id), 83,
+  'les 41 calculs reçoivent leurs 83 termes');
 select is_empty($$
   select t.calcul_id from essai e
     join public.indicateur c on c.ministere_id = e.ministere
@@ -307,8 +371,8 @@ select results_eq($$
 $$, $$ select a.modele, jsonb_build_object('modele', a.modele, 'nombre', a.saisis + a.calculs) from attendu a order by a.modele $$,
   'une ligne de journal par fiche : le modèle et le nombre, sans texte');
 select is(tests.compter((select berger from ctx), 'aal2',
-    'select 1 from public.v_calcul where ministere_id in (select ministere from essai)'), 29,
-  'le berger lit les 29 calculs de la V1 dans v_calcul, les 11 calculs étendus restent invisibles');
+    'select 1 from public.v_calcul where ministere_id in (select ministere from essai)'), 30,
+  'le berger lit les 30 calculs de la V1 dans v_calcul, les 11 calculs étendus restent invisibles');
 select results_eq($$
   select (select count(*)::int from public.v_suggestions s join essai e on e.ministere = s.ministere_id where e.modele = 'kumi'),
          (select count(*)::int from public.v_suggestions s join essai e on e.ministere = s.ministere_id where e.modele = 'eagles')

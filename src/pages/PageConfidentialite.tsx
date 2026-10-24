@@ -103,10 +103,10 @@ export function PageConfidentialite() {
         </PartieTexte>
         <PartieTexte titre="Chiffres sensibles">
           <p>
-            Onze indicateurs sont sensibles : ceux de la santé, de l'accompagnement et de l'écoute,
-            et, pour Prodiges Junior, les nouveaux enfants et les enfants déjà venus. Pour chacun,
-            le ministère concerné saisit un total par mois, le mois en cours compris : un nombre,
-            jamais un nom.
+            Douze indicateurs sont sensibles : ceux de la santé, de l'accompagnement et de l'écoute,
+            les nouveaux enfants et les enfants déjà venus de Prodiges Junior, et les manquements à
+            la confidentialité constatés par Protocole. Pour chacun, le ministère concerné saisit un
+            total par mois, le mois en cours compris : un nombre, jamais un nom.
           </p>
           <p>
             Le ministère peut répartir ce total entre quelques catégories larges, quand la
