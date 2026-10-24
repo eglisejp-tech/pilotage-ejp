@@ -19,8 +19,8 @@ export function OuvertureSemaine({ semaine, phrase, ligneSecondaire, surligner }
   const [premierMot, ...suite] = semaine.periode.split(' ')
 
   return (
-    <header className="flex flex-col gap-3 min-[600px]:flex-row min-[600px]:items-end min-[600px]:gap-10">
-      <p className="flex shrink-0 items-end gap-3 min-[600px]:flex-col-reverse min-[600px]:items-start min-[600px]:gap-0">
+    <header className="flex flex-col gap-3 tablette:flex-row tablette:items-end tablette:gap-10">
+      <p className="flex shrink-0 items-end gap-3 tablette:flex-col-reverse tablette:items-start tablette:gap-0">
         <span className="sr-only">
           Semaine {semaine.numero}, {semaine.periode}
         </span>
@@ -32,18 +32,18 @@ export function OuvertureSemaine({ semaine, phrase, ligneSecondaire, surligner }
         </span>
         <span
           aria-hidden="true"
-          className="pb-0.5 text-note font-semibold text-encre-3 min-[600px]:pb-6"
+          className="pb-0.5 text-note font-semibold text-encre-3 tablette:pb-6"
         >
           Semaine {premierMot}
-          <br className="min-[600px]:hidden" /> {suite.join(' ')}
+          <br className="tablette:hidden" /> {suite.join(' ')}
         </span>
       </p>
       <div className="flex min-w-0 flex-col gap-4">
-        <h1 className="font-lecture text-phrase leading-[1.17] font-medium tracking-[-0.01em] min-[600px]:leading-[1.14]">
+        <h1 className="font-lecture text-phrase leading-[1.17] font-medium tracking-[-0.01em] tablette:leading-[1.14]">
           <PhraseSemaine morceaux={phrase} surligner={surligner} />
         </h1>
         {ligneSecondaire ? (
-          <p className="hidden max-w-[620px] text-[15px] leading-relaxed text-encre-2 min-[600px]:block">
+          <p className="hidden max-w-[620px] text-interface leading-relaxed text-encre-2 tablette:block">
             {ligneSecondaire}
           </p>
         ) : null}

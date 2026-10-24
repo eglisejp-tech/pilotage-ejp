@@ -61,6 +61,17 @@ export const TEXTES_VIDES = {
     dateSansSession: "Aucune session pour l'instant",
     /** Point de courbe sans saisie, dans sa description texte. Proposé. */
     pointDeCourbeSansSaisie: 'sans saisie',
+    /**
+     * Note sous le tableau tant qu'aucune courbe n'a deux points : une seule phrase, pas une par
+     * ligne. LISEZMOI, « Premier usage » (proposition 11, T69).
+     */
+    notePremierUsage: 'Les courbes apparaîtront avec les premières saisies.',
+    /**
+     * Note sous le tableau dès qu'une courbe a deux points : sa période, puis ce que disent un
+     * trou et un rond vide (proposition 11 et écart 4, T69). Proposé.
+     */
+    noteCourbes:
+      "Courbes : 10 derniers dimanches ou 4 dernières sessions. Un trou : aucune saisie ; un rond vide : des ministères n'ont pas saisi.",
   },
 
   aDecider: {

@@ -17,13 +17,13 @@ interface Props {
  */
 export function LigneRubriqueFij({ rubrique, avecAide }: Props) {
   return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-filet py-3 min-[600px]:grid-cols-[minmax(0,1.3fr)_88px_minmax(0,1fr)_128px]">
-      <span className="text-[15px]">{rubrique.libelle}</span>
-      <span className="text-right min-[600px]:text-left">
+    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-filet py-3 tablette:grid-cols-[minmax(0,1.3fr)_88px_minmax(0,1fr)_128px]">
+      <span className="text-interface">{rubrique.libelle}</span>
+      <span className="text-right tablette:text-left">
         {rubrique.total === null ? (
-          <span className="text-sm text-encre-3">{PAS_DE_SAISIE}</span>
+          <span className="text-detail text-encre-3">{PAS_DE_SAISIE}</span>
         ) : (
-          <span className="font-chiffres text-[34px] leading-none font-extrabold tabular-nums">
+          <span className="font-chiffres text-chiffre leading-none font-extrabold tabular-nums">
             {nombre(rubrique.total)}
           </span>
         )}

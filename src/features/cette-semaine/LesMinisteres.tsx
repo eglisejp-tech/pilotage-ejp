@@ -4,6 +4,7 @@ import { MessageVide } from './MessageVide'
 import { TableauMinisteres } from './TableauMinisteres'
 import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
+import { LARGEURS } from '@/lib/largeurs'
 import type { LigneMinistere } from './types'
 import { useLargeurMin } from './useLargeurMin'
 
@@ -19,7 +20,7 @@ interface Props {
  */
 export function LesMinisteres({ ministeres, avecColonnesConseil }: Props) {
   const idTitre = useId()
-  const tableau = useLargeurMin(600)
+  const tableau = useLargeurMin(LARGEURS.tablette)
   const vide = ministeres.length === 0
 
   return (

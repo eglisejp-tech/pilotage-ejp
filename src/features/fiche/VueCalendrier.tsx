@@ -5,6 +5,7 @@ import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { BandeauAlerteFiche } from '@/features/fiche/BandeauAlerteFiche'
+import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
 import { phrasesBandeau } from '@/features/fiche/construireCalendrier'
 import type { LigneCalendrier } from '@/features/fiche/construireCalendrier'
@@ -27,9 +28,6 @@ interface Props {
   profil: TypeCompte
 }
 
-const classeBouton =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
-
 /**
  * « Calendrier prévisionnel » de la fiche (maquettes 04 et 12) : les événements du ministère et
  * ceux qui le mentionnent, datés d'au plus 7 jours dans le passé (et les événements à confirmer,
@@ -45,7 +43,7 @@ export function VueCalendrier({ etat: lecture, profil }: Props) {
   const idTitre = useId()
   const estMinistere = profil === 'ministere'
   const ajouter = (
-    <Link to="/saisir/evenement" className={classeBouton}>
+    <Link to="/saisir/evenement" className={CLASSE_BOUTON_SECONDAIRE_FICHE}>
       {TEXTES_CALENDRIER.ajouter}
     </Link>
   )
@@ -87,7 +85,8 @@ export function VueCalendrier({ etat: lecture, profil }: Props) {
                 className={cn(
                   GRILLE_EVENEMENT,
                   avecAction && GRILLE_EVENEMENT_ACTION,
-                  'hidden border-b border-filet py-2.5 text-sm text-encre-3 md:grid',
+                  // En-têtes de colonnes en 13 px, comme dans 04 et 12 (écart 9, T69).
+                  'hidden border-b border-filet py-2.5 text-note text-encre-3 tablette-large:grid',
                 )}
               >
                 <span>{TEXTES_CALENDRIER.colonneDate}</span>

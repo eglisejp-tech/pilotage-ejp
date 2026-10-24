@@ -19,7 +19,7 @@ export function RetiresFiche({ retires }: Props) {
       onToggle={(evenement) => setOuvert(evenement.currentTarget.open)}
       className="mt-6"
     >
-      <summary className="inline-flex min-h-cible cursor-pointer items-center text-[15px] font-semibold underline underline-offset-4">
+      <summary className="inline-flex min-h-cible cursor-pointer items-center text-interface font-semibold underline underline-offset-4">
         Retirés ({retires.length})
       </summary>
       {retires.length === 0 ? (
@@ -29,10 +29,10 @@ export function RetiresFiche({ retires }: Props) {
           {retires.map((retire) => (
             <li
               key={retire.id}
-              className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-filet py-2.5 text-[15px]"
+              className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-filet py-2.5 text-interface"
             >
               <span>{retire.libelle}</span>
-              <span className="text-sm text-encre-3">{retire.detail}</span>
+              <span className="text-detail text-encre-3">{retire.detail}</span>
             </li>
           ))}
         </ul>

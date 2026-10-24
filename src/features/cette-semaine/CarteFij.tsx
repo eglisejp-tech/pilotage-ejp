@@ -10,8 +10,10 @@ interface Props {
   carte: DonneesCarteFij | null
 }
 
-const grille = 'grid w-full max-w-[346px] grid-cols-5 gap-1 lg:max-w-[380px]'
-const carre = 'flex aspect-square min-w-0 flex-col justify-between p-1.5 min-[600px]:p-2'
+const grille = 'grid w-full max-w-[346px] grid-cols-5 gap-1 ordinateur:max-w-[380px]'
+// Les codes, « À saisir » et les nombres gardent l'échelle de la carte (maquettes 01 à 03) : à
+// 360 px, un carré n'a que 49 px de large, sans place pour un cran de plus.
+const carre = 'flex aspect-square min-w-0 flex-col justify-between p-1.5 tablette:p-2'
 const codes: CodeDepartement[] = ['75', '77', '78', '91', '92', '93', '94', '95']
 
 /**
@@ -62,7 +64,7 @@ export function CarteFij({ carte }: Props) {
           <CarteEnAttente />
         </div>
       ) : (
-        <div className="mt-3 flex flex-col gap-3 min-[600px]:mt-4 min-[600px]:gap-4">
+        <div className="mt-3 flex flex-col gap-3 tablette:mt-4 tablette:gap-4">
           <ul className={grille}>
             {carte.departements.map((departement) => {
               const place = placesDepartements[departement.code]
@@ -82,7 +84,7 @@ export function CarteFij({ carte }: Props) {
                     className={
                       departement.valeur === null
                         ? 'text-xs font-semibold'
-                        : 'font-chiffres text-2xl leading-[0.9] font-extrabold tabular-nums lg:text-[29px]'
+                        : 'font-chiffres text-2xl leading-[0.9] font-extrabold tabular-nums ordinateur:text-[29px]'
                     }
                   >
                     {departement.valeur === null

@@ -42,7 +42,7 @@ export type ProprietesEcranAcceptation = {
 }
 
 const lienTexte =
-  'inline-flex min-h-cible items-center self-start text-[15px] text-nuit underline underline-offset-4'
+  'inline-flex min-h-cible items-center self-start text-interface text-nuit underline underline-offset-4'
 
 /**
  * Écran « Conditions d'utilisation » (décision T53, sans maquette : il suit les écrans 16 à 18).
@@ -87,8 +87,9 @@ export function EcranAcceptation({
       {annonce}
       {/* Les liens et la case suffisent : pas de phrase sous le titre (T66, t037). */}
       <TitreConnexion surtitre={libelleCompte} titre="Conditions d'utilisation" taille="moyenne" />
+      {/* Un encadré blanc à filet fin, sans barre sur son bord (proposition 10, T69). */}
       {conditionsChangees ? (
-        <p className="border-l-4 border-attention bg-papier px-3.5 py-3 text-[15px] leading-normal text-encre">
+        <p className="border border-filet bg-papier px-3.5 py-3 text-interface leading-normal text-encre">
           Les conditions ont changé. Lisez-les avant de continuer.
         </p>
       ) : null}
@@ -98,7 +99,7 @@ export function EcranAcceptation({
         // dessiné comme les liens de lecture : la sortie de la mauvaise personne se voit autant
         // qu'eux.
         <div className="flex flex-col">
-          <p className="text-[15px] leading-normal wrap-anywhere">
+          <p className="text-interface leading-normal wrap-anywhere">
             {PHRASE_ACCEPTATION_PERSONNE}{' '}
             <span className="block">{TEXTES_EN_TETE_PERSONNE.vous(personne.prenom)}</span>
           </p>
@@ -116,12 +117,12 @@ export function EcranAcceptation({
         <a href="/confidentialite" target="_blank" rel="noopener noreferrer" className={lienTexte}>
           Lire la politique de confidentialité (nouvel onglet)
         </a>
-        <p className="text-sm text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
+        <p className="text-detail text-encre-3">Conditions du {dateDeVersionConditions(version)}</p>
       </div>
 
       <form noValidate onSubmit={envoyer} className="flex flex-col gap-6">
         <div className="flex flex-col gap-1.5">
-          <label className="flex min-h-cible items-start gap-3 text-[15px] leading-normal">
+          <label className="flex min-h-cible items-start gap-3 text-interface leading-normal">
             <input
               type="checkbox"
               aria-invalid={message ? true : undefined}
@@ -133,7 +134,7 @@ export function EcranAcceptation({
             confidentialité
           </label>
           {message ? (
-            <p id="acceptation-erreur" className="text-[15px] leading-normal text-alerte">
+            <p id="acceptation-erreur" className="text-interface leading-normal text-alerte">
               {message}
             </p>
           ) : null}

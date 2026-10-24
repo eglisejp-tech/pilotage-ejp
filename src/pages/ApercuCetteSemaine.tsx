@@ -151,7 +151,7 @@ export function ApercuCetteSemaine() {
   return (
     <>
       <title>Aperçu, Cette semaine, Pilotage EJP</title>
-      <div className="mb-8 flex flex-col border-b border-filet pb-1 text-sm">
+      <div className="mb-8 flex flex-col border-b border-filet pb-1 text-detail">
         <nav aria-label="Profil de l'aperçu" className="flex flex-wrap items-center gap-x-5">
           <p className="text-encre-3">Aperçu, données d'exemple. Profil :</p>
           <ul className="flex flex-wrap gap-x-5">

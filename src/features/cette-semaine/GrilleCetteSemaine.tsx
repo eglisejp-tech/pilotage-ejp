@@ -23,11 +23,13 @@ interface Props {
 
 // Colonne de droite à partir de 1024 px (380 px à partir de 1280 px).
 const deuxColonnes =
-  'lg:grid-cols-[minmax(0,1fr)_18.75rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16'
-const rangee = 'grid items-start gap-9 min-[600px]:gap-11'
+  'ordinateur:grid-cols-[minmax(0,1fr)_18.75rem] ordinateur:gap-x-10 ordinateur-large:grid-cols-[minmax(0,1fr)_23.75rem] ordinateur-large:gap-x-16'
+// Un seul écart entre les sections, à toutes les largeurs (gabarit commun, proposition 14 et
+// écart 7, T69) : 48 px, au lieu de 36, 44 puis 52 px selon la largeur.
+const rangee = 'grid items-start gap-sections'
 // De 768 à 1023 px, la carte passe à droite de la session (maquette 02).
-const sessionEtCarte = 'md:grid-cols-[minmax(0,1fr)_17.5rem] md:gap-x-10'
-const pile = 'flex flex-col gap-9 min-[600px]:gap-11 lg:gap-13'
+const sessionEtCarte = 'tablette-large:grid-cols-[minmax(0,1fr)_17.5rem] tablette-large:gap-x-10'
+const pile = 'flex flex-col gap-sections'
 
 /**
  * Mise en page de « Cette semaine » (maquettes 01, 02, 03, 07), partagée par la vue et son
@@ -59,12 +61,14 @@ export function GrilleCetteSemaine({
     return (
       <div className={pile}>
         {ouverture}
-        <div className={`${rangee} ${deuxColonnes} lg:grid-rows-[auto_1fr] lg:gap-y-13`}>
-          <div className="min-w-0 lg:col-start-1 lg:row-start-1">{accueil.vosSaisies}</div>
-          <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        <div className={`${rangee} ${deuxColonnes} ordinateur:grid-rows-[auto_1fr]`}>
+          <div className="min-w-0 ordinateur:col-start-1 ordinateur:row-start-1">
+            {accueil.vosSaisies}
+          </div>
+          <div className="min-w-0 ordinateur:col-start-2 ordinateur:row-span-2 ordinateur:row-start-1">
             {accueil.vosPoints}
           </div>
-          <div className="min-w-0 lg:col-start-1 lg:row-start-2">{chiffres}</div>
+          <div className="min-w-0 ordinateur:col-start-1 ordinateur:row-start-2">{chiffres}</div>
         </div>
         <div className={`${rangee} ${sessionEtCarte} ${deuxColonnes}`}>
           {session}
@@ -79,12 +83,14 @@ export function GrilleCetteSemaine({
     return (
       <div className={pile}>
         {ouverture}
-        <div className={`${rangee} ${sessionEtCarte} ${deuxColonnes} lg:gap-y-13`}>
-          <div className="min-w-0 md:col-span-2 lg:col-span-1 lg:col-start-1 lg:row-start-1">
+        <div className={`${rangee} ${sessionEtCarte} ${deuxColonnes}`}>
+          <div className="min-w-0 tablette-large:col-span-2 ordinateur:col-span-1 ordinateur:col-start-1 ordinateur:row-start-1">
             {chiffres}
           </div>
-          <div className="min-w-0 lg:col-span-2 lg:col-start-1 lg:row-start-2">{session}</div>
-          <div className="min-w-0 lg:col-start-2 lg:row-start-1">{carte}</div>
+          <div className="min-w-0 ordinateur:col-span-2 ordinateur:col-start-1 ordinateur:row-start-2">
+            {session}
+          </div>
+          <div className="min-w-0 ordinateur:col-start-2 ordinateur:row-start-1">{carte}</div>
         </div>
         {ministeres}
       </div>
@@ -105,7 +111,7 @@ export function GrilleCetteSemaine({
       <div className={`${rangee} ${deuxColonnes}`}>
         {chiffres}
         {aDeciderEnTete ? null : (
-          <div className="flex min-w-0 flex-col gap-9 min-[600px]:gap-11">
+          <div className="flex min-w-0 flex-col gap-sections">
             {aDecider}
             <EmplacementEvenementsAConfirmer />
           </div>

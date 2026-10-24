@@ -55,12 +55,12 @@ export function VueReunion({ etat, peutSaisir }: Props) {
         ) : null}
       </p>
       {reunion?.objet ? (
-        <p className="text-sm text-encre-2">
+        <p className="text-detail text-encre-2">
           <Libre texte={reunion.objet} />
         </p>
       ) : null}
       {reunion?.decision ? (
-        <p className="text-sm text-encre-2">
+        <p className="text-detail text-encre-2">
           {TEXTES_REUNION_FICHE.decisionAttendue} : <Libre texte={reunion.decision} />
         </p>
       ) : null}

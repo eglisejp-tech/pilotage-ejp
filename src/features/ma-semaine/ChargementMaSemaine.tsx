@@ -19,9 +19,10 @@ function SectionEnAttente({ titre }: { titre: string }) {
   )
 }
 
+// Les colonnes et les écarts de VueMaSemaine : les blocs ne bougent pas à l'arrivée des données.
 const colonnes =
-  'grid items-start gap-9 min-[600px]:gap-11 lg:grid-cols-[minmax(0,1fr)_18.75rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16'
-const colonne = 'flex min-w-0 flex-col gap-9 min-[600px]:gap-11 lg:gap-13'
+  'grid items-start gap-sections ordinateur:grid-cols-[minmax(0,1fr)_18.75rem] ordinateur:gap-x-10 ordinateur-large:grid-cols-[minmax(0,1fr)_23.75rem] ordinateur-large:gap-x-16'
+const colonne = 'flex min-w-0 flex-col gap-sections'
 
 /**
  * Chargement de « Ma semaine » (T65, moment 2) : les titres de section tout de suite, à leur
@@ -32,7 +33,7 @@ const colonne = 'flex min-w-0 flex-col gap-9 min-[600px]:gap-11 lg:gap-13'
  */
 export function ChargementMaSemaine() {
   return (
-    <div className="flex flex-col gap-9 min-[600px]:gap-11 lg:gap-13">
+    <div className="flex flex-col gap-sections">
       <header>
         <h1 className="sr-only">{TEXTES_MA_SEMAINE.onglet}</h1>
         <IndicateurChargement texte={TEXTES_MA_SEMAINE.chargement} />

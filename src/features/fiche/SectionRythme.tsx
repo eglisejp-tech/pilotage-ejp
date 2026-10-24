@@ -2,6 +2,7 @@ import { useId, useState } from 'react'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { LigneIndicateurFiche } from '@/features/fiche/LigneIndicateurFiche'
 import type { SectionFiche } from '@/features/fiche/modeleFiche'
+import { LARGEURS } from '@/lib/largeurs'
 
 interface Props {
   section: SectionFiche
@@ -16,7 +17,7 @@ const classeTitre = 'text-note font-semibold tracking-[0.04em] text-encre-3 uppe
  */
 export function SectionRythme({ section }: Props) {
   const idTitre = useId()
-  const telephone = !useLargeurMin(600)
+  const telephone = !useLargeurMin(LARGEURS.tablette)
   const [ouverte, setOuverte] = useState(true)
   const lignes = (
     <ul aria-labelledby={idTitre} className="flex flex-col">

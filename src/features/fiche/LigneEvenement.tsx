@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { classesBouton } from '@/components/ui/Bouton'
 import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
 import type { LigneCalendrier, TonStatut } from '@/features/fiche/construireCalendrier'
 import { TEXTES_CALENDRIER } from '@/features/fiche/textesCalendrier'
@@ -12,11 +13,15 @@ const COULEUR_STATUT: Record<TonStatut, string> = {
 
 /** Grille d'une ligne : date, événement, statut et, si une ligne a une action, une colonne de bouton. */
 export const GRILLE_EVENEMENT =
-  'grid grid-cols-[minmax(0,1fr)] items-baseline gap-x-5 gap-y-1 md:grid-cols-[8.75rem_minmax(0,1fr)_17rem]'
-export const GRILLE_EVENEMENT_ACTION = 'md:grid-cols-[8.75rem_minmax(0,1fr)_17rem_9.5rem]'
+  'grid grid-cols-[minmax(0,1fr)] items-baseline gap-x-5 gap-y-1 tablette-large:grid-cols-[8.75rem_minmax(0,1fr)_17rem]'
+export const GRILLE_EVENEMENT_ACTION =
+  'tablette-large:grid-cols-[8.75rem_minmax(0,1fr)_17rem_9.5rem]'
 
-const classeBouton =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond'
+/** « Mettre à jour » : le bouton secondaire dense des lignes (proposition 6, T69). */
+const classeBouton = cn(
+  classesBouton({ variante: 'secondaire', taille: 'ligne-dense' }),
+  'whitespace-nowrap',
+)
 
 interface Props {
   ligne: LigneCalendrier
@@ -40,7 +45,8 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
       className={cn(
         GRILLE_EVENEMENT,
         avecAction && GRILLE_EVENEMENT_ACTION,
-        'border-b border-filet py-3.5 text-base',
+        // 15 px, comme les lignes du calendrier de 04 et 12 (une seule taille par objet, écart 9).
+        'border-b border-filet py-3.5 text-interface',
       )}
     >
       <span className="text-encre-2 tabular-nums">
@@ -80,9 +86,7 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
           {ligne.texteDate !== null ? (
             <>
               {' '}
-              <span className={cn('text-[15px]', COULEUR_STATUT[ligne.texteDate.ton])}>
-                {ligne.texteDate.texte}
-              </span>
+              <span className={COULEUR_STATUT[ligne.texteDate.ton]}>{ligne.texteDate.texte}</span>
             </>
           ) : null}
         </span>
@@ -94,7 +98,7 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
         ) : null}
       </div>
       {avecAction ? (
-        <span className="mt-1 md:mt-0 md:justify-self-end">
+        <span className="mt-1 tablette-large:mt-0 tablette-large:justify-self-end">
           {ligne.versMiseAJour !== null ? (
             <Link to={ligne.versMiseAJour} className={classeBouton}>
               {TEXTES_CALENDRIER.metteAJour}

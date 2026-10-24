@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import { Link } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { Bouton } from '@/components/ui/Bouton'
 import { ChampLibre as Libre } from '@/features/cette-semaine/ChampLibre'
 import type { LigneAlerte } from '@/features/cette-semaine/construireAlerte'
 import { TEXTES_A_CONFIRMER } from '@/features/cette-semaine/textesAConfirmer'
@@ -54,12 +55,12 @@ export function EvenementsAConfirmer({ etat }: Props) {
         </EtatVide>
       ) : (
         <>
-          <p className="py-3 text-[15px] text-encre-2">{TEXTES_A_CONFIRMER.phrase}</p>
+          <p className="py-3 text-interface text-encre-2">{TEXTES_A_CONFIRMER.phrase}</p>
           <ul id={idListe} className="flex flex-col">
             {affichees.map((ligne) => (
               <li
                 key={ligne.id}
-                className="border-t border-filet py-3 text-[15px] leading-normal break-words"
+                className="border-t border-filet py-3 text-interface leading-normal break-words"
               >
                 «&nbsp;
                 <Libre texte={ligne.titre} />
@@ -76,15 +77,15 @@ export function EvenementsAConfirmer({ etat }: Props) {
             ))}
           </ul>
           {aDesLignesCachees(lignes.length) ? (
-            <button
-              type="button"
+            <Bouton
+              taille="ligne-dense"
               aria-expanded={deplie}
               aria-controls={idListe}
               onClick={() => setDeplie((valeur) => !valeur)}
-              className="mt-2 inline-flex min-h-cible items-center self-start border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond"
+              className="mt-2 self-start whitespace-nowrap"
             >
               {deplie ? TEXTES_A_CONFIRMER.replier : TEXTES_A_CONFIRMER.voirTout(lignes.length)}
-            </button>
+            </Bouton>
           ) : null}
         </>
       )}

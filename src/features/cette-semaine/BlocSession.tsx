@@ -29,7 +29,7 @@ function AutresSessions({ liens }: { liens: Lien[] }) {
         <li key={lien.href}>
           <Link
             to={lien.href}
-            className="-my-3 inline-flex min-h-cible items-center text-sm text-nuit underline underline-offset-4"
+            className="-my-3 inline-flex min-h-cible items-center text-detail text-nuit underline underline-offset-4"
           >
             {lien.libelle}
           </Link>
@@ -76,13 +76,13 @@ export function BlocSession({ bloc }: Props) {
     .map((apport) => apport.ministere)
 
   return (
-    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col gap-3 min-[600px]:gap-4">
+    <section aria-labelledby={idTitre} className="flex min-w-0 flex-col gap-3 tablette:gap-4">
       <TitreSection
         id={idTitre}
         titre={session.titre}
         complement={<AutresSessions liens={session.autres} />}
       />
-      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 min-[600px]:gap-x-4">
+      <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 tablette:gap-x-4">
         {session.total === null ? (
           <span className="font-lecture text-[22px] leading-tight text-encre-3">
             {TEXTES_VIDES.session.totalSansSaisie}
@@ -92,26 +92,26 @@ export function BlocSession({ bloc }: Props) {
             {nombre(session.total)}
           </span>
         )}
-        <span className="text-sm text-encre-2 min-[600px]:text-[15px] lg:text-base">
-          {resume(session)}
-        </span>
+        {/* Une seule taille (écart 9, T69) : 15 px, 16 px à partir de 1440 px (14, 15 et 16 px dans
+            03, 02 et 01). */}
+        <span className="text-interface text-encre-2">{resume(session)}</span>
       </p>
       {session.noteDoubleCompte ? (
-        <p className="text-sm text-encre-2">{session.noteDoubleCompte}</p>
+        <p className="text-detail text-encre-2">{session.noteDoubleCompte}</p>
       ) : null}
       {/* Aucun ministère attendu : ni barre vide, ni liste vide, le résumé le dit. */}
       {session.apports.length > 0 ? <BarreSession apports={session.apports} /> : null}
       {manquants.length > 0 ? (
-        <p className="text-sm text-encre-2 lg:hidden">
+        <p className="text-detail text-encre-2 ordinateur:hidden">
           À saisir : <strong className="font-bold text-attention">{manquants.join(', ')}</strong>
         </p>
       ) : null}
       {session.apports.length > 0 ? (
-        <ul className="sr-only lg:not-sr-only lg:grid lg:grid-cols-2 lg:gap-x-10">
+        <ul className="sr-only ordinateur:not-sr-only ordinateur:grid ordinateur:grid-cols-2 ordinateur:gap-x-10">
           {session.apports.map((apport) => (
             <li
               key={apport.ministere}
-              className="flex justify-between gap-3 border-b border-filet py-[7px] text-sm"
+              className="flex justify-between gap-3 border-b border-filet py-[7px] text-detail"
             >
               <span>{apport.ministere}</span>
               {apport.valeur === null ? (

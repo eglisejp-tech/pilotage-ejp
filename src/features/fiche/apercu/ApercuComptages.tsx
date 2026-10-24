@@ -61,12 +61,12 @@ export function ApercuComptages({ ecran, profil }: Props) {
   return (
     <>
       <title>Aperçu, Coordination, Pilotage EJP</title>
-      <div className="flex flex-col gap-12">
+      <div className="flex flex-col gap-sections">
         <h1 className="font-lecture text-[clamp(40px,4.2vw,56px)] leading-none font-medium break-words">
           Coordination
         </h1>
-        <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16">
-          <div className="flex min-w-0 flex-col gap-12">
+        <div className="grid items-start gap-sections ordinateur-large:grid-cols-[minmax(0,1fr)_23.75rem] ordinateur-large:gap-x-16">
+          <div className="flex min-w-0 flex-col gap-sections">
             <BlocEvenementsEglise bloc={bloc} />
             <BlocPonctualite bloc={bloc} retards={retards} />
           </div>

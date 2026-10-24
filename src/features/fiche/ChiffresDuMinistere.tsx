@@ -47,7 +47,7 @@ export function ChiffresDuMinistere({
       {donnees.aideCourbe ? (
         // En-tête de la colonne des courbes (à partir de 768 px) : son aide dit ce qu'une courbe
         // montre, une seule fois pour toute la fiche.
-        <div data-ligne-aide className={`${GRILLE_LIGNE} hidden md:grid`}>
+        <div data-ligne-aide className={`${GRILLE_LIGNE} hidden tablette-large:grid`}>
           <span className={`${CASE_COURBE} col-start-4 flex items-center text-note text-encre-3`}>
             {TEXTES_FICHE.colonneCourbe}
             <Aide code="fiche.courbe" libelle={TEXTES_FICHE.colonneCourbe} placement="flottante" />

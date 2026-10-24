@@ -29,7 +29,7 @@ export function ListeChiffres({ lignes, compacte = false }: Props) {
             className={`grid items-center gap-x-3 border-t border-filet py-3 first:border-t-0 ${avecCourbe ? 'grid-cols-[minmax(0,1fr)_72px_minmax(4.5rem,auto)]' : 'grid-cols-[minmax(0,1fr)_auto]'}`}
           >
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="text-[15px]">{ligne.libelle}</span>
+              <span className="text-interface">{ligne.libelle}</span>
               <span
                 className={`text-note ${aSignaler ? 'font-semibold text-attention' : 'text-encre-3'}`}
               >

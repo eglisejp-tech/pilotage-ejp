@@ -23,11 +23,11 @@ export function EcartLigne({ ecart }: Props) {
     return <span className={`text-note ${COULEURS.non_saisi}`}>{ecart.texte}</span>
   }
   return (
-    <span className={`text-sm md:whitespace-nowrap ${COULEURS[ecart.sens]}`}>
-      <span aria-hidden="true" className="hidden md:inline">
+    <span className={`text-detail tablette-large:whitespace-nowrap ${COULEURS[ecart.sens]}`}>
+      <span aria-hidden="true" className="hidden tablette-large:inline">
         {ecart.texte}
       </span>
-      <span className="not-sr-only md:sr-only">{ecart.description}</span>
+      <span className="not-sr-only tablette-large:sr-only">{ecart.description}</span>
     </span>
   )
 }
