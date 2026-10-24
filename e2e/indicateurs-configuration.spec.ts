@@ -259,7 +259,7 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     await expect(page.getByText('Retiré le 3 oct. : doublon.')).toBeHidden()
     await page.getByText('Retirés (2)').click()
     await expect(page.getByText('Retiré le 3 oct. : doublon.')).toBeVisible()
-    await expect(page.getByText('Refusé le 1 oct.')).toBeVisible()
+    await expect(page.getByText('Refusé le 1er oct.')).toBeVisible()
   })
 
   test('Kumi : 6 prévus à créer, « Créer ces 6 indicateurs » crée tout et le bloc disparaît', async ({

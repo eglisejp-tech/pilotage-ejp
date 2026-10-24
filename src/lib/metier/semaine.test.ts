@@ -111,7 +111,7 @@ describe('semaineIso et semaineDeReference', () => {
 describe('libellés de la semaine', () => {
   it('écrit le mois une fois quand la semaine tient dans un mois', () => {
     expect(libellePeriode('2026-09-21', '2026-09-27')).toBe('du 21 au 27 sept.')
-    expect(libellePeriode('2026-06-01', '2026-06-07')).toBe('du 1 au 7 juin')
+    expect(libellePeriode('2026-06-01', '2026-06-07')).toBe('du 1er au 7 juin')
   })
 
   it("écrit les deux mois quand la semaine change de mois ou d'année", () => {

@@ -31,7 +31,7 @@ import {
 import type { DateIso } from '@/lib/metier/dates'
 import { libelleMois, libelleMoisEnCours, moisDe } from '@/lib/metier/periodes'
 import { nomSession } from '@/lib/metier/phrases'
-import { comparerNoms, nombre } from '@/lib/metier/texte'
+import { comparerNoms, ESPACE_INSECABLE, nombre } from '@/lib/metier/texte'
 import { formaterValeur } from '@/lib/metier/unites'
 import { TEXTES_MA_SEMAINE } from './textesMaSemaine'
 import type { LigneEglise } from './types'
@@ -238,10 +238,12 @@ function lignesIndicateursPropres(lectures: LecturesMaSemaine): LigneCommune[] {
       // Indicateur du mois : le mois en cours d'abord s'il a une saisie, avec le mois écoulé en
       // détail ; sinon le mois écoulé et « pas encore de saisie » pour le mois en cours.
       if (suivi.mois_en_cours_valeur !== null) {
+        // « Août 2026 : 6 », espaces insécables : la valeur ne finit pas seule une ligne (T69).
+        const deuxPoints = `${ESPACE_INSECABLE}:${ESPACE_INSECABLE}`
         const detail =
           derniere === null
             ? libelleMoisEnCours(moisCourant)
-            : `${libelleMoisEnCours(moisCourant)}. ${libelleMois(moisDe(derniere.periode))} : ${derniere.texte}`
+            : `${libelleMoisEnCours(moisCourant)}. ${libelleMois(moisDe(derniere.periode))}${deuxPoints}${derniere.texte}`
         return ligne(
           cle,
           suivi.libelle,

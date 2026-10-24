@@ -11,6 +11,7 @@ import {
   jourDeLaSemaine,
   joursEntre,
   partiesDeParis,
+  quantieme,
   type DateIso,
   type Instant,
 } from './dates'
@@ -63,14 +64,14 @@ export function semaineDeReference(instant: Instant): SemaineDeReference {
   }
 }
 
-/** « du 21 au 27 sept. », « du 28 sept. au 4 oct. », « du 28 déc. au 3 janv. » */
+/** « du 21 au 27 sept. », « du 1er au 7 juin », « du 28 sept. au 4 oct. », « du 28 déc. au 3 janv. » */
 export function libellePeriode(debut: DateIso, fin: DateIso): string {
   const debutCourt = formaterJourCourt(debut)
   const finCourt = formaterJourCourt(fin)
   // Même mois de la même année : le mois ne s'écrit qu'une fois.
   const memeMois = debut.slice(0, 7) === fin.slice(0, 7)
   return memeMois
-    ? `du ${Number(debut.slice(8, 10))} au ${finCourt}`
+    ? `du ${quantieme(Number(debut.slice(8, 10)))} au ${finCourt}`
     : `du ${debutCourt} au ${finCourt}`
 }
 

@@ -19,8 +19,8 @@ import {
 } from './indicateurs'
 import type { EntreeCalcul } from './indicateurs'
 
-// Espace fine insécable d'Intl (U+202F) : « 12 480 », « 80 % », « 5 164 € ».
-const F = ' '
+// Espace insécable (U+00A0, T69) : « 12 480 », « 80 % », « 5 164 € ».
+const F = '\xa0'
 
 describe('ordre de la fiche (R6)', () => {
   it('range par rythme (dimanche, mois, à ce jour), puis par ordre alphabétique', () => {

@@ -119,7 +119,7 @@ describe('textes du bloc', () => {
 
   it('le jour d’envoi est celui de Paris, jamais celui du navigateur', () => {
     // 23 h 30 à Paris le 1er octobre est encore le 1er octobre ; 00 h 30 le 2 est le 2.
-    expect(texteEnvoyeLe('2026-10-01T21:30:00Z')).toBe('Envoyé le 1 oct.')
+    expect(texteEnvoyeLe('2026-10-01T21:30:00Z')).toBe('Envoyé le 1er oct.')
     expect(texteEnvoyeLe('2026-10-01T22:30:00Z')).toBe('Envoyé le 2 oct.')
   })
 
@@ -155,7 +155,7 @@ describe('lignes d’EJP Tech', () => {
       id: DEMANDE,
       libelle: 'Demandes reçues',
       rythme: 'chaque mois',
-      envoyeLe: 'Envoyé le 1 oct.',
+      envoyeLe: 'Envoyé le 1er oct.',
       depuis: 'depuis 9 jours',
       enRetard: true,
       nbValeurs: 2,

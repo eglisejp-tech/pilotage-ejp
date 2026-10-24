@@ -49,7 +49,7 @@ test.describe('calendrier de la fiche (aperçu)', () => {
     await expect(calendrier.getByRole('listitem').first()).toContainText('Sam. 3 oct.')
     await expect(calendrier.getByText('En attente de validation')).toBeVisible()
     await expect(calendrier.getByText('Annulé')).toBeVisible()
-    await expect(calendrier.getByText('Reporté du dim. 1 nov.')).toBeVisible()
+    await expect(calendrier.getByText('Reporté du dim. 1er nov.')).toBeVisible()
     await expect(page.locator('[data-alerte-fiche]')).toHaveCount(0)
     await expect(page.getByRole('link', { name: ACTIONS })).toHaveCount(0)
   })

@@ -5,7 +5,7 @@
 
 import type { UniteIndicateur } from '@/lib/base'
 import { formaterHeure } from './dates'
-import { accorder, ESPACE_FINE, nombre } from './texte'
+import { accorder, ESPACE_INSECABLE, nombre } from './texte'
 
 /** Plafond de chaque unité (inclus), vérifié aussi par `private.controler_mesure`. */
 export const PLAFOND_UNITE: Readonly<Record<UniteIndicateur, number>> = {
@@ -45,7 +45,7 @@ export function formaterValeur(valeur: number, unite: UniteIndicateur): string {
     case 'grand_nombre':
       return nombre(valeur)
     case 'euros':
-      return `${nombre(valeur)}${ESPACE_FINE}€`
+      return `${nombre(valeur)}${ESPACE_INSECABLE}€`
     case 'heure':
       return formaterHeureEnMinutes(valeur)
     case 'jours':

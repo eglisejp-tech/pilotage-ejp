@@ -9,7 +9,7 @@ import {
   periodeApercu,
 } from '@/features/indicateurs/configuration/panneaux/apercu'
 import type { SourceCalcul } from '@/features/indicateurs/configuration/panneaux/apercu'
-import { ESPACE_FINE, nombre } from '@/lib/metier/texte'
+import { ESPACE_INSECABLE, nombre } from '@/lib/metier/texte'
 
 const source = (id: string, nature: SourceCalcul['nature']): SourceCalcul => ({
   id,
@@ -21,7 +21,7 @@ const source = (id: string, nature: SourceCalcul['nature']): SourceCalcul => ({
 
 describe('apercuCalcul : des nombres d’exemple, jamais une valeur lue', () => {
   it('un taux : 16 sur 20, soit 80 %', () => {
-    expect(apercuCalcul('taux')).toBe(`Par exemple : 16 sur 20, soit 80${ESPACE_FINE}%`)
+    expect(apercuCalcul('taux')).toBe(`Par exemple : 16 sur 20, soit 80${ESPACE_INSECABLE}%`)
   })
 
   it('un taux garde le même exemple quel que soit le chiffre du haut', () => {
@@ -34,7 +34,7 @@ describe('apercuCalcul : des nombres d’exemple, jamais une valeur lue', () => 
       `Par exemple : ${nombre(1240)} pour 53, soit 23,4`,
     )
     expect(apercuCalcul('moyenne', 'euros')).toBe(
-      `Par exemple : ${nombre(1240)}${ESPACE_FINE}€ pour 53, soit 23,4${ESPACE_FINE}€`,
+      `Par exemple : ${nombre(1240)}${ESPACE_INSECABLE}€ pour 53, soit 23,4${ESPACE_INSECABLE}€`,
     )
   })
 
@@ -80,7 +80,7 @@ describe('apercuSaisie : « Publications, septembre 2026 : __ »', () => {
 
   it('des euros portent leur signe', () => {
     expect(apercuSaisie({ ...base, unite: 'euros' })).toBe(
-      `Publications, septembre 2026 : __${ESPACE_FINE}€`,
+      `Publications, septembre 2026 : __${ESPACE_INSECABLE}€`,
     )
   })
 

@@ -18,7 +18,14 @@ import { formaterJourCourt, formaterJourSemaine, nomDuMois } from './dates'
 import type { DateIso } from './dates'
 import { dernierMoisPermis, estMois, premierMoisPermis } from './periodes'
 import { formaterPourcentage, NON_CALCULE } from './pourcentage'
-import { accorder, comparerNoms, ESPACE_FINE, nombre, terminerPhrase } from './texte'
+import {
+  accorder,
+  comparerNoms,
+  ESPACE_INSECABLE,
+  nombre,
+  sansEspaceFine,
+  terminerPhrase,
+} from './texte'
 import { formaterHeureEnMinutes, formaterValeur, MOINS_DE_3 } from './unites'
 
 /** Rythmes dans l'ordre de la fiche (R6) : chaque dimanche, chaque mois, puis « à ce jour ». */
@@ -184,8 +191,8 @@ export function formaterResultatCalcul(
   if (unite === 'heure') return formaterHeureEnMinutes(Math.min(1439, Math.round(resultat)))
   // L'accord porte sur la valeur écrite : 1,96 s'écrit « 2,0 jours ».
   const arrondi = Math.round(resultat * 10) / 10
-  const decimal = formatDecimal.format(arrondi)
-  if (unite === 'euros') return `${decimal}${ESPACE_FINE}€`
+  const decimal = sansEspaceFine(formatDecimal.format(arrondi))
+  if (unite === 'euros') return `${decimal}${ESPACE_INSECABLE}€`
   if (unite === 'jours') return `${decimal} ${accorder(arrondi, 'jour', 'jours')}`
   return decimal
 }
