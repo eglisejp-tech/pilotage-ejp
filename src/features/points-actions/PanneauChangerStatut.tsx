@@ -1,10 +1,12 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { messageDeRefusPoint, STATUTS_CHOISIS } from '@/data/pointsEcriture'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { FenetreAction } from '@/features/points-actions/FenetreAction'
 import { CHOIX_STATUT, TEXTES_ACTIONS_POINT } from '@/features/points-actions/textes'
+import { ChoixSegmente } from '@/features/saisie/ChoixSegmente'
 import { DejaEnregistre } from '@/features/saisie/DejaEnregistre'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import type { StatutPoint } from '@/lib/base'
@@ -28,7 +30,8 @@ function statutInitial(statut: StatutPoint): StatutChoisi {
 /**
  * Fenêtre « Changer le statut » (BRIEF section 9, dérivée du choix de priorité de 10) : le titre
  * du point, trois vrais boutons radio segmentés (« À traiter », « En cours », « En attente de
- * décision », le statut actuel choisi), le texte visible qui dit qui tranche « En attente de
+ * décision », le statut actuel choisi ; les uns sous les autres quand un libellé ne tient plus sur
+ * une ligne, proposition 9, T69), le texte visible qui dit qui tranche « En attente de
  * décision » (sans bulle, T66), puis « Enregistrer le statut » et « Annuler ». Le bouton n'est
  * jamais grisé (BRIEF, section 9). Un refus de la base (« Ce point est traité : il ne change plus. ») se dit sous le bouton
  * d'enregistrement, avant « Annuler », tel quel. Enregistrer le statut déjà en place n'écrit rien :
@@ -74,30 +77,19 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           aria-describedby={idNote}
           className="flex min-w-0 flex-col gap-1.5"
         >
-          <p id={idTitre} className="text-[15px] font-semibold">
+          <p id={idTitre} className="text-interface font-semibold">
             {TEXTES_ACTIONS_POINT.statut.libelle}
           </p>
-          <div className="grid grid-cols-3">
-            {CHOIX_STATUT.map((option) => (
-              <label key={option.valeur} className="relative flex not-first:-ml-px">
-                <input
-                  type="radio"
-                  name={`${id}-statut`}
-                  value={option.valeur}
-                  checked={choisi === option.valeur}
-                  onChange={() => {
-                    setChoisi(option.valeur)
-                    setInchange(0)
-                  }}
-                  className="peer sr-only"
-                />
-                <span className="flex min-h-14 w-full cursor-pointer items-center justify-center border border-encre bg-papier px-2 py-1 text-center text-[15px] leading-tight font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
-                  {option.libelle}
-                </span>
-              </label>
-            ))}
-          </div>
-          <p id={idNote} className="text-sm leading-normal text-encre-3">
+          <ChoixSegmente
+            nom={`${id}-statut`}
+            choix={CHOIX_STATUT}
+            valeur={choisi}
+            onChange={(statutChoisi) => {
+              setChoisi(statutChoisi)
+              setInchange(0)
+            }}
+          />
+          <p id={idNote} className="text-detail leading-normal text-encre-3">
             {TEXTES_ACTIONS_POINT.statut.note}
           </p>
         </fieldset>
@@ -111,13 +103,9 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           essai={inchange}
         />
         {refus ? <ErreurFormulaire message={refus} /> : null}
-        <button
-          type="button"
-          onClick={onFermer}
-          className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-        >
+        <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.statut.annuler}
-        </button>
+        </Bouton>
       </form>
     </FenetreAction>
   )
