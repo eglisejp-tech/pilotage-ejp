@@ -1,3 +1,4 @@
+import { LARGEURS } from '@/lib/largeurs'
 import { Courbe } from './Courbe'
 import { EcartChiffre } from './EcartChiffre'
 import type { LigneChiffre } from './types'
@@ -17,10 +18,10 @@ interface Props {
  * il partage la largeur avec « À décider » : libellés et courbes y sont plus étroits.
  */
 export function TableauChiffres({ lignes, idTitre }: Props) {
-  const grandEcran = useLargeurMin(1280)
-  const ordinateur = useLargeurMin(1024)
-  const tablette = useLargeurMin(768)
-  const largeurCourbe = grandEcran ? 132 : ordinateur ? 88 : tablette ? 104 : 80
+  const ordinateurLarge = useLargeurMin(LARGEURS.ordinateurLarge)
+  const ordinateur = useLargeurMin(LARGEURS.ordinateur)
+  const tabletteLarge = useLargeurMin(LARGEURS.tabletteLarge)
+  const largeurCourbe = ordinateurLarge ? 132 : ordinateur ? 88 : tabletteLarge ? 104 : 80
 
   return (
     <table aria-labelledby={idTitre} className="w-full border-collapse">

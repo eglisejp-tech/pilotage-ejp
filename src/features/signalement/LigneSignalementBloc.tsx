@@ -124,7 +124,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
             {TEXTES_BLOC_SIGNALEMENTS.ligne(signalement.ecran, signalement.saisi_le)}
           </p>
         </div>
-        <p className="min-w-0 font-lecture text-[19px] leading-snug wrap-anywhere">
+        <p className="min-w-0 font-lecture text-citation wrap-anywhere">
           «&nbsp;
           <TexteSignale texte={signalement.texte} />
           &nbsp;»

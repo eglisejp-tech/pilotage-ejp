@@ -127,7 +127,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
           {unSeul ? (
             <div className="flex flex-col gap-1">
               <p className="text-[15px] font-semibold">{champs[0]?.libelle}</p>
-              <p className="font-lecture text-[17px] leading-snug wrap-anywhere">
+              <p className="font-lecture text-citation wrap-anywhere">
                 «&nbsp;{champs[0]?.texte}&nbsp;»
               </p>
             </div>
@@ -155,7 +155,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
                   />
                   <span className="flex min-w-0 flex-col">
                     <span className="text-[15px] font-semibold">{possible.libelle}</span>
-                    <span className="font-lecture text-[17px] leading-snug wrap-anywhere text-encre-2">
+                    <span className="font-lecture text-citation wrap-anywhere text-encre-2">
                       «&nbsp;{possible.texte}&nbsp;»
                     </span>
                   </span>

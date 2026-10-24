@@ -25,6 +25,22 @@ export default defineConfig([
     },
   },
   {
+    // Fondations (T69, proposition 6) : un bouton inactif garde le focus et sa place au clavier.
+    // Les autres garde-fous du design sont dans scripts/verifier-design.mjs.
+    files: ['src/**/*.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "JSXOpeningElement[name.name=/^(button|Bouton)$/] > JSXAttribute[name.name='disabled']",
+          message:
+            'Pas de disabled sur un bouton : aria-disabled, ou Bouton avec enCours ou indisponible (T69).',
+        },
+      ],
+    },
+  },
+  {
     // Composants générés par shadcn/ui : ils exportent aussi leurs variantes.
     files: ['src/components/ui/**/*.tsx'],
     rules: {

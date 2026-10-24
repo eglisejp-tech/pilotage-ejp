@@ -1,3 +1,4 @@
+import { ZoneDeTexte } from '@/components/ui/ZoneDeTexte'
 import { LONGUEUR_TEXTE_MAX } from '@/features/indicateurs/schemas'
 import { Compteur } from '@/features/saisie/Compteur'
 import { RappelDonneesPersonnelles } from '@/features/saisie/RappelDonneesPersonnelles'
@@ -22,7 +23,8 @@ interface Props {
  * compteur « 0 sur 280 », qui la lit en texte visible, et le rappel sur les données personnelles
  * sous le premier de ces champs (c'est le premier champ libre du formulaire). Pas d'aide : ce
  * qu'il faut savoir avant d'écrire est visible (aides-contextuelles.md, section 8). Le champ
- * reprend la précision du total le plus récent ; vidé, il la retire de l'affichage.
+ * reprend la précision du total le plus récent ; vidé, il la retire de l'affichage. Le champ
+ * commun (T69) : texte de 16 px, Safari sur iPhone ne zoome plus (proposition 3).
  */
 export function ChampPrecision({
   indicateurId,
@@ -62,14 +64,13 @@ export function ChampPrecision({
       <p id={idLecteurs} className="text-sm leading-normal text-encre-3">
         {TEXTES_CHIFFRES.precisionLecteurs}
       </p>
-      <textarea
+      <ZoneDeTexte
         id={id}
         rows={3}
         value={valeur}
         onChange={(evenement) => onChange(evenement.target.value)}
         aria-invalid={erreur ? true : undefined}
         aria-describedby={decritPar}
-        className="w-full border border-encre bg-papier px-3 py-2 text-[15px] leading-normal text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
       {rappel ? <RappelDonneesPersonnelles id={idRappel} /> : null}
       <Compteur id={idCompteur} valeur={Array.from(valeur).length} max={LONGUEUR_TEXTE_MAX} />

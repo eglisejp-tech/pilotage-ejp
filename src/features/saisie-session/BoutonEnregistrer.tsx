@@ -1,10 +1,13 @@
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 import { MESSAGE_DEJA_ENREGISTRE } from '@/features/saisie-session/useEnvoiSaisie'
 
 interface Props {
   /** « Enregistrer la présence », « Enregistrer la carte »... */
   libelle: string
-  /** Pendant l'envoi : « Enregistrement en cours », le bouton ne répond plus (BRIEF, section 9). */
+  /**
+   * Pendant l'envoi : « Enregistrement en cours » ; un second appui n'envoie rien (verrou de
+   * useEnvoiSaisie), et le bouton garde le focus (BRIEF, section 9).
+   */
   enCours: boolean
   /** Le formulaire contient ce qui vient d'être enregistré : un nouvel appui n'envoie rien. */
   dejaEnvoye?: boolean
@@ -13,8 +16,9 @@ interface Props {
 }
 
 /**
- * Bouton principal d'une saisie (maquettes 08 et 09) : jaune, pleine largeur, 58 px. Pendant
- * l'envoi, la petite flamme accompagne « Enregistrement en cours » (T65, moment 4).
+ * Bouton principal d'une saisie (maquettes 08 et 09) : le Bouton commun (T69), jaune, pleine
+ * largeur, 58 px. Pendant l'envoi, la petite flamme accompagne « Enregistrement en cours » (T65,
+ * moment 4), sans que le bouton quitte l'ordre du clavier (`aria-disabled`, jamais `disabled`).
  */
 export function BoutonEnregistrer({
   libelle,
@@ -24,18 +28,19 @@ export function BoutonEnregistrer({
 }: Props) {
   return (
     <>
-      <button
+      <Bouton
         type="submit"
-        disabled={enCours}
-        aria-disabled={dejaEnvoye ? true : undefined}
-        className="min-h-14.5 w-full bg-lumiere px-4 text-[17px] font-bold text-encre disabled:cursor-wait aria-disabled:opacity-60"
+        variante="principal"
+        taille="enregistrer"
+        pleineLargeur
+        enCours={enCours}
+        indisponible={dejaEnvoye}
+        libelleEnCours="Enregistrement en cours"
       >
-        <LibelleEnvoi enCours={enCours} libelleEnCours="Enregistrement en cours">
-          {libelle}
-        </LibelleEnvoi>
-      </button>
+        {libelle}
+      </Bouton>
       {doublon ? (
-        <p role="status" className="text-[15px] leading-normal text-encre-3">
+        <p role="status" className="text-interface leading-normal text-encre-3">
           {MESSAGE_DEJA_ENREGISTRE}
         </p>
       ) : null}

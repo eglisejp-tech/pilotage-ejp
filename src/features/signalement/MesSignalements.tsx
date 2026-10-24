@@ -55,7 +55,7 @@ export function MesSignalements({ contenu }: Props) {
                     : TEXTES_MES_SIGNALEMENTS.clos(signalement.clos_le)}
                 </span>
               </p>
-              <p className="min-w-0 font-lecture text-[17px] leading-snug wrap-anywhere">
+              <p className="min-w-0 font-lecture text-citation wrap-anywhere">
                 «&nbsp;
                 <TexteSignale texte={signalement.texte} />
                 &nbsp;»

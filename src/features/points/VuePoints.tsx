@@ -2,6 +2,8 @@ import { useId } from 'react'
 import { useSearchParams } from 'react-router'
 import { EtatVide } from '@/components/etats/EtatVide'
 import type { ActionVide, SituationVide } from '@/components/etats/situations'
+import { EnTetePage } from '@/components/ui/EnTetePage'
+import { GabaritPage } from '@/components/ui/GabaritPage'
 import { FiltreMinistere } from '@/features/points/FiltreMinistere'
 import { LienNouveauPoint, VERS_NOUVEAU_POINT } from '@/features/points/LienNouveauPoint'
 import { ListePoints } from '@/features/points/ListePoints'
@@ -90,14 +92,10 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
     lignes.length === 0 ? videDe(vue, donnees, profil, () => choisirMinistere(null)) : null
   const introduction = profil === 'ministere' ? TEXTES_POINTS.introduction.ministere : null
   return (
-    <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-2.5">
-        <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
-        {introduction !== null ? (
-          <p className="max-w-[720px] leading-relaxed text-encre-2">{introduction}</p>
-        ) : null}
+    <GabaritPage>
+      <EnTetePage titre={titre} phrase={introduction}>
         {profil === 'ministere' ? <LienNouveauPoint /> : null}
-      </header>
+      </EnTetePage>
 
       <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
         <div className="flex flex-wrap items-end justify-between gap-x-4 border-b-2 border-encre">
@@ -123,6 +121,6 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
       </section>
 
       {vue === 'ouverts' ? <TraitesRecemment lignes={donnees.recents} /> : null}
-    </div>
+    </GabaritPage>
   )
 }

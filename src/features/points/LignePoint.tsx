@@ -36,7 +36,7 @@ export function LignePoint({ ligne, compte }: Props) {
     >
       <p
         className={cn(
-          'col-start-1 row-start-1 font-chiffres text-[19px] font-extrabold tracking-[0.04em] uppercase lg:col-start-1',
+          'col-start-1 row-start-1 font-chiffres text-priorite uppercase lg:col-start-1',
           traite ? 'text-encre-3' : couleursPriorite[ligne.priorite],
         )}
       >
@@ -45,7 +45,7 @@ export function LignePoint({ ligne, compte }: Props) {
       </p>
 
       <div className="col-span-2 row-start-2 flex min-w-0 flex-col gap-1 lg:col-span-1 lg:col-start-2 lg:row-start-1">
-        <h3 id={idTitre} className="font-lecture text-[21px] leading-tight font-medium">
+        <h3 id={idTitre} className="font-lecture text-titre-point">
           <ChampLibre texte={ligne.titre} />
         </h3>
         {ligne.description ? (

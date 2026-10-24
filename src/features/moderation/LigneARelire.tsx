@@ -72,7 +72,7 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
               {plusieursChamps ? (
                 <span className="text-note text-encre-3">{champ.libelle}</span>
               ) : null}
-              <p className="font-lecture text-[19px] leading-snug wrap-anywhere">
+              <p className="font-lecture text-citation wrap-anywhere">
                 «&nbsp;
                 <ChampLibre texte={{ texte: champ.texte, masque: champ.masque }} />
                 &nbsp;»
