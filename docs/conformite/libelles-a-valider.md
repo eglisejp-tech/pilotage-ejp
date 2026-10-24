@@ -1,6 +1,6 @@
 # Libellés et définitions des indicateurs à valider
 
-- **Date** : 6 octobre 2026, révisé le 7 octobre 2026 (valeurs exactes des indicateurs sensibles pour le berger et le conseil), complété le 20 octobre 2026 (chiffre d'affaires de Merch à la semaine, T64, à valider)
+- **Date** : 6 octobre 2026, révisé le 7 octobre 2026 (valeurs exactes des indicateurs sensibles pour le berger et le conseil), complété le 20 octobre 2026 (chiffre d'affaires de Merch à la semaine, T64, à valider) et le 24 octobre 2026 (indicateurs de Protocole, T71, à valider par la responsable du Protocole)
 - **Statut** : validé pour EJP Tech par la personne responsable le 6 octobre 2026 ; à valider par la coordination et les ministères avant l'ouverture des saisies
 - **Pour qui** : la coordination, qui relit tout, et chaque ministère, qui relit sa section
 - **Rédigé par** : EJP Tech
@@ -102,10 +102,11 @@ Le texte « Précision » :
 - **Qui le lit** : le ministère qui l'a écrit, le berger, le conseil et EJP Tech. Ni l'administration de l'église, ni les autres ministères. Jamais la vue de l'église, jamais un courriel.
 - **Relecture** : EJP Tech relit ces textes et peut masquer un texte qui contient une information personnelle. Le journal ne recopie jamais la précision.
 
-Les onze indicateurs sensibles :
+Les douze indicateurs sensibles (onze jusqu'au 24 octobre 2026, plus celui de Protocole, T71) :
 
 | Ministère       | Indicateur                                          |
 | --------------- | --------------------------------------------------- |
+| Protocole       | Manquements à la confidentialité constatés          |
 | Social          | Bénéficiaires (passages)                            |
 | Social          | Personnes accompagnées                              |
 | Social          | Nouveaux bénéficiaires                              |
@@ -930,7 +931,7 @@ Questions de la relecture : le sigle « PCNC » est gardé tel quel ; une répon
 
 ## 20. Protocole
 
-Protocole n'a aucun indicateur propre : la liste de la coordination n'en demande aucun. Il saisit les trois chiffres communs, pour que les totaux de l'église restent complets.
+La liste de la coordination ne demande aucun indicateur à Protocole. Ajout du 24 octobre 2026 (T71) : la responsable du Protocole a donné quatre domaines à suivre, et la personne responsable y a choisi huit indicateurs saisis et un calcul. Libellés et définitions proposés, à relire par la responsable du Protocole avant la création en production. Protocole saisit aussi les trois chiffres communs, pour que les totaux de l'église restent complets.
 
 ### Chiffres communs
 
@@ -940,7 +941,27 @@ Protocole n'a aucun indicateur propre : la liste de la coordination n'en demande
 | STARs actifs     | STARs actifs             | À ce jour       |               |
 | Dont en FIJ      | Dont en FIJ              | À ce jour       |               |
 
-Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère.
+### Ce que le ministère saisit
+
+Un de ces indicateurs est sensible : voir « Les indicateurs sensibles » au début du document.
+
+| Indicateur tel qu'il apparaîtra            | Ce qu'on compte exactement                                                                                                           | Quand           | Unité  | Sensible | Votre réponse |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------ | -------- | ------------- |
+| Plan de service prêt la veille             | Enregistrez 1 si le plan du service (placement, accueil, répartition des STARs) était prêt la veille du culte, sinon 0.              | Chaque dimanche | Nombre | non      |               |
+| Événements préparés une semaine avant      | Événements tenus dans le mois, hors cultes, dont le Protocole avait son plan au moins une semaine avant.                             | Chaque mois     | Nombre | non      |               |
+| Écarts aux consignes relevés               | Cas où une consigne n'a pas été respectée (horaires, tenue, placement, accès réservés), sans nom ni détail. Si aucun, enregistrez 0. | Chaque mois     | Nombre | non      |               |
+| Demandes reçues                            | Demandes adressées au Protocole par les autres ministères ou l'équipe pastorale, reçues dans le mois.                                | Chaque mois     | Nombre | non      |               |
+| Demandes traitées                          | Parmi les demandes reçues dans le mois, celles que le Protocole a menées à terme.                                                    | Chaque mois     | Nombre | non      |               |
+| Points d'équipe tenus                      | Réunions ou points d'équipe du Protocole tenus dans le mois. Si aucun, enregistrez 0.                                                | Chaque mois     | Nombre | non      |               |
+| Manquements à la confidentialité constatés | Manquements à la confidentialité constatés dans le mois, comptés sans nom ni détail. Si aucun, enregistrez 0.                        | Chaque mois     | Nombre | oui      |               |
+
+### Ce que l'outil calcule
+
+| Indicateur                 | Comment il se calcule                                                     | À saisir | Votre réponse |
+| -------------------------- | ------------------------------------------------------------------------- | -------- | ------------- |
+| Part des demandes traitées | « Demandes traitées » divisées par « Demandes reçues ». Plafonné à 100 %. | Rien     |               |
+
+Questions de la relecture : « Plan de service prêt la veille » se saisit 0 ou 1 ; l'outil accepte un nombre plus grand, la définition seule dit 0 ou 1. Une demande traitée compte le mois où elle est arrivée : si elle est menée à terme le mois suivant, le chiffre de son mois d'arrivée se corrige. Qu'est-ce qui compte comme un manquement à la confidentialité ? Cela vous convient-il ?
 
 **Remarques du ministère :**
 
@@ -1059,11 +1080,11 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 | Multilingue      | 8               | 0              | 2                 | 0                      | 0          |
 | Sécurité         | 7               | 0              | 2                 | 0                      | 0          |
 | Formation        | 6               | 0              | 3                 | 0                      | 0          |
-| Protocole        | 0               | 0              | 0                 | 0                      | 0          |
+| Protocole        | 8               | 1              | 1                 | 0                      | 0          |
 | MDS              | 8               | 0              | 0                 | 1                      | 1          |
 | Prodiges Junior  | 4               | 2              | 1                 | 0                      | 0          |
 | Prodiges Academy | 0               | 0              | 0                 | 0                      | 0          |
-| **Total**        | **161**         | **11**         | **40**            | **8**                  | **12**     |
+| **Total**        | **169**         | **12**         | **41**            | **8**                  | **12**     |
 
 À ces totaux s'ajoutent :
 
@@ -1071,8 +1092,8 @@ Aucun chiffre propre à saisir, aucun calcul, aucun graphique pour ce ministère
 - les **4 rubriques par département** de Coordo FIJ, saisies chaque semaine pour 8 départements (32 valeurs par semaine) ;
 - 2 points d'attention de départ (Production et Entretien) et 3 valeurs de départ de Production.
 
-Au total : **161 chiffres saisis** (dont 11 sensibles ; 162 après l'ajout du chiffre d'affaires de Merch à la semaine, T64, puis 161 depuis T68, qui remplace « Événements commencés à l'heure » par un calcul sur les heures des événements), **40 chiffres calculés** et **8 comptages d'événements** par l'outil (dont la ponctualité des événements et des cultes, T68), **12 graphiques**. Sur les 48 chiffres calculés ou comptés, 29 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
+Au total : **169 chiffres saisis** (dont 12 sensibles ; 162 après l'ajout du chiffre d'affaires de Merch à la semaine, T64, puis 161 depuis T68, qui remplace « Événements commencés à l'heure » par un calcul sur les heures des événements, puis 169 depuis T71, avec les 8 de Protocole), **41 chiffres calculés** (dont la part des demandes traitées de Protocole, T71) et **8 comptages d'événements** par l'outil (dont la ponctualité des événements et des cultes, T68), **12 graphiques**. Sur les 49 chiffres calculés ou comptés, 30 sont visibles dès l'ouverture et 19 s'affichent dans les 4 semaines qui suivent.
 
 ## Sources et contrôle
 
-Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 162 chiffres saisis (depuis T64), 41 calculs, 7 comptages d'événements, 12 graphiques.
+Ce document reprend mot pour mot le catalogue de la vague 1 (`docs/conception/vague-1-decisions.md`, sections 3 et 4) et, pour les trois chiffres communs, les textes d'aide du `BRIEF.md`. Les renvois internes de questions (K10, K19 et suivants) ont été retirés du tableau « Les choix à relire en priorité ». Les nombres par ministère ont été comptés contre ce catalogue : 162 chiffres saisis (depuis T64), 41 calculs, 7 comptages d'événements, 12 graphiques ; depuis T71, 169 chiffres saisis et 41 calculs (migration `20261024211427_protocole_catalogue.sql`, test `indicateurs-vague-1.test.sql`).
