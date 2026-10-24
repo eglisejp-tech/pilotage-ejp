@@ -93,7 +93,7 @@
       "src/features/signalement/ContenuBlocSignalements.tsx": 1,
       "src/features/signalement/FormulaireCloture.tsx": 3,
       "src/features/signalement/FormulaireSignalement.tsx": 2,
-      "src/features/signalement/LigneSignalementBloc.tsx": 3,
+      "src/features/signalement/LigneSignalementBloc.tsx": 2,
       "src/features/signalement/MesSignalements.tsx": 2,
       "src/pages/ErreurApplication.tsx": 1,
       "src/pages/ErreurDePage.tsx": 2,
@@ -127,8 +127,7 @@
       "src/features/personnes/FenetreEffacement.tsx": 2,
       "src/features/personnes/VuePersonnes.tsx": 3,
       "src/features/saisie-fij/FormulaireCarteFij.tsx": 1,
-      "src/features/saisie-fij/FormulaireStatistiquesFij.tsx": 1,
-      "src/features/signalement/LigneSignalementBloc.tsx": 8
+      "src/features/saisie-fij/FormulaireStatistiquesFij.tsx": 1
     },
     "largeur-phrase": {
       "src/components/etats/EtatVide.tsx": 1,
@@ -172,7 +171,6 @@
       "src/features/personnes/VuePersonnes.tsx": 1,
       "src/features/signalement/FormulaireCloture.tsx": 1,
       "src/features/signalement/FormulaireSignalement.tsx": 1,
-      "src/features/signalement/LigneSignalementBloc.tsx": 1,
       "src/pages/ErreurDePage.tsx": 1
     },
     "liste-native": {

@@ -112,7 +112,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
 
   return (
     <article aria-labelledby={idTitre} className="flex flex-col gap-3 py-[18px]">
-      <div className="grid gap-x-8 gap-y-2 min-[1024px]:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,16rem)]">
+      <div className="grid gap-x-8 gap-y-2 ordinateur:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,16rem)]">
         <div className="flex min-w-0 flex-col gap-0.5">
           <p id={idTitre} className="text-[15px] font-semibold wrap-anywhere">
             {signalement.ministere_nom}
@@ -126,7 +126,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
           <TexteSignale texte={signalement.texte} />
           &nbsp;»
         </p>
-        <div className="flex min-w-0 flex-col items-start gap-2 min-[1024px]:items-end min-[1024px]:text-right">
+        <div className="flex min-w-0 flex-col items-start gap-2 ordinateur:items-end ordinateur:text-right">
           {signalement.ouvert || signalement.clos_le === null ? null : (
             <>
               <p className="text-note text-encre-3">
@@ -143,7 +143,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
           {boutonClore || boutonMasquer ? (
             // À partir de 1024 px, les boutons s'empilent dans une colonne à la largeur du plus
             // large : même largeur, mêmes bords, sans escalier (proposition 5, T69).
-            <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col min-[1024px]:w-max min-[1024px]:max-w-full min-[1024px]:flex-col">
+            <div className="flex flex-wrap gap-3 max-tablette:w-full max-tablette:flex-col ordinateur:w-max ordinateur:max-w-full ordinateur:flex-col">
               {boutonClore ? (
                 <Bouton
                   ref={bouton}
@@ -163,7 +163,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
         </div>
       </div>
       {ouvert && cloture ? (
-        <div id={idPanneau} className="min-[1024px]:ml-auto min-[1024px]:w-[32rem]">
+        <div id={idPanneau} className="ordinateur:ml-auto ordinateur:w-[32rem]">
           <FormulaireCloture
             id={`${idPanneau}-commentaire`}
             signalementId={signalement.id}
