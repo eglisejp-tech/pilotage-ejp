@@ -33,14 +33,14 @@ function SectionEnChargement({ titre }: { titre: string }) {
  */
 export function SqueletteFiche({ titre, profil = 'berger' }: Props) {
   return (
-    <div className="flex flex-col gap-12">
+    <div className="flex flex-col gap-sections">
       <header className="flex flex-col gap-4">
         <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
         <IndicateurChargement texte={TEXTES_FICHE.chargement} />
       </header>
-      <div className="grid items-start gap-12 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16">
+      <div className="grid items-start gap-sections ordinateur-large:grid-cols-[minmax(0,1fr)_23.75rem] ordinateur-large:gap-x-16">
         <SectionEnChargement titre={TEXTES_FICHE.titreChiffres} />
-        <div className="flex min-w-0 flex-col gap-12">
+        <div className="flex min-w-0 flex-col gap-sections">
           <SectionEnChargement titre={titrePointsFiche(profil)} />
           <SectionEnChargement titre={TEXTES_FICHE.titreDernieresSaisies} />
         </div>

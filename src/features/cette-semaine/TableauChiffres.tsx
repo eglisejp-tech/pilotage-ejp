@@ -39,7 +39,7 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
           <tr key={ligne.id} className={index > 0 ? 'border-t border-filet' : undefined}>
             <th
               scope="row"
-              className="w-[9.5rem] py-3 pr-3 text-left font-normal md:w-[13.25rem] lg:w-[9.5rem] xl:w-[13.75rem] xl:pr-4"
+              className="w-[9.5rem] py-3 pr-3 text-left font-normal tablette-large:w-[13.25rem] ordinateur:w-[9.5rem] ordinateur-large:w-[13.75rem] ordinateur-large:pr-4"
             >
               {ligne.libelle}
             </th>
@@ -48,10 +48,10 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
                 <td className="w-px py-3 pr-2 text-right">
                   <ValeurChiffre valeur={ligne.valeur} />
                 </td>
-                <td className="w-px py-3 pr-3 text-sm xl:pr-4">
+                <td className="w-px py-3 pr-3 text-detail ordinateur-large:pr-4">
                   {ligne.ecart ? <EcartChiffre ecart={ligne.ecart} /> : null}
                 </td>
-                <td className="w-px py-3 pr-3 xl:pr-4">
+                <td className="w-px py-3 pr-3 ordinateur-large:pr-4">
                   {ligne.courbe ? (
                     <Courbe courbe={ligne.courbe} largeur={largeurCourbe} hauteur={26} />
                   ) : null}
@@ -62,18 +62,18 @@ export function TableauChiffres({ lignes, idTitre }: Props) {
               // ligne garde la hauteur d'une ligne chiffrée (T22).
               <td
                 colSpan={3}
-                className="h-[calc(var(--text-chiffre)+1.5rem)] py-3 pr-3 text-left xl:pr-4"
+                className="h-[calc(var(--text-chiffre)+1.5rem)] py-3 pr-3 text-left ordinateur-large:pr-4"
               >
                 <ValeurChiffre valeur={ligne.valeur} />
               </td>
             )}
             <td
-              className={`py-3 pr-3 text-sm ${ligne.dateSignalee ? 'font-semibold text-attention' : 'text-encre-3'}`}
+              className={`py-3 pr-3 text-detail ${ligne.dateSignalee ? 'font-semibold text-attention' : 'text-encre-3'}`}
             >
               {ligne.date}
             </td>
             <td
-              className={`w-px py-3 text-right text-sm font-semibold whitespace-nowrap ${ligne.completude?.complet === false ? 'text-attention' : 'text-encre-3'}`}
+              className={`w-px py-3 text-right text-detail font-semibold whitespace-nowrap ${ligne.completude?.complet === false ? 'text-attention' : 'text-encre-3'}`}
             >
               {ligne.completude?.texte}
             </td>

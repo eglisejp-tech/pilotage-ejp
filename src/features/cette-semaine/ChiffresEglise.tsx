@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { LARGEURS } from '@/lib/largeurs'
 import { ListeChiffres } from './ListeChiffres'
 import { TableauChiffres } from './TableauChiffres'
 import { TitreSection } from './TitreSection'
@@ -15,7 +16,7 @@ interface Props {
 /** Bloc des chiffres de l'église : un tableau à partir de 600 px, une liste en dessous. */
 export function ChiffresEglise({ titre, lignes, note }: Props) {
   const idTitre = useId()
-  const tableau = useLargeurMin(600)
+  const tableau = useLargeurMin(LARGEURS.tablette)
 
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
@@ -23,7 +24,7 @@ export function ChiffresEglise({ titre, lignes, note }: Props) {
         id={idTitre}
         titre={titre}
         complement={
-          <span aria-hidden="true" className="hidden text-note text-encre-3 lg:inline">
+          <span aria-hidden="true" className="hidden text-note text-encre-3 ordinateur:inline">
             Ministères ayant saisi
           </span>
         }

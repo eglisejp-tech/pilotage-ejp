@@ -4,6 +4,7 @@ import { NomMinistere } from './NomMinistere'
 import { couleursPriorite, libellesPriorite } from './priorites'
 import { TEXTES_VIDES } from './textesVides'
 import type { LigneMinistere } from './types'
+import { LARGEURS } from '@/lib/largeurs'
 import { useLargeurMin } from './useLargeurMin'
 
 interface Props {
@@ -21,17 +22,23 @@ const cellule = 'py-[13px] pr-5'
  * berger et le conseil, à partir de 1024 px (maquettes 01 et 02).
  */
 export function TableauMinisteres({ ministeres, avecColonnesConseil, idTitre }: Props) {
-  const ordinateur = useLargeurMin(1024)
+  const ordinateur = useLargeurMin(LARGEURS.ordinateur)
   const colonnesConseil = avecColonnesConseil && ordinateur
 
   return (
     <table aria-labelledby={idTitre} className="w-full border-collapse">
       <thead>
         <tr className="text-left text-note text-encre-3">
-          <th scope="col" className="w-[12.5rem] pt-3 pr-5 pb-1.5 font-normal lg:w-[13.75rem]">
+          <th
+            scope="col"
+            className="w-[12.5rem] pt-3 pr-5 pb-1.5 font-normal ordinateur:w-[13.75rem]"
+          >
             Ministère
           </th>
-          <th scope="col" className="w-[10.5rem] pt-3 pr-5 pb-1.5 font-normal lg:w-[11.875rem]">
+          <th
+            scope="col"
+            className="w-[10.5rem] pt-3 pr-5 pb-1.5 font-normal ordinateur:w-[11.875rem]"
+          >
             Mise à jour
           </th>
           <th scope="col" className="pt-3 pr-5 pb-1.5 font-normal">
@@ -51,7 +58,7 @@ export function TableauMinisteres({ ministeres, avecColonnesConseil, idTitre }: 
       </thead>
       <tbody>
         {ministeres.map((ministere) => (
-          <tr key={ministere.id} className="border-t border-filet align-baseline text-[15px]">
+          <tr key={ministere.id} className="border-t border-filet align-baseline text-interface">
             <th scope="row" className={`${cellule} text-left font-semibold`}>
               <NomMinistere ministere={ministere} />
             </th>
@@ -75,7 +82,7 @@ export function TableauMinisteres({ ministeres, avecColonnesConseil, idTitre }: 
                     TEXTES_VIDES.ministeres.reunionNonRenseignee}
                 </td>
                 <td
-                  className={`py-[13px] text-sm font-semibold ${ministere.conseil?.pointOuvert ? couleursPriorite[ministere.conseil.pointOuvert] : 'text-encre-3'}`}
+                  className={`py-[13px] text-detail font-semibold ${ministere.conseil?.pointOuvert ? couleursPriorite[ministere.conseil.pointOuvert] : 'text-encre-3'}`}
                 >
                   {ministere.conseil?.pointOuvert
                     ? libellesPriorite[ministere.conseil.pointOuvert]

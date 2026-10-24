@@ -13,7 +13,7 @@ export function ListeMinisteres({ ministeres }: Props) {
       {ministeres.map((ministere) => (
         <li
           key={ministere.id}
-          className="flex items-baseline justify-between gap-3 border-t border-filet py-3 text-[15px] first:border-t-0"
+          className="flex items-baseline justify-between gap-3 border-t border-filet py-3 text-interface first:border-t-0"
         >
           <span className="font-semibold">
             <NomMinistere ministere={ministere} />

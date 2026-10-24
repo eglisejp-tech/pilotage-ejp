@@ -53,12 +53,12 @@ export function CartePointFiche({ point, compte = null }: Props) {
         <Libre texte={point.titre} />
       </h3>
       {point.description ? (
-        <p className="text-[15px] leading-normal text-encre-2">
+        <p className="text-interface leading-normal text-encre-2">
           <Libre texte={point.description} />
         </p>
       ) : null}
       {avecAttendu ? (
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-detail text-encre-2">
           {point.attendu ? (
             <span>
               {TEXTES_FICHE.points.attendu}{' '}
@@ -84,7 +84,7 @@ export function CartePointFiche({ point, compte = null }: Props) {
       ) : null}
       <PoseActionsPoint point={point} compte={compte} />
       {point.traite !== null ? (
-        <p className="text-sm text-encre-2">
+        <p className="text-detail text-encre-2">
           <span className="font-semibold text-bien">{point.traite.texte}</span>
           {point.traite.commentaire !== null ? (
             <>

@@ -40,7 +40,7 @@ export function ADecider({ points, lienTousLesPoints, compte = null }: Props) {
         complement={
           <Link
             to={lienTousLesPoints}
-            className="-my-3 inline-flex min-h-cible items-center text-sm text-nuit underline underline-offset-4"
+            className="-my-3 inline-flex min-h-cible items-center text-detail text-nuit underline underline-offset-4"
           >
             {TEXTES_A_DECIDER.tousLesPoints}
           </Link>

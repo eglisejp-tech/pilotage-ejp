@@ -6,6 +6,7 @@ import { GrilleCetteSemaine } from './GrilleCetteSemaine'
 import { voitADecider } from './lecteur'
 import { TEXTES_VIDES } from './textesVides'
 import { TitreSection } from './TitreSection'
+import { LARGEURS } from '@/lib/largeurs'
 import type { ProfilVue } from './types'
 import { useLargeurMin } from './useLargeurMin'
 
@@ -36,7 +37,7 @@ function SectionEnAttente({ titre }: { titre: string }) {
  * `status` : certains lecteurs d'écran n'annoncent pas ce qui change dans une zone occupée.
  */
 export function ChargementCetteSemaine({ profil }: Props) {
-  const telephone = !useLargeurMin(600)
+  const telephone = !useLargeurMin(LARGEURS.tablette)
 
   // La zone role="status" existe dès le départ, vide : le texte y entre après 300 ms et les
   // lecteurs d'écran l'annoncent (une zone ajoutée avec son texte ne l'est pas toujours).
@@ -58,7 +59,7 @@ export function ChargementCetteSemaine({ profil }: Props) {
       : undefined
   if (accueil && telephone) {
     return (
-      <div className="flex flex-col gap-9">
+      <div className="flex flex-col gap-sections">
         {ouverture}
         {accueil.vosSaisies}
         {accueil.vosPoints}

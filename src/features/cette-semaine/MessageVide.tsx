@@ -10,5 +10,5 @@ interface Props {
  * blanc, jamais un zéro qui aurait l'air d'une donnée. Le texte vient de TEXTES_VIDES.
  */
 export function MessageVide({ children }: Props) {
-  return <p className="max-w-prose py-[18px] text-encre-2">{children}</p>
+  return <p className="max-w-lecture py-[18px] text-encre-2">{children}</p>
 }

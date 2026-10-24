@@ -15,7 +15,7 @@ interface Props {
 export function MarqueFraicheur({ libelle, etat }: Props) {
   return (
     <span
-      className={`inline-flex items-center gap-2 text-[15px] font-semibold whitespace-nowrap ${COULEURS[etat]}`}
+      className={`inline-flex items-center gap-2 text-interface font-semibold whitespace-nowrap ${COULEURS[etat]}`}
     >
       <span aria-hidden="true" className="size-2 shrink-0 bg-current" />
       {libelle}

@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
-import { CLASSE_BOUTON_SECONDAIRE_FICHE } from '@/features/fiche/classesFiche'
+import {
+  CLASSE_BOUTON_PRINCIPAL_FICHE,
+  CLASSE_BOUTON_SECONDAIRE_FICHE,
+} from '@/features/fiche/classesFiche'
 import { MarqueFraicheur } from '@/features/fiche/MarqueFraicheur'
 import type { DonneesFiche } from '@/features/fiche/modeleFiche'
 import { PhraseFiche } from '@/features/fiche/PhraseFiche'
@@ -28,9 +31,9 @@ export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
   return (
     <header className="flex flex-col gap-3.5">
       {estMinistere ? (
-        <p className="text-sm text-encre-3">{TEXTES_FICHE.surtitreMinistere}</p>
+        <p className="text-detail text-encre-3">{TEXTES_FICHE.surtitreMinistere}</p>
       ) : (
-        <nav aria-label="Chemin" className="text-sm text-encre-3">
+        <nav aria-label="Chemin" className="text-detail text-encre-3">
           <Link
             to="/ministeres"
             className="-my-3 inline-flex min-h-cible items-center underline underline-offset-4"
@@ -47,7 +50,7 @@ export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
           </h1>
           <PhraseFiche phrase={donnees.phrase} />
         </div>
-        <div className="flex min-w-60 flex-col gap-1.5 text-[15px]">
+        <div className="flex min-w-60 flex-col gap-1.5 text-interface">
           <p className="flex items-center">
             <MarqueFraicheur libelle={fraicheur.libelle} etat={fraicheur.etat} />
           </p>
@@ -56,10 +59,7 @@ export function EnTeteFiche({ donnees, reunion, nouveauPoint }: Props) {
       </div>
       {estMinistere ? (
         <div className="mt-2 flex flex-wrap gap-3">
-          <Link
-            to="/saisir/dimanche"
-            className="inline-flex min-h-cible items-center justify-center bg-lumiere px-5 text-[15px] font-semibold whitespace-nowrap text-encre"
-          >
+          <Link to="/saisir/dimanche" className={CLASSE_BOUTON_PRINCIPAL_FICHE}>
             {TEXTES_FICHE.saisirDimanche}
           </Link>
           {/* Une seule fois sur la page : au premier usage, l'action est dans le bloc des chiffres. */}

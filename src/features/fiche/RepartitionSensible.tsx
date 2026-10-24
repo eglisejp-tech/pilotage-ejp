@@ -19,7 +19,7 @@ export function RepartitionSensible({ repartitions }: Props) {
     <details
       open={ouvert}
       onToggle={(evenement) => setOuvert(evenement.currentTarget.open)}
-      className="text-sm"
+      className="text-detail"
     >
       <summary className="inline-flex min-h-cible cursor-pointer items-center font-semibold text-encre underline underline-offset-4">
         {TEXTES_FICHE.repartition}

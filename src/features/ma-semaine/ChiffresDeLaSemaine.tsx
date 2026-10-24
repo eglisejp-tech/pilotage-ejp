@@ -29,7 +29,7 @@ export function ChiffresDeLaSemaine({ lignes, fij }: Props) {
       </ul>
       <Link
         to="/ma-fiche"
-        className="mt-1 inline-flex min-h-cible items-center self-start text-sm text-nuit underline underline-offset-4"
+        className="mt-1 inline-flex min-h-cible items-center self-start text-detail text-nuit underline underline-offset-4"
       >
         {TEXTES_MA_SEMAINE.lienFiche}
       </Link>

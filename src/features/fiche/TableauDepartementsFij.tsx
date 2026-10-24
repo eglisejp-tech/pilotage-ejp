@@ -4,6 +4,7 @@ import type {
   DepartementDuBloc,
   RubriqueDuBloc,
 } from '@/features/fiche/donneesChiffresParDepartement'
+import { LARGEURS } from '@/lib/largeurs'
 import { nombre } from '@/lib/metier/texte'
 
 interface Props {
@@ -25,16 +26,16 @@ const enMinuscule = (texte: string) => `${texte.charAt(0).toLowerCase()}${texte.
  * ce qui est affiché.
  */
 export function TableauDepartementsFij({ rubriques, departements, semaine }: Props) {
-  const tableau = useLargeurMin(600)
+  const tableau = useLargeurMin(LARGEURS.tablette)
   if (!tableau) {
     return (
       <ul className="flex flex-col">
         {departements.map((departement) => (
           <li key={departement.code} className="border-b border-filet py-3">
-            <p className="text-[15px] font-semibold">
+            <p className="text-interface font-semibold">
               {departement.code} {departement.nom}
             </p>
-            <dl className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 text-sm">
+            <dl className="mt-1 grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-0.5 text-detail">
               {rubriques.map((rubrique) => {
                 const v = departement.valeurs[rubrique.code]
                 return (
@@ -51,7 +52,7 @@ export function TableauDepartementsFij({ rubriques, departements, semaine }: Pro
     )
   }
   return (
-    <table className="w-full border-collapse text-left text-[15px]">
+    <table className="w-full border-collapse text-left text-interface">
       <caption className="sr-only">{`Dernière valeur de chaque département, ${enMinuscule(semaine)}`}</caption>
       <thead>
         <tr className="border-b border-filet text-note text-encre-3">
@@ -77,7 +78,7 @@ export function TableauDepartementsFij({ rubriques, departements, semaine }: Pro
                 <td
                   key={rubrique.code}
                   className={
-                    v === null ? 'py-2.5 pr-3 text-sm text-encre-3' : 'py-2.5 pr-3 tabular-nums'
+                    v === null ? 'py-2.5 pr-3 text-detail text-encre-3' : 'py-2.5 pr-3 tabular-nums'
                   }
                 >
                   {valeur(v)}

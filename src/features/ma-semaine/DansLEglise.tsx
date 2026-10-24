@@ -24,7 +24,7 @@ export function DansLEglise({ lignes }: Props) {
             key={ligne.cle}
             className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-filet py-3"
           >
-            <span className="col-start-1 min-w-0 text-base break-words">{ligne.libelle}</span>
+            <span className="col-start-1 min-w-0 text-texte break-words">{ligne.libelle}</span>
             <span className="col-start-2 row-start-1 justify-self-end text-right">
               <ValeurLigne
                 valeur={
@@ -34,7 +34,7 @@ export function DansLEglise({ lignes }: Props) {
                 }
               />
             </span>
-            <span className="col-span-2 min-w-0 text-sm text-encre-3">{ligne.detail}</span>
+            <span className="col-span-2 min-w-0 text-detail text-encre-3">{ligne.detail}</span>
           </li>
         ))}
       </ul>

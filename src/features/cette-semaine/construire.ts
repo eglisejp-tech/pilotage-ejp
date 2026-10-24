@@ -37,6 +37,7 @@ import {
 import { detailFij } from '@/lib/metier/pourcentage'
 import { libellePeriode } from '@/lib/metier/semaine'
 import { comparerNoms, nombre } from '@/lib/metier/texte'
+import { noteDesChiffres } from './noteChiffres'
 import { TEXTE_MASQUE, TEXTES_VIDES } from './textesVides'
 import type {
   ApportSession,
@@ -101,10 +102,6 @@ export interface LecturesCetteSemaine {
 
 type LigneSession = LigneVue<'v_session_completude'>
 type LigneTableau = LigneVue<'v_tableau_ministeres'>
-
-// La règle du STAR compté une fois quitte la note (T66, t180) : elle ira dans la page Aide, qui
-// reste à créer (guide de rédaction, section 6).
-const NOTE_CHIFFRES = 'Courbes : 10 derniers dimanches ou 4 dernières sessions.'
 
 const DEPARTEMENTS: { code: CodeDepartement; nom: string }[] = [
   { code: '75', nom: 'Paris' },
@@ -735,7 +732,7 @@ export function construireCetteSemaine(
   const commun = {
     semaine: semaineAffichee(semaine),
     chiffres,
-    noteChiffres: NOTE_CHIFFRES,
+    noteChiffres: noteDesChiffres(chiffres),
     session: blocSession(contexte, typeSession),
     carte: carteFij(lectures.carteFij),
   }

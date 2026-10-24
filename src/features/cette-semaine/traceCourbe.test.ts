@@ -24,6 +24,31 @@ describe('tracerCourbe', () => {
     ])
   })
 
+  it('marque le bout de chaque morceau d’un point plein, sans pointillé entre les morceaux', () => {
+    const { chemin, reperes } = tracerCourbe(
+      [{ valeur: 1 }, { valeur: 2 }, { valeur: null }, { valeur: 3 }, { valeur: 2 }, { valeur: 4 }],
+      108,
+      26,
+    )
+    expect(chemin).toBe('M4 22 L24 16 M64 10 L84 16 L104 4')
+    expect(reperes).toEqual([
+      { x: 24, y: 16, plein: true, rayon: 2 },
+      { x: 104, y: 4, plein: true, rayon: 3 },
+    ])
+  })
+
+  it('garde le cercle vide au bout d’un morceau incomplet', () => {
+    const { reperes } = tracerCourbe(
+      [{ valeur: 1 }, { valeur: 2, incomplet: true }, { valeur: null }, { valeur: 4 }],
+      100,
+      26,
+    )
+    expect(reperes).toEqual([
+      { x: 34.7, y: 16, plein: false, rayon: 2.5 },
+      { x: 96, y: 4, plein: true, rayon: 3 },
+    ])
+  })
+
   it('dessine le dernier point vide quand il est incomplet', () => {
     const { reperes } = tracerCourbe([{ valeur: 63 }, { valeur: 58, incomplet: true }], 132, 26)
     expect(reperes).toEqual([{ x: 128, y: 22, plein: false, rayon: 3 }])
