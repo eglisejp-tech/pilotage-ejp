@@ -107,6 +107,30 @@ test.describe('saisie du dimanche (propositions 1, 3 et 4)', () => {
   })
 })
 
+test.describe('aucun champ de moins de 16 px : pas de zoom imprévu sur iPhone (proposition 3)', () => {
+  const ECRANS = [
+    { nom: 'chiffres du mois', adresse: '/apercu/saisies?profil=ministere&ecran=mois' },
+    { nom: 'session', adresse: '/apercu/saisies-e4?profil=ministere&ecran=session' },
+    { nom: 'événement', adresse: '/apercu/evenements?profil=ministere' },
+    { nom: 'réunion', adresse: '/apercu/evenements?profil=ministere&ecran=reunion' },
+    { nom: 'nouveau point', adresse: '/apercu/nouveau-point?profil=ministere' },
+  ]
+  for (const { nom, adresse } of ECRANS) {
+    test(nom, async ({ page }) => {
+      await ouvrir(page, adresse)
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+      expect(await champsTropPetits(page)).toEqual([])
+    })
+  }
+
+  test('« Marquer traité » d’un point', async ({ page }) => {
+    await ouvrir(page, '/apercu/points-actions?profil=ministere&lien=createur')
+    await page.getByRole('button', { name: 'Marquer traité' }).first().click()
+    await expect(page.getByRole('dialog').getByRole('textbox')).toBeVisible()
+    expect(await champsTropPetits(page)).toEqual([])
+  })
+})
+
 test.describe('choix en un seul bloc, sans mot coupé (proposition 9)', () => {
   test('types de session : les uns sous les autres, 48 px, une ligne chacun', async ({ page }) => {
     for (const taille of largeursDuTest(page)) {

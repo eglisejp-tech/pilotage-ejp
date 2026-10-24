@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FunctionComponent, MouseEvent } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
@@ -47,9 +48,6 @@ export interface ProprietesActionsPoint {
 }
 
 type Fenetre = 'statut' | 'traite' | 'mentions'
-
-const CLASSE_BOUTON =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond'
 
 /**
  * Vrai pour un refus de la base qui dit que la page est périmée : point déjà traité, mentions
@@ -219,34 +217,20 @@ export const ActionsPoint: FunctionComponent<ProprietesActionsPoint> = ({ point,
         {point.titre.masque ? TEXTE_MASQUE_AFFICHE : point.titre.texte}
       </span>
       {peutStatut ? (
-        <button
-          type="button"
-          aria-describedby={idTitre}
-          onClick={(evenement) => ouvrir('statut', evenement)}
-          className={CLASSE_BOUTON}
-        >
+        <Bouton aria-describedby={idTitre} onClick={(evenement) => ouvrir('statut', evenement)}>
           {TEXTES_ACTIONS_POINT.boutonStatut}
-        </button>
+        </Bouton>
       ) : null}
       {peutTraiter ? (
-        <button
-          type="button"
-          aria-describedby={idTitre}
-          onClick={(evenement) => ouvrir('traite', evenement)}
-          className={CLASSE_BOUTON}
-        >
+        <Bouton aria-describedby={idTitre} onClick={(evenement) => ouvrir('traite', evenement)}>
           {TEXTES_ACTIONS_POINT.boutonTraite}
-        </button>
+        </Bouton>
       ) : null}
+      {/* « Modifier les mentions » reste un bouton (T54 ; T69, proposition 12). */}
       {peutMentions ? (
-        <button
-          type="button"
-          aria-describedby={idTitre}
-          onClick={(evenement) => ouvrir('mentions', evenement)}
-          className={CLASSE_BOUTON}
-        >
+        <Bouton aria-describedby={idTitre} onClick={(evenement) => ouvrir('mentions', evenement)}>
           {TEXTES_ACTIONS_POINT.boutonMentions}
-        </button>
+        </Bouton>
       ) : null}
       {fenetre === 'statut' ? (
         <PanneauChangerStatut

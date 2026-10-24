@@ -604,7 +604,7 @@ describe('la fenêtre aux deux largeurs', () => {
     await utilisateur.click(screen.getByRole('button', { name: 'Changer le statut' }))
     const fenetre = screen.getByRole('dialog')
     expect(fenetre).toHaveClass('w-full')
-    expect(fenetre).toHaveClass('min-[600px]:max-w-[460px]')
+    expect(fenetre).toHaveClass('tablette:max-w-[460px]')
     expect(document.body.style.overflow).toBe('hidden')
   })
 

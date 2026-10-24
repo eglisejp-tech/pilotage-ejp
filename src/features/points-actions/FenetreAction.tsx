@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from 'react'
 import type { ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { TEXTE_MASQUE_AFFICHE } from '@/features/fiche/textesFiche'
+import { LIBELLE_RETOUR } from '@/features/saisie/textes'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 
 interface Props {
@@ -39,7 +40,7 @@ export function FenetreAction({ titre, point, onFermer, children }: Props) {
       <div
         aria-hidden="true"
         onClick={onFermer}
-        className="absolute inset-0 hidden bg-encre/50 min-[600px]:block"
+        className="absolute inset-0 hidden bg-encre/50 tablette:block"
       />
       <div
         ref={panneau}
@@ -48,29 +49,26 @@ export function FenetreAction({ titre, point, onFermer, children }: Props) {
         aria-labelledby={idTitre}
         tabIndex={-1}
         data-colonne
-        className="relative flex h-full w-full flex-col gap-5 overflow-y-auto bg-papier px-4 py-6 outline-hidden min-[600px]:max-w-[460px] min-[600px]:border-l min-[600px]:border-filet min-[600px]:px-6"
+        className="relative flex h-full w-full flex-col gap-5 overflow-y-auto bg-papier px-4 py-6 outline-hidden tablette:max-w-[460px] tablette:border-l tablette:border-filet tablette:px-6"
       >
         <div>
           <button
             type="button"
             onClick={onFermer}
-            className="inline-flex min-h-cible items-center text-[15px] text-nuit underline underline-offset-4"
+            className="inline-flex min-h-cible items-center text-interface text-nuit underline underline-offset-4"
           >
-            Retour
+            {LIBELLE_RETOUR}
           </button>
         </div>
         <div className="flex flex-col gap-2">
-          <h2
-            id={idTitre}
-            className="font-lecture text-[32px] leading-[1.1] font-medium min-[600px]:text-[34px]"
-          >
+          <h2 id={idTitre} className="font-lecture text-titre-panneau">
             {titre}
           </h2>
           <p
             className={
               point.masque
-                ? 'text-[15px] leading-normal text-encre-3'
-                : 'text-[17px] leading-normal font-semibold text-encre-2'
+                ? 'text-interface leading-normal text-encre-3'
+                : 'text-texte leading-normal font-semibold text-encre-2'
             }
           >
             {point.masque ? TEXTE_MASQUE_AFFICHE : `« ${point.texte} »`}

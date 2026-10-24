@@ -28,10 +28,10 @@ export function ChoixMois({ mois, proposes, rattrapage }: Props) {
   return (
     <div className="flex flex-col gap-2">
       <div className="flex min-h-cible flex-wrap items-center">
-        <p className="text-[15px] font-semibold">{TEXTES_CHIFFRES.libelleMois}</p>
+        <p className="text-interface font-semibold">{TEXTES_CHIFFRES.libelleMois}</p>
       </div>
       <nav aria-label="Mois proposés">
-        <ul className="grid grid-cols-1 gap-2 min-[600px]:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-2 tablette:grid-cols-3">
           {proposes.map((propose) => (
             <li key={propose.mois}>
               <Link
@@ -39,10 +39,10 @@ export function ChoixMois({ mois, proposes, rattrapage }: Props) {
                 replace
                 aria-current={propose.mois === mois ? 'page' : undefined}
                 className={cn(
-                  'flex h-full min-h-cible items-center justify-center border px-3 py-2 text-center text-sm font-semibold',
+                  'retour-appui flex h-full min-h-cible items-center justify-center border px-3 py-2 text-center text-detail font-semibold',
                   propose.mois === mois
-                    ? 'border-encre bg-encre text-papier'
-                    : 'border-encre bg-papier text-encre hover:bg-fond',
+                    ? 'retour-clair border-encre bg-encre text-papier'
+                    : 'border-encre bg-papier text-encre',
                 )}
               >
                 {propose.libelle}
@@ -52,7 +52,7 @@ export function ChoixMois({ mois, proposes, rattrapage }: Props) {
         </ul>
       </nav>
       {enCours ? (
-        <p className="text-sm leading-normal text-encre-3">
+        <p className="text-detail leading-normal text-encre-3">
           {TEXTES_CHIFFRES.indicationMoisEnCours}
         </p>
       ) : null}

@@ -58,10 +58,10 @@ export function ChampPrecision({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-sm font-semibold">
+      <label htmlFor={id} className="text-detail font-semibold">
         {TEXTES_CHIFFRES.precisionLibelle}
       </label>
-      <p id={idLecteurs} className="text-sm leading-normal text-encre-3">
+      <p id={idLecteurs} className="text-detail leading-normal text-encre-3">
         {TEXTES_CHIFFRES.precisionLecteurs}
       </p>
       <ZoneDeTexte
@@ -75,12 +75,12 @@ export function ChampPrecision({
       {rappel ? <RappelDonneesPersonnelles id={idRappel} /> : null}
       <Compteur id={idCompteur} valeur={Array.from(valeur).length} max={LONGUEUR_TEXTE_MAX} />
       {note ? (
-        <p id={idNote} className="text-sm leading-normal text-encre-3">
+        <p id={idNote} className="text-detail leading-normal text-encre-3">
           {note}
         </p>
       ) : null}
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

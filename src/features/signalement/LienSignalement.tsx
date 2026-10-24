@@ -20,7 +20,7 @@ export function LienSignalement({ ecran, enLigne = false }: Props) {
     <Link
       to={`/signaler?ecran=${ecran}`}
       className={cn(
-        'text-[15px] text-nuit underline underline-offset-4',
+        'text-interface text-nuit underline underline-offset-4',
         !enLigne && 'inline-flex min-h-cible items-center self-start',
       )}
     >

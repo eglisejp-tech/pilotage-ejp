@@ -1,4 +1,5 @@
 import { useId, useRef } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { TEXTES_FERMER_SANS_ENREGISTRER } from '@/features/saisie/textes'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 
@@ -35,30 +36,18 @@ export function FenetreFermerSansEnregistrer({ onFermer, onContinuer }: Props) {
         className="relative flex max-h-full w-full max-w-[480px] flex-col gap-5 overflow-y-auto border border-filet bg-papier p-6 outline-hidden"
       >
         {/* Lignes équilibrées : à 390 px, le « ? » ne reste jamais seul sur sa ligne. */}
-        <h2
-          id={idTitre}
-          className="font-lecture text-[28px] leading-tight font-medium text-balance"
-        >
+        <h2 id={idTitre} className="font-lecture text-titre-fenetre text-balance">
           {TEXTES_FERMER_SANS_ENREGISTRER.titre}
         </h2>
         <p id={idTexte} className="leading-normal text-encre-2">
           {TEXTES_FERMER_SANS_ENREGISTRER.texte}
         </p>
-        <div className="flex flex-col-reverse gap-2 min-[480px]:flex-row min-[480px]:justify-end">
-          <button
-            type="button"
-            onClick={onContinuer}
-            className="inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
-          >
-            {TEXTES_FERMER_SANS_ENREGISTRER.continuer}
-          </button>
-          <button
-            type="button"
-            onClick={onFermer}
-            className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier"
-          >
+        {/* Comme FenetreConfirmation : côte à côte à droite à partir de 600 px. */}
+        <div className="flex flex-col-reverse gap-2 tablette:flex-row tablette:justify-end">
+          <Bouton onClick={onContinuer}>{TEXTES_FERMER_SANS_ENREGISTRER.continuer}</Bouton>
+          <Bouton variante="sombre" onClick={onFermer}>
             {TEXTES_FERMER_SANS_ENREGISTRER.fermer}
-          </button>
+          </Bouton>
         </div>
       </div>
     </div>
