@@ -22,9 +22,11 @@ playwright/.cache/
 # Sessions enregistrées par le projet Playwright « connexion » (BRIEF section 8)
 e2e/.auth/
 
-# Hébergement
+# Hébergement (Cloudflare Pages depuis T70 : wrangler y garde son cache local)
 .vercel/
 .netlify/
+.wrangler/
+redirection-netlify/
 
 # Journaux
 logs/
