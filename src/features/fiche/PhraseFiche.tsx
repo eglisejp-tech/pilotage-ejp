@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import type { Segment } from '@/lib/metier/phrases'
+import { lierNombres } from '@/lib/metier/texte'
 
 interface Props {
   phrase: readonly Segment[]
@@ -7,7 +8,8 @@ interface Props {
 
 /**
  * Phrase de la fiche (04, 12, la même pour tous) : seule la partie « Un point attend une
- * décision. » reçoit le surligneur jaune, le point final restant hors du surligneur.
+ * décision. » reçoit le surligneur jaune, le point final restant hors du surligneur. Un nombre
+ * reste avec son mot (T69, proposition 8).
  */
 export function PhraseFiche({ phrase }: Props) {
   return (
@@ -15,10 +17,10 @@ export function PhraseFiche({ phrase }: Props) {
       {phrase.map((segment, rang) =>
         segment.surligne ? (
           <mark key={rang} className="a-decider text-inherit">
-            {segment.texte}
+            {lierNombres(segment.texte)}
           </mark>
         ) : (
-          <Fragment key={rang}>{segment.texte}</Fragment>
+          <Fragment key={rang}>{lierNombres(segment.texte)}</Fragment>
         ),
       )}
     </p>

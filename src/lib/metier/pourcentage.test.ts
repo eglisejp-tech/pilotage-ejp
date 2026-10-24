@@ -35,9 +35,9 @@ describe('pourcentageFij', () => {
 })
 
 describe('formaterPourcentage', () => {
-  it('écrit « 77 % » avec une espace fine insécable', () => {
-    expect(formaterPourcentage(77)).toBe('77\u202f%')
-    expect(formaterPourcentage(0)).toBe('0\u202f%')
+  it('écrit « 77 % » avec une espace insécable (U+00A0)', () => {
+    expect(formaterPourcentage(77)).toBe('77\xa0%')
+    expect(formaterPourcentage(0)).toBe('0\xa0%')
   })
 
   it('écrit « Non calculé » sans pourcentage', () => {

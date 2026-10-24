@@ -214,7 +214,8 @@
  * Animations de chargement (T65, docs/decisions.md) : la flamme du logo d'EJP Tech. Les trois
  * couleurs sont celles du dégradé et des reflets du logo (public/favicon.svg), seule exception
  * aux tokens, voulue par T65 : elles vivent ici, en variables, pour que src/styles/tokens.css
- * reste la copie de la référence et qu'aucun composant n'écrive de couleur. Le reste vient des
+ * reste la copie de la référence (avec ses seuls ajouts du brief, --fij-1 à --fij-5) et qu'aucun
+ * composant n'écrive de couleur. Le reste vient des
  * tokens (--nuit pour le monogramme, --lumiere pour la lueur) ; la flamme d'un bouton prend la
  * couleur de son libellé.
  * Les styles de base sont l'état final, immobile : avec « Réduire les animations », la règle de
@@ -413,6 +414,28 @@
     @apply bg-background text-foreground;
     /* 16 px, 17 px à partir de 1440 px (src/styles/fondations.css). */
     font-size: var(--taille-texte);
+    /*
+     * Finitions du texte (T69, proposition 8). Pas de mot seul sur la dernière ligne d'un
+     * paragraphe, d'une note ou d'une seconde ligne : la règle s'hérite, elle vaut partout. Un
+     * navigateur qui ne la connaît pas coupe comme avant.
+     */
+    text-wrap: pretty;
+  }
+  /* Des titres aux lignes équilibrées, phrase de la semaine comprise. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  /*
+   * Chiffres de même largeur dans les tableaux et les dates (BRIEF section 10 : dates et heures
+   * en Public Sans avec tabular-nums). Big Shoulders n'a pas de chiffres tabulaires : ses
+   * valeurs gardent leur chasse, la mise en page les aligne.
+   */
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
   }
   /* Focus toujours visible (BRIEF section 10, accessibilité) */
   :focus-visible {

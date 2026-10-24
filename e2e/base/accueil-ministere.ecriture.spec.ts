@@ -52,7 +52,8 @@ test('un événement à confirmer : une ligne « Mettre à jour » et la phrase 
 
   // La phrase compte les événements sans jamais citer leur titre ; « Tout est à jour » est masqué.
   const phrase = page.getByRole('heading', { level: 1 })
-  await expect(phrase).toContainText(/le statut (d'un événement|de \d+ événements)/)
+  // \s : un nombre et son mot sont liés par une espace insécable (T69, proposition 8).
+  await expect(phrase).toContainText(/le statut (d'un\sévénement|de \d+\sévénements)/)
   await expect(phrase).not.toContainText(NOM)
   await expect(phrase).not.toContainText('Tout est à jour')
   await expect(

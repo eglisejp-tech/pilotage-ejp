@@ -319,7 +319,7 @@ const ministeres: LigneConseil[] = [
     href: '/ministeres/for',
     fraicheur: { libelle: 'Il y a 3 jours', etat: 'a_jour' },
     prochainEvenement: evenement('4 oct.', 'Nouvelle promotion'),
-    conseil: { prochaineReunion: '1 oct.', pointOuvert: null },
+    conseil: { prochaineReunion: '1er oct.', pointOuvert: null },
   },
   {
     id: 'fij',

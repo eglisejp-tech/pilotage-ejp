@@ -182,7 +182,7 @@ describe('/indicateurs, bloc « À valider » pour EJP Tech', () => {
       .getAllByRole('heading', { level: 3 })
       .map((titre) => titre.textContent ?? '')
     expect(noms).toEqual(['Kumi', 'Communication', 'Intégration'])
-    expect(ligne('Kumi').getByText('Envoyé le 1 oct.')).toBeInTheDocument()
+    expect(ligne('Kumi').getByText('Envoyé le 1er oct.')).toBeInTheDocument()
     expect(ligne('Kumi').getByText(/depuis 9 jours/)).toBeInTheDocument()
     expect(ligne('Kumi').getByText('en retard')).toBeInTheDocument()
     expect(ligne('Communication').queryByText('en retard')).toBeNull()

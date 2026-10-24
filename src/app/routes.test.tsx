@@ -12,6 +12,7 @@ import { accueil, ADRESSES_APPLICATION, titrePour } from '@/features/navigation/
 import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { VERSION_CONDITIONS } from '@/lib/metier/conditions'
+import { lierNombres } from '@/lib/metier/texte'
 import { clientRequetes } from '@/lib/requetes'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
@@ -328,7 +329,8 @@ describe('routes', () => {
     installerVueDeLEglise('berger')
     afficher('/')
     const attendu = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
-    const phrase = attendu.phrase.map((morceau) => morceau.texte).join('')
+    // L'écran lie chaque nombre à son mot (espaces insécables, T69) : le nom accessible aussi.
+    const phrase = attendu.phrase.map((morceau) => lierNombres(morceau.texte)).join('')
     expect(await screen.findByRole('heading', { level: 1, name: phrase })).toBeInTheDocument()
     expect(document.title).toBe('Cette semaine, Pilotage EJP')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
@@ -386,7 +388,7 @@ describe('routes', () => {
     const faux = installerVueDeLEglise('admin_plateforme')
     const routeur = afficher('/')
     const berger = construireCetteSemaine(lecturesExemple(), { profil: 'berger' }, null)
-    const phrase = berger.phrase.map((morceau) => morceau.texte).join('')
+    const phrase = berger.phrase.map((morceau) => lierNombres(morceau.texte)).join('')
     expect(await screen.findByRole('heading', { level: 1, name: phrase })).toBeInTheDocument()
     expect(routeur.state.location.pathname).toBe('/')
     expect(document.title).toBe('Cette semaine, Pilotage EJP')

@@ -82,7 +82,7 @@ describe('une ligne du journal, en mots', () => {
       '15 déc., 23 h 30',
     )
     expect(construireLigne(ligne({ le: '2026-09-30T22:05:00Z' }), CONTEXTE).quand).toBe(
-      '1 oct., 0 h 05',
+      '1er oct., 0 h 05',
     )
   })
 

@@ -73,7 +73,7 @@ describe('partALHeure et retardMoyen', () => {
   it('part arrondie comme le pourcentage FIJ (0,5 vers le haut), retard moyen à la minute', () => {
     const { total, evenements } = ponctualiteDuMois(MOIS)
     expect(partALHeure(total)).toBe(63)
-    expect(formaterPartALHeure(total)).toBe('63 %')
+    expect(formaterPartALHeure(total)).toBe('63\xa0%')
     expect(retardMoyen(total)).toBe(8)
     expect(formaterRetardMoyen(total)).toBe('8 min')
     expect(partALHeure(evenements)).toBe(50)
@@ -91,7 +91,7 @@ describe('partALHeure et retardMoyen', () => {
 
   it('tous à l’heure, avance comptée 0 : 100 % et 0 min', () => {
     const { total } = ponctualiteDuMois({ ...RIEN, realises: 2, avec_heures: 2, a_l_heure: 2 })
-    expect(formaterPartALHeure(total)).toBe('100 %')
+    expect(formaterPartALHeure(total)).toBe('100\xa0%')
     expect(formaterRetardMoyen(total)).toBe('0 min')
   })
 })
@@ -99,6 +99,6 @@ describe('partALHeure et retardMoyen', () => {
 describe('formaterMinutes', () => {
   it('« 35 min », « 1 234 min »', () => {
     expect(formaterMinutes(35)).toBe('35 min')
-    expect(formaterMinutes(1234)).toBe('1 234 min')
+    expect(formaterMinutes(1234)).toBe('1\xa0234 min')
   })
 })
