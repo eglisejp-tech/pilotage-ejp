@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { LONGUEUR_MAX_NOM_MINISTERE } from '../../../supabase/functions/_shared/schemas.ts'
+import { Bouton } from '@/components/ui/Bouton'
 import { ChampLigne } from '@/features/comptes/ChampLigne'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { longueurEnCaracteres, schemaNouveauMinistere } from '@/features/comptes/schemas'
@@ -102,13 +103,9 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
         enCours={isSubmitting}
         libelleEnCours={TEXTES_COMPTES.enCours.creer}
       />
-      <button
-        type="button"
-        onClick={annuler}
-        className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-      >
+      <Bouton pleineLargeur onClick={annuler}>
         {TEXTES_COMPTES.annuler}
-      </button>
+      </Bouton>
       {refus !== null ? <ErreurFormulaire message={refus} /> : null}
     </form>
   )

@@ -98,7 +98,10 @@ export function VuePoints({ titre, profil, donnees, compte }: Props) {
       </EnTetePage>
 
       <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
-        <div className="flex flex-wrap items-end justify-between gap-x-4 border-b-2 border-encre">
+        {/* Quand la ligne est trop étroite (téléphone), le filtre passe au-dessus des onglets
+            (retour à la ligne inversé) : les onglets restent sur le trait, avec leur soulignement
+            (proposition 5, T69). En retour inversé, `items-start` aligne en bas de la ligne. */}
+        <div className="flex flex-wrap-reverse items-start justify-between gap-x-4 gap-y-3 border-b-2 border-encre">
           <OngletsPoints vue={vue} nombres={nombres} />
           {donnees.ministeres !== null ? (
             <FiltreMinistere

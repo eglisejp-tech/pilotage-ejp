@@ -1,4 +1,5 @@
 import type { ComponentProps } from 'react'
+import { Champ } from '@/components/ui/Champ'
 import { Compteur } from '@/features/saisie/Compteur'
 
 type Props = Omit<
@@ -19,7 +20,7 @@ type Props = Omit<
 
 /**
  * Champ d'une ligne des panneaux de l'écran 13 (nom du ministère, adresse email) : libellé, champ
- * de 52 px, indication éventuelle, compteur, puis le message d'erreur sous le champ, reliés au
+ * commun de 52 px (Champ, T69), indication éventuelle, compteur, puis le message d'erreur sous le champ, reliés au
  * champ par `aria-describedby`.
  */
 export function ChampLigne({ id, libelle, note, compteur, erreur, ...proprietes }: Props) {
@@ -32,18 +33,17 @@ export function ChampLigne({ id, libelle, note, compteur, erreur, ...proprietes 
     .join(' ')
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={id} className="text-[15px] font-semibold">
+      <label htmlFor={id} className="text-interface font-semibold">
         {libelle}
       </label>
-      <input
+      <Champ
         {...proprietes}
         id={id}
         aria-invalid={erreur ? true : undefined}
         aria-describedby={decritPar || undefined}
-        className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
       {note ? (
-        <p id={idNote} className="text-sm leading-normal text-encre-2">
+        <p id={idNote} className="text-detail leading-normal text-encre-2">
           {note}
         </p>
       ) : null}
@@ -56,7 +56,7 @@ export function ChampLigne({ id, libelle, note, compteur, erreur, ...proprietes 
         />
       ) : null}
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

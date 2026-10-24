@@ -8,6 +8,7 @@ import type { ResultatAction } from '@/features/comptes/ResultatLigne'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import type { LigneCompte } from '@/features/comptes/types'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
+import { LARGEURS } from '@/lib/largeurs'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -28,9 +29,25 @@ const entete = 'pt-1 pr-5 pb-1 text-left align-middle font-normal'
 const cellule = 'py-2.5 pr-5 align-middle'
 
 /**
+ * Largeurs des colonnes, les mêmes dans les trois sections (Ministères, Berger et conseil, EJP
+ * Tech) : la colonne « Double authentification » est au même endroit dans chaque tableau, comme
+ * dans la maquette 13 (proposition 5, T69), et une ligne ne pousse jamais la page hors de
+ * l'écran. La colonne « Indicateurs » reste vide hors des ministères ; les boutons prennent le
+ * reste (« État » le prend en lecture seule). Proches de la maquette à 1440 px (200, 270, 284,
+ * 206 et 303 px de 1264).
+ */
+function largeursColonnes(ordinateur: boolean, avecActions: boolean): string[] {
+  const etat = avecActions ? (ordinateur ? 'w-[17%]' : 'w-[24%]') : ''
+  return ordinateur
+    ? ['w-[15%]', 'w-[21%]', 'w-[14%] grand-ecran:w-[19%]', etat]
+    : ['w-[30%]', 'w-[20%]', etat]
+}
+
+/**
  * Tableau d'une section de l'écran 13 à partir de 600 px (maquette 13). À partir de 1024 px,
  * l'adresse a sa colonne ; de 600 à 1023 px, elle passe sous le nom pour que les boutons tiennent.
- * La colonne « Indicateurs » n'existe que pour les ministères.
+ * La colonne « Indicateurs » n'existe que pour les ministères. Largeurs fixes (`table-fixed`) :
+ * un libellé trop long passe à la ligne dans sa case, même celui d'un bouton.
  */
 export function TableauComptes({
   lignes,
@@ -41,17 +58,23 @@ export function TableauComptes({
   resultat,
   moi,
 }: Props) {
-  const ordinateur = useLargeurMin(1024)
+  const ordinateur = useLargeurMin(LARGEURS.ordinateur)
   const ministeres = variante === 'ministeres'
   return (
-    <table aria-labelledby={idTitre} className="w-full border-collapse">
+    <table aria-labelledby={idTitre} className="w-full table-fixed border-collapse">
+      <colgroup>
+        {largeursColonnes(ordinateur, onAction !== null).map((largeur, rang) => (
+          <col key={rang} className={largeur || undefined} />
+        ))}
+        {onAction !== null ? <col /> : null}
+      </colgroup>
       <thead>
         <tr className="text-note text-encre-3">
-          <th scope="col" className={cn(entete, ordinateur ? 'w-[180px]' : 'w-[34%]')}>
+          <th scope="col" className={entete}>
             {ministeres ? TEXTES_COMPTES.colonneMinistere : TEXTES_COMPTES.colonneCompte}
           </th>
           {ordinateur ? (
-            <th scope="col" className={cn(entete, 'w-[250px]')}>
+            <th scope="col" className={entete}>
               {ministeres
                 ? TEXTES_COMPTES.colonneEmailMinistere
                 : TEXTES_COMPTES.colonneEmailPersonnel}
@@ -64,8 +87,8 @@ export function TableauComptes({
           ) : (
             <td />
           )}
-          <th scope="col" className={cn(entete, ordinateur && 'w-[200px]')}>
-            <span className="inline-flex items-center whitespace-nowrap">
+          <th scope="col" className={entete}>
+            <span className="inline-flex items-center">
               {TEXTES_COMPTES.colonneEtat}
               <Aide
                 code="comptes.etat"
@@ -83,11 +106,11 @@ export function TableauComptes({
       </thead>
       <tbody>
         {lignes.map((ligne) => (
-          <tr key={ligne.cle} data-cle={ligne.cle} className="border-t border-filet text-[15px]">
+          <tr key={ligne.cle} data-cle={ligne.cle} className="border-t border-filet text-interface">
             <th scope="row" className={cn(cellule, 'text-left font-semibold')}>
               {ligne.nom}
               {ordinateur ? null : (
-                <span className="block text-sm font-normal break-all text-encre-2">
+                <span className="block text-detail font-normal break-all text-encre-2">
                   {ligne.email ?? TEXTES_COMPTES.pasDeCompte}
                 </span>
               )}

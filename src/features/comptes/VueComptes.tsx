@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react'
 import { ApresChargement } from '@/components/etats/ApresChargement'
 import { ChargementPage } from '@/components/etats/ChargementPage'
 import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
+import { EnTetePage } from '@/components/ui/EnTetePage'
+import { GabaritPage } from '@/components/ui/GabaritPage'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { FenetreConfirmation } from '@/features/comptes/FenetreConfirmation'
 import { ListesEglise } from '@/features/comptes/ListesEglise'
@@ -94,143 +96,138 @@ export function VueComptes({
   ) : null
 
   return (
-    <div ref={contenuRef} className="flex flex-col gap-12">
-      {pleinePage ? null : (
-        <div className="flex flex-col gap-6 min-[1024px]:flex-row min-[1024px]:items-end min-[1024px]:justify-between">
-          <div className="flex flex-col gap-2.5">
-            <h1
-              ref={titreRef}
-              tabIndex={-1}
-              className="font-lecture text-titre leading-[1.1] font-medium focus:outline-hidden"
-            >
-              {titre}
-            </h1>
-            <p className="max-w-[720px] leading-relaxed text-encre-2">
-              {lectureSeule ? TEXTES_COMPTES.introductionLecture : TEXTES_COMPTES.introduction}
-            </p>
-          </div>
-          {donnees.etat === 'donnees' && !lectureSeule ? (
-            <BoutonAjout
-              principal
-              libelle={TEXTES_COMPTES.ajouterMinistere}
-              onClick={() => ecran.ouvrirPanneau({ genre: 'ministere' })}
-            />
-          ) : null}
+    <div ref={contenuRef}>
+      <GabaritPage>
+        {pleinePage ? null : (
+          <EnTetePage
+            titre={titre}
+            titreRef={titreRef}
+            phrase={lectureSeule ? TEXTES_COMPTES.introductionLecture : TEXTES_COMPTES.introduction}
+            action={
+              donnees.etat === 'donnees' && !lectureSeule ? (
+                <BoutonAjout
+                  principal
+                  libelle={TEXTES_COMPTES.ajouterMinistere}
+                  onClick={() => ecran.ouvrirPanneau({ genre: 'ministere' })}
+                />
+              ) : null
+            }
+          />
+        )}
+
+        <div className="-my-6">
+          <MessageReussite message={ecran.reussite} envoi={ecran.envoi} />
         </div>
-      )}
 
-      <div className="-my-6">
-        <MessageReussite message={ecran.reussite} envoi={ecran.envoi} />
-      </div>
-
-      {pleinePage ? null : (
-        <ApresChargement
-          enChargement={donnees.etat === 'chargement'}
-          indicateur={<ChargementPage texte={TEXTES_COMPTES.chargement} />}
-        >
-          {donnees.etat === 'erreur' ? (
-            <ErreurDePage
-              message={TEXTES_COMPTES.erreur}
-              libelleBouton={TEXTES_COMPTES.reessayer}
-              onReessayer={donnees.reessayer}
-            />
-          ) : null}
-          {donnees.etat === 'donnees' ? (
-            <>
-              <SectionComptes
-                titre={TEXTES_COMPTES.titreMinisteres}
-                complement={
-                  // Sans aucun ministère, l'en-tête ne dit rien : l'état vide parle.
-                  donnees.donnees.ministeres.length > 0 ? (
-                    <span className="text-note text-encre-3">
-                      {complementMinisteres(donnees.donnees.nbMinisteresActifs)}
-                    </span>
-                  ) : undefined
-                }
-                lignes={donnees.donnees.ministeres}
-                variante="ministeres"
-                vide={{
-                  texte: VIDES_COMPTES.ministeres,
-                  suite: lectureSeule ? VIDES_COMPTES.ministeresSuiteLecture : undefined,
-                }}
-                onAction={onAction}
-                enCours={ecran.enCours}
-                resultat={resultat}
-                moi={moi}
+        {pleinePage ? null : (
+          <ApresChargement
+            enChargement={donnees.etat === 'chargement'}
+            indicateur={<ChargementPage texte={TEXTES_COMPTES.chargement} />}
+          >
+            {donnees.etat === 'erreur' ? (
+              <ErreurDePage
+                message={TEXTES_COMPTES.erreur}
+                libelleBouton={TEXTES_COMPTES.reessayer}
+                onReessayer={donnees.reessayer}
               />
-              <SectionComptes
-                titre={TEXTES_COMPTES.titreBergerConseil}
-                complement={
-                  lectureSeule ? undefined : (
-                    <div className="flex w-full flex-col gap-2 min-[600px]:w-auto min-[600px]:flex-row">
-                      {donnees.donnees.bergerActif ? null : (
+            ) : null}
+            {donnees.etat === 'donnees' ? (
+              <>
+                <SectionComptes
+                  titre={TEXTES_COMPTES.titreMinisteres}
+                  complement={
+                    // Sans aucun ministère, l'en-tête ne dit rien : l'état vide parle.
+                    donnees.donnees.ministeres.length > 0 ? (
+                      <span className="text-note text-encre-3">
+                        {complementMinisteres(donnees.donnees.nbMinisteresActifs)}
+                      </span>
+                    ) : undefined
+                  }
+                  lignes={donnees.donnees.ministeres}
+                  variante="ministeres"
+                  vide={{
+                    texte: VIDES_COMPTES.ministeres,
+                    suite: lectureSeule ? VIDES_COMPTES.ministeresSuiteLecture : undefined,
+                  }}
+                  onAction={onAction}
+                  enCours={ecran.enCours}
+                  resultat={resultat}
+                  moi={moi}
+                />
+                <SectionComptes
+                  titre={TEXTES_COMPTES.titreBergerConseil}
+                  complement={
+                    lectureSeule ? undefined : (
+                      <div className="flex w-full flex-col gap-2 tablette:w-auto tablette:flex-row">
+                        {donnees.donnees.bergerActif ? null : (
+                          <BoutonAjout
+                            libelle={TEXTES_COMPTES.ajouterBerger}
+                            onClick={() => ecran.ouvrirPanneau({ genre: 'berger' })}
+                          />
+                        )}
                         <BoutonAjout
-                          libelle={TEXTES_COMPTES.ajouterBerger}
-                          onClick={() => ecran.ouvrirPanneau({ genre: 'berger' })}
+                          libelle={TEXTES_COMPTES.ajouterConseil}
+                          onClick={() =>
+                            ecran.ouvrirPanneau({
+                              genre: 'conseil',
+                              nomAffiche: donnees.donnees.prochainConseil,
+                            })
+                          }
                         />
-                      )}
+                      </div>
+                    )
+                  }
+                  lignes={donnees.donnees.bergerConseil}
+                  variante="personnes"
+                  vide={{ texte: VIDES_COMPTES.bergerConseil }}
+                  onAction={onAction}
+                  enCours={ecran.enCours}
+                  resultat={resultat}
+                  moi={moi}
+                />
+                <SectionComptes
+                  titre={TEXTES_COMPTES.titreEjpTech}
+                  complement={
+                    lectureSeule ? undefined : (
                       <BoutonAjout
-                        libelle={TEXTES_COMPTES.ajouterConseil}
+                        libelle={TEXTES_COMPTES.ajouterEjpTech}
                         onClick={() =>
                           ecran.ouvrirPanneau({
-                            genre: 'conseil',
-                            nomAffiche: donnees.donnees.prochainConseil,
+                            genre: 'admin_plateforme',
+                            nomAffiche: donnees.donnees.prochainEjpTech,
                           })
                         }
                       />
-                    </div>
-                  )
-                }
-                lignes={donnees.donnees.bergerConseil}
-                variante="personnes"
-                vide={{ texte: VIDES_COMPTES.bergerConseil }}
-                onAction={onAction}
-                enCours={ecran.enCours}
-                resultat={resultat}
-                moi={moi}
-              />
-              <SectionComptes
-                titre={TEXTES_COMPTES.titreEjpTech}
-                complement={
-                  lectureSeule ? undefined : (
-                    <BoutonAjout
-                      libelle={TEXTES_COMPTES.ajouterEjpTech}
-                      onClick={() =>
-                        ecran.ouvrirPanneau({
-                          genre: 'admin_plateforme',
-                          nomAffiche: donnees.donnees.prochainEjpTech,
-                        })
-                      }
-                    />
-                  )
-                }
-                lignes={donnees.donnees.ejpTech}
-                variante="personnes"
-                vide={{
-                  texte: VIDES_COMPTES.ejpTech,
-                  suite: lectureSeule ? VIDES_COMPTES.ejpTechSuite : undefined,
-                }}
-                onAction={onAction}
-                enCours={ecran.enCours}
-                resultat={resultat}
-                moi={moi}
-              />
-              <ListesEglise lectureSeule={lectureSeule} />
-            </>
-          ) : null}
-        </ApresChargement>
-      )}
+                    )
+                  }
+                  lignes={donnees.donnees.ejpTech}
+                  variante="personnes"
+                  vide={{
+                    texte: VIDES_COMPTES.ejpTech,
+                    suite: lectureSeule ? VIDES_COMPTES.ejpTechSuite : undefined,
+                  }}
+                  onAction={onAction}
+                  enCours={ecran.enCours}
+                  resultat={resultat}
+                  moi={moi}
+                />
+                <ListesEglise lectureSeule={lectureSeule} />
+              </>
+            ) : null}
+          </ApresChargement>
+        )}
 
-      {/* Toujours à la même place de l'arbre : passer le palier de 600 px garde la saisie. En
+        {/* Toujours à la même place de l'arbre : passer le palier de 600 px garde la saisie. En
           page entière, rien n'est rendu entre la région des messages et le panneau. */}
-      {panneau}
-      {ecran.confirmation ? (
-        <FenetreConfirmation
-          confirmation={ecran.confirmation.texte}
-          onConfirmer={ecran.confirmation.confirmer}
-          onAnnuler={ecran.annulerConfirmation}
-        />
-      ) : null}
+        {panneau}
+        {ecran.confirmation ? (
+          <FenetreConfirmation
+            confirmation={ecran.confirmation.texte}
+            onConfirmer={ecran.confirmation.confirmer}
+            onAnnuler={ecran.annulerConfirmation}
+          />
+        ) : null}
+      </GabaritPage>
     </div>
   )
 }
