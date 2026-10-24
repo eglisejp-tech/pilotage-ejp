@@ -14,19 +14,22 @@ export function ListesEglise({ lectureSeule = true }: { lectureSeule?: boolean }
   return (
     <section aria-labelledby={idTitre} className="flex flex-col">
       <TitreSection id={idTitre} titre={TEXTES_COMPTES.titreListes} />
-      <div className="flex flex-col gap-3 pt-4 min-[600px]:flex-row min-[600px]:items-center">
-        <p id={idStatuts} className="shrink-0 font-semibold min-[600px]:w-[200px]">
+      <div className="flex flex-col gap-3 pt-4 tablette:flex-row tablette:items-center">
+        <p id={idStatuts} className="shrink-0 font-semibold tablette:w-[200px]">
           {TEXTES_COMPTES.statutsEvenement}
         </p>
         <ul aria-labelledby={idStatuts} className="flex flex-wrap gap-3">
           {STATUTS_EVENEMENT.map((statut) => (
-            <li key={statut.valeur} className="border border-filet bg-papier px-3 py-2 text-[15px]">
+            <li
+              key={statut.valeur}
+              className="border border-filet bg-papier px-3 py-2 text-interface"
+            >
               {statut.libelle}
             </li>
           ))}
         </ul>
       </div>
-      <p className="mt-4 text-sm text-encre-3">
+      <p className="mt-4 text-detail text-encre-3">
         {lectureSeule ? TEXTES_COMPTES.noteStatuts : TEXTES_COMPTES.noteStatutsGestion}
       </p>
     </section>

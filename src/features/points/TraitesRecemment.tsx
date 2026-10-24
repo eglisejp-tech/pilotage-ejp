@@ -25,7 +25,7 @@ export function TraitesRecemment({ lignes }: Props) {
         {lignes.map((ligne) => (
           <li
             key={ligne.id}
-            className="grid gap-x-5 gap-y-0.5 border-t border-filet py-3.5 text-[15px] first:border-t-0 lg:grid-cols-[minmax(0,1fr)_240px_280px] lg:items-baseline"
+            className="grid gap-x-5 gap-y-0.5 border-t border-filet py-3.5 text-interface first:border-t-0 ordinateur:grid-cols-[minmax(0,1fr)_240px_280px] ordinateur:items-baseline"
           >
             <p className="text-encre-2">
               <ChampLibre texte={ligne.titre} />

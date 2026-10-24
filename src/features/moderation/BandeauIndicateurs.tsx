@@ -16,12 +16,12 @@ interface Props {
 export function BandeauIndicateurs({ indicateurs }: Props) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 border border-filet bg-papier px-4 py-2">
-      <p className="text-[15px] leading-normal">
+      <p className="text-interface leading-normal">
         {TEXTES_INDICATEURS_A_VALIDER.phrase(indicateurs.nombre, indicateurs.plusAncienJours)}
       </p>
       <Link
         to={`/indicateurs#${ANCRE_A_VALIDER}`}
-        className="inline-flex min-h-cible items-center text-[15px] font-semibold text-nuit underline underline-offset-4"
+        className="inline-flex min-h-cible items-center text-interface font-semibold text-nuit underline underline-offset-4"
       >
         {TEXTES_INDICATEURS_A_VALIDER.lien}
       </Link>

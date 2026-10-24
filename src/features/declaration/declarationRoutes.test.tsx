@@ -234,7 +234,10 @@ describe('« Qui utilise l’outil ? » (T56)', () => {
       const faux = installer(type, { declaration: null })
       const routeur = afficher('/qui-utilise?changer=1')
       await waitFor(() => expect(routeur.state.location.pathname).not.toBe('/qui-utilise'))
-      const entete = await screen.findByRole('banner')
+      // L'en-tête de l'outil vient d'abord. Testing Library compte aussi comme « banner »
+      // l'en-tête de page commun (EnTetePage, Modération), que le navigateur, lui, ne compte pas.
+      const [entete] = await screen.findAllByRole('banner')
+      if (entete === undefined) throw new Error('En-tête de l’outil absent')
       expect(within(entete).queryByText(/^Vous :/)).not.toBeInTheDocument()
       expect(
         within(entete).queryByRole('link', { name: "Ce n'est pas moi", hidden: true }),

@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { EnTetePage } from '@/components/ui/EnTetePage'
+import { GabaritPage } from '@/components/ui/GabaritPage'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 
 interface Props {
@@ -16,7 +18,8 @@ interface Props {
  * Écran `/moderation` d'EJP Tech, l'accueil de ce profil (BRIEF, « Modération » ; maquette 15) :
  * le titre de l'écran (h1), sans surtitre (T66, t345), puis en tête l'état des indicateurs à
  * valider, le bloc « Signalements » et la file des textes à relire. Le titre de page (h1) précède
- * les titres des deux blocs (h2).
+ * les titres des deux blocs (h2). Gabarit commun (proposition 14, T69) : l'en-tête et son bandeau
+ * (24 px entre eux), puis un seul écart de 48 px avant chaque bloc.
  *
  * Écart tracé (LISEZMOI, écran 15) : la maquette titre l'écran « Champs libres à relire » ; ici ce
  * titre est celui de la file (« Textes à relire », T66), car l'écran porte aussi les signalements
@@ -25,14 +28,16 @@ interface Props {
 export function EcranModeration({ titre, bandeau, signalements, file }: Props) {
   useTitrePage(titre)
   return (
-    <section aria-labelledby="titre-page" className="flex flex-col">
-      <h1 id="titre-page" className="font-lecture text-titre leading-tight font-medium">
-        {titre}
-      </h1>
-      {bandeau ? <div className="mt-6">{bandeau}</div> : null}
-      {/* Maquette 15 : pas de filet sous le titre de l'écran, celui du bloc suit. */}
-      {signalements ? <div className="mt-8">{signalements}</div> : null}
-      {file ? <div className="mt-12">{file}</div> : null}
+    <section aria-labelledby="titre-page">
+      <GabaritPage>
+        <div className="flex flex-col gap-bloc">
+          <EnTetePage titre={titre} idTitre="titre-page" />
+          {bandeau}
+        </div>
+        {/* Maquette 15 : pas de filet sous le titre de l'écran, celui du bloc suit. */}
+        {signalements}
+        {file}
+      </GabaritPage>
     </section>
   )
 }

@@ -24,7 +24,7 @@ export function OngletsPoints({ vue, nombres }: Props) {
   }
   return (
     <nav aria-label={TEXTES_POINTS.navigationVues}>
-      <ul role="list" className="flex gap-5 min-[600px]:gap-7">
+      <ul role="list" className="flex gap-5 tablette:gap-7">
         {VUES_POINTS.map((cible) => {
           const actif = cible === vue
           return (

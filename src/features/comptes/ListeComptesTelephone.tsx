@@ -38,7 +38,7 @@ export function ListeComptesTelephone({
         <li
           key={ligne.cle}
           data-cle={ligne.cle}
-          className="flex flex-col gap-1.5 border-t border-filet py-4 text-[15px] first:border-t-0"
+          className="flex flex-col gap-1.5 border-t border-filet py-4 text-interface first:border-t-0"
         >
           <span className="font-semibold">{ligne.nom}</span>
           <span className="break-all text-encre-2">

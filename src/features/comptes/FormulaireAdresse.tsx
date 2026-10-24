@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { Bouton } from '@/components/ui/Bouton'
 import { ChampLigne } from '@/features/comptes/ChampLigne'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { schemaAdresse } from '@/features/comptes/schemas'
@@ -75,20 +76,16 @@ export function FormulaireAdresse({ libelle, note, nomAffiche, envoyer, onAnnule
         {...register('email')}
       />
       {nomAffiche ? (
-        <p className="text-[15px] text-encre-2">{TEXTES_COMPTES.nomAffiche(nomAffiche)}</p>
+        <p className="text-interface text-encre-2">{TEXTES_COMPTES.nomAffiche(nomAffiche)}</p>
       ) : null}
       <BoutonEnregistrer
         libelle={TEXTES_COMPTES.boutonCreerCompte}
         enCours={isSubmitting}
         libelleEnCours={TEXTES_COMPTES.enCours.creer}
       />
-      <button
-        type="button"
-        onClick={annuler}
-        className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-      >
+      <Bouton pleineLargeur onClick={annuler}>
         {TEXTES_COMPTES.annuler}
-      </button>
+      </Bouton>
       {refus !== null ? <ErreurFormulaire message={refus} /> : null}
     </form>
   )

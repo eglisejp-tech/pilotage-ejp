@@ -4,12 +4,14 @@ import { EtatVide } from '@/components/etats/EtatVide'
 import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import { ChargementBloc } from '@/features/fiche/ChargementBloc'
+import { GRILLE_FILE, RANGEE_FILE } from '@/features/moderation/colonnesFile'
 import { compterEnAttente } from '@/features/moderation/construire'
 import type { TexteARelire } from '@/features/moderation/construire'
 import { LigneARelire } from '@/features/moderation/LigneARelire'
 import type { ChoixMasquage } from '@/features/moderation/schemas'
 import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
+import { cn } from '@/lib/utils'
 
 /** Ce que montre la file « Textes à relire ». */
 export type ContenuFile =
@@ -57,7 +59,7 @@ export function FileARelire({ contenu: lecture }: Props) {
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b-2 border-encre pb-3">
-        <div className="flex max-w-prose flex-col gap-1">
+        <div className="flex max-w-lecture flex-col gap-1">
           <h2
             id={idTitre}
             ref={titre}
@@ -66,7 +68,7 @@ export function FileARelire({ contenu: lecture }: Props) {
           >
             {TEXTES_MODERATION.titreFile}
           </h2>
-          <p className="text-sm text-encre-2">{TEXTES_MODERATION.intro}</p>
+          <p className="text-detail text-encre-2">{TEXTES_MODERATION.intro}</p>
         </div>
         {contenu.etat === 'liste' ? (
           <p className="text-note text-encre-2">
@@ -95,11 +97,11 @@ export function FileARelire({ contenu: lecture }: Props) {
           {contenu.textes.length === 0 ? (
             <EtatVide situation="tout_est_fait">{TEXTES_MODERATION.vide}</EtatVide>
           ) : (
-            <ol>
+            <ol className={GRILLE_FILE}>
               {contenu.textes.map((texte) => (
                 <li
                   key={`${texte.cible}:${texte.cibleId}`}
-                  className="border-t border-filet first:border-t-0"
+                  className={cn('border-t border-filet first:border-t-0', RANGEE_FILE)}
                 >
                   <LigneARelire
                     texte={texte}

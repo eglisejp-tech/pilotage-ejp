@@ -1,4 +1,5 @@
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 import { actionsDeLaLigne, LIBELLES_ACTIONS } from '@/features/comptes/actionsLigne'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import { TEXTES_COMPTES } from '@/features/comptes/textes'
@@ -32,7 +33,7 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
   if (moi != null && ligne.userId === moi) {
     // Dans le tableau, à droite, à la place des boutons des autres lignes.
     return (
-      <p className={cn('text-sm text-encre-3', !pleineLargeur && 'text-right')}>
+      <p className={cn('text-detail text-encre-3', !pleineLargeur && 'text-right')}>
         {TEXTES_COMPTES.votreCompte}
       </p>
     )
@@ -41,19 +42,16 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
   return (
     <div className={cn('flex gap-2', pleineLargeur ? 'flex-col' : 'flex-wrap justify-end')}>
       {actions.map((action) => (
-        <button
+        <Bouton
           key={action}
-          type="button"
+          pleineLargeur={pleineLargeur}
+          // Toute la ligne attend la fin de l'envoi ; seul le bouton cliqué dit « … en cours ».
+          enCours={enCours !== null}
           // Le nom visible d'abord, puis le compte : « Désactiver Communication » (WCAG 2.5.3).
           aria-label={`${enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]} ${ligne.nom}`}
-          aria-disabled={enCours !== null ? true : undefined}
           onClick={() => {
             if (enCours === null) onAction(ligne, action)
           }}
-          className={cn(
-            'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4.5 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond aria-disabled:cursor-wait',
-            pleineLargeur && 'w-full',
-          )}
         >
           <LibelleEnvoi
             enCours={enCours === action}
@@ -61,7 +59,7 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
           >
             {LIBELLES_ACTIONS[action]}
           </LibelleEnvoi>
-        </button>
+        </Bouton>
       ))}
     </div>
   )

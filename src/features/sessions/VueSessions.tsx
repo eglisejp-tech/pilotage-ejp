@@ -3,6 +3,8 @@ import { ApresChargement } from '@/components/etats/ApresChargement'
 import { ChargementPage } from '@/components/etats/ChargementPage'
 import { useLectureAffichee } from '@/components/etats/useLectureAffichee'
 import { EtatVide } from '@/components/etats/EtatVide'
+import { EnTetePage } from '@/components/ui/EnTetePage'
+import { GabaritPage } from '@/components/ui/GabaritPage'
 import { TitreSection } from '@/features/cette-semaine/TitreSection'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
@@ -23,10 +25,11 @@ import {
   TEXTES_SESSIONS,
 } from '@/features/sessions/textes'
 import type { ActionsSessions, DonneesSessions } from '@/features/sessions/types'
+import { LARGEURS } from '@/lib/largeurs'
 import { ErreurDePage } from '@/pages/ErreurDePage'
 
 /** Largeur à partir de laquelle la colonne « Déclarer une session » est dans la page (maquette 14). */
-const LARGEUR_COLONNE = 1024
+const LARGEUR_COLONNE = LARGEURS.ordinateur
 
 interface Props {
   titre: string
@@ -100,10 +103,8 @@ export function VueSessions({
         aria-labelledby={`${idListe}-declarer`}
         className="flex flex-col gap-5 border border-filet bg-papier p-6"
       >
-        <h2
-          id={`${idListe}-declarer`}
-          className="font-lecture text-[28px] leading-[1.1] font-medium"
-        >
+        {/* 28 px comme dans la maquette 14 : la taille nommée du titre de fenêtre. */}
+        <h2 id={`${idListe}-declarer`} className="font-lecture text-titre-fenetre">
           {TEXTES_SESSIONS.declarer}
         </h2>
         <FormulaireSession
@@ -121,32 +122,27 @@ export function VueSessions({
     ) : null
 
   return (
-    <div className="flex flex-col gap-10">
+    <GabaritPage>
       {pleinePage ? null : (
-        <div className="flex flex-col gap-6 min-[1024px]:flex-row min-[1024px]:items-end min-[1024px]:justify-between">
-          <div className="flex flex-col gap-2.5">
-            <h1
-              ref={titreRef}
-              tabIndex={-1}
-              className="font-lecture text-titre leading-[1.1] font-medium focus:outline-hidden"
-            >
-              {titre}
-            </h1>
-            <p className="max-w-[720px] leading-relaxed text-encre-2">
-              {TEXTES_SESSIONS.introduction}
-            </p>
-          </div>
-          {pret && !avecColonne ? (
-            <BoutonAjout
-              principal
-              libelle={TEXTES_SESSIONS.declarer}
-              onClick={() => setPanneau({ genre: 'declarer' })}
-            />
-          ) : null}
-        </div>
+        <EnTetePage
+          titre={titre}
+          titreRef={titreRef}
+          phrase={TEXTES_SESSIONS.introduction}
+          action={
+            pret && !avecColonne ? (
+              <BoutonAjout
+                principal
+                libelle={TEXTES_SESSIONS.declarer}
+                onClick={() => setPanneau({ genre: 'declarer' })}
+              />
+            ) : null
+          }
+        />
       )}
 
-      <div className="-my-5">
+      {/* Sans message, la région ne prend aucune place : un seul écart entre l'en-tête et la
+          liste. */}
+      <div className="-my-6">
         <MessageReussite message={reussite} envoi={envoi} />
       </div>
 
@@ -163,7 +159,7 @@ export function VueSessions({
             />
           ) : null}
           {pret ? (
-            <div className="grid grid-cols-1 items-start gap-10 min-[1024px]:grid-cols-[minmax(0,1fr)_400px]">
+            <div className="grid grid-cols-1 items-start gap-10 ordinateur:grid-cols-[minmax(0,1fr)_400px]">
               <section aria-labelledby={idListe} className="flex min-w-0 flex-col">
                 <TitreSection id={idListe} titre={TEXTES_SESSIONS.titreListe} />
                 {pret.lignes.length === 0 ? (
@@ -208,6 +204,6 @@ export function VueSessions({
           onAnnuler={() => setASupprimer(null)}
         />
       ) : null}
-    </div>
+    </GabaritPage>
   )
 }

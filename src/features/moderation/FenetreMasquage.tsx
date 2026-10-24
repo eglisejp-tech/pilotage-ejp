@@ -1,8 +1,7 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { useId, useRef, useState } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
+import { useFenetreModale } from '@/components/ui/useFenetreModale'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
-import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 import { lireRefusModeration } from '@/features/moderation/refus'
 import { schemaChoixMasquage } from '@/features/moderation/schemas'
 import type { ChoixMasquage } from '@/features/moderation/schemas'
@@ -30,18 +29,21 @@ interface Props {
   onAnnuler: () => void
 }
 
-const classeRadioBase =
+const classeRadio =
   'size-5 shrink-0 accent-encre focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre'
-const classeRadioChamp = `mt-0.5 ${classeRadioBase}`
-const classeRadioMotif = classeRadioBase
 
 /**
  * Fenêtre « Masquer ce texte ? » (BRIEF, « Modération » ; écran 15) : le choix du champ (seulement
  * les champs non vides et pas déjà masqués), le motif par boutons radio, la phrase « Le texte sera
- * remplacé par « [texte masqué] ». C'est définitif. », puis « Masquer le texte » (T66). Il
- * n'y a aucun champ libre : ni rappel sur les données personnelles, ni compteur. Fenêtre modale :
- * le focus y reste, Échap annule, le focus revient au bouton d'origine (ou au titre de la ligne,
- * quand ce bouton a disparu). Avec un seul champ, il est déjà choisi et se lit en citation.
+ * remplacé par « [texte masqué] ». C'est définitif. », puis « Masquer le texte » (T66), le seul
+ * bouton foncé de l'écran (proposition 12, T69 : dans la ligne, il est encadré). Il n'y a aucun
+ * champ libre : ni rappel sur les données personnelles, ni compteur. Avec un seul champ, il est
+ * déjà choisi et se lit en citation.
+ *
+ * Le modèle de fenêtre commun (proposition 20, T69 ; FenetreConfirmation) : l'élément `<dialog>`
+ * du navigateur, ouvert en fenêtre modale (useFenetreModale), une seule largeur de 480 px. Le
+ * focus entre sur la fenêtre, y reste, Échap annule (sauf pendant l'envoi) et le focus revient au
+ * bouton d'origine (ou au titre de la liste quand ce bouton a disparu, choix de l'écran).
  */
 export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }: Props) {
   const idTitre = useId()
@@ -50,28 +52,23 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
   const idErreurChamp = useId()
   const idErreurMotif = useId()
   const nom = useId()
-  const fenetre = useRef<HTMLDivElement>(null)
+  const fenetre = useRef<HTMLDialogElement>(null)
   const unSeul = champs.length === 1
   const [champ, setChamp] = useState<string>(unSeul ? (champs[0]?.code ?? '') : '')
   const [motif, setMotif] = useState<MotifMasquage | ''>('')
   const [erreurs, setErreurs] = useState<{ champ?: string; motif?: string }>({})
   const [refus, setRefus] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
-  usePiegeFocus(fenetre, true, () => {
-    if (!enCours) onAnnuler()
-  })
+  // Lu sans attendre le rendu : deux appuis rapprochés n'envoient qu'une fois.
+  const verrou = useRef(false)
 
-  // La page ne défile plus derrière la fenêtre.
-  useEffect(() => {
-    const avant = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = avant
-    }
-  }, [])
+  const annulerSiLibre = () => {
+    if (!verrou.current) onAnnuler()
+  }
+  useFenetreModale(fenetre, annulerSiLibre)
 
   const soumettre = async () => {
-    if (enCours) return
+    if (verrou.current) return
     setRefus(null)
     const lu = schemaChoixMasquage.safeParse({ champ, motif })
     if (!lu.success) {
@@ -85,154 +82,141 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
       return
     }
     setErreurs({})
+    verrou.current = true
     setEnCours(true)
     try {
       await masquer(lu.data)
       onFait()
     } catch (erreur) {
+      verrou.current = false
       setRefus(lireRefusModeration(erreur))
       setEnCours(false)
     }
   }
 
-  return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div aria-hidden="true" className="absolute inset-0 bg-encre/50" />
-      <div
-        ref={fenetre}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={idTitre}
-        aria-describedby={idContexte}
-        tabIndex={-1}
-        className="relative flex max-h-full w-full max-w-[520px] flex-col gap-5 overflow-y-auto border border-filet bg-papier p-6 outline-hidden"
+  return (
+    <dialog
+      ref={fenetre}
+      aria-modal="true"
+      aria-labelledby={idTitre}
+      aria-describedby={idContexte}
+      tabIndex={-1}
+      className="m-auto max-h-[calc(100%-2rem)] w-[calc(100%-2rem)] max-w-[480px] overflow-y-auto border border-filet bg-papier p-6 text-encre outline-hidden backdrop:bg-encre/50 open:flex open:flex-col open:gap-5"
+    >
+      <div className="flex flex-col gap-1">
+        {/* Lignes équilibrées : à 390 px, le « ? » ne reste jamais seul sur sa ligne. */}
+        <h2 id={idTitre} className="font-lecture text-titre-fenetre text-balance">
+          {TEXTES_FENETRE_MASQUAGE.titre}
+        </h2>
+        <p id={idContexte} className="text-interface text-encre-2">
+          {contexte}
+        </p>
+      </div>
+
+      <form
+        noValidate
+        className="flex flex-col gap-5"
+        onSubmit={(evenement) => {
+          evenement.preventDefault()
+          void soumettre()
+        }}
       >
-        <div className="flex flex-col gap-1">
-          <h2 id={idTitre} className="font-lecture text-[28px] leading-tight font-medium">
-            {TEXTES_FENETRE_MASQUAGE.titre}
-          </h2>
-          <p id={idContexte} className="text-[15px] text-encre-2">
-            {contexte}
-          </p>
-        </div>
-
-        <form
-          noValidate
-          className="flex flex-col gap-5"
-          onSubmit={(evenement) => {
-            evenement.preventDefault()
-            void soumettre()
-          }}
-        >
-          {unSeul ? (
-            <div className="flex flex-col gap-1">
-              <p className="text-[15px] font-semibold">{champs[0]?.libelle}</p>
-              <p className="font-lecture text-citation wrap-anywhere">
-                «&nbsp;{champs[0]?.texte}&nbsp;»
-              </p>
-            </div>
-          ) : (
-            <fieldset
-              aria-describedby={erreurs.champ ? idErreurChamp : undefined}
-              className="flex min-w-0 flex-col gap-1"
-            >
-              <legend className="mb-1 text-[15px] font-semibold">
-                {TEXTES_FENETRE_MASQUAGE.legendeChamp}
-              </legend>
-              {champs.map((possible) => (
-                <label
-                  key={possible.code}
-                  className="flex min-h-cible cursor-pointer items-start gap-3 py-2"
-                >
-                  <input
-                    type="radio"
-                    name={`${nom}-champ`}
-                    value={possible.code}
-                    checked={champ === possible.code}
-                    onChange={() => setChamp(possible.code)}
-                    aria-invalid={erreurs.champ ? true : undefined}
-                    className={classeRadioChamp}
-                  />
-                  <span className="flex min-w-0 flex-col">
-                    <span className="text-[15px] font-semibold">{possible.libelle}</span>
-                    <span className="font-lecture text-citation wrap-anywhere text-encre-2">
-                      «&nbsp;{possible.texte}&nbsp;»
-                    </span>
-                  </span>
-                </label>
-              ))}
-              {erreurs.champ ? (
-                <p id={idErreurChamp} className="text-[15px] leading-normal text-alerte">
-                  {erreurs.champ}
-                </p>
-              ) : null}
-            </fieldset>
-          )}
-
+        {unSeul ? (
+          <div className="flex flex-col gap-1">
+            <p className="text-interface font-semibold">{champs[0]?.libelle}</p>
+            <p className="font-lecture text-citation wrap-anywhere">
+              «&nbsp;{champs[0]?.texte}&nbsp;»
+            </p>
+          </div>
+        ) : (
           <fieldset
-            aria-describedby={erreurs.motif ? idErreurMotif : undefined}
+            aria-describedby={erreurs.champ ? idErreurChamp : undefined}
             className="flex min-w-0 flex-col gap-1"
           >
-            <legend className="mb-1 text-[15px] font-semibold">
-              {TEXTES_FENETRE_MASQUAGE.legendeMotif}
+            <legend className="mb-1 text-interface font-semibold">
+              {TEXTES_FENETRE_MASQUAGE.legendeChamp}
             </legend>
-            {MOTIFS_RADIO.map((possible) => (
+            {champs.map((possible) => (
               <label
                 key={possible.code}
-                className="flex min-h-cible cursor-pointer items-center gap-3 py-1"
+                className="flex min-h-cible cursor-pointer items-start gap-3 py-2"
               >
                 <input
                   type="radio"
-                  name={`${nom}-motif`}
+                  name={`${nom}-champ`}
                   value={possible.code}
-                  checked={motif === possible.code}
-                  onChange={() => setMotif(possible.code)}
-                  aria-invalid={erreurs.motif ? true : undefined}
-                  className={classeRadioMotif}
+                  checked={champ === possible.code}
+                  onChange={() => setChamp(possible.code)}
+                  aria-invalid={erreurs.champ ? true : undefined}
+                  className={`mt-0.5 ${classeRadio}`}
                 />
-                <span className="text-[15px] leading-snug">{possible.libelle}</span>
+                <span className="flex min-w-0 flex-col">
+                  <span className="text-interface font-semibold">{possible.libelle}</span>
+                  <span className="font-lecture text-citation wrap-anywhere text-encre-2">
+                    «&nbsp;{possible.texte}&nbsp;»
+                  </span>
+                </span>
               </label>
             ))}
-            {erreurs.motif ? (
-              <p id={idErreurMotif} className="text-[15px] leading-normal text-alerte">
-                {erreurs.motif}
+            {erreurs.champ ? (
+              <p id={idErreurChamp} className="text-interface leading-normal text-alerte">
+                {erreurs.champ}
               </p>
             ) : null}
           </fieldset>
+        )}
 
-          <p id={idAvertissement} className="leading-normal text-encre-2">
-            {TEXTES_FENETRE_MASQUAGE.avertissement}
-          </p>
+        <fieldset
+          aria-describedby={erreurs.motif ? idErreurMotif : undefined}
+          className="flex min-w-0 flex-col gap-1"
+        >
+          <legend className="mb-1 text-interface font-semibold">
+            {TEXTES_FENETRE_MASQUAGE.legendeMotif}
+          </legend>
+          {MOTIFS_RADIO.map((possible) => (
+            <label
+              key={possible.code}
+              className="flex min-h-cible cursor-pointer items-center gap-3 py-1"
+            >
+              <input
+                type="radio"
+                name={`${nom}-motif`}
+                value={possible.code}
+                checked={motif === possible.code}
+                onChange={() => setMotif(possible.code)}
+                aria-invalid={erreurs.motif ? true : undefined}
+                className={classeRadio}
+              />
+              <span className="text-interface leading-snug">{possible.libelle}</span>
+            </label>
+          ))}
+          {erreurs.motif ? (
+            <p id={idErreurMotif} className="text-interface leading-normal text-alerte">
+              {erreurs.motif}
+            </p>
+          ) : null}
+        </fieldset>
 
-          <div className="flex flex-col-reverse gap-2 min-[480px]:flex-row min-[480px]:justify-end">
-            <button
-              type="button"
-              onClick={() => {
-                if (!enCours) onAnnuler()
-              }}
-              aria-disabled={enCours ? true : undefined}
-              className="inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4.5 text-[15px] font-semibold text-encre hover:bg-fond"
-            >
-              {TEXTES_FENETRE_MASQUAGE.annuler}
-            </button>
-            <button
-              type="submit"
-              aria-describedby={idAvertissement}
-              aria-disabled={enCours ? true : undefined}
-              className="inline-flex min-h-cible items-center justify-center bg-encre px-4.5 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
-            >
-              <LibelleEnvoi
-                enCours={enCours}
-                libelleEnCours={TEXTES_FENETRE_MASQUAGE.boutonEnCours}
-              >
-                {TEXTES_FENETRE_MASQUAGE.bouton}
-              </LibelleEnvoi>
-            </button>
-          </div>
-          {refus !== null ? <ErreurFormulaire message={refus} /> : null}
-        </form>
-      </div>
-    </div>,
-    document.body,
+        <p id={idAvertissement} className="leading-normal text-encre-2">
+          {TEXTES_FENETRE_MASQUAGE.avertissement}
+        </p>
+
+        <div className="flex flex-col-reverse gap-2 tablette:flex-row tablette:justify-end">
+          <Bouton enCours={enCours} onClick={annulerSiLibre}>
+            {TEXTES_FENETRE_MASQUAGE.annuler}
+          </Bouton>
+          <Bouton
+            type="submit"
+            variante="sombre"
+            enCours={enCours}
+            libelleEnCours={TEXTES_FENETRE_MASQUAGE.boutonEnCours}
+            aria-describedby={idAvertissement}
+          >
+            {TEXTES_FENETRE_MASQUAGE.bouton}
+          </Bouton>
+        </div>
+        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      </form>
+    </dialog>
   )
 }
