@@ -121,7 +121,10 @@ export function ChampNombre({
         className={cn(
           'w-full min-w-0 bg-papier text-center font-chiffres font-black text-encre tabular-nums aria-invalid:border-2 aria-invalid:border-alerte',
           grand
-            ? cn('h-[100px] border-0 leading-[.9]', tailleGrand)
+            ? // Proposition 1 (T69, écart 1) : un trait de 2 px sous la place du chiffre, comme
+              // une ligne d'écriture, pour que le champ se voie même vide (--encre-3 : 5,40:1 sur
+              // le blanc). Il fonce quand on touche le champ. Jamais de 0 par défaut.
+              cn('h-[100px] border-b-2 border-encre-3 leading-[.9] focus:border-encre', tailleGrand)
             : 'h-14.5 border border-encre text-[32px]',
         )}
       />
@@ -143,15 +146,18 @@ export function ChampNombre({
           htmlFor={id}
           libelle={libelle}
           code={aide}
-          classeLibelle={grand ? undefined : 'text-sm'}
+          classeLibelle={grand ? undefined : 'text-detail'}
         />
       ) : (
-        <label htmlFor={id} className={cn('font-semibold', grand ? 'text-[15px]' : 'text-sm')}>
+        <label
+          htmlFor={id}
+          className={cn('font-semibold', grand ? 'text-interface' : 'text-detail')}
+        >
           {libelle}
         </label>
       )}
       {definition ? (
-        <p id={idDefinition} className="text-sm leading-normal text-encre-3">
+        <p id={idDefinition} className="text-detail leading-normal text-encre-3">
           {definition}
         </p>
       ) : null}
@@ -170,7 +176,7 @@ export function ChampNombre({
               onClick={() => {
                 if (peutRetirer) onChange(ajusterNombre(valeur, -1, max))
               }}
-              className="h-cible-saisie border border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+              className="retour-appui h-cible-saisie border border-encre bg-papier font-chiffres text-[34px] font-extrabold text-encre aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
             >
               <span aria-hidden="true">{MOINS}</span>
             </button>
@@ -182,7 +188,7 @@ export function ChampNombre({
               onClick={() => {
                 if (peutAjouter) onChange(ajusterNombre(valeur, 1, max))
               }}
-              className="h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
+              className="retour-appui retour-clair h-cible-saisie bg-encre font-chiffres text-[34px] font-extrabold text-papier aria-disabled:cursor-not-allowed aria-disabled:opacity-40"
             >
               <span aria-hidden="true">+</span>
             </button>
@@ -221,4 +227,4 @@ export function ChampNombre({
   )
 }
 
-const classeMessage = 'text-[15px] leading-normal text-alerte'
+const classeMessage = 'text-interface leading-normal text-alerte'
