@@ -1,4 +1,5 @@
 import { Bouton } from '@/components/ui/Bouton'
+import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { CelluleSaisies } from '@/features/sessions/CelluleSaisies'
 import type { LigneSession } from '@/features/sessions/construire'
@@ -67,7 +68,9 @@ export function ListeSessions({ lignes, idTitre, onModifier, onSupprimer }: Prop
             className="flex flex-col gap-1.5 border-t border-filet py-4 text-interface first:border-t-0"
           >
             <span className="text-encre-2">{ligne.dateCourte}</span>
-            <span className="font-bold">{ligne.nom}</span>
+            <span className="font-bold">
+              <SansCoupureAuTrait texte={ligne.nom} />
+            </span>
             <span className="text-encre-2">
               {TEXTES_SESSIONS.colonneAttendus} : {ligne.attendus}
             </span>
@@ -111,7 +114,7 @@ export function ListeSessions({ lignes, idTitre, onModifier, onSupprimer }: Prop
           <tr key={ligne.id} data-cle={ligne.id} className="border-t border-filet">
             <td className={`${cellule} whitespace-nowrap text-encre-2`}>{ligne.dateCourte}</td>
             <th scope="row" className={`${cellule} text-left font-bold`}>
-              {ligne.nom}
+              <SansCoupureAuTrait texte={ligne.nom} />
             </th>
             <td className={cellule}>{ligne.attendus}</td>
             <td className={cellule}>

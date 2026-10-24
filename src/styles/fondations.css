@@ -108,8 +108,10 @@
 }
 
 /*
- * La règle de tokens.css (« * ») ne touche pas les pseudo-éléments : le voile s'arrête aussi
- * avec « Réduire les animations ».
+ * Deux règles « Réduire les animations », voulues : celle de tokens.css (« * ») vient de la
+ * copie de docs/reference/tokens.css, qui ne se modifie pas, et ne touche pas les
+ * pseudo-éléments. Celle-ci les complète : le voile de survol (`.retour-appui::after`) s'arrête
+ * aussi. Un changement du voile garde cette règle.
  */
 @media (prefers-reduced-motion: reduce) {
   *::before,

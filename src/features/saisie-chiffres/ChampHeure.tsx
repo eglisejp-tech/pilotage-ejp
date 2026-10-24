@@ -65,7 +65,9 @@ export function ChampHeure({
 
   return (
     <div role="group" aria-labelledby={idLibelle} className="flex flex-col gap-1.5">
-      <div className="flex min-h-cible flex-wrap items-center">
+      {/* Même rangée que le libellé d'un nombre (LibelleAvecAide) : l'écart de 6 px jusqu'à la
+          définition est le même pour tous les champs (proposition 18, T69). */}
+      <div className="flex flex-wrap items-center">
         <p id={idLibelle} className="text-detail font-semibold">
           {libelle}
         </p>

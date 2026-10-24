@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
+import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useFenetreModale } from '@/components/ui/useFenetreModale'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 
@@ -90,7 +91,7 @@ export function FenetreConfirmation({
     >
       {/* Lignes équilibrées : à 390 px, le « ? » ne reste jamais seul sur sa ligne. */}
       <h2 id={idTitre} className="font-lecture text-titre-fenetre text-balance">
-        {titre}
+        <SansCoupureAuTrait texte={titre} />
       </h2>
       <div id={idTexte} className="leading-normal text-encre-2">
         {texte}

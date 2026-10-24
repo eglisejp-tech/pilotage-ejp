@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import type { LigneSignalement } from '@/data/signalements'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { FenetreMasquage } from '@/features/moderation/FenetreMasquage'
@@ -24,9 +25,6 @@ interface Props {
     surMasque: () => void
   }
 }
-
-const boutonSecondaire =
-  'inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
 
 /**
  * Les champs libres d'un signalement que « Masquer le texte » peut encore remplacer : son texte
@@ -99,15 +97,14 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
   }
   const boutonMasquer =
     masquage && masquables.length > 0 ? (
-      <button
-        type="button"
+      <Bouton
         aria-describedby={idTitre}
         aria-haspopup="dialog"
         onClick={() => setFenetre(true)}
-        className={boutonSecondaire}
+        className="whitespace-nowrap"
       >
         {TEXTES_MODERATION.boutonMasquer}
-      </button>
+      </Bouton>
     ) : null
 
   const peutClore = (signalement.ouvert || signalement.clos_le === null) && cloture
@@ -144,20 +141,21 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
             </>
           )}
           {boutonClore || boutonMasquer ? (
-            <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col min-[1024px]:justify-end">
+            // À partir de 1024 px, les boutons s'empilent dans une colonne à la largeur du plus
+            // large : même largeur, mêmes bords, sans escalier (proposition 5, T69).
+            <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col min-[1024px]:w-max min-[1024px]:max-w-full min-[1024px]:flex-col">
               {boutonClore ? (
-                <button
+                <Bouton
                   ref={bouton}
-                  type="button"
                   aria-describedby={idTitre}
                   onClick={() => {
                     cloture.surOuverture?.()
                     setOuvert(true)
                   }}
-                  className={boutonSecondaire}
+                  className="whitespace-nowrap"
                 >
                   {TEXTES_BLOC_SIGNALEMENTS.boutonClore}
-                </button>
+                </Bouton>
               ) : null}
               {boutonMasquer}
             </div>

@@ -22,12 +22,12 @@ interface Props {
 }
 
 /**
- * Une ligne d'indicateur propre de la fiche : libellé (marque « à valider » en texte visible ; le
- * détail d'un calcul suffit, sans bulle, T66 t202), dernière valeur, petite courbe et date de la
- * dernière saisie sur la première ligne. Dessous, sous le libellé, en petit et en gris
- * (proposition 17, T69) : l'explication d'une valeur non calculée, la somme de l'année avec sa
- * complétude et son aide, la valeur du mois en cours d'un indicateur du mois, puis, pour un
- * sensible, ses précisions et sa répartition repliée (P45 à P47).
+ * Une ligne d'indicateur propre de la fiche : libellé, dernière valeur, petite courbe et date de la
+ * dernière saisie sur la première ligne. Dessous, sous le libellé, sur toute la largeur, en petit
+ * et en gris (proposition 17, T69) : l'état « à valider » en orange (texte visible ; le détail d'un
+ * calcul suffit, sans bulle, T66 t202), l'explication d'une valeur non calculée, la somme de
+ * l'année avec sa complétude et son aide, la valeur du mois en cours d'un indicateur du mois,
+ * puis, pour un sensible, ses précisions et sa répartition repliée (P45 à P47).
  */
 export function LigneIndicateurFiche({ ligne }: Props) {
   const { aides } = ligne
@@ -41,6 +41,7 @@ export function LigneIndicateurFiche({ ligne }: Props) {
   const explication = ligne.valeur.etat === 'non_calcule' ? ligne.detail : null
   const date = explication === null ? ligne.detail : null
   const sousLignes =
+    ligne.aValider !== null ||
     explication !== null ||
     ligne.somme !== null ||
     ligne.moisEnCours !== null ||
@@ -48,12 +49,7 @@ export function LigneIndicateurFiche({ ligne }: Props) {
   return (
     <li className="border-b border-filet py-3">
       <div className={GRILLE_LIGNE}>
-        <span className={CASE_LIBELLE}>
-          <span>{ligne.libelle}</span>
-          {ligne.aValider !== null ? (
-            <span className="block text-note font-semibold text-attention">{ligne.aValider}</span>
-          ) : null}
-        </span>
+        <span className={CASE_LIBELLE}>{ligne.libelle}</span>
         <span className={CASE_VALEUR}>
           <ValeurLigne valeur={ligne.valeur} />
         </span>
@@ -69,6 +65,9 @@ export function LigneIndicateurFiche({ ligne }: Props) {
       </div>
       {sousLignes ? (
         <div className={SOUS_LIGNES}>
+          {ligne.aValider !== null ? (
+            <p className="font-semibold text-attention">{ligne.aValider}</p>
+          ) : null}
           {explication !== null ? (
             <p className={cn(ligne.detailSignale && 'font-semibold text-attention')}>
               {explication}

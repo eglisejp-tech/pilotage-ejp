@@ -10,6 +10,7 @@ import {
 } from 'react'
 import type { ReactNode } from 'react'
 import { UNSAFE_DataRouterContext } from 'react-router'
+import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
 import { ContexteEnTeteSaisie } from '@/features/saisie/enTeteSaisie'
@@ -222,7 +223,7 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
       <div className="flex flex-col gap-1.5">
         {surtitre ? <p className="text-note font-semibold text-encre-3">{surtitre}</p> : null}
         <h1 id={idTitre} className="font-lecture text-titre-panneau">
-          {titre}
+          <SansCoupureAuTrait texte={titre} />
         </h1>
       </div>
       <div className="flex flex-col gap-5">{children}</div>
