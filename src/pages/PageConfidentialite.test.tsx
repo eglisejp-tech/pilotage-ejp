@@ -54,7 +54,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 13 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 24 octobre 2026.",
     )
   })
 
@@ -142,7 +142,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(partie('Données traitées')).toContainElement(acceptation)
   })
 
-  it("parle d'une seule boîte Gmail, celle d'EJP Tech, et des transferts propres à Google et à Netlify", () => {
+  it("parle d'une seule boîte Gmail, celle d'EJP Tech, et des transferts propres à Google et à Cloudflare (T70)", () => {
     afficher()
     elementExact(
       'li',
@@ -154,8 +154,14 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     )
     elementExact(
       'p',
-      "Supabase et Netlify agissent sous contrat. Pour Google, il n'y a pas de contrat de sous-traitance : la boîte Gmail gratuite d'EJP Tech relève des conditions grand public de Google. Google et Netlify sont établis aux États-Unis. Les transferts vers Google s'appuient sur le cadre de protection des données entre l'Union européenne et les États-Unis ; ceux vers Netlify, sur les clauses contractuelles types de la Commission européenne.",
+      "Supabase et Cloudflare agissent sous contrat. Pour Google, il n'y a pas de contrat de sous-traitance : la boîte Gmail gratuite d'EJP Tech relève des conditions grand public de Google. Google et Cloudflare sont établis aux États-Unis. Les transferts vers Google et vers Cloudflare s'appuient sur le cadre de protection des données entre l'Union européenne et les États-Unis ; pour Cloudflare, les clauses contractuelles types de la Commission européenne prennent le relais si ce cadre ne s'applique plus.",
     )
+    elementExact('li', 'Cloudflare : hébergement du site.')
+    elementExact(
+      'li',
+      'Les adresses IP, dans les journaux techniques de Supabase et de Cloudflare.',
+    )
+    expect(textePage()).not.toMatch(/Netlify/)
     expect(textePage()).not.toMatch(/Gmail de l'église/)
     expect(textePage()).not.toMatch(/messagerie Gmail/)
     expect(textePage()).not.toMatch(/Ils agissent sous contrat/)

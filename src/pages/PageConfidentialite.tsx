@@ -20,14 +20,16 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * (export final compris) et « Vos droits ». La version des conditions change (VERSION_CONDITIONS).
  * Mise à jour du 13 octobre 2026 : sur un compte partagé, chaque personne accepte elle-même les
  * conditions (T61), dans « Données traitées » ; phrase proposée, à valider. La version des
- * conditions change de nouveau.
+ * conditions change de nouveau. Mise à jour du 24 octobre 2026 : Cloudflare remplace Netlify pour
+ * l'hébergement du site (T70), même rôle, mêmes données, même pays ; phrases proposées, à valider
+ * par la coordination. La version des conditions ne change pas (T70).
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 13 octobre
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 24 octobre
         2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
@@ -64,7 +66,7 @@ export function PageConfidentialite() {
               Le nom et la photo du profil Google, transmis par Google quand une personne se
               connecte avec Google. L'outil ne les affiche pas et ne les copie pas.
             </li>
-            <li>Les adresses IP, dans les journaux techniques de Supabase et de Netlify.</li>
+            <li>Les adresses IP, dans les journaux techniques de Supabase et de Cloudflare.</li>
             <li>
               La date à laquelle chaque compte accepte les conditions, et leur version ; sur le
               compte partagé d'un ministère, chaque personne les accepte elle-même, sous le prénom
@@ -135,19 +137,19 @@ export function PageConfidentialite() {
         <PartieTexte titre="Sous-traitants">
           <ul role="list" className={liste}>
             <li>Supabase : base de données et connexion, en région Paris (Union européenne).</li>
-            <li>Netlify : hébergement du site.</li>
+            <li>Cloudflare : hébergement du site.</li>
             <li>
               Google : connexion avec Google, et envoi des emails de l'outil depuis la boîte Gmail
               gratuite d'EJP Tech.
             </li>
           </ul>
           <p>
-            Supabase et Netlify agissent sous contrat. Pour Google, il n'y a pas de contrat de
+            Supabase et Cloudflare agissent sous contrat. Pour Google, il n'y a pas de contrat de
             sous-traitance : la boîte Gmail gratuite d'EJP Tech relève des conditions grand public
-            de Google. Google et Netlify sont établis aux États-Unis. Les transferts vers Google
-            s'appuient sur le cadre de protection des données entre l'Union européenne et les
-            États-Unis ; ceux vers Netlify, sur les clauses contractuelles types de la Commission
-            européenne.
+            de Google. Google et Cloudflare sont établis aux États-Unis. Les transferts vers Google
+            et vers Cloudflare s'appuient sur le cadre de protection des données entre l'Union
+            européenne et les États-Unis ; pour Cloudflare, les clauses contractuelles types de la
+            Commission européenne prennent le relais si ce cadre ne s'applique plus.
           </p>
         </PartieTexte>
         <PartieTexte titre="Durées de conservation">
@@ -173,8 +175,8 @@ export function PageConfidentialite() {
             </li>
             <li>
               <strong className="text-encre">Journaux techniques (adresses IP)</strong> : selon les
-              durées de Supabase et de Netlify, au plus 1 an, la durée maximale recommandée par la
-              CNIL pour ces journaux.
+              durées de Supabase et de Cloudflare, au plus 1 an, la durée maximale recommandée par
+              la CNIL pour ces journaux.
             </li>
             <li>
               <strong className="text-encre">Sauvegardes de la base</strong> : une copie chiffrée
