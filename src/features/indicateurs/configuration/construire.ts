@@ -5,6 +5,7 @@
 import { LIMITE_CHANGEMENTS } from '@/data/indicateursConfiguration'
 import type {
   IndicateurConfiguration,
+  LienModele,
   LigneCatalogue,
   LigneJournalConfiguration,
   LigneUsage,
@@ -27,7 +28,7 @@ import {
   texteIndicateursMinistere,
 } from '@/features/indicateurs/configuration/phrases'
 import type { SourceCalcul } from '@/features/indicateurs/configuration/panneaux/apercu'
-import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
+import { etatPrevus, listesParMinistere } from '@/features/indicateurs/configuration/prevus'
 import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
 import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import { estJamaisSaisi, estPeuSaisi } from '@/features/indicateurs/configuration/usage'
@@ -42,8 +43,8 @@ export interface LecturesConfiguration {
   indicateurs: readonly IndicateurConfiguration[]
   usage: readonly LigneUsage[]
   catalogue: readonly LigneCatalogue[]
-  /** Lignes `indicateurs_prevus_crees` du journal (réponse « Aucun prévu » comprise). */
-  creations: readonly LigneJournalConfiguration[]
+  /** Liste choisie de chaque ministère (`v_ministere_modele`, T72), « Aucun prévu » compris. */
+  liens: readonly LienModele[]
   /** Gestes de configuration du journal, pour la colonne « Dernier changement ». */
   changements: readonly LigneJournalConfiguration[]
 }
@@ -109,7 +110,7 @@ export function construireConfiguration(
 ): ConfigurationIndicateurs {
   const actifs = ministeresActifs(lectures.ministeres)
   const modeles = modelesDuCatalogue(lectures.catalogue)
-  const sansPrevu = ministeresSansPrevu(lectures.creations)
+  const liens = listesParMinistere(lectures.liens)
   const indicateursParMinistere = parMinistere(lectures.indicateurs)
   const usageParId = new Map(lectures.usage.map((ligne) => [ligne.indicateur_id, ligne]))
   const changementParMinistere = new Map<string, string>()
@@ -132,7 +133,7 @@ export function construireConfiguration(
       nom: ministere.nom,
       href: `/indicateurs/${ministere.id}`,
       texteIndicateurs: texteIndicateursMinistere(suivis.length),
-      prevus: etatPrevus(ministere.nom, siens, modeles, sansPrevu.has(ministere.id)),
+      prevus: etatPrevus(liens.get(ministere.id), siens, modeles),
       peuSaisis: suivis.filter((indicateur) => estPeuSaisi(usageParId.get(indicateur.id))).length,
       suivis: suivis.length,
       dernierChangement:
@@ -204,12 +205,7 @@ export function construireMinistere(
     id: ministere.id,
     nom: ministere.nom,
     phrase: phraseMinistere(suivis.length),
-    prevus: etatPrevus(
-      ministere.nom,
-      siens,
-      modeles,
-      ministeresSansPrevu(lectures.creations).has(ministere.id),
-    ),
+    prevus: etatPrevus(listesParMinistere(lectures.liens).get(ministere.id), siens, modeles),
     modeles,
     sources: trierIndicateurs(
       suivis.filter(

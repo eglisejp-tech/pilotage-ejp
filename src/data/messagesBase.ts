@@ -387,6 +387,19 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   'Un indicateur prévu porte le nom du chiffre commun « % » : le catalogue est à corriger.': {
     texte: PREVUS_EN_PANNE,
   },
+  // Liste choisie d'un ministère (choisir_modele_prevus et creer_indicateurs_prevus, T72,
+  // Proposé) : ce qui bloque et quoi faire.
+  "Cette fiche suit encore des indicateurs prévus d'une autre liste : retirez-les avant de changer de liste.":
+    {
+      texte:
+        'Cette fiche suit encore des indicateurs prévus de sa liste. Retirez-les, puis changez de liste.',
+    },
+  "Cette liste sert déjà à la fiche « % » : changez d'abord le choix de cette fiche.": {
+    texte: "Cette liste sert déjà à « % ». Changez d'abord la liste de ce ministère.",
+  },
+  "Cette fiche suit une autre liste : changez d'abord le choix de la liste.": {
+    texte: "Cette fiche suit une autre liste. Changez d'abord la liste choisie.",
+  },
 
   // Indicateurs : correction, retrait, validation (corriger_indicateur, retirer_indicateur,
   // valider_indicateur ; T66, m235 et m236 : « déjà enregistré » et « changé entre-temps »).

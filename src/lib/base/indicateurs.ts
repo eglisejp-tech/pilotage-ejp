@@ -353,6 +353,18 @@ export type VuesIndicateurs = {
     calcul: CalculIndicateur | null
     ordre: number
   }>
+  /**
+   * Liste des indicateurs prévus choisie pour chaque ministère (T72), administration et EJP Tech :
+   * une ligne par ministère, désactivés compris.
+   */
+  v_ministere_modele: Vue<{
+    ministere_id: string
+    /** Code du catalogue ou « aucun » ; null : rien n'est choisi. */
+    modele: string | null
+    choisi_le: string | null
+    /** Présélection d'après le nom du ministère (code ou « aucun »), jamais un choix ; null : aucune. */
+    suggere: string | null
+  }>
   /** Le ministère pour sa fiche, administration et EJP Tech. */
   v_suggestions: Vue<{
     ministere_id: string
@@ -427,6 +439,11 @@ export type FonctionsIndicateurs = {
     Args: { p_ministere_id: string; p_modele: string }
     /** Nombre d'indicateurs créés. */
     Returns: number
+  }
+  /** EJP Tech seul (T60, T72) : code du catalogue ou « aucun ». */
+  choisir_modele_prevus: {
+    Args: { p_ministere_id: string; p_modele: string }
+    Returns: undefined
   }
   creer_indicateur: {
     Args: {

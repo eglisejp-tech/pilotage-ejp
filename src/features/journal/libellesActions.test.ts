@@ -33,10 +33,11 @@ describe('libellés des actions (BRIEF, section 6)', () => {
     expect(libelleAction('texte_masque')).toBe('A masqué un texte')
   })
 
-  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4, 2 des mentions (T54)', () => {
-    expect(CODES_ACTIONS).toHaveLength(31)
-    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(31)
+  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4, 2 des mentions (T54), le choix de la liste (T72)', () => {
+    expect(CODES_ACTIONS).toHaveLength(32)
+    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(32)
     for (const code of CODES_ACTIONS) expect(libelleAction(code)).toMatch(/^A /)
+    expect(libelleAction('modele_prevus_choisi')).toBe('A choisi la liste des prévus')
   })
 
   it('un code inconnu garde un libellé neutre, jamais le code', () => {
@@ -57,7 +58,7 @@ describe('actions que chaque profil peut filtrer', () => {
   it('le berger et le conseil ne lisent aucun signalement (T39)', () => {
     for (const profil of ['berger', 'conseil'] as const) {
       const actions = actionsDuProfil(profil)
-      expect(actions).toHaveLength(29)
+      expect(actions).toHaveLength(30)
       expect(actions).not.toContain('difficulte_signalee')
       expect(actions).not.toContain('signalement_clos')
     }
@@ -97,6 +98,8 @@ describe('actions que chaque profil peut filtrer', () => {
         'compte_cree',
         'indicateur_valide',
         'texte_relu',
+        // T72 : le choix de la liste, geste de configuration, comme dans journal_lisible_administration.
+        'modele_prevus_choisi',
       ]),
     )
   })

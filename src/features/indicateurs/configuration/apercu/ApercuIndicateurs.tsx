@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
+  apresChoix,
   apresCreation,
   ID_COMMUNICATION,
   ID_EAGLES,
@@ -19,6 +20,7 @@ import {
 } from '@/features/indicateurs/configuration/construire'
 import {
   reussiteAucunPrevu,
+  reussiteChoixListe,
   reussiteCreationPrevus,
   TEXTES_CONFIGURATION,
 } from '@/features/indicateurs/configuration/textes'
@@ -33,6 +35,9 @@ import { PageNonDisponible } from '@/pages/PageNonDisponible'
 const ATTENTE_SIMULEE_MS = 150
 const REFUS_EXEMPLE =
   'La fiche a déjà « Activités réalisées » : retirez-le avant de créer les indicateurs prévus.'
+/** Refus d'un choix de liste (T72), tel que l'écran le dit après traduction. */
+const REFUS_CHOIX_EXEMPLE =
+  "Cette liste sert déjà à « Kumi ». Changez d'abord la liste de ce ministère."
 
 const MINISTERES_PAR_VUE: Readonly<Record<string, string>> = {
   communication: ID_COMMUNICATION,
@@ -93,7 +98,42 @@ function useCreationSimulee(
     },
     [courant, ecrire, envoi],
   )
-  return { creer, enCours, dernier, reussite, envoi: numero, refus }
+  const choisir = useCallback(
+    async (ministere: { id: string; nom: string }, liste: { code: string; nom: string }) => {
+      if (occupe.current) return false
+      occupe.current = true
+      setEnCours(ministere.id)
+      setDernier(ministere.id)
+      setRefus(null)
+      await new Promise((resolve) => setTimeout(resolve, ATTENTE_SIMULEE_MS))
+      let accepte = false
+      if (envoi === 'echec') {
+        setReussite(null)
+        setRefus(TEXTES_CONFIGURATION.erreur)
+      } else if (envoi === 'refus') {
+        setReussite(null)
+        setRefus(REFUS_CHOIX_EXEMPLE)
+      } else {
+        ecrire({
+          ...courant.current,
+          lectures: apresChoix(
+            courant.current.lectures,
+            ministere.id,
+            liste.code,
+            new Date().toISOString(),
+          ),
+        })
+        setReussite(reussiteChoixListe(liste.nom, ministere.nom))
+        setNumero((precedent) => precedent + 1)
+        accepte = true
+      }
+      occupe.current = false
+      setEnCours(null)
+      return accepte
+    },
+    [courant, ecrire, envoi],
+  )
+  return { creer, choisir, enCours, dernier, reussite, envoi: numero, refus }
 }
 
 const reessayer = () => undefined
@@ -106,10 +146,11 @@ const reessayer = () => undefined
  *   aucun bouton) ; tout autre profil : « Page non disponible » (l'écran est réservé à ces deux
  *   profils) ;
  * - `vue=liste` (défaut), `liste-vide` (aucun ministère), `liste-chargement`, `liste-probleme` ;
- * - `vue=communication`, `kumi` (6 prévus à créer), `eagles` (prévus créés), `jeunesse` (nom non
- *   reconnu : à choisir), `protocole` (« Aucun prévu », sans indicateur), `introuvable`,
- *   `chargement`, `probleme` : l'écran d'un ministère ;
- * - `&envoi=echec` simule une connexion perdue, `&envoi=refus` un refus de la base.
+ * - `vue=communication`, `kumi` (liste choisie, 6 prévus à créer), `eagles` (prévus créés),
+ *   `jeunesse` (rien de choisi : à choisir), `protocole` (« Aucun prévu », sans indicateur),
+ *   `introuvable`, `chargement`, `probleme` : l'écran d'un ministère ;
+ * - `&envoi=echec` simule une connexion perdue, `&envoi=refus` un refus de la base (création ou
+ *   choix de la liste).
  * Enregistrée seulement en développement.
  */
 export function ApercuIndicateurs() {

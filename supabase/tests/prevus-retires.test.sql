@@ -1,9 +1,10 @@
 -- Prévus retirés (correctif du 8 octobre 2026, migration 20261010120500_prevus_retires_aucun.sql) :
 -- des prévus tous retirés n'empêchent plus le modèle « aucun » ; un prévu encore actif l'empêche
--- toujours ; un prévu retiré ne renaît pas par un second appel.
+-- toujours ; un prévu retiré ne renaît pas par un second appel. Depuis T72, le passage à
+-- « aucun » se fait par choisir_modele_prevus.
 begin;
 
-select plan(5);
+select plan(7);
 
 create temp table ctx as
 select tests.creer_ministere('Prévus retirés A') as a_m,
@@ -30,8 +31,15 @@ select public.retirer_indicateur(i.id, 'erreur')
   from public.indicateur i
  where i.ministere_id = (select b_m from ctx) and i.modele_code = 'essai_ret_un';
 
+-- T72 : la fiche A suit la liste « essai retires » ; « aucun » se choisit d'abord
+-- (choisir_modele_prevus), creer_indicateurs_prevus refusant un modèle différent du lien.
+select throws_ok($$ select public.creer_indicateurs_prevus((select a_m from ctx), 'aucun') $$,
+  'P0001', 'Cette fiche suit une autre liste : changez d''abord le choix de la liste.',
+  'T72 : « aucun » par creer_indicateurs_prevus est refusé tant que la fiche suit une autre liste');
+select lives_ok($$ select public.choisir_modele_prevus((select a_m from ctx), 'aucun') $$,
+  '« aucun » se choisit quand tous les prévus de la fiche sont retirés');
 select is(public.creer_indicateurs_prevus((select a_m from ctx), 'aucun'), 0,
-  '« aucun » est accepté quand tous les prévus de la fiche sont retirés');
+  '« aucun » est ensuite accepté par creer_indicateurs_prevus');
 select throws_ok($$ select public.creer_indicateurs_prevus((select b_m from ctx), 'aucun') $$,
   'P0001', 'Cette fiche a déjà des indicateurs prévus : « aucun » ne s''applique pas.',
   '« aucun » reste refusé quand un prévu de la fiche est encore actif');

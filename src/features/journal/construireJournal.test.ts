@@ -380,6 +380,26 @@ describe('une ligne du journal, en mots', () => {
     ).toBe('8 indicateurs prévus pour Communication')
   })
 
+  it('T72 : le choix de la liste nomme la liste, et celle d’avant', () => {
+    expect(
+      texteDe({
+        action: 'modele_prevus_choisi',
+        ministere_nom: 'FIJ',
+        detail: { avant: null, apres: 'coordo fij' },
+      }),
+    ).toBe('Liste « Coordo FIJ » pour FIJ')
+    expect(
+      texteDe({
+        action: 'modele_prevus_choisi',
+        ministere_nom: 'Protocole',
+        detail: { avant: 'aucun', apres: 'protocole' },
+      }),
+    ).toBe('Liste « Protocole » pour Protocole, au lieu de « Aucun prévu »')
+    expect(texteDe({ action: 'modele_prevus_choisi', ministere_nom: 'Kumi', detail: {} })).toBe(
+      'Liste des indicateurs prévus pour Kumi',
+    )
+  })
+
   it('T62 : un retrait par le ministère dit qui l’a fait, jamais son motif écrit', () => {
     expect(
       texteDe({
