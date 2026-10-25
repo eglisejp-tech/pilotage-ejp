@@ -90,7 +90,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     const sensibles = partie('Chiffres sensibles')
     for (const phrase of [
-      "Onze indicateurs sont sensibles : ceux de la santé, de l'accompagnement et de l'écoute, et, pour Prodiges Junior, les nouveaux enfants et les enfants déjà venus. Pour chacun, le ministère concerné saisit un total par mois, le mois en cours compris : un nombre, jamais un nom.",
+      "Douze indicateurs sont sensibles : ceux de la santé, de l'accompagnement et de l'écoute, les nouveaux enfants et les enfants déjà venus de Prodiges Junior, et les manquements à la confidentialité constatés par Protocole. Pour chacun, le ministère concerné saisit un total par mois, le mois en cours compris : un nombre, jamais un nom.",
       "Les autres chiffres ne sont pas sensibles. Ils se saisissent chaque dimanche, chaque mois ou à ce jour, selon l'indicateur, et ne contiennent jamais de nom. Par exemple, Prodiges Junior saisit chaque dimanche le nombre d'enfants présents, en un seul total, sans âge ni nom.",
       'Le ministère peut répartir ce total entre quelques catégories larges, quand la coordination en a fixé la liste. Il peut aussi joindre à ce total une « Précision » de 280 caractères au plus.',
       "La « Précision » ne doit contenir aucune information sur une personne. L'outil refuse un texte qui contient une adresse email, un lien, une suite de 5 chiffres ou plus, ou une civilité suivie d'un nom. EJP Tech relit chaque précision et peut la masquer.",

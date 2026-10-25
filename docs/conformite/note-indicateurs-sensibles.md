@@ -57,6 +57,14 @@ Ces indicateurs se saisissent par mois, y compris pour le mois en cours. La list
 demandait « par semaine » pour Call your sister et la plate-forme d'écoute : l'outil les compte par
 mois, car un petit nombre par semaine dans un domaine sensible peut désigner une personne.
 
+**Ajout du 24 octobre 2026 (T71, `docs/decisions.md`)** : un douzième indicateur sensible, hors de la
+liste de la coordination, choisi par la personne responsable pour Protocole : « Manquements à la
+confidentialité constatés » (« Manquements à la confidentialité constatés dans le mois, comptés sans
+nom ni détail. Si aucun, enregistrez 0. »). Il reçoit toutes les protections de cette note : total
+par mois, valeurs exactes pour Protocole, le berger, le conseil et EJP Tech, aucune valeur pour
+l'administration de l'église ni pour les autres ministères, aucun calcul, « Précision » possible,
+catégories à fixer par la coordination. La section 9 vaut aussi pour lui.
+
 D'autres chiffres des mêmes ministères **ne sont pas** sensibles, et pourquoi :
 
 - « Enfants présents » (chaque dimanche) et « Enfants inscrits » (Prodiges Junior) : de grands

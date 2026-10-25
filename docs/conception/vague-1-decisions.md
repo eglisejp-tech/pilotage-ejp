@@ -7,7 +7,8 @@
   (`docs/conception/configuration-indicateurs.md`), validation (`docs/conception/validation-metier.md`),
   `BRIEF.md`, `docs/decisions.md` (numéros du 6 octobre)
 - **Entrées du journal des décisions** : P32 à P41 et T36 (`docs/decisions.md`) ; révisions : P42,
-  P45 à P47 (indicateurs sensibles), modèle T41
+  P45 à P47 (indicateurs sensibles), modèle T41 ; T64 (Merch), T68 (ponctualité), T71 (Protocole,
+  24 octobre 2026, révise K51)
 - **Révision du 6 octobre 2026** : la personne responsable a décidé que les indicateurs sensibles
   sont créés et actifs dès la vague 1 (P42, réponse à la question 4 de `docs/plan-etape-4.md`).
   K56, X4 et les sections 7 et 8 de ce document sont alignés ; toutes les protections de K5
@@ -183,7 +184,8 @@ ont été rapprochées (section 8).
   ne se saisit jamais, il lui faut ses deux comptes.
 - **K5a. Un total par mois (révisé P45) pour Santé, Social, Call your sister, la plate-forme d'écoute ?**
   Oui, et pour les nouveaux enfants et les enfants déjà venus de Prodiges Junior : nature « mois »,
-  case sensible, compte entier, aucun calcul sur eux. Onze indicateurs sensibles en tout.
+  case sensible, compte entier, aucun calcul sur eux. Onze indicateurs sensibles en tout (douze
+  depuis T71 : les manquements à la confidentialité constatés de Protocole).
   **Révisé le 6 octobre 2026 (P45 à P47, décision de la personne responsable)** : un total par
   mois, le mois en cours compris ; « aucune ventilation, aucun texte attaché » est remplacé par une
   répartition entre des catégories fixées par la coordination (P47, catégories : à fixer par la
@@ -466,7 +468,10 @@ ont été rapprochées (section 8).
 - **K50b. PCNC ?** Sigle gardé tel quel, nom du parcours.
 - **K50c. Questionnaire de satisfaction ?** L'outil n'en crée pas : il reçoit deux comptes mensuels
   anonymes (réponses, réponses satisfaites). Sans questionnaire : « Non calculé ».
-- **K51. Protocole ?** Les chiffres communs seulement ; modèle « aucun ».
+- **K51. Protocole ?** Les chiffres communs seulement ; modèle « aucun ». **Révisé le 24 octobre
+  2026 (T71, choix de la personne responsable sur les domaines donnés par la responsable du
+  Protocole)** : modèle « protocole », sept indicateurs saisis, dont un sensible, et une part
+  (section 4, « Protocole »).
 - **K52a. Total de registre de MDS ?** Non : la fiche de MDS affiche les totaux de l'église « STARs
   actifs » et « STARs au service » en lignes de référence, avec leur complétude.
 - **K52b. Nouveaux STARs ?** Comptés par MDS seul, au mois.
@@ -872,7 +877,9 @@ familles de texte et la relecture par EJP Tech).
 ### Protocole
 
 Aucune demande dans la liste (K51) : Protocole saisit les trois chiffres communs, pour que les totaux
-de l'église restent complets. Modèle « aucun » au catalogue.
+de l'église restent complets. Modèle « aucun » au catalogue jusqu'au 24 octobre 2026 ; depuis T71,
+modèle « protocole » (section 4), choisi par la personne responsable sur les domaines donnés par la
+responsable du Protocole, hors des 185 demandes de la liste.
 
 ### Prodiges Academy (hors de la liste de la coordination)
 
@@ -949,7 +956,9 @@ du ministère ; il compte dans les 30 lignes de la fiche.
   couverture des événements, Part des demandes satisfaites), Sécurité (Taux de couverture des
   postes), Formation (Taux de présence, Taux de complétion, Taux de satisfaction), Prodiges Junior
   (Taux de présence). Quinze portaient « plafond 100 % » ; quatre autres taux de même nature
-  reçoivent aussi le drapeau (Réalisation, Kumi, Eagles, Prodiges Junior). Ne le reçoivent pas : le
+  reçoivent aussi le drapeau (Réalisation, Kumi, Eagles, Prodiges Junior). Depuis T68, 18 (la Part
+  des événements à l'heure a quitté le catalogue) ; depuis T71, 19 avec la Part des demandes
+  traitées de Protocole. Ne le reçoivent pas : le
   taux de résolution des demandes (« peut dépasser 100 % »), le taux d'engagement, et,
   **Proposé, à confirmer par la coordination**, le taux de retour des NA, le taux de conversion NA
   vers FIJ et le taux de perte (leur haut et leur bas portent sur des mois décalés : un haut plus
@@ -1383,7 +1392,35 @@ sensible » : l'administration confirme que « Enfants présents » et « Enfant
 pas. Nouveaux enfants et Enfants déjà venus : catégories : à fixer par la coordination (P47) ;
 « Précision » possible (P46).
 
-### Protocole et Prodiges Academy
+### Protocole
+
+Ajouté le 24 octobre 2026 (T71, `docs/decisions.md`), révise K51 : indicateurs choisis par la
+personne responsable sur les domaines donnés par la responsable du Protocole ; définitions
+proposées, à relire par elle avant la création en production. Migration
+`20261024211427_protocole_catalogue.sql`.
+
+| Libellé                                    | Ce qu'on compte exactement                                                                                                           | Rythme   | Unité, borne  | Rubrique | Sensible | Somme |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------- | -------- | -------- | ----- |
+| Plan de service prêt la veille             | Enregistrez 1 si le plan du service (placement, accueil, répartition des STARs) était prêt la veille du culte, sinon 0.              | Dimanche | nombre, 9 999 | aucune   | non      | oui   |
+| Événements préparés une semaine avant      | Événements tenus dans le mois, hors cultes, dont le Protocole avait son plan au moins une semaine avant.                             | Mois     | nombre, 9 999 | aucune   | non      | oui   |
+| Écarts aux consignes relevés               | Cas où une consigne n'a pas été respectée (horaires, tenue, placement, accès réservés), sans nom ni détail. Si aucun, enregistrez 0. | Mois     | nombre, 9 999 | aucune   | non      | oui   |
+| Demandes reçues                            | Demandes adressées au Protocole par les autres ministères ou l'équipe pastorale, reçues dans le mois.                                | Mois     | nombre, 9 999 | aucune   | non      | oui   |
+| Demandes traitées                          | Parmi les demandes reçues dans le mois, celles que le Protocole a menées à terme.                                                    | Mois     | nombre, 9 999 | aucune   | non      | oui   |
+| Points d'équipe tenus                      | Réunions ou points d'équipe du Protocole tenus dans le mois. Si aucun, enregistrez 0.                                                | Mois     | nombre, 9 999 | aucune   | non      | oui   |
+| Manquements à la confidentialité constatés | Manquements à la confidentialité constatés dans le mois, comptés sans nom ni détail. Si aucun, enregistrez 0.                        | Mois     | nombre, 9 999 | aucune   | oui      | oui   |
+
+| Calcul                     | Type       | Formule (sources)                   | Lot |
+| -------------------------- | ---------- | ----------------------------------- | --- |
+| Part des demandes traitées | taux, part | Demandes traitées ÷ Demandes reçues | V1  |
+
+« Plan de service prêt la veille » vaut 0 ou 1 : la base garde la borne de l'unité nombre (9 999),
+faute d'unité « oui ou non » ; sa somme de l'année est le nombre de dimanches où le plan était
+prêt. « Demandes traitées » compte les demandes du mois de leur arrivée, pour que la part ne
+dépasse 100 % que sur une erreur de saisie. Manquements à la confidentialité constatés :
+catégories : à fixer par la coordination (P47) ; « Précision » possible (P46). Aucun commun
+renommé.
+
+### Prodiges Academy
 
 Modèle « aucun » : aucun prévu.
 
@@ -1397,17 +1434,17 @@ le ministère dans le mois »).
 
 ### Taille de la vague 1
 
-| Élément                                    | Nombre                                                                                                                                                                                 |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Indicateurs saisis (prévus)                | 161 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine, moins « Événements commencés à l'heure », retiré par T68), dont 11 sensibles, 5 en euros, 2 en heure, 4 en jours |
-| Calculs                                    | 40 : 29 en V1 (taux et moyennes de T35), 11 en V1+4 (calculs étendus et événements) ; la part des événements à l'heure, retirée par T68, se lit dans `evenements_eglise_mois()`        |
-| Séries dérivées des événements             | 7 (6 de l'église pour Coordination, 1 de MDS), V1+4                                                                                                                                    |
-| Statistiques FIJ par département           | 4 rubriques × 8 départements, V1                                                                                                                                                       |
-| Communs affichés sous le nom de la demande | 13 (dont 2 lignes de référence de l'église pour MDS)                                                                                                                                   |
-| Graphiques déclarés                        | 12, V1+4                                                                                                                                                                               |
-| Points d'attention de départ               | 2 (Production, Entretien)                                                                                                                                                              |
-| Ministères                                 | 23, dont 21 avec des prévus, Protocole et Prodiges Academy sans                                                                                                                        |
-| Plus grande fiche                          | MCAD, 21 lignes sur 30                                                                                                                                                                 |
+| Élément                                    | Nombre                                                                                                                                                                                                                                |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Indicateurs saisis (prévus)                | 168 (161 et, depuis T64, le chiffre d'affaires de Merch à la semaine, moins « Événements commencés à l'heure », retiré par T68, plus les 7 de Protocole, T71), dont 12 sensibles, 5 en euros, 2 en heure, 4 en jours                  |
+| Calculs                                    | 41 : 30 en V1 (taux et moyennes de T35, dont la part des demandes traitées de Protocole, T71), 11 en V1+4 (calculs étendus et événements) ; la part des événements à l'heure, retirée par T68, se lit dans `evenements_eglise_mois()` |
+| Séries dérivées des événements             | 7 (6 de l'église pour Coordination, 1 de MDS), V1+4                                                                                                                                                                                   |
+| Statistiques FIJ par département           | 4 rubriques × 8 départements, V1                                                                                                                                                                                                      |
+| Communs affichés sous le nom de la demande | 13 (dont 2 lignes de référence de l'église pour MDS)                                                                                                                                                                                  |
+| Graphiques déclarés                        | 12, V1+4                                                                                                                                                                                                                              |
+| Points d'attention de départ               | 2 (Production, Entretien)                                                                                                                                                                                                             |
+| Ministères                                 | 23, dont 22 avec des prévus (Protocole depuis T71), Prodiges Academy sans                                                                                                                                                             |
+| Plus grande fiche                          | MCAD, 21 lignes sur 30                                                                                                                                                                                                                |
 
 Charge de saisie la plus lourde : MPI, 7 chiffres chaque dimanche ; Coordo FIJ, 32 valeurs par
 semaine dans un seul formulaire ; MCAD, 13 chiffres par mois. Tous les comptes mensuels se saisissent
@@ -1511,7 +1548,8 @@ Tout ce document l'est. Comment une révision s'applique :
 - **Questions à poser pendant la relecture** : sens de la présence au culte (K19a) ; live et
   diffusion en direct (K32) ; catégories de Merch et de Prodiges Musique ; rubriques et étapes de
   Coordo FIJ ; jour des séances de Formation (formateurs mobilisés) ; définitions d'activité et de
-  projet de Kumi et d'Eagles ; **listes de catégories des onze indicateurs sensibles** (P47 : 3 à
+  projet de Kumi et d'Eagles ; **listes de catégories des onze indicateurs sensibles** (douze
+  depuis T71, avec les manquements à la confidentialité constatés de Protocole ; P47 : 3 à
   6 catégories larges, dont « Autre », ou « Aucune » si l'indicateur reste un simple total),
   proposées par Santé, Social, Kumi, Eagles et Prodiges Junior et fixées par la coordination
   (section « Catégories des chiffres sensibles » de `docs/conformite/libelles-a-valider.md`).

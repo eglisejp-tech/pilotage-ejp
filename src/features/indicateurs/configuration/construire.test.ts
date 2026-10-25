@@ -114,8 +114,14 @@ describe('état des prévus (7.1)', () => {
     expect(etat.genre).toBe('a_choisir')
   })
 
-  it('« Aucun prévu » enregistré, mais un modèle porte le nom du ministère : « Aucun prévu » gagne', () => {
-    expect(etatPrevus('Kumi', [], modeles, true).genre).toBe('aucun')
+  it('« Aucun prévu » enregistré, puis un modèle au nom du ministère arrive au catalogue : le modèle gagne (T71)', () => {
+    // Comme Protocole : « Aucun prévu » avant le 24 octobre 2026, puis son modèle au catalogue.
+    const etat = etatPrevus('Kumi', [], modeles, true)
+    expect(etat.genre).toBe('a_creer')
+    if (etat.genre === 'a_creer') {
+      expect(etat.modele.code).toBe('kumi')
+      expect(etat.manquants).toHaveLength(6)
+    }
   })
 
   it('le nom du ministère se compare une fois normalisé : accents, casse, espaces', () => {
