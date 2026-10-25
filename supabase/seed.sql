@@ -9,6 +9,8 @@
 -- envoi partagent saisi_le. Toutes les dates sont décalées d'un nombre entier de semaines,
 -- calculé au chargement, pour que le dimanche 27 sept. 2026 devienne
 -- private.dimanche_reference() : le jeu reste actuel et les tests ne vieillissent pas.
+-- Aucune heure n'est après maintenant, quel que soit le jour : le jeu va jusqu'au mercredi
+-- 30 sept., et le dimanche de référence devient aujourd'hui dès midi (pg_temp.borne).
 -- Valeurs attendues (dates avant décalage) : BRIEF, section 13, et supabase/tests/calculs.test.sql.
 
 -- Décalage des dates et des heures (heure de Paris)
@@ -18,9 +20,31 @@ language sql stable as $$
   select p_jour + (private.dimanche_reference() - date '2026-09-27')
 $$;
 
+-- Maintenant, figé au premier appel de la session : toutes les heures du jeu se bornent sur le
+-- même instant, quel que soit le découpage en transactions.
+create function pg_temp.maintenant() returns timestamptz
+language sql stable as $$
+  select coalesce(nullif(current_setting('graine.maintenant', true), '')::timestamptz, now())
+$$;
+
+select set_config('graine.maintenant', pg_temp.maintenant()::text, false);
+
+-- Heure bornée : une heure plus récente que maintenant moins deux heures est ramenée entre
+-- maintenant moins deux heures et maintenant moins une heure, sans changer l'ordre des heures
+-- (deux heures distinctes le restent). Les autres heures ne bougent pas.
+create function pg_temp.borne(p_instant timestamptz) returns timestamptz
+language sql stable as $$
+  select case when p_instant <= b.limite then p_instant
+              else b.limite + make_interval(secs => 3600 * b.ecart / (b.ecart + 3600)) end
+    from (select m - interval '2 hours' as limite,
+                 extract(epoch from p_instant - (m - interval '2 hours'))::double precision as ecart
+            from pg_temp.maintenant() as m) as b
+$$;
+
 create function pg_temp.h(p_heure timestamp) returns timestamptz
 language sql stable as $$
-  select (p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day') at time zone 'Europe/Paris'
+  select pg_temp.borne((p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day')
+                       at time zone 'Europe/Paris')
 $$;
 
 -- Ministères et comptes (identifiants fixes, adresses en @exemple.test)

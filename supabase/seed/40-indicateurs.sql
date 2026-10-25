@@ -35,15 +35,28 @@ language sql stable as $$
   select p_jour + (private.dimanche_reference() - date '2026-09-27')
 $$;
 
-create or replace function pg_temp.h(p_heure timestamp) returns timestamptz
+-- Maintenant, figé au premier appel de la session, et heure bornée : comme dans seed.sql.
+create or replace function pg_temp.maintenant() returns timestamptz
 language sql stable as $$
-  select (p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day') at time zone 'Europe/Paris'
+  select coalesce(nullif(current_setting('graine.maintenant', true), '')::timestamptz, now())
+$$;
+
+select set_config('graine.maintenant', pg_temp.maintenant()::text, false);
+
+create or replace function pg_temp.borne(p_instant timestamptz) returns timestamptz
+language sql stable as $$
+  select case when p_instant <= b.limite then p_instant
+              else b.limite + make_interval(secs => 3600 * b.ecart / (b.ecart + 3600)) end
+    from (select m - interval '2 hours' as limite,
+                 extract(epoch from p_instant - (m - interval '2 hours'))::double precision as ecart
+            from pg_temp.maintenant() as m) as b
 $$;
 
 -- Heure décalée, jamais après maintenant (le dimanche de référence peut être aujourd'hui).
-create or replace function pg_temp.hc(p_heure timestamp) returns timestamptz
+create or replace function pg_temp.h(p_heure timestamp) returns timestamptz
 language sql stable as $$
-  select least(pg_temp.h(p_heure), now() - interval '1 hour')
+  select pg_temp.borne((p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day')
+                       at time zone 'Europe/Paris')
 $$;
 
 -- 1er du mois, p_recul mois avant le mois en cours (heure de Paris) : 0 pour le mois en cours.
@@ -56,8 +69,7 @@ $$;
 -- maintenant.
 create or replace function pg_temp.envoi(p_recul integer) returns timestamptz
 language sql stable as $$
-  select least(((pg_temp.mois(p_recul - 1) + 2)::timestamp + time '20:00') at time zone 'Europe/Paris',
-               now() - interval '1 hour')
+  select pg_temp.borne(((pg_temp.mois(p_recul - 1) + 2)::timestamp + time '20:00') at time zone 'Europe/Paris')
 $$;
 
 create temp table graine40_fiche (
@@ -203,13 +215,13 @@ select i.id, f.ministere, v.date_ref, v.valeur, v.saisi_le, f.compte
   from (values
       -- Intégration : NA et NC de quatre dimanches, Welcome Prodiges sur trois mois et le mois
       -- en cours, un indicateur bientôt retiré
-      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-06'), 4, pg_temp.hc(timestamp '2026-09-06 13:30')),
-      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-13'), 6, pg_temp.hc(timestamp '2026-09-13 13:30')),
-      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-20'), 3, pg_temp.hc(timestamp '2026-09-20 13:30')),
-      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-27'), 5, pg_temp.hc(timestamp '2026-09-27 13:30')),
-      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-13'), 1, pg_temp.hc(timestamp '2026-09-13 13:30')),
-      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-20'), 0, pg_temp.hc(timestamp '2026-09-20 13:30')),
-      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-27'), 2, pg_temp.hc(timestamp '2026-09-27 13:30')),
+      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-06'), 4, pg_temp.h(timestamp '2026-09-06 13:30')),
+      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-13'), 6, pg_temp.h(timestamp '2026-09-13 13:30')),
+      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-20'), 3, pg_temp.h(timestamp '2026-09-20 13:30')),
+      ('int', 'integration_nouveaux_arrivants_na', pg_temp.j(date '2026-09-27'), 5, pg_temp.h(timestamp '2026-09-27 13:30')),
+      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-13'), 1, pg_temp.h(timestamp '2026-09-13 13:30')),
+      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-20'), 0, pg_temp.h(timestamp '2026-09-20 13:30')),
+      ('int', 'integration_nouveaux_convertis_nc', pg_temp.j(date '2026-09-27'), 2, pg_temp.h(timestamp '2026-09-27 13:30')),
       ('int', 'integration_welcome_prodiges_sessions', pg_temp.mois(3), 1, pg_temp.envoi(3)),
       ('int', 'integration_welcome_prodiges_sessions', pg_temp.mois(2), 1, pg_temp.envoi(2)),
       ('int', 'integration_welcome_prodiges_sessions', pg_temp.mois(1), 2, pg_temp.envoi(1)),
@@ -224,9 +236,9 @@ select i.id, f.ministere, v.date_ref, v.valeur, v.saisi_le, f.compte
       ('int', 'integration_presences_d_equipiers_aux_evenements', pg_temp.mois(2), 6, pg_temp.envoi(2)),
       ('int', 'integration_presences_d_equipiers_aux_evenements', pg_temp.mois(1), 4, pg_temp.envoi(1)),
       -- Coordination : heures (10 h 42 et 10 h 35, prévue à 10 h 30), baptêmes du dernier mois
-      ('coo', 'coordination_heure_de_debut_du_culte', pg_temp.j(date '2026-09-20'), 642, pg_temp.hc(timestamp '2026-09-20 13:00')),
-      ('coo', 'coordination_heure_de_debut_du_culte', pg_temp.j(date '2026-09-27'), 635, pg_temp.hc(timestamp '2026-09-27 13:00')),
-      ('coo', 'coordination_heure_prevue_du_culte', pg_temp.j(date '2026-09-01'), 630, pg_temp.hc(timestamp '2026-09-01 20:00')),
+      ('coo', 'coordination_heure_de_debut_du_culte', pg_temp.j(date '2026-09-20'), 642, pg_temp.h(timestamp '2026-09-20 13:00')),
+      ('coo', 'coordination_heure_de_debut_du_culte', pg_temp.j(date '2026-09-27'), 635, pg_temp.h(timestamp '2026-09-27 13:00')),
+      ('coo', 'coordination_heure_prevue_du_culte', pg_temp.j(date '2026-09-01'), 630, pg_temp.h(timestamp '2026-09-01 20:00')),
       ('coo', 'coordination_bapteme_baptises', pg_temp.mois(1), 7, pg_temp.envoi(1)),
       ('coo', 'coordination_bapteme_sessions', pg_temp.mois(1), 2, pg_temp.envoi(1)),
       ('coo', 'coordination_bapteme_baptises_a_la_derniere_session_du_mois', pg_temp.mois(1), 4, pg_temp.envoi(1)),
@@ -240,11 +252,11 @@ select i.id, f.ministere, v.date_ref, v.valeur, v.saisi_le, f.compte
       ('soc', 'social_fonds_leves', pg_temp.mois(2), 800, pg_temp.envoi(2)),
       ('soc', 'social_fonds_leves', pg_temp.mois(1), 1250, pg_temp.envoi(1)),
       ('soc', 'social_actions_sociales', pg_temp.mois(1), 3, pg_temp.envoi(1)),
-      ('soc', 'social_partenariats_actifs', pg_temp.j(date '2026-09-03'), 4, pg_temp.hc(timestamp '2026-09-03 20:00')),
+      ('soc', 'social_partenariats_actifs', pg_temp.j(date '2026-09-03'), 4, pg_temp.h(timestamp '2026-09-03 20:00')),
       -- Prodiges Junior : enfants présents de deux dimanches, enfants inscrits
-      ('pju', 'prodiges_junior_enfants_presents', pg_temp.j(date '2026-09-20'), 14, pg_temp.hc(timestamp '2026-09-20 13:20')),
-      ('pju', 'prodiges_junior_enfants_presents', pg_temp.j(date '2026-09-27'), 16, pg_temp.hc(timestamp '2026-09-27 13:20')),
-      ('pju', 'prodiges_junior_enfants_inscrits', pg_temp.j(date '2026-09-20'), 40, pg_temp.hc(timestamp '2026-09-20 13:20')),
+      ('pju', 'prodiges_junior_enfants_presents', pg_temp.j(date '2026-09-20'), 14, pg_temp.h(timestamp '2026-09-20 13:20')),
+      ('pju', 'prodiges_junior_enfants_presents', pg_temp.j(date '2026-09-27'), 16, pg_temp.h(timestamp '2026-09-27 13:20')),
+      ('pju', 'prodiges_junior_enfants_inscrits', pg_temp.j(date '2026-09-20'), 40, pg_temp.h(timestamp '2026-09-20 13:20')),
       -- EJP Formation : séances, questionnaire (12 satisfaites pour 10 réponses au dernier mois)
       ('for', 'formation_seances_presences', pg_temp.mois(2), 24, pg_temp.envoi(2)),
       ('for', 'formation_seances_presences', pg_temp.mois(1), 30, pg_temp.envoi(1)),
@@ -254,21 +266,21 @@ select i.id, f.ministere, v.date_ref, v.valeur, v.saisi_le, f.compte
       ('for', 'formation_reponses_au_questionnaire', pg_temp.mois(1), 10, pg_temp.envoi(1)),
       ('for', 'formation_reponses_satisfaites', pg_temp.mois(2), 6, pg_temp.envoi(2)),
       ('for', 'formation_reponses_satisfaites', pg_temp.mois(1), 12, pg_temp.envoi(1)),
-      ('for', 'formation_inscrits_pcnc', pg_temp.j(date '2026-09-20'), 20, pg_temp.hc(timestamp '2026-09-20 20:00')),
+      ('for', 'formation_inscrits_pcnc', pg_temp.j(date '2026-09-20'), 20, pg_temp.h(timestamp '2026-09-20 20:00')),
       ('for', 'formation_personnes_ayant_termine_la_formation', pg_temp.j(date '2026-09-20'), 12,
-       pg_temp.hc(timestamp '2026-09-20 20:00')),
+       pg_temp.h(timestamp '2026-09-20 20:00')),
       -- Jeunesse : un grand nombre, des jours, l'ajout validé et l'ajout à valider
       ('jeu', 'Vues des vidéos de la jeunesse', pg_temp.mois(1), 12480, pg_temp.envoi(1)),
       ('jeu', 'Jours de préparation des sorties', pg_temp.mois(1), 9, pg_temp.envoi(1)),
       ('jeu', 'suggestion_activites_realisees', pg_temp.mois(1), 3, pg_temp.envoi(1)),
-      ('jeu', 'suggestion_participants', pg_temp.mois(1), 25, now() - interval '2 hours')
+      ('jeu', 'suggestion_participants', pg_temp.mois(1), 25, pg_temp.maintenant() - interval '2 hours')
     ) as v(fiche, cle, date_ref, valeur, saisi_le)
   join graine40_fiche f on f.code = v.fiche
   join public.indicateur i on i.ministere_id = f.ministere and (i.modele_code = v.cle or i.libelle = v.cle);
 
 -- 4. Retrait avec saisies : Intégration ne suit plus les présences d'équipiers aux événements
 -- (motif « plus suivi » ; ses saisies restent lisibles dans le bloc « Retirés »).
-update public.indicateur i set etat = 'retire', retrait_motif = 'plus_suivi', retire_le = now() - interval '30 minutes'
+update public.indicateur i set etat = 'retire', retrait_motif = 'plus_suivi', retire_le = pg_temp.maintenant() - interval '30 minutes'
   from graine40_fiche f
  where f.code = 'int' and i.ministere_id = f.ministere
    and i.modele_code = 'integration_presences_d_equipiers_aux_evenements';
