@@ -8,7 +8,7 @@
 -- l'appelant (décision T15) : absente, inconnue, d'un autre compte ou en aal1, elle est refusée.
 begin;
 
-select plan(110);
+select plan(117);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction).
 do $$
@@ -71,6 +71,8 @@ insert into appels values
    'select public.serveur_controler_correction_adresse(%1$L, %3$L, %2$L, ''essai-matrice-nouvelle@exemple.test'')'),
   ('serveur_corriger_adresse',
    'select public.serveur_corriger_adresse(%1$L, %3$L, %2$L, ''essai-matrice-nouvelle@exemple.test'')'),
+  ('serveur_preparer_correction_adresse',
+   'select public.serveur_preparer_correction_adresse(%1$L, %3$L, %2$L, ''essai-matrice-nouvelle@exemple.test'')'),
   ('serveur_controler_suppression_ministere',
    'select public.serveur_controler_suppression_ministere(%1$L, %3$L, %2$L)'),
   ('serveur_supprimer_ministere', 'select public.serveur_supprimer_ministere(%1$L, %3$L, %2$L)');
@@ -80,7 +82,7 @@ grant select on ctx, appels to anon, authenticated, service_role;
 select is(
   (select count(*)::int from pg_proc p
     where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace) and p.proname like 'serveur\_%'),
-  28, 'vingt-huit fonctions serveur : quatorze dans public, quatorze dans private (T74 compris)');
+  30, 'trente fonctions serveur : quinze dans public, quinze dans private (T74 compris)');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace) and p.proname like 'serveur\_%'

@@ -59,12 +59,13 @@ function titreDu(panneau: PanneauOuvert): string {
  * sous 600 px, panneau de 460 px au-delà (`PanneauSaisie`). Sous le titre, le formulaire : son
  * bouton dit ce qui se passe (« Créer et envoyer l'invitation », T66 t276 ; « Corriger et
  * envoyer l'invitation », T74). La réactivation d'un compte jamais activé passe par un panneau
- * qui corrige l'adresse au passage : réactivation d'abord, puis correction si l'adresse change ;
- * après une réactivation réussie, un nouvel essai ne refait que la correction.
+ * qui corrige l'adresse au passage : correction d'abord si l'adresse change (compte encore
+ * désactivé), puis réactivation ; après une correction réussie, un nouvel essai ne refait que la
+ * réactivation.
  */
 export function PanneauCompte({ panneau, actions, onCree, onFermer }: Props) {
-  // Réactivation faite dans ce panneau : un refus de la correction se réessaie seul.
-  const reactive = useRef(false)
+  // Adresse déjà corrigée dans ce panneau : un refus de la réactivation se réessaie seul.
+  const corrigee = useRef<string | null>(null)
 
   const contenu = (() => {
     switch (panneau.genre) {
@@ -99,11 +100,13 @@ export function PanneauCompte({ panneau, actions, onCree, onFermer }: Props) {
             ministere={panneau.ministere}
             onAnnuler={onFermer}
             envoyer={async (email, changee) => {
-              if (!reactive.current) {
-                await actions.reactiver(panneau.userId)
-                reactive.current = true
+              // L'adresse se corrige d'abord, compte encore désactivé : l'adresse fausse perd ses
+              // accès avant que le bannissement soit levé (revue du 25 octobre 2026).
+              if (changee && corrigee.current !== email) {
+                await actions.corriger(panneau.userId, email)
+                corrigee.current = email
               }
-              if (changee) await actions.corriger(panneau.userId, email)
+              await actions.reactiver(panneau.userId)
               onCree(
                 changee
                   ? REUSSITES_COMPTES.reactiveEtInvite(panneau.libelle, email)

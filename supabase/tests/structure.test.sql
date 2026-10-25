@@ -332,7 +332,8 @@ select is_empty($$
                                     'serveur_revoquer_sessions',
                                     -- T74
                                     'serveur_controler_correction_adresse', 'serveur_corriger_adresse',
-                                    'serveur_controler_suppression_ministere', 'serveur_supprimer_ministere')))
+                                    'serveur_controler_suppression_ministere', 'serveur_supprimer_ministere',
+                                    'serveur_preparer_correction_adresse')))
 $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
 -- Listes exhaustives des fonctions : (nom, nombre d'arguments, security definer, exécutable par
 -- authenticated, exécutable par service_role). Le nombre d'arguments distingue les surcharges
@@ -387,6 +388,7 @@ $$, $$ values
   ('serveur_corriger_adresse', 4, false, false, true),
   ('serveur_creer_compte', 7, false, false, true),
   ('serveur_desactiver_compte', 3, false, false, true),
+  ('serveur_preparer_correction_adresse', 4, false, false, true),
   ('serveur_reactiver_compte', 3, false, false, true),
   ('serveur_reinitialiser_2fa', 3, false, false, true),
   ('serveur_relancer_invitation', 3, false, false, true),
@@ -396,7 +398,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 49 fonctions de public : 35 de l''API (security invoker, authenticated) et 14 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 50 fonctions de public : 35 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -444,6 +446,7 @@ $$, $$ values
   ('controler_suppression_ministere', 1, false, false, false),
   ('controler_terme', 0, true, false, false),
   ('corriger_indicateur', 3, true, true, false),
+  ('couper_ancienne_adresse', 1, false, false, false),
   ('creer_calcul', 7, true, true, false),
   ('creer_indicateur', 9, true, true, false),
   ('creer_indicateurs_prevus', 2, true, true, false),
@@ -540,6 +543,7 @@ $$, $$ values
   ('serveur_corriger_adresse', 4, true, false, true),
   ('serveur_creer_compte', 7, true, false, true),
   ('serveur_desactiver_compte', 3, true, false, true),
+  ('serveur_preparer_correction_adresse', 4, true, false, true),
   ('serveur_reactiver_compte', 3, true, false, true),
   ('serveur_reinitialiser_2fa', 3, true, false, true),
   ('serveur_relancer_invitation', 3, true, false, true),
@@ -564,7 +568,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 160 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 162 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

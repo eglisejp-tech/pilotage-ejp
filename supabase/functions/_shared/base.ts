@@ -20,6 +20,7 @@ export type FonctionServeur =
   | 'serveur_revoquer_sessions'
   // T74
   | 'serveur_controler_correction_adresse'
+  | 'serveur_preparer_correction_adresse'
   | 'serveur_corriger_adresse'
   | 'serveur_controler_suppression_ministere'
   | 'serveur_supprimer_ministere'

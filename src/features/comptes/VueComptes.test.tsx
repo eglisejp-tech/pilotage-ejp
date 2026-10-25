@@ -281,8 +281,9 @@ describe('VueComptes (écran 13)', () => {
       '20000000-0000-4000-8000-000000000010',
       'ejptech1+ministere@exemple.test',
     )
-    expect(actions.reactiver.mock.invocationCallOrder[0]).toBeLessThan(
-      actions.corriger.mock.invocationCallOrder[0] ?? 0,
+    // L'adresse se corrige d'abord, compte encore désactivé, puis le compte se réactive.
+    expect(actions.corriger.mock.invocationCallOrder[0]).toBeLessThan(
+      actions.reactiver.mock.invocationCallOrder[0] ?? 0,
     )
     expect(
       await screen.findByText(
@@ -291,9 +292,9 @@ describe('VueComptes (écran 13)', () => {
     ).toBeInTheDocument()
   })
 
-  it('réactivé, mais la correction refusée : un nouvel essai ne refait que la correction', async () => {
+  it('adresse corrigée, mais la réactivation refusée : un nouvel essai ne refait que la réactivation', async () => {
     const actions = actionsFausses()
-    actions.corriger.mockRejectedValueOnce(new ErreurCompte('invitation_trop_recente'))
+    actions.reactiver.mockRejectedValueOnce(new ErreurCompte('ministere_a_deja_un_compte'))
     afficher(donnees(), actions)
     await afficherDesactives()
     await userEvent.click(bouton('Réactiver EJP TECH'))
@@ -302,13 +303,11 @@ describe('VueComptes (écran 13)', () => {
     await userEvent.type(champ, 'ejptech1+ministere@exemple.test')
     await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
     expect(
-      await screen.findByText(
-        'Une invitation vient de partir vers cette adresse. Attendez une minute, puis réessayez.',
-      ),
+      await screen.findByText('Ce ministère a déjà un compte actif. Rechargez la page.'),
     ).toBeInTheDocument()
     await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
-    expect(actions.reactiver).toHaveBeenCalledTimes(1)
-    expect(actions.corriger).toHaveBeenCalledTimes(2)
+    expect(actions.corriger).toHaveBeenCalledTimes(1)
+    expect(actions.reactiver).toHaveBeenCalledTimes(2)
   })
 
   it('« Supprimer » : la fenêtre dit ce qui disparaît, puis le message en haut de la page', async () => {

@@ -8,7 +8,7 @@
 -- ministère, pas le parcours de saisie, que d'autres fichiers testent.
 begin;
 
-select plan(81);
+select plan(86);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -54,6 +54,17 @@ insert into auth.sessions (id, user_id, aal)
 select sa, tech, 'aal2'::auth.aal_level from ctx
 union all select gen_random_uuid(), aact, 'aal1'::auth.aal_level from ctx;
 update public.compte set desactive_le = now() where user_id = (select inactif from ctx);
+-- Ce que l'adresse fausse a pu ouvrir sur le compte « à activer » : une connexion Google
+-- (identité rattachée) et un lien à usage unique ; plus son identité email, qui reste
+-- (migration 20261025211216, même exception que mfa_factors ci-dessus).
+insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select gen_random_uuid(), 'essai-t74-google', aact, '{"sub": "essai-t74-google"}'::jsonb, 'google', now(), now(), now()
+  from ctx;
+insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select gen_random_uuid(), aact::text, aact, jsonb_build_object('sub', aact::text), 'email', now(), now(), now()
+  from ctx;
+insert into auth.one_time_tokens (id, user_id, token_type, token_hash, relates_to, created_at, updated_at)
+select gen_random_uuid(), aact, 'confirmation_token', 'essai-t74-jeton', 'essai-t74', now(), now() from ctx;
 
 -- Ministères de la suppression : vide (désactivé, son compte invité, ses indicateurs prévus de la
 -- liste « tech », calculs compris, son lien à la liste, une place dans une session sans saisie),
@@ -252,9 +263,9 @@ select throws_ok($$ select public.serveur_controler_correction_adresse((select t
 select throws_ok($$ select public.serveur_controler_correction_adresse((select tech from ctx), (select sa from ctx),
                     (select eglise from ctx), 'essai-t74-nouvelle@exemple.test') $$,
   'P0001', 'type_interdit', 'le compte de l''administration de l''église : refusé');
-select throws_ok($$ select public.serveur_controler_correction_adresse((select tech from ctx), (select sa from ctx),
-                    (select inactif from ctx), 'essai-t74-nouvelle@exemple.test') $$,
-  'P0001', 'compte_desactive', 'compte désactivé : refusé (il se réactive d''abord)');
+select lives_ok($$ select public.serveur_controler_correction_adresse((select tech from ctx), (select sa from ctx),
+                   (select inactif from ctx), 'essai-t74-nouvelle@exemple.test') $$,
+  'compte désactivé jamais activé : accepté (la réactivation corrige d''abord, migration 20261025211216)');
 select throws_ok($$ select public.serveur_controler_correction_adresse((select tech from ctx), (select sa from ctx),
                     gen_random_uuid(), 'essai-t74-nouvelle@exemple.test') $$,
   'P0001', 'compte_inconnu', 'compte inconnu : refusé');
@@ -264,9 +275,28 @@ select throws_ok($$ select public.serveur_controler_correction_adresse((select t
 select throws_ok($$ select public.serveur_corriger_adresse((select tech from ctx), (select sa from ctx),
                     (select aact from ctx), 'essai-t74-corrigee@exemple.test') $$,
   'P0001', 'adresse_non_modifiee', 'écriture refusée tant qu''Auth garde l''ancienne adresse');
+-- Préparation, avant l'appel à Auth : l'adresse fausse perd ses accès.
+select lives_ok($$ select public.serveur_preparer_correction_adresse((select tech from ctx), (select sa from ctx),
+                   (select aact from ctx), 'essai-t74-corrigee@exemple.test') $$,
+  'préparation acceptée pour un compte « à activer »');
+select throws_ok($$ select public.serveur_preparer_correction_adresse((select tech from ctx), (select sa from ctx),
+                    (select active from ctx), 'essai-t74-corrigee@exemple.test') $$,
+  'P0001', 'compte_deja_active', 'préparation refusée pour un compte activé');
 reset role;
--- Ce que fait l'Edge Function dans Auth avant l'écriture (adresse et mot de passe).
+select ok(not exists (select 1 from auth.sessions s where s.user_id = (select aact from ctx))
+          and not exists (select 1 from auth.identities i where i.user_id = (select aact from ctx) and i.provider = 'google')
+          and exists (select 1 from auth.identities i where i.user_id = (select aact from ctx) and i.provider = 'email')
+          and not exists (select 1 from auth.one_time_tokens t where t.user_id = (select aact from ctx))
+          and (select u.email from auth.users u where u.id = (select aact from ctx)) = 'essai-t74-a-activer@exemple.test'
+          and not exists (select 1 from public.journal j where j.cible_id = (select aact from ctx)),
+  'préparation : sessions, identité Google et liens à usage unique supprimés, identité email gardée, rien d''autre');
+-- Ce que fait l'Edge Function dans Auth avant l'écriture (adresse et mot de passe), et un accès
+-- rouvert entre-temps : l'écriture le coupe de nouveau.
 update auth.users set email = 'essai-t74-corrigee@exemple.test' where id = (select aact from ctx);
+insert into auth.sessions (id, user_id, aal) select gen_random_uuid(), aact, 'aal1'::auth.aal_level from ctx;
+insert into auth.identities (id, provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+select gen_random_uuid(), 'essai-t74-google-2', aact, '{"sub": "essai-t74-google-2"}'::jsonb, 'google', now(), now(), now()
+  from ctx;
 alter table ctx add column journal_avant integer;
 update ctx set journal_avant = (select count(*) from public.journal);
 set local role service_role;
@@ -277,8 +307,9 @@ reset role;
 select ok((select u.email_confirmed_at is null from auth.users u where u.id = (select aact from ctx)),
   'correction : l''adresse n''est plus confirmée (l''invitation peut repartir)');
 select ok(not exists (select 1 from auth.sessions s where s.user_id = (select aact from ctx))
-          and exists (select 1 from auth.sessions s where s.id = (select sa from ctx)),
-  'correction : sessions du compte supprimées, celle de l''appelant gardée');
+          and exists (select 1 from auth.sessions s where s.id = (select sa from ctx))
+          and not exists (select 1 from auth.identities i where i.user_id = (select aact from ctx) and i.provider <> 'email'),
+  'correction : sessions et identité Google du compte supprimées, session de l''appelant gardée');
 select results_eq($$
   select j.action, j.compte, j.ministere_id, j.cible, j.detail from public.journal j
    where j.cible_id = (select aact from ctx)
@@ -361,6 +392,12 @@ select is((tests.lire((select tech from ctx), 'aal2',
 select is(tests.compter(tests.compte('Administration de l''église'), 'aal2',
   'select 1 from public.v_journal where action = ''ministere_supprime'' and cible_id = (select vide from ctx) and ministere_nom = ''Essai T74 vide'''),
   1, 'l''administration de l''église lit la suppression (journal_lisible_administration)');
+select is(tests.compter(tests.compte('Berger'), 'aal2',
+  'select 1 from public.v_journal where action = ''ministere_supprime'' and cible_id = (select vide from ctx) and ministere_nom = ''Essai T74 vide'''),
+  1, 'le berger lit la suppression, comme tout le journal (lit_tout)');
+select is(tests.compter(tests.compte('Ministère Communication'), 'aal2',
+  'select 1 from public.v_journal where ministere_id = (select vide from ctx) or cible_id = (select vide from ctx)'),
+  0, 'un autre ministère ne lit aucune ligne du ministère supprimé, ni sa suppression');
 select throws_ok($$ insert into public.journal (compte, ministere_id, action) values (null, (select vide from ctx), 'texte_relu') $$,
   'P0001', 'Ce ministère n''existe pas.', 'le journal refuse une ligne nouvelle pour un ministère supprimé');
 select lives_ok($$ insert into public.ministere (nom) values ('Essai T74 vide') $$,

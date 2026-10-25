@@ -307,8 +307,9 @@ export function simulerAction(
 }
 
 /**
- * Correction simulée d'une adresse (T74), avec les refus de `corriger-adresse` : compte
- * désactivé, déjà activé, adresse déjà prise. L'adresse change et redevient non confirmée.
+ * Correction simulée d'une adresse (T74), avec les refus de `corriger-adresse` : compte déjà
+ * activé, adresse déjà prise. Un compte désactivé se corrige (« Réactiver » corrige d'abord).
+ * L'adresse change et redevient non confirmée.
  */
 export function simulerCorrection(
   donnees: DonneesApercu,
@@ -317,7 +318,6 @@ export function simulerCorrection(
 ): DonneesApercu {
   const cible = donnees.comptes.find((c) => c.ligne.user_id === userId)
   if (!cible) throw new ErreurCompte('compte_inconnu')
-  if (cible.ligne.desactive_le !== null) throw new ErreurCompte('compte_desactive')
   if (cible.facteur) throw new ErreurCompte('compte_deja_active')
   if (donnees.comptes.some((c) => c.ligne.email === email && c.ligne.user_id !== userId)) {
     throw new ErreurCompte('adresse_deja_utilisee')

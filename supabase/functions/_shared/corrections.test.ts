@@ -119,15 +119,17 @@ afterEach(() => {
 describe('corriger-adresse', () => {
   const demande = { user_id: CIBLE, email: ADRESSE }
 
-  it('contrôle, adresse et mot de passe, base, facteurs non vérifiés, puis invitation', async () => {
+  it('contrôle, accès coupés, facteurs non vérifiés, puis adresse, base et invitation', async () => {
     const { appelant, appels, parametresRpc, attributsAuth } = clientFactice()
     await corrigerAdresse(demande, appelant)
+    // L'adresse fausse perd ses accès avant que l'adresse change dans Auth (revue du 25 octobre).
     expect(appels).toEqual([
       'rpc:serveur_controler_correction_adresse',
-      'adresse',
-      'rpc:serveur_corriger_adresse',
+      'rpc:serveur_preparer_correction_adresse',
       'liste_facteurs',
       'suppression_facteur:f2',
+      'adresse',
+      'rpc:serveur_corriger_adresse',
       'invitation',
     ])
     for (const parametres of parametresRpc) {
@@ -199,10 +201,22 @@ describe('corriger-adresse', () => {
     })
   })
 
-  it('un facteur qui ne se supprime pas arrête avant l’invitation', async () => {
+  it('un facteur qui ne se supprime pas arrête avant de toucher à l’adresse', async () => {
     const { appelant, appels } = clientFactice({ echecs: { 'suppression_facteur:f2': 'panne' } })
     expect(await erreurDe(corrigerAdresse(demande, appelant))).toMatchObject({ statut: 500 })
+    expect(appels).not.toContain('adresse')
     expect(appels).not.toContain('invitation')
+  })
+
+  it('un refus de la préparation (compte activé entre-temps) ne touche pas à Auth', async () => {
+    const { appelant, appels } = clientFactice({
+      echecs: { 'rpc:serveur_preparer_correction_adresse': 'compte_deja_active' },
+    })
+    expect(await erreurDe(corrigerAdresse(demande, appelant))).toMatchObject({
+      statut: 409,
+      code: 'compte_deja_active',
+    })
+    expect(appels).not.toContain('adresse')
   })
 })
 

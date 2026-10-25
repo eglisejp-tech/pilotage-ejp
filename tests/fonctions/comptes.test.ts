@@ -3,6 +3,7 @@
 // npm run test:fonctions. Ils ajoutent des comptes et des ministères d'essai à la base locale :
 // en local, npx supabase db reset remet ensuite le jeu d'exemple d'origine.
 import { randomUUID } from 'node:crypto'
+import { createClient } from '@supabase/supabase-js'
 import { beforeAll, describe, expect, it } from 'vitest'
 import {
   activerDoubleAuthentification,
@@ -698,6 +699,14 @@ describe('corriger-adresse', () => {
     expect(invite).toBeDefined()
     const avant = await compte(invite!.id)
     const { data: auth } = await clientSecret().auth.admin.getUserById(invite!.id)
+    // Un lien d'invitation de l'adresse fausse, comme celui qu'elle a reçu (revue du 25 octobre).
+    const { data: lien, error: erreurLien } = await clientSecret().auth.admin.generateLink({
+      type: 'invite',
+      email: ancienne,
+    })
+    expect(erreurLien).toBeNull()
+    const jetonLien = lien.properties?.hashed_token
+    expect(jetonLien).toBeTruthy()
     // Auth espace deux envois au même utilisateur (max_frequency de la pile locale).
     await new Promise((resolve) => setTimeout(resolve, 2_000))
 
@@ -711,6 +720,19 @@ describe('corriger-adresse', () => {
     const { data: apres } = await clientSecret().auth.admin.getUserById(invite!.id)
     expect(apres.user?.email).toBe(nouvelle)
     expect(apres.user?.email_confirmed_at ?? null).toBeNull()
+    // Le lien de l'adresse fausse ne sert plus : il n'ouvre rien et ne confirme rien.
+    const { apiUrl, clePublique } = environnement()
+    const visiteur = createClient(apiUrl, clePublique, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+    const { data: ouverture, error: erreurOuverture } = await visiteur.auth.verifyOtp({
+      token_hash: String(jetonLien),
+      type: 'invite',
+    })
+    expect(erreurOuverture).not.toBeNull()
+    expect(ouverture.session ?? null).toBeNull()
+    const { data: toujours } = await clientSecret().auth.admin.getUserById(invite!.id)
+    expect(toujours.user?.email_confirmed_at ?? null).toBeNull()
     expect(Date.parse(apres.user?.invited_at ?? '')).toBeGreaterThanOrEqual(
       Date.parse(auth.user?.invited_at ?? ''),
     )
@@ -787,6 +809,45 @@ describe('corriger-adresse', () => {
         cible_id: invite!.id,
         detail: { type: 'ministere' },
       },
+    ])
+  })
+
+  it('« Réactiver » qui corrige : l’adresse se corrige compte encore désactivé, puis il se réactive', async () => {
+    const ancienne = adresseDeTest('essai-correction-desactive')
+    const nouvelle = adresseDeTest('essai-correction-desactive-bis')
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'conseil', email: ancienne },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const invite = await utilisateurParEmail(ancienne)
+    attendreSucces(
+      await appeler('desactiver-compte', { user_id: invite!.id }, { jeton: sessionTech.jeton }),
+    )
+    await new Promise((resolve) => setTimeout(resolve, 2_000))
+    attendreSucces(
+      await appeler(
+        'corriger-adresse',
+        { user_id: invite!.id, email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    // Toujours désactivé et banni : l'invitation est partie, rien ne s'ouvre encore.
+    expect((await compte(invite!.id))?.desactive_le).not.toBeNull()
+    const { data: banni } = await clientSecret().auth.admin.getUserById(invite!.id)
+    expect(banni.user?.email).toBe(nouvelle)
+    expect(Date.parse(banni.user?.banned_until ?? '')).toBeGreaterThan(Date.now())
+    attendreSucces(
+      await appeler('reactiver-compte', { user_id: invite!.id }, { jeton: sessionTech.jeton }),
+    )
+    expect((await compte(invite!.id))?.desactive_le).toBeNull()
+    expect((await lignesJournal(sessionTech, invite!.id)).map((ligne) => ligne.action)).toEqual([
+      'compte_cree',
+      'compte_desactive',
+      'adresse_corrigee',
+      'compte_reactive',
     ])
   })
 

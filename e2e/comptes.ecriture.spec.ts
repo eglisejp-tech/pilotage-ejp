@@ -412,9 +412,12 @@ test.describe("l'administration de l'église lit les comptes, sans les gérer (T
         'EJP Tech crée et gère les ministères et les comptes. Adressez-lui vos demandes.',
       ),
     ).toBeVisible()
-    await expect(page.getByRole('main').getByRole('button', { name: /^(?!Aide : )/ })).toHaveCount(
-      0,
-    )
+    // Seulement les aides et l'ouverture des désactivés repliés (T74) : aucune action.
+    await expect(
+      page
+        .getByRole('main')
+        .getByRole('button', { name: /^(?!Aide : |(Afficher|Masquer) (le|les) .*désactivés?$)/ }),
+    ).toHaveCount(0)
     const entetes = {
       apikey: process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? '',
       Authorization: `Bearer ${await jetonAcces(page)}`,
