@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { LIMITE_CHANGEMENTS } from '@/data/indicateursConfiguration'
 import {
+  apresChoix,
   apresCreation,
   ID_ANCIEN,
   ID_COMMUNICATION,
@@ -15,7 +16,12 @@ import {
   construireConfiguration,
   construireMinistere,
 } from '@/features/indicateurs/configuration/construire'
-import { etatPrevus, ministeresSansPrevu } from '@/features/indicateurs/configuration/prevus'
+import type { LienModele } from '@/data/indicateursConfiguration'
+import {
+  blocPrevusVisible,
+  etatPrevus,
+  listesParMinistere,
+} from '@/features/indicateurs/configuration/prevus'
 import { nombre } from '@/lib/metier/texte'
 
 describe('catalogue : modèles', () => {
@@ -38,94 +44,113 @@ describe('catalogue : modèles', () => {
   })
 })
 
-describe('état des prévus (7.1)', () => {
+describe('état des prévus (7.1, T72 : la liste choisie)', () => {
   const lectures = lecturesExemple()
   const modeles = modelesDuCatalogue(lectures.catalogue)
-  const sansPrevu = ministeresSansPrevu(lectures.creations)
-  const de = (id: string, nom: string, aucun = false) =>
+  const liens = listesParMinistere(lectures.liens)
+  const de = (id: string) =>
     etatPrevus(
-      nom,
+      liens.get(id),
       lectures.indicateurs.filter((indicateur) => indicateur.ministere_id === id),
       modeles,
-      aucun,
     )
+  const lien = (modele: string | null, suggere: string | null = null): LienModele => ({
+    ministere_id: 'm',
+    modele,
+    choisi_le: null,
+    suggere,
+  })
 
-  it('nom reconnu, rien créé : « 6 à créer »', () => {
-    const etat = de(ID_KUMI, 'Kumi')
+  it('liste choisie, rien créé : « 6 à créer », la liste se change encore', () => {
+    const etat = de(ID_KUMI)
     expect(etat.genre).toBe('a_creer')
     if (etat.genre === 'a_creer') {
       expect(etat.modele.code).toBe('kumi')
       expect(etat.manquants).toHaveLength(6)
+      expect(etat.modifiable).toBe(true)
     }
   })
 
-  it('tous les prévus du modèle sont sur la fiche : « Créés »', () => {
-    expect(de(ID_COMMUNICATION, 'Communication').genre).toBe('crees')
-    expect(de(ID_EAGLES, 'Eagles').genre).toBe('crees')
+  it('tous les prévus de la liste sont sur la fiche : « Créés », la liste ne se change plus', () => {
+    expect(de(ID_COMMUNICATION)).toMatchObject({ genre: 'crees', modifiable: false })
+    expect(de(ID_EAGLES)).toMatchObject({ genre: 'crees', modifiable: false })
   })
 
-  it('nom non reconnu, rien créé : « À choisir »', () => {
-    expect(de(ID_JEUNESSE, 'Jeunesse').genre).toBe('a_choisir')
+  it('rien de choisi : « À choisir », sans suggestion pour un nom inconnu', () => {
+    expect(de(ID_JEUNESSE)).toEqual({ genre: 'a_choisir', suggestion: null })
   })
 
-  it('la réponse « Aucun prévu » du journal : « Aucun prévu », jamais « À choisir »', () => {
-    expect(sansPrevu.has(ID_PROTOCOLE)).toBe(true)
-    expect(sansPrevu.has(ID_JEUNESSE)).toBe(false)
-    expect(de(ID_PROTOCOLE, 'Protocole', true).genre).toBe('aucun')
+  it('« Aucun prévu » choisi : « Aucun prévu », jamais « À choisir »', () => {
+    expect(de(ID_PROTOCOLE).genre).toBe('aucun')
   })
 
-  it('les prévus déjà créés priment sur le nom : un ministère au nom inconnu garde son modèle', () => {
-    const indicateurs = lectures.indicateurs
-      .filter((indicateur) => indicateur.ministere_id === ID_EAGLES)
-      .slice(0, 1)
-    const etat = etatPrevus('Aigles', indicateurs, modeles, false)
-    expect(etat.genre).toBe('a_creer')
-    if (etat.genre === 'a_creer') {
-      expect(etat.modele.code).toBe('eagles')
-      expect(etat.manquants.map((prevu) => prevu.libelle)).toEqual(['Présents aux rencontres'])
-    }
+  it('la suggestion présélectionne sans choisir : un modèle du catalogue ou « aucun »', () => {
+    expect(etatPrevus(lien(null, 'kumi'), [], modeles)).toEqual({
+      genre: 'a_choisir',
+      suggestion: 'kumi',
+    })
+    expect(etatPrevus(lien(null, 'aucun'), [], modeles)).toEqual({
+      genre: 'a_choisir',
+      suggestion: 'aucun',
+    })
+    // Une suggestion inconnue du catalogue lu n'est pas proposée.
+    expect(etatPrevus(lien(null, 'tech'), [], modeles)).toEqual({
+      genre: 'a_choisir',
+      suggestion: null,
+    })
+    expect(etatPrevus(undefined, [], modeles)).toEqual({ genre: 'a_choisir', suggestion: null })
+  })
+
+  it('le nom ne décide plus : sans lien, des prévus créés ne valent pas un choix', () => {
+    const indicateurs = lectures.indicateurs.filter(
+      (indicateur) => indicateur.ministere_id === ID_EAGLES,
+    )
+    expect(etatPrevus(lien(null), indicateurs, modeles).genre).toBe('a_choisir')
+  })
+
+  it('la liste choisie fait foi, même si les prévus d’une autre liste sont sur la fiche', () => {
+    const etat = etatPrevus(
+      lien('kumi'),
+      [{ modele_code: 'eagles_rencontres', etat: 'actif' }],
+      modeles,
+    )
+    expect(etat).toMatchObject({ genre: 'a_creer', modifiable: true })
   })
 
   it('un prévu retiré ne renaît pas : il compte comme créé', () => {
     const etat = etatPrevus(
-      'Eagles',
+      lien('eagles'),
       [
         { modele_code: 'eagles_rencontres', etat: 'retire' },
         { modele_code: 'eagles_presents', etat: 'actif' },
       ],
       modeles,
-      false,
     )
-    expect(etat.genre).toBe('crees')
+    expect(etat).toMatchObject({ genre: 'crees', modifiable: false })
   })
 
-  it('des prévus tous retirés ne décident pas du modèle (correctif du 8 octobre 2026)', () => {
-    // Prévus d'Eagles créés par erreur sur une autre fiche, puis retirés : le modèle reste à
-    // choisir, au lieu de « Eagles, déjà créés ».
+  it('des prévus tous retirés : « Créés », et la liste se change (correctif du 8 octobre 2026)', () => {
     const etat = etatPrevus(
-      'Aigles',
+      lien('eagles'),
       [
         { modele_code: 'eagles_rencontres', etat: 'retire' },
         { modele_code: 'eagles_presents', etat: 'retire' },
       ],
       modeles,
-      false,
     )
-    expect(etat.genre).toBe('a_choisir')
+    expect(etat).toMatchObject({ genre: 'crees', modifiable: true })
+    expect(blocPrevusVisible(etat)).toBe(true)
   })
 
-  it('« Aucun prévu » enregistré, puis un modèle au nom du ministère arrive au catalogue : le modèle gagne (T71)', () => {
-    // Comme Protocole : « Aucun prévu » avant le 24 octobre 2026, puis son modèle au catalogue.
-    const etat = etatPrevus('Kumi', [], modeles, true)
-    expect(etat.genre).toBe('a_creer')
-    if (etat.genre === 'a_creer') {
-      expect(etat.modele.code).toBe('kumi')
-      expect(etat.manquants).toHaveLength(6)
-    }
+  it('une liste choisie absente du catalogue lu se lit comme « À choisir »', () => {
+    expect(etatPrevus(lien('liste disparue'), [], modeles).genre).toBe('a_choisir')
   })
 
-  it('le nom du ministère se compare une fois normalisé : accents, casse, espaces', () => {
-    expect(etatPrevus('  KUMI ', [], modeles, false).genre).toBe('a_creer')
+  it('le bloc de la fiche : à choisir, à créer et « Aucun prévu » ; pas une liste créée et suivie', () => {
+    expect(blocPrevusVisible(de(ID_JEUNESSE))).toBe(true)
+    expect(blocPrevusVisible(de(ID_KUMI))).toBe(true)
+    expect(blocPrevusVisible(de(ID_PROTOCOLE))).toBe(true)
+    expect(blocPrevusVisible(de(ID_COMMUNICATION))).toBe(false)
   })
 })
 
@@ -358,7 +383,7 @@ describe('apresCreation (aperçu) : « Créer » comme la base', () => {
     expect(kumi?.prevus.genre).toBe('crees')
     expect(kumi?.sansIndicateur).toBe(false)
     expect(kumi?.phrase).toBe('6 indicateurs suivis.')
-    expect(lectures.creations[0]).toMatchObject({
+    expect(lectures.changements[0]).toMatchObject({
       ministere_id: ID_KUMI,
       action: 'indicateurs_prevus_crees',
     })
@@ -370,7 +395,7 @@ describe('apresCreation (aperçu) : « Créer » comme la base', () => {
     expect(second.nombre).toBe(0)
   })
 
-  it('« Aucun prévu » : aucun indicateur, la réponse est enregistrée', () => {
+  it('« Aucun prévu » : aucun indicateur, la fiche sans liste reçoit « aucun », comme la base', () => {
     const { lectures, nombre } = apresCreation(
       lecturesExemple(),
       ID_JEUNESSE,
@@ -378,7 +403,33 @@ describe('apresCreation (aperçu) : « Créer » comme la base', () => {
       '2026-10-07T10:00:00+00:00',
     )
     expect(nombre).toBe(0)
-    expect(ministeresSansPrevu(lectures.creations).has(ID_JEUNESSE)).toBe(true)
+    expect(lectures.liens.find((lien) => lien.ministere_id === ID_JEUNESSE)?.modele).toBe('aucun')
     expect(construireMinistere(ID_JEUNESSE, lectures)?.prevus.genre).toBe('aucun')
+  })
+})
+
+describe('apresChoix (aperçu) : « Enregistrer le choix » comme la base (T72)', () => {
+  it('la liste choisie remplace la précédente, avec sa ligne de journal {avant, apres}', () => {
+    const lectures = apresChoix(lecturesExemple(), ID_JEUNESSE, 'film', '2026-10-07T10:00:00+00:00')
+    const jeunesse = construireMinistere(ID_JEUNESSE, lectures)
+    expect(jeunesse?.prevus).toMatchObject({ genre: 'a_creer', modifiable: true })
+    expect(lectures.changements[0]).toEqual({
+      ministere_id: ID_JEUNESSE,
+      le: '2026-10-07T10:00:00+00:00',
+      action: 'modele_prevus_choisi',
+      detail: { avant: null, apres: 'film' },
+    })
+    expect(lectures.liens.filter((lien) => lien.ministere_id === ID_JEUNESSE)).toHaveLength(1)
+  })
+
+  it('« Aucun prévu » se change en liste', () => {
+    const lectures = apresChoix(
+      lecturesExemple(),
+      ID_PROTOCOLE,
+      'film',
+      '2026-10-07T10:00:00+00:00',
+    )
+    expect(construireMinistere(ID_PROTOCOLE, lectures)?.prevus.genre).toBe('a_creer')
+    expect(lectures.changements[0]?.detail).toEqual({ avant: 'aucun', apres: 'film' })
   })
 })

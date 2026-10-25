@@ -6,8 +6,9 @@
 --   (creer_indicateurs_prevus) : Communication, Intégration, Coordination, Social, FIJ (modèle
 --   « coordo fij »), Prodiges Junior et EJP Formation (modèle « formation »), sensibles compris,
 --   actifs dès leur création (P42), avec les termes de leurs calculs et une ligne de journal
---   indicateurs_prevus_crees par fiche. Jeunesse n'a pas de modèle : l'administration lui a
---   ajouté deux indicateurs (un grand nombre et des jours), et elle a demandé trois suggestions.
+--   indicateurs_prevus_crees par fiche, puis leur liste choisie (T72, section 5). Jeunesse n'a
+--   pas de modèle : l'administration lui a ajouté deux indicateurs (un grand nombre et des
+--   jours), et elle a demandé trois suggestions.
 -- - Une valeur par unité : nombre, grand nombre (Jeunesse), euros (Social, Fonds levés), heure
 --   (Coordination, Heure de début et Heure prévue du culte), jours (Jeunesse).
 -- - Un sensible : « Bénéficiaires (passages) » de Social, 6, 1, 0 et 2 sur les quatre derniers
@@ -278,3 +279,8 @@ select i.retire_le, '20000000-0000-4000-8000-000000000021'::uuid, i.ministere_id
   from public.indicateur i
   join graine40_fiche f on f.code = 'int' and f.ministere = i.ministere_id
  where i.modele_code = 'integration_presences_d_equipiers_aux_evenements';
+
+-- 5. Liste choisie de chaque fiche (T72) : la reprise de 20261025003417_ministere_modele.sql,
+-- comme en production, au nom de « Système ». Les sept fiches avec prévus reçoivent leur modèle
+-- (Coordination l'a déjà, par son nom, depuis la migration) ; Jeunesse reste à choisir.
+select private.reprendre_modeles();

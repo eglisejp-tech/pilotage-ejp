@@ -2,6 +2,7 @@ import { Link } from 'react-router'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
 import type { LigneMinistereConfiguration } from '@/features/indicateurs/configuration/construire'
 import {
+  nomAccessibleChanger,
   nomAccessibleCreer,
   TEXTES_CONFIGURATION,
   texteACreer,
@@ -22,14 +23,28 @@ const classeBouton =
   'inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-sm font-semibold whitespace-nowrap text-encre hover:bg-fond aria-disabled:cursor-wait'
 
 /**
- * Colonne « Prévus » (7.1) : « 6 à créer » et le bouton « Créer », « Créés », « Aucun prévu », ou
- * « À choisir » avec un lien vers l'écran du ministère, où se fait le choix. Le nom accessible du
- * bouton dit quel ministère et combien d'indicateurs.
+ * Colonne « Prévus » (7.1) : « 6 à créer » et le bouton « Créer », « Créés », « Aucun prévu » avec
+ * le lien « Changer » (T72), ou « À choisir » avec un lien vers l'écran du ministère, où se fait le
+ * choix. Le nom accessible du bouton dit quel ministère et combien d'indicateurs.
  */
 export function CellulePrevus({ ligne, creation }: Props) {
   const { prevus } = ligne
   if (prevus.genre === 'crees') return <>{textes.crees}</>
-  if (prevus.genre === 'aucun') return <>{textes.aucunPrevu}</>
+  if (prevus.genre === 'aucun') {
+    if (creation === null) return <>{textes.aucunPrevu}</>
+    return (
+      <span className="flex flex-wrap items-center gap-x-3">
+        <span>{textes.aucunPrevu}</span>
+        <Link
+          to={ligne.href}
+          aria-label={nomAccessibleChanger(ligne.nom)}
+          className="inline-flex min-h-cible items-center font-semibold underline underline-offset-4"
+        >
+          {textes.changer}
+        </Link>
+      </span>
+    )
+  }
   if (creation === null) {
     return (
       <>{prevus.genre === 'a_choisir' ? textes.aChoisir : texteACreer(prevus.manquants.length)}</>

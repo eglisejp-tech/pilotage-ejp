@@ -2,8 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import {
   lireChangementsConfiguration,
-  lireCreationsPrevus,
   lireIndicateursPropres,
+  lireListesChoisies,
   lireMinisteresConfiguration,
   lireUsageConfiguration,
 } from '@/data/indicateursConfiguration'
@@ -23,7 +23,8 @@ import type { TypeCompte } from '@/lib/base'
 
 /**
  * Les six lectures des deux écrans de configuration (ministères, indicateurs propres, usage,
- * catalogue, créations de prévus, gestes du journal). Les deux écrans partagent les mêmes clés :
+ * catalogue, liste choisie de chaque ministère, gestes du journal). Les deux écrans partagent les
+ * mêmes clés :
  * de `/indicateurs` à `/indicateurs/:id`, rien n'est relu. `activer` à faux : aucune requête (un
  * profil qui n'a pas la page ne lit rien).
  */
@@ -48,9 +49,9 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
     queryFn: lireCatalogue,
     enabled: activer,
   })
-  const creations = useQuery({
-    queryKey: CLES_CONFIGURATION.creations,
-    queryFn: lireCreationsPrevus,
+  const liens = useQuery({
+    queryKey: CLES_CONFIGURATION.liens,
+    queryFn: lireListesChoisies,
     enabled: activer,
   })
   const changements = useQuery({
@@ -58,7 +59,7 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
     queryFn: lireChangementsConfiguration,
     enabled: activer,
   })
-  const requetes = [ministeres, indicateurs, usage, catalogue, creations, changements]
+  const requetes = [ministeres, indicateurs, usage, catalogue, liens, changements]
   const echec = requetes.some((requete) => requete.isError)
   return useMemo((): EtatBloc<LecturesConfiguration> => {
     if (echec) {
@@ -74,7 +75,7 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
       indicateurs.data === undefined ||
       usage.data === undefined ||
       catalogue.data === undefined ||
-      creations.data === undefined ||
+      liens.data === undefined ||
       changements.data === undefined
     ) {
       return { etat: 'chargement' }
@@ -86,7 +87,7 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
         indicateurs: indicateurs.data,
         usage: usage.data,
         catalogue: catalogue.data,
-        creations: creations.data,
+        liens: liens.data,
         changements: changements.data,
       },
     }
@@ -98,7 +99,7 @@ function useLectures(activer: boolean): EtatBloc<LecturesConfiguration> {
     indicateurs.data,
     usage.data,
     catalogue.data,
-    creations.data,
+    liens.data,
     changements.data,
   ])
 }

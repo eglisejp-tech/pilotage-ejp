@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { MarqueFraicheur } from '@/features/fiche/MarqueFraicheur'
 import type { LigneListeMinistere } from '@/features/ministeres/construireListe'
+import { RepereAChoisir } from '@/features/ministeres/RepereAChoisir'
 
 interface Props {
   ministeres: LigneListeMinistere[]
@@ -33,6 +34,11 @@ export function ListeMinisteresTelephone({ ministeres, idTitre }: Props) {
           </span>
           {ministere.description !== null ? (
             <span className="text-sm text-encre-3">{ministere.description}</span>
+          ) : null}
+          {ministere.prevusAChoisir !== null ? (
+            <span>
+              <RepereAChoisir ministere={ministere} />
+            </span>
           ) : null}
         </li>
       ))}

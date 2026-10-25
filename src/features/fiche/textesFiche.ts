@@ -120,6 +120,11 @@ export const TEXTES_FICHE = {
     aucunEvenement: 'Aucun événement prévu',
     reunionNonRenseignee: 'Aucune date',
     aucunPointOuvert: 'Aucun',
+    /**
+     * Repère d'EJP Tech sous le nom d'un ministère sans liste d'indicateurs prévus choisie (T72,
+     * Proposé) : un lien vers l'écran où se fait le choix.
+     */
+    prevusAChoisir: 'Prévus : à choisir',
   },
 } as const
 

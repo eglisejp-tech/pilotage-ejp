@@ -18,8 +18,33 @@ const LIGNES: LigneListeMinistere[] = [
     prochainEvenement: null,
     prochaineReunion: null,
     pointOuvert: null,
+    prevusAChoisir: null,
   },
 ]
+
+// T72 : le repère d'EJP Tech « Prévus : à choisir » sous le nom d'un ministère sans liste choisie.
+const SANS_LISTE: LigneListeMinistere[] = [
+  { ...LIGNES[0]!, id: 'm2', nom: 'Ministère Santé', prevusAChoisir: { href: '/indicateurs/m2' } },
+  { ...LIGNES[0]!, id: 'm3', nom: 'Kumi' },
+]
+
+describe('repère « Prévus : à choisir » (T72)', () => {
+  for (const [nom, Composant] of [
+    ['le tableau', TableauListeMinisteres],
+    ['la liste du téléphone', ListeMinisteresTelephone],
+  ] as const) {
+    it(`${nom} : un lien vers le choix pour le seul ministère sans liste`, () => {
+      render(
+        <MemoryRouter>
+          <Composant ministeres={SANS_LISTE} idTitre="titre" />
+        </MemoryRouter>,
+      )
+      const repere = screen.getByRole('link', { name: 'Prévus : à choisir pour Ministère Santé' })
+      expect(repere).toHaveAttribute('href', '/indicateurs/m2')
+      expect(screen.getAllByRole('link', { name: /^Prévus : à choisir/ })).toHaveLength(1)
+    })
+  }
+})
 
 describe('liens du nom dans la liste des ministères', () => {
   it('le tableau donne au lien une largeur minimale de 44 px', () => {

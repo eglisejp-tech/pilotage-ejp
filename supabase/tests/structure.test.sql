@@ -54,8 +54,10 @@ select tables_are('public', array[
   'retrait_indicateur'
 ]::name[], 'public contient les 33 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4, 1 de l''étape 5, 2 de l''étape 6, 4 de l''étape 8), rien de plus');
 select tables_are('private', array[
-  'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun'
-]::name[], 'private contient les 5 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs), rien de plus');
+  'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun',
+  -- étape 8 (T72)
+  'ministere_modele'
+]::name[], 'private contient les 6 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs, liste choisie pour chaque ministère), rien de plus');
 select views_are('public', array[
   'v_semaine', 'v_derniere_mesure', 'v_mesure_dimanche', 'v_total_dimanche', 'v_total_a_ce_jour',
   'v_pourcentage_fij', 'v_carte_fij', 'v_participation_courante', 'v_session_completude',
@@ -70,8 +72,10 @@ select views_are('public', array[
   -- étape 8 (T56)
   'v_ma_declaration', 'v_personnes', 'v_journal_intervenant',
   -- étape 4 bis (L2, T68)
-  'v_evenements_mois'
-]::name[], 'public contient les 36 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 3 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
+  'v_evenements_mois',
+  -- étape 8 (T72)
+  'v_ministere_modele'
+]::name[], 'public contient les 37 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 4 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind in ('m', 'p', 'f')
@@ -345,6 +349,7 @@ $$, $$ values
   ('ajouter_mention_point', 2, false, true, false),
   ('ajouter_suggestion', 3, false, true, false),
   ('changer_statut_point', 2, false, true, false),
+  ('choisir_modele_prevus', 2, false, true, false),
   ('clore_signalement', 2, false, true, false),
   ('conditions_acceptees', 1, false, true, false),
   ('corriger_indicateur', 3, false, true, false),
@@ -382,7 +387,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 44 fonctions de public : 34 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 45 fonctions de public : 35 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -403,6 +408,7 @@ $$, $$ values
   ('auteur_texte', 2, false, false, false),
   ('catalogue', 0, true, true, false),
   ('changer_statut_point', 2, true, true, false),
+  ('choisir_modele_prevus', 2, true, true, false),
   ('clore_signalement', 2, true, true, false),
   ('communs_de_fiche', 0, true, true, false),
   ('comptages_evenements_mois', 1, false, true, false),
@@ -480,6 +486,9 @@ $$, $$ values
   ('ministere_du_signalement', 2, false, false, false),
   ('ministere_fij', 0, true, true, false),
   ('ministeres_actifs', 1, false, false, false),
+  ('modele_choisi', 1, false, false, false),
+  ('modele_suggere', 1, false, false, false),
+  ('modeles_ministeres', 0, true, true, false),
   ('modifier_mentions_point', 2, true, true, false),
   ('modifier_session', 2, true, true, false),
   ('mois_courant', 0, false, true, false),
@@ -490,11 +499,13 @@ $$, $$ values
   ('peut_configurer', 0, true, true, false),
   ('points_mentionnant_mon_ministere', 0, true, true, false),
   ('poser_mention', 3, true, false, false),
+  ('poser_modele', 3, false, false, false),
   ('precisions_sensibles', 0, true, true, false),
   ('refuser_mention_double', 0, false, false, false),
   ('refuser_modification', 0, false, false, false),
   ('refuser_modification_sauf_effacement', 0, false, false, false),
   ('refuser_modification_sauf_masquage', 0, false, false, false),
+  ('reprendre_modeles', 0, false, false, false),
   ('retard_minutes', 2, false, true, false),
   ('retirer_calculs_de', 1, false, false, false),
   ('retirer_indicateur', 2, true, true, false),
@@ -532,7 +543,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 142 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 148 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -638,6 +649,8 @@ select bag_eq($$
    where c.relnamespace in ('public'::regnamespace, 'private'::regnamespace) and not t.tgisinternal
 $$, $$ values
   ('private.indicateur_prevu_terme', 'controler_prevu_terme'),
+  ('private.ministere_modele', 'ajout_seulement'),
+  ('private.ministere_modele', 'ajout_seulement_vider'),
   ('public.acceptation_conditions', 'ajout_seulement'),
   ('public.acceptation_conditions', 'ajout_seulement_vider'),
   ('public.acceptation_conditions', 'forcer_auteur'),
@@ -720,7 +733,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 83 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles, mention unique, inaltérabilité, termes complets, et eux seuls');
+$$, 'les 85 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles, mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72), termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

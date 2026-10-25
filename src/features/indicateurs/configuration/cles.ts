@@ -12,7 +12,7 @@ export const CLES_CONFIGURATION = {
   indicateurs: ['indicateurs', 'configuration', 'indicateurs'],
   usage: ['indicateurs', 'configuration', 'usage'],
   catalogue: ['indicateurs', 'configuration', 'catalogue'],
-  creations: ['indicateurs', 'configuration', 'creations'],
+  liens: ['indicateurs', 'configuration', 'liens'],
   changements: ['indicateurs', 'configuration', 'changements'],
 } as const
 

@@ -18,6 +18,7 @@ import type { TypeCompte } from '@/lib/base'
 function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   return {
     creer: vi.fn(() => Promise.resolve()),
+    choisir: vi.fn(() => Promise.resolve(true)),
     enCours: null,
     dernier: null,
     reussite: null,
@@ -182,7 +183,7 @@ describe('VueIndicateursMinistere : bloc « Indicateurs prévus »', () => {
     expect(screen.queryByText(/^Aucun indicateur pour Kumi/)).toBeNull()
   })
 
-  it('nom non reconnu : le choix « Nom du ministère dans la liste », « Aucun prévu » en dernier', async () => {
+  it('rien de choisi : « Nom du ministère dans la liste », « Aucun prévu » en dernier, puis « Enregistrer le choix » (T72)', async () => {
     const creation = afficherMinistere(ID_JEUNESSE)
     const choix = screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
     expect(
@@ -197,23 +198,82 @@ describe('VueIndicateursMinistere : bloc « Indicateurs prévus »', () => {
       'Kumi',
       'Aucun prévu',
     ])
-    // Rien à créer tant que rien n'est choisi.
+    // Rien à créer ni à enregistrer tant que rien n'est choisi.
     expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Enregistrer le choix' })).toBeNull()
     await userEvent.selectOptions(choix, 'Film')
     expect(screen.getByText('Liste « Film » : 3 indicateurs à créer.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Créer ces 3 indicateurs' }))
-    expect(creation.creer).toHaveBeenCalledWith({ id: ID_JEUNESSE, nom: 'Jeunesse' }, 'film')
+    // Le choix s'enregistre d'abord ; rien n'est créé ici.
+    expect(screen.queryByRole('button', { name: /^Créer/ })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le choix' }))
+    expect(creation.choisir).toHaveBeenCalledWith(
+      { id: ID_JEUNESSE, nom: 'Jeunesse' },
+      { code: 'film', nom: 'Film' },
+    )
+    expect(creation.creer).not.toHaveBeenCalled()
   })
 
-  it('« Aucun prévu » choisi : la phrase et le bouton qui l’enregistre', async () => {
+  it('« Aucun prévu » choisi : la phrase et « Enregistrer le choix »', async () => {
     const creation = afficherMinistere(ID_JEUNESSE)
     await userEvent.selectOptions(
       screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
       'Aucun prévu',
     )
     expect(screen.getByText('Aucun indicateur prévu pour ce ministère.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer « Aucun prévu »' }))
-    expect(creation.creer).toHaveBeenCalledWith({ id: ID_JEUNESSE, nom: 'Jeunesse' }, 'aucun')
+    await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le choix' }))
+    expect(creation.choisir).toHaveBeenCalledWith(
+      { id: ID_JEUNESSE, nom: 'Jeunesse' },
+      { code: 'aucun', nom: 'Aucun prévu' },
+    )
+  })
+
+  it('la suggestion d’après le nom présélectionne la liste, avec son indication, sans rien enregistrer', () => {
+    const lectures = lecturesExemple()
+    lectures.liens = lectures.liens.map((lien) =>
+      lien.ministere_id === ID_JEUNESSE ? { ...lien, suggere: 'kumi' } : lien,
+    )
+    const donnees = construireMinistere(ID_JEUNESSE, lectures)
+    if (donnees === null) throw new Error('ministère d’exemple absent')
+    const creation = afficherEtat({ etat: 'pret', donnees })
+    const choix = screen.getByRole('combobox', { name: 'Nom du ministère dans la liste' })
+    expect(choix).toHaveValue('kumi')
+    expect(choix).toHaveAccessibleDescription(
+      "Choix proposé d'après le nom du ministère : vérifiez-le avant d'enregistrer.",
+    )
+    expect(screen.getByRole('button', { name: 'Enregistrer le choix' })).toBeInTheDocument()
+    expect(creation.choisir).not.toHaveBeenCalled()
+  })
+
+  it('« Aucun prévu » enregistré : la phrase et « Changer », qui rouvre le choix, puis « Annuler »', async () => {
+    const creation = afficherMinistere(ID_PROTOCOLE)
+    const bloc = screen.getByRole('region', { name: 'Indicateurs prévus' })
+    expect(within(bloc).getByText('Aucun indicateur prévu pour ce ministère.')).toBeInTheDocument()
+    expect(within(bloc).queryByRole('combobox')).toBeNull()
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Changer' }))
+    const choix = within(bloc).getByRole('combobox', { name: 'Nom du ministère dans la liste' })
+    expect(choix).toHaveValue('aucun')
+    // « Annuler » referme le choix sans rien enregistrer.
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Annuler' }))
+    expect(within(bloc).queryByRole('combobox')).toBeNull()
+    expect(creation.choisir).not.toHaveBeenCalled()
+    // Puis une liste, enregistrée : le choix se referme quand la base l'accepte.
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Changer' }))
+    await userEvent.selectOptions(
+      within(bloc).getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
+      'Film',
+    )
+    await userEvent.click(within(bloc).getByRole('button', { name: 'Enregistrer le choix' }))
+    expect(creation.choisir).toHaveBeenCalledWith(
+      { id: ID_PROTOCOLE, nom: 'Protocole' },
+      { code: 'film', nom: 'Film' },
+    )
+    expect(within(bloc).queryByRole('combobox')).toBeNull()
+  })
+
+  it('liste choisie, aucun prévu suivi : « Changer » à côté de « Créer ces 6 indicateurs »', () => {
+    afficherMinistere(ID_KUMI)
+    const bloc = screen.getByRole('region', { name: 'Indicateurs prévus' })
+    expect(within(bloc).getByRole('button', { name: 'Changer' })).toBeInTheDocument()
   })
 
   it('une aide sur le titre du bloc ; le choix porte une indication, plus de bulle (T66, t334)', () => {
@@ -274,10 +334,11 @@ describe('VueIndicateursMinistere : bloc « Indicateurs prévus »', () => {
 })
 
 describe('VueIndicateursMinistere : états vides', () => {
-  it('Protocole : « Aucun indicateur pour Protocole. », sans bloc de prévus', () => {
+  it('Protocole : « Aucun indicateur pour Protocole. », et le bloc qui dit « Aucun prévu » (T72)', () => {
     afficherMinistere(ID_PROTOCOLE)
     expect(screen.getByText('Aucun indicateur pour Protocole.')).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Indicateurs prévus' })).toBeNull()
+    const bloc = screen.getByRole('region', { name: 'Indicateurs prévus' })
+    expect(within(bloc).queryByRole('button', { name: /^Créer/ })).toBeNull()
     expect(screen.queryByText(/Retirés/)).toBeNull()
   })
 

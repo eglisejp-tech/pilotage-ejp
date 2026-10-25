@@ -2,8 +2,8 @@
 // indicateurs.md, 7.1 et 7.2) : les écrans `/indicateurs` et `/indicateurs/:id` de
 // l'administration de l'église et d'EJP Tech. Une fonction typée par requête ; rien n'est recompté
 // ici. Aucune valeur d'indicateur n'est lue : seulement les définitions, l'usage (jamais une
-// valeur), le catalogue des prévus et quelques lignes du journal (« Dernier changement »,
-// « Aucun prévu »). Le fichier `indicateurs.ts` de l'étape 4 n'est pas modifié : il ne lit ni
+// valeur), le catalogue des prévus, la liste choisie de chaque ministère (T72) et quelques lignes
+// du journal (« Dernier changement »). Le fichier `indicateurs.ts` de l'étape 4 n'est pas modifié : il ne lit ni
 // `modele_code`, ni `texte_le`, que cet écran demande.
 
 import { z } from 'zod'
@@ -88,6 +88,7 @@ export type LigneJournalConfiguration = {
 export const ACTIONS_CONFIGURATION = [
   'indicateur_cree',
   'indicateurs_prevus_crees',
+  'modele_prevus_choisi',
   'indicateur_corrige',
   'indicateur_retire',
   'indicateur_valide',
@@ -123,20 +124,24 @@ export async function lireChangementsConfiguration(): Promise<LigneJournalConfig
 }
 
 /**
- * Créations des indicateurs prévus et choix « Aucun prévu » : une ligne par appel de
- * `creer_indicateurs_prevus` qui a écrit. Sert à savoir qu'un ministère sans prévu a déjà reçu sa
- * réponse « aucun » (le détail porte le code du modèle).
+ * Liste des indicateurs prévus choisie pour un ministère (T72) : le code du catalogue, « aucun »,
+ * ou null quand rien n'est choisi, et la suggestion d'après son nom (présélection seulement).
  */
-export async function lireCreationsPrevus(): Promise<LigneJournalConfiguration[]> {
-  const lignes = await lireToutesLesPages((debut, fin) =>
+export type LienModele = LigneVue<'v_ministere_modele'>
+
+/**
+ * Liste choisie de chaque ministère (`v_ministere_modele`, administration et EJP Tech), lue page par
+ * page. Elle remplace la déduction par le nom du ministère et la lecture de la réponse « Aucun
+ * prévu » dans le journal.
+ */
+export async function lireListesChoisies(): Promise<LienModele[]> {
+  return lireToutesLesPages((debut, fin) =>
     supabase()
-      .from('v_journal')
-      .select('ministere_id, le, action, detail')
-      .eq('action', 'indicateurs_prevus_crees')
-      .order('id')
+      .from('v_ministere_modele')
+      .select('ministere_id, modele, choisi_le, suggere')
+      .order('ministere_id')
       .range(debut, fin),
   )
-  return garderMinistere(lignes)
 }
 
 /** Catalogue des prévus et des suggestions (administration et EJP Tech). */
@@ -174,17 +179,35 @@ export async function lireMinisteresConfiguration(): Promise<MinistereConfigurat
   return data
 }
 
-/** Ce que reçoit `creer_indicateurs_prevus` : un ministère et un code du catalogue (ou « aucun »). */
+/**
+ * Ce que reçoivent `creer_indicateurs_prevus` et `choisir_modele_prevus` : un ministère et un code
+ * du catalogue (ou « aucun »).
+ */
 export const schemaCreationPrevus = z.object({
   ministereId: z.uuid(),
   modele: z.string().trim().min(1),
 })
 
 /**
- * Crée les indicateurs prévus d'un ministère (`creer_indicateurs_prevus`, administration et EJP
- * Tech) : tout ou rien, sans doublon. `modele` est le code du catalogue (nom normalisé du
- * ministère de la liste de la coordination), ou « aucun » pour un ministère sans prévu. Les deux
- * valeurs passent par `schemaCreationPrevus` avant tout appel. Rend le nombre d'indicateurs créés.
+ * Enregistre la liste choisie pour un ministère (`choisir_modele_prevus`, EJP Tech seul, T72) :
+ * un code du catalogue ou « aucun ». La base refuse une liste qui sert déjà à un autre ministère
+ * actif, et le changement tant qu'un prévu de la liste actuelle est suivi. Les deux valeurs passent
+ * par `schemaCreationPrevus` avant tout appel.
+ */
+export async function choisirModelePrevus(ministereId: string, modele: string): Promise<void> {
+  const valeurs = schemaCreationPrevus.parse({ ministereId, modele })
+  const { error } = await supabase().rpc('choisir_modele_prevus', {
+    p_ministere_id: valeurs.ministereId,
+    p_modele: valeurs.modele,
+  })
+  if (error) throw error
+}
+
+/**
+ * Crée les indicateurs prévus d'un ministère (`creer_indicateurs_prevus`, EJP Tech) : tout ou
+ * rien, sans doublon. `modele` est le code de la liste choisie, ou « aucun » pour un ministère sans
+ * prévu ; la base refuse un autre code que celui de la liste choisie (T72). Les deux valeurs passent
+ * par `schemaCreationPrevus` avant tout appel. Rend le nombre d'indicateurs créés.
  */
 export async function creerIndicateursPrevus(ministereId: string, modele: string): Promise<number> {
   const valeurs = schemaCreationPrevus.parse({ ministereId, modele })

@@ -43,6 +43,7 @@ function connecte(type: TypeCompte, enEchec: string[] = []) {
       v_usage_indicateurs: [...lectures.usage],
       v_catalogue: [...lectures.catalogue],
       v_journal: [...lectures.changements],
+      v_ministere_modele: [...lectures.liens],
     },
     enEchec,
   })
@@ -78,6 +79,8 @@ const TABLES_DE_CONFIGURATION = [
   'v_usage_indicateurs',
   'v_catalogue',
   'v_journal',
+  // T72 : la liste choisie de chaque ministère.
+  'v_ministere_modele',
 ]
 
 describe.each<TypeCompte>(['admin_eglise', 'admin_plateforme'])('/indicateurs, %s', (profil) => {
