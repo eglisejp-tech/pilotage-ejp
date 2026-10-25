@@ -94,6 +94,10 @@ test.describe('/indicateurs (aperçu)', () => {
     await expect(ligne('Eagles')).toContainText('Créés')
     await expect(ligne('Jeunesse')).toContainText('À choisir')
     await expect(ligne('Protocole')).toContainText('Aucun prévu')
+    // T72 : « Aucun prévu » se change sur l'écran du ministère.
+    await expect(
+      ligne('Protocole').getByRole('link', { name: 'Changer la liste de Protocole' }),
+    ).toHaveAttribute('href', /\/indicateurs\/10000000-0000-4000-8000-000000000005$/)
     await expect(ligne('Communication')).toContainText('2 peu saisis')
     await expect(ligne('Communication')).toContainText('5 sur 30')
     await expect(ligne('Communication')).not.toContainText('ajouté par')
@@ -196,6 +200,7 @@ test.describe('administration de l’église, en lecture (T60, aperçu)', () => 
     await expect(kumi).toContainText('6 à créer')
     await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
     await expect(page.getByRole('link', { name: /^Choisir/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /^Changer/ })).toHaveCount(0)
   })
 
   test('/indicateurs/:id : la phrase de lecture, ni bloc des prévus, ni choix, ni bouton', async ({
@@ -281,7 +286,7 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     ])
   })
 
-  test('Jeunesse : nom non reconnu, choix dans la liste puis « Créer ces 3 indicateurs »', async ({
+  test('Jeunesse : rien de choisi, « Enregistrer le choix » puis « Créer ces 3 indicateurs » (T72)', async ({
     page,
   }) => {
     await ouvrir(page, { vue: 'jeunesse' })
@@ -297,19 +302,62 @@ test.describe('/indicateurs/:id (aperçu)', () => {
     ])
     await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
     await choix.selectOption({ label: 'Film' })
+    // Le choix s'enregistre d'abord : rien n'est créé avant.
+    await expect(page.getByRole('button', { name: /^Créer/ })).toHaveCount(0)
+    await page.getByRole('button', { name: 'Enregistrer le choix' }).click()
+    await expect(page.getByText('Choix « Film » enregistré pour Jeunesse.')).toBeVisible()
+    await expect(page.getByRole('combobox')).toHaveCount(0)
     await page.getByRole('button', { name: 'Créer ces 3 indicateurs' }).click()
     await expect(page.getByText('3 indicateurs prévus créés.')).toBeVisible()
-    await expect(page.getByRole('combobox')).toHaveCount(0)
+    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
   })
 
-  test('Jeunesse : « Aucun prévu » enregistre la réponse, le bloc disparaît', async ({ page }) => {
+  test('Jeunesse : « Aucun prévu » s’enregistre, puis « Changer » le rouvre', async ({ page }) => {
     await ouvrir(page, { vue: 'jeunesse' })
     await page
       .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
       .selectOption({ label: 'Aucun prévu' })
-    await page.getByRole('button', { name: 'Enregistrer « Aucun prévu »' }).click()
+    await page.getByRole('button', { name: 'Enregistrer le choix' }).click()
     await expect(page.getByText('Choix « Aucun prévu » enregistré pour Jeunesse.')).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Indicateurs prévus' })).toHaveCount(0)
+    const bloc = page.getByRole('region', { name: 'Indicateurs prévus' })
+    await expect(bloc.getByText('Aucun indicateur prévu pour ce ministère.')).toBeVisible()
+    await expect(bloc.getByRole('combobox')).toHaveCount(0)
+    await bloc.getByRole('button', { name: 'Changer' }).click()
+    await expect(
+      bloc.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
+    ).toHaveValue('aucun')
+    await bloc.getByRole('button', { name: 'Annuler' }).click()
+    await expect(bloc.getByRole('combobox')).toHaveCount(0)
+  })
+
+  test('Protocole : « Aucun prévu » se change en liste, puis ses prévus se créent (T72)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { vue: 'protocole' })
+    const bloc = page.getByRole('region', { name: 'Indicateurs prévus' })
+    await bloc.getByRole('button', { name: 'Changer' }).click()
+    await bloc
+      .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
+      .selectOption({ label: 'Film' })
+    await bloc.getByRole('button', { name: 'Enregistrer le choix' }).click()
+    await expect(page.getByText('Choix « Film » enregistré pour Protocole.')).toBeVisible()
+    await expect(bloc.getByRole('button', { name: 'Créer ces 3 indicateurs' })).toBeVisible()
+  })
+
+  test('refus du choix par la base : sa phrase sous le bouton, le choix reste ouvert', async ({
+    page,
+  }) => {
+    await ouvrir(page, { vue: 'jeunesse', envoi: 'refus' })
+    await page
+      .getByRole('combobox', { name: 'Nom du ministère dans la liste' })
+      .selectOption({ label: 'Kumi' })
+    await page.getByRole('button', { name: 'Enregistrer le choix' }).click()
+    await expect(page.getByRole('alert')).toHaveText(
+      "Cette liste sert déjà à « Kumi ». Changez d'abord la liste de ce ministère.",
+    )
+    await expect(
+      page.getByRole('combobox', { name: 'Nom du ministère dans la liste' }),
+    ).toBeVisible()
   })
 
   test('Protocole : « Aucun indicateur pour Protocole. »', async ({ page }) => {

@@ -153,6 +153,23 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
       await page.goto('/')
       expect(await compter(page, 'v_catalogue?select=code')).toBeGreaterThan(0)
       expect(await compter(page, 'v_usage_indicateurs?select=indicateur_id')).toBeGreaterThan(0)
+      // T72 : la liste choisie de chaque ministère, une ligne par ministère ; le jeu d'exemple
+      // relie les sept fiches avec prévus, Jeunesse reste à choisir.
+      expect(await compter(page, 'v_ministere_modele?select=ministere_id')).toBeGreaterThanOrEqual(
+        8,
+      )
+      expect(
+        await compter(
+          page,
+          `v_ministere_modele?select=ministere_id&ministere_id=eq.${MINISTERE_JEUNESSE}&modele=is.null`,
+        ),
+      ).toBe(1)
+      expect(
+        await compter(
+          page,
+          `v_ministere_modele?select=ministere_id&ministere_id=eq.${MINISTERE_COMMUNICATION}&modele=eq.communication`,
+        ),
+      ).toBe(1)
       if (profil === 'admin_eglise') {
         // P06 : l'administration ne lit aucune valeur d'indicateur propre (Social en a, seed/40).
         expect(
@@ -211,6 +228,38 @@ for (const profil of ['admin_eglise', 'admin_plateforme'] as const) {
   })
 }
 
+// T72 : sur l'écran Ministères, EJP Tech lit le repère « Prévus : à choisir » des ministères sans
+// liste choisie (Jeunesse, dans le jeu d'exemple) ; le berger et le conseil, rien.
+test.describe('écran Ministères (T72)', () => {
+  test.describe('EJP Tech', () => {
+    test.use({ storageState: fichierSession('admin_plateforme') })
+
+    test('« Prévus : à choisir » sous Jeunesse seulement, vers son écran Indicateurs', async ({
+      page,
+    }) => {
+      await page.goto('/ministeres')
+      await attendreLaFinDuChargement(page)
+      const repere = page.getByRole('link', { name: 'Prévus : à choisir pour Jeunesse' })
+      await expect(repere).toBeVisible()
+      await expect(repere).toHaveAttribute('href', `/indicateurs/${MINISTERE_JEUNESSE}`)
+      await expect(page.getByRole('link', { name: /^Prévus : à choisir/ })).toHaveCount(1)
+    })
+  })
+
+  test.describe('berger', () => {
+    test.use({ storageState: fichierSession('berger') })
+
+    test('aucun repère, aucune lecture des listes choisies', async ({ page }) => {
+      const requetes = suivreRequetesDeDonnees(page)
+      await page.goto('/ministeres')
+      await attendreLaFinDuChargement(page)
+      await expect(page.getByRole('link', { name: 'Jeunesse', exact: true })).toBeVisible()
+      await expect(page.getByRole('link', { name: /^Prévus : à choisir/ })).toHaveCount(0)
+      expect(requetes).not.toContain('/rest/v1/v_ministere_modele')
+    })
+  })
+})
+
 // Le ministère, le berger et le conseil : ni la page, ni aucune requête de données ; par l'API, ni
 // le catalogue ni l'usage (réservés à l'administration et à EJP Tech).
 for (const compte of COMPTES_PROFILS.filter((profil) =>
@@ -235,10 +284,13 @@ for (const compte of COMPTES_PROFILS.filter((profil) =>
       expect(requetes.filter((chemin) => chemin !== '/rest/v1/compte')).toEqual([])
     })
 
-    test('par l’API : ni le catalogue, ni l’usage des indicateurs', async ({ page }) => {
+    test('par l’API : ni le catalogue, ni l’usage des indicateurs, ni les listes choisies', async ({
+      page,
+    }) => {
       await page.goto('/')
       expect(await compter(page, 'v_catalogue?select=code')).toBe(0)
       expect(await compter(page, 'v_usage_indicateurs?select=indicateur_id')).toBe(0)
+      expect(await compter(page, 'v_ministere_modele?select=ministere_id')).toBe(0)
     })
   })
 }

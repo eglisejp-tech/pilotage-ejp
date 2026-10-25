@@ -25,6 +25,11 @@ import { PageNonDisponible } from '@/pages/PageNonDisponible'
 const TITRE_FICHE = 'Fiche du ministère'
 const reessayer = () => undefined
 
+/** Pour EJP Tech (T72) : Intégration n'a pas encore de liste d'indicateurs prévus choisie. */
+const SANS_LISTE_EXEMPLE: ReadonlySet<string> = new Set(
+  TABLEAU_EXEMPLE.filter((ligne) => ligne.nom === 'Intégration').map((ligne) => ligne.ministere_id),
+)
+
 /**
  * Aperçu de développement de la fiche d'un ministère (maquettes 04 et 12) et de la liste des
  * ministères, sans base ni requête : les vrais composants, nourris des lignes d'exemple de
@@ -41,7 +46,8 @@ const reessayer = () => undefined
  *   `fiche-erreur-points` (les points en échec), `fiche-erreur-details` (le détail des sensibles
  *   en échec), `chargement`, `erreur`, `introuvable` ;
  * - `ministeres`, `ministeres-vide`, `ministeres-erreur`, `ministeres-chargement` (T65) : la liste
- *   (berger, conseil, EJP Tech) ;
+ *   (berger, conseil, EJP Tech ; pour EJP Tech, le repère « Prévus : à choisir » d'Intégration,
+ *   T72) ;
  * - `comptages`, `comptages-premier-mois`, `comptages-vide`, `comptages-erreur`,
  *   `comptages-chargement` (L2, T68) : « Événements de l'église » et « Ponctualité » de la fiche
  *   de Coordination (`ministere` : Coordination, totaux seulement ; `&compte=Coordination` et
@@ -79,8 +85,13 @@ export function ApercuFiche() {
         <VueMinisteres
           liste={{
             etat: 'donnees',
-            donnees: construireListeMinisteres(TABLEAU_EXEMPLE, '2026-10-07'),
+            donnees: construireListeMinisteres(
+              TABLEAU_EXEMPLE,
+              '2026-10-07',
+              profil === 'admin_plateforme' ? SANS_LISTE_EXEMPLE : new Set(),
+            ),
           }}
+          gestion={profil === 'admin_plateforme'}
         />
       )
     case 'ministeres-vide':
