@@ -74,8 +74,10 @@ select views_are('public', array[
   -- étape 4 bis (L2, T68)
   'v_evenements_mois',
   -- étape 8 (T72)
-  'v_ministere_modele'
-]::name[], 'public contient les 37 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 4 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
+  'v_ministere_modele',
+  -- étape 8 (T74)
+  'v_ministeres_supprimables', 'v_comptes_jamais_actives'
+]::name[], 'public contient les 39 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 6 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind in ('m', 'p', 'f')
@@ -327,7 +329,10 @@ select is_empty($$
                                     'serveur_creer_compte', 'serveur_desactiver_compte', 'serveur_reinitialiser_2fa',
                                     'serveur_controler_relance', 'serveur_relancer_invitation',
                                     'serveur_controler_reactivation', 'serveur_reactiver_compte',
-                                    'serveur_revoquer_sessions')))
+                                    'serveur_revoquer_sessions',
+                                    -- T74
+                                    'serveur_controler_correction_adresse', 'serveur_corriger_adresse',
+                                    'serveur_controler_suppression_ministere', 'serveur_supprimer_ministere')))
 $$, 'aucune fonction de public ni de private n''est exécutable par anon, ni par service_role hors fonctions serveur des comptes');
 -- Listes exhaustives des fonctions : (nom, nombre d'arguments, security definer, exécutable par
 -- authenticated, exécutable par service_role). Le nombre d'arguments distingue les surcharges
@@ -374,20 +379,24 @@ $$, $$ values
   ('saisir_chiffres_mois', 2, false, true, false),
   ('saisir_fij_statistiques', 2, false, true, false),
   ('serveur_controler_cible', 3, false, false, true),
+  ('serveur_controler_correction_adresse', 4, false, false, true),
   ('serveur_controler_creation_compte', 6, false, false, true),
   ('serveur_controler_reactivation', 3, false, false, true),
   ('serveur_controler_relance', 3, false, false, true),
+  ('serveur_controler_suppression_ministere', 3, false, false, true),
+  ('serveur_corriger_adresse', 4, false, false, true),
   ('serveur_creer_compte', 7, false, false, true),
   ('serveur_desactiver_compte', 3, false, false, true),
   ('serveur_reactiver_compte', 3, false, false, true),
   ('serveur_reinitialiser_2fa', 3, false, false, true),
   ('serveur_relancer_invitation', 3, false, false, true),
   ('serveur_revoquer_sessions', 3, false, false, true),
+  ('serveur_supprimer_ministere', 3, false, false, true),
   ('signaler_difficulte', 2, false, true, false),
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 45 fonctions de public : 35 de l''API (security invoker, authenticated) et 10 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 49 fonctions de public : 35 de l''API (security invoker, authenticated) et 14 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -412,22 +421,27 @@ $$, $$ values
   ('clore_signalement', 2, true, true, false),
   ('communs_de_fiche', 0, true, true, false),
   ('comptages_evenements_mois', 1, false, true, false),
+  ('compte_active', 1, false, false, false),
+  ('comptes_jamais_actives', 0, true, true, false),
   ('conditions_acceptees', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
   ('controler_appelant', 1, false, false, false),
   ('controler_categorie_sensible', 0, true, false, false),
   ('controler_cible', 2, false, false, false),
   ('controler_cible_desactivee', 2, false, false, false),
+  ('controler_correction_adresse', 3, false, false, false),
   ('controler_creation_compte', 3, false, false, false),
   ('controler_evenement_etat', 0, true, false, false),
   ('controler_indicateur', 0, true, false, false),
   ('controler_invitation_en_attente', 1, false, false, false),
+  ('controler_journal_ministere', 0, true, false, false),
   ('controler_mentions_point', 1, true, false, false),
   ('controler_mesure', 0, true, false, false),
   ('controler_mesure_le', 4, false, false, false),
   ('controler_precision', 0, true, false, false),
   ('controler_prevu_terme', 0, false, false, false),
   ('controler_session', 2, false, false, false),
+  ('controler_suppression_ministere', 1, false, false, false),
   ('controler_terme', 0, true, false, false),
   ('corriger_indicateur', 3, true, true, false),
   ('creer_calcul', 7, true, true, false),
@@ -486,6 +500,7 @@ $$, $$ values
   ('ministere_du_signalement', 2, false, false, false),
   ('ministere_fij', 0, true, true, false),
   ('ministeres_actifs', 1, false, false, false),
+  ('ministeres_supprimables', 0, true, true, false),
   ('modele_choisi', 1, false, false, false),
   ('modele_suggere', 1, false, false, false),
   ('modeles_ministeres', 0, true, true, false),
@@ -505,6 +520,8 @@ $$, $$ values
   ('refuser_modification', 0, false, false, false),
   ('refuser_modification_sauf_effacement', 0, false, false, false),
   ('refuser_modification_sauf_masquage', 0, false, false, false),
+  ('refuser_modification_sauf_ministere_supprime', 0, false, false, false),
+  ('refus_suppression_ministere', 1, false, false, false),
   ('reprendre_modeles', 0, false, false, false),
   ('retard_minutes', 2, false, true, false),
   ('retirer_calculs_de', 1, false, false, false),
@@ -515,15 +532,19 @@ $$, $$ values
   ('saisir_chiffres_mois', 2, true, true, false),
   ('saisir_fij_statistiques', 2, true, true, false),
   ('serveur_controler_cible', 3, true, false, true),
+  ('serveur_controler_correction_adresse', 4, true, false, true),
   ('serveur_controler_creation_compte', 6, true, false, true),
   ('serveur_controler_reactivation', 3, true, false, true),
   ('serveur_controler_relance', 3, true, false, true),
+  ('serveur_controler_suppression_ministere', 3, true, false, true),
+  ('serveur_corriger_adresse', 4, true, false, true),
   ('serveur_creer_compte', 7, true, false, true),
   ('serveur_desactiver_compte', 3, true, false, true),
   ('serveur_reactiver_compte', 3, true, false, true),
   ('serveur_reinitialiser_2fa', 3, true, false, true),
   ('serveur_relancer_invitation', 3, true, false, true),
   ('serveur_revoquer_sessions', 3, true, false, true),
+  ('serveur_supprimer_ministere', 3, true, false, true),
   ('session_courante', 0, false, true, false),
   ('signaler_difficulte', 2, true, true, false),
   ('suggestions', 0, true, true, false),
@@ -543,7 +564,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 148 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 160 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -676,6 +697,7 @@ $$, $$ values
   ('public.indicateur', 'controler_indicateur'),
   ('public.indicateur', 'controler_indicateur_vider'),
   ('public.indicateur', 'figer_part'),
+  ('public.indicateur', 'refuser_suppression'),
   ('public.indicateur', 'remplacement_complet'),
   ('public.indicateur', 'termes_complets'),
   ('public.indicateur_terme', 'ajout_seulement'),
@@ -688,6 +710,7 @@ $$, $$ values
   ('public.journal', 'ajout_seulement'),
   ('public.journal', 'ajout_seulement_vider'),
   ('public.journal', 'attribuer_intervenant'),
+  ('public.journal', 'controler_ministere'),
   ('public.journal_intervenant', 'ajout_seulement'),
   ('public.journal_intervenant', 'ajout_seulement_vider'),
   ('public.mesure', 'controler_mesure'),
@@ -733,7 +756,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 85 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles, mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72), termes complets, et eux seuls');
+$$, 'les 87 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles (ministère du journal compris, T74), mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72 ; suppression d''un ministère vide, T74), termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

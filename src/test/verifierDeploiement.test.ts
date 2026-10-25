@@ -104,11 +104,11 @@ function jwt(revendications: Record<string, unknown>): string {
 const optionsSite = { siteUrl: SITE, supabaseUrl: SUPABASE }
 
 describe('FONCTIONS', () => {
-  it('reprend exactement les 5 Edge Functions de supabase/functions', () => {
+  it('reprend exactement les 7 Edge Functions de supabase/functions', () => {
     const fichiers = Object.keys(import.meta.glob('../../supabase/functions/*/index.ts'))
     const dossiers = fichiers.map((chemin) => chemin.split('/').at(-2))
     expect([...FONCTIONS].sort()).toEqual([...dossiers].sort())
-    expect(FONCTIONS).toHaveLength(5)
+    expect(FONCTIONS).toHaveLength(7)
   })
 })
 
@@ -142,7 +142,7 @@ describe('contrôle complet', () => {
       const noms = Object.keys(appel.entetes).map((nom) => nom.toLowerCase())
       expect(noms).not.toContain('authorization')
     }
-    // Aucun appel n'écrit hors des 5 fonctions : POST sans jeton, refusé avant toute action.
+    // Aucun appel n'écrit hors des 7 fonctions : POST sans jeton, refusé avant toute action.
     const ecritures = appels.filter((a) => !['GET', 'HEAD', 'OPTIONS'].includes(a.methode))
     expect(ecritures).toHaveLength(FONCTIONS.length)
     expect(ecritures.every((a) => new URL(a.url).pathname.startsWith('/functions/v1/'))).toBe(true)
@@ -397,11 +397,11 @@ describe('réglages Auth', () => {
 describe('Edge Functions', () => {
   const base = { siteUrl: SITE, supabaseUrl: SUPABASE, cle: CLE }
 
-  it('contrôle OPTIONS puis POST sans jeton pour chacune des 5 fonctions', async () => {
+  it('contrôle OPTIONS puis POST sans jeton pour chacune des 7 fonctions', async () => {
     const { fetchImpl, appels } = fauxDeploiement()
     const resultats = await verifierFonctions({ ...base, fetchImpl })
     expect(echecs(resultats)).toEqual([])
-    expect(resultats).toHaveLength(10)
+    expect(resultats).toHaveLength(14)
     for (const fonction of FONCTIONS) {
       const adresse = `https://abcdefghijklmnop.supabase.co/functions/v1/${fonction}`
       expect(appels.filter((a) => a.url === adresse).map((a) => a.methode)).toEqual([
@@ -459,7 +459,7 @@ describe('Edge Functions', () => {
     const fetchImpl: Fetch = async () => {
       throw new TypeError('fetch failed')
     }
-    expect(echecs(await verifierFonctions({ ...base, fetchImpl }))).toHaveLength(10)
+    expect(echecs(await verifierFonctions({ ...base, fetchImpl }))).toHaveLength(14)
   })
 })
 

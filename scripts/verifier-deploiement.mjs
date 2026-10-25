@@ -3,7 +3,7 @@
 //   node scripts/verifier-deploiement.mjs <url-du-site> <url-supabase> <cle-publique> [--google=oui|non] [--dist=dist]
 //
 // Il vérifie : les en-têtes du site, la page /ma-fiche, les réglages Auth (inscription fermée,
-// connexion par email, Google selon le choix), les 5 Edge Functions de comptes (OPTIONS puis POST
+// connexion par email, Google selon le choix), les 7 Edge Functions de comptes (OPTIONS puis POST
 // sans jeton) et l'absence de clé secrète dans le dossier dist/. Il n'écrit rien nulle part et
 // n'accepte jamais de clé secrète : seulement la clé publique (sb_publishable_...). Sortie : code 0
 // si tout est au vert, 1 si un contrôle échoue, 2 si les arguments sont faux.
@@ -11,13 +11,15 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 
-// Les 5 fonctions de supabase/functions (verify_jwt = false dans config.toml).
+// Les 7 fonctions de supabase/functions (verify_jwt = false dans config.toml).
 export const FONCTIONS = [
+  'corriger-adresse',
   'creer-compte',
   'desactiver-compte',
   'reactiver-compte',
   'reinitialiser-2fa',
   'relancer-invitation',
+  'supprimer-ministere',
 ]
 
 const DELAI_MS = 15000

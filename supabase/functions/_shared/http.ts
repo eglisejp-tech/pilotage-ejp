@@ -35,6 +35,14 @@ export type CodeErreur =
   // reinitialiser-2fa interrompue après le changement du mot de passe : le compte est bloqué tant
   // que l'action n'est pas relancée (m194).
   | 'activation_incomplete'
+  // T74 : corriger-adresse et supprimer-ministere. Un compte activé ne change plus d'adresse et
+  // son ministère ne se supprime pas ; un ministère qui a des données, ou FIJ et Coordination, ne
+  // se supprime pas. suppression_incomplete : le ministère est supprimé, mais un utilisateur Auth
+  // de son compte reste à effacer (docs/exploitation.md).
+  | 'compte_deja_active'
+  | 'ministere_non_vide'
+  | 'ministere_de_reference'
+  | 'suppression_incomplete'
   | 'erreur_interne'
 
 // Refus attendu : il devient une réponse { erreur } avec son statut.

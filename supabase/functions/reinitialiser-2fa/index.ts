@@ -17,18 +17,11 @@
 import type { Appelant } from '../_shared/appelant.ts'
 import { appelerBase } from '../_shared/base.ts'
 import { consigner, ErreurFonction } from '../_shared/http.ts'
+import { motDePasseAleatoire } from '../_shared/motDePasse.ts'
 import { schemaCibleCompte, type DemandeCibleCompte } from '../_shared/schemas.ts'
 import { servir } from '../_shared/servir.ts'
 
 const FONCTION = 'reinitialiser-2fa'
-
-// 52 caractères aléatoires ; le préfixe satisfait toute règle de composition de Supabase
-// (minuscule, majuscule, chiffre, symbole). Jamais écrit dans un journal.
-function motDePasseAleatoire(): string {
-  const octets = crypto.getRandomValues(new Uint8Array(36))
-  const base64 = btoa(String.fromCharCode(...octets))
-  return `Aa1!${base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')}`
-}
 
 export async function reinitialiserDoubleAuthentification(
   { user_id: cible }: DemandeCibleCompte,

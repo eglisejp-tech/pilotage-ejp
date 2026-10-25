@@ -472,16 +472,24 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Une répartition accompagne le total du mois d'un indicateur sensible.": REPLI,
   // Le motif d'une déclaration de prénom est fixé par l'interface (T56).
   'Motif inconnu.': REPLI,
+  // Une ligne de journal pour un ministère supprimé pendant l'envoi (T74) : garde-fou, que
+  // l'interface ne déclenche pas (le ministère n'est plus proposé).
+  "Ce ministère n'existe pas.": REPLI,
   // Codes des fonctions serveur des comptes : seules les Edge Functions les reçoivent et les
-  // traduisent (`supabase/functions/_shared/base.ts`, puis MESSAGES_ERREURS_COMPTES).
+  // traduisent (`supabase/functions/_shared/base.ts`, puis MESSAGES_ERREURS_COMPTES). T74 :
+  // correction d'une adresse et suppression d'un ministère.
   adresse_deja_utilisee: REPLI,
+  adresse_non_modifiee: REPLI,
   berger_deja_actif: REPLI,
   compte_actif: REPLI,
+  compte_deja_active: REPLI,
   compte_desactive: REPLI,
   compte_inconnu: REPLI,
   invitation_deja_acceptee: REPLI,
   ministere_a_deja_un_compte: REPLI,
+  ministere_de_reference: REPLI,
   ministere_inconnu: REPLI,
+  ministere_non_vide: REPLI,
   nom_ministere_deja_pris: REPLI,
   propre_compte: REPLI,
   requete_invalide: REPLI,

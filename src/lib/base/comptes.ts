@@ -45,6 +45,13 @@ export type VuesComptes = {
     desactive_le: string | null
     etat: EtatCompte
   }>
+  /** Ministères vides qu'EJP Tech peut supprimer (T74) ; aucune ligne pour les autres profils. */
+  v_ministeres_supprimables: Vue<{ ministere_id: string }>
+  /**
+   * Comptes jamais activés, désactivés compris, hors administration de l'église (T74) ; aucune
+   * ligne pour les autres profils qu'EJP Tech.
+   */
+  v_comptes_jamais_actives: Vue<{ user_id: string }>
 }
 
 export type FonctionsComptes = {

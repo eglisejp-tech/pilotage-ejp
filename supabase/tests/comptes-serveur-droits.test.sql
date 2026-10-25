@@ -1,5 +1,6 @@
 -- Matrice des droits des fonctions serveur des comptes (migrations comptes_fonctions_serveur,
--- comptes_relance_reactivation, comptes_revocation_sessions, comptes_session_appelant) : aucune
+-- comptes_relance_reactivation, comptes_revocation_sessions, comptes_session_appelant, et
+-- comptes_corrections de T74 : correction d'une adresse, suppression d'un ministère) : aucune
 -- n'est exécutable par anon ni par authenticated ; chaque fonction public, contrôles préalables
 -- compris, est refusée à l'anonyme, à un compte connecté en aal1 et en aal2, et, au nom de
 -- service_role, à un appelant qui n'est pas EJP Tech (décision T60 : un ministère, le berger, le
@@ -7,7 +8,7 @@
 -- l'appelant (décision T15) : absente, inconnue, d'un autre compte ou en aal1, elle est refusée.
 begin;
 
-select plan(82);
+select plan(110);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction).
 do $$
@@ -64,14 +65,22 @@ insert into appels values
   ('serveur_reactiver_compte', 'select public.serveur_reactiver_compte(%1$L, %3$L, %2$L)'),
   ('serveur_reinitialiser_2fa', 'select public.serveur_reinitialiser_2fa(%1$L, %3$L, %2$L)'),
   ('serveur_relancer_invitation', 'select public.serveur_relancer_invitation(%1$L, %3$L, %2$L)'),
-  ('serveur_revoquer_sessions', 'select public.serveur_revoquer_sessions(%1$L, %3$L, %2$L)');
+  ('serveur_revoquer_sessions', 'select public.serveur_revoquer_sessions(%1$L, %3$L, %2$L)'),
+  -- T74 : l'identifiant du compte visé tient lieu de ministère inconnu (refus avant toute lecture).
+  ('serveur_controler_correction_adresse',
+   'select public.serveur_controler_correction_adresse(%1$L, %3$L, %2$L, ''essai-matrice-nouvelle@exemple.test'')'),
+  ('serveur_corriger_adresse',
+   'select public.serveur_corriger_adresse(%1$L, %3$L, %2$L, ''essai-matrice-nouvelle@exemple.test'')'),
+  ('serveur_controler_suppression_ministere',
+   'select public.serveur_controler_suppression_ministere(%1$L, %3$L, %2$L)'),
+  ('serveur_supprimer_ministere', 'select public.serveur_supprimer_ministere(%1$L, %3$L, %2$L)');
 grant select on ctx, appels to anon, authenticated, service_role;
 
 -- Droits déclarés
 select is(
   (select count(*)::int from pg_proc p
     where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace) and p.proname like 'serveur\_%'),
-  20, 'vingt fonctions serveur : dix dans public, dix dans private');
+  28, 'vingt-huit fonctions serveur : quatorze dans public, quatorze dans private (T74 compris)');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace) and p.proname like 'serveur\_%'

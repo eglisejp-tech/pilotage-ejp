@@ -66,17 +66,23 @@ select results_eq($$
    where p.pronamespace in ('public'::regnamespace, 'private'::regnamespace)
      and has_function_privilege('service_role', p.oid, 'EXECUTE')
    order by 1
-$$, $$ values ('private.serveur_controler_cible' collate "C"), ('private.serveur_controler_creation_compte'),
+$$, $$ values ('private.serveur_controler_cible' collate "C"), ('private.serveur_controler_correction_adresse'),
+              ('private.serveur_controler_creation_compte'),
               ('private.serveur_controler_reactivation'), ('private.serveur_controler_relance'),
+              ('private.serveur_controler_suppression_ministere'), ('private.serveur_corriger_adresse'),
               ('private.serveur_creer_compte'), ('private.serveur_desactiver_compte'),
               ('private.serveur_reactiver_compte'), ('private.serveur_reinitialiser_2fa'),
               ('private.serveur_relancer_invitation'), ('private.serveur_revoquer_sessions'),
-              ('public.serveur_controler_cible'), ('public.serveur_controler_creation_compte'),
+              ('private.serveur_supprimer_ministere'),
+              ('public.serveur_controler_cible'), ('public.serveur_controler_correction_adresse'),
+              ('public.serveur_controler_creation_compte'),
               ('public.serveur_controler_reactivation'), ('public.serveur_controler_relance'),
+              ('public.serveur_controler_suppression_ministere'), ('public.serveur_corriger_adresse'),
               ('public.serveur_creer_compte'), ('public.serveur_desactiver_compte'),
               ('public.serveur_reactiver_compte'), ('public.serveur_reinitialiser_2fa'),
-              ('public.serveur_relancer_invitation'), ('public.serveur_revoquer_sessions') $$,
-  'service_role exécute exactement les 20 fonctions serveur des comptes');
+              ('public.serveur_relancer_invitation'), ('public.serveur_revoquer_sessions'),
+              ('public.serveur_supprimer_ministere') $$,
+  'service_role exécute exactement les 28 fonctions serveur des comptes (T74 compris)');
 select schema_privs_are('private', 'service_role', array['USAGE']::name[],
   'service_role a seulement usage sur le schéma private');
 select is_empty($$

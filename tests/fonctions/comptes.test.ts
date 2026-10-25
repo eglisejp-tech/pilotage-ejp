@@ -29,7 +29,24 @@ const FONCTIONS = [
   'reinitialiser-2fa',
   'relancer-invitation',
   'reactiver-compte',
+  // T74
+  'corriger-adresse',
+  'supprimer-ministere',
 ] as const
+
+// Corps qui passe le schéma de chaque fonction (le refus attendu vient ensuite de la base).
+function corpsValide(fonction: (typeof FONCTIONS)[number], email: string): Record<string, unknown> {
+  switch (fonction) {
+    case 'creer-compte':
+      return { type: 'conseil', email }
+    case 'corriger-adresse':
+      return { user_id: randomUUID(), email }
+    case 'supprimer-ministere':
+      return { ministere_id: randomUUID() }
+    default:
+      return { user_id: randomUUID() }
+  }
+}
 
 // EJP Tech gère seul les comptes (décision T60) : c'est l'appelant des essais.
 let tech: CompteDeTest
@@ -201,10 +218,7 @@ describe("contrôle de l'appelant", () => {
     const { error } = await session.client.auth.signOut({ scope: 'local' })
     expect(error).toBeNull()
     for (const fonction of FONCTIONS) {
-      const corps =
-        fonction === 'creer-compte'
-          ? { type: 'conseil', email: adresseDeTest('essai-session') }
-          : { user_id: randomUUID() }
+      const corps = corpsValide(fonction, adresseDeTest('essai-session'))
       attendreErreur(
         await appeler(fonction, corps, { jeton: session.jeton }),
         401,
@@ -245,6 +259,10 @@ describe('validation de la demande', () => {
       ['reinitialiser-2fa', {}],
       ['relancer-invitation', { user_id: randomUUID(), email: 'a@example.com' }],
       ['reactiver-compte', '{"user_id": '],
+      ['corriger-adresse', { user_id: randomUUID() }],
+      ['corriger-adresse', { user_id: randomUUID(), email: 'pas-une-adresse' }],
+      ['supprimer-ministere', { ministere_id: 'x' }],
+      ['supprimer-ministere', { user_id: randomUUID() }],
     ]
     for (const [fonction, corps] of invalides) {
       attendreErreur(await appeler(fonction, corps, { jeton }), 400, 'requete_invalide')
@@ -661,6 +679,288 @@ describe('reactiver-compte', () => {
       'compte_actif',
     )
     expect(await lignesJournal(sessionTech, cible.id)).toHaveLength(2)
+  })
+})
+
+// T74 : corriger l'adresse d'un compte jamais activé, puis renvoyer l'invitation.
+describe('corriger-adresse', () => {
+  it('remplace l’adresse d’une invitation en attente et envoie l’invitation à la nouvelle', async () => {
+    const ancienne = adresseDeTest('essai-correction-ancienne')
+    const nouvelle = adresseDeTest('essai-correction-nouvelle')
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'conseil', email: ancienne },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const invite = await utilisateurParEmail(ancienne)
+    expect(invite).toBeDefined()
+    const avant = await compte(invite!.id)
+    const { data: auth } = await clientSecret().auth.admin.getUserById(invite!.id)
+    // Auth espace deux envois au même utilisateur (max_frequency de la pile locale).
+    await new Promise((resolve) => setTimeout(resolve, 2_000))
+
+    const reponse = await appeler(
+      'corriger-adresse',
+      { user_id: invite!.id, email: nouvelle },
+      { jeton: sessionTech.jeton },
+    )
+    attendreSucces(reponse)
+    expect(sansFuite(reponse, [ancienne, nouvelle])).toBe(true)
+    const { data: apres } = await clientSecret().auth.admin.getUserById(invite!.id)
+    expect(apres.user?.email).toBe(nouvelle)
+    expect(apres.user?.email_confirmed_at ?? null).toBeNull()
+    expect(Date.parse(apres.user?.invited_at ?? '')).toBeGreaterThanOrEqual(
+      Date.parse(auth.user?.invited_at ?? ''),
+    )
+    expect(await utilisateurParEmail(ancienne)).toBeUndefined()
+    expect(await compte(invite!.id)).toEqual(avant)
+    const lignes = await lignesJournal(sessionTech, invite!.id)
+    expect(lignes.filter((ligne) => ligne.action === 'adresse_corrigee')).toEqual([
+      {
+        action: 'adresse_corrigee',
+        compte: tech.id,
+        ministere_id: null,
+        cible: 'compte',
+        cible_id: invite!.id,
+        detail: { type: 'conseil' },
+      },
+    ])
+    expect(JSON.stringify(lignes)).not.toContain('@')
+  })
+
+  it('« À activer » : l’adresse et le mot de passe changent, le ministère ne bouge pas', async () => {
+    const ancienne = adresseDeTest('essai-correction-ministere')
+    const nouvelle = adresseDeTest('essai-correction-ministere-bis')
+    const nom = `Essai correction ${suffixe()}`
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'ministere', email: ancienne, ministere: { nom } },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const invite = await utilisateurParEmail(ancienne)
+    const avant = await compte(invite!.id)
+    expect(avant?.ministere_id).toBeTruthy()
+    // Quelqu'un a ouvert l'invitation de l'adresse fausse et choisi un mot de passe.
+    const motDePasse = `Essai-${randomUUID()}`
+    const { error: erreurConfirmation } = await clientSecret().auth.admin.updateUserById(
+      invite!.id,
+      { email_confirm: true, password: motDePasse },
+    )
+    expect(erreurConfirmation).toBeNull()
+    await expect(connecter({ id: invite!.id, email: ancienne, motDePasse })).resolves.toBeDefined()
+    await new Promise((resolve) => setTimeout(resolve, 2_000))
+
+    attendreSucces(
+      await appeler(
+        'corriger-adresse',
+        { user_id: invite!.id, email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const { data: apres } = await clientSecret().auth.admin.getUserById(invite!.id)
+    expect(apres.user?.email).toBe(nouvelle)
+    expect(apres.user?.email_confirmed_at ?? null).toBeNull()
+    // Le mot de passe choisi depuis l'adresse fausse ne sert plus, ni avec l'une ni avec l'autre.
+    await expect(connecter({ id: invite!.id, email: ancienne, motDePasse })).rejects.toThrow()
+    await expect(connecter({ id: invite!.id, email: nouvelle, motDePasse })).rejects.toThrow()
+    expect(await compte(invite!.id)).toEqual(avant)
+    const { data: ministere } = await clientSecret()
+      .from('ministere')
+      .select('nom, desactive_le')
+      .eq('id', avant!.ministere_id!)
+      .single()
+    expect(ministere).toEqual({ nom, desactive_le: null })
+    expect(
+      (await lignesJournal(sessionTech, invite!.id)).filter(
+        (ligne) => ligne.action === 'adresse_corrigee',
+      ),
+    ).toEqual([
+      {
+        action: 'adresse_corrigee',
+        compte: tech.id,
+        ministere_id: avant!.ministere_id,
+        cible: 'compte',
+        cible_id: invite!.id,
+        detail: { type: 'ministere' },
+      },
+    ])
+  })
+
+  it('refuse un compte activé, une adresse prise, son propre compte et l’administration', async () => {
+    const active = await creerCompteDeTest('conseil')
+    await connecterEnAal2(active)
+    const nouvelle = adresseDeTest('essai-correction-refus')
+    attendreErreur(
+      await appeler(
+        'corriger-adresse',
+        { user_id: active.id, email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+      409,
+      'compte_deja_active',
+      [active.email, nouvelle],
+    )
+    const invite = adresseDeTest('essai-correction-prise')
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'conseil', email: invite },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const utilisateur = await utilisateurParEmail(invite)
+    attendreErreur(
+      await appeler(
+        'corriger-adresse',
+        { user_id: utilisateur!.id, email: active.email },
+        { jeton: sessionTech.jeton },
+      ),
+      409,
+      'adresse_deja_utilisee',
+      [active.email],
+    )
+    attendreErreur(
+      await appeler(
+        'corriger-adresse',
+        { user_id: tech.id, email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+      403,
+      'propre_compte',
+    )
+    const administration = await creerCompteDeTest('admin_eglise', {
+      libelle: "Administration de l'église",
+    })
+    attendreErreur(
+      await appeler(
+        'corriger-adresse',
+        { user_id: administration.id, email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+      400,
+      'type_interdit',
+    )
+    attendreErreur(
+      await appeler(
+        'corriger-adresse',
+        { user_id: randomUUID(), email: nouvelle },
+        { jeton: sessionTech.jeton },
+      ),
+      400,
+      'compte_inconnu',
+    )
+    expect(await utilisateurParEmail(nouvelle)).toBeUndefined()
+    for (const cible of [active.id, utilisateur!.id, administration.id]) {
+      expect(
+        (await lignesJournal(sessionTech, cible)).filter(
+          (ligne) => ligne.action === 'adresse_corrigee',
+        ),
+      ).toEqual([])
+    }
+  })
+})
+
+// T74 : supprimer un ministère vide, son compte et son utilisateur Auth.
+describe('supprimer-ministere', () => {
+  it('supprime un ministère vide, son compte et son utilisateur Auth ; le journal garde son nom', async () => {
+    const email = adresseDeTest('essai-suppression')
+    const nom = `Essai suppression ${suffixe()}`
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'ministere', email, ministere: { nom } },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+    const utilisateur = await utilisateurParEmail(email)
+    const ministereId = (await compte(utilisateur!.id))?.ministere_id
+    expect(ministereId).toBeTruthy()
+
+    const reponse = await appeler(
+      'supprimer-ministere',
+      { ministere_id: ministereId },
+      { jeton: sessionTech.jeton },
+    )
+    attendreSucces(reponse)
+    expect(sansFuite(reponse, [email])).toBe(true)
+    expect(await compte(utilisateur!.id)).toBeNull()
+    const { data: ministere } = await clientSecret()
+      .from('ministere')
+      .select('id')
+      .eq('id', ministereId!)
+      .maybeSingle()
+    expect(ministere).toBeNull()
+    const { data: auth } = await clientSecret().auth.admin.getUserById(utilisateur!.id)
+    expect(auth.user ?? null).toBeNull()
+    const lignes = await lignesJournal(sessionTech, ministereId!)
+    expect(lignes.map((ligne) => ligne.action)).toEqual(['ministere_cree', 'ministere_supprime'])
+    expect(lignes[1]).toEqual({
+      action: 'ministere_supprime',
+      compte: tech.id,
+      ministere_id: ministereId,
+      cible: 'ministere',
+      cible_id: ministereId,
+      detail: { nom, comptes: 1, indicateurs: 0 },
+    })
+    expect(JSON.stringify(lignes)).not.toContain('@')
+    // La ligne de création du compte reste, lisible avec le nom du ministère.
+    const { data: vue } = await sessionTech.client
+      .from('v_journal')
+      .select('ministere_nom, cible_texte')
+      .eq('action', 'compte_cree')
+      .eq('cible_id', utilisateur!.id)
+      .single()
+    expect(vue).toEqual({ ministere_nom: nom, cible_texte: `Ministère ${nom}` })
+
+    // L'adresse et le nom redeviennent libres.
+    attendreSucces(
+      await appeler(
+        'creer-compte',
+        { type: 'ministere', email, ministere: { nom } },
+        { jeton: sessionTech.jeton },
+      ),
+    )
+  })
+
+  it('refuse un compte activé, FIJ et un ministère inconnu, sans rien supprimer', async () => {
+    const ministere = await creerMinistereDeTest()
+    const active = await creerCompteDeTest('ministere', { ministereId: ministere.id })
+    await connecterEnAal2(active)
+    attendreErreur(
+      await appeler(
+        'supprimer-ministere',
+        { ministere_id: ministere.id },
+        { jeton: sessionTech.jeton },
+      ),
+      409,
+      'compte_deja_active',
+      [active.email],
+    )
+    expect(await compte(active.id)).not.toBeNull()
+    const { data: fij } = await clientSecret()
+      .from('ministere')
+      .select('id')
+      .eq('code', 'fij')
+      .single()
+    attendreErreur(
+      await appeler('supprimer-ministere', { ministere_id: fij?.id }, { jeton: sessionTech.jeton }),
+      409,
+      'ministere_de_reference',
+    )
+    attendreErreur(
+      await appeler(
+        'supprimer-ministere',
+        { ministere_id: randomUUID() },
+        { jeton: sessionTech.jeton },
+      ),
+      400,
+      'ministere_inconnu',
+    )
+    expect(await lignesJournal(sessionTech, ministere.id)).toEqual([])
   })
 })
 

@@ -1,7 +1,8 @@
 // Ministères et comptes (écran 13, lot L1) : lectures de l'administration de l'église et d'EJP
-// Tech, puis appels des cinq Edge Functions de comptes, par EJP Tech seul (T60 ; BRIEF, section 8,
-// « Les Edge Functions »). Une fonction par requête. Les lectures passent par la RLS :
-// `v_etat_comptes` ne rend des lignes qu'à l'administration et à EJP Tech, en aal2. Les
+// Tech, puis appels des sept Edge Functions de comptes, par EJP Tech seul (T60 et T74 ; BRIEF,
+// section 8, « Les Edge Functions »). Une fonction par requête. Les lectures passent par la RLS :
+// `v_etat_comptes` ne rend des lignes qu'à l'administration et à EJP Tech, en aal2 ;
+// `v_ministeres_supprimables` et `v_comptes_jamais_actives` (T74), qu'à EJP Tech. Les
 // écritures ne passent jamais par une table : chaque action appelle
 // sa fonction par `functions.invoke`, avec le jeton de la session (la clé secrète reste dans la
 // fonction). Chaque demande est validée par les schémas partagés avec les fonctions
@@ -12,6 +13,8 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 import type { CodeErreur } from '../../supabase/functions/_shared/http.ts'
 import {
   schemaCibleCompte,
+  schemaCibleMinistere,
+  schemaCorrigerAdresse,
   schemaCreerCompte,
   type DemandeCreerCompte,
 } from '../../supabase/functions/_shared/schemas.ts'
@@ -20,13 +23,15 @@ import { supabase } from '@/lib/supabase'
 
 export type LigneEtatCompte = LigneVue<'v_etat_comptes'>
 
-/** Les cinq Edge Functions de comptes. */
+/** Les sept Edge Functions de comptes. */
 export type FonctionCompte =
   | 'creer-compte'
   | 'relancer-invitation'
   | 'desactiver-compte'
   | 'reactiver-compte'
   | 'reinitialiser-2fa'
+  | 'corriger-adresse'
+  | 'supprimer-ministere'
 
 /** Code de refus d'une fonction, ou `connexion` quand la réponse n'est pas arrivée. */
 export type CodeErreurCompte = CodeErreur | 'connexion'
@@ -71,6 +76,14 @@ export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>
   /** Proposé (m194) : « Refaire l'activation » interrompue, le compte reste bloqué. */
   activation_incomplete:
     "« Refaire l'activation » n'a pas abouti. Relancez-la avant de prévenir la personne.",
+  // T74 (Proposé) : l'écran ne propose ces actions que quand elles sont possibles ; ces refus
+  // disent que la liste a changé entre-temps.
+  compte_deja_active: 'Ce compte est déjà activé. Rechargez la page.',
+  ministere_non_vide: 'Ce ministère a maintenant des données : il ne peut plus être supprimé.',
+  ministere_de_reference:
+    'Ce ministère fait partie de la liste de référence : il ne se supprime pas.',
+  suppression_incomplete:
+    "Le ministère est supprimé, mais son adresse reste dans Supabase. Effacez-la en suivant le guide d'exploitation.",
   erreur_interne: "L'action n'a pas abouti. Réessayez dans quelques minutes.",
 }
 
@@ -166,6 +179,26 @@ export async function lireIndicateursDesMinisteres(): Promise<{ ministere_id: st
 }
 
 /**
+ * Ministères qu'EJP Tech peut supprimer (T74) : vides, sans compte activé, hors FIJ et
+ * Coordination. La base le vérifie de nouveau à la suppression.
+ */
+export async function lireMinisteresSupprimables(): Promise<string[]> {
+  const { data, error } = await supabase().from('v_ministeres_supprimables').select('ministere_id')
+  if (error) throw error
+  return data.map((ligne) => ligne.ministere_id)
+}
+
+/**
+ * Comptes jamais activés (aucun code de double authentification vérifié), désactivés compris
+ * (T74) : leur adresse se corrige, à la réactivation aussi.
+ */
+export async function lireComptesJamaisActives(): Promise<string[]> {
+  const { data, error } = await supabase().from('v_comptes_jamais_actives').select('user_id')
+  if (error) throw error
+  return data.map((ligne) => ligne.user_id)
+}
+
+/**
  * Crée un compte (nouveau ministère, ministère existant sans compte, berger, conseil ou EJP
  * Tech) et envoie l'invitation. La demande est validée par le schéma de la fonction : une valeur
  * invalide lève une erreur Zod avant tout appel.
@@ -195,4 +228,20 @@ export async function reactiverCompte(userId: string): Promise<void> {
  */
 export async function reinitialiserDoubleAuthentification(userId: string): Promise<void> {
   await appelerFonction('reinitialiser-2fa', schemaCibleCompte.parse({ user_id: userId }))
+}
+
+/**
+ * Corrige l'adresse d'un compte jamais activé (T74) : la nouvelle adresse remplace l'ancienne et
+ * reçoit l'invitation. Le ministère, ses indicateurs et son historique ne bougent pas.
+ */
+export async function corrigerAdresse(userId: string, email: string): Promise<void> {
+  await appelerFonction('corriger-adresse', schemaCorrigerAdresse.parse({ user_id: userId, email }))
+}
+
+/** Supprime un ministère vide, ses indicateurs, son compte et son accès de connexion (T74). */
+export async function supprimerMinistere(ministereId: string): Promise<void> {
+  await appelerFonction(
+    'supprimer-ministere',
+    schemaCibleMinistere.parse({ ministere_id: ministereId }),
+  )
 }

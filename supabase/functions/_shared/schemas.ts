@@ -57,3 +57,16 @@ export const schemaCibleCompte = z.strictObject({
   user_id: z.uuid('Ce compte est introuvable. Rechargez la page.'),
 })
 export type DemandeCibleCompte = z.infer<typeof schemaCibleCompte>
+
+// corriger-adresse (T74) : le compte visé et sa nouvelle adresse, lue comme à la création.
+export const schemaCorrigerAdresse = z.strictObject({
+  user_id: schemaCibleCompte.shape.user_id,
+  email,
+})
+export type DemandeCorrigerAdresse = z.infer<typeof schemaCorrigerAdresse>
+
+// supprimer-ministere (T74) : le ministère visé par son identifiant.
+export const schemaCibleMinistere = z.strictObject({
+  ministere_id: z.uuid('Ce ministère est introuvable. Rechargez la page.'),
+})
+export type DemandeCibleMinistere = z.infer<typeof schemaCibleMinistere>

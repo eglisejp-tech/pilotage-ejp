@@ -2,7 +2,8 @@
 // Chaque appel porte l'identifiant de l'appelant et sa session (p_appelant, p_session) : la base
 // vérifie de nouveau son compte et exige que sa session existe encore en aal2 (décision T15).
 // Les refus portent un code court, traduit ici en réponse HTTP ; toute autre erreur devient 500
-// sans détail.
+// sans détail. La réponse de la fonction (seule serveur_supprimer_ministere en rend une) est
+// rendue telle quelle, à valider par l'appelant.
 import type { Appelant } from './appelant.ts'
 import { consigner, ErreurFonction, type CodeErreur, type StatutErreur } from './http.ts'
 
@@ -17,6 +18,11 @@ export type FonctionServeur =
   | 'serveur_controler_reactivation'
   | 'serveur_reactiver_compte'
   | 'serveur_revoquer_sessions'
+  // T74
+  | 'serveur_controler_correction_adresse'
+  | 'serveur_corriger_adresse'
+  | 'serveur_controler_suppression_ministere'
+  | 'serveur_supprimer_ministere'
 
 const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['appelant_non_autorise', [403, 'acces_refuse']],
@@ -33,6 +39,11 @@ const refusConnus = new Map<string, [StatutErreur, CodeErreur]>([
   ['compte_desactive', [409, 'compte_desactive']],
   ['compte_actif', [409, 'compte_actif']],
   ['invitation_deja_acceptee', [409, 'invitation_deja_acceptee']],
+  ['compte_deja_active', [409, 'compte_deja_active']],
+  // corriger-adresse : Auth ne porte pas l'adresse demandée (autre correction entre-temps).
+  ['adresse_non_modifiee', [409, 'conflit']],
+  ['ministere_non_vide', [409, 'ministere_non_vide']],
+  ['ministere_de_reference', [409, 'ministere_de_reference']],
 ])
 
 export function traduireErreurBase(erreur: { code?: string; message?: string }): ErreurFonction {
@@ -48,13 +59,13 @@ export async function appelerBase(
   fonction: string,
   serveur: FonctionServeur,
   parametres: Record<string, unknown>,
-): Promise<void> {
-  const { error } = await appelant.admin.rpc(serveur, {
+): Promise<unknown> {
+  const { data, error } = await appelant.admin.rpc(serveur, {
     ...parametres,
     p_appelant: appelant.id,
     p_session: appelant.session,
   })
-  if (!error) return
+  if (!error) return data as unknown
   const traduite = traduireErreurBase(error)
   if (traduite.statut === 500) consigner(fonction, serveur, error.code)
   throw traduite

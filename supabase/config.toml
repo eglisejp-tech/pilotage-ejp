@@ -456,6 +456,19 @@ verify_jwt = false
 import_map = "./functions/reactiver-compte/deno.json"
 entrypoint = "./functions/reactiver-compte/index.ts"
 
+# T74 : corriger l'adresse d'un compte jamais activé, supprimer un ministère vide.
+[functions.corriger-adresse]
+enabled = true
+verify_jwt = false
+import_map = "./functions/corriger-adresse/deno.json"
+entrypoint = "./functions/corriger-adresse/index.ts"
+
+[functions.supprimer-ministere]
+enabled = true
+verify_jwt = false
+import_map = "./functions/supprimer-ministere/deno.json"
+entrypoint = "./functions/supprimer-ministere/index.ts"
+
 [analytics]
 enabled = true
 port = 54327
