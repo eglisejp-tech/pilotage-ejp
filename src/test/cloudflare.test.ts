@@ -195,7 +195,8 @@ describe('Mise en ligne par la CI (job « deploiement »)', () => {
 
   it('existe, après tous les autres jobs de la CI', () => {
     expect(job.length).toBeGreaterThan(0)
-    expect(job).toMatch(/needs: \[qualite, base, e2e, fonctions\]/)
+    // « changements » en tête : la CI économe (src/test/ciChangements.test.ts).
+    expect(job).toMatch(/needs: \[changements, qualite, base, e2e, fonctions\]/)
   })
 
   it('ne se lance que sur main, pour un envoi ou un lancement à la main', () => {
