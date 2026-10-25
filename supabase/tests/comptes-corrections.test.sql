@@ -8,7 +8,7 @@
 -- ministère, pas le parcours de saisie, que d'autres fichiers testent.
 begin;
 
-select plan(80);
+select plan(81);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -91,10 +91,10 @@ select n, tests.creer_ministere('Essai T74 ' || n)
   from unnest(array['mesure', 'participation', 'carte FIJ', 'statistique FIJ', 'répartition', 'précision',
                     'point', 'mention de point', 'événement', 'mention d''événement', 'réunion',
                     'signalement', 'demande', 'validation', 'retrait', 'session saisie', 'journal',
-                    'déclaration', 'conditions', 'compte activé']) as n;
+                    'déclaration', 'conditions', 'compte activé', 'activation refaite']) as n;
 alter table cas add column compte uuid;
 update cas set compte = tests.creer_compte('essai-t74-cas-' || md5(nom) || '@exemple.test', 'ministere', ministere)
- where nom in ('journal', 'déclaration', 'conditions', 'compte activé');
+ where nom in ('journal', 'déclaration', 'conditions', 'compte activé', 'activation refaite');
 create function pg_temp.m(p_nom text) returns uuid language sql stable as $$
   select c.ministere from cas c where c.nom = p_nom $$;
 create function pg_temp.c(p_nom text) returns uuid language sql stable as $$
@@ -180,6 +180,11 @@ alter table public.acceptation_conditions enable trigger user;
 update auth.users set email_confirmed_at = now() where id = pg_temp.c('compte activé');
 insert into auth.mfa_factors (id, user_id, friendly_name, factor_type, status, created_at, updated_at)
 values (gen_random_uuid(), pg_temp.c('compte activé'), 'Essai T74', 'totp', 'verified', now(), now());
+-- Activé un jour, puis « Refaire l'activation » : plus de facteur, mais la ligne de journal reste
+-- (migration 20261025204627).
+insert into public.journal (compte, ministere_id, action, cible, cible_id)
+values ((select tech from ctx), pg_temp.m('activation refaite'), 'double_auth_reinitialisee', 'compte',
+        pg_temp.c('activation refaite'));
 grant select on cas to service_role, authenticated, anon;
 -- Lus au nom de service_role, qui n'exécute ni pg_temp ni tests.
 alter table ctx add column m_mesure uuid, add column m_active uuid, add column fij uuid;
@@ -196,7 +201,8 @@ select is(private.refus_suppression_ministere(tests.ministere('FIJ')), 'minister
 select is(private.refus_suppression_ministere(tests.ministere('Coordination')), 'ministere_de_reference',
   'Coordination (code posé par une migration) : jamais supprimé');
 select is(private.refus_suppression_ministere(c.ministere),
-          case c.nom when 'compte activé' then 'compte_deja_active' else 'ministere_non_vide' end,
+          case when c.nom in ('compte activé', 'activation refaite') then 'compte_deja_active'
+               else 'ministere_non_vide' end,
           'refus : ' || c.nom)
   from cas c order by c.nom;
 

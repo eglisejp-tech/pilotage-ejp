@@ -16,12 +16,15 @@ import { verifierAdresseLocale } from './installer-comptes.ts'
 // Functions de comptes : projet « ecritures » (en série, à 1440 px, après les projets de
 // lecture). EJP Tech, qui gère seul les comptes (décision T60), crée un ministère « Tech » (T48 :
 // l'alias « +ministere » d'une adresse d'EJP Tech), lit l'invitation dans la boîte locale, la
-// relance, désactive puis réactive le ministère, le compte active son code (par l'API, comme
-// e2e/installer-comptes.ts), puis EJP Tech refait l'activation. À la fin (test.afterAll, même
-// après un échec), le ministère d'essai est désactivé : il ne compte plus dans les totaux des
-// parcours suivants. L'administration de l'église lit l'écran sans aucun bouton, et une Edge
-// Function lui répond 403 ; les trois autres profils reçoivent la page non disponible, sans
-// requête de données ni appel de fonction.
+// relance, désactive puis réactive le ministère (le panneau de T74 propose l'adresse), corrige
+// l'adresse (T74 : l'invitation part vers la nouvelle, puis on revient à la première), le compte
+// active son code (par l'API, comme e2e/installer-comptes.ts), puis EJP Tech refait l'activation.
+// Un deuxième ministère d'essai, vide, est supprimé (T74 : le ministère, son compte et son
+// utilisateur Auth disparaissent, le journal garde son nom). À la fin (test.afterAll, même après
+// un échec), le ministère d'essai est désactivé : il ne compte plus dans les totaux des parcours
+// suivants. L'administration de l'église lit l'écran sans aucun bouton, et une Edge Function lui
+// répond 403 ; les trois autres profils reçoivent la page non disponible, sans requête de données
+// ni appel de fonction.
 //
 // Sans base (E2E_BASE absent), tout est ignoré. En local, sans edge runtime ou sans Mailpit, le
 // parcours d'EJP Tech est ignoré avec sa raison ; en CI (le job « e2e » démarre l'edge runtime),
@@ -33,6 +36,10 @@ const NOM = `Tech essai ${SUFFIXE}`
 const EMAIL = `ejptech1+ministere-${SUFFIXE}@exemple.test`
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const MOT_DE_PASSE = `essai-l1-${SUFFIXE}-Aa1!`
+// T74 : l'adresse corrigée, puis le ministère vide à supprimer.
+const EMAIL_CORRIGE = `ejptech1+corrige-${SUFFIXE}@exemple.test`
+const NOM_VIDE = `Vide essai ${SUFFIXE}`
+const EMAIL_VIDE = `ejptech1+vide-${SUFFIXE}@exemple.test`
 
 test.describe.configure({ mode: 'serial' })
 test.skip(!AVEC_BASE, 'Parcours avec la base locale seulement (E2E_BASE=1).')
@@ -201,10 +208,71 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     await expect(bouton(page, `Réactiver ${NOM}`)).toBeVisible()
     expect((await compteDuTest(page)).etat).toBe('desactive')
 
+    // Jamais activé : la réactivation passe par un panneau qui propose l'adresse (T74).
     await bouton(page, `Réactiver ${NOM}`).click()
+    const adresse = page.getByRole('textbox', { name: 'Adresse email', exact: true })
+    await expect(adresse).toHaveValue(EMAIL)
+    await bouton(page, 'Réactiver le ministère').click()
     await expect(reussite(page)).toHaveText(`Ministère ${NOM} réactivé.`)
     await expect(bouton(page, `Renvoyer l'invitation ${NOM}`)).toBeVisible()
     expect((await compteDuTest(page)).etat).toBe('invitation_envoyee')
+  })
+
+  test('corrige l’adresse : l’invitation part vers la nouvelle, puis retour à la première (T74)', async ({
+    page,
+  }) => {
+    test.setTimeout(150_000)
+    await ouvrirComptes(page)
+    const { user_id: id, ministere_id: ministere } = await compteDuTest(page)
+    const indicateursAvant = await lire<{ id: string }>(
+      page,
+      `indicateur?select=id&ministere_id=eq.${ministere}`,
+    )
+    const corriger = async (actuelle: string, nouvelle: string) => {
+      // Auth espace deux envois au même compte ; un refus « trop récent » se réessaie une fois.
+      for (let essai = 1; essai <= 2; essai += 1) {
+        await page.waitForTimeout(essai === 1 ? 2_000 : 61_000)
+        await ouvrirComptes(page)
+        await bouton(page, `Corriger l'adresse ${NOM}`).click()
+        const champ = page.getByRole('textbox', { name: 'Nouvelle adresse email', exact: true })
+        await expect(champ).toHaveValue(actuelle)
+        await champ.fill(nouvelle)
+        await bouton(page, "Corriger et envoyer l'invitation").click()
+        const resultat = reussite(page).or(page.getByRole('alert')).filter({ hasText: /\S/ })
+        await expect(resultat.first()).toBeVisible()
+        if ((await reussite(page).count()) > 0) break
+      }
+      await expect(reussite(page)).toHaveText(`Adresse corrigée. Invitation envoyée à ${nouvelle}.`)
+    }
+
+    await corriger(EMAIL, EMAIL_CORRIGE)
+    await expect
+      .poll(async () => (await messagesPour(page, EMAIL_CORRIGE)).length, { timeout: 15_000 })
+      .toBe(1)
+    const [corrige] = await lire<{ user_id: string; etat: string }>(
+      page,
+      `v_etat_comptes?select=user_id,etat&email=eq.${encodeURIComponent(EMAIL_CORRIGE)}`,
+    )
+    expect(corrige).toEqual({ user_id: id, etat: 'invitation_envoyee' })
+
+    await corriger(EMAIL_CORRIGE, EMAIL)
+    await expect
+      .poll(async () => (await messagesPour(page, EMAIL)).length, { timeout: 15_000 })
+      .toBe(3)
+    // Même compte, même ministère, mêmes indicateurs ; le journal ne garde aucune adresse.
+    expect(await compteDuTest(page)).toMatchObject({ user_id: id, ministere_id: ministere })
+    expect(
+      await lire<{ id: string }>(page, `indicateur?select=id&ministere_id=eq.${ministere}`),
+    ).toEqual(indicateursAvant)
+    const journal = await lire<{ action: string; detail: unknown }>(
+      page,
+      `journal?select=action,detail&cible_id=eq.${id}&action=eq.adresse_corrigee`,
+    )
+    expect(journal).toEqual([
+      { action: 'adresse_corrigee', detail: { type: 'ministere' } },
+      { action: 'adresse_corrigee', detail: { type: 'ministere' } },
+    ])
+    expect(JSON.stringify(journal)).not.toContain('@')
   })
 
   test('le compte active son code, puis EJP Tech refait l’activation', async ({ page }) => {
@@ -260,6 +328,69 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
       password: MOT_DE_PASSE,
     })
     expect(ancien).not.toBeNull()
+    // « À activer » de nouveau : l'adresse se corrige ; activé un jour, le ministère ne se
+    // supprime plus (T74, migration 20261025204627).
+    await expect(bouton(page, `Corriger l'adresse ${NOM}`)).toBeVisible()
+    await expect(bouton(page, `Supprimer ${NOM}`)).toHaveCount(0)
+  })
+
+  test('supprime un ministère vide : il disparaît avec son compte, le journal garde son nom (T74)', async ({
+    page,
+  }) => {
+    await ouvrirComptes(page)
+    await bouton(page, 'Ajouter un ministère').click()
+    await page.getByRole('textbox', { name: 'Nom du ministère', exact: true }).fill(NOM_VIDE)
+    await page
+      .getByRole('textbox', { name: 'Email partagé du ministère', exact: true })
+      .fill(EMAIL_VIDE)
+    await bouton(page, "Créer et envoyer l'invitation").click()
+    await expect(reussite(page)).toHaveText(
+      `Ministère ${NOM_VIDE} créé. Invitation envoyée à ${EMAIL_VIDE}.`,
+    )
+    const [compte] = await lire<{ user_id: string; ministere_id: string }>(
+      page,
+      `v_etat_comptes?select=user_id,ministere_id&email=eq.${encodeURIComponent(EMAIL_VIDE)}`,
+    )
+    if (!compte) throw new Error('Le ministère vide est introuvable.')
+
+    await bouton(page, `Supprimer ${NOM_VIDE}`).click()
+    const fenetre = page.getByRole('alertdialog', { name: `Supprimer ${NOM_VIDE} ?` })
+    await expect(fenetre).toContainText(
+      `${NOM_VIDE} et son compte (${EMAIL_VIDE}) disparaissent de l'outil.`,
+    )
+    await fenetre.getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(reussite(page)).toHaveText(`Ministère ${NOM_VIDE} supprimé.`)
+    await expect(page.getByRole('region', { name: 'Ministères', exact: true })).not.toContainText(
+      NOM_VIDE,
+    )
+
+    expect(
+      await lire<{ id: string }>(page, `ministere?select=id&id=eq.${compte.ministere_id}`),
+    ).toEqual([])
+    expect(
+      await lire<{ user_id: string }>(
+        page,
+        `v_etat_comptes?select=user_id&user_id=eq.${compte.user_id}`,
+      ),
+    ).toEqual([])
+    // L'utilisateur Auth est supprimé aussi (lu avec la clé secrète locale du test).
+    const cleSecrete = process.env.E2E_CLE_SECRETE_LOCALE
+    if (!cleSecrete) throw new Error('Clé secrète locale absente (voir le job « e2e »).')
+    const admin = createClient(adresseBase(), cleSecrete, {
+      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    })
+    const { data: auth } = await admin.auth.admin.getUserById(compte.user_id)
+    expect(auth.user ?? null).toBeNull()
+    // Le journal garde la création et la suppression, avec le nom, jamais l'adresse.
+    const journal = await lire<{ action: string; detail: Record<string, unknown> }>(
+      page,
+      `journal?select=action,detail&cible_id=eq.${compte.ministere_id}&order=id`,
+    )
+    expect(journal).toEqual([
+      { action: 'ministere_cree', detail: {} },
+      { action: 'ministere_supprime', detail: { nom: NOM_VIDE, comptes: 1, indicateurs: 0 } },
+    ])
+    expect(JSON.stringify(journal)).not.toContain('@')
   })
 })
 
