@@ -125,14 +125,13 @@ export function MenuEspaces({
           {liste.map((espace) => (
             <li key={espace.id}>
               {espace.actif ? (
+                // Un seul texte, « EJP Tech, compte 1 (espace actif) » : le libellé seul reste
+                // celui de l'en-tête, sans double dans le panneau.
                 <p
                   aria-current="true"
                   className="flex min-h-cible items-center text-interface wrap-anywhere text-encre"
                 >
-                  <span>
-                    <span className="font-semibold">{espace.libelle}</span>{' '}
-                    <span className="text-encre-3">({TEXTES_ESPACES.actif})</span>
-                  </span>
+                  <span className="font-semibold">{`${espace.libelle} (${TEXTES_ESPACES.actif})`}</span>
                 </p>
               ) : (
                 <Bouton

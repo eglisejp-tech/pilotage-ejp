@@ -31,7 +31,11 @@ describe("MenuEspaces (« Changer d'espace », T73)", () => {
     expect(bouton).toHaveAttribute('aria-expanded', 'true')
     const liste = screen.getByRole('list', { name: 'Comptes ouverts sur cet appareil' })
     expect(liste).toHaveTextContent('EJP Tech, compte 1 (espace actif)')
-    expect(screen.getByText('EJP Tech, compte 1').closest('[aria-current="true"]')).not.toBeNull()
+    expect(liste.querySelector('[aria-current="true"]')).toHaveTextContent(
+      'EJP Tech, compte 1 (espace actif)',
+    )
+    // Le libellé seul reste celui de l'en-tête : pas de double dans le panneau.
+    expect(screen.queryByText('EJP Tech, compte 1')).not.toBeInTheDocument()
 
     await userEvent.tab()
     expect(screen.getByRole('button', { name: 'Passer à Ministère Tech' })).toHaveFocus()

@@ -177,7 +177,11 @@ describe("Changer d'espace (T73)", () => {
 
     const panneau = await ouvrirChangerDEspace()
     expect(panneau.getByRole('list', { name: 'Comptes ouverts sur cet appareil' })).toBeVisible()
-    expect(panneau.getByText('EJP Tech, compte 1').closest('[aria-current]')).not.toBeNull()
+    expect(
+      panneau
+        .getByRole('list', { name: 'Comptes ouverts sur cet appareil' })
+        .querySelector('[aria-current]'),
+    ).toHaveTextContent('EJP Tech, compte 1 (espace actif)')
     await userEvent.click(panneau.getByRole('button', { name: 'Passer à Ministère Tech' }))
 
     expect(rechargerA).toHaveBeenCalledWith('/')
