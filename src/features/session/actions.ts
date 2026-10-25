@@ -21,7 +21,11 @@ import {
   effacerMotDePasseAChoisir,
 } from '@/features/session/motDePasseAChoisir'
 import type { EtapeMotDePasse } from '@/features/session/motDePasseAChoisir'
-import { fermerLesAutresEspaces, fermerSeulementCetEspace } from '@/features/espaces/actions'
+import {
+  detacherLesAutresEspaces,
+  fermerEspaces,
+  fermerSeulementCetEspace,
+} from '@/features/espaces/actions'
 import { noterDeconnexionVolontaire } from '@/features/session/motif'
 import { rafraichirSession } from '@/features/session/useEtatSession'
 import { messagesConnexion } from '@/features/connexion/messages'
@@ -252,15 +256,18 @@ async function deconnexionLocaleReussie(): Promise<boolean> {
  * alors nous-mêmes et on recharge, pour qu'un appareil partagé ne reste jamais connecté.
  * L'écran de connexion confirme ensuite « Compte déconnecté. » (m060) ; `annoncer` faux : rien
  * (après l'écran « Compte désactivé », qui a déjà tout dit). Tous les comptes ouverts sur
- * l'appareil se ferment (T73) : les autres espaces d'abord, puis celui-ci.
+ * l'appareil se ferment (T73), en même temps : celui-ci, les autres espaces et toute connexion
+ * orpheline. Puis plus aucune connexion ne reste dans ce navigateur, même si un serveur n'a pas
+ * répondu.
  */
 export async function seDeconnecter(annoncer = true): Promise<void> {
   noterDeconnexionVolontaire(annoncer)
   effacerMotDePasseAChoisir()
   viderDonnees()
-  await fermerLesAutresEspaces()
-  if (!(await deconnexionLocaleReussie())) {
-    effacerSessionLocale()
+  const autres = detacherLesAutresEspaces()
+  const [reussie] = await Promise.all([deconnexionLocaleReussie(), fermerEspaces(autres)])
+  effacerSessionLocale()
+  if (!reussie) {
     window.location.assign('/connexion')
     return
   }

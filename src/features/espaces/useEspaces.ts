@@ -10,9 +10,12 @@ import { NOMBRE_MAX_ESPACES } from '@/lib/espaces'
  */
 export function useEspaces(libelleActif: string): ProprietesEspaces {
   const registre = useRegistre()
+  const utilisateurActif = registre.espaces.find(({ id }) => id === registre.actif)?.utilisateur
   const liste = registre.espaces.flatMap((espace) => {
     if (espace.id === registre.actif) return [{ id: espace.id, libelle: libelleActif, actif: true }]
-    return espace.libelle ? [{ id: espace.id, libelle: espace.libelle, actif: false }] : []
+    // Un doublon du compte actif, en cours de fermeture, ne se propose pas.
+    if (!espace.libelle || espace.utilisateur === utilisateurActif) return []
+    return [{ id: espace.id, libelle: espace.libelle, actif: false }]
   })
   return {
     liste,

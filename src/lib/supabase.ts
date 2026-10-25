@@ -44,15 +44,44 @@ export function lireConfiguration(environnement: Environnement): { url: string; 
   return { url, cle }
 }
 
+let ecrituresEnCours = 0
+
+/**
+ * Une écriture vers la base ou une Edge Function (tout appel autre qu'une lecture GET ou HEAD
+ * vers /rest/v1/ ou /functions/v1/). Les appels à Auth ne comptent pas.
+ */
+export function estEcriture(entree: RequestInfo | URL, init?: RequestInit): boolean {
+  const methode = (
+    init?.method ?? (entree instanceof Request ? entree.method : 'GET')
+  ).toUpperCase()
+  if (methode === 'GET' || methode === 'HEAD') return false
+  const adresse =
+    typeof entree === 'string' ? entree : entree instanceof URL ? entree.href : entree.url
+  return /\/(?:rest|functions)\/v1\//.test(adresse)
+}
+
+/**
+ * Écritures en vol (T73) : changer d'espace attend qu'elles soient finies, pour ne jamais
+ * recharger la page au milieu d'un enregistrement (sa réussite ne s'afficherait pas).
+ */
+export function ecrituresEnVol(): number {
+  return ecrituresEnCours
+}
+
 /** fetch avec un délai maximal, en gardant le signal d'annulation fourni par l'appelant. */
 function fetchAvecDelai(entree: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const delai = AbortSignal.timeout(DELAI_MAX_REQUETE)
   const signal = init?.signal ? AbortSignal.any([init.signal, delai]) : delai
-  return fetch(entree, { ...init, signal })
+  if (!estEcriture(entree, init)) return fetch(entree, { ...init, signal })
+  ecrituresEnCours += 1
+  return fetch(entree, { ...init, signal }).finally(() => {
+    ecrituresEnCours -= 1
+  })
 }
 
 let client: ClientSupabase | undefined
 let espaceDuClient: string | undefined
+let cleClient: string | undefined
 
 function creerClient(url: string, cle: string, storageKey: string, actif: boolean) {
   return createClient<Database>(url, cle, {
@@ -85,7 +114,8 @@ export function supabase(): ClientSupabase {
   if (!client) {
     const { url, cle } = lireConfiguration(import.meta.env)
     const espace = espaceActif()
-    client = creerClient(url, cle, cleDeStockage(espace, url), true)
+    cleClient = cleDeStockage(espace, url)
+    client = creerClient(url, cle, cleClient, true)
     espaceDuClient = espace.id
   }
   return client
@@ -94,6 +124,11 @@ export function supabase(): ClientSupabase {
 /** Espace du client de la page (T73), ou undefined s'il n'est pas encore créé. */
 export function idEspaceDuClient(): string | undefined {
   return espaceDuClient
+}
+
+/** Clé de stockage du client de la page (T73), ou undefined s'il n'est pas encore créé. */
+export function cleDuClient(): string | undefined {
+  return cleClient
 }
 
 /** Clé de stockage de la connexion d'un espace (T73). */

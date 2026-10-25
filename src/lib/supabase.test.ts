@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ErreurConfiguration, lireConfiguration, supabase } from '@/lib/supabase'
+import {
+  ecrituresEnVol,
+  ErreurConfiguration,
+  estEcriture,
+  lireConfiguration,
+  supabase,
+} from '@/lib/supabase'
 
 function jwt(charge: object): string {
   const encoder = (valeur: object) => btoa(JSON.stringify(valeur)).replace(/=+$/, '')
@@ -68,5 +74,49 @@ describe('supabase() : aucun nouvel essai caché', () => {
     const { error } = await supabase().from('ministere').select('id')
     expect(error).not.toBeNull()
     expect(appels).toHaveBeenCalledTimes(1)
+  })
+})
+
+// « Changer d'espace » (T73) attend la fin des écritures en vol : l'application écrit par des
+// appels directs à la base (pas de useMutation), comptés ici.
+describe('supabase() : écritures en vol', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('reconnaît une écriture : tout sauf GET et HEAD, vers la base ou une Edge Function', () => {
+    const base = 'http://127.0.0.1:54321'
+    expect(estEcriture(`${base}/rest/v1/rpc/creer_point`, { method: 'POST' })).toBe(true)
+    expect(estEcriture(new URL(`${base}/functions/v1/creer-compte`), { method: 'post' })).toBe(true)
+    expect(estEcriture(`${base}/rest/v1/indicateur`, { method: 'PATCH' })).toBe(true)
+    expect(estEcriture(`${base}/rest/v1/v_semaine`, { method: 'GET' })).toBe(false)
+    expect(estEcriture(`${base}/rest/v1/v_semaine`)).toBe(false)
+    expect(estEcriture(`${base}/auth/v1/token?grant_type=refresh_token`, { method: 'POST' })).toBe(
+      false,
+    )
+  })
+
+  it('compte une écriture tant que sa réponse n’est pas arrivée', async () => {
+    vi.stubEnv('VITE_SUPABASE_URL', 'http://127.0.0.1:54321')
+    vi.stubEnv('VITE_SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_test')
+    let repondre: (reponse: Response) => void = () => undefined
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        () =>
+          new Promise<Response>((resoudre) => {
+            repondre = resoudre
+          }),
+      ),
+    )
+    const appel = supabase().rpc('declarer_intervenant', {
+      p_prenom: 'Marie',
+      p_motif: 'connexion',
+    })
+    const resultat = Promise.resolve(appel)
+    await vi.waitFor(() => expect(ecrituresEnVol()).toBe(1))
+    repondre(new Response('null', { status: 200 }))
+    await resultat
+    expect(ecrituresEnVol()).toBe(0)
   })
 })

@@ -6,8 +6,16 @@ import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
-import { changerDEspace, noterCompteDeLEspace } from '@/features/espaces/actions'
-import { effacerMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
+import {
+  changerDEspace,
+  detacherLesAutresEspaces,
+  fermerLesConnexionsOrphelines,
+  noterCompteDeLEspace,
+} from '@/features/espaces/actions'
+import {
+  definirMotDePasseAChoisir,
+  effacerMotDePasseAChoisir,
+} from '@/features/session/motDePasseAChoisir'
 import type { TypeCompte } from '@/lib/base'
 import { CLE_REGISTRE, lirePassageDEspace, lireRegistre } from '@/lib/espaces'
 import type { Registre } from '@/lib/espaces'
@@ -24,14 +32,24 @@ const etat = vi.hoisted(() => ({
   /** Espace du client de la page : celui qui était actif à son chargement. */
   page: 'principal',
   clients: {} as Record<string, unknown>,
+  /** Écritures en vol vers la base (compteur de `fetchAvecDelai`). */
+  ecritures: 0,
 }))
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: () => etat.clients[etat.page],
-  idEspaceDuClient: () => etat.page,
-  cleDeStockageDe: (espace: { cle: string | null }) => espace.cle ?? 'sb-127-auth-token',
-  clientDeLEspaceInactif: (espace: { id: string }) => etat.clients[espace.id],
-}))
+vi.mock('@/lib/supabase', () => {
+  const cleDe = (espace: { cle: string | null }) => espace.cle ?? 'sb-127-auth-token'
+  return {
+    supabase: () => etat.clients[etat.page],
+    idEspaceDuClient: () => etat.page,
+    cleDuClient: () =>
+      etat.page === 'principal'
+        ? 'sb-127-auth-token'
+        : `sb-pilotage-espace-${etat.page}-auth-token`,
+    cleDeStockageDe: cleDe,
+    ecrituresEnVol: () => etat.ecritures,
+    clientDeLEspaceInactif: (espace: { id: string }) => etat.clients[espace.id],
+  }
+})
 vi.mock('@/lib/rechargement', () => ({ rechargerA: vi.fn() }))
 
 const ID_PLATEFORME = '20000000-0000-4000-8000-000000000005'
@@ -133,6 +151,8 @@ async function ouvrirChangerDEspace() {
 
 beforeEach(() => {
   etat.clients = {}
+  etat.ecritures = 0
+  etat.page = 'principal'
   window.localStorage.clear()
   window.sessionStorage.clear()
 })
@@ -283,14 +303,39 @@ describe("Changer d'espace (T73)", () => {
     expect(screen.getByRole('button', { name: 'Revenir à EJP Tech, compte 1' })).toBeVisible()
   })
 
-  it('un enregistrement en cours : le passage attend, pour ne rien écrire au nom d’un autre compte', async () => {
+  it('une écriture en vol : le passage attend sa fin, pour que sa réussite s’affiche', async () => {
     deuxComptes('principal')
-    vi.spyOn(clientRequetes, 'isMutating').mockReturnValue(1)
+    // Les écritures passent par des appels directs à la base, comptés par fetchAvecDelai.
+    etat.ecritures = 1
     await expect(changerDEspace('tech0001')).resolves.toEqual({
       erreur: 'Un enregistrement est en cours. Réessayez dans un instant.',
     })
     expect(lireRegistre().actif).toBe('principal')
     expect(rechargerA).not.toHaveBeenCalled()
+  })
+
+  it('un autre onglet change d’espace pendant une écriture : le rechargement attend sa fin', async () => {
+    deuxComptes('principal')
+    plateforme()
+    charger('/')
+    await attendreVueDeLEglise()
+    etat.ecritures = 1
+    deuxComptes('tech0001')
+    window.dispatchEvent(new StorageEvent('storage', { key: CLE_REGISTRE }))
+    await new Promise((resoudre) => setTimeout(resoudre, 300))
+    expect(rechargerA).not.toHaveBeenCalled()
+    etat.ecritures = 0
+    await waitFor(() => expect(rechargerA).toHaveBeenCalledWith('/'))
+  })
+
+  it('l’étape « mot de passe à choisir » ne suit pas la personne dans un autre espace', async () => {
+    deuxComptes('tech0001')
+    etat.page = 'tech0001'
+    plateforme()
+    tech()
+    definirMotDePasseAChoisir('recuperation')
+    await changerDEspace('principal')
+    expect(window.sessionStorage.getItem('pilotage-ejp.mot-de-passe-a-choisir')).toBeNull()
   })
 
   it('un compte ouvert une deuxième fois ferme son ancien espace (aucun doublon)', async () => {
@@ -305,18 +350,38 @@ describe("Changer d'espace (T73)", () => {
       libelle: 'EJP Tech, compte 1',
       actif: true,
     })
-    expect(lireRegistre().espaces).toEqual([
-      {
-        id: 'tech0001',
-        cle: CLE_TECH,
-        utilisateur: ID_PLATEFORME,
-        libelle: 'EJP Tech, compte 1',
-        type: 'admin_plateforme',
-      },
-    ])
+    // L'ancien espace ne quitte la liste qu'une fois sa connexion fermée.
     await waitFor(() =>
-      expect(comptePlateforme.auth.signOut).toHaveBeenCalledWith({ scope: 'local' }),
+      expect(lireRegistre().espaces).toEqual([
+        {
+          id: 'tech0001',
+          cle: CLE_TECH,
+          utilisateur: ID_PLATEFORME,
+          libelle: 'EJP Tech, compte 1',
+          type: 'admin_plateforme',
+        },
+      ]),
     )
+    expect(comptePlateforme.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+  })
+
+  it('une connexion orpheline (hors de la liste) se ferme au chargement et à « Se déconnecter »', async () => {
+    deuxComptes('principal')
+    plateforme()
+    const orpheline = installer('orphe0001', scenario('conseil', ID_TECH, 'Conseil, compte 1'))
+    const cle = 'sb-pilotage-espace-orphe0001-auth-token'
+    window.localStorage.setItem(cle, '{"jeton":"oublié"}')
+    window.localStorage.setItem(`${cle}-flow-abc-code-verifier`, 'verificateur')
+    await fermerLesConnexionsOrphelines()
+    expect(orpheline.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
+    expect(orpheline.auth.dispose).toHaveBeenCalled()
+    expect(window.localStorage.getItem(cle)).toBeNull()
+    expect(window.localStorage.getItem(`${cle}-flow-abc-code-verifier`)).toBeNull()
+
+    // Et « Se déconnecter » en ferme une autre, apparue entre-temps.
+    orpheline.auth.signOut.mockClear()
+    window.localStorage.setItem(cle, '{"jeton":"oublié"}')
+    expect(detacherLesAutresEspaces().map(({ id }) => id)).toEqual(['tech0001', 'orphe0001'])
   })
 
   it('un autre onglet change d’espace : celui-ci le suit', async () => {
@@ -326,7 +391,7 @@ describe("Changer d'espace (T73)", () => {
     await attendreVueDeLEglise()
     deuxComptes('tech0001')
     window.dispatchEvent(new StorageEvent('storage', { key: CLE_REGISTRE }))
-    expect(rechargerA).toHaveBeenCalledWith('/')
+    await waitFor(() => expect(rechargerA).toHaveBeenCalledWith('/'))
     expect(clientRequetes.getQueryData(CLE_SESSION)).toBeUndefined()
   })
 })
