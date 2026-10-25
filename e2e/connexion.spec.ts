@@ -71,25 +71,27 @@ test.describe('écrans de connexion (aperçu)', () => {
     }
   })
 
-  test('aucun défilement horizontal à 360 et 390 px', async ({ page }, infos) => {
-    test.skip(infos.project.name !== 'telephone', 'Largeurs de téléphone : projet telephone.')
-    // Deux largeurs, dix-neuf écrans : une quarantaine de chargements dans un seul test. Sur la
-    // machine de la CI, qui lance aussi les parcours avec la base, 30 s ne suffisent pas toujours.
-    test.slow()
-    for (const largeur of [360, 390]) {
-      await page.setViewportSize({ width: largeur, height: 800 })
-      for (const { adresse, titre } of [
-        ...ECRANS.map(({ ecran, titre }) => ({ adresse: `ecran=${ecran}`, titre })),
-        ...ETATS,
-      ]) {
+  // Un test par écran ou état, deux chargements chacun. Une seule page qui enchaînait les 46
+  // chargements (près de 680 modules chacun : le serveur de développement ne regroupe pas les
+  // fichiers, soit quelque 30 000 requêtes) finissait par se voir refuser ses requêtes par
+  // Chromium (net::ERR_INSUFFICIENT_RESOURCES) : les modules ne chargeaient plus, l'écran restait
+  // vide et son titre introuvable. Une page neuve par test repart de zéro.
+  for (const { adresse, titre } of [
+    ...ECRANS.map(({ ecran, titre }) => ({ adresse: `ecran=${ecran}`, titre })),
+    ...ETATS,
+  ]) {
+    test(`aucun défilement horizontal à 360 et 390 px : ${adresse}`, async ({ page }, infos) => {
+      test.skip(infos.project.name !== 'telephone', 'Largeurs de téléphone : projet telephone.')
+      for (const largeur of [360, 390]) {
+        await page.setViewportSize({ width: largeur, height: 800 })
         await ouvrir(page, adresse, titre)
         const debordement = await page.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         )
         expect(debordement, `${adresse} à ${largeur} px`).toBeLessThanOrEqual(0)
       }
-    }
-  })
+    })
+  }
 
   test('les cibles font 44 px de haut au moins', async ({ page }) => {
     for (const { ecran, titre } of ECRANS) {
@@ -182,51 +184,54 @@ test.describe('écrans de connexion (aperçu)', () => {
     await expect(page).toHaveTitle('Mot de passe oublié, Pilotage EJP')
   })
 
-  test('captures en 1440 et 390 px', { tag: '@captures' }, async ({ page }, infos) => {
-    test.skip(infos.project.name !== 'ordinateur', 'Une seule série de captures.')
-    test.slow()
-    const captures: {
-      nom: string
-      adresse: string
-      titre: string
-      remplir?: () => Promise<void>
-    }[] = [
-      ...ECRANS.map(({ ecran, titre }) => ({ nom: ecran, adresse: `ecran=${ecran}`, titre })),
-      // États non dessinés : lien refusé, lien envoyé.
-      {
-        nom: 'acces-invitation-lien-invalide',
-        adresse: 'ecran=acces-invitation&etat=lien-invalide',
-        titre: "Ce lien n'est plus valable",
-      },
-      {
-        nom: 'mot-de-passe-oublie-envoye',
-        adresse: 'ecran=mot-de-passe-oublie&etat=envoye',
-        titre: 'Mot de passe oublié',
-      },
-      // Mêmes états que les maquettes : erreur de 16, code entamé de 17 et de 18.
-      {
-        nom: '16-connexion-comme-maquette',
-        adresse: 'ecran=connexion&etat=erreur-identifiants',
-        titre: 'Pilotage EJP',
-        remplir: async () => {
-          await page.getByLabel('Email', { exact: true }).fill('communication@ejp.exemple')
-          await page.getByLabel('Mot de passe', { exact: true }).fill('mot de passe')
+  // Un test par largeur : quinze chargements par page au lieu de trente (voir plus haut, le refus
+  // de Chromium quand une même page enchaîne trop de chargements).
+  for (const largeur of [1440, 390]) {
+    test(`captures en ${largeur} px`, { tag: '@captures' }, async ({ page }, infos) => {
+      test.skip(infos.project.name !== 'ordinateur', 'Une seule série de captures.')
+      test.slow()
+      const captures: {
+        nom: string
+        adresse: string
+        titre: string
+        remplir?: () => Promise<void>
+      }[] = [
+        ...ECRANS.map(({ ecran, titre }) => ({ nom: ecran, adresse: `ecran=${ecran}`, titre })),
+        // États non dessinés : lien refusé, lien envoyé.
+        {
+          nom: 'acces-invitation-lien-invalide',
+          adresse: 'ecran=acces-invitation&etat=lien-invalide',
+          titre: "Ce lien n'est plus valable",
         },
-      },
-      {
-        nom: '17-activation-comme-maquette',
-        adresse: 'ecran=activation',
-        titre: 'Activer la double authentification',
-        remplir: () => page.getByLabel("Saisissez le code affiché par l'application.").fill('482'),
-      },
-      {
-        nom: '18-code-comme-maquette',
-        adresse: 'ecran=code',
-        titre: 'Code de vérification',
-        remplir: () => page.getByLabel('Code à 6 chiffres').fill('4829'),
-      },
-    ]
-    for (const largeur of [1440, 390]) {
+        {
+          nom: 'mot-de-passe-oublie-envoye',
+          adresse: 'ecran=mot-de-passe-oublie&etat=envoye',
+          titre: 'Mot de passe oublié',
+        },
+        // Mêmes états que les maquettes : erreur de 16, code entamé de 17 et de 18.
+        {
+          nom: '16-connexion-comme-maquette',
+          adresse: 'ecran=connexion&etat=erreur-identifiants',
+          titre: 'Pilotage EJP',
+          remplir: async () => {
+            await page.getByLabel('Email', { exact: true }).fill('communication@ejp.exemple')
+            await page.getByLabel('Mot de passe', { exact: true }).fill('mot de passe')
+          },
+        },
+        {
+          nom: '17-activation-comme-maquette',
+          adresse: 'ecran=activation',
+          titre: 'Activer la double authentification',
+          remplir: () =>
+            page.getByLabel("Saisissez le code affiché par l'application.").fill('482'),
+        },
+        {
+          nom: '18-code-comme-maquette',
+          adresse: 'ecran=code',
+          titre: 'Code de vérification',
+          remplir: () => page.getByLabel('Code à 6 chiffres').fill('4829'),
+        },
+      ]
       await page.setViewportSize({ width: largeur, height: largeur === 1440 ? 900 : 844 })
       for (const { nom, adresse, titre, remplir } of captures) {
         await ouvrir(page, `${adresse}&outils=non`, titre)
@@ -237,6 +242,6 @@ test.describe('écrans de connexion (aperçu)', () => {
           fullPage: true,
         })
       }
-    }
-  })
+    })
+  }
 })
