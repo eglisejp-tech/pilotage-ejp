@@ -1544,7 +1544,11 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 ### T71. Protocole : sept indicateurs saisis et une part (révise K51)
 
 - **Date** : 24 octobre 2026
-- **Sujet** : la section de Protocole est vide dans le document des KPI de la coordination. K51 (`docs/conception/vague-1-decisions.md`) en avait tiré « les chiffres communs seulement ; modèle « aucun » » : Protocole ne saisissait que les STARs au service, les STARs actifs et « Dont en FIJ ». La responsable du Protocole a donné quatre domaines à suivre ; la personne responsable a choisi les indicateurs le 24 octobre 2026.
+- **Sujet** : la section de Protocole est vide dans le document des KPI de la coordination. K51 (`docs/conception/vague-1-decisions.md`) en avait tiré « les chiffres communs seulement ; modèle « aucun » » : Protocole ne saisissait que les STARs au service, les STARs actifs et « Dont en FIJ ». La responsable du Protocole a donné quatre domaines ; la personne responsable y a choisi les indicateurs le 24 octobre 2026 :
+  - « Organisation et anticipation » : Plan de service prêt la veille, Événements préparés une semaine avant ;
+  - « Respect des consignes et des règles » : Écarts aux consignes relevés ;
+  - « Communication et coordination » : Demandes reçues, Demandes traitées, Part des demandes traitées, Points d'équipe tenus ;
+  - « Confidentialité et discrétion » : Manquements à la confidentialité constatés (sensible).
 - **Décision** (choix de la personne responsable du 24 octobre 2026) : un modèle « protocole » au catalogue, avec huit prévus : sept indicateurs saisis et un calcul :
   1. **Plan de service prêt la veille** : chaque dimanche, 0 ou 1 (placement, accueil, répartition des STARs, prêts la veille du culte).
   2. **Événements préparés une semaine avant** : chaque mois, les événements du mois, hors cultes, pour lesquels le Protocole avait son plan au moins une semaine avant.
