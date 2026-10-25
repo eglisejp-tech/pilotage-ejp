@@ -182,12 +182,21 @@ describe("Changer d'espace (T73)", () => {
         .getByRole('list', { name: 'Comptes ouverts sur cet appareil' })
         .querySelector('[aria-current]'),
     ).toHaveTextContent('EJP Tech, compte 1 (espace actif)')
+    const viderCache = vi.spyOn(clientRequetes, 'clear')
     await userEvent.click(panneau.getByRole('button', { name: 'Passer à Ministère Tech' }))
 
     expect(rechargerA).toHaveBeenCalledWith('/')
     expect(lireRegistre().actif).toBe('tech0001')
-    // Rien du compte précédent ne reste en mémoire, pas même l'état de sa session.
-    expect(clientRequetes.getQueryCache().getAll()).toHaveLength(0)
+    // Rien du compte précédent ne reste en mémoire : le cache est vidé avant le rechargement. Dans
+    // le test, la page n'est pas vraiment rechargée (rechargerA est simulé) : l'écran encore
+    // affiché recrée aussitôt ses requêtes, plus ou moins vite selon la machine. On contrôle donc
+    // le vidage, son ordre et la donnée du compte précédent, pas un cache vide.
+    expect(viderCache).toHaveBeenCalledOnce()
+    expect(viderCache.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(rechargerA).mock.invocationCallOrder.at(-1) ?? 0,
+    )
+    expect(clientRequetes.getQueryData(['donnee-de-la-plateforme'])).toBeUndefined()
+    viderCache.mockRestore()
     expect(comptePlateforme.auth.signOut).not.toHaveBeenCalled()
     // L'ouverture de 2,5 s (T67) ne rejoue pas : ce n'est pas une ouverture de l'outil.
     expect(lirePassageDEspace()).toBe(true)
