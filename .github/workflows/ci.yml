@@ -159,3 +159,158 @@ jobs:
       - name: Journal de l'edge runtime
         if: failure()
         run: docker logs "$(docker ps -q --filter name=supabase_edge_runtime)" 2>&1 | tail -n 200
+
+  # Mise en ligne sur Cloudflare Pages (T70) : seulement sur main, et seulement quand tous les
+  # autres jobs sont verts (needs). Le build prend les valeurs publiques de production dans les
+  # variables du dépôt (vars, jamais un secret dans le navigateur), puis wrangler publie dist sur
+  # le projet pilotage-ejp, branche de production main. Tant que le secret CLOUDFLARE_API_TOKEN
+  # n'existe pas, le job s'arrête au vert avec un avertissement et ne publie rien
+  # (docs/exploitation.md, section 3.1). Relancer une mise en ligne : Actions, CI, « Run
+  # workflow » sur main.
+  deploiement:
+    name: Mise en ligne (Cloudflare Pages)
+    needs: [qualite, base, e2e, fonctions]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Une mise en ligne à la fois : la suivante attend la fin de celle en cours.
+    concurrency:
+      group: deploiement-production
+      cancel-in-progress: false
+    env:
+      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY }}
+      VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v7
+      # Seule la présence des secrets est lue ici (vrai ou faux), jamais leur valeur.
+      - name: Vérifier les réglages de la mise en ligne
+        id: reglages
+        env:
+          JETON_PRESENT: ${{ secrets.CLOUDFLARE_API_TOKEN != '' }}
+          COMPTE_PRESENT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          if [ "$JETON_PRESENT" != "true" ]; then
+            echo "::warning title=Mise en ligne non faite::Le secret CLOUDFLARE_API_TOKEN n'existe pas encore : rien n'est publié (docs/exploitation.md, section 3.1)."
+            echo "pret=non" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          manque=""
+          [ "$COMPTE_PRESENT" = "true" ] || manque="$manque secret CLOUDFLARE_ACCOUNT_ID,"
+          [ -n "$VITE_SUPABASE_URL" ] || manque="$manque variable VITE_SUPABASE_URL,"
+          [ -n "$VITE_SUPABASE_PUBLISHABLE_KEY" ] || manque="$manque variable VITE_SUPABASE_PUBLISHABLE_KEY,"
+          [ -n "$VITE_SITE_URL" ] || manque="$manque variable VITE_SITE_URL,"
+          if [ -n "$manque" ]; then
+            echo "::error title=Mise en ligne arrêtée::Il manque :${manque%,} (docs/exploitation.md, section 3.1)."
+            exit 1
+          fi
+          case "$VITE_SUPABASE_PUBLISHABLE_KEY" in
+            sb_publishable_*) ;;
+            *)
+              echo "::error title=Mise en ligne arrêtée::VITE_SUPABASE_PUBLISHABLE_KEY doit être la clé publique (sb_publishable_...), jamais la clé secrète."
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "$VITE_SUPABASE_URL" | grep -Eq '^https://[a-z]{20}\.supabase\.co$'; then
+            echo "::error title=Mise en ligne arrêtée::VITE_SUPABASE_URL doit être de la forme https://<identifiant>.supabase.co."
+            exit 1
+          fi
+          csp=$(grep -m 1 '^  Content-Security-Policy:' public/_headers)
+          case "$csp" in
+            *"connect-src "*" $VITE_SUPABASE_URL"*) ;;
+            *)
+              echo "::error title=Mise en ligne arrêtée::$VITE_SUPABASE_URL n'est pas dans connect-src de public/_headers : le navigateur bloquerait l'outil."
+              exit 1
+              ;;
+          esac
+          case "$VITE_SITE_URL" in
+            https://*) ;;
+            *)
+              echo "::error title=Mise en ligne arrêtée::VITE_SITE_URL doit commencer par https://."
+              exit 1
+              ;;
+          esac
+          echo "pret=oui" >> "$GITHUB_OUTPUT"
+      - uses: actions/setup-node@v7
+        if: steps.reglages.outputs.pret == 'oui'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - if: steps.reglages.outputs.pret == 'oui'
+        run: npm ci
+      - if: steps.reglages.outputs.pret == 'oui'
+        run: npm run build
+      # Le dossier publié : _headers et _redirects copiés, 404 de /assets/ seulement, aperçu des
+      # liens à la bonne adresse, aucune clé secrète.
+      - name: Contrôler le dossier dist
+        if: steps.reglages.outputs.pret == 'oui'
+        run: |
+          test -f dist/_headers
+          test -f dist/_redirects
+          test -f dist/assets/404.html
+          test ! -e dist/404.html
+          grep -qF "content=\"${VITE_SITE_URL%/}/apercu-lien.png\"" dist/index.html
+          ! grep -rEq 'sb_secret_[A-Za-z0-9_-]{20,}|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_SECRET_KEYS' dist
+      # Le projet pilotage-ejp (envoi direct) : créé au premier passage s'il n'existe pas, avec la
+      # branche de production main ; s'il existe, sa branche de production doit être main, sinon
+      # « --branch=main » publierait un simple aperçu. API de Cloudflare, droit « Pages : Edit ».
+      - name: Vérifier le projet Cloudflare Pages
+        if: steps.reglages.outputs.pret == 'oui'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/pages/projects"
+          projet="$RUNNER_TEMP/projet.json"
+          code=$(curl -sS -o "$projet" -w '%{http_code}' -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "$api/pilotage-ejp")
+          if [ "$code" = "404" ]; then
+            code=$(curl -sS -o "$projet" -w '%{http_code}' -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H 'Content-Type: application/json' --data '{"name":"pilotage-ejp","production_branch":"main"}' "$api")
+            if [ "$code" != "200" ]; then
+              echo "::error title=Mise en ligne arrêtée::Cloudflare refuse de créer le projet pilotage-ejp (HTTP $code)."
+              exit 1
+            fi
+            echo "::notice title=Projet créé::Projet Cloudflare Pages pilotage-ejp créé, branche de production main."
+          elif [ "$code" != "200" ]; then
+            echo "::error title=Mise en ligne arrêtée::Cloudflare refuse la lecture du projet pilotage-ejp (HTTP $code) : vérifier le jeton (droit Cloudflare Pages : Edit) et CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+          branche=$(node -e 'process.stdout.write(String(require(process.argv[1]).result.production_branch))' "$projet")
+          domaine=$(node -e 'process.stdout.write(String(require(process.argv[1]).result.subdomain))' "$projet")
+          if [ "$branche" != "main" ]; then
+            echo "::error title=Mise en ligne arrêtée::La branche de production du projet pilotage-ejp est « $branche », pas main (docs/exploitation.md, section 3.1)."
+            exit 1
+          fi
+          if [ "https://$domaine" != "${VITE_SITE_URL%/}" ]; then
+            echo "::warning title=Adresse à vérifier::Le projet répond à https://$domaine, mais VITE_SITE_URL vaut $VITE_SITE_URL (docs/exploitation.md, section 3.1)."
+          fi
+      - name: Publier sur Cloudflare Pages
+        id: publication
+        if: steps.reglages.outputs.pret == 'oui'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          wranglerVersion: '4.148.0'
+          command: pages deploy dist --project-name=pilotage-ejp --branch=main --commit-dirty=true
+      # La production sert-elle ce build ? Le nom empreint du script principal doit apparaître sur
+      # VITE_SITE_URL, avec la politique de contenu. Avertissement seulement : la diffusion peut
+      # prendre quelques secondes.
+      - name: Contrôler le site en ligne
+        if: steps.reglages.outputs.pret == 'oui'
+        env:
+          ADRESSE: ${{ steps.publication.outputs.deployment-url }}
+        run: |
+          site="${VITE_SITE_URL%/}"
+          echo "Mise en ligne faite : $ADRESSE (site : $site)" >> "$GITHUB_STEP_SUMMARY"
+          script=$(grep -o -m 1 'src="/assets/index-[^"]*\.js"' dist/index.html)
+          for essai in 1 2 3 4 5 6 7 8 9 10; do
+            page=$(curl -fsS "$site/" || true)
+            entetes=$(curl -fsSI "$site/ma-fiche" || true)
+            if [[ "$page" == *"$script"* && "${entetes,,}" == *"content-security-policy:"* ]]; then
+              echo "La production sert ce build, avec la politique de contenu." >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 6
+          done
+          echo "::warning title=Production à vérifier::$site ne sert pas encore ce build après une minute (branche de production, adresse VITE_SITE_URL, en-têtes : docs/exploitation.md, section 3.1)."

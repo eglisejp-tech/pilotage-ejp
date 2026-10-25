@@ -54,7 +54,7 @@ elles ne créent aucun traitement.
 | Prestataire | Ce qu'il fait pour l'outil                                                         | Où sont les données                                 | Cadre                                                                                                                       |
 | ----------- | ---------------------------------------------------------------------------------- | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
 | Supabase    | Base de données, connexion, fonctions du serveur, journaux techniques, sauvegardes | Région Paris (Union européenne)                     | Accord de protection des données (DPA) accepté avec les conditions d'utilisation. Voir la note sous le tableau              |
-| Netlify     | Hébergement du site (les pages de l'application), journaux techniques              | Réseau mondial, sans région au choix (voir la note) | Accord de protection des données (DPA) accepté avec les conditions. Société établie aux États-Unis. Voir la note            |
+| Cloudflare  | Hébergement du site (les pages de l'application), journaux techniques (T70)        | Réseau mondial, sans région au choix (voir la note) | Accord de protection des données (DPA) intégré aux conditions. Société établie aux États-Unis. Voir la note                 |
 | Google      | Connexion avec Google ; envoi des emails par la messagerie Gmail de l'église       | États-Unis                                          | Conditions grand public de Google (Gmail gratuit), sans accord de sous-traitance (article 28). Voir la note sous le tableau |
 
 **Note sur Google (fait donné par la personne responsable le 6 octobre 2026).** L'église envoie ses
@@ -80,21 +80,41 @@ l'acceptation de l'accord a le même effet que la signature des clauses contract
 s'applique donc sans signature séparée depuis la création de l'organisation EJP TECH, le 5 octobre 2026. Recommandation : télécharger une copie sur https://supabase.com/legal/dpa et la garder avec ce
 registre. La société contractante reste À compléter.
 
-**Note sur Netlify (faits donnés le 6 octobre 2026).**
+**Note sur Cloudflare (faits lus le 24 octobre 2026, T70).** Cloudflare Pages remplace Netlify
+pour l'hébergement du site depuis le 24 octobre 2026 : Netlify, offre gratuite, n'avait plus de
+crédits et refusait toute mise en ligne.
 
-- Son accord de protection des données est intégré par renvoi à l'accord d'abonnement en libre
-  service et s'applique dès l'acceptation des conditions, sans signature (sources :
-  https://www.netlify.com/blog/2023-terms-conditions et https://www.netlify.com/gdpr-ccpa.md).
-- Une source secondaire indique qu'il inclut les clauses contractuelles types de l'Union européenne
-  (module 2) et que Netlify est certifié au cadre de protection des données Union européenne et
-  États-Unis : à vérifier sur dataprivacyframework.gov.
-- Hébergement : Netlify sert les fichiers statiques du site depuis un réseau mondial. Aucune région
-  ne se choisit pour ce type de site. Netlify ne reçoit aucune donnée de l'outil, seulement ses
-  journaux techniques d'accès (adresses IP). Les comptes et les chiffres restent chez Supabase, à
-  Paris.
+- Société : Cloudflare, Inc., 101 Townsend Street, San Francisco, Californie 94107, États-Unis
+  (https://www.cloudflare.com/terms/, article 20, et https://www.cloudflare.com/privacypolicy/).
+- L'accord d'abonnement en libre service s'applique aussi aux services gratuits (article 2.6). Son
+  article 6.1 intègre par renvoi l'accord de protection des données
+  (https://www.cloudflare.com/cloudflare-customer-dpa/) quand le contenu du client comprend des
+  données de personnes européennes : il s'applique sans signature séparée.
+- Rôle : Cloudflare est sous-traitant (« Processor ») ; l'église est responsable du traitement.
+- Transferts : Cloudflare déclare respecter le cadre de protection des données entre l'Union
+  européenne et les États-Unis, et en être certifié. Son accord prévoit les clauses contractuelles
+  types de 2021 (modules 2 ou 3) si cette certification cesse : à vérifier sur
+  dataprivacyframework.gov (point 7 de « Ce qui reste à compléter »).
+- Hébergement : Pages sert les fichiers statiques du site depuis le réseau mondial de Cloudflare.
+  Aucune région ne se choisit pour ce type de site. Cloudflare ne reçoit aucune donnée de l'outil,
+  seulement les journaux techniques des requêtes (adresses IP). Les comptes et les chiffres restent
+  chez Supabase, à Paris. Aucun cookie constaté : les en-têtes de deux sites statiques
+  `*.pages.dev`, lus le 24 octobre 2026, n'ont aucun `Set-Cookie` (à revérifier sur le site après
+  le premier déploiement). Web Analytics de Cloudflare reste désactivé : il ajouterait un script
+  et un appel à un autre service.
+- Durée des journaux : l'accord de Cloudflare n'en fixe pas pour ces journaux (« jusqu'à la fin du
+  contrat ou jusqu'à ce que le traitement ne soit plus nécessaire », annexe 1) et la politique de
+  confidentialité ne donne pas de durée. Le plafond d'un an de la page « Confidentialité » reste à
+  confirmer auprès de Cloudflare (privacyquestions@cloudflare.com) : À compléter par EJP Tech.
 
-Accès aux tableaux de bord de Supabase et de Netlify : EJP Tech seul. Double authentification sur
-ces deux comptes : À compléter par EJP Tech (confirmation, elle est recommandée).
+**Ancien hébergeur, Netlify (faits donnés le 6 octobre 2026).** Accord de protection des données
+intégré à l'accord d'abonnement en libre service, réseau mondial, journaux d'accès seulement.
+Pendant la transition (T70), l'ancienne adresse `https://pilotage-ejp.netlify.app` ne fait que
+renvoyer vers la nouvelle ; le site Netlify est supprimé quand plus personne ne l'utilise
+(`docs/exploitation.md`, section 3.1).
+
+Accès aux tableaux de bord de Supabase et de Cloudflare : EJP Tech seul. Double authentification
+sur ces deux comptes : À compléter par EJP Tech (confirmation, elle est recommandée).
 
 Un seul projet Supabase distant existe (décision T52, 7 octobre 2026) : créé le 5 octobre 2026 comme
 préproduction, il est devenu la **production**. Offre gratuite, organisation « EJP TECH », région
@@ -109,12 +129,12 @@ Code ne lit pas la base (T52).
 ### Transferts hors de l'Union européenne
 
 - La base de données est hébergée en région Paris.
-- Google et Netlify sont établis aux États-Unis. Les transferts s'appuient sur le cadre de
-  protection des données entre l'Union européenne et les États-Unis, ou sur les clauses
-  contractuelles types de la Commission européenne.
-- À compléter par EJP Tech : vérifier que Google et Netlify figurent sur la liste du cadre de
-  protection des données (dataprivacyframework.gov), et noter la date de la vérification. Pour
-  Netlify, ses clauses contractuelles types (module 2) sont à vérifier de la même façon.
+- Google et Cloudflare sont établis aux États-Unis. Les transferts s'appuient sur le cadre de
+  protection des données entre l'Union européenne et les États-Unis ; pour Cloudflare, les clauses
+  contractuelles types de la Commission européenne prennent le relais si ce cadre cesse de
+  s'appliquer (son accord de protection des données).
+- À compléter par EJP Tech : vérifier que Google et Cloudflare figurent sur la liste du cadre de
+  protection des données (dataprivacyframework.gov), et noter la date de la vérification.
 - À compléter par EJP Tech : société avec qui l'église a contracté pour Supabase, et accès possible
   aux données depuis l'extérieur de l'Union européenne (support, administration du service).
 
@@ -125,7 +145,7 @@ Code ne lit pas la base (T52).
 | Comptes, saisies, historique et journal      | Toute la vie de l'outil, puis suppression à son arrêt, après l'export final remis à la coordination                                                                                                                    |
 | Compte désactivé                             | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                                                                                                                                            |
 | Nom et photo du profil Google                | Gardés avec le compte, jamais affichés, supprimés avec lui                                                                                                                                                             |
-| Journaux techniques (adresses IP)            | Selon les durées de Supabase et de Netlify, au plus 1 an                                                                                                                                                               |
+| Journaux techniques (adresses IP)            | Selon les durées de Supabase et de Cloudflare, au plus 1 an (pour Cloudflare, à confirmer : voir la note sur Cloudflare)                                                                                               |
 | Sauvegardes de la base                       | Export chiffré chaque semaine, 4 gardés. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus (T52)                                                                                      |
 | Copies des emails envoyés                    | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil                                                                                                                                  |
 | Prénoms déclarés sur un compte partagé (T56) | 12 mois, puis remplacés par « [prénom effacé] » (EJP Tech, chaque mois). 4 semaines au plus dans les sauvegardes. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination (fiche 7) |
@@ -193,7 +213,7 @@ archivage du dépôt du code.
   - nom et photo du profil Google, quand une personne se connecte avec Google : l'outil ne les
     affiche pas et ne les copie pas ;
   - adresses IP et historique des connexions, dans les journaux techniques de Supabase et de
-    Netlify ;
+    Cloudflare ;
   - jeton de connexion gardé dans le navigateur jusqu'à la déconnexion (nécessaire au
     fonctionnement, sans consentement à donner) ;
   - date à laquelle chaque compte accepte les conditions d'utilisation, et version acceptée
@@ -232,7 +252,7 @@ archivage du dépôt du code.
     berger, ni le conseil, ni un autre ministère ne les lisent ;
   - Supabase et Google, comme prestataires.
 - **Prestataires et lieu** : Supabase (connexion, région Paris), Google (connexion avec Google),
-  Netlify (site).
+  Cloudflare (site).
 - **Transferts hors UE** : connexion avec Google (États-Unis), voir « Transferts ».
 - **Durées** : compte gardé toute la vie de l'outil, même désactivé ; nom et photo Google supprimés
   avec le compte ; journaux techniques au plus 1 an ; exports chiffrés hebdomadaires, 4 gardés
@@ -352,7 +372,7 @@ archivage du dépôt du code.
   - l'administration de l'église voit les définitions et l'usage (« saisi 4 mois sur 5 »), jamais
     une valeur d'indicateur propre ; elle voit les chiffres communs de la vue de l'église ;
   - les autres ministères voient seulement les chiffres communs de la vue de l'église.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
+- **Prestataires et lieu** : Supabase (région Paris), Cloudflare (site).
 - **Transferts hors UE** : aucun pour la base. Voir « Transferts » pour l'hébergement du site.
 - **Durées** : toute la vie de l'outil, puis export final et suppression. Un indicateur retiré pour
   confidentialité ne se lit plus, pour aucun profil, EJP Tech compris ; ses lignes restent dans la
@@ -394,7 +414,7 @@ archivage du dépôt du code.
   - le ministère Coordination lit, dans les 4 semaines après la mise en service, des totaux
     d'événements de l'église par mois, sans titre, sans date et sans détail par ministère (P38) ;
   - seul EJP Tech lit la modération.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
+- **Prestataires et lieu** : Supabase (région Paris), Cloudflare (site).
 - **Transferts hors UE** : aucun pour la base.
 - **Durées** : toute la vie de l'outil. Un texte masqué reste dans les exports
   hebdomadaires jusqu'à leur suppression (4 semaines au plus).
@@ -423,7 +443,7 @@ archivage du dépôt du code.
     (un identifiant), détail (codes, nombres, dates et identifiants seulement). Jamais un texte libre,
     jamais un email, aucune valeur d'indicateur propre ;
   - journaux techniques : adresses IP, connexions, erreurs, dans les tableaux de bord de Supabase et
-    de Netlify, hors de l'application.
+    de Cloudflare, hors de l'application.
 - **Données sensibles** : aucune.
 - **Destinataires** :
   - un ministère lit les lignes de son ministère et de son compte ;
@@ -440,10 +460,11 @@ archivage du dépôt du code.
     fiche 7). Le prénom n'est jamais écrit dans le journal : il vit dans une table à part, que seul
     EJP Tech lit ;
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
-    Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Netlify, et
+    Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Cloudflare, et
     double authentification activée sur ces accès.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (réseau mondial, journaux d'accès seulement).
-- **Transferts hors UE** : journaux techniques de Netlify, voir « Transferts ».
+- **Prestataires et lieu** : Supabase (région Paris), Cloudflare (réseau mondial, journaux d'accès
+  seulement).
+- **Transferts hors UE** : journaux techniques de Cloudflare, voir « Transferts ».
 - **Durées** : journal de l'application toute la vie de l'outil ; journaux techniques au plus 1 an.
 - **Mesures propres** :
   - personne ne peut modifier ni effacer le journal, pas même le propriétaire de la base ;
@@ -510,7 +531,7 @@ archivage du dépôt du code.
   passe jamais pour un texte masqué par EJP Tech (T43, 7 octobre 2026) ; les mêmes règles
   s'appliquent au commentaire de clôture ; relecture et masquage par EJP Tech ; ajout seulement ;
   journal avec le code de l'écran, sans le texte ; aucun email.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
+- **Prestataires et lieu** : Supabase (région Paris), Cloudflare (site).
 - **Durées** : toute la vie de l'outil, comme les autres écritures.
 
 ## Fiche 7. Prénom déclaré sur un compte partagé
@@ -538,7 +559,7 @@ archivage du dépôt du code.
   ministères ; la base le garantit. La personne voit seulement son propre prénom, celui de la
   déclaration en cours sur son appareil (« Vous : Marie »), jamais ceux déclarés avant elle. À
   l'arrêt de l'outil : la coordination, dans l'export final.
-- **Prestataires et lieu** : Supabase (région Paris), Netlify (site).
+- **Prestataires et lieu** : Supabase (région Paris), Cloudflare (site).
 - **Durées** : 12 mois, puis le prénom est remplacé par « [prénom effacé] » (EJP Tech, chaque mois,
   `docs/exploitation.md`) ; 4 semaines au plus dans les sauvegardes. Les prénoms qui restent à
   l'arrêt de l'outil figurent dans l'export final remis à la coordination (décision de la personne
@@ -563,12 +584,14 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
    responsable du traitement, indiqué plus haut. Aucun DPO désigné.
 2. Supabase : télécharger une copie de l'accord de protection des données
    (https://supabase.com/legal/dpa) et la garder avec le registre.
-3. Netlify : rien à signer, l'accord s'applique à l'acceptation des conditions. Vérifier sa
-   certification et ses clauses contractuelles types (voir le point 7).
+3. Cloudflare (T70, à la place de Netlify) : rien à signer, l'accord de protection des données
+   est intégré par renvoi à l'accord d'abonnement en libre service. Vérifier sa certification
+   (voir le point 7) et demander la durée de conservation des journaux techniques (note sur
+   Cloudflare).
 4. Société avec qui l'église a contracté pour Supabase, et accès possible aux données depuis
    l'extérieur de l'Union européenne.
-5. (Réglé le 6 octobre 2026.) Hébergement de Netlify : réseau mondial, sans région au choix,
-   journaux d'accès seulement.
+5. (Réglé le 6 octobre 2026, repris le 24 octobre 2026 pour Cloudflare.) Hébergement du site :
+   réseau mondial, sans région au choix, journaux d'accès seulement.
 6. Emails par un Gmail gratuit (fait donné le 6 octobre 2026) : pas d'accord de sous-traitance
    avec Google, ni pour les emails ni pour la connexion avec Google, conditions grand public.
    Corriger la phrase « agissent sous contrat » de la page
@@ -576,12 +599,12 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
    sans l'imposer : Google Workspace pour les associations (gratuit pour une association
    éligible, avec un avenant sur la protection des données), ou un service d'envoi européen avec
    contrat. Reste à décider par la personne responsable.
-7. Présence de Google et de Netlify sur la liste du cadre de protection des données, avec la date
-   de la vérification.
+7. Présence de Google et de Cloudflare sur la liste du cadre de protection des données, avec la
+   date de la vérification.
 8. Adresse d'envoi des emails : décidée le 6 octobre 2026 (T08), c'est l'adresse d'EJP Tech de la
    page « Confidentialité » ; SMTP décidé le 7 octobre 2026 (Gmail gratuit d'EJP Tech). Rien à
    compléter.
-9. Double authentification sur les comptes de tableau de bord de Supabase et de Netlify, dont
+9. Double authentification sur les comptes de tableau de bord de Supabase et de Cloudflare, dont
    seul EJP Tech a l'accès : à confirmer, elle est recommandée.
 10. Durée de conservation de l'export final et lieu où la coordination le garde (à la coordination).
 11. Confirmation que chaque titulaire de compte est membre de l'église ou en contact régulier avec

@@ -11,7 +11,9 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * Page « Conditions d'utilisation » : texte statique, lisible sans connexion, à côté de la page
  * Confidentialité. Ajoutée au BRIEF et validée par EJP Tech et la coordination le 5 octobre 2026
  * (docs/decisions.md, T17). Mise à jour le 13 octobre 2026 (T60 : EJP Tech gère les comptes), la
- * même date que `VERSION_CONDITIONS`.
+ * même date que `VERSION_CONDITIONS`. Le 24 octobre 2026, la mention de l'hébergeur nomme
+ * Cloudflare au lieu de Netlify (T70) : une information, pas une règle d'utilisation, donc ni la
+ * date ni `VERSION_CONDITIONS` ne changent (phrase proposée, à valider par la coordination).
  */
 export function PageConditions() {
   useTitrePage("Conditions d'utilisation")
@@ -38,7 +40,8 @@ export function PageConditions() {
           </p>
           <p>
             Hébergement : la base de données est hébergée par Supabase, en région Paris (Union
-            européenne). Le site est hébergé par Netlify.
+            européenne). Le site est hébergé par Cloudflare (Cloudflare, Inc., 101 Townsend Street,
+            San Francisco, États-Unis).
           </p>
         </PartieTexte>
         <PartieTexte titre="Accès à l'outil">

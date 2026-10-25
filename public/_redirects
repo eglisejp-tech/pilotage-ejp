@@ -1,4 +1,15 @@
-# Netlify : l'application est une page unique. Toute adresse (dont /acces?token_hash=...) sert
-# index.html, puis le routeur de l'application affiche la bonne page. Les fichiers de dist/
-# existants (assets, favicon) passent avant cette règle.
-/*    /index.html    200
+# Redirections de Pilotage EJP sur Cloudflare Pages (T70). Ce fichier ne contient volontairement
+# aucune règle : il est gardé pour expliquer pourquoi, et src/test/cloudflare.test.ts vérifie qu'il
+# reste vide.
+#
+# Application à page unique : sans 404.html à la racine du site, Pages sert index.html avec le
+# statut 200 pour toute adresse qui n'est pas un fichier (/ma-fiche, /acces?token_hash=..., etc.),
+# puis le routeur de l'application affiche la bonne page.
+# (developers.cloudflare.com/pages/configuration/serving-pages/, vérifié le 24 octobre 2026.)
+#
+# Ne jamais ajouter « /* /index.html 200 », la règle de Netlify : Pages applique ses redirections
+# avant les fichiers, et wrangler l'écarte comme une boucle (« Infinite loop detected »).
+#
+# Un fichier absent de /assets/ répond 404 grâce à public/assets/404.html : Pages cherche un
+# 404.html dans le dossier de l'adresse, puis dans les dossiers parents. Une règle de statut 404
+# n'existe pas dans ce fichier (seuls 200, 301, 302, 303, 307 et 308 sont acceptés).
