@@ -4,15 +4,17 @@
 -- 1. Matrice des droits (BRIEF, section 7), écrite en données et parcourue par
 --    tests.verifier_matrice (000-outils.test.sql) : v_ministere_modele (administration de
 --    l'église et EJP Tech), private.ministere_modele (rien pour personne), choisir_modele_prevus
---    (EJP Tech seul), les aides privées (personne) ; la dérivation ajoute l'aal1 de chaque ligne
---    acceptée et l'anonyme.
+--    (EJP Tech seul, en public comme en private), private.modeles_ministeres, les aides privées
+--    (personne) ; la dérivation ajoute l'aal1 de chaque ligne acceptée et l'anonyme. Puis la RLS,
+--    la politique restrictive et la séquence de la table privée.
 -- 2. choisir_modele_prevus : modèle inconnu, choix et journal {avant, apres}, second choix
 --    identique sans écriture, un modèle par ministère actif, refus de quitter une liste dont un
 --    prévu est suivi (vers une autre liste ou vers « aucun »), passage possible une fois les
 --    prévus retirés, « aucun » réversible, historique gardé.
 -- 3. creer_indicateurs_prevus : refuse un modèle différent du lien, pose le lien vide.
 -- 4. Inaltérabilité de la table, même pour son propriétaire.
--- 5. Journal : l'administration, le ministère et le berger lisent les lignes du choix.
+-- 5. Journal : l'administration, le ministère, le berger, le conseil et EJP Tech lisent les lignes
+--    du choix ; un autre ministère et l'aal1, rien. Un ministère désactivé ne reçoit pas de liste.
 -- 6. Reprise (private.reprendre_modeles) : modèle le plus représenté des prévus non retirés, nom
 --    exact (Protocole, même avec « Aucun prévu » au journal), modèle déjà pris, « aucun » du
 --    journal, prévus tous retirés, ministère désactivé, ministère sans rien ; FIJ du jeu
@@ -32,8 +34,9 @@ select tests.creer_ministere('Essai lien libre') as libre,
        tests.compte('Conseil, compte 1') as conseil,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech;
-alter table ctx add column ministere uuid;
-update ctx set ministere = tests.creer_compte('lien-libre@exemple.test', 'ministere', libre);
+alter table ctx add column ministere uuid, add column ministere_autre uuid;
+update ctx set ministere = tests.creer_compte('lien-libre@exemple.test', 'ministere', libre),
+               ministere_autre = tests.creer_compte('lien-autre@exemple.test', 'ministere', autre);
 grant select on ctx to authenticated, anon;
 
 -- Catalogue d'essai : trois listes pour les choix, quatre pour la reprise.
@@ -68,6 +71,11 @@ create temp view matrice_lien (profil, objet, action, aal, attendu, requete) as
       'delete from private.ministere_modele'),
      ('choisir_modele_prevus', 'appeler', array['42501', '42501', '42501', '42501', 'ok'],
       'select public.choisir_modele_prevus((select autre from ctx), ''essai lien b'')'),
+     -- Les parties private ouvertes à authenticated font les mêmes contrôles en direct.
+     ('private.choisir_modele_prevus', 'appeler', array['42501', '42501', '42501', '42501', 'ok'],
+      'select private.choisir_modele_prevus((select autre from ctx), ''essai lien b'')'),
+     ('private.modeles_ministeres', 'lire', array['0', '0', '0', '2', '2'],
+      'select 1 from private.modeles_ministeres() where ministere_id in (select libre from ctx union all select autre from ctx)'),
      ('private.modele_suggere', 'appeler', array['42501', '42501', '42501', '42501', '42501'],
       'select private.modele_suggere(''Kumi'')'),
      ('private.modele_choisi', 'appeler', array['42501', '42501', '42501', '42501', '42501'],
@@ -124,7 +132,7 @@ insert into reference values
   ('Prodiges Academy', 'aucun');
 grant select on reference to authenticated;
 
-select plan(43
+select plan(51
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_lien',
                         'select profil, compte from profil_lien', true));
 
@@ -133,8 +141,25 @@ select * from tests.verifier_matrice(
   'select profil, compte from profil_lien',
   true);
 
+-- La table privée : RLS, la politique restrictive aal2 seule, aucun droit sur sa séquence.
+select ok((select c.relrowsecurity from pg_class c where c.oid = 'private.ministere_modele'::regclass),
+  'private.ministere_modele : RLS activée');
+select results_eq($$
+  select p.policyname::text collate "default", p.permissive::text collate "default", p.cmd::text collate "default",
+         p.roles::text collate "default"
+    from pg_policies p where p.schemaname = 'private' and p.tablename = 'ministere_modele'
+$$, $$ values ('double_authentification'::text, 'RESTRICTIVE'::text, 'ALL'::text, '{authenticated}'::text) $$,
+  'private.ministere_modele : la seule politique est la restrictive aal2');
+select ok(not has_sequence_privilege('authenticated', 'private.ministere_modele_id_seq', 'USAGE')
+          and not has_sequence_privilege('authenticated', 'private.ministere_modele_id_seq', 'UPDATE')
+          and not has_sequence_privilege('anon', 'private.ministere_modele_id_seq', 'USAGE'),
+  'private.ministere_modele : aucun droit sur sa séquence');
+
 -- 2. choisir_modele_prevus (EJP Tech, aal2)
 select tests.se_connecter((select tech from ctx), 'aal2');
+select throws_ok($$ select public.choisir_modele_prevus((select desactive from ctx), 'essai lien c') $$,
+  '42501', 'Cet élément n''existe pas ou vous n''y avez pas accès.',
+  'un ministère désactivé ne reçoit pas de liste');
 select throws_ok($$ select public.choisir_modele_prevus((select libre from ctx), 'essai inconnu') $$,
   'P0001', 'Ce modèle n''existe pas dans le catalogue.', 'un modèle absent du catalogue est refusé');
 select throws_ok($$ select public.choisir_modele_prevus((select libre from ctx), 'suggestion') $$,
@@ -238,6 +263,18 @@ select is(tests.compter((select ministere from ctx), 'aal2',
 select is(tests.compter((select berger from ctx), 'aal2',
     format('select 1 from public.journal where action = %L and ministere_id = %L', 'modele_prevus_choisi', (select libre from ctx))),
   2, 'le berger les lit');
+select is(tests.compter((select conseil from ctx), 'aal2',
+    format('select 1 from public.journal where action = %L and ministere_id = %L', 'modele_prevus_choisi', (select libre from ctx))),
+  2, 'le conseil les lit');
+select is(tests.compter((select tech from ctx), 'aal2',
+    format('select 1 from public.journal where action = %L and ministere_id = %L', 'modele_prevus_choisi', (select libre from ctx))),
+  2, 'EJP Tech les lit');
+select is(tests.compter((select ministere_autre from ctx), 'aal2',
+    format('select 1 from public.journal where action = %L and ministere_id = %L', 'modele_prevus_choisi', (select libre from ctx))),
+  0, 'un autre ministère ne lit pas les choix de cette fiche');
+select is(tests.compter((select admin from ctx), 'aal1',
+    format('select 1 from public.journal where action = %L', 'modele_prevus_choisi')),
+  0, 'en aal1, rien ne se lit');
 
 -- 6. Reprise
 update ctx set indicateurs_avant = (select count(*) from public.indicateur),
