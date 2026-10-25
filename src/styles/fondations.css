@@ -65,6 +65,26 @@
   button:not(:disabled, [aria-disabled='true']) {
     cursor: pointer;
   }
+
+  /*
+   * Safari sur iPhone et iPad donne aux champs de date et d'heure une largeur à lui, qui ignore
+   * `w-full` : le champ dépassait du panneau « Ajouter une session » (constaté sur iPad le
+   * 25 octobre 2026). Sans apparence native, il reprend la largeur du formulaire, et sa valeur
+   * reste alignée à gauche comme celle des autres champs. La règle ne vise que les appareils
+   * Apple tactiles (`-webkit-touch-callout`) : rien ne change sur ordinateur ni sur Android, où
+   * le sélecteur de date garde son icône.
+   */
+  @supports (-webkit-touch-callout: none) {
+    input:is([type='date'], [type='time'], [type='datetime-local']) {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      min-width: 0;
+    }
+    input::-webkit-date-and-time-value {
+      text-align: left;
+    }
+  }
 }
 
 @layer components {

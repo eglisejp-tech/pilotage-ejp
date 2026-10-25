@@ -16,6 +16,33 @@ concurrency:
 # Image des runners fixée (ubuntu-24.04, pas ubuntu-latest) : ubuntu-latest passe à 26.04 entre le
 # 19 octobre et le 19 novembre 2026, et deux runs tomberaient sur deux images différentes.
 jobs:
+  # CI économe (docs/exploitation.md, section 7.8) : ce job compare l'envoi au dernier run vert de
+  # la branche. Documentation seule (docs/, .claude/, fichiers .md) : « qualite » tourne seul ;
+  # sinon, ou dans le doute (lancement à la main, aucun run vert, API muette), tout tourne. Il lit
+  # tout l'historique (ancêtres du commit) et la liste des runs, rien d'autre. Les autres jobs
+  # testent « != 'non' » : seule une réponse « non » explicite les saute.
+  changements:
+    name: Fichiers changés
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      code: ${{ steps.decision.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - id: decision
+        run: node scripts/ci-changements.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  # Toujours, documentation seule comprise : le lint et le contrôle des textes lisent aussi les .md.
   qualite:
     name: Lint, types, tests unitaires, build
     runs-on: ubuntu-24.04
@@ -35,6 +62,8 @@ jobs:
 
   base:
     name: Base de données (migrations, RLS, pgTAP)
+    needs: changements
+    if: needs.changements.outputs.code != 'non'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -53,12 +82,14 @@ jobs:
   # Un job par format, plus un pour les écritures, en parallèle : la suite entière dépassait les
   # 30 minutes d'un seul job (8 octobre 2026). Chaque job a sa base locale neuve.
   # Pas d'attente du job « qualite » : chaque job installe tout lui-même, et attendre coûtait
-  # 3 minutes à chaque run (mesuré le 12 octobre 2026).
+  # 3 minutes à chaque run (mesuré le 12 octobre 2026). Seule attente : « changements », court.
   # Le 23 octobre 2026, le 1440 px (26 minutes, captures comprises) a dépassé trois fois ses
   # 30 minutes : l'installation du navigateur, d'habitude sous 30 secondes, en a pris 5 à 7.
   # Il est coupé en deux moitiés (--shard), et chaque job a 40 minutes de marge.
   e2e:
     name: Parcours Playwright (${{ matrix.partie.nom }})
+    needs: changements
+    if: needs.changements.outputs.code != 'non'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     strategy:
@@ -138,6 +169,8 @@ jobs:
 
   fonctions:
     name: Edge Functions de comptes (pile locale)
+    needs: changements
+    if: needs.changements.outputs.code != 'non'
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
@@ -171,10 +204,13 @@ jobs:
   # n'existe pas, le job s'arrête au vert avec un avertissement et ne publie rien
   # (docs/exploitation.md, section 3.1). Relancer une mise en ligne : Actions, CI, « Run
   # workflow » sur main.
+  # CI économe (section 7.8) : documentation seule depuis le dernier run vert, rien à publier, le
+  # job est sauté. Sans always() ni failure() dans la condition, GitHub y ajoute success() : un job
+  # requis en échec, annulé ou sauté empêche toute publication.
   deploiement:
     name: Mise en ligne (Cloudflare Pages)
-    needs: [qualite, base, e2e, fonctions]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    needs: [changements, qualite, base, e2e, fonctions]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && needs.changements.outputs.code != 'non'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Une mise en ligne à la fois : la suivante attend la fin de celle en cours.

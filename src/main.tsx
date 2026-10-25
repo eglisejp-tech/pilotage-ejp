@@ -8,12 +8,16 @@ import { routes } from '@/app/routes'
 import { BandeauHorsLigne } from '@/components/etats/BandeauHorsLigne'
 import { AnnonceDePage } from '@/features/connexion/AnnonceDePage'
 import { clientRequetes } from '@/lib/requetes'
+import { prechargerEcran } from '@/pages/pagesDesAdresses'
 import './index.css'
 
 const racine = document.getElementById('root')
 if (!racine) {
   throw new Error("L'élément #root est introuvable dans index.html.")
 }
+
+// Le code de l'écran demandé arrive pendant la lecture de la session et l'ouverture (T67).
+prechargerEcran(window.location.pathname)
 
 const routeur = createBrowserRouter(routes)
 

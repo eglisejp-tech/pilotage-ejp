@@ -16,9 +16,10 @@ function lire(): boolean {
 
 /**
  * Vrai tant que le navigateur se croit connecté à internet. Sert au bandeau « Pas de connexion
- * internet » et à rien d'autre : aucun bouton n'est grisé hors ligne, l'envoi échoue et le dit
- * (LISEZMOI, « États »). Le navigateur ne se trompe que dans un sens : « en ligne » peut cacher
- * un serveur injoignable, que les erreurs de lecture et d'envoi couvrent.
+ * internet », et au nouvel essai du code d'un écran au retour du réseau (`AffichageEcran`), comme
+ * les lectures se relisent seules. Rien d'autre : aucun bouton n'est grisé hors ligne, l'envoi
+ * échoue et le dit (LISEZMOI, « États »). Le navigateur ne se trompe que dans un sens :
+ * « en ligne » peut cacher un serveur injoignable, que les erreurs de lecture et d'envoi couvrent.
  */
 export function useEnLigne(): boolean {
   return useSyncExternalStore(abonner, lire, () => true)
