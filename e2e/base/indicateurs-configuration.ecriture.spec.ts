@@ -247,7 +247,8 @@ test.describe('EJP Tech, qui configure (T60)', () => {
       p_ministere_id: essaiSansPrevu,
       p_modele: 'aucun',
     })
-    expect(retour.status()).toBe(200)
+    // choisir_modele_prevus ne rend rien : PostgREST répond 204.
+    expect(retour.status()).toBe(204)
     expect((await journalChoix(page, essaiSansPrevu)).map((ligne) => ligne.detail)).toEqual([
       { avant: null, apres: 'aucun' },
       { avant: 'aucun', apres: 'film' },
