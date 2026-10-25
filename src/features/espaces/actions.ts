@@ -1,5 +1,6 @@
 import type { Compte } from '@/data/compte'
 import { TEXTES_ESPACES } from '@/features/espaces/textes'
+import { accueil } from '@/features/navigation/profils'
 import type { EtatSession, Statut } from '@/features/session/etat'
 import {
   analyserRegistre,
@@ -99,10 +100,16 @@ async function quitter(registre: Registre): Promise<Registre> {
 export async function changerDEspace(id: string): Promise<ResultatEspace> {
   if (enregistrementEnCours()) return { erreur: TEXTES_ESPACES.enregistrementEnCours }
   const registre = lireRegistre()
-  if (id === registre.actif || !registre.espaces.some((espace) => espace.id === id)) return {}
+  const cible = registre.espaces.find((espace) => espace.id === id)
+  if (id === registre.actif || !cible) return {}
   ecrireRegistre(avecActif(await quitter(registre), id))
-  recharger('/')
+  recharger(accueilDe(cible))
   return {}
+}
+
+/** L'accueil du compte de l'espace (la modération pour EJP Tech), ou « / » s'il n'est pas connu. */
+function accueilDe(espace: Espace | undefined): string {
+  return espace?.type ? accueil(espace.type) : '/'
 }
 
 /**
@@ -135,8 +142,9 @@ export async function retirerCeCompte(): Promise<ResultatEspace> {
   if (registre.espaces.length < 2) return {}
   const actif = espaceActif(registre)
   await fermerEspaceActif(actif)
-  ecrireRegistre(sansEspace(registre, actif.id))
-  recharger('/')
+  const suivant = sansEspace(registre, actif.id)
+  ecrireRegistre(suivant)
+  recharger(accueilDe(espaceActif(suivant)))
   return {}
 }
 

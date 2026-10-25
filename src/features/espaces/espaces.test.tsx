@@ -212,7 +212,8 @@ describe("Changer d'espace (T73)", () => {
 
     // Revenir à l'autre compte ferme l'espace expiré : la liste ne garde que des comptes ouverts.
     await userEvent.click(screen.getByRole('button', { name: 'Revenir à EJP Tech, compte 1' }))
-    expect(rechargerA).toHaveBeenCalledWith('/')
+    // La page se recharge sur l'accueil de ce compte : la modération pour EJP Tech.
+    expect(rechargerA).toHaveBeenCalledWith('/moderation')
     expect(lireRegistre().espaces.map(({ id }) => id)).toEqual(['principal'])
     expect(lireRegistre().actif).toBe('principal')
   })
@@ -253,7 +254,7 @@ describe("Changer d'espace (T73)", () => {
     expect(compteTech.auth.signOut).toHaveBeenCalledWith({ scope: 'local' })
     expect(comptePlateforme.auth.signOut).not.toHaveBeenCalled()
     expect(lireRegistre().espaces.map(({ id }) => id)).toEqual(['principal'])
-    expect(rechargerA).toHaveBeenCalledWith('/')
+    expect(rechargerA).toHaveBeenCalledWith('/moderation')
   })
 
   it('« Ajouter un compte » ouvre la connexion d’un nouvel espace, et le retour reste possible', async () => {

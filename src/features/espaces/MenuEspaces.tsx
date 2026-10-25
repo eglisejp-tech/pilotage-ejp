@@ -156,6 +156,7 @@ export function MenuEspaces({
             enCours={enCours?.type === 'ajouter'}
             libelleEnCours={TEXTES_ESPACES.ajoutEnCours}
             onClick={() => void agir({ type: 'ajouter' })}
+            className="justify-start"
           >
             {TEXTES_ESPACES.ajouter}
           </Bouton>

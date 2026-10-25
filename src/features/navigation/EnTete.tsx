@@ -61,10 +61,12 @@ export function EnTete(proprietes: ProprietesEnTete) {
         <NavigationOnglets onglets={onglets} />
         {/* Avec « Vous : Marie D. » et « Ce n'est pas moi » (T56), le compte reste sur plusieurs
             lignes à toutes les largeurs : sur une seule, la ligne déborde de 1280 à 1440 px, et
-            plus loin avec un long prénom. */}
+            plus loin avec un long prénom. Le bloc peut céder quelques pixels (min-w-0) : quand la
+            place manque (cinq onglets à 1024 px), « Se déconnecter » passe sous « Changer
+            d'espace » (T73) au lieu de faire défiler la page. */}
         <div
           className={cn(
-            'flex shrink-0 flex-col items-end self-center py-2 text-sm',
+            'flex min-w-0 flex-col items-end self-center py-2 text-sm',
             personne ? 'max-w-72' : 'xl:flex-row xl:items-center xl:gap-4 xl:py-0',
           )}
         >
@@ -74,7 +76,7 @@ export function EnTete(proprietes: ProprietesEnTete) {
           </p>
           {personne ? <PersonneDeclaree {...personne} /> : null}
           {/* « Changer d'espace » (T73) et « Se déconnecter » sur une ligne, à droite. */}
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-end gap-x-4">
             {espaces ? <MenuEspaces {...espaces} disposition="en-tete" /> : null}
             <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
           </div>
