@@ -215,7 +215,10 @@ archivage du dépôt du code.
   - adresses IP et historique des connexions, dans les journaux techniques de Supabase et de
     Cloudflare ;
   - jeton de connexion gardé dans le navigateur jusqu'à la déconnexion (nécessaire au
-    fonctionnement, sans consentement à donner) ;
+    fonctionnement, sans consentement à donner). Depuis T73 (« Changer d'espace », 25 octobre
+    2026), un jeton par compte ouvert sur le navigateur, chacun dans sa propre clé, et une liste
+    des comptes ouverts (id du compte, libellé, type ; ni email ni jeton) ; « Se déconnecter » les
+    ferme tous. Aucune donnée nouvelle, aucune finalité nouvelle ;
   - date à laquelle chaque compte accepte les conditions d'utilisation, et version acceptée
     (T53, décidé le 8 octobre 2026). La politique de confidentialité est portée à la connaissance
     du compte, jamais soumise à consentement. La ligne est ajoutée une seule fois par version,

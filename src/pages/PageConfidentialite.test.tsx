@@ -54,7 +54,7 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 24 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 25 octobre 2026.",
     )
   })
 
@@ -181,6 +181,13 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     elementExact(
       'p',
       "Une saisie ne se modifie pas : une correction s'ajoute comme une nouvelle saisie. Un texte qui contient une information personnelle est masqué.",
+    )
+  })
+
+  it('dit que plusieurs connexions peuvent être gardées, et que « Se déconnecter » les ferme (T73)', () => {
+    afficher()
+    expect(partie('Cookies et traceurs')).toHaveTextContent(
+      "Si vous ajoutez un compte (« Changer d'espace »), sa connexion y est gardée aussi, avec le nom et le type de chaque compte ouvert ; « Se déconnecter » les ferme toutes.",
     )
   })
 

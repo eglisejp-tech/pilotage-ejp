@@ -18,6 +18,7 @@ import {
   sansEspace,
 } from '@/lib/espaces'
 import type { Espace, Registre } from '@/lib/espaces'
+import { rechargerA } from '@/lib/rechargement'
 import { CLE_SESSION, clientRequetes } from '@/lib/requetes'
 import { cleDeStockageDe, clientDeLEspaceInactif, idEspaceDuClient, supabase } from '@/lib/supabase'
 
@@ -71,7 +72,7 @@ async function fermerEspaceActif(espace: Espace): Promise<void> {
 function recharger(adresse: string): void {
   clientRequetes.clear()
   noterPassageDEspace()
-  window.location.assign(adresse)
+  rechargerA(adresse)
 }
 
 /** Un enregistrement en cours se ferait au nom du compte qu'on quitte : on attend sa fin. */

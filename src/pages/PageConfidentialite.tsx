@@ -22,14 +22,17 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * conditions (T61), dans « Données traitées » ; phrase proposée, à valider. La version des
  * conditions change de nouveau. Mise à jour du 24 octobre 2026 : Cloudflare remplace Netlify pour
  * l'hébergement du site (T70), même rôle, mêmes données, même pays ; phrases proposées, à valider
- * par la coordination. La version des conditions ne change pas (T70).
+ * par la coordination. La version des conditions ne change pas (T70). Mise à jour du 25 octobre
+ * 2026 : plusieurs comptes ouverts sur un même navigateur (T73, « Changer d'espace »), dans
+ * « Cookies et traceurs » ; phrase proposée. La version des conditions ne change pas : même
+ * stockage, strictement nécessaire, sans nouvelle donnée ni nouvelle finalité (T73).
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 24 octobre
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 25 octobre
         2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
@@ -194,8 +197,10 @@ export function PageConfidentialite() {
           <p>
             Aucun traceur ni cookie publicitaire, aucun appel à un autre service au chargement des
             pages. Votre connexion est gardée dans ce navigateur jusqu'à ce que vous vous
-            déconnectiez : c'est nécessaire au fonctionnement, sans consentement à donner. Ce
-            navigateur retient aussi que vous avez fermé le bandeau d'avancement.
+            déconnectiez : c'est nécessaire au fonctionnement, sans consentement à donner. Si vous
+            ajoutez un compte (« Changer d'espace »), sa connexion y est gardée aussi, avec le nom
+            et le type de chaque compte ouvert ; « Se déconnecter » les ferme toutes. Ce navigateur
+            retient aussi que vous avez fermé le bandeau d'avancement.
           </p>
         </PartieTexte>
         <PartieTexte titre="Sécurité">

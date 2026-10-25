@@ -29,10 +29,8 @@ const schemaEspace = z.object({
     .string()
     .regex(/^sb-pilotage-espace-[a-z0-9]{1,24}-auth-token$/)
     .nullable(),
-  utilisateur: z
-    .string()
-    .regex(/^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i)
-    .optional(),
+  /** Id Auth du compte (un uuid chez Supabase), pour repérer un compte ouvert deux fois. */
+  utilisateur: z.string().min(1).max(64).optional(),
   libelle: z.string().min(1).max(120).optional(),
   type: z.enum(TYPES).optional(),
 })
