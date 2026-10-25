@@ -33,7 +33,7 @@ Ce kit prépare un dépôt pour que Claude Code construise l'application « Pilo
 
 1. Node.js selon `.nvmrc` (24, installé). Les hooks utilisent node : `jq` n'est pas nécessaire.
 2. Git for Windows (installé) : il fournit Git Bash, que Claude Code et les hooks utilisent.
-3. La CLI Supabase est une dépendance de développement du projet (2.118) : elle s'appelle par `npx supabase`, sans installation globale.
+3. La CLI Supabase est une dépendance de développement du projet (2.122) : elle s'appelle par `npx supabase`, sans installation globale.
 4. Docker : **indisponible sur ce poste** (ni WSL ni Hyper-V, il faut l'informatique). En attendant, la base locale ne démarre pas ici : les tests de base (`npx supabase db start` puis `npx supabase test db`) tournent dans GitHub Actions (job « base » de `.github/workflows/ci.yml`).
 5. Claude Code dans VS Code (installé). `gh` est facultatif.
 6. Les comptes de l'église : le dépôt GitHub `eglisejp-tech/pilotage-ejp` (D6) et un projet Supabase, créé dans une organisation au nom de l'église, région Paris. Depuis T52 (7 octobre 2026), ce projet (`ugbitornbspatpcowlvg`, offre gratuite) est la **production** : il n'y a plus de préproduction distante.
