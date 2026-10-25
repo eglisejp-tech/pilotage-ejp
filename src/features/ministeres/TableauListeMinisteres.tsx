@@ -5,6 +5,7 @@ import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { MarqueFraicheur } from '@/features/fiche/MarqueFraicheur'
 import { TEXTES_FICHE } from '@/features/fiche/textesFiche'
 import type { LigneListeMinistere } from '@/features/ministeres/construireListe'
+import { RepereAChoisir } from '@/features/ministeres/RepereAChoisir'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -60,6 +61,11 @@ export function TableauListeMinisteres({ ministeres, idTitre }: Props) {
               </Link>
               {ministere.description !== null ? (
                 <span className="block text-sm text-encre-3">{ministere.description}</span>
+              ) : null}
+              {ministere.prevusAChoisir !== null ? (
+                <span className="block">
+                  <RepereAChoisir ministere={ministere} />
+                </span>
               ) : null}
             </th>
             <td className={cellule}>

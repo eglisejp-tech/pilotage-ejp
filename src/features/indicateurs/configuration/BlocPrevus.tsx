@@ -1,18 +1,20 @@
 import { useId, useState } from 'react'
 import { Aide } from '@/components/aide/Aide'
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
-import type { PrevuCatalogue } from '@/features/indicateurs/configuration/catalogue'
+import { ChoixListePrevus } from '@/features/indicateurs/configuration/ChoixListePrevus'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
-import { resteAChoisirOuCreer } from '@/features/indicateurs/configuration/prevus'
+import { ListePrevus } from '@/features/indicateurs/configuration/ListePrevus'
+import { blocPrevusVisible } from '@/features/indicateurs/configuration/prevus'
+import type { EtatPrevus } from '@/features/indicateurs/configuration/prevus'
 import { RefusCreation } from '@/features/indicateurs/configuration/RefusCreation'
 import type { CreationPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import {
   boutonCreerPrevus,
   introPrevus,
+  prevusTousRetires,
   TEXTES_CONFIGURATION,
 } from '@/features/indicateurs/configuration/textes'
-import { libelleRythme } from '@/lib/metier/indicateurs'
 
 interface Props {
   donnees: ConfigurationMinistere
@@ -20,53 +22,56 @@ interface Props {
 }
 
 const textes = TEXTES_CONFIGURATION.ministere
-const classeBouton =
-  'inline-flex min-h-14 items-center justify-center bg-lumiere px-5 text-[15px] font-semibold text-encre aria-disabled:cursor-wait'
+const classeLien =
+  'inline-flex min-h-cible items-center text-interface font-semibold underline underline-offset-4'
 
-/** Prévus à créer : le libellé, le rythme et la mention d'un calcul. */
-function ListePrevus({ prevus }: { prevus: readonly PrevuCatalogue[] }) {
-  return (
-    <ul className="mt-3 w-full">
-      {prevus.map((prevu) => (
-        <li
-          key={prevu.code}
-          className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-filet py-2 text-[15px]"
-        >
-          <span className="min-w-0 break-words">{prevu.libelle}</span>
-          <span className="text-note text-encre-3">
-            {libelleRythme(prevu.nature)}
-            {prevu.calcul !== null ? ', calcul' : ''}
-          </span>
-        </li>
-      ))}
-    </ul>
-  )
+/** Ce que la liste montre d'abord : la suggestion tant que rien n'est choisi, sinon le choix. */
+function choixDe(prevus: EtatPrevus): string {
+  switch (prevus.genre) {
+    case 'a_choisir':
+      return prevus.suggestion ?? ''
+    case 'aucun':
+      return MODELE_AUCUN
+    case 'a_creer':
+    case 'crees':
+      return prevus.modele.code
+  }
 }
 
 /**
- * Bloc « Indicateurs prévus » de `/indicateurs/:id` (7.2), tant qu'il reste des indicateurs prévus
- * à créer : la liste et le bouton « Créer ces 6 indicateurs ». Si le nom du ministère n'est pas
- * reconnu, le choix « Nom du ministère dans la liste », avec « Aucun prévu » en dernier, et son
- * indication tant que rien n'est choisi (T66). La base crée tout ou rien, sans doublon ;
- * son refus s'affiche sous le bouton. Le bloc disparaît dès que les prévus sont créés ou que
- * « Aucun prévu » est enregistré ; le message de réussite reste sous la phrase du ministère.
+ * Bloc « Indicateurs prévus » de `/indicateurs/:id` (7.2, T72). Rien de choisi : la liste
+ * « Nom du ministère dans la liste », présélectionnée d'après le nom du ministère, et « Enregistrer
+ * le choix ». Liste choisie : ses prévus à créer et « Créer ces 6 indicateurs ». « Aucun prévu », ou
+ * une liste dont aucun prévu n'est suivi : « Changer » rouvre le choix. La base enregistre le choix,
+ * crée tout ou rien, sans doublon ; son refus s'affiche sous le bouton. Le bloc disparaît dès que
+ * les prévus sont créés ; le message de réussite reste sous la phrase du ministère.
  */
 export function BlocPrevus({ donnees, creation }: Props) {
   const idTitre = useId()
-  const idChoix = useId()
-  const idIndication = useId()
-  const [choix, setChoix] = useState('')
   const { prevus } = donnees
-  if (!resteAChoisirOuCreer(prevus)) return null
+  const [changer, setChanger] = useState(false)
+  const [choix, setChoix] = useState(() => choixDe(prevus))
+  if (!blocPrevusVisible(prevus)) return null
 
-  const modele =
-    prevus.genre === 'a_creer'
-      ? prevus.modele
-      : (donnees.modeles.find((candidat) => candidat.code === choix) ?? null)
-  const aCreer = prevus.genre === 'a_creer' ? prevus.manquants : (modele?.prevus ?? [])
-  const nombre = aCreer.length
   const enCours = creation.enCours === donnees.id
   const ministere = { id: donnees.id, nom: donnees.nom }
+  const formulaire = prevus.genre === 'a_choisir' || changer
+  const modifiable = prevus.genre === 'aucun' || (prevus.genre !== 'a_choisir' && prevus.modifiable)
+  const ouvrirChoix = () => {
+    setChoix(choixDe(prevus))
+    setChanger(true)
+  }
+  const enregistrer = (liste: { code: string; nom: string }) => {
+    void creation.choisir(ministere, liste).then((accepte) => {
+      if (accepte) setChanger(false)
+    })
+  }
+  const lienChanger =
+    !formulaire && modifiable ? (
+      <button type="button" onClick={ouvrirChoix} className={classeLien}>
+        {textes.changer}
+      </button>
+    ) : null
 
   return (
     <section aria-labelledby={idTitre} className="mt-6 border border-filet bg-papier p-4">
@@ -76,64 +81,47 @@ export function BlocPrevus({ donnees, creation }: Props) {
         </h2>
         <Aide code="indicateurs.prevus" libelle={textes.titrePrevus} placement="flottante" />
       </div>
-      {prevus.genre === 'a_choisir' ? (
-        <div className="mt-2 flex max-w-prose flex-col gap-1.5">
-          <label htmlFor={idChoix} className="text-[15px] font-semibold">
-            {textes.choixModele}
-          </label>
-          <select
-            id={idChoix}
-            value={choix}
-            aria-describedby={choix === '' ? idIndication : undefined}
-            onChange={(evenement) => setChoix(evenement.target.value)}
-            className="h-14 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre"
-          >
-            <option value="">{textes.choixModelePlaceholder}</option>
-            {donnees.modeles.map((candidat) => (
-              <option key={candidat.code} value={candidat.code}>
-                {candidat.nom}
-              </option>
-            ))}
-            <option value={MODELE_AUCUN}>{textes.aucunPrevu}</option>
-          </select>
-          {/* L'indication remplace la bulle `indicateurs.modele` (T66, t334 et t335). */}
-          {choix === '' ? (
-            <p id={idIndication} className="text-sm leading-normal text-encre-2">
-              {textes.attenteChoix}
-            </p>
-          ) : null}
-        </div>
+      {formulaire ? (
+        <ChoixListePrevus
+          modeles={donnees.modeles}
+          choix={choix}
+          onChoix={setChoix}
+          suggestion={prevus.genre === 'a_choisir' ? prevus.suggestion : null}
+          enCours={enCours}
+          onEnregistrer={enregistrer}
+          onAnnuler={changer ? () => setChanger(false) : undefined}
+        />
       ) : null}
-      {choix === MODELE_AUCUN && prevus.genre === 'a_choisir' ? (
+      {!formulaire && prevus.genre === 'a_creer' ? (
         <div className="mt-3 flex flex-col items-start gap-3">
-          <p className="max-w-prose text-encre-2">{textes.aucunPrevuExplication}</p>
-          <button
-            type="button"
-            aria-disabled={enCours || undefined}
-            aria-busy={enCours || undefined}
-            onClick={() => void creation.creer(ministere, MODELE_AUCUN)}
-            className={classeBouton}
-          >
-            {textes.boutonAucunPrevu}
-          </button>
-        </div>
-      ) : null}
-      {modele !== null && choix !== MODELE_AUCUN ? (
-        <div className="mt-3 flex flex-col items-start gap-3">
-          <p className="max-w-prose text-encre-2">{introPrevus(modele.nom, nombre)}</p>
-          <ListePrevus prevus={aCreer} />
-          <button
-            type="button"
-            aria-disabled={enCours || undefined}
-            aria-busy={enCours || undefined}
-            onClick={() => void creation.creer(ministere, modele.code)}
-            className={classeBouton}
-          >
+          <p className="max-w-lecture text-encre-2">
+            {introPrevus(prevus.modele.nom, prevus.manquants.length)}
+          </p>
+          <ListePrevus prevus={prevus.manquants} />
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
             {/* Pendant l'envoi : « Création en cours » (m227). */}
-            <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}>
-              {boutonCreerPrevus(nombre)}
-            </LibelleEnvoi>
-          </button>
+            <Bouton
+              variante="principal"
+              taille="principal"
+              enCours={enCours}
+              libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}
+              aria-busy={enCours || undefined}
+              onClick={() => void creation.creer(ministere, prevus.modele.code)}
+            >
+              {boutonCreerPrevus(prevus.manquants.length)}
+            </Bouton>
+            {lienChanger}
+          </div>
+        </div>
+      ) : null}
+      {!formulaire && prevus.genre !== 'a_creer' ? (
+        <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
+          <p className="max-w-lecture text-encre-2">
+            {prevus.genre === 'aucun'
+              ? textes.aucunPrevuExplication
+              : prevusTousRetires(prevus.modele.nom)}
+          </p>
+          {lienChanger}
         </div>
       ) : null}
       <RefusCreation refus={creation.dernier === donnees.id ? creation.refus : null} />

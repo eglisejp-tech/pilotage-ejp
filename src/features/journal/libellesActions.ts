@@ -30,6 +30,8 @@ export const LIBELLES_ACTIONS = {
   double_auth_reinitialisee: "A refait l'activation",
   indicateur_cree: 'A créé un indicateur',
   indicateurs_prevus_crees: 'A créé les indicateurs prévus',
+  // T72 (Proposé) : le choix de la liste des indicateurs prévus d'un ministère.
+  modele_prevus_choisi: 'A choisi la liste des prévus',
   indicateur_corrige: 'A corrigé un indicateur',
   indicateur_valide: 'A validé un indicateur',
   indicateur_refuse: 'A refusé un indicateur',

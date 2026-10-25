@@ -16,6 +16,7 @@ import { simulerLargeur } from '@/test/largeur'
 function creationDe(surcharge: Partial<CreationPrevus> = {}): CreationPrevus {
   return {
     creer: vi.fn(() => Promise.resolve()),
+    choisir: vi.fn(() => Promise.resolve(true)),
     enCours: null,
     dernier: null,
     reussite: null,

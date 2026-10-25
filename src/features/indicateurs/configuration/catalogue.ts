@@ -32,8 +32,9 @@ export interface ModeleCatalogue {
 }
 
 // Noms de la liste de la coordination, écrits comme dans `docs/conception/vague-1-decisions.md`
-// (un titre par ministère). Un modèle absent de cette liste s'écrit avec une majuscule initiale.
-const NOMS_MODELES: Readonly<Record<string, string>> = {
+// (un titre par ministère). Un modèle absent de cette liste s'écrit avec une majuscule initiale ;
+// un test (`catalogue.test.ts`) vérifie que chaque modèle des migrations a le sien.
+export const NOMS_MODELES: Readonly<Record<string, string>> = {
   communication: 'Communication',
   coordination: 'Coordination',
   'coordo fij': 'Coordo FIJ',

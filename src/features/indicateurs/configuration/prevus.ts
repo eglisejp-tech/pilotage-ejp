@@ -1,73 +1,53 @@
 // État des indicateurs prévus d'un ministère (configuration-indicateurs.md, 7.1 : « 6 à créer »,
-// « Créés », « Aucun prévu » ou « À choisir »). Rien ici ne décide à la place de la base : un prévu
-// compte comme créé dès qu'un indicateur de la fiche porte son code (`modele_code`), quel que soit
-// son état, comme `creer_indicateurs_prevus` (un prévu retiré ne renaît pas).
+// « Créés », « Aucun prévu » ou « À choisir »). Depuis T72, la liste suivie est celle que la base a
+// enregistrée pour le ministère (`v_ministere_modele`) : l'écran ne la déduit plus de son nom. Rien
+// ici ne décide à la place de la base : un prévu compte comme créé dès qu'un indicateur de la fiche
+// porte son code (`modele_code`), quel que soit son état, comme `creer_indicateurs_prevus` (un
+// prévu retiré ne renaît pas).
 
-import type {
-  IndicateurConfiguration,
-  LigneJournalConfiguration,
-} from '@/data/indicateursConfiguration'
+import type { IndicateurConfiguration, LienModele } from '@/data/indicateursConfiguration'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import type {
   ModeleCatalogue,
   PrevuCatalogue,
 } from '@/features/indicateurs/configuration/catalogue'
-import { normaliser } from '@/features/indicateurs/configuration/normaliser'
 
 export type EtatPrevus =
-  /** Le modèle est connu et des prévus manquent : « 6 à créer » et le bouton « Créer ». */
-  | { genre: 'a_creer'; modele: ModeleCatalogue; manquants: PrevuCatalogue[] }
-  /** Tous les prévus du modèle sont sur la fiche : « Créés ». */
-  | { genre: 'crees'; modele: ModeleCatalogue }
-  /** La réponse « Aucun prévu » a été enregistrée et aucun modèle ne porte le nom du ministère (Prodiges Academy). */
+  /**
+   * La liste est choisie et des prévus manquent : « 6 à créer » et le bouton « Créer ».
+   * `modifiable` : aucun prévu de la liste n'est suivi, la base accepte d'en changer.
+   */
+  | { genre: 'a_creer'; modele: ModeleCatalogue; manquants: PrevuCatalogue[]; modifiable: boolean }
+  /** Tous les prévus de la liste choisie sont sur la fiche : « Créés ». */
+  | { genre: 'crees'; modele: ModeleCatalogue; modifiable: boolean }
+  /** « Aucun prévu » est la liste choisie (Prodiges Academy) : elle se change. */
   | { genre: 'aucun' }
-  /** Le nom du ministère n'est pas reconnu : « À choisir » dans la liste de la coordination. */
-  | { genre: 'a_choisir' }
+  /**
+   * Rien n'est choisi : « À choisir ». `suggestion` : la présélection d'après le nom du ministère
+   * (code du catalogue ou « aucun »), jamais un choix ; null : aucune.
+   */
+  | { genre: 'a_choisir'; suggestion: string | null }
 
-/** Faut-il montrer le bloc « Prévus par la coordination » de la fiche d'un ministère ? */
+/** Faut-il montrer le bloc « Indicateurs prévus » de la fiche d'un ministère ? */
 export function resteAChoisirOuCreer(etat: EtatPrevus): boolean {
   return etat.genre === 'a_creer' || etat.genre === 'a_choisir'
 }
 
 /**
- * Ministères pour lesquels la réponse « Aucun prévu » a été enregistrée : une ligne de journal
- * `indicateurs_prevus_crees` dont le détail porte le modèle « aucun ».
+ * Le bloc de la fiche montre aussi « Aucun prévu » et une liste dont aucun prévu n'est suivi : avec
+ * « Changer », pour revenir sur le choix (T72).
  */
-export function ministeresSansPrevu(
-  creations: readonly LigneJournalConfiguration[],
-): ReadonlySet<string> {
-  return new Set(
-    creations
-      .filter((ligne) => ligne.action === 'indicateurs_prevus_crees')
-      .filter((ligne) => ligne.detail?.['modele'] === MODELE_AUCUN)
-      .map((ligne) => ligne.ministere_id),
+export function blocPrevusVisible(etat: EtatPrevus): boolean {
+  return (
+    resteAChoisirOuCreer(etat) ||
+    etat.genre === 'aucun' ||
+    (etat.genre === 'crees' && etat.modifiable)
   )
 }
 
-/**
- * Modèle d'un ministère, dans cet ordre : celui de ses prévus déjà créés (le plus représenté),
- * puis, sans prévu créé, celui dont le nom normalisé égale le sien. `null` : à choisir, ou
- * « Aucun prévu » si cette réponse a été enregistrée. Un modèle au nom du ministère l'emporte sur
- * la réponse « Aucun prévu » (T71) : elle a été donnée quand le catalogue n'avait pas ce modèle
- * (Protocole, avant le 24 octobre 2026), car l'écran ne la propose qu'à un nom non reconnu.
- */
-function modeleDuMinistere(
-  nom: string,
-  codesCrees: ReadonlySet<string>,
-  modeles: readonly ModeleCatalogue[],
-): ModeleCatalogue | null {
-  let meilleur: ModeleCatalogue | null = null
-  let meilleurNombre = 0
-  for (const modele of modeles) {
-    const nombre = modele.prevus.filter((prevu) => codesCrees.has(prevu.code)).length
-    if (nombre > meilleurNombre) {
-      meilleur = modele
-      meilleurNombre = nombre
-    }
-  }
-  if (meilleur !== null) return meilleur
-  const nomNormalise = normaliser(nom)
-  return modeles.find((modele) => modele.code === nomNormalise) ?? null
+/** Liste choisie de chaque ministère, par identifiant. */
+export function listesParMinistere(liens: readonly LienModele[]): ReadonlyMap<string, LienModele> {
+  return new Map(liens.map((lien) => [lien.ministere_id, lien]))
 }
 
 /** Codes de modèle des indicateurs donnés. */
@@ -81,23 +61,37 @@ function codesDe(
   )
 }
 
+/** Une suggestion n'est retenue que si elle désigne « aucun » ou un modèle du catalogue lu. */
+function suggestionValable(
+  suggestion: string | null | undefined,
+  modeles: readonly ModeleCatalogue[],
+): string | null {
+  if (suggestion === null || suggestion === undefined) return null
+  if (suggestion === MODELE_AUCUN) return MODELE_AUCUN
+  return modeles.some((modele) => modele.code === suggestion) ? suggestion : null
+}
+
 /**
- * État des prévus d'un ministère : `indicateurs` sont les siens, tous états.
- * `aucunEnregistre` : la réponse « Aucun prévu » est dans le journal.
- * Le modèle se déduit des seuls indicateurs non retirés (correctif du 8 octobre 2026 : des prévus
- * d'un autre modèle, créés par erreur puis retirés, faisaient croire à ce modèle). Un prévu retiré
- * ne manque pas pour autant : la base ne le recrée jamais (creer_indicateurs_prevus).
+ * État des prévus d'un ministère : `lien` est sa ligne de `v_ministere_modele` (absente : rien
+ * n'est choisi), `indicateurs` sont les siens, tous états. Une liste choisie que le catalogue lu
+ * ne connaît pas se lit comme « À choisir » : la base refusera tout autre geste.
  */
 export function etatPrevus(
-  nom: string,
+  lien: LienModele | undefined,
   indicateurs: readonly Pick<IndicateurConfiguration, 'modele_code' | 'etat'>[],
   modeles: readonly ModeleCatalogue[],
-  aucunEnregistre: boolean,
 ): EtatPrevus {
-  const codesSuivis = codesDe(indicateurs.filter((indicateur) => indicateur.etat !== 'retire'))
+  const choisi = lien?.modele ?? null
+  if (choisi === MODELE_AUCUN) return { genre: 'aucun' }
+  const modele = choisi === null ? undefined : modeles.find((candidat) => candidat.code === choisi)
+  if (modele === undefined) {
+    return { genre: 'a_choisir', suggestion: suggestionValable(lien?.suggere, modeles) }
+  }
   const codesCrees = codesDe(indicateurs)
-  const modele = modeleDuMinistere(nom, codesSuivis, modeles)
-  if (modele === null) return aucunEnregistre ? { genre: 'aucun' } : { genre: 'a_choisir' }
+  const codesSuivis = codesDe(indicateurs.filter((indicateur) => indicateur.etat !== 'retire'))
+  const modifiable = !modele.prevus.some((prevu) => codesSuivis.has(prevu.code))
   const manquants = modele.prevus.filter((prevu) => !codesCrees.has(prevu.code))
-  return manquants.length > 0 ? { genre: 'a_creer', modele, manquants } : { genre: 'crees', modele }
+  return manquants.length > 0
+    ? { genre: 'a_creer', modele, manquants, modifiable }
+    : { genre: 'crees', modele, modifiable }
 }

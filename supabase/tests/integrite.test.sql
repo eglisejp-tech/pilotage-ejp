@@ -92,7 +92,8 @@ select lives_ok($$
   select ctx.en_fij, ctx.com_m, private.aujourdhui(), 25 from ctx
 $$, 'actifs et « dont en FIJ » du même envoi sont comparés après l''envoi');
 
--- Une ligne de journal par envoi
+-- Une ligne de journal par envoi (l'envoi se retrouve par sa dernière ligne, pas par l'heure la
+-- plus récente de la table)
 select lives_ok($$
   insert into public.mesure (indicateur_id, ministere_id, date_ref, valeur)
   select ctx.service, ctx.com_m, private.dimanche_reference() - 7, 11 from ctx
@@ -105,15 +106,18 @@ select tests.deconnecter();
 
 select is((select count(*)::int from public.journal j
             where j.compte = (select com from ctx)
-              and j.le = (select max(m.saisi_le) from public.mesure m where m.saisi_par = (select com from ctx))),
+              and j.le = (select m.saisi_le from public.mesure m where m.saisi_par = (select com from ctx)
+                           order by m.id desc limit 1)),
   1, 'un envoi de plusieurs lignes donne une seule ligne de journal');
 select is((select jsonb_array_length(j.detail -> 'lignes') from public.journal j
             where j.compte = (select com from ctx)
-              and j.le = (select max(m.saisi_le) from public.mesure m where m.saisi_par = (select com from ctx))),
+              and j.le = (select m.saisi_le from public.mesure m where m.saisi_par = (select com from ctx)
+                           order by m.id desc limit 1)),
   3, 'la ligne de journal cite les trois chiffres de l''envoi');
 select is((select j.ministere_id from public.journal j
             where j.compte = (select com from ctx)
-              and j.le = (select max(m.saisi_le) from public.mesure m where m.saisi_par = (select com from ctx))),
+              and j.le = (select m.saisi_le from public.mesure m where m.saisi_par = (select com from ctx)
+                           order by m.id desc limit 1)),
   (select com_m from ctx), 'la ligne de journal vise le ministère de la saisie');
 
 -- Carte des FIJ : seulement le ministère FIJ, les 8 départements en un envoi

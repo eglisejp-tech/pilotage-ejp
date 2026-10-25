@@ -5,6 +5,7 @@
 
 import type {
   IndicateurConfiguration,
+  LienModele,
   LigneCatalogue,
   LigneJournalConfiguration,
   LigneUsage,
@@ -202,7 +203,13 @@ export function lecturesExemple(): LecturesConfiguration {
     usage(grand.id, ID_JEUNESSE, 2, 2, '2026-10-01T10:00:00+00:00'),
     usage(jours.id, ID_JEUNESSE, 0, 1, null),
   ]
-  const creations: LigneJournalConfiguration[] = [
+  const changements: LigneJournalConfiguration[] = [
+    {
+      ministere_id: ID_COMMUNICATION,
+      le: '2026-10-05T09:00:00+00:00',
+      action: 'indicateur_corrige',
+      detail: null,
+    },
     {
       ministere_id: ID_PROTOCOLE,
       le: '2026-10-01T09:00:00+00:00',
@@ -215,15 +222,6 @@ export function lecturesExemple(): LecturesConfiguration {
       action: 'indicateurs_prevus_crees',
       detail: { modele: 'communication', nombre: 4 },
     },
-  ]
-  const changements: LigneJournalConfiguration[] = [
-    {
-      ministere_id: ID_COMMUNICATION,
-      le: '2026-10-05T09:00:00+00:00',
-      action: 'indicateur_corrige',
-      detail: null,
-    },
-    ...creations,
     {
       ministere_id: ID_EAGLES,
       le: '2026-10-02T08:00:00+00:00',
@@ -236,8 +234,58 @@ export function lecturesExemple(): LecturesConfiguration {
     indicateurs,
     usage: lignesUsage,
     catalogue: CATALOGUE,
-    creations,
+    liens: LIENS,
     changements,
+  }
+}
+
+/**
+ * Listes choisies (T72) : Communication, Kumi (rien créé) et Eagles suivent la liste de leur nom,
+ * Protocole « Aucun prévu » ; Jeunesse (nom non reconnu, aucune suggestion) et l'ancien ministère
+ * n'ont rien de choisi.
+ */
+const LIENS: LienModele[] = [
+  lien(ID_COMMUNICATION, 'communication'),
+  lien(ID_KUMI, 'kumi'),
+  lien(ID_EAGLES, 'eagles'),
+  lien(ID_PROTOCOLE, 'aucun'),
+  { ministere_id: ID_JEUNESSE, modele: null, choisi_le: null, suggere: null },
+  { ministere_id: ID_ANCIEN, modele: null, choisi_le: null, suggere: null },
+]
+
+function lien(ministereId: string, modele: string): LienModele {
+  return {
+    ministere_id: ministereId,
+    modele,
+    choisi_le: '2026-10-01T08:00:00+00:00',
+    suggere: modele,
+  }
+}
+
+/**
+ * Lectures après « Enregistrer le choix » (T72) : la liste choisie remplace la précédente et la
+ * ligne de journal est écrite, comme `choisir_modele_prevus`. Sert l'aperçu, qui n'a pas de base.
+ */
+export function apresChoix(
+  lectures: LecturesConfiguration,
+  ministereId: string,
+  modele: string,
+  maintenant: string,
+): LecturesConfiguration {
+  const avant = lectures.liens.find((ligne) => ligne.ministere_id === ministereId)
+  const ligneJournal: LigneJournalConfiguration = {
+    ministere_id: ministereId,
+    le: maintenant,
+    action: 'modele_prevus_choisi',
+    detail: { avant: avant?.modele ?? null, apres: modele },
+  }
+  return {
+    ...lectures,
+    liens: [
+      ...lectures.liens.filter((ligne) => ligne.ministere_id !== ministereId),
+      { ministere_id: ministereId, modele, choisi_le: maintenant, suggere: avant?.suggere ?? null },
+    ],
+    changements: [ligneJournal, ...lectures.changements],
   }
 }
 
@@ -277,13 +325,17 @@ export function apresCreation(
     action: 'indicateurs_prevus_crees',
     detail: { modele, nombre: nouveaux.length },
   }
+  // Comme la base (T72) : une fiche sans liste reçoit celle de sa création.
+  const sansListe = !lectures.liens.some(
+    (ligne) => ligne.ministere_id === ministereId && ligne.modele !== null,
+  )
+  const choisies = sansListe ? apresChoix(lectures, ministereId, modele, maintenant) : lectures
   return {
     nombre: nouveaux.length,
     lectures: {
-      ...lectures,
+      ...choisies,
       indicateurs: [...lectures.indicateurs, ...nouveaux],
-      creations: [ligneJournal, ...lectures.creations],
-      changements: [ligneJournal, ...lectures.changements],
+      changements: [ligneJournal, ...choisies.changements],
     },
   }
 }

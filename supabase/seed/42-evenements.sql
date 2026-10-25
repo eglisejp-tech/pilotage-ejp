@@ -20,9 +20,28 @@ language sql stable as $$
   select p_jour + (private.dimanche_reference() - date '2026-09-27')
 $$;
 
+-- Maintenant, figé au premier appel de la session, et heure bornée, jamais après maintenant :
+-- comme dans seed.sql.
+create or replace function pg_temp.maintenant() returns timestamptz
+language sql stable as $$
+  select coalesce(nullif(current_setting('graine.maintenant', true), '')::timestamptz, now())
+$$;
+
+select set_config('graine.maintenant', pg_temp.maintenant()::text, false);
+
+create or replace function pg_temp.borne(p_instant timestamptz) returns timestamptz
+language sql stable as $$
+  select case when p_instant <= b.limite then p_instant
+              else b.limite + make_interval(secs => 3600 * b.ecart / (b.ecart + 3600)) end
+    from (select m - interval '2 hours' as limite,
+                 extract(epoch from p_instant - (m - interval '2 hours'))::double precision as ecart
+            from pg_temp.maintenant() as m) as b
+$$;
+
 create or replace function pg_temp.h(p_heure timestamp) returns timestamptz
 language sql stable as $$
-  select (p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day') at time zone 'Europe/Paris'
+  select pg_temp.borne((p_heure + (private.dimanche_reference() - date '2026-09-27') * interval '1 day')
+                       at time zone 'Europe/Paris')
 $$;
 
 insert into public.evenement (id, ministere_id, titre, saisi_le, saisi_par)

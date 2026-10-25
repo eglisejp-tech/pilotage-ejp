@@ -41,7 +41,7 @@
       "src/features/declaration/apercu/ApercuDeclaration.tsx": 1,
       "src/features/indicateurs/configuration/ActionsLigne.tsx": 1,
       "src/features/indicateurs/configuration/ActionsMinistere.tsx": 1,
-      "src/features/indicateurs/configuration/BlocPrevus.tsx": 6,
+      "src/features/indicateurs/configuration/BlocPrevus.tsx": 1,
       "src/features/indicateurs/configuration/CellulePrevus.tsx": 1,
       "src/features/indicateurs/configuration/LigneConfiguration.tsx": 4,
       "src/features/indicateurs/configuration/ListeIndicateursTelephone.tsx": 1,
@@ -132,7 +132,6 @@
     "largeur-phrase": {
       "src/components/etats/EtatVide.tsx": 1,
       "src/features/chargement/apercu/ApercuChargement.tsx": 1,
-      "src/features/indicateurs/configuration/BlocPrevus.tsx": 3,
       "src/features/indicateurs/configuration/RefusCreation.tsx": 1,
       "src/features/indicateurs/configuration/VueIndicateurs.tsx": 2,
       "src/features/indicateurs/configuration/VueIndicateursMinistere.tsx": 3,
@@ -175,7 +174,6 @@
     },
     "liste-native": {
       "src/features/connexion/apercu/ApercuConnexion.tsx": 2,
-      "src/features/indicateurs/configuration/BlocPrevus.tsx": 1,
       "src/features/indicateurs/configuration/panneaux/ChampListe.tsx": 1,
       "src/features/saisie-fij/FormulaireStatistiquesFij.tsx": 1
     },

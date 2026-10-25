@@ -3,7 +3,37 @@
 -- Lecture par le berger en aal2, à travers les vues (RLS comprise).
 begin;
 
-select plan(29);
+select plan(30);
+
+-- Garde : aucun horodatage du jeu n'est après maintenant, quel que soit le jour et l'heure du
+-- chargement (le dimanche de référence devient aujourd'hui dès midi). Toutes les colonnes
+-- timestamptz des tables du schéma public, lues sans RLS.
+create function pg_temp.horodatages_futurs() returns text[]
+language plpgsql as $$
+declare
+  v_colonne record;
+  v_futur boolean;
+  v_res text[] := '{}';
+begin
+  for v_colonne in
+    select format('%I.%I', s.nspname, k.relname) as tab, a.attname as col
+      from pg_attribute a
+      join pg_class k on k.oid = a.attrelid
+      join pg_namespace s on s.oid = k.relnamespace
+     where s.nspname = 'public' and k.relkind in ('r', 'p') and a.attnum > 0 and not a.attisdropped
+       and a.atttypid = 'timestamptz'::regtype
+     order by 1, 2
+  loop
+    execute format('select exists (select 1 from %s where %I > now())', v_colonne.tab, v_colonne.col) into v_futur;
+    if v_futur then
+      v_res := v_res || (v_colonne.tab || '.' || v_colonne.col);
+    end if;
+  end loop;
+  return v_res;
+end $$;
+
+select is(pg_temp.horodatages_futurs(), '{}'::text[],
+  'aucun horodatage du jeu d''exemple n''est après maintenant');
 
 select tests.se_connecter(tests.compte('Berger'), 'aal2');
 

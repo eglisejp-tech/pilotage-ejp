@@ -2,11 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ReponseFausse } from '@/test/fauxRequete'
 import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import {
+  choisirModelePrevus,
   creerIndicateursPrevus,
   LIMITE_CHANGEMENTS,
   lireChangementsConfiguration,
-  lireCreationsPrevus,
   lireIndicateursPropres,
+  lireListesChoisies,
   lireUsageConfiguration,
   TAILLE_PAGE,
 } from './indicateursConfiguration'
@@ -90,21 +91,23 @@ describe('lecture page par page', () => {
     expect(appelsDe(faux.de('v_usage_indicateurs')[0])).toContain('order("indicateur_id")')
   })
 
-  it('les créations de prévus se lisent aussi page par page, dans l’ordre du journal', async () => {
+  it('les listes choisies (T72) se lisent aussi page par page, par ministère', async () => {
     const ligne = (rang: number) => ({
-      ministere_id: MINISTERE,
-      le: '2026-10-05T10:00:00+00:00',
-      action: 'indicateurs_prevus_crees',
-      detail: { rang },
+      ministere_id: `m${rang}`,
+      modele: rang % 2 === 0 ? 'kumi' : null,
+      choisi_le: null,
+      suggere: null,
     })
     const { faux } = installer({
-      v_journal: [
+      v_ministere_modele: [
         { data: Array.from({ length: TAILLE_PAGE }, (_, rang) => ligne(rang)), error: null },
-        { data: [ligne(TAILLE_PAGE), { ...ligne(0), ministere_id: null }], error: null },
+        { data: [ligne(TAILLE_PAGE)], error: null },
       ],
     })
-    expect(await lireCreationsPrevus()).toHaveLength(TAILLE_PAGE + 1)
-    expect(appelsDe(faux.de('v_journal')[0])).toContain('order("id")')
+    expect(await lireListesChoisies()).toHaveLength(TAILLE_PAGE + 1)
+    const appels = appelsDe(faux.de('v_ministere_modele')[0])
+    expect(appels).toContain('select("ministere_id, modele, choisi_le, suggere")')
+    expect(appels).toContain('order("ministere_id")')
   })
 
   it('une erreur de lecture, même sur une page suivante, arrête tout', async () => {
@@ -152,5 +155,35 @@ describe('creerIndicateursPrevus', () => {
     await expect(creerIndicateursPrevus(MINISTERE, '   ')).rejects.toThrow()
     await expect(creerIndicateursPrevus(MINISTERE, '')).rejects.toThrow()
     expect(appelsRpc).toEqual([])
+  })
+})
+
+describe('choisirModelePrevus (T72)', () => {
+  it('appelle choisir_modele_prevus avec le ministère et le code, « aucun » compris', async () => {
+    const { appelsRpc } = installer({})
+    await choisirModelePrevus(MINISTERE, 'coordo fij')
+    await choisirModelePrevus(MINISTERE, 'aucun')
+    expect(appelsRpc).toEqual([
+      { nom: 'choisir_modele_prevus', args: { p_ministere_id: MINISTERE, p_modele: 'coordo fij' } },
+      { nom: 'choisir_modele_prevus', args: { p_ministere_id: MINISTERE, p_modele: 'aucun' } },
+    ])
+  })
+
+  it('un identifiant mal formé ou un code vide : refusé avant tout appel à la base', async () => {
+    const { appelsRpc } = installer({})
+    await expect(choisirModelePrevus('pas-un-identifiant', 'kumi')).rejects.toThrow()
+    await expect(choisirModelePrevus(MINISTERE, ' ')).rejects.toThrow()
+    expect(appelsRpc).toEqual([])
+  })
+
+  it('le refus de la base remonte tel quel', async () => {
+    courant.client = {
+      rpc: () =>
+        Promise.resolve({
+          data: null,
+          error: { code: 'P0001', message: 'Ce modèle n’existe pas dans le catalogue.' },
+        }),
+    }
+    await expect(choisirModelePrevus(MINISTERE, 'kumi')).rejects.toMatchObject({ code: 'P0001' })
   })
 })

@@ -25,7 +25,7 @@
 --    retiré avec saisies.
 begin;
 
-select plan(59);
+select plan(61);
 
 create temp table attendu (modele text primary key, saisis integer, calculs integer, sensibles integer, parts integer,
                            v1 integer);
@@ -307,17 +307,24 @@ $$, $$ values (13, 2, true) $$, '13 communs affichés sous le nom de la demande,
 -- 2. Création par EJP Tech (bouton « Créer » ; décision T60)
 
 select tests.se_connecter((select tech from ctx), 'aal2');
+-- T71 : la fiche Protocole de production a pu recevoir « Aucun prévu » avant T71. Depuis T72,
+-- EJP Tech choisit la liste « Protocole » (choisir_modele_prevus), puis crée ses prévus. Avant la
+-- fiche d'essai du modèle Protocole : un modèle choisi ne sert qu'une fiche active.
+select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'aucun'), 0,
+  'T71 : une fiche Protocole reçoit d''abord la réponse « Aucun prévu », comme avant T71');
+select throws_ok($$ select public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole') $$,
+  'P0001', 'Cette fiche suit une autre liste : changez d''abord le choix de la liste.',
+  'T72 : la création refuse un modèle différent de la liste choisie (« aucun »)');
+select lives_ok($$ select public.choisir_modele_prevus((select protocole_aucun from ctx), 'protocole') $$,
+  'T72 : « Aucun prévu » se change en « Protocole »');
+select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole'), 8,
+  'T71 : la même fiche reçoit ensuite les 8 prévus du modèle Protocole');
 select lives_ok($$ select count(public.creer_indicateurs_prevus(e.ministere, e.modele)) from essai e $$,
   'EJP Tech crée les prévus d''un ministère d''essai pour chacun des 22 modèles');
 select is(public.creer_indicateurs_prevus((select e.ministere from essai e where e.modele = 'mcad'), 'mcad'), 0,
   'un second appel ne crée aucun doublon');
 select is(public.creer_indicateurs_prevus((select academy from ctx), 'aucun'), 0,
   'Prodiges Academy : modèle « aucun », aucun indicateur');
--- T71 : la fiche Protocole de production a pu recevoir « Aucun prévu » avant cette migration.
-select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'aucun'), 0,
-  'T71 : une fiche Protocole reçoit d''abord la réponse « Aucun prévu », comme avant T71');
-select is(public.creer_indicateurs_prevus((select protocole_aucun from ctx), 'protocole'), 8,
-  'T71 : la même fiche reçoit ensuite les 8 prévus du modèle Protocole');
 select is(tests.lire((select tech from ctx), 'aal2',
     format('select ajouts, ajouts_max, lignes, lignes_max from public.limites_indicateurs(%L)',
            (select e.ministere from essai e where e.modele = 'mcad'))),

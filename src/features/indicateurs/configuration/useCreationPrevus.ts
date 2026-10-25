@@ -1,11 +1,12 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
-import { creerIndicateursPrevus } from '@/data/indicateursConfiguration'
+import { choisirModelePrevus, creerIndicateursPrevus } from '@/data/indicateursConfiguration'
 import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { invaliderApresEcriture } from '@/features/indicateurs/configuration/cles'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import {
   reussiteAucunPrevu,
+  reussiteChoixListe,
   reussiteCreationPrevus,
   TEXTES_CONFIGURATION,
 } from '@/features/indicateurs/configuration/textes'
@@ -34,6 +35,15 @@ export function messageDeRefusPrevus(erreur: unknown, formulaire = false): strin
 export interface CreationPrevus {
   /** Crée les prévus d'un ministère, ou enregistre « Aucun prévu » (`MODELE_AUCUN`). */
   creer: (ministere: { id: string; nom: string }, modele: string) => Promise<void>
+  /**
+   * Enregistre la liste choisie d'un ministère (`choisir_modele_prevus`, T72) : `liste.code` est le
+   * code du catalogue ou `MODELE_AUCUN`, `liste.nom` son nom à l'écran. Rend vrai si la base l'a
+   * acceptée.
+   */
+  choisir: (
+    ministere: { id: string; nom: string },
+    liste: { code: string; nom: string },
+  ) => Promise<boolean>
   /** Identifiant du ministère dont la création est en cours, ou `null`. */
   enCours: string | null
   /** Identifiant du ministère du dernier envoi : le refus s'affiche sur sa ligne. */
@@ -47,9 +57,9 @@ export interface CreationPrevus {
 }
 
 /**
- * Création des indicateurs prévus (administration et EJP Tech) : un seul appel à
- * `creer_indicateurs_prevus`, tout ou rien. Après une réussite, toutes les lectures de la
- * configuration sont relues. Un second clic pendant l'envoi ne fait rien.
+ * Choix de la liste et création des indicateurs prévus (EJP Tech) : un seul appel à
+ * `choisir_modele_prevus` ou à `creer_indicateurs_prevus`, tout ou rien. Après une réussite,
+ * toutes les lectures de la configuration sont relues. Un second clic pendant l'envoi ne fait rien.
  */
 export function useCreationPrevus(): CreationPrevus {
   const client = useQueryClient()
@@ -88,5 +98,30 @@ export function useCreationPrevus(): CreationPrevus {
     [client],
   )
 
-  return { creer, enCours, dernier, reussite, envoi, refus }
+  const choisir = useCallback(
+    async (ministere: { id: string; nom: string }, liste: { code: string; nom: string }) => {
+      if (occupe.current) return false
+      occupe.current = true
+      setEnCours(ministere.id)
+      setDernier(ministere.id)
+      setRefus(null)
+      try {
+        await choisirModelePrevus(ministere.id, liste.code)
+        await invaliderApresEcriture(client, ministere.id)
+        setReussite(reussiteChoixListe(liste.nom, ministere.nom))
+        setEnvoi((precedent) => precedent + 1)
+        return true
+      } catch (erreur) {
+        setReussite(null)
+        setRefus(messageDeRefusPrevus(erreur) ?? TEXTES_CONFIGURATION.erreur)
+        return false
+      } finally {
+        occupe.current = false
+        setEnCours(null)
+      }
+    },
+    [client],
+  )
+
+  return { creer, choisir, enCours, dernier, reussite, envoi, refus }
 }

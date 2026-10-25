@@ -28,6 +28,8 @@ export const TEXTES_CONFIGURATION = {
     crees: 'Créés',
     aucunPrevu: 'Aucun prévu',
     aChoisir: 'À choisir',
+    /** Lien de « Aucun prévu » vers l'écran du ministère, où le choix se change (T72, Proposé). */
+    changer: 'Changer',
     /** Colonne « Saisie » : proposé. */
     saisieReguliere: 'Régulière',
     aucuneSaisieASuivre: 'Rien à suivre',
@@ -55,7 +57,17 @@ export const TEXTES_CONFIGURATION = {
     aucunPrevu: 'Aucun prévu',
     /** Proposé : le choix « Aucun prévu » est retenu (T66, t336). */
     aucunPrevuExplication: 'Aucun indicateur prévu pour ce ministère.',
-    boutonAucunPrevu: 'Enregistrer « Aucun prévu »',
+    /**
+     * Indication sous le choix quand la liste est présélectionnée d'après le nom du ministère :
+     * une suggestion, jamais un choix (T72, Proposé).
+     */
+    indicationSuggestion:
+      "Choix proposé d'après le nom du ministère : vérifiez-le avant d'enregistrer.",
+    /** Le choix passe par la base avant toute création (T72). */
+    boutonEnregistrerChoix: 'Enregistrer le choix',
+    /** Revenir sur la liste choisie, tant qu'aucun de ses prévus n'est suivi (T72, Proposé). */
+    changer: 'Changer',
+    annulerChangement: 'Annuler',
     titreRetires: 'Retirés',
     /**
      * Le lien d'un ajout à valider vers le bloc de l'écran Indicateurs (7.2) : le même lien que la
@@ -68,6 +80,8 @@ export const TEXTES_CONFIGURATION = {
   },
   /** Bouton « Créer » ou « Créer ces 6 indicateurs » pendant l'envoi (m227, Proposé). */
   creationEnCours: 'Création en cours',
+  /** Bouton « Enregistrer le choix » pendant l'envoi (T72, Proposé). */
+  enregistrementEnCours: 'Enregistrement en cours',
   /** Chargement de la liste, puis de l'écran d'un ministère (T65). */
   chargement: 'Chargement des indicateurs',
   chargementMinistere: 'Chargement des indicateurs du ministère',
@@ -120,7 +134,22 @@ export function reussiteCreationPrevus(n: number, nomMinistere: string): string 
 
 /** Proposé : la réponse « Aucun prévu » est enregistrée (formule « réussite », T66 t338, m226). */
 export function reussiteAucunPrevu(nomMinistere: string): string {
-  return `Choix « Aucun prévu » enregistré pour ${nomMinistere}.`
+  return reussiteChoixListe(TEXTES_CONFIGURATION.ministere.aucunPrevu, nomMinistere)
+}
+
+/** Proposé (T72) : la liste choisie est enregistrée, sur le modèle de « Aucun prévu ». */
+export function reussiteChoixListe(nomListe: string, nomMinistere: string): string {
+  return `Choix « ${nomListe} » enregistré pour ${nomMinistere}.`
+}
+
+/** Proposé (T72) : la liste choisie n'a plus aucun prévu suivi ; elle se change. */
+export function prevusTousRetires(nomListe: string): string {
+  return `Les indicateurs prévus de la liste « ${nomListe} » sont tous retirés.`
+}
+
+/** Nom accessible du lien « Changer » de la colonne « Prévus » : « Changer la liste de Kumi ». */
+export function nomAccessibleChanger(ministere: string): string {
+  return `Changer la liste de ${ministere}`
 }
 
 /**

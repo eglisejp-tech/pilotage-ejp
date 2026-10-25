@@ -249,6 +249,40 @@ describe('/ministeres', () => {
     expect(screen.queryByText(/EJP Tech crée les ministères/)).toBeNull()
   })
 
+  it('EJP Tech lit le repère « Prévus : à choisir » des ministères sans liste choisie (T72)', async () => {
+    const liens = TABLEAU_EXEMPLE.map((ligne) => ({
+      ministere_id: ligne.ministere_id,
+      modele: ligne.ministere_id === SOCIAL ? null : 'communication',
+      choisi_le: null,
+      suggere: null,
+    }))
+    const faux = installer('admin_plateforme', {
+      v_semaine: [SEMAINE],
+      v_tableau_ministeres: TABLEAU_EXEMPLE,
+      v_ministere_modele: liens,
+    })
+    afficher('/ministeres')
+    const repere = await screen.findByRole(
+      'link',
+      { name: 'Prévus : à choisir pour Social' },
+      ATTENTE,
+    )
+    expect(repere).toHaveAttribute('href', `/indicateurs/${SOCIAL}`)
+    expect(screen.getAllByRole('link', { name: /^Prévus : à choisir/ })).toHaveLength(1)
+    expect(faux.tables).toContain('v_ministere_modele')
+  })
+
+  it('le berger ne lit pas les listes choisies : aucun repère, aucune lecture', async () => {
+    const faux = installer('berger', {
+      v_semaine: [SEMAINE],
+      v_tableau_ministeres: TABLEAU_EXEMPLE,
+    })
+    afficher('/ministeres')
+    expect(await screen.findByRole('link', { name: 'Communication' }, ATTENTE)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /^Prévus : à choisir/ })).toBeNull()
+    expect(faux.tables).not.toContain('v_ministere_modele')
+  })
+
   it('problème passager : bandeau et « Réessayer »', async () => {
     installer('admin_plateforme', { v_semaine: [SEMAINE] }, ['v_tableau_ministeres'])
     afficher('/ministeres')

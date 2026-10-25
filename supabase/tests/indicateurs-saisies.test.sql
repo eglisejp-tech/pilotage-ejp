@@ -244,9 +244,13 @@ select lives_ok($$
   select pg_temp.i('Essai s. heure'), com_m, dimanche, 642 from ctx
 $$, 'un envoi mêle un mois, un « à ce jour » et une heure');
 select tests.deconnecter();
+-- L'envoi se retrouve par sa dernière ligne (identifiant), pas par l'heure la plus récente de la
+-- table : le jeu d'exemple peut avoir des heures du jour.
+alter table ctx add column envoi timestamptz;
+update ctx set envoi = (select m.saisi_le from public.mesure m where m.saisi_par = ctx.com order by m.id desc limit 1);
 select results_eq($$
   select i.libelle, m.date_ref, m.valeur from public.mesure m join public.indicateur i on i.id = m.indicateur_id
-   where m.saisi_par = (select com from ctx) and m.saisi_le = (select max(x.saisi_le) from public.mesure x)
+   where m.saisi_par = (select com from ctx) and m.saisi_le = (select envoi from ctx)
    order by i.libelle
 $$, $$ select 'Essai s. heure', dimanche, 642 from ctx
        union all select 'Essai s. nombre', mois_passe, 14 from ctx
@@ -254,7 +258,7 @@ $$, $$ select 'Essai s. heure', dimanche, 642 from ctx
   'mois au 1er, dimanche tel quel, « à ce jour » à la date du jour');
 select is((select count(*)::int from public.journal j
             where j.compte = (select com from ctx) and j.action = 'mesure_saisie'
-              and j.le = (select max(x.saisi_le) from public.mesure x)), 1,
+              and j.le = (select envoi from ctx)), 1,
   'un envoi donne une seule ligne de journal');
 select is((select count(*)::int from public.mesure m where m.valeur in (10000, 10000000, 1440, 100000)), 0,
   'aucune valeur refusée n''a été écrite');

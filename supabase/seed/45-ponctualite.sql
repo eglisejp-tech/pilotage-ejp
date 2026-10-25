@@ -37,10 +37,28 @@ language sql stable as $$
   select (private.mois_courant() - make_interval(months => p_recul))::date
 $$;
 
+-- Maintenant, figé au premier appel de la session, et heure bornée, jamais après maintenant :
+-- comme dans seed.sql.
+create or replace function pg_temp.maintenant() returns timestamptz
+language sql stable as $$
+  select coalesce(nullif(current_setting('graine.maintenant', true), '')::timestamptz, now())
+$$;
+
+select set_config('graine.maintenant', pg_temp.maintenant()::text, false);
+
+create or replace function pg_temp.borne(p_instant timestamptz) returns timestamptz
+language sql stable as $$
+  select case when p_instant <= b.limite then p_instant
+              else b.limite + make_interval(secs => 3600 * b.ecart / (b.ecart + 3600)) end
+    from (select m - interval '2 hours' as limite,
+                 extract(epoch from p_instant - (m - interval '2 hours'))::double precision as ecart
+            from pg_temp.maintenant() as m) as b
+$$;
+
 -- 20 h (heure de Paris) le jour donné, jamais après maintenant moins une heure.
 create or replace function pg_temp.a_20h(p_jour date) returns timestamptz
 language sql stable as $$
-  select least((p_jour::timestamp + time '20:00') at time zone 'Europe/Paris', now() - interval '1 hour')
+  select pg_temp.borne((p_jour::timestamp + time '20:00') at time zone 'Europe/Paris')
 $$;
 
 create temp table graine45 (

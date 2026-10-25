@@ -25,6 +25,7 @@ import { simulerLargeur } from '@/test/largeur'
 
 const creation: CreationPrevus = {
   creer: vi.fn(() => Promise.resolve()),
+  choisir: vi.fn(() => Promise.resolve(true)),
   enCours: null,
   dernier: null,
   reussite: null,

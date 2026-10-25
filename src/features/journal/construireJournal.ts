@@ -10,6 +10,8 @@ import type { IndicateurCommun } from '@/data/eglise'
 import type { LigneJournal, SessionJournal } from '@/data/journal'
 import { libelleStatut } from '@/features/evenements/textes'
 import { TEXTE_MASQUE, TEXTE_MASQUE_AFFICHE } from '@/features/fiche/textesFiche'
+import { MODELE_AUCUN, nomDuModele } from '@/features/indicateurs/configuration/catalogue'
+import { TEXTES_CONFIGURATION } from '@/features/indicateurs/configuration/textes'
 import { libelleAction } from '@/features/journal/libellesActions'
 import type { LigneJournalAffichee, SegmentDetail } from '@/features/journal/modeleJournal'
 import { LIBELLES_ECRAN } from '@/features/signalement/textes'
@@ -115,6 +117,11 @@ function texteDe(detail: Detail, cle: string): string | null {
 function jourDe(detail: Detail, cle: string): string | null {
   const valeur = texteDe(detail, cle)
   return valeur !== null && estDateIso(valeur) ? valeur : null
+}
+
+/** Nom d'une liste d'indicateurs prévus (T72) : « Coordo FIJ », « Aucun prévu ». */
+function nomDeListe(code: string): string {
+  return code === MODELE_AUCUN ? TEXTES_CONFIGURATION.ministere.aucunPrevu : nomDuModele(code)
 }
 
 /** « de Social », « d'Intégration » : l'élision devant une voyelle. */
@@ -433,6 +440,15 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
             : `${nombre(total)} ${accorder(total, 'indicateur prévu', 'indicateurs prévus')}${pour}`,
         ),
       ]
+    }
+    case 'modele_prevus_choisi': {
+      // T72 : deux codes du catalogue (ou « aucun »), jamais un texte libre.
+      const apres = texteDe(detail, 'apres')
+      const avant = texteDe(detail, 'avant')
+      const pour = ligne.ministere_nom === null ? '' : ` pour ${ligne.ministere_nom}`
+      if (apres === null) return [simple(`Liste des indicateurs prévus${pour}`)]
+      const auLieu = avant === null ? '' : `, au lieu de « ${nomDeListe(avant)} »`
+      return [simple(`Liste « ${nomDeListe(apres)} »${pour}${auLieu}`)]
     }
     case 'indicateur_retire': {
       // T62 : retiré par le ministère qui l'avait ajouté. Son motif écrit n'est jamais au journal.

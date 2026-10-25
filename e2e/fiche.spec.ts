@@ -228,6 +228,22 @@ test.describe('états vides de la fiche et de la liste (T36)', () => {
       page.getByText('Aucun ministère actif. Ajoutez-en dans Ministères et comptes.'),
     ).toBeVisible()
   })
+
+  test('liste lue par EJP Tech : « Prévus : à choisir » sous le seul ministère sans liste (T72)', async ({
+    page,
+  }) => {
+    await ouvrir(page, { ecran: 'ministeres', profil: 'admin_plateforme' })
+    const repere = page.getByRole('link', { name: 'Prévus : à choisir pour Intégration' })
+    await expect(repere).toBeVisible()
+    await expect(repere).toHaveAttribute('href', /^\/indicateurs\/[0-9a-f-]{36}$/)
+    await expect(page.getByRole('link', { name: /^Prévus : à choisir/ })).toHaveCount(1)
+    const boite = await repere.boundingBox()
+    expect(boite?.height ?? 0).toBeGreaterThanOrEqual(44)
+    // Le berger ne lit pas les listes choisies : aucun repère.
+    await ouvrir(page, { ecran: 'ministeres', profil: 'berger' })
+    await expect(page.getByRole('link', { name: 'Communication' })).toBeVisible()
+    await expect(page.getByRole('link', { name: /^Prévus : à choisir/ })).toHaveCount(0)
+  })
 })
 
 /** Les blocs « Événements de l'église » et « Ponctualité » de la fiche de Coordination (L2, T68). */
