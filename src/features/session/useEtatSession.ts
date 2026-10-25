@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect } from 'react'
 import { surSessionChangee } from '@/data/messagesBase'
+import { suivreLesAutresOnglets } from '@/features/espaces/actions'
 import { chargerEtatSessionSuivi, verifierSessionChangee } from '@/features/session/chargement'
 import { clientRequetes, CLE_SESSION, viderDonnees } from '@/lib/requetes'
 import { supabase } from '@/lib/supabase'
@@ -17,6 +18,8 @@ function abonnerAuxChangements() {
   if (abonne) return
   abonne = true
   surSessionChangee(() => void verifierSessionChangee())
+  // Un autre onglet change d'espace (T73) : celui-ci le suit.
+  suivreLesAutresOnglets()
   let utilisateurPrecedent: string | null | undefined
   try {
     supabase().auth.onAuthStateChange((evenement, session) => {

@@ -38,11 +38,28 @@ export function MiseEnPageApercu() {
   // ?compte=Coordination : le ministère du compte, quand l'écran est la fiche d'un autre que
   // Communication (la fiche de Coordination lue par Coordination, avec ?onglet=/ma-fiche).
   const compte = profil === 'ministere' ? parametres.get('compte') : null
+  const libelleCompte = compte ? `Ministère ${compte}` : LIBELLES_EXEMPLE[profil]
+  // ?espaces=2 : un deuxième compte ouvert sur l'appareil (T73), le ministère Tech pour EJP Tech
+  // et le compte d'EJP Tech pour les autres. Les boutons du panneau n'y font rien.
+  const autre = profil === 'admin_plateforme' ? 'Ministère Tech' : LIBELLES_EXEMPLE.admin_plateforme
+  const espaces = {
+    liste: [
+      { id: 'apercu-actif', libelle: libelleCompte, actif: true },
+      ...(parametres.get('espaces') === '2'
+        ? [{ id: 'apercu-autre', libelle: autre, actif: false }]
+        : []),
+    ],
+    peutAjouter: true,
+    surChanger: () => Promise.resolve({}),
+    surAjouter: () => ({}),
+    surRetirer: () => Promise.resolve({}),
+  }
   return (
     <MiseEnPage
-      libelleCompte={compte ? `Ministère ${compte}` : LIBELLES_EXEMPLE[profil]}
+      libelleCompte={libelleCompte}
       onglets={onglets}
       accueil={ici}
+      espaces={espaces}
       personne={
         vous ? { prenom: vous, lienChangement: '/apercu/qui-utilise?changer=1' } : undefined
       }

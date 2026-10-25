@@ -21,6 +21,7 @@ import {
   effacerMotDePasseAChoisir,
 } from '@/features/session/motDePasseAChoisir'
 import type { EtapeMotDePasse } from '@/features/session/motDePasseAChoisir'
+import { fermerLesAutresEspaces, fermerSeulementCetEspace } from '@/features/espaces/actions'
 import { noterDeconnexionVolontaire } from '@/features/session/motif'
 import { rafraichirSession } from '@/features/session/useEtatSession'
 import { messagesConnexion } from '@/features/connexion/messages'
@@ -250,12 +251,14 @@ async function deconnexionLocaleReussie(): Promise<boolean> {
  * partagé (BRIEF section 8, règle 6). Sans réseau, auth-js garde la session : on l'efface
  * alors nous-mêmes et on recharge, pour qu'un appareil partagé ne reste jamais connecté.
  * L'écran de connexion confirme ensuite « Compte déconnecté. » (m060) ; `annoncer` faux : rien
- * (après l'écran « Compte désactivé », qui a déjà tout dit).
+ * (après l'écran « Compte désactivé », qui a déjà tout dit). Tous les comptes ouverts sur
+ * l'appareil se ferment (T73) : les autres espaces d'abord, puis celui-ci.
  */
 export async function seDeconnecter(annoncer = true): Promise<void> {
   noterDeconnexionVolontaire(annoncer)
   effacerMotDePasseAChoisir()
   viderDonnees()
+  await fermerLesAutresEspaces()
   if (!(await deconnexionLocaleReussie())) {
     effacerSessionLocale()
     window.location.assign('/connexion')
@@ -264,11 +267,22 @@ export async function seDeconnecter(annoncer = true): Promise<void> {
   await rafraichirSession()
 }
 
-/** Écran « Compte désactivé » : déconnexion locale s'il reste une session sur cet appareil. */
+/**
+ * Écran « Compte désactivé » : déconnexion locale s'il reste une session sur cet appareil. Avec
+ * d'autres comptes ouverts sur l'appareil (T73), seul celui-ci se ferme : l'écran de connexion
+ * propose ensuite d'y revenir.
+ */
 export async function quitterSessionDesactivee(): Promise<void> {
   try {
     const { data } = await supabase().auth.getSession()
-    if (data.session) await seDeconnecter(false)
+    if (!data.session) return
+    noterDeconnexionVolontaire(false)
+    viderDonnees()
+    if (await fermerSeulementCetEspace()) {
+      await rafraichirSession()
+      return
+    }
+    await seDeconnecter(false)
   } catch {
     // Configuration absente ou stockage illisible : aucune session à fermer.
   }

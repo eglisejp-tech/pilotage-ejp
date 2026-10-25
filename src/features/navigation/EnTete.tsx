@@ -1,6 +1,8 @@
 import { Link } from 'react-router'
 import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
 import type { Personne } from '@/features/declaration/PersonneDeclaree'
+import { MenuEspaces } from '@/features/espaces/MenuEspaces'
+import type { ProprietesEspaces } from '@/features/espaces/MenuEspaces'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import { MenuTelephone } from '@/features/navigation/MenuTelephone'
 import { NavigationOnglets } from '@/features/navigation/NavigationOnglets'
@@ -17,6 +19,8 @@ export type ProprietesEnTete = {
   deconnexionEnCours?: boolean
   /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
   personne?: Personne
+  /** « Changer d'espace » (T73) : les comptes ouverts sur l'appareil. */
+  espaces?: ProprietesEspaces
 }
 
 /**
@@ -32,7 +36,8 @@ const ONGLETS_EN_LIGNE_MAX = 5
  * En dessous, ou au-delà de cinq onglets : voir MenuTelephone.
  */
 export function EnTete(proprietes: ProprietesEnTete) {
-  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours, personne } = proprietes
+  const { libelleCompte, onglets, accueil, onSignOut, deconnexionEnCours, personne, espaces } =
+    proprietes
   const menuPartout = onglets.length > ONGLETS_EN_LIGNE_MAX
   return (
     <header className="border-b border-filet bg-papier">
@@ -68,7 +73,11 @@ export function EnTete(proprietes: ProprietesEnTete) {
             {libelleCompte}
           </p>
           {personne ? <PersonneDeclaree {...personne} /> : null}
-          <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
+          {/* « Changer d'espace » (T73) et « Se déconnecter » sur une ligne, à droite. */}
+          <div className="flex items-center gap-4">
+            {espaces ? <MenuEspaces {...espaces} disposition="en-tete" /> : null}
+            <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
+          </div>
         </div>
       </div>
       <MenuTelephone {...proprietes} partout={menuPartout} />

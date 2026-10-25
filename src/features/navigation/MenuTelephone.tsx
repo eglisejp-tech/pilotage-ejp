@@ -3,6 +3,8 @@ import type { KeyboardEvent } from 'react'
 import { Link, NavLink, useLocation } from 'react-router'
 import { PersonneDeclaree } from '@/features/declaration/PersonneDeclaree'
 import type { Personne } from '@/features/declaration/PersonneDeclaree'
+import { MenuEspaces } from '@/features/espaces/MenuEspaces'
+import type { ProprietesEspaces } from '@/features/espaces/MenuEspaces'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import type { Onglet } from '@/features/navigation/profils'
 import { cn } from '@/lib/utils'
@@ -15,6 +17,8 @@ type Proprietes = {
   deconnexionEnCours?: boolean
   /** Compte de ministère : la personne déclarée sur cet appareil (T56). */
   personne?: Personne
+  /** « Changer d'espace » (T73) : les comptes ouverts sur l'appareil. */
+  espaces?: ProprietesEspaces
   /**
    * Menu à toutes les largeurs (plus de cinq onglets : EJP Tech, T60). À partir de 1024 px, la
    * ligne et le menu s'alignent sur le contenu de la page.
@@ -37,6 +41,7 @@ export function MenuTelephone({
   onSignOut,
   deconnexionEnCours,
   personne,
+  espaces,
   partout = false,
 }: Proprietes) {
   const aligne = partout ? 'lg:mx-auto lg:box-content lg:max-w-contenu lg:px-marge' : ''
@@ -125,6 +130,7 @@ export function MenuTelephone({
             {libelleCompte}
           </p>
           {personne ? <PersonneDeclaree {...personne} surChangement={fermer} /> : null}
+          {espaces ? <MenuEspaces {...espaces} disposition="menu" /> : null}
           <BoutonDeconnexion onClick={onSignOut} enCours={deconnexionEnCours} />
           <Link
             to="/confidentialite"

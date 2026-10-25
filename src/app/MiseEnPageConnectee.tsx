@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { MiseEnPage } from '@/app/MiseEnPage'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
+import { useEspaces } from '@/features/espaces/useEspaces'
 import { accueil, ONGLETS } from '@/features/navigation/profils'
 import { seDeconnecter } from '@/features/session/actions'
 import { useCompteConnecte, usePrenomDeclare } from '@/features/session/contexte'
@@ -18,6 +19,7 @@ export function MiseEnPageConnectee() {
   const prenom = usePrenomDeclare()
   const { pathname, search } = useLocation()
   const [deconnexionEnCours, setDeconnexionEnCours] = useState(false)
+  const espaces = useEspaces(compte.libelle)
 
   async function deconnecter() {
     setDeconnexionEnCours(true)
@@ -31,6 +33,7 @@ export function MiseEnPageConnectee() {
       accueil={accueil(compte.type)}
       onSignOut={() => void deconnecter()}
       deconnexionEnCours={deconnexionEnCours}
+      espaces={espaces}
       personne={
         prenom === null
           ? undefined

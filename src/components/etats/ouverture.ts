@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
+import { lirePassageDEspace } from '@/lib/espaces'
 
 // L'ouverture (le monogramme qui se dessine, la flamme qui s'allume) ne joue qu'une fois par
-// chargement de l'application : à la première vérification de la session.
-let ouvertureJouee = false
+// chargement de l'application : à la première vérification de la session. Un passage d'un
+// espace à l'autre (T73) recharge la page sans être une ouverture : elle ne rejoue pas.
+let ouvertureJouee = lirePassageDEspace()
 
 /**
  * Vrai pour la première vérification de la session depuis le chargement de l'application (T65,

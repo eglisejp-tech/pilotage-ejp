@@ -2,6 +2,7 @@ import { isAuthApiError } from '@supabase/supabase-js'
 import { lireMonCompte } from '@/data/compte'
 import { lireConditionsAcceptees, lireConditionsAccepteesParLaPersonne } from '@/data/conditions'
 import { lireMaDeclaration, noterPassage } from '@/data/personnes'
+import { noterCompteDeLEspace } from '@/features/espaces/actions'
 import { deduireEtat } from '@/features/session/etat'
 import type { EtatSession } from '@/features/session/etat'
 import { noterTransition } from '@/features/session/motif'
@@ -53,6 +54,8 @@ export async function chargerEtatSession(): Promise<EtatSession> {
     const { data: niveau, error: erreurNiveau } = await auth.mfa.getAuthenticatorAssuranceLevel()
     if (erreurNiveau) throw erreurNiveau
     const compte = await lireMonCompte(session.user.id)
+    // Plusieurs comptes ouverts sur l'appareil (T73) : la liste « Changer d'espace » nomme celui-ci.
+    noterCompteDeLEspace(session.user.id, compte)
 
     let facteurVerifie: string | null = null
     if (compte?.actif && niveau.currentLevel === 'aal1' && niveau.nextLevel === 'aal2') {

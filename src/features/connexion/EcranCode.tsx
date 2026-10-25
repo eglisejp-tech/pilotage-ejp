@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { BoutonLien } from '@/features/connexion/BoutonLien'
 import { ColonneConnexion } from '@/features/connexion/ColonneConnexion'
 import { FormulaireCode } from '@/features/connexion/FormulaireCode'
@@ -18,6 +19,8 @@ export type ProprietesEcranCode = {
    * avant le nouveau mot de passe, et l'écran le dit (m051).
    */
   apresRecuperation?: boolean
+  /** Les autres comptes ouverts sur l'appareil (T73), avant « Se déconnecter ». */
+  autresEspaces?: ReactNode
 }
 
 /** Écran 18 : code de double authentification, à chaque connexion. */
@@ -28,6 +31,7 @@ export function EcranCode({
   enCours,
   erreur,
   apresRecuperation = false,
+  autresEspaces,
 }: ProprietesEcranCode) {
   useTitrePage('Code de vérification')
 
@@ -61,6 +65,8 @@ export function EcranCode({
       <p className="text-sm leading-[1.55] text-encre-3">
         Téléphone perdu ou changé&nbsp;? Demandez à EJP Tech de refaire l'activation.
       </p>
+
+      {autresEspaces}
 
       <BoutonLien onClick={onSignOut}>Se déconnecter</BoutonLien>
     </ColonneConnexion>

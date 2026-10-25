@@ -30,6 +30,8 @@ export type ProprietesEcranActivation = {
   enCours?: boolean
   /** Message du bandeau (messagesConnexion), remis à undefined à chaque nouvel envoi. */
   erreur?: string
+  /** Les autres comptes ouverts sur l'appareil (T73), en fin d'écran. */
+  autresEspaces?: ReactNode
 }
 
 /** « JBSWY3DPEHPK3PXP » devient « JBSW Y3DP EHPK 3PXP », plus facile à recopier. */
@@ -51,6 +53,7 @@ export function EcranActivation({
   enCours,
   erreur,
   annonce,
+  autresEspaces,
 }: ProprietesEcranActivation) {
   useTitrePage('Activer la double authentification')
 
@@ -121,6 +124,7 @@ export function EcranActivation({
           />
         </li>
       </ol>
+      {autresEspaces}
     </ColonneConnexion>
   )
 }

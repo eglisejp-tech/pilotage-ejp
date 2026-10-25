@@ -4,6 +4,7 @@ import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { ANNONCE_DOUBLE_AUTHENTIFICATION } from '@/features/connexion/reussiteEnAttente'
 import { EcranActivation } from '@/features/connexion/EcranActivation'
 import { messagesConnexion } from '@/features/connexion/messages'
+import { RetourEspaces } from '@/features/espaces/RetourEspaces'
 import { preparerActivation, seDeconnecter, verifierCode } from '@/features/session/actions'
 import type { Activation } from '@/features/session/actions'
 
@@ -71,6 +72,7 @@ export function ActivationConnectee({ compte }: Proprietes) {
       enCours={enCours}
       erreur={erreur}
       annonce={<AnnonceSuivante dans="colonne" />}
+      autresEspaces={<RetourEspaces />}
     />
   )
 }

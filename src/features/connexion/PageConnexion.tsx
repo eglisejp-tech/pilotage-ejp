@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { EcranConnexion } from '@/features/connexion/EcranConnexion'
 import { messagesConnexion } from '@/features/connexion/messages'
 import type { ValeursConnexion } from '@/features/connexion/schemas'
+import { messageEspaceExpire } from '@/features/espaces/actions'
+import { RetourEspaces } from '@/features/espaces/RetourEspaces'
 import { seConnecterAvecGoogle, seConnecterAvecMotDePasse } from '@/features/session/actions'
 import { erreurDeRetourGoogle } from '@/features/session/erreurs'
 import { avecRetour, ADRESSE_CONNEXION } from '@/features/session/decisions'
@@ -25,6 +27,9 @@ export function PageConnexion() {
   const [motif] = useState(lireMotif)
   const [erreur, setErreur] = useState<string | undefined>(() => {
     if (erreurGoogle) return erreurGoogle
+    // D'autres comptes restent ouverts sur l'appareil (T73) : le message nomme celui à reconnecter.
+    const espaceExpire = messageEspaceExpire()
+    if (espaceExpire) return espaceExpire
     return motif && motif !== 'deconnexion' ? MESSAGES_MOTIF[motif] : undefined
   })
   // Après « Se déconnecter » : une confirmation, pas une erreur (m060).
@@ -66,6 +71,7 @@ export function PageConnexion() {
       enCours={enCours}
       erreur={erreur}
       information={erreur || enCours ? undefined : information}
+      autresEspaces={<RetourEspaces />}
     />
   )
 }

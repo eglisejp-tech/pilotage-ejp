@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Compte } from '@/data/compte'
 import { EcranCode } from '@/features/connexion/EcranCode'
+import { RetourEspaces } from '@/features/espaces/RetourEspaces'
 import { seDeconnecter, verifierCode } from '@/features/session/actions'
 import { useMotDePasseAChoisir } from '@/features/session/motDePasseAChoisir'
 
@@ -35,6 +36,7 @@ export function CodeConnecte({ compte, facteurId }: Proprietes) {
       enCours={enCours}
       erreur={erreur}
       apresRecuperation={apresRecuperation}
+      autresEspaces={<RetourEspaces />}
     />
   )
 }

@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 import { adressesConnexion } from '@/features/connexion/adresses'
 import { BandeauErreur } from '@/features/connexion/BandeauErreur'
@@ -28,6 +29,8 @@ export type ProprietesEcranConnexion = {
   lienMotDePasseOublie?: string
   lienConfidentialite?: string
   lienConditions?: string
+  /** Les autres comptes ouverts sur l'appareil (T73), sous le titre : « Revenir à ... ». */
+  autresEspaces?: ReactNode
 }
 
 /** Écran 16 : Google ou email et mot de passe. Pas d'inscription : l'église crée les comptes. */
@@ -40,6 +43,7 @@ export function EcranConnexion({
   lienMotDePasseOublie = adressesConnexion.motDePasseOublie,
   lienConfidentialite = adressesConnexion.confidentialite,
   lienConditions = adressesConnexion.conditions,
+  autresEspaces,
 }: ProprietesEcranConnexion) {
   useTitrePage('Connexion')
   const {
@@ -85,6 +89,8 @@ export function EcranConnexion({
           <MessageReussite message={informationPrete === information ? information : null} />
         </div>
       ) : null}
+
+      {autresEspaces}
 
       <BoutonGoogle onClick={onGoogle} enCours={enCours === 'google'} occupe={occupe} />
 
