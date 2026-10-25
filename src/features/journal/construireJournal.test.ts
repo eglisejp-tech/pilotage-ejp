@@ -323,6 +323,33 @@ describe('une ligne du journal, en mots', () => {
     )
   })
 
+  it('T74 : adresse corrigée (le compte, jamais l’adresse) et ministère supprimé (son nom)', () => {
+    expect(
+      texteDe({
+        action: 'adresse_corrigee',
+        cible: 'compte',
+        cible_texte: 'Ministère Tech',
+        detail: { type: 'ministere' },
+      }),
+    ).toBe('Ministère Tech')
+    expect(
+      texteDe({
+        action: 'ministere_supprime',
+        cible: 'ministere',
+        cible_texte: 'Tech',
+        detail: { nom: 'Tech', indicateurs: 8, comptes: 1 },
+      }),
+    ).toBe('Tech, 8 indicateurs supprimés avec lui')
+    expect(
+      texteDe({
+        action: 'ministere_supprime',
+        cible: 'ministere',
+        cible_texte: 'Tech',
+        detail: { nom: 'Tech', indicateurs: 0, comptes: 0 },
+      }),
+    ).toBe('Tech')
+  })
+
   it('texte relu ou masqué : l’objet et le motif, jamais le texte', () => {
     expect(
       texteDe({

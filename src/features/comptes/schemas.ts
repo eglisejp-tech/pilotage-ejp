@@ -3,6 +3,7 @@ import {
   schemaCreerCompte,
   type DemandeCreerCompte,
 } from '../../../supabase/functions/_shared/schemas.ts'
+import { TEXTES_COMPTES } from '@/features/comptes/textes'
 import type { CreationCompte } from '@/features/comptes/types'
 
 // Schémas des panneaux de l'écran 13 (CLAUDE.md : validation Zod partagée entre formulaire et
@@ -10,7 +11,7 @@ import type { CreationCompte } from '@/features/comptes/types'
 // (`supabase/functions/_shared/schemas.ts`) : le nom (1 à 50 caractères), la description (280
 // au plus, facultative) et l'adresse (minuscules, 254 caractères au plus) se valident à
 // l'identique dans le navigateur et dans la fonction. `src/data/comptes.ts` revalide la demande
-// complète avec `schemaCreerCompte` avant l'appel.
+// complète avec `schemaCreerCompte` (et `schemaCorrigerAdresse`, T74) avant l'appel.
 
 const [optionMinistere] = schemaCreerCompte.options
 const [, nouveauMinistere] = optionMinistere.shape.ministere.options
@@ -31,6 +32,20 @@ export type NouveauMinistere = z.output<typeof schemaNouveauMinistere>
 export const schemaAdresse = z.object({ email: champEmail })
 export type EntreeAdresse = z.input<typeof schemaAdresse>
 export type Adresse = z.output<typeof schemaAdresse>
+
+/**
+ * « Corriger l'adresse » (T74) : la nouvelle adresse, différente de l'actuelle (casse et espaces
+ * ignorés, comme la fonction). À la réactivation, l'adresse actuelle est acceptée : elle ne
+ * change pas.
+ */
+export function schemaCorrection(actuelle: string | null, accepterActuelle: boolean) {
+  const ancienne = actuelle?.trim().toLowerCase() ?? null
+  return z.object({
+    email: champEmail.refine((email) => accepterActuelle || email !== ancienne, {
+      message: TEXTES_COMPTES.adresseIdentique,
+    }),
+  })
+}
 
 /** Longueur en caractères, comme `char_length` de la base (un émoji compte pour un). */
 export function longueurEnCaracteres(texte: string): number {

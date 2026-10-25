@@ -29,6 +29,7 @@ export function FenetreConfirmation({
       texte={confirmation.texte}
       confirmer={confirmation.bouton}
       libelleEnCours={confirmation.enCours}
+      varianteConfirmer={confirmation.definitif ? 'sombre' : 'principal'}
       annuler={TEXTES_COMPTES.annuler}
       onConfirmer={onConfirmer}
       onAnnuler={onAnnuler}

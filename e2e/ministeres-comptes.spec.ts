@@ -43,12 +43,20 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await expect(ministeres).toContainText('communication@exemple.test')
     await expect(ministeres).toContainText('Activée')
     await expect(ministeres).toContainText('À activer')
-    await expect(ministeres).toContainText('Désactivé le 2 oct.')
     await expect(ministeres).toContainText('Aucune adresse')
     await expect(bouton(page, 'Créer le compte Coordination')).toBeVisible()
-    await expect(bouton(page, 'Réactiver Merch')).toBeVisible()
     await expect(bouton(page, 'Désactiver Social')).toBeVisible()
+    await expect(bouton(page, "Corriger l'adresse Social")).toBeVisible()
     await expect(bouton(page, "Refaire l'activation Social")).toHaveCount(0)
+    // T74 : les désactivés sont repliés sous la liste.
+    await expect(ministeres).not.toContainText('Désactivé le 2 oct.')
+    const desactives = bouton(page, 'Afficher les 2 ministères désactivés')
+    await expect(desactives).toHaveAttribute('aria-expanded', 'false')
+    await desactives.click()
+    await expect(ministeres).toContainText('Désactivé le 2 oct.')
+    await expect(bouton(page, 'Réactiver Merch')).toBeVisible()
+    await expect(bouton(page, 'Supprimer EJP TECH')).toBeVisible()
+    await expect(bouton(page, 'Supprimer Merch')).toHaveCount(0)
     const lien = page.getByRole('link', { name: '2 indicateurs pour Communication' })
     await expect(lien).toHaveAttribute('href', /^\/indicateurs\/10000000-/)
     await expect(ministeres).toContainText('et les chiffres par département')
@@ -193,6 +201,85 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await expect(page.locator(':focus')).toHaveAccessibleName(/ Communication$/)
   })
 
+  test('« Corriger l’adresse » (T74) : adresse actuelle, refus d’une adresse identique, réussite', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, "Corriger l'adresse Social").click()
+    await expect(
+      page.getByRole('heading', { level: 1, name: "Corriger l'adresse de Social" }),
+    ).toBeVisible()
+    await expect(page.getByText('Adresse actuelle : social@exemple.test')).toBeVisible()
+    await expect(champ(page, 'Nouvelle adresse email')).toHaveValue('social@exemple.test')
+    await bouton(page, "Corriger et envoyer l'invitation").click()
+    await expect(champ(page, 'Nouvelle adresse email')).toHaveAccessibleDescription(
+      "Une boîte mail partagée par le ministère, pas l'adresse d'une personne. Saisissez une adresse différente de l'adresse actuelle.",
+    )
+    await champ(page, 'Nouvelle adresse email').fill('social.partage@exemple.test')
+    await bouton(page, "Corriger et envoyer l'invitation").click()
+    await expect(reussite(page)).toHaveText(
+      'Adresse corrigée. Invitation envoyée à social.partage@exemple.test.',
+    )
+    await expect(section(page, 'Ministères')).toContainText('social.partage@exemple.test')
+    // L'adresse n'est plus confirmée : l'invitation se renvoie.
+    await expect(bouton(page, "Renvoyer l'invitation Social")).toBeVisible()
+  })
+
+  test('« Réactiver » EJP TECH (T74) : l’adresse se corrige au passage, puis l’invitation part', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Réactiver EJP TECH').click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Réactiver EJP TECH' })).toBeVisible()
+    await expect(champ(page, 'Adresse email')).toHaveValue('ejptech1+ministre@exemple.test')
+    await expect(bouton(page, 'Réactiver le ministère')).toBeVisible()
+    await champ(page, 'Adresse email').fill('ejptech1+ministere@exemple.test')
+    await bouton(page, "Réactiver et envoyer l'invitation").click()
+    await expect(reussite(page)).toHaveText(
+      'Ministère EJP TECH réactivé. Invitation envoyée à ejptech1+ministere@exemple.test.',
+    )
+    await expect(section(page, 'Ministères').getByText('9 actifs', { exact: true })).toBeVisible()
+    await expect(bouton(page, "Renvoyer l'invitation EJP TECH")).toBeVisible()
+    // Merch reste seul parmi les désactivés (section ouverte, ou rouverte fermée sous 600 px).
+    await expect(
+      page.getByRole('button', { name: /^(Afficher|Masquer) le ministère désactivé$/ }),
+    ).toBeVisible()
+  })
+
+  test('« Supprimer » un ministère vide (T74) : la fenêtre dit ce qui disparaît', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP TECH ?')
+    await expect(fenetre(page)).toContainText(
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Le journal garde la trace de la suppression. C'est définitif.",
+    )
+    await page.keyboard.press('Escape')
+    await expect(fenetre(page)).toHaveCount(0)
+    await expect(bouton(page, 'Supprimer EJP TECH')).toBeFocused()
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(reussite(page)).toHaveText('Ministère EJP TECH supprimé.')
+    await expect(fenetre(page)).toHaveCount(0)
+    await expect(section(page, 'Ministères')).not.toContainText('EJP TECH')
+    await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
+  })
+
+  test('« Supprimer » refusé (le ministère a maintenant des données) : la fenêtre le dit', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'refus=ministere_non_vide')
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(fenetre(page).getByRole('alert')).toHaveText(
+      'Ce ministère a maintenant des données : il ne peut plus être supprimé.',
+    )
+  })
+
   test('refaire l’activation : texte du ministère, puis « À activer »', async ({ page }) => {
     await ouvrir(page)
     await bouton(page, "Refaire l'activation Communication").click()
@@ -262,15 +349,21 @@ test.describe('Ministères et comptes (administration de l’église, en lecture
     ).toBeVisible()
     const ministeres = section(page, 'Ministères')
     await expect(ministeres).toContainText('communication@exemple.test')
+    // Les désactivés repliés s'ouvrent en lecture aussi (T74).
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
     await expect(ministeres).toContainText('Désactivé le 2 oct.')
     await expect(section(page, 'Berger et conseil')).toContainText('Invitation envoyée')
     await expect(section(page, 'EJP Tech')).toContainText('ejptech1@exemple.test')
-    // Aucun bouton d'action dans le contenu : seulement les aides.
+    // Aucun bouton d'action dans le contenu : seulement les aides et l'ouverture des désactivés.
     const boutons = page.getByRole('main').getByRole('button')
     const noms = await boutons.evaluateAll((elements) =>
       elements.map((element) => element.getAttribute('aria-label') ?? element.textContent ?? ''),
     )
-    expect(noms.filter((nom) => !nom.startsWith('Aide'))).toEqual([])
+    expect(
+      noms.filter(
+        (nom) => !nom.startsWith('Aide') && !/^(Afficher|Masquer) .*désactivés?$/.test(nom),
+      ),
+    ).toEqual([])
     // La note vers l'écran Indicateurs est retirée (T66, t266) : le menu y mène.
     await expect(page.getByText(/Pour lire les indicateurs/)).toHaveCount(0)
     await auditer(page)
@@ -316,6 +409,15 @@ test.describe('Ministères et comptes : accessibilité et tailles (aperçu)', ()
     await ouvrir(page)
     await bouton(page, 'Désactiver Communication').click()
     await auditer(page)
+    // T74 : désactivés ouverts, fenêtre de suppression, panneau de correction.
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await auditer(page)
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await auditer(page)
+    await ouvrir(page)
+    await bouton(page, "Corriger l'adresse Social").click()
+    await auditer(page)
   })
 
   test('audit axe : premier usage et problème passager', async ({ page }) => {
@@ -327,6 +429,7 @@ test.describe('Ministères et comptes : accessibilité et tailles (aperçu)', ()
 
   test('boutons du contenu : 44 px de haut au moins', async ({ page }) => {
     await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
     const cibles = page.getByRole('main').locator('button:visible')
     for (let rang = 0; rang < (await cibles.count()); rang++) {
       const boite = await cibles.nth(rang).boundingBox()
@@ -336,18 +439,22 @@ test.describe('Ministères et comptes : accessibilité et tailles (aperçu)', ()
 
   test('à 360 px, aucun défilement horizontal (page et panneau)', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 })
-    for (const requete of ['', 'vue=premier-usage']) {
-      await ouvrir(page, requete)
-      const debord = await page.evaluate(
+    const mesurer = () =>
+      page.evaluate(
         () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
       )
-      expect(debord, requete || 'données').toBeLessThanOrEqual(0)
+    for (const requete of ['', 'vue=premier-usage']) {
+      await ouvrir(page, requete)
+      expect(await mesurer(), requete || 'données').toBeLessThanOrEqual(0)
     }
     await bouton(page, 'Ajouter un ministère').click()
-    const debord = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    )
-    expect(debord, 'panneau').toBeLessThanOrEqual(0)
+    expect(await mesurer(), 'panneau').toBeLessThanOrEqual(0)
+    // T74 : désactivés ouverts (adresses longues) et panneau de correction.
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    expect(await mesurer(), 'désactivés').toBeLessThanOrEqual(0)
+    await bouton(page, "Corriger l'adresse Social").click()
+    expect(await mesurer(), 'correction').toBeLessThanOrEqual(0)
   })
 
   test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
@@ -365,5 +472,21 @@ test.describe('Ministères et comptes : accessibilité et tailles (aperçu)', ()
       path: `${dossier}/comptes-premier-usage-${largeur}.png`,
       fullPage: true,
     })
+    // T74 : désactivés ouverts, suppression, réactivation avec adresse, correction.
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await page.screenshot({ path: `${dossier}/comptes-desactives-${largeur}.png`, fullPage: true })
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await page.screenshot({ path: `${dossier}/comptes-suppression-${largeur}.png` })
+    await page.keyboard.press('Escape')
+    await bouton(page, 'Réactiver EJP TECH').click()
+    await champ(page, 'Adresse email').fill('ejptech1+ministere@exemple.test')
+    await page.screenshot({
+      path: `${dossier}/comptes-reactivation-${largeur}.png`,
+      fullPage: true,
+    })
+    await ouvrir(page)
+    await bouton(page, "Corriger l'adresse Social").click()
+    await page.screenshot({ path: `${dossier}/comptes-correction-${largeur}.png`, fullPage: true })
   })
 })

@@ -1,6 +1,7 @@
 // Décision T60 : EJP Tech gère seul les ministères et les comptes ; l'administration de l'église
 // lit le même écran 13, sans aucun bouton d'action, avec la phrase qui le dit.
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { donneesExemple } from '@/features/comptes/apercu/exemples'
@@ -29,6 +30,8 @@ function afficherEnLecture(etat: EtatBloc<DonneesComptes>) {
     desactiver: vi.fn(() => Promise.resolve()),
     reactiver: vi.fn(() => Promise.resolve()),
     refaireActivation: vi.fn(() => Promise.resolve()),
+    corriger: vi.fn(() => Promise.resolve()),
+    supprimer: vi.fn(() => Promise.resolve()),
   } satisfies ActionsComptes
   render(
     <MemoryRouter>
@@ -38,10 +41,13 @@ function afficherEnLecture(etat: EtatBloc<DonneesComptes>) {
   return actions
 }
 
-/** Seules les aides (« ? ») sont des boutons : aucun ajout, aucune action de ligne. */
+/**
+ * Seules les aides (« ? ») et l'ouverture des désactivés repliés (T74) sont des boutons : aucun
+ * ajout, aucune action de ligne.
+ */
 function seulementDesAides() {
   expect(screen.queryAllByRole('button')).toEqual(
-    screen.queryAllByRole('button', { name: /^Aide/ }),
+    screen.queryAllByRole('button', { name: /^Aide|^(Afficher|Masquer) (le|les) .*désactivés?$/ }),
   )
 }
 
@@ -75,6 +81,17 @@ describe('VueComptes (écran 13), administration de l’église en lecture', () 
     expect(screen.getByRole('region', { name: 'Listes' })).toHaveTextContent(
       'Pour changer cette liste, demandez à EJP Tech.',
     )
+  })
+
+  it('les désactivés repliés s’ouvrent, sans « Réactiver » ni « Supprimer » (T74)', async () => {
+    afficherEnLecture(donnees())
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Afficher les 2 ministères désactivés' }),
+    )
+    expect(screen.getByRole('region', { name: 'Ministères' })).toHaveTextContent(
+      'merch@exemple.test',
+    )
+    seulementDesAides()
   })
 
   it('plus de note vers l’écran Indicateurs sous les ministères (T66, t271)', () => {

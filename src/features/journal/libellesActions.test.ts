@@ -33,11 +33,13 @@ describe('libellés des actions (BRIEF, section 6)', () => {
     expect(libelleAction('texte_masque')).toBe('A masqué un texte')
   })
 
-  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4, 2 des mentions (T54), le choix de la liste (T72)', () => {
-    expect(CODES_ACTIONS).toHaveLength(32)
-    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(32)
+  it('chaque code de `journal_action_check` a un libellé : 20 codes du brief, 9 de l’étape 4, 2 des mentions (T54), le choix de la liste (T72), la correction et la suppression (T74)', () => {
+    expect(CODES_ACTIONS).toHaveLength(34)
+    expect(new Set(CODES_ACTIONS.map(libelleAction)).size).toBe(34)
     for (const code of CODES_ACTIONS) expect(libelleAction(code)).toMatch(/^A /)
     expect(libelleAction('modele_prevus_choisi')).toBe('A choisi la liste des prévus')
+    expect(libelleAction('adresse_corrigee')).toBe("A corrigé l'adresse d'un compte")
+    expect(libelleAction('ministere_supprime')).toBe('A supprimé un ministère')
   })
 
   it('un code inconnu garde un libellé neutre, jamais le code', () => {
@@ -58,14 +60,15 @@ describe('actions que chaque profil peut filtrer', () => {
   it('le berger et le conseil ne lisent aucun signalement (T39)', () => {
     for (const profil of ['berger', 'conseil'] as const) {
       const actions = actionsDuProfil(profil)
-      expect(actions).toHaveLength(30)
+      expect(actions).toHaveLength(32)
       expect(actions).not.toContain('difficulte_signalee')
       expect(actions).not.toContain('signalement_clos')
     }
   })
 
-  it('un ministère ne déclare aucune session', () => {
+  it('un ministère ne déclare aucune session, et ne lit jamais sa propre suppression (T74)', () => {
     const actions = actionsDuProfil('ministere')
+    expect(actions).not.toContain('ministere_supprime')
     expect(actions).not.toContain('session_declaree')
     expect(actions).not.toContain('session_modifiee')
     expect(actions).not.toContain('session_supprimee')

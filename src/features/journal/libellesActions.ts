@@ -28,6 +28,9 @@ export const LIBELLES_ACTIONS = {
   compte_desactive: 'A désactivé un compte',
   compte_reactive: 'A réactivé un compte',
   double_auth_reinitialisee: "A refait l'activation",
+  // T74 (Proposé) : l'adresse d'un compte jamais activé, un ministère vide.
+  adresse_corrigee: "A corrigé l'adresse d'un compte",
+  ministere_supprime: 'A supprimé un ministère',
   indicateur_cree: 'A créé un indicateur',
   indicateurs_prevus_crees: 'A créé les indicateurs prévus',
   // T72 (Proposé) : le choix de la liste des indicateurs prévus d'un ministère.
@@ -70,6 +73,15 @@ const ACTIONS_DES_SESSIONS: readonly CodeAction[] = [
 ]
 
 /**
+ * Ce qu'un ministère ne lit jamais : les sessions, et la suppression d'un ministère (un ministère
+ * supprimé n'a plus de compte, T74).
+ */
+const ACTIONS_HORS_MINISTERE: readonly CodeAction[] = [
+  ...ACTIONS_DES_SESSIONS,
+  'ministere_supprime',
+]
+
+/**
  * Actions que la liste fermée de l'administration de l'église laisse lire (BRIEF, section 7,
  * `private.journal_lisible_administration`) : ni événements, ni réunions, ni points, ni chiffres
  * par département, ni signalements.
@@ -93,7 +105,7 @@ export const ACTIONS_HORS_ADMINISTRATION: readonly CodeAction[] = [
  */
 export function actionsDuProfil(profil: TypeCompte): CodeAction[] {
   const ecartees: readonly CodeAction[] = {
-    ministere: ACTIONS_DES_SESSIONS,
+    ministere: ACTIONS_HORS_MINISTERE,
     berger: ACTIONS_DES_SIGNALEMENTS,
     conseil: ACTIONS_DES_SIGNALEMENTS,
     admin_eglise: ACTIONS_HORS_ADMINISTRATION,

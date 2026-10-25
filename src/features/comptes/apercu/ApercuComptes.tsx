@@ -5,10 +5,13 @@ import {
   attendre,
   donneesExemple,
   donneesPremierUsage,
+  lecturesGestionApercu,
   lireRefusApercu,
   lireVueApercuComptes,
   simulerAction,
+  simulerCorrection,
   simulerCreation,
+  simulerSuppression,
 } from '@/features/comptes/apercu/exemples'
 import type { DonneesApercu } from '@/features/comptes/apercu/exemples'
 import { construireComptes } from '@/features/comptes/construireComptes'
@@ -81,6 +84,8 @@ function EcranApercu({ vue, refus, echec, lectureSeule }: Props) {
     desactiver: (id) => appliquer((avant) => simulerAction(avant, id, 'desactiver')),
     reactiver: (id) => appliquer((avant) => simulerAction(avant, id, 'reactiver')),
     refaireActivation: (id) => appliquer((avant) => simulerAction(avant, id, 'refaire')),
+    corriger: (id, email) => appliquer((avant) => simulerCorrection(avant, id, email)),
+    supprimer: (id) => appliquer((avant) => simulerSuppression(avant, id)),
   }
 
   let etat: EtatBloc<DonneesComptes>
@@ -93,6 +98,8 @@ function EcranApercu({ vue, refus, echec, lectureSeule }: Props) {
         donnees.comptes.map((compte) => compte.ligne),
         donnees.ministeres,
         donnees.indicateurs,
+        // En lecture (administration), ces lectures ne rendent rien, comme la base.
+        lectureSeule ? {} : lecturesGestionApercu(donnees),
       ),
     }
   }

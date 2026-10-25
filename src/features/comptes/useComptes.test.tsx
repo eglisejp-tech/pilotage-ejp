@@ -75,4 +75,25 @@ describe('useActionsComptes', () => {
     await expect(actions.desactiver(COMPTE)).rejects.toMatchObject({ code: 'connexion' })
     expect(clesRelues()).toEqual([['comptes'], ['ministeres']])
   })
+
+  it('corriger : corriger-adresse avec l’adresse lue par le schéma, puis la relecture (T74)', async () => {
+    const invoke = installer(() => Promise.resolve({ data: { ok: true }, error: null }))
+    const { actions, clesRelues } = monter()
+    await actions.corriger(COMPTE, ' Tech+Ministere@Exemple.test ')
+    expect(invoke).toHaveBeenCalledWith('corriger-adresse', {
+      body: { user_id: COMPTE, email: 'tech+ministere@exemple.test' },
+    })
+    expect(clesRelues()).toEqual([['comptes'], ['ministeres']])
+  })
+
+  it('supprimer : supprimer-ministere avec { ministere_id }, puis la relecture (T74)', async () => {
+    const invoke = installer(() => Promise.resolve({ data: { ok: true }, error: null }))
+    const { actions, clesRelues } = monter()
+    const ministere = '10000000-0000-4000-8000-000000000010'
+    await actions.supprimer(ministere)
+    expect(invoke).toHaveBeenCalledWith('supprimer-ministere', {
+      body: { ministere_id: ministere },
+    })
+    expect(clesRelues()).toEqual([['comptes'], ['ministeres']])
+  })
 })

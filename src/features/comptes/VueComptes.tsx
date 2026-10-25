@@ -88,8 +88,14 @@ export function VueComptes({
 
   const panneau = ecran.panneau ? (
     <PanneauCompte
+      // Un autre panneau repart de zéro (réactivation déjà faite comprise, T74).
+      key={
+        'userId' in ecran.panneau
+          ? `${ecran.panneau.genre}-${ecran.panneau.userId}`
+          : ecran.panneau.genre
+      }
       panneau={ecran.panneau}
-      creer={actions.creer}
+      actions={actions}
       onCree={ecran.apresCreation}
       onFermer={ecran.fermerPanneau}
     />
@@ -137,13 +143,16 @@ export function VueComptes({
                   titre={TEXTES_COMPTES.titreMinisteres}
                   complement={
                     // Sans aucun ministère, l'en-tête ne dit rien : l'état vide parle.
-                    donnees.donnees.ministeres.length > 0 ? (
+                    donnees.donnees.ministeres.length +
+                      donnees.donnees.ministeresDesactives.length >
+                    0 ? (
                       <span className="text-note text-encre-3">
                         {complementMinisteres(donnees.donnees.nbMinisteresActifs)}
                       </span>
                     ) : undefined
                   }
                   lignes={donnees.donnees.ministeres}
+                  desactives={donnees.donnees.ministeresDesactives}
                   variante="ministeres"
                   vide={{
                     texte: VIDES_COMPTES.ministeres,
@@ -178,6 +187,7 @@ export function VueComptes({
                     )
                   }
                   lignes={donnees.donnees.bergerConseil}
+                  desactives={donnees.donnees.bergerConseilDesactives}
                   variante="personnes"
                   vide={{ texte: VIDES_COMPTES.bergerConseil }}
                   onAction={onAction}
@@ -201,6 +211,7 @@ export function VueComptes({
                     )
                   }
                   lignes={donnees.donnees.ejpTech}
+                  desactives={donnees.donnees.ejpTechDesactives}
                   variante="personnes"
                   vide={{
                     texte: VIDES_COMPTES.ejpTech,

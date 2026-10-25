@@ -419,7 +419,18 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
     case 'compte_reactive':
     case 'double_auth_reinitialisee':
     case 'compte_cree':
+    case 'adresse_corrigee':
       return objet(ligne)
+    case 'ministere_supprime': {
+      // T74 : le nom gardé par la ligne, et ce qui est parti avec le ministère (jamais d'adresse).
+      const total = nombreDe(detail, 'indicateurs')
+      return avecSuite(
+        objet(ligne),
+        total === null || total === 0
+          ? null
+          : `${nombre(total)} ${accorder(total, 'indicateur supprimé', 'indicateurs supprimés')} avec lui`,
+      )
+    }
     case 'compte_desactive':
       return avecSuite(
         objet(ligne),

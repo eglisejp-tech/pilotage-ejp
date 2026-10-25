@@ -3,15 +3,19 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import type { CodeErreur } from '../../supabase/functions/_shared/http.ts'
 import {
+  corrigerAdresse,
   creerCompte,
   desactiverCompte,
   ErreurCompte,
+  lireComptesJamaisActives,
   lireEtatComptes,
   lireIndicateursDesMinisteres,
+  lireMinisteresSupprimables,
   MESSAGES_ERREURS_COMPTES,
   reactiverCompte,
   reinitialiserDoubleAuthentification,
   relancerInvitation,
+  supprimerMinistere,
 } from './comptes'
 
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
@@ -66,9 +70,17 @@ describe('lectures de l’écran 13', () => {
       'in("etat", ["actif","en_attente"])',
     ])
   })
+
+  it('T74 : ministères supprimables et comptes jamais activés, leurs seuls identifiants', async () => {
+    const faux = installer()
+    await lireMinisteresSupprimables()
+    await lireComptesJamaisActives()
+    expect(appelsDe(faux.de('v_ministeres_supprimables')[0])).toEqual(['select("ministere_id")'])
+    expect(appelsDe(faux.de('v_comptes_jamais_actives')[0])).toEqual(['select("user_id")'])
+  })
 })
 
-describe('appels des cinq fonctions de comptes', () => {
+describe('appels des sept fonctions de comptes', () => {
   it('creer-compte : la demande validée par le schéma partagé, adresse en minuscules', async () => {
     const faux = installer()
     await creerCompte({
@@ -116,7 +128,21 @@ describe('appels des cinq fonctions de comptes', () => {
   it('un identifiant qui n’est pas un uuid ne part pas', async () => {
     const faux = installer()
     await expect(desactiverCompte('pas-un-uuid')).rejects.toThrow()
+    await expect(supprimerMinistere('pas-un-uuid')).rejects.toThrow()
+    await expect(corrigerAdresse(COMPTE, 'pas-une-adresse')).rejects.toThrow()
     expect(faux.invoke).not.toHaveBeenCalled()
+  })
+
+  it('corriger-adresse et supprimer-ministere : les corps des schémas partagés (T74)', async () => {
+    const faux = installer()
+    await corrigerAdresse(COMPTE, ' Tech@Exemple.test')
+    await supprimerMinistere(FIJ)
+    expect(faux.invoke).toHaveBeenCalledWith('corriger-adresse', {
+      body: { user_id: COMPTE, email: 'tech@exemple.test' },
+    })
+    expect(faux.invoke).toHaveBeenCalledWith('supprimer-ministere', {
+      body: { ministere_id: FIJ },
+    })
   })
 })
 
@@ -143,6 +169,10 @@ describe('codes d’erreur traduits en français', () => {
     'conflit',
     'invitation_non_envoyee',
     'activation_incomplete',
+    'compte_deja_active',
+    'ministere_non_vide',
+    'ministere_de_reference',
+    'suppression_incomplete',
     'erreur_interne',
   ]
 

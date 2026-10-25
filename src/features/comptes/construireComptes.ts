@@ -27,12 +27,28 @@ export function prochainLibelle(
   return `${type === 'conseil' ? 'Conseil' : 'EJP Tech'}, compte ${suivant}`
 }
 
+/** Lectures réservées à EJP Tech (T74) : vides en lecture seule. */
+export interface LecturesGestion {
+  /** Ministères vides qu'EJP Tech peut supprimer. */
+  supprimables?: readonly string[]
+  /** Comptes jamais activés, désactivés compris. */
+  jamaisActives?: readonly string[]
+}
+
+interface Contexte {
+  nombres: ReadonlyMap<string, number>
+  supprimables: ReadonlySet<string>
+  jamaisActives: ReadonlySet<string>
+}
+
 function ligneDuCompte(
   compte: LigneEtatCompte,
   nom: string,
   indicateurs: number | null,
   fij: boolean,
+  contexte: Contexte,
 ): LigneCompte {
+  const ministere = compte.type === 'ministere' ? compte.ministere_id : null
   return {
     cle: compte.user_id,
     userId: compte.user_id,
@@ -44,6 +60,12 @@ function ligneDuCompte(
     ministereId: compte.ministere_id,
     indicateurs,
     fij,
+    // Un compte actif le dit par son état ; un compte désactivé, par la lecture de T74.
+    jamaisActive:
+      compte.etat === 'invitation_envoyee' ||
+      compte.etat === 'a_activer' ||
+      (compte.etat === 'desactive' && contexte.jamaisActives.has(compte.user_id)),
+    supprimable: ministere !== null && contexte.supprimables.has(ministere),
   }
 }
 
@@ -52,22 +74,27 @@ function plusRecent(a: LigneEtatCompte, b: LigneEtatCompte): number {
   return (b.desactive_le ?? '').localeCompare(a.desactive_le ?? '')
 }
 
+interface Lignes {
+  actifs: LigneCompte[]
+  desactives: LigneCompte[]
+}
+
 function lignesMinisteres(
   comptes: readonly LigneEtatCompte[],
   ministeres: readonly MinistereListe[],
-  nombres: ReadonlyMap<string, number>,
-): LigneCompte[] {
+  contexte: Contexte,
+): Lignes {
   const actifs: LigneCompte[] = []
   const desactives: LigneCompte[] = []
   for (const ministere of [...ministeres].sort((a, b) => comparerNoms(a.nom, b.nom))) {
     const siens = comptes.filter(
       (compte) => compte.type === 'ministere' && compte.ministere_id === ministere.id,
     )
-    const indicateurs = nombres.get(ministere.id) ?? 0
+    const indicateurs = contexte.nombres.get(ministere.id) ?? 0
     const fij = ministere.code === 'fij'
     const actif = siens.find((compte) => compte.desactive_le === null)
     if (actif) {
-      actifs.push(ligneDuCompte(actif, ministere.nom, indicateurs, fij))
+      actifs.push(ligneDuCompte(actif, ministere.nom, indicateurs, fij, contexte))
     } else if (ministere.desactive_le === null) {
       // Ministère actif sans compte (FIJ et Coordination, posés par les migrations).
       actifs.push({
@@ -81,19 +108,21 @@ function lignesMinisteres(
         ministereId: ministere.id,
         indicateurs,
         fij,
+        jamaisActive: false,
+        supprimable: contexte.supprimables.has(ministere.id),
       })
     } else {
       const dernier = [...siens].sort(plusRecent)[0]
-      if (dernier) desactives.push(ligneDuCompte(dernier, ministere.nom, indicateurs, fij))
+      if (dernier) {
+        desactives.push(ligneDuCompte(dernier, ministere.nom, indicateurs, fij, contexte))
+      }
     }
   }
-  return [...actifs, ...desactives]
+  return { actifs, desactives }
 }
 
-function rangPersonne(compte: LigneEtatCompte): [number, number, number] {
-  const type = compte.type === 'berger' ? 0 : 1
-  const actif = compte.type === 'berger' && compte.desactive_le !== null ? 1 : 0
-  return [type, actif, numeroDuLibelle(compte.libelle) ?? 0]
+function rangPersonne(compte: LigneEtatCompte): [number, number] {
+  return [compte.type === 'berger' ? 0 : 1, numeroDuLibelle(compte.libelle) ?? 0]
 }
 
 function comparerPersonnes(a: LigneEtatCompte, b: LigneEtatCompte): number {
@@ -108,33 +137,51 @@ function comparerPersonnes(a: LigneEtatCompte, b: LigneEtatCompte): number {
 function lignesPersonnes(
   comptes: readonly LigneEtatCompte[],
   types: readonly TypeCompte[],
-): LigneCompte[] {
-  return comptes
+  contexte: Contexte,
+): Lignes {
+  const lignes = comptes
     .filter((compte) => types.includes(compte.type))
     .sort(comparerPersonnes)
-    .map((compte) => ligneDuCompte(compte, compte.libelle, null, false))
+    .map((compte) => ligneDuCompte(compte, compte.libelle, null, false, contexte))
+  return {
+    actifs: lignes.filter((ligne) => ligne.etat !== 'desactive'),
+    desactives: lignes.filter((ligne) => ligne.etat === 'desactive'),
+  }
 }
 
 /**
  * Données de l'écran 13 : les ministères (comptes de ministère, et ministères actifs sans compte),
- * le berger et le conseil, puis EJP Tech. Le compte de l'administration n'y figure pas : aucune
- * action ne s'y applique (les fonctions refusent le compte de l'appelant). Les dates de
- * désactivation sont des jours de Paris, jamais la date du navigateur.
+ * le berger et le conseil, puis EJP Tech, chaque section avec ses désactivés à part (section
+ * repliée « Désactivés », T74). Le compte de l'administration n'y figure pas : aucune action ne
+ * s'y applique (les fonctions refusent ce compte). Les dates de désactivation sont des jours de
+ * Paris, jamais la date du navigateur.
  */
 export function construireComptes(
   comptes: readonly LigneEtatCompte[],
   ministeres: readonly MinistereListe[],
   indicateurs: readonly { ministere_id: string | null }[],
+  gestion: LecturesGestion = {},
 ): DonneesComptes {
   const nombres = new Map<string, number>()
   for (const { ministere_id: id } of indicateurs) {
     if (id !== null) nombres.set(id, (nombres.get(id) ?? 0) + 1)
   }
+  const contexte: Contexte = {
+    nombres,
+    supprimables: new Set(gestion.supprimables ?? []),
+    jamaisActives: new Set(gestion.jamaisActives ?? []),
+  }
+  const lignesDesMinisteres = lignesMinisteres(comptes, ministeres, contexte)
+  const bergerConseil = lignesPersonnes(comptes, ['berger', 'conseil'], contexte)
+  const ejpTech = lignesPersonnes(comptes, ['admin_plateforme'], contexte)
   return {
-    ministeres: lignesMinisteres(comptes, ministeres, nombres),
+    ministeres: lignesDesMinisteres.actifs,
+    ministeresDesactives: lignesDesMinisteres.desactives,
     nbMinisteresActifs: ministeres.filter((ministere) => ministere.desactive_le === null).length,
-    bergerConseil: lignesPersonnes(comptes, ['berger', 'conseil']),
-    ejpTech: lignesPersonnes(comptes, ['admin_plateforme']),
+    bergerConseil: bergerConseil.actifs,
+    bergerConseilDesactives: bergerConseil.desactives,
+    ejpTech: ejpTech.actifs,
+    ejpTechDesactives: ejpTech.desactives,
     bergerActif: comptes.some((compte) => compte.type === 'berger' && compte.desactive_le === null),
     prochainConseil: prochainLibelle(comptes, 'conseil'),
     prochainEjpTech: prochainLibelle(comptes, 'admin_plateforme'),

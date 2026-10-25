@@ -10,6 +10,18 @@ import { formaterJourCourt } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import { accorder, nombre } from '@/lib/metier/texte'
 
+function objetDesactives(nombreDesactives: number, ministeres: boolean): string {
+  return ministeres
+    ? accorder(nombreDesactives, 'ministère désactivé', 'ministères désactivés')
+    : accorder(nombreDesactives, 'compte désactivé', 'comptes désactivés')
+}
+
+/** « le ministère désactivé », « les 2 comptes désactivés ». */
+function articleDesactives(nombreDesactives: number, ministeres: boolean): string {
+  const objet = objetDesactives(nombreDesactives, ministeres)
+  return nombreDesactives === 1 ? `le ${objet}` : `les ${nombre(nombreDesactives)} ${objet}`
+}
+
 export const TEXTES_COMPTES = {
   titre: 'Ministères et comptes',
   /** Ce que fait l'écran, sans le fonctionnement interne (T66, t264 ; guide, exemple 7). */
@@ -59,6 +71,9 @@ export const TEXTES_COMPTES = {
   refaireActivation: "Refaire l'activation",
   desactiver: 'Désactiver',
   reactiver: 'Réactiver',
+  // T74 (Proposé)
+  corrigerAdresse: "Corriger l'adresse",
+  supprimer: 'Supprimer',
   annuler: 'Annuler',
   /**
    * Pendant l'envoi, le bouton dit ce qui se fait (T66, m202) : une entrée par action d'une
@@ -70,6 +85,8 @@ export const TEXTES_COMPTES = {
     refaire: 'Réinitialisation en cours',
     desactiver: 'Désactivation en cours',
     reactiver: 'Réactivation en cours',
+    corriger: 'Correction en cours',
+    supprimer: 'Suppression en cours',
   },
   /** À la place des boutons, sur la ligne du compte connecté (T60, Proposé). */
   votreCompte: 'Votre compte',
@@ -94,10 +111,34 @@ export const TEXTES_COMPTES = {
   boutonCreerMinistere: "Créer et envoyer l'invitation",
   boutonCreerCompte: "Créer et envoyer l'invitation",
 
+  // Correction d'une adresse et réactivation d'un compte jamais activé (T74, Proposé)
+  panneauCorrection: (nom: string) => `Corriger l'adresse de ${nom}`,
+  panneauReactivation: (nom: string) => `Réactiver ${nom}`,
+  adresseActuelle: (email: string) => `Adresse actuelle : ${email}`,
+  champNouvelleAdresse: 'Nouvelle adresse email',
+  champAdresseReactivation: 'Adresse email',
+  /** Sous l'adresse, à la réactivation : elle se corrige au passage. */
+  indicationReactivation: "Corrigez-la si elle est fausse : l'invitation partira vers la nouvelle.",
+  adresseIdentique: "Saisissez une adresse différente de l'adresse actuelle.",
+  boutonCorriger: "Corriger et envoyer l'invitation",
+  boutonReactiverMinistere: 'Réactiver le ministère',
+  boutonReactiverCompte: 'Réactiver le compte',
+  boutonReactiverEtInviter: "Réactiver et envoyer l'invitation",
+
+  // Section repliée des désactivés (T74, Proposé) : « 2 ministères désactivés », et le bouton
+  // « Afficher les 2 ministères désactivés » (« Afficher le compte désactivé » pour un seul).
+  desactives: (nombreDesactives: number, ministeres: boolean) =>
+    `${nombre(nombreDesactives)} ${objetDesactives(nombreDesactives, ministeres)}`,
+  afficherDesactives: (nombreDesactives: number, ministeres: boolean) =>
+    `Afficher ${articleDesactives(nombreDesactives, ministeres)}`,
+  masquerDesactives: (nombreDesactives: number, ministeres: boolean) =>
+    `Masquer ${articleDesactives(nombreDesactives, ministeres)}`,
+
   // Confirmations (BRIEF, section 9)
   boutonDesactiverMinistere: 'Désactiver le ministère',
   boutonDesactiverCompte: 'Désactiver le compte',
   boutonRefaireActivation: "Refaire l'activation",
+  boutonSupprimerMinistere: 'Supprimer le ministère',
 } as const
 
 /** Libellé de l'état d'un compte (BRIEF, section 9 ; LISEZMOI, écarts de 13). */
@@ -156,6 +197,11 @@ export const REUSSITES_COMPTES = {
   /** La consigne à transmettre, en une phrase : le message disparaît après 6 s (T66, m182). */
   activationARefaire: (nom: string) =>
     `Activation à refaire pour ${nom}. Dites-lui de choisir « Mot de passe oublié ».`,
+  // T74 (Proposé)
+  adresseCorrigee: (email: string) => `Adresse corrigée. Invitation envoyée à ${email}.`,
+  reactiveEtInvite: (nom: string, email: string) =>
+    `${nom} réactivé. Invitation envoyée à ${email}.`,
+  supprime: (nom: string) => `${nom} supprimé.`,
 } as const
 
 /**
@@ -167,6 +213,32 @@ export interface TexteConfirmation {
   texte: string
   bouton: string
   enCours: string
+  /** Bouton foncé : l'action perd quelque chose pour de bon (suppression, T74). */
+  definitif?: boolean
+}
+
+/**
+ * « Supprimer Tech ? » (T74, Proposé) : ce qui disparaît (le ministère, ses indicateurs, son
+ * compte et son adresse), puis ce qui reste (le journal). Action définitive.
+ */
+export function confirmationSupprimerMinistere(
+  nom: string,
+  email: string | null,
+  indicateurs: number,
+): TexteConfirmation {
+  const avec: string[] = []
+  if (indicateurs === 1) avec.push('son indicateur')
+  if (indicateurs > 1) avec.push(`ses ${nombre(indicateurs)} indicateurs`)
+  if (email !== null) avec.push(`son compte (${email})`)
+  // « Tech », « Tech et son compte (...) », « Tech, ses 8 indicateurs et son compte (...) ».
+  const sujet = avec.length === 2 ? `${nom}, ${avec.join(' et ')}` : [nom, ...avec].join(' et ')
+  return {
+    titre: `Supprimer ${nom} ?`,
+    texte: `${sujet} ${avec.length === 0 ? 'disparaît' : 'disparaissent'} de l'outil. Le journal garde la trace de la suppression. C'est définitif.`,
+    bouton: TEXTES_COMPTES.boutonSupprimerMinistere,
+    enCours: TEXTES_COMPTES.enCours.supprimer,
+    definitif: true,
+  }
 }
 
 /** « Désactiver Communication ? » (BRIEF, section 9). */

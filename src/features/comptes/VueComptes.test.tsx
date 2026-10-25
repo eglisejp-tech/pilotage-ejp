@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ErreurCompte } from '@/data/comptes'
 import { ApercuComptes } from '@/features/comptes/apercu/ApercuComptes'
-import { donneesExemple } from '@/features/comptes/apercu/exemples'
+import { donneesExemple, lecturesGestionApercu } from '@/features/comptes/apercu/exemples'
 import { construireComptes } from '@/features/comptes/construireComptes'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import { VueComptes } from '@/features/comptes/VueComptes'
@@ -19,6 +19,7 @@ function donnees(): EtatBloc<DonneesComptes> {
       exemple.comptes.map((compte) => compte.ligne),
       exemple.ministeres,
       exemple.indicateurs,
+      lecturesGestionApercu(exemple),
     ),
   }
 }
@@ -32,7 +33,14 @@ function actionsFausses(): {
     desactiver: vi.fn(() => Promise.resolve()),
     reactiver: vi.fn(() => Promise.resolve()),
     refaireActivation: vi.fn(() => Promise.resolve()),
+    corriger: vi.fn(() => Promise.resolve()),
+    supprimer: vi.fn(() => Promise.resolve()),
   }
+}
+
+/** Ouvre la section repliée des ministères désactivés (Merch et Tech, T74). */
+async function afficherDesactives() {
+  await userEvent.click(bouton('Afficher les 2 ministères désactivés'))
 }
 
 function afficher(etat: EtatBloc<DonneesComptes>, actions: ActionsComptes = actionsFausses()) {
@@ -102,6 +110,7 @@ describe('VueComptes (écran 13)', () => {
     const actions = actionsFausses()
     actions.reactiver.mockRejectedValue(new ErreurCompte('ministere_a_deja_un_compte'))
     afficher(donnees(), actions)
+    await afficherDesactives()
     await userEvent.click(bouton('Réactiver Merch'))
     const refus = await screen.findByRole('alert')
     expect(refus).toHaveTextContent('Ce ministère a déjà un compte actif. Rechargez la page.')
@@ -115,6 +124,7 @@ describe('VueComptes (écran 13)', () => {
         <ApercuComptes />
       </MemoryRouter>,
     )
+    await afficherDesactives()
     await userEvent.click(bouton('Réactiver Merch'))
     expect(await screen.findByText('Ministère Merch réactivé.')).toBeInTheDocument()
     await waitFor(() => expect(document.activeElement).toHaveAccessibleName(/ Merch$/))
@@ -207,6 +217,117 @@ describe('VueComptes (écran 13)', () => {
     const listes = screen.getByRole('region', { name: 'Listes' })
     expect(within(listes).getByText("Liste commune à toute l'église.")).toBeInTheDocument()
     expect(within(listes).queryByText(/faites une demande à EJP Tech/)).toBeNull()
+  })
+
+  it('les désactivés sont repliés sous la liste ; « Réactiver » et « Supprimer » y restent (T74)', async () => {
+    afficher(donnees())
+    const ministeres = screen.getByRole('region', { name: 'Ministères' })
+    expect(within(ministeres).queryByText('Merch')).toBeNull()
+    const ouvrir = bouton('Afficher les 2 ministères désactivés')
+    expect(ouvrir).toHaveAttribute('aria-expanded', 'false')
+    await userEvent.click(ouvrir)
+    expect(bouton('Masquer les 2 ministères désactivés')).toHaveAttribute('aria-expanded', 'true')
+    expect(bouton('Réactiver Merch')).toBeInTheDocument()
+    expect(bouton('Réactiver EJP TECH')).toBeInTheDocument()
+    // Tech est vide : « Supprimer » ; Merch a des données : pas de « Supprimer ».
+    expect(bouton('Supprimer EJP TECH')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Supprimer Merch' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Supprimer Communication' })).toBeNull()
+  })
+
+  it('« Corriger l’adresse » : adresse actuelle, refus d’une adresse identique, puis l’appel', async () => {
+    const actions = afficher(donnees())
+    // Social : adresse confirmée, code jamais activé (« À activer »).
+    await userEvent.click(bouton("Corriger l'adresse Social"))
+    expect(
+      screen.getByRole('heading', { name: "Corriger l'adresse de Social" }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('Adresse actuelle : social@exemple.test')).toBeInTheDocument()
+    const champ = screen.getByRole('textbox', { name: 'Nouvelle adresse email' })
+    expect(champ).toHaveValue('social@exemple.test')
+    await userEvent.click(bouton("Corriger et envoyer l'invitation"))
+    expect(champ).toHaveAccessibleDescription(
+      expect.stringContaining("Saisissez une adresse différente de l'adresse actuelle."),
+    )
+    expect(actions.corriger).not.toHaveBeenCalled()
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'Social.Partage@exemple.test ')
+    await userEvent.click(bouton("Corriger et envoyer l'invitation"))
+    expect(actions.corriger).toHaveBeenCalledWith(
+      '20000000-0000-4000-8000-000000000005',
+      'social.partage@exemple.test',
+    )
+    expect(
+      await screen.findByText(
+        'Adresse corrigée. Invitation envoyée à social.partage@exemple.test.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('« Réactiver » un compte jamais activé propose de corriger l’adresse au passage (T74)', async () => {
+    const actions = actionsFausses()
+    afficher(donnees(), actions)
+    await afficherDesactives()
+    await userEvent.click(bouton('Réactiver EJP TECH'))
+    expect(screen.getByRole('heading', { name: 'Réactiver EJP TECH' })).toBeInTheDocument()
+    const champ = screen.getByRole('textbox', { name: 'Adresse email' })
+    expect(champ).toHaveValue('ejptech1+ministre@exemple.test')
+    expect(bouton('Réactiver le ministère')).toBeInTheDocument()
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'ejptech1+ministere@exemple.test')
+    await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
+    expect(actions.reactiver).toHaveBeenCalledWith('20000000-0000-4000-8000-000000000010')
+    expect(actions.corriger).toHaveBeenCalledWith(
+      '20000000-0000-4000-8000-000000000010',
+      'ejptech1+ministere@exemple.test',
+    )
+    expect(actions.reactiver.mock.invocationCallOrder[0]).toBeLessThan(
+      actions.corriger.mock.invocationCallOrder[0] ?? 0,
+    )
+    expect(
+      await screen.findByText(
+        'Ministère EJP TECH réactivé. Invitation envoyée à ejptech1+ministere@exemple.test.',
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it('réactivé, mais la correction refusée : un nouvel essai ne refait que la correction', async () => {
+    const actions = actionsFausses()
+    actions.corriger.mockRejectedValueOnce(new ErreurCompte('invitation_trop_recente'))
+    afficher(donnees(), actions)
+    await afficherDesactives()
+    await userEvent.click(bouton('Réactiver EJP TECH'))
+    const champ = screen.getByRole('textbox', { name: 'Adresse email' })
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'ejptech1+ministere@exemple.test')
+    await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
+    expect(
+      await screen.findByText(
+        'Une invitation vient de partir vers cette adresse. Attendez une minute, puis réessayez.',
+      ),
+    ).toBeInTheDocument()
+    await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
+    expect(actions.reactiver).toHaveBeenCalledTimes(1)
+    expect(actions.corriger).toHaveBeenCalledTimes(2)
+  })
+
+  it('« Supprimer » : la fenêtre dit ce qui disparaît, puis le message en haut de la page', async () => {
+    render(
+      <MemoryRouter initialEntries={['/apercu/comptes?profil=admin_plateforme']}>
+        <ApercuComptes />
+      </MemoryRouter>,
+    )
+    await afficherDesactives()
+    await userEvent.click(bouton('Supprimer EJP TECH'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP TECH ?' })
+    expect(fenetre).toHaveTextContent(
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Le journal garde la trace de la suppression. C'est définitif.",
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
+    expect(await screen.findByText('Ministère EJP TECH supprimé.')).toBeInTheDocument()
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    // Seul Merch reste dans la section, encore ouverte.
+    expect(bouton('Masquer le ministère désactivé')).toBeInTheDocument()
   })
 
   it('adresse déjà utilisée : sous le champ, le panneau reste ouvert', async () => {

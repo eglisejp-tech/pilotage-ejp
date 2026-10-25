@@ -7,6 +7,7 @@ import {
   confirmationDesactiverCompte,
   confirmationDesactiverMinistere,
   confirmationRefaireActivation,
+  confirmationSupprimerMinistere,
   REUSSITES_COMPTES,
 } from '@/features/comptes/textes'
 import type { TexteConfirmation } from '@/features/comptes/textes'
@@ -89,6 +90,14 @@ export function useEcranComptes(actions: ActionsComptes) {
     setPanneau(ouvert)
   }
 
+  /** Réussite d'un panneau ou d'une suppression : en haut de la page, la ligne a pu partir. */
+  const annoncer = (message: string) => {
+    setPanneau(null)
+    setResultat(null)
+    setReussite(message)
+    setEnvoi((precedent) => precedent + 1)
+  }
+
   const surAction = (ligne: LigneCompte, action: ActionLigne) => {
     const ministere = ligne.type === 'ministere'
     const libelle = ministere ? `Ministère ${ligne.nom}` : ligne.nom
@@ -103,7 +112,22 @@ export function useEcranComptes(actions: ActionsComptes) {
       }
       return
     }
+    if (action === 'supprimer') {
+      const ministereId = ligne.ministereId
+      if (ministereId === null) return
+      setResultat(null)
+      setConfirmation({
+        texte: confirmationSupprimerMinistere(ligne.nom, ligne.email, ligne.indicateurs ?? 0),
+        confirmer: async () => {
+          await actions.supprimer(ministereId)
+          setConfirmation(null)
+          annoncer(REUSSITES_COMPTES.supprime(libelle))
+        },
+      })
+      return
+    }
     if (userId === null) return
+    const compteVise = { userId, nom: ligne.nom, libelle, email: ligne.email, ministere }
     switch (action) {
       case 'relancer':
         void agirDirectement(
@@ -113,7 +137,15 @@ export function useEcranComptes(actions: ActionsComptes) {
           REUSSITES_COMPTES.invitationRelancee(ligne.email ?? ligne.nom),
         )
         return
+      case 'corriger':
+        ouvrirPanneau({ genre: 'corriger', ...compteVise })
+        return
       case 'reactiver':
+        // Jamais activé : la réactivation propose de corriger l'adresse au passage (T74).
+        if (ligne.jamaisActive) {
+          ouvrirPanneau({ genre: 'reactiver', ...compteVise })
+          return
+        }
         void agirDirectement(ligne, action, actions.reactiver, REUSSITES_COMPTES.reactive(libelle))
         return
       case 'desactiver':
@@ -141,13 +173,8 @@ export function useEcranComptes(actions: ActionsComptes) {
     panneau,
     ouvrirPanneau,
     fermerPanneau: () => setPanneau(null),
-    /** Création réussie : le panneau se ferme et le message s'affiche en haut de la page. */
-    apresCreation: (message: string) => {
-      setPanneau(null)
-      setResultat(null)
-      setReussite(message)
-      setEnvoi((precedent) => precedent + 1)
-    },
+    /** Panneau réussi : il se ferme et le message s'affiche en haut de la page. */
+    apresCreation: annoncer,
     confirmation,
     annulerConfirmation: () => setConfirmation(null),
     enCours,

@@ -37,6 +37,8 @@ export interface DonneesApercu {
   comptes: CompteApercu[]
   ministeres: MinistereListe[]
   indicateurs: { ministere_id: string | null }[]
+  /** Ministères qui ont des saisies (ou des points, des événements...) : jamais supprimés (T74). */
+  avecDonnees: string[]
 }
 
 const m = (n: number) => `10000000-0000-4000-8000-${String(n).padStart(12, '0')}`
@@ -83,12 +85,19 @@ const MINISTERES: MinistereListe[] = [
   { id: m(7), code: null, nom: 'Prodiges Junior', desactive_le: null },
   { id: m(8), code: null, nom: 'EJP Formation', desactive_le: null },
   { id: m(9), code: null, nom: 'Merch', desactive_le: '2026-10-02T09:30:00+02:00' },
+  // T74 : créé avec une adresse mal tapée, désactivé sans avoir rien saisi (le cas d'EJP TECH).
+  { id: m(10), code: null, nom: 'EJP TECH', desactive_le: '2026-10-02T09:30:00+02:00' },
 ]
 
-/** Le jeu de l'aperçu : Coordination sans compte (comme en production), Merch désactivé. */
+/**
+ * Le jeu de l'aperçu : Coordination sans compte (comme en production), Merch désactivé, et EJP TECH,
+ * désactivé, vide, son compte jamais activé (adresse mal tapée) : il se réactive en corrigeant
+ * l'adresse, ou se supprime (T74).
+ */
 export function donneesExemple(): DonneesApercu {
   return {
     ministeres: MINISTERES.map((ministere) => ({ ...ministere })),
+    avecDonnees: MINISTERES.filter((ministere) => ministere.id !== m(10)).map((x) => x.id),
     comptes: [
       compte(1, 'ministere', 'Ministère Communication', 'communication@exemple.test', {
         ministere: m(1),
@@ -112,6 +121,12 @@ export function donneesExemple(): DonneesApercu {
         ministere: m(9),
         desactive: true,
       }),
+      compte(10, 'ministere', 'Ministère EJP TECH', 'ejptech1+ministre@exemple.test', {
+        ministere: m(10),
+        confirme: false,
+        facteur: false,
+        desactive: true,
+      }),
       compte(11, 'berger', 'Berger', 'berger@exemple.test'),
       compte(12, 'conseil', 'Conseil, compte 1', 'conseil1@exemple.test'),
       compte(13, 'conseil', 'Conseil, compte 2', 'conseil2@exemple.test'),
@@ -125,6 +140,8 @@ export function donneesExemple(): DonneesApercu {
       { ministere_id: m(1) },
       { ministere_id: m(7) },
       { ministere_id: m(9) },
+      // Les 8 indicateurs prévus d'EJP TECH, sans aucune saisie.
+      ...Array.from({ length: 8 }, () => ({ ministere_id: m(10) })),
     ],
   }
 }
@@ -141,7 +158,30 @@ export function donneesPremierUsage(): DonneesApercu {
       compte(31, 'admin_plateforme', 'EJP Tech, compte 1', 'ejptech1@exemple.test'),
     ],
     indicateurs: [],
+    avecDonnees: [],
   }
+}
+
+/**
+ * Ce que lit EJP Tech pour la gestion (T74), comme la base le calcule : les ministères vides
+ * (aucune donnée, aucun compte activé, ni FIJ ni Coordination) et les comptes jamais activés.
+ */
+export function lecturesGestionApercu(donnees: DonneesApercu): {
+  supprimables: string[]
+  jamaisActives: string[]
+} {
+  const jamaisActives = donnees.comptes
+    .filter((c) => !c.facteur && c.ligne.type !== 'admin_eglise')
+    .map((c) => c.ligne.user_id)
+  const supprimables = donnees.ministeres
+    .filter(
+      (x) =>
+        x.code === null &&
+        !donnees.avecDonnees.includes(x.id) &&
+        !donnees.comptes.some((c) => c.ligne.ministere_id === x.id && c.facteur),
+    )
+    .map((x) => x.id)
+  return { supprimables, jamaisActives }
 }
 
 /** Attente d'une réponse simulée : le bouton dit « Envoi en cours ». */
@@ -263,5 +303,48 @@ export function simulerAction(
     ...donnees,
     ministeres,
     comptes: donnees.comptes.map((c) => (c.ligne.user_id === userId ? recalculer(suivant) : c)),
+  }
+}
+
+/**
+ * Correction simulée d'une adresse (T74), avec les refus de `corriger-adresse` : compte
+ * désactivé, déjà activé, adresse déjà prise. L'adresse change et redevient non confirmée.
+ */
+export function simulerCorrection(
+  donnees: DonneesApercu,
+  userId: string,
+  email: string,
+): DonneesApercu {
+  const cible = donnees.comptes.find((c) => c.ligne.user_id === userId)
+  if (!cible) throw new ErreurCompte('compte_inconnu')
+  if (cible.ligne.desactive_le !== null) throw new ErreurCompte('compte_desactive')
+  if (cible.facteur) throw new ErreurCompte('compte_deja_active')
+  if (donnees.comptes.some((c) => c.ligne.email === email && c.ligne.user_id !== userId)) {
+    throw new ErreurCompte('adresse_deja_utilisee')
+  }
+  const suivant = recalculer({ ...cible, confirme: false, ligne: { ...cible.ligne, email } })
+  return {
+    ...donnees,
+    comptes: donnees.comptes.map((c) => (c.ligne.user_id === userId ? suivant : c)),
+  }
+}
+
+/**
+ * Suppression simulée d'un ministère vide (T74), avec les refus de `supprimer-ministere` : le
+ * ministère, ses comptes et ses indicateurs disparaissent.
+ */
+export function simulerSuppression(donnees: DonneesApercu, ministereId: string): DonneesApercu {
+  const ministere = donnees.ministeres.find((x) => x.id === ministereId)
+  if (!ministere) throw new ErreurCompte('ministere_inconnu')
+  if (ministere.code !== null) throw new ErreurCompte('ministere_de_reference')
+  if (donnees.comptes.some((c) => c.ligne.ministere_id === ministereId && c.facteur)) {
+    throw new ErreurCompte('compte_deja_active')
+  }
+  if (donnees.avecDonnees.includes(ministereId)) throw new ErreurCompte('ministere_non_vide')
+  return {
+    ...donnees,
+    ministeres: donnees.ministeres.filter((x) => x.id !== ministereId),
+    comptes: donnees.comptes.filter((c) => c.ligne.ministere_id !== ministereId),
+    indicateurs: donnees.indicateurs.filter((i) => i.ministere_id !== ministereId),
   }
 }

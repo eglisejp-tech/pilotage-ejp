@@ -22,15 +22,27 @@ export interface LigneCompte {
   indicateurs: number | null
   /** Ministère FIJ : il saisit aussi ses chiffres par département. */
   fij: boolean
+  /**
+   * Compte jamais activé (aucun code vérifié), désactivé compris (T74) : son adresse se corrige,
+   * à la réactivation aussi. Faux sans compte.
+   */
+  jamaisActive: boolean
+  /** Ministère vide qu'EJP Tech peut supprimer (T74) ; toujours faux hors des ministères. */
+  supprimable: boolean
 }
 
 /** Ce que l'écran affiche, construit à partir des lectures. */
 export interface DonneesComptes {
+  /** Ministères actifs, avec ou sans compte. */
   ministeres: LigneCompte[]
+  /** Ministères désactivés : la section repliée « Désactivés » sous la liste (T74). */
+  ministeresDesactives: LigneCompte[]
   /** Ministères actifs (en-tête « 8 actifs, un email partagé chacun »). */
   nbMinisteresActifs: number
   bergerConseil: LigneCompte[]
+  bergerConseilDesactives: LigneCompte[]
   ejpTech: LigneCompte[]
+  ejpTechDesactives: LigneCompte[]
   /** Un berger actif existe : « Ajouter le compte du berger » n'apparaît pas. */
   bergerActif: boolean
   /** Libellés que recevront les prochains comptes (« Conseil, compte 5 »), jamais réutilisés. */
@@ -51,4 +63,8 @@ export interface ActionsComptes {
   desactiver: (userId: string) => Promise<void>
   reactiver: (userId: string) => Promise<void>
   refaireActivation: (userId: string) => Promise<void>
+  /** T74 : nouvelle adresse d'un compte jamais activé, qui reçoit l'invitation. */
+  corriger: (userId: string, email: string) => Promise<void>
+  /** T74 : supprime un ministère vide, son compte et ses indicateurs. */
+  supprimer: (ministereId: string) => Promise<void>
 }
