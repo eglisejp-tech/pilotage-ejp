@@ -205,7 +205,8 @@ describe('Mise en ligne par la CI (job « deploiement »)', () => {
   })
 
   it('publie dist sur le projet pilotage-ejp, branche de production main, avec wrangler-action', () => {
-    expect(job).toContain('uses: cloudflare/wrangler-action@v4')
+    // Action tierce qui reçoit le jeton : fixée par un SHA complet, sa version en commentaire.
+    expect(job).toMatch(/uses: cloudflare\/wrangler-action@[0-9a-f]{40} # v4\.\d+\.\d+/)
     expect(job).toMatch(/pages deploy dist --project-name=pilotage-ejp --branch=main/)
     // Sinon « --branch=main » publierait un simple aperçu.
     expect(job).toContain(`--data '{"name":"pilotage-ejp","production_branch":"main"}'`)
