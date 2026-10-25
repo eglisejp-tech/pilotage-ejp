@@ -1,6 +1,14 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import type { Page, Route } from '@playwright/test'
+import type { Page } from '@playwright/test'
+import {
+  ENTETES_CORS,
+  enregistrerSession,
+  estLectureDeSession,
+  repondreSession,
+  SERVEUR,
+  simulerBase,
+} from './outils/session-simulee.ts'
 
 // Réseau (plan de l'étape 7, lot F1) : bandeau hors ligne, lecture interrompue, envoi en échec et
 // route sans réponse. Aucune base : les aperçus et l'écran de connexion se passent du serveur, et
@@ -16,107 +24,10 @@ const APRES_RETOUR = { timeout: 10_000 }
 const ECHEC = 'La connexion a échoué. Réessayez.'
 // Lecture de la session abandonnée après 10 s (m252) : le cas « lent » a sa phrase.
 const TROP_LONG = 'La réponse met trop de temps. Réessayez.'
-// Adresse du client Supabase : celle de playwright.config.ts (variable VITE_SUPABASE_URL, sinon la
-// base locale par défaut). Le client range sa session sous « sb-<premier mot du nom d'hôte>-auth-token ».
-const SERVEUR = process.env.VITE_SUPABASE_URL ?? 'http://127.0.0.1:54321'
-const CLE_STOCKAGE = `sb-${new URL(SERVEUR).hostname.split('.')[0]}-auth-token`
-const UTILISATEUR = '00000000-0000-4000-8000-000000000001'
-
 const bandeau = (page: Page) =>
   page.getByRole('status').filter({ hasText: 'Pas de connexion internet' })
 /** La région « status » du bandeau : toujours là, vide tant que la connexion est là. */
 const regionBandeau = (page: Page) => page.locator('#root > [role="status"]')
-
-function base64Url(objet: object): string {
-  return Buffer.from(JSON.stringify(objet)).toString('base64url')
-}
-
-/**
- * Une session enregistrée de berger, en double authentification (aal2). Le client la lit dans le
- * stockage local, sans appel au serveur : il ne vérifie pas la signature du jeton.
- */
-async function enregistrerSession(page: Page) {
-  const expiration = Math.floor(Date.now() / 1000) + 3600
-  const jeton = [
-    base64Url({ alg: 'HS256', typ: 'JWT' }),
-    base64Url({
-      sub: UTILISATEUR,
-      role: 'authenticated',
-      aal: 'aal2',
-      amr: [{ method: 'totp', timestamp: expiration - 60 }],
-      exp: expiration,
-    }),
-    // Une signature en base64url de longueur valide : le client refuse un jeton mal formé.
-    'c2lnbmF0dXJl',
-  ].join('.')
-  const session = {
-    access_token: jeton,
-    refresh_token: 'jeton-de-renouvellement',
-    token_type: 'bearer',
-    expires_in: 3600,
-    expires_at: expiration,
-    user: {
-      id: UTILISATEUR,
-      aud: 'authenticated',
-      role: 'authenticated',
-      email: 'berger@exemple.test',
-      app_metadata: {},
-      user_metadata: {},
-      created_at: '2026-01-01T00:00:00Z',
-    },
-  }
-  await page.addInitScript(([cle, valeur]) => window.localStorage.setItem(cle, valeur), [
-    CLE_STOCKAGE,
-    JSON.stringify(session),
-  ] as const)
-}
-
-// Le serveur factice est une autre origine que la page : sans ces en-têtes (et sans réponse à la
-// requête de vérification OPTIONS), le navigateur refuse la réponse simulée.
-const ENTETES_CORS = {
-  'access-control-allow-origin': '*',
-  'access-control-allow-headers': '*',
-  'access-control-allow-methods': 'GET, POST, OPTIONS',
-}
-
-const repondreCompte = (route: Route) =>
-  route.request().method() === 'OPTIONS'
-    ? route.fulfill({ status: 204, headers: ENTETES_CORS })
-    : route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: ENTETES_CORS,
-        json: {
-          user_id: UTILISATEUR,
-          type: 'berger',
-          ministere_id: null,
-          libelle: 'Berger',
-          desactive_le: null,
-        },
-      })
-
-/** Lectures de la session : la ligne de compte, puis (en aal2) l'acceptation des conditions (T53). */
-const estLectureDeSession = (route: Route) =>
-  /\/(compte|acceptation_conditions)$/.test(new URL(route.request().url()).pathname)
-
-const repondreSession = (route: Route) =>
-  new URL(route.request().url()).pathname.endsWith('/acceptation_conditions') &&
-  route.request().method() !== 'OPTIONS'
-    ? route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        headers: ENTETES_CORS,
-        json: [{ id: 'acceptation-1' }],
-      })
-    : repondreCompte(route)
-
-/** Les lectures de la base : le compte répond, tout le reste échoue ou reste sans réponse. */
-async function simulerBase(page: Page, autres: 'echec' | 'silence') {
-  await page.route(`${SERVEUR}/rest/v1/**`, (route) => {
-    if (estLectureDeSession(route)) return repondreSession(route)
-    return autres === 'echec' ? route.abort('failed') : new Promise<void>(() => {})
-  })
-}
 
 test.describe('bandeau hors ligne', () => {
   test('paraît quand la connexion tombe, disparaît quand elle revient, sur la connexion', async ({

@@ -42,15 +42,28 @@ function dossierPolices(): string[] {
 }
 
 // https://vite.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ command, mode }) => {
   // Vite lit process.env avant les fichiers .env : la valeur réduite remplace la leur.
   process.env.VITE_SITE_URL = adresseSite(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL)
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
-      alias: {
-        '@': fileURLToPath(new URL('./src', import.meta.url)),
-      },
+      alias: [
+        // Au build seulement : les aperçus de développement (src/app/routesDeDeveloppement.tsx)
+        // deviennent une liste vide, et leur code sort du bundle (découpage par écran). Le
+        // serveur de développement et les tests gardent les aperçus. Avant « @ », plus général.
+        ...(command === 'build'
+          ? [
+              {
+                find: /^@\/app\/routesDeDeveloppement$/,
+                replacement: fileURLToPath(
+                  new URL('./src/app/routesDeDeveloppementAbsentes.ts', import.meta.url),
+                ),
+              },
+            ]
+          : []),
+        { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },
+      ],
     },
     server: {
       // La racine habituelle de Vite, plus le dossier réel des polices.
