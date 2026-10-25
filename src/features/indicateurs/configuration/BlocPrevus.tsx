@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { Aide } from '@/components/aide/Aide'
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import { ChoixListePrevus } from '@/features/indicateurs/configuration/ChoixListePrevus'
 import type { ConfigurationMinistere } from '@/features/indicateurs/configuration/construire'
@@ -22,10 +22,8 @@ interface Props {
 }
 
 const textes = TEXTES_CONFIGURATION.ministere
-const classeBouton =
-  'inline-flex min-h-14 items-center justify-center bg-lumiere px-5 text-[15px] font-semibold text-encre aria-disabled:cursor-wait'
 const classeLien =
-  'inline-flex min-h-cible items-center text-[15px] font-semibold underline underline-offset-4'
+  'inline-flex min-h-cible items-center text-interface font-semibold underline underline-offset-4'
 
 /** Ce que la liste montre d'abord : la suggestion tant que rien n'est choisi, sinon le choix. */
 function choixDe(prevus: EtatPrevus): string {
@@ -96,30 +94,29 @@ export function BlocPrevus({ donnees, creation }: Props) {
       ) : null}
       {!formulaire && prevus.genre === 'a_creer' ? (
         <div className="mt-3 flex flex-col items-start gap-3">
-          <p className="max-w-prose text-encre-2">
+          <p className="max-w-lecture text-encre-2">
             {introPrevus(prevus.modele.nom, prevus.manquants.length)}
           </p>
           <ListePrevus prevus={prevus.manquants} />
           <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-            <button
-              type="button"
-              aria-disabled={enCours || undefined}
+            {/* Pendant l'envoi : « Création en cours » (m227). */}
+            <Bouton
+              variante="principal"
+              taille="principal"
+              enCours={enCours}
+              libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}
               aria-busy={enCours || undefined}
               onClick={() => void creation.creer(ministere, prevus.modele.code)}
-              className={classeBouton}
             >
-              {/* Pendant l'envoi : « Création en cours » (m227). */}
-              <LibelleEnvoi enCours={enCours} libelleEnCours={TEXTES_CONFIGURATION.creationEnCours}>
-                {boutonCreerPrevus(prevus.manquants.length)}
-              </LibelleEnvoi>
-            </button>
+              {boutonCreerPrevus(prevus.manquants.length)}
+            </Bouton>
             {lienChanger}
           </div>
         </div>
       ) : null}
       {!formulaire && prevus.genre !== 'a_creer' ? (
         <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2">
-          <p className="max-w-prose text-encre-2">
+          <p className="max-w-lecture text-encre-2">
             {prevus.genre === 'aucun'
               ? textes.aucunPrevuExplication
               : prevusTousRetires(prevus.modele.nom)}

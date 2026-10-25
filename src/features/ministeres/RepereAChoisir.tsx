@@ -16,7 +16,7 @@ export function RepereAChoisir({ ministere }: Props) {
   return (
     <Link
       to={ministere.prevusAChoisir.href}
-      className="inline-flex min-h-cible items-center text-sm font-semibold text-encre-2 underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
+      className="inline-flex min-h-cible items-center text-detail font-semibold text-encre-2 underline decoration-encre-3 underline-offset-4 hover:decoration-encre"
     >
       {TEXTES_FICHE.liste.prevusAChoisir} <span className="sr-only">pour {ministere.nom}</span>
     </Link>

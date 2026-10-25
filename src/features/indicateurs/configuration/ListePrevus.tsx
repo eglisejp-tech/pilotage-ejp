@@ -12,7 +12,7 @@ export function ListePrevus({ prevus }: Props) {
       {prevus.map((prevu) => (
         <li
           key={prevu.code}
-          className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-filet py-2 text-[15px]"
+          className="flex flex-wrap items-baseline justify-between gap-x-4 border-b border-filet py-2 text-interface"
         >
           <span className="min-w-0 break-words">{prevu.libelle}</span>
           <span className="text-note text-encre-3">
