@@ -65,7 +65,7 @@ export function ComptagesEvenementsLus({ avecRetards }: Props) {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-12">
+    <div className="flex min-w-0 flex-col gap-sections">
       <BlocEvenementsEglise bloc={bloc} />
       <BlocPonctualite bloc={bloc} retards={lectureRetards} />
     </div>

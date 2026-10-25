@@ -90,7 +90,8 @@ describe('« Vos chiffres de la semaine »', () => {
     expect(ligneDe(chiffres, 'indicateur:visuels')).toMatchObject({
       libelle: 'Visuels livrés ce mois',
       valeur: { texte: '2' },
-      detail: 'Septembre en cours. Août 2026 : 6',
+      // Espaces insécables autour du deux-points : « 6 » ne finit pas seul une ligne (T69).
+      detail: 'Septembre en cours. Août 2026\xa0:\xa06',
     })
   })
 

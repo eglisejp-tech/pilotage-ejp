@@ -31,6 +31,9 @@ export function erreurDeConnexion(objet: ObjetSaisie): string {
 /** Largeur à partir de laquelle une saisie s'ouvre en panneau latéral de 460 px (BRIEF section 9). */
 export const LARGEUR_PANNEAU = 600
 
+/** Le lien qui ferme une saisie : en haut du panneau, ou dans l'en-tête simplifié du téléphone. */
+export const LIBELLE_RETOUR = 'Retour'
+
 /**
  * Fermer un panneau de saisie dont un champ a changé (m265, guide des messages 10.7, Proposé) :
  * « Retour », Échap, le fond du panneau ou « Annuler ».

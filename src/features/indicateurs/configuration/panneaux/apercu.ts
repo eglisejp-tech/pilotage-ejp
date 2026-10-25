@@ -9,7 +9,7 @@ import type { DateIso } from '@/lib/metier/dates'
 import { formaterJourSemaine } from '@/lib/metier/dates'
 import { formaterResultatCalcul } from '@/lib/metier/indicateurs'
 import { ajouterMois, libelleMois, moisDe } from '@/lib/metier/periodes'
-import { accorder, ESPACE_FINE, nombre } from '@/lib/metier/texte'
+import { accorder, ESPACE_INSECABLE, nombre } from '@/lib/metier/texte'
 import { formaterValeur } from '@/lib/metier/unites'
 
 /** Libellé affiché tant que la personne n'a rien écrit. */
@@ -53,7 +53,7 @@ export function apercuSaisie(entree: EntreeApercuSaisie): string {
   const libelle = entree.libelle.replace(/\s+/g, ' ').trim() || LIBELLE_PAR_DEFAUT
   const periode = periodeApercu(entree.nature, entree.aujourdhui, entree.dimancheReference)
   const tete = periode === null ? libelle : `${libelle}, ${periode}`
-  return `${tete} : __${entree.unite === 'euros' ? `${ESPACE_FINE}€` : ''}`
+  return `${tete} : __${entree.unite === 'euros' ? `${ESPACE_INSECABLE}€` : ''}`
 }
 
 /**

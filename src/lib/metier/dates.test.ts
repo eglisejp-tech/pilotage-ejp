@@ -16,6 +16,7 @@ import {
   joursEntre,
   lireInstant,
   partiesDeParis,
+  quantieme,
 } from './dates'
 
 describe('estDateIso', () => {
@@ -140,7 +141,16 @@ describe('partiesDeParis, jourDeParis et heureDeParis', () => {
 describe('formats de dates', () => {
   it('écrit « 27 sept. », sans zéro devant le jour', () => {
     expect(formaterJourCourt('2026-09-27')).toBe('27 sept.')
-    expect(formaterJourCourt('2026-10-01')).toBe('1 oct.')
+    expect(formaterJourCourt('2026-10-02')).toBe('2 oct.')
+  })
+
+  it('écrit « 1er » pour le premier jour du mois (T69, écart 11)', () => {
+    expect(quantieme(1)).toBe('1er')
+    expect(quantieme(2)).toBe('2')
+    expect(quantieme(31)).toBe('31')
+    expect(formaterJourCourt('2026-10-01')).toBe('1er oct.')
+    expect(formaterJourAbrege('2026-11-01')).toBe('Dim. 1er nov.')
+    expect(formaterJourSemaineTitre('2026-11-01')).toBe('Dimanche 1er nov.')
   })
 
   it('abrège les douze mois comme le brief', () => {
@@ -178,7 +188,7 @@ describe('formats de dates', () => {
   it('écrit le mois en entier : « samedi 17 octobre »', () => {
     expect(formaterJourLong('2026-10-17')).toBe('samedi 17 octobre')
     expect(formaterJourLong('2026-09-26')).toBe('samedi 26 septembre')
-    expect(formaterJourLong('2027-01-01')).toBe('vendredi 1 janvier')
+    expect(formaterJourLong('2027-01-01')).toBe('vendredi 1er janvier')
   })
 })
 
@@ -206,6 +216,6 @@ describe('formats des heures', () => {
   it("écrit une ligne de journal à l'heure de Paris : « 27 sept., 12 h 41 »", () => {
     expect(formaterHorodatage('2026-09-27T10:41:00Z')).toBe('27 sept., 12 h 41')
     expect(formaterHorodatage('2026-09-26T20:05:00.654321+00:00')).toBe('26 sept., 22 h 05')
-    expect(formaterHorodatage('2026-12-31T23:00:00Z')).toBe('1 janv., 0 h')
+    expect(formaterHorodatage('2026-12-31T23:00:00Z')).toBe('1er janv., 0 h')
   })
 })

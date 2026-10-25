@@ -1,8 +1,11 @@
+import { Bouton } from '@/components/ui/Bouton'
+import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { CelluleSaisies } from '@/features/sessions/CelluleSaisies'
 import type { LigneSession } from '@/features/sessions/construire'
 import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
+import { cn } from '@/lib/utils'
 
 interface Props {
   lignes: readonly LigneSession[]
@@ -11,48 +14,41 @@ interface Props {
   onSupprimer: (ligne: LigneSession) => void
 }
 
-const classeBouton =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-3.5 text-[15px] font-semibold text-encre hover:bg-fond'
-
+/**
+ * « Modifier » puis « Supprimer » (une session sans saisie seulement). Alignés à gauche de leur
+ * case : « Modifier » reste à la même place, que « Supprimer » soit là ou non (proposition 5,
+ * T69). Côte à côte à partir de 1024 px, l'un sous l'autre en dessous.
+ */
 function Boutons({
   ligne,
   onModifier,
   onSupprimer,
-  pleineLargeur,
+  pleineLargeur = false,
 }: Omit<Props, 'lignes' | 'idTitre'> & { ligne: LigneSession; pleineLargeur?: boolean }) {
-  const classe = pleineLargeur ? `${classeBouton} w-full` : classeBouton
   return (
-    <div
-      className={
-        pleineLargeur
-          ? 'flex flex-col gap-2'
-          : 'flex flex-col gap-2 min-[1024px]:flex-row min-[1024px]:justify-end'
-      }
-    >
-      <button
-        type="button"
-        className={classe}
+    <div className={cn('flex flex-col gap-2', !pleineLargeur && 'ordinateur:flex-row')}>
+      <Bouton
+        pleineLargeur={pleineLargeur}
         aria-label={`${TEXTES_SESSIONS.modifier} ${ligne.designation}`}
         onClick={() => onModifier(ligne)}
       >
         {TEXTES_SESSIONS.modifier}
-      </button>
+      </Bouton>
       {ligne.supprimable ? (
-        <button
-          type="button"
-          className={classe}
+        <Bouton
+          pleineLargeur={pleineLargeur}
           aria-label={`${TEXTES_SESSIONS.supprimer} ${ligne.designation}`}
           onClick={() => onSupprimer(ligne)}
         >
           {TEXTES_SESSIONS.supprimer}
-        </button>
+        </Bouton>
       ) : null}
     </div>
   )
 }
 
 const entete = 'pt-1 pr-5 pb-1 text-left align-middle font-normal'
-const cellule = 'py-3 pr-5 align-top text-[15px]'
+const cellule = 'py-3 pr-5 align-top text-interface'
 
 /**
  * Sessions déclarées (maquette 14). À partir de 600 px, un tableau : date, session, attendus,
@@ -69,10 +65,12 @@ export function ListeSessions({ lignes, idTitre, onModifier, onSupprimer }: Prop
           <li
             key={ligne.id}
             data-cle={ligne.id}
-            className="flex flex-col gap-1.5 border-t border-filet py-4 text-[15px] first:border-t-0"
+            className="flex flex-col gap-1.5 border-t border-filet py-4 text-interface first:border-t-0"
           >
             <span className="text-encre-2">{ligne.dateCourte}</span>
-            <span className="font-bold">{ligne.nom}</span>
+            <span className="font-bold">
+              <SansCoupureAuTrait texte={ligne.nom} />
+            </span>
             <span className="text-encre-2">
               {TEXTES_SESSIONS.colonneAttendus} : {ligne.attendus}
             </span>
@@ -116,7 +114,7 @@ export function ListeSessions({ lignes, idTitre, onModifier, onSupprimer }: Prop
           <tr key={ligne.id} data-cle={ligne.id} className="border-t border-filet">
             <td className={`${cellule} whitespace-nowrap text-encre-2`}>{ligne.dateCourte}</td>
             <th scope="row" className={`${cellule} text-left font-bold`}>
-              {ligne.nom}
+              <SansCoupureAuTrait texte={ligne.nom} />
             </th>
             <td className={cellule}>{ligne.attendus}</td>
             <td className={cellule}>

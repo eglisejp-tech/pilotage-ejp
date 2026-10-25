@@ -2,20 +2,38 @@ import { describe, expect, it } from 'vitest'
 import {
   accorder,
   comparerNoms,
+  ESPACE_FINE,
+  ESPACE_INSECABLE,
+  lierNombres,
   listeNoms,
   longueurEnCaracteres,
   majusculeInitiale,
   MOINS,
   nombre,
   nombreEnDebutDePhrase,
+  sansEspaceFine,
   terminerPhrase,
   trierNoms,
 } from './texte'
+
+// Espace insécable, pour des attentes lisibles.
+const I = ESPACE_INSECABLE
 
 describe('nombre', () => {
   it('écrit les petits nombres en chiffres', () => {
     expect(nombre(0)).toBe('0')
     expect(nombre(52)).toBe('52')
+  })
+
+  it("groupe les milliers par l'espace insécable des polices, jamais par l'espace fine", () => {
+    expect(nombre(1234)).toBe(`1${I}234`)
+    expect(nombre(9_999_999)).toBe(`9${I}999${I}999`)
+    expect(nombre(-1234)).not.toContain(ESPACE_FINE)
+  })
+
+  it('garde une espace insécable (U+00A0), dessinée par les trois polices', () => {
+    expect(ESPACE_INSECABLE).toBe(String.fromCodePoint(0xa0))
+    expect(sansEspaceFine(`1${ESPACE_FINE}250${ESPACE_FINE}€`)).toBe(`1${I}250${I}€`)
   })
 
   it('groupe les milliers à la française, avec une espace insécable', () => {
@@ -137,5 +155,41 @@ describe('longueurEnCaracteres', () => {
     expect(longueurEnCaracteres('🙏')).toBe(1)
     expect('🙏'.length).toBe(2)
     expect(longueurEnCaracteres('Fait 🙏🙏🙏')).toBe(8)
+  })
+})
+
+describe('lierNombres', () => {
+  it('lie un nombre au mot qui le suit', () => {
+    expect(lierNombres("2 ministères n'ont pas encore saisi")).toBe(
+      `2${I}ministères n'ont pas encore saisi`,
+    )
+    expect(lierNombres('le 27 sept.')).toBe(`le 27${I}sept.`)
+    expect(lierNombres('le 1er oct.')).toBe(`le 1er${I}oct.`)
+    expect(lierNombres(`52 STARs, 80${I}%`)).toBe(`52${I}STARs, 80${I}%`)
+  })
+
+  it('lie un petit nombre écrit en lettres, sans toucher un mot qui le contient', () => {
+    expect(lierNombres('et un point attend votre décision')).toBe(
+      `et un${I}point attend votre décision`,
+    )
+    expect(lierNombres('Deux points attendent')).toBe(`Deux${I}points attendent`)
+    expect(lierNombres('aucun point, chacun le sait')).toBe('aucun point, chacun le sait')
+  })
+
+  it('garde ensemble une heure et une complétude', () => {
+    expect(lierNombres('lundi 5 oct., 20 h 30')).toBe(`lundi 5${I}oct., 20${I}h${I}30`)
+    expect(lierNombres('6 sur 8')).toBe(`6${I}sur${I}8`)
+  })
+
+  it('lie la ponctuation double, les guillemets et le nombre qui suit un deux-points', () => {
+    expect(lierNombres('Septembre en cours. Août 2026 : 6')).toBe(
+      `Septembre en cours. Août 2026${I}:${I}6`,
+    )
+    expect(lierNombres('Manque : Social')).toBe(`Manque${I}: Social`)
+    expect(lierNombres('« Les comptes » ?')).toBe(`«${I}Les comptes${I}»${I}?`)
+  })
+
+  it('ne change pas un texte sans nombre ni ponctuation double', () => {
+    expect(lierNombres('Tous les ministères ont saisi.')).toBe('Tous les ministères ont saisi.')
   })
 })

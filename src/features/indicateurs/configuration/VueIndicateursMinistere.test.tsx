@@ -143,7 +143,7 @@ describe('VueIndicateursMinistere : un ministère qui suit des indicateurs (7.2)
     expect(resume.closest('details')).not.toHaveAttribute('open')
     await userEvent.click(resume)
     expect(screen.getByText('Retiré le 3 oct. : doublon.')).toBeVisible()
-    expect(screen.getByText('Refusé le 1 oct.')).toBeVisible()
+    expect(screen.getByText('Refusé le 1er oct.')).toBeVisible()
   })
 
   it('une seule aide d’usage pour tout l’écran', () => {

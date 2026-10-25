@@ -58,15 +58,15 @@ export function ChoixMinisteres({
       className="flex min-w-0 flex-col gap-1"
     >
       <div className="flex min-h-cible items-center justify-between gap-3 border-b border-filet">
-        <p id={idTitre} className="text-[15px] font-semibold">
+        <p id={idTitre} className="text-interface font-semibold">
           {TEXTES_SESSIONS.titreMinisteres}
         </p>
-        <p aria-live="polite" className="text-[15px] text-encre-2">
+        <p aria-live="polite" className="text-interface text-encre-2">
           {phraseCoches(coches, ministeres.length)}
         </p>
       </div>
       {avecNote ? (
-        <p id={idNote} className="pt-1 text-sm leading-normal text-encre-2">
+        <p id={idNote} className="pt-1 text-detail leading-normal text-encre-2">
           {note}
         </p>
       ) : null}
@@ -80,7 +80,7 @@ export function ChoixMinisteres({
         <ul className="flex flex-col">
           {ministeres.map((ministere, rang) => (
             <li key={ministere.id} className="border-b border-filet">
-              <label className="flex min-h-cible items-center gap-3 text-base">
+              <label className="flex min-h-cible items-center gap-3 text-texte">
                 <input
                   ref={rang === 0 ? refPremier : undefined}
                   type="checkbox"
@@ -98,7 +98,7 @@ export function ChoixMinisteres({
         </ul>
       )}
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

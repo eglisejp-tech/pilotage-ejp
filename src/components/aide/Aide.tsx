@@ -96,6 +96,10 @@ export function Aide({ code, libelle, placement = 'flux' }: AideProps) {
 
   const flux = placement === 'flux'
 
+  // La zone de toucher garde ses 44 px (T38), mais dépasse du disque en haut et en bas (marges
+  // négatives) : la ligne du libellé ne prend que la hauteur du disque, et la définition reste à
+  // 6 px de son libellé, comme dans la maquette 08 (proposition 18, T69). La bulle « flux »
+  // s'ouvre donc 12 px sous la ligne, sous la zone du bouton et non sur elle.
   const boutonAide = (
     <button
       ref={bouton}
@@ -104,11 +108,11 @@ export function Aide({ code, libelle, placement = 'flux' }: AideProps) {
       aria-expanded={ouvert}
       aria-controls={idBulle}
       onClick={() => setOuvert((precedent) => !precedent)}
-      className="group/aide inline-flex size-cible shrink-0 items-center justify-center"
+      className="group/aide -my-3 inline-flex size-cible shrink-0 items-center justify-center"
     >
       <span
         aria-hidden="true"
-        className="aide-forme grid place-items-center border border-encre-2 bg-papier text-[13px] leading-none font-bold text-encre group-aria-expanded/aide:bg-encre group-aria-expanded/aide:text-papier"
+        className="aide-forme grid place-items-center border border-encre-2 bg-papier text-note leading-none font-bold text-encre group-aria-expanded/aide:bg-encre group-aria-expanded/aide:text-papier"
       >
         ?
       </span>
@@ -122,9 +126,9 @@ export function Aide({ code, libelle, placement = 'flux' }: AideProps) {
           ref={bulle}
           data-cote="bas"
           className={cn(
-            'group/bulle block border border-encre bg-encre px-3.5 py-3 text-left text-sm leading-[1.45] font-normal text-papier',
+            'group/bulle block border border-encre bg-encre px-3.5 py-3 text-left text-detail leading-[1.45] font-normal text-papier',
             flux
-              ? 'relative mt-2 w-full min-[600px]:max-w-(--aide-largeur)'
+              ? 'relative mt-3 w-full tablette:max-w-(--aide-largeur)'
               : 'absolute top-[calc(100%+8px)] z-30 w-(--aide-largeur) max-w-[calc(100vw-1rem)] data-[cote=haut]:top-auto data-[cote=haut]:bottom-[calc(100%+8px)]',
           )}
         >

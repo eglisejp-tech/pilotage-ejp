@@ -288,7 +288,7 @@ describe('construireMinistere : écran /indicateurs/:id', () => {
         id: expect.any(String),
         libelle: 'Événements couverts',
         rythme: 'Chaque mois',
-        detail: 'Refusé le 1 oct.',
+        detail: 'Refusé le 1er oct.',
       },
     ])
   })

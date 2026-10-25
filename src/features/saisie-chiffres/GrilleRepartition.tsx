@@ -50,11 +50,11 @@ export function GrilleRepartition({
       className="flex flex-col gap-2 outline-hidden"
     >
       <div className="flex min-h-cible flex-wrap items-center">
-        <p id={idTitre} className="text-sm font-semibold">
+        <p id={idTitre} className="text-detail font-semibold">
           {TEXTES_CHIFFRES.grilleTitre}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3 min-[600px]:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 tablette:grid-cols-3">
         {categories.map((categorie) => (
           <ChampNombre
             key={categorie.code}
@@ -69,7 +69,7 @@ export function GrilleRepartition({
           />
         ))}
       </div>
-      <p id={idEtat} aria-live="polite" className="text-[15px] leading-normal">
+      <p id={idEtat} aria-live="polite" className="text-interface leading-normal">
         {message !== null ? (
           <span className="text-alerte">{message}</span>
         ) : etat.etat === 'reste' ? (

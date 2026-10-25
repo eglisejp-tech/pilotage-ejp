@@ -13,7 +13,7 @@ interface Props {
  */
 export function PrecisionSensible({ precision }: Props) {
   return (
-    <p className="text-sm leading-normal text-encre-2">
+    <p className="text-detail leading-normal text-encre-2">
       <span className="font-semibold text-encre">{precision.titre} : </span>
       <span className={cn(precision.texte.masque && 'text-encre-3')}>
         {precision.texte.masque ? TEXTE_MASQUE_AFFICHE : precision.texte.texte}

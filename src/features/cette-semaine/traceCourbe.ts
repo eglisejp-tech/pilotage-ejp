@@ -1,6 +1,6 @@
 import type { PointCourbe } from './types'
 
-/** Repère d'une courbe : dernier point, point incomplet (cercle vide) ou point isolé. */
+/** Repère d'une courbe : dernier point, point incomplet (cercle vide) ou bout d'un morceau. */
 export interface Repere {
   x: number
   y: number
@@ -20,6 +20,10 @@ const arrondi = (nombre: number) => Number(nombre.toFixed(1))
  * Trace une petite courbe dans un cadre `largeur` x `hauteur`, à `marge` pixels du bord.
  * Les courbes gardent le total brut (règle 12) : une valeur nulle laisse un trou (jamais zéro),
  * un point incomplet porte un cercle vide, le dernier point un cercle plein s'il est complet.
+ * Le bout de chaque morceau (le point qui précède un trou, ou un point isolé) porte un petit point
+ * plein, ou son cercle vide s'il est incomplet : un morceau se lit comme une courbe qui s'arrête,
+ * pas comme un trait cassé (proposition 11, T69). Aucun pointillé entre deux morceaux : un trou
+ * veut dire qu'aucune saisie n'existe.
  */
 export function tracerCourbe(
   points: PointCourbe[],
@@ -55,7 +59,7 @@ export function tracerCourbe(
       reperes.push({ x, y, plein: !point.incomplet, rayon: 3 })
     } else if (point.incomplet) {
       reperes.push({ x, y, plein: false, rayon: 2.5 })
-    } else if (precedentVide && suivantVide) {
+    } else if (suivantVide) {
       reperes.push({ x, y, plein: true, rayon: 2 })
     }
   })

@@ -1,4 +1,4 @@
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 
 interface Props {
   /** Ce que fait le bouton (« Ajouter au calendrier », « Enregistrer la réunion »). */
@@ -14,22 +14,24 @@ interface Props {
 }
 
 /**
- * Bouton d'enregistrement d'une saisie (maquette 11) : jaune `--lumiere`, pleine largeur, 58 px.
- * Pendant l'envoi, il reste dans l'ordre du clavier (`aria-disabled`) pour que le focus ne se
- * perde pas, et il redevient actif dès la réponse, réussie ou non ; la petite flamme accompagne
- * « … en cours » (T65, moment 4). Après une réussite, il reste inactif jusqu'à la prochaine
- * modification du formulaire.
+ * Bouton d'enregistrement d'une saisie (maquette 11) : le Bouton commun (T69), jaune, pleine
+ * largeur, 58 px. Pendant l'envoi, il reste dans l'ordre du clavier (`aria-disabled`) pour que le
+ * focus ne se perde pas, et il redevient actif dès la réponse, réussie ou non ; la petite flamme
+ * accompagne « … en cours » (T65, moment 4). Après une réussite, il reste indisponible (estompé)
+ * jusqu'à la prochaine modification du formulaire.
  */
 export function BoutonEnregistrer({ libelle, enCours, libelleEnCours, dejaEnvoye = false }: Props) {
   return (
-    <button
+    <Bouton
       type="submit"
-      aria-disabled={enCours || dejaEnvoye ? true : undefined}
-      className="min-h-14.5 w-full bg-lumiere px-4 text-[17px] font-bold text-encre aria-disabled:cursor-wait"
+      variante="principal"
+      taille="enregistrer"
+      pleineLargeur
+      enCours={enCours}
+      indisponible={dejaEnvoye}
+      libelleEnCours={libelleEnCours}
     >
-      <LibelleEnvoi enCours={enCours} libelleEnCours={libelleEnCours}>
-        {libelle}
-      </LibelleEnvoi>
-    </button>
+      {libelle}
+    </Bouton>
   )
 }

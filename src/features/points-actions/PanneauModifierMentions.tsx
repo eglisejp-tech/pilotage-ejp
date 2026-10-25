@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
 import { messageDeRefusPoint } from '@/data/pointsEcriture'
@@ -98,13 +99,9 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
           essai={inchange}
         />
         {refus ? <ErreurFormulaire message={refus} /> : null}
-        <button
-          type="button"
-          onClick={onFermer}
-          className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-        >
+        <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.mentions.annuler}
-        </button>
+        </Bouton>
       </form>
     )
   } else if (ministeres.isError && !ministeres.isFetching) {

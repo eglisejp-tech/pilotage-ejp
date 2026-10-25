@@ -1,0 +1,122 @@
+/*
+ * Fondations communes (T69, docs/decisions.md ; mode d'emploi : BRIEF_DESIGN.md, section 10).
+ * Ces variables ne sont pas des tokens : src/styles/tokens.css reste la copie de la référence,
+ * avec ses seuls ajouts du brief (--fij-1 à --fij-5). Elles nomment, par rôle, des valeurs qui
+ * étaient écrites à la main dans les composants. La configuration Tailwind (src/index.css) les
+ * branche : text-note, text-detail, text-interface, text-texte, gap-sections, max-w-lecture...
+ */
+
+:root {
+  /*
+   * Tailles de texte par rôle (proposition 16, écart 9 : une seule taille par objet, la plus
+   * proche des maquettes). Public Sans : quatre crans, agrandis d'un cran à partir de 1440 px.
+   */
+  --taille-note: var(--t-note); /* 13 px : notes, dates, en-têtes de colonnes, surtitres */
+  --taille-detail: 14px; /* seconde ligne d'une rangée, boutons de ligne de 01 à 04 et 12 */
+  --taille-interface: 15px; /* libellés, boutons, liens, onglets, lignes de liste */
+  --taille-texte: var(--t-texte); /* 16 px : texte courant et champs (16 px au moins, iPhone) */
+  --taille-enregistrer: 17px; /* « Enregistrer » des saisies, en gras */
+
+  /* Newsreader et Big Shoulders : une taille par objet, la même à toutes les largeurs. */
+  --taille-citation: 19px; /* texte libre cité entre guillemets (maquette 15 : 20 px) */
+  --taille-priorite: 19px; /* priorité d'un point, en capitales */
+  --taille-titre-point: 22px; /* titre d'un point (maquettes 01 à 04, 07, 12 ; 21 px dans 05) */
+  --taille-titre-fenetre: 28px; /* titre d'une fenêtre de confirmation */
+  --taille-titre-panneau: 32px; /* titre d'un panneau de saisie, 34 px à partir de 600 px */
+
+  /* Espacements nommés (proposition 14, écart 7) : un seul écart entre les sections. */
+  --espace-sections: 48px; /* entre l'en-tête de page et chaque section (maquettes 04, 05, 13, 15) */
+  --espace-bloc: 24px; /* entre le titre d'une section et son contenu, entre deux blocs */
+  --espace-entete: 10px; /* entre le titre de page et sa phrase */
+
+  /*
+   * Largeur de lecture (proposition 14, écart 7) : environ 75 caractères par ligne (BRIEF_DESIGN,
+   * 45 à 75). En em, elle suit le texte agrandi à partir de 1440 px.
+   */
+  --largeur-lecture: 35em;
+
+  /* Troisième animation (T69, écart 12) : la couleur au survol d'un bouton, courte. */
+  --duree-survol: 120ms;
+}
+
+/* Tablette (600 px, --breakpoint-tablette) : le titre d'un panneau prend son cran. */
+@media (width >= 600px) {
+  :root {
+    --taille-titre-panneau: 34px;
+  }
+}
+
+/*
+ * Grand écran (1440 px, --breakpoint-grand-ecran ; proposition 15, écart 8) : le texte courant
+ * passe à 17 px, comme le demande BRIEF_DESIGN (section 6), et les autres textes de l'interface
+ * prennent le même cran. Les titres et les chiffres suivent déjà la largeur (tokens fluides).
+ */
+@media (width >= 1440px) {
+  :root {
+    --taille-note: 14px;
+    --taille-detail: 15px;
+    --taille-interface: 16px;
+    --taille-texte: 17px;
+  }
+}
+
+@layer base {
+  /* Proposition 7 : la main sur un bouton qui répond (Tailwind 4 garde la flèche par défaut). */
+  button:not(:disabled, [aria-disabled='true']) {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /*
+   * Retour visible (proposition 7, écart 12) : au survol, un voile de la couleur du texte, à 10 %,
+   * qui arrive en 120 ms ; à l'appui, 18 %, tout de suite. Le voile passe entre le fond et le
+   * libellé (z-index négatif dans un contexte isolé) : aucune couleur nouvelle, le contraste du
+   * libellé reste celui du repos (au pire 8:1 sur le jaune). Un bouton inactif (`aria-disabled`)
+   * ne réagit pas. Au doigt, seul l'appui compte : le survol attend une souris (`hover: hover`).
+   */
+  .retour-appui {
+    position: relative;
+    isolation: isolate;
+  }
+  .retour-appui::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--encre);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duree-survol) ease-out;
+  }
+  /* Sur un fond foncé, le voile est clair. */
+  .retour-appui.retour-clair::after {
+    background-color: var(--papier);
+  }
+  @media (hover: hover) {
+    .retour-appui:hover::after {
+      opacity: 0.1;
+    }
+  }
+  .retour-appui:active::after {
+    opacity: 0.18;
+    transition-duration: 0s;
+  }
+  .retour-appui[aria-disabled='true']::after {
+    opacity: 0;
+  }
+}
+
+/*
+ * Deux règles « Réduire les animations », voulues : celle de tokens.css (« * ») vient de la
+ * copie de docs/reference/tokens.css, qui ne se modifie pas, et ne touche pas les
+ * pseudo-éléments. Celle-ci les complète : le voile de survol (`.retour-appui::after`) s'arrête
+ * aussi. Un changement du voile garde cette règle.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

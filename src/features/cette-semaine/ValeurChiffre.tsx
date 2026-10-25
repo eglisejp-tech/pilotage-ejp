@@ -5,11 +5,15 @@ interface Props {
   valeur: ValeurAffichee
 }
 
-/** Valeur d'un chiffre de l'église, en Big Shoulders à chasse fixe, ou son état vide. */
+/**
+ * Valeur d'un chiffre de l'église, en Big Shoulders, ou son état vide. Big Shoulders n'a pas de
+ * chiffres de même largeur (son 1 est presque deux fois plus étroit que son 0) : `tabular-nums`
+ * n'y change rien, la colonne aligne les valeurs à droite.
+ */
 export function ValeurChiffre({ valeur }: Props) {
   if (valeur.etat !== 'saisie') {
     return (
-      <span className="text-sm whitespace-nowrap text-encre-3">
+      <span className="text-detail whitespace-nowrap text-encre-3">
         {valeur.etat === 'vide' ? TEXTES_VIDES.chiffres.valeur : TEXTES_VIDES.chiffres.nonCalcule}
       </span>
     )

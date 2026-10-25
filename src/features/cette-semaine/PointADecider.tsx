@@ -25,9 +25,7 @@ export function PointADecider({ point, compte = null }: Props) {
   return (
     <article aria-labelledby={idTitre} className="flex flex-col gap-1.5 py-[18px]">
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-        <p
-          className={`font-chiffres text-[19px] font-extrabold tracking-[0.04em] uppercase ${couleursPriorite[point.priorite]}`}
-        >
+        <p className={`font-chiffres text-priorite uppercase ${couleursPriorite[point.priorite]}`}>
           <span className="sr-only">{TEXTES_A_DECIDER.priorite}</span>
           {libellesPriorite[point.priorite]}
         </p>
@@ -44,16 +42,16 @@ export function PointADecider({ point, compte = null }: Props) {
           ) : null}
         </p>
       </div>
-      <h3 id={idTitre} className="font-lecture text-[22px] leading-tight font-medium">
+      <h3 id={idTitre} className="font-lecture text-titre-point">
         <ChampLibre texte={point.titre} />
       </h3>
       {point.description ? (
-        <p className="hidden text-[15px] leading-normal text-encre-2 min-[600px]:block">
+        <p className="hidden text-interface leading-normal text-encre-2 tablette:block">
           <ChampLibre texte={point.description} />
         </p>
       ) : null}
       {avecAttendu ? (
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-detail text-encre-2">
           {point.attendu ? (
             <span>
               {TEXTES_A_DECIDER.attendu}{' '}

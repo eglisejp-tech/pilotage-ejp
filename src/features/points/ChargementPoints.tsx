@@ -1,5 +1,7 @@
 import { IndicateurChargement } from '@/components/etats/IndicateurChargement'
 import { PlaceReservee } from '@/components/etats/PlaceReservee'
+import { EnTetePage } from '@/components/ui/EnTetePage'
+import { GabaritPage } from '@/components/ui/GabaritPage'
 import { LienNouveauPoint } from '@/features/points/LienNouveauPoint'
 import { TEXTES_POINTS } from '@/features/points/textesPoints'
 import type { ProfilPoints } from '@/features/points/textesPoints'
@@ -19,18 +21,13 @@ interface Props {
  */
 export function ChargementPoints({ titre, profil }: Props) {
   return (
-    <div className="flex flex-col gap-12">
-      <header className="flex flex-col gap-2.5">
-        <h1 className="font-lecture text-titre leading-tight font-medium">{titre}</h1>
-        {profil === 'ministere' ? (
-          <>
-            <p className="max-w-[720px] leading-relaxed text-encre-2">
-              {TEXTES_POINTS.introduction.ministere}
-            </p>
-            <LienNouveauPoint />
-          </>
-        ) : null}
-      </header>
+    <GabaritPage>
+      <EnTetePage
+        titre={titre}
+        phrase={profil === 'ministere' ? TEXTES_POINTS.introduction.ministere : null}
+      >
+        {profil === 'ministere' ? <LienNouveauPoint /> : null}
+      </EnTetePage>
       <div className="flex flex-col gap-2.5">
         <div className="min-h-cible border-b-2 border-encre" />
         {/* La zone d'annonce existe dès le départ, vide : le texte y entre après 300 ms. */}
@@ -40,6 +37,6 @@ export function ChargementPoints({ titre, profil }: Props) {
           <PlaceReservee className="h-[30px] w-4/5" />
         </div>
       </div>
-    </div>
+    </GabaritPage>
   )
 }

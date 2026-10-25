@@ -6,6 +6,7 @@
 
 import { enLectureSeule } from '@/lib/metier/droits'
 import { comparerNoms } from '@/lib/metier/texte'
+import { noteDesChiffres } from './noteChiffres'
 import { TEXTES_VIDES } from './textesVides'
 import type {
   ApportSession,
@@ -25,8 +26,6 @@ import type {
 export type SessionExemple = 'batir' | 'anti_dispersion'
 
 const semaine = { numero: 39, periode: 'du 21 au 27 sept.' }
-
-const noteChiffres = 'Courbes : 10 derniers dimanches ou 4 dernières sessions.'
 
 function texte(valeur: string) {
   return { texte: valeur, masque: false }
@@ -320,7 +319,7 @@ const ministeres: LigneConseil[] = [
     href: '/ministeres/for',
     fraicheur: { libelle: 'Il y a 3 jours', etat: 'a_jour' },
     prochainEvenement: evenement('4 oct.', 'Nouvelle promotion'),
-    conseil: { prochaineReunion: '1 oct.', pointOuvert: null },
+    conseil: { prochaineReunion: '1er oct.', pointOuvert: null },
   },
   {
     id: 'fij',
@@ -385,7 +384,7 @@ function pourProfil(profil: ProfilVue, contenu: Contenu): DonneesCetteSemaine {
     semaine,
     ligneSecondaire: contenu.ligneSecondaire,
     chiffres: contenu.chiffres,
-    noteChiffres,
+    noteChiffres: noteDesChiffres(contenu.chiffres),
     session: contenu.session,
     carte: contenu.carte,
   }

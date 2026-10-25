@@ -74,9 +74,9 @@ export function BlocChiffresParDepartement({ bloc: lecture, peutSaisir }: Props)
                 <LigneRubriqueFij key={rubrique.code} rubrique={rubrique} avecAide={rang === 0} />
               ))}
             </ul>
-            <h3 className="mt-6 text-[15px] font-semibold">{TEXTES_BLOC_FIJ.parDepartement}</h3>
+            <h3 className="mt-6 text-interface font-semibold">{TEXTES_BLOC_FIJ.parDepartement}</h3>
             {bloc.donnees.semaineVide ? (
-              <p className="max-w-prose py-3 text-encre-2">
+              <p className="max-w-lecture py-3 text-encre-2">
                 {TEXTES_BLOC_FIJ.semaineVide(bloc.donnees.semaine)}
               </p>
             ) : (

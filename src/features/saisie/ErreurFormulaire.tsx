@@ -14,7 +14,10 @@ interface Props {
  */
 export function ErreurFormulaire({ objet = 'chiffres', message }: Props) {
   return (
-    <p role="alert" className="bg-alerte-fond px-3.5 py-3 text-[15px] leading-normal text-alerte">
+    <p
+      role="alert"
+      className="bg-alerte-fond px-3.5 py-3 text-interface leading-normal text-alerte"
+    >
       {message ?? erreurDeConnexion(objet)}
     </p>
   )

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
@@ -204,13 +205,9 @@ export function FormulaireSession({
         essai={inchange}
       />
       {onAnnuler ? (
-        <button
-          type="button"
-          onClick={annuler}
-          className="min-h-cible w-full border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-        >
+        <Bouton pleineLargeur onClick={annuler}>
           {TEXTES_SESSIONS.annuler}
-        </button>
+        </Bouton>
       ) : null}
       {refus !== null ? <ErreurFormulaire message={refus} /> : null}
     </form>

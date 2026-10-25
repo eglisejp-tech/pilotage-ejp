@@ -1,4 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react'
+import { ListeDeroulante } from '@/components/ui/ListeDeroulante'
 
 interface Props {
   libelle: string
@@ -9,19 +10,21 @@ interface Props {
 
 /**
  * Un filtre de l'écran 06 (maquette 06) : son libellé au-dessus, puis une vraie liste de choix de
- * 44 px de haut, nommée par son libellé pour les lecteurs d'écran. Pleine largeur sur téléphone.
+ * 44 px de haut (la liste commune, T69 : texte de 16 px, flèche dessinée), nommée par son libellé
+ * pour les lecteurs d'écran. Pleine largeur sur téléphone, 220 px à partir de 600 px.
  */
 export function ChampListe({ libelle, valeur, surChoix, children }: Props) {
   return (
-    <label className="flex w-full min-w-0 flex-col gap-1.5 text-sm font-semibold sm:w-auto">
+    <label className="flex w-full min-w-0 flex-col gap-1.5 text-detail font-semibold tablette:w-auto">
       {libelle}
-      <select
+      <ListeDeroulante
+        taille="filtre"
         value={valeur}
         onChange={(evenement: ChangeEvent<HTMLSelectElement>) => surChoix(evenement.target.value)}
-        className="min-h-cible w-full min-w-0 border border-encre bg-papier px-3 text-[15px] font-normal text-encre sm:w-[220px]"
+        className="w-full tablette:w-[220px]"
       >
         {children}
-      </select>
+      </ListeDeroulante>
     </label>
   )
 }

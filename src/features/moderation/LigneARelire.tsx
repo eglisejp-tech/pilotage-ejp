@@ -1,11 +1,14 @@
 import { useId, useState } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
+import { RANGEE_FILE } from '@/features/moderation/colonnesFile'
 import type { TexteARelire } from '@/features/moderation/construire'
 import { FenetreMasquage } from '@/features/moderation/FenetreMasquage'
 import { lireRefusModeration } from '@/features/moderation/refus'
 import type { ChoixMasquage } from '@/features/moderation/schemas'
 import { TEXTES_MODERATION } from '@/features/moderation/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { cn } from '@/lib/utils'
 
 interface Props {
   texte: TexteARelire
@@ -17,19 +20,20 @@ interface Props {
   surFait: (message: string) => void
 }
 
-const boutonSecondaire =
-  'inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond aria-disabled:cursor-wait'
-const boutonPrincipal =
-  'inline-flex min-h-cible items-center justify-center bg-encre px-4 text-[15px] font-semibold whitespace-nowrap text-papier aria-disabled:cursor-wait'
-
 /**
  * Une ligne de la file « Textes à relire » (maquette 15) : le type et le ministère, puis la date
  * et l'heure de Paris ; tous les champs libres non vides entre guillemets (avec leur nom quand il
  * y en a plusieurs) ; à droite, « Marquer relu » et « Masquer le texte » pour un texte à relire,
- * ou la décision (« Relu le 29 sept. », « Masqué le 29 sept. : nom
- * d'une personne »). Un texte relu ou masqué qui garde des champs non masqués garde « Masquer le
- * texte » (une donnée personnelle peut être signalée après la relecture). Un champ déjà masqué s'affiche en `--encre-3`. Une précision dit aussi l'indicateur et
- * le mois, jamais la valeur. Un refus de la base se dit sous les boutons.
+ * ou la décision (« Relu le 29 sept. », « Masqué le 29 sept. : nom d'une personne »). Un texte
+ * relu ou masqué qui garde des champs non masqués garde « Masquer le texte » (une donnée
+ * personnelle peut être signalée après la relecture). Un champ déjà masqué s'affiche en
+ * `--encre-3`. Une précision dit aussi l'indicateur et le mois, jamais la valeur. Un refus de la
+ * base se dit sous les boutons.
+ *
+ * « Masquer le texte », un geste définitif, est encadré comme dans « Signalements » : rien
+ * n'attire l'œil avant « Marquer relu », l'action courante ; le fond foncé n'apparaît que dans la
+ * fenêtre de confirmation (proposition 12, T69 ; écart 5 avec la maquette 15). À partir de
+ * 1024 px, les trois colonnes sont celles de la liste (colonnesFile.ts).
  */
 export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
   const idTitre = useId()
@@ -55,67 +59,70 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
   const plusieursChamps = texte.champs.length > 1
 
   return (
-    <article aria-labelledby={idTitre} className="flex flex-col gap-3 py-[18px]">
-      <div className="grid gap-x-8 gap-y-3 min-[1024px]:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]">
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <h3 id={idTitre} className="text-[15px] font-semibold wrap-anywhere">
-            {texte.entete}
-          </h3>
-          <p className="text-note text-encre-3">{texte.quand}</p>
-          {texte.indicateur !== null ? (
-            <p className="text-note wrap-anywhere text-encre-3">{texte.indicateur}</p>
-          ) : null}
-        </div>
-        <div className="flex min-w-0 flex-col gap-2">
-          {texte.champs.map((champ) => (
-            <div key={champ.code} className="flex min-w-0 flex-col">
-              {plusieursChamps ? (
-                <span className="text-note text-encre-3">{champ.libelle}</span>
-              ) : null}
-              <p className="font-lecture text-[19px] leading-snug wrap-anywhere">
-                «&nbsp;
-                <ChampLibre texte={{ texte: champ.texte, masque: champ.masque }} />
-                &nbsp;»
-              </p>
-            </div>
-          ))}
-        </div>
-        <div className="flex min-w-0 flex-col items-start gap-2 min-[1024px]:items-end">
-          {texte.decision !== null ? (
-            <p className="text-note text-encre-3 min-[1024px]:text-right">{texte.decision}</p>
-          ) : null}
-          {aRelire || peutMasquer ? (
-            <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col">
-              {aRelire ? (
-                <button
-                  type="button"
-                  aria-describedby={idTitre}
-                  aria-disabled={enCours ? true : undefined}
-                  onClick={() => void marquerRelu()}
-                  className={boutonSecondaire}
-                >
-                  {TEXTES_MODERATION.boutonRelu}
-                </button>
-              ) : null}
-              {peutMasquer ? (
-                <button
-                  type="button"
-                  aria-describedby={idTitre}
-                  aria-haspopup="dialog"
-                  aria-disabled={enCours ? true : undefined}
-                  onClick={() => {
-                    if (!enCours) setFenetre(true)
-                  }}
-                  className={aRelire ? boutonPrincipal : boutonSecondaire}
-                >
-                  {TEXTES_MODERATION.boutonMasquer}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+    <article
+      aria-labelledby={idTitre}
+      className={cn('grid gap-x-8 gap-y-3 py-[18px]', RANGEE_FILE)}
+    >
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <h3 id={idTitre} className="text-interface font-semibold wrap-anywhere">
+          {texte.entete}
+        </h3>
+        <p className="text-note text-encre-3">{texte.quand}</p>
+        {texte.indicateur !== null ? (
+          <p className="text-note wrap-anywhere text-encre-3">{texte.indicateur}</p>
+        ) : null}
       </div>
-      {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      <div className="flex min-w-0 flex-col gap-2">
+        {texte.champs.map((champ) => (
+          <div key={champ.code} className="flex min-w-0 flex-col">
+            {plusieursChamps ? (
+              <span className="text-note text-encre-3">{champ.libelle}</span>
+            ) : null}
+            <p className="font-lecture text-citation wrap-anywhere">
+              «&nbsp;
+              <ChampLibre texte={{ texte: champ.texte, masque: champ.masque }} />
+              &nbsp;»
+            </p>
+          </div>
+        ))}
+      </div>
+      <div className="flex min-w-0 flex-col items-start gap-2 ordinateur:items-end">
+        {texte.decision !== null ? (
+          <p className="text-note text-encre-3 ordinateur:text-right">{texte.decision}</p>
+        ) : null}
+        {aRelire || peutMasquer ? (
+          <div className="flex flex-wrap gap-3 max-tablette:w-full max-tablette:flex-col">
+            {aRelire ? (
+              <Bouton
+                aria-describedby={idTitre}
+                enCours={enCours}
+                onClick={() => void marquerRelu()}
+                className="whitespace-nowrap"
+              >
+                {TEXTES_MODERATION.boutonRelu}
+              </Bouton>
+            ) : null}
+            {peutMasquer ? (
+              <Bouton
+                aria-describedby={idTitre}
+                aria-haspopup="dialog"
+                enCours={enCours}
+                onClick={() => {
+                  if (!enCours) setFenetre(true)
+                }}
+                className="whitespace-nowrap"
+              >
+                {TEXTES_MODERATION.boutonMasquer}
+              </Bouton>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+      {refus !== null ? (
+        <div className="ordinateur:col-span-full">
+          <ErreurFormulaire message={refus} />
+        </div>
+      ) : null}
       {fenetre ? (
         <FenetreMasquage
           contexte={texte.entete}

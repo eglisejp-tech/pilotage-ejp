@@ -65,14 +65,16 @@ export function ChampHeure({
 
   return (
     <div role="group" aria-labelledby={idLibelle} className="flex flex-col gap-1.5">
-      <div className="flex min-h-cible flex-wrap items-center">
-        <p id={idLibelle} className="text-sm font-semibold">
+      {/* Même rangée que le libellé d'un nombre (LibelleAvecAide) : l'écart de 6 px jusqu'à la
+          définition est le même pour tous les champs (proposition 18, T69). */}
+      <div className="flex flex-wrap items-center">
+        <p id={idLibelle} className="text-detail font-semibold">
           {libelle}
         </p>
         {aide ? <Aide code={aide} libelle={libelle} /> : null}
       </div>
       {definition ? (
-        <p id={idDefinition} className="text-sm leading-normal text-encre-3">
+        <p id={idDefinition} className="text-detail leading-normal text-encre-3">
           {definition}
         </p>
       ) : null}
@@ -133,13 +135,13 @@ export function ChampHeure({
           erreur reçue à l'envoi n'y est pas : le focus va au champ, qui la lit avec lui. */}
       <div aria-live="polite" className="-mt-1.5">
         {aReprendre ? (
-          <p id={idErreur} className="mt-1.5 text-[15px] leading-normal text-alerte">
+          <p id={idErreur} className="mt-1.5 text-interface leading-normal text-alerte">
             {MESSAGE_NOMBRE_ENTIER}
           </p>
         ) : null}
       </div>
       {!aReprendre && message ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {message}
         </p>
       ) : null}

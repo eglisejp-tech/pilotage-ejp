@@ -167,7 +167,7 @@ describe('construireFiche : indicateurs propres', () => {
   it('somme de l’année avec son départ et sa complétude ; « plus de 30 jours » signalé', () => {
     const donnees = berger()
     expect(ligne(donnees, 'Fonds levés').somme).toEqual({
-      texte: 'Depuis août : 2 050 €',
+      texte: 'Depuis août : 2\xa0050\xa0€',
       completude: '2 mois sur 2',
     })
     expect(ligne(donnees, 'Personnes rencontrées en maraude').somme?.completude).toBe(
@@ -210,7 +210,7 @@ describe('construireFiche : indicateurs propres', () => {
       calcul: true,
       valeur: { etat: 'saisie', texte: '80', unite: '%' },
       detail: 'Septembre 2026 (16 sur 20)',
-      somme: { texte: "Sur l'année : 78 %", completude: '2 mois sur 2' },
+      somme: { texte: "Sur l'année : 78\xa0%", completude: '2 mois sur 2' },
     })
     expect(ligne(donnees, 'Montant moyen par action')).toMatchObject({
       valeur: { etat: 'non_calcule', texte: 'Non calculé' },

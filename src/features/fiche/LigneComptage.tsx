@@ -24,7 +24,7 @@ export function LigneComptage({ ligne, complement }: Props) {
         <span className={CASE_VALEUR}>
           <ValeurLigne valeur={ligne.valeur} />
         </span>
-        <span className="col-span-2 min-w-0 text-sm text-encre-3 md:col-span-3 md:col-start-3">
+        <span className="col-span-2 min-w-0 text-detail text-encre-3 tablette-large:col-span-3 tablette-large:col-start-3">
           {ligne.details.map((detail) => (
             <span key={detail} className="block">
               {detail}
@@ -33,7 +33,7 @@ export function LigneComptage({ ligne, complement }: Props) {
         </span>
       </div>
       {complement !== undefined ? (
-        <div className="mt-1.5 flex flex-col gap-1 text-sm text-encre-2">{complement}</div>
+        <div className="mt-1.5 flex flex-col gap-1 text-detail text-encre-2">{complement}</div>
       ) : null}
     </li>
   )

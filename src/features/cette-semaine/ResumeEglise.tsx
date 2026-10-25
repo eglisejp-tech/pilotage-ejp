@@ -35,7 +35,7 @@ export function ResumeEglise({ resume, chiffres, note, children }: Props) {
             aria-expanded={deplie}
             aria-controls={idContenu}
             onClick={() => setDeplie((avant) => !avant)}
-            className="-my-3 inline-flex min-h-cible min-w-cible items-center justify-end text-sm text-nuit underline underline-offset-4"
+            className="-my-3 inline-flex min-h-cible min-w-cible items-center justify-end text-detail text-nuit underline underline-offset-4"
           >
             {deplie ? 'Voir moins' : 'Tout voir'}
           </button>
@@ -46,7 +46,7 @@ export function ResumeEglise({ resume, chiffres, note, children }: Props) {
           <>
             <ListeChiffres lignes={chiffres} />
             <p className="mt-2.5 text-note text-encre-3">{note}</p>
-            <div className="mt-9 flex flex-col gap-9">{children}</div>
+            <div className="mt-sections flex flex-col gap-sections">{children}</div>
           </>
         ) : (
           <ListeChiffres lignes={resume} compacte />

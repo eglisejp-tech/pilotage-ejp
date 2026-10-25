@@ -1,6 +1,7 @@
 import type { ComponentProps } from 'react'
 import { LibelleAvecAide } from '@/components/aide/LibelleAvecAide'
 import type { CodeAide } from '@/components/aide/textesAide'
+import { Champ } from '@/components/ui/Champ'
 import { DEBUT_COMPTEUR, LONGUEUR_MAX_COURT } from '@/features/evenements/textes'
 import { Compteur } from '@/features/saisie/Compteur'
 import { RappelDonneesPersonnelles } from '@/features/saisie/RappelDonneesPersonnelles'
@@ -55,20 +56,19 @@ export function ChampTexteCourt({
       {aide ? (
         <LibelleAvecAide htmlFor={id} libelle={libelle} code={aide} />
       ) : (
-        <label htmlFor={id} className="text-[15px] font-semibold">
+        <label htmlFor={id} className="text-interface font-semibold">
           {libelle}
         </label>
       )}
-      <input
+      <Champ
         {...proprietes}
         id={id}
         type="text"
         aria-invalid={erreur ? true : undefined}
         aria-describedby={decritPar || undefined}
-        className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
       />
       {note ? (
-        <p id={idNote} className="text-sm leading-normal text-encre-2">
+        <p id={idNote} className="text-detail leading-normal text-encre-2">
           {note}
         </p>
       ) : null}
@@ -80,7 +80,7 @@ export function ChampTexteCourt({
         afficherDes={DEBUT_COMPTEUR}
       />
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

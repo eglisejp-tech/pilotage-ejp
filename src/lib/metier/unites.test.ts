@@ -11,8 +11,8 @@ import {
   valeurPermise,
 } from './unites'
 
-// Espace fine insécable d'Intl (U+202F) : « 12 480 », « 5 164 € ».
-const F = ' '
+// Espace insécable (U+00A0, T69) : « 12 480 », « 5 164 € ».
+const F = '\xa0'
 
 describe('formaterValeur', () => {
   it('écrit chaque unité comme le brief : 14, 12 480, 5 164 €, 10 h 42, 3 jours', () => {

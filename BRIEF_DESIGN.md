@@ -89,7 +89,7 @@ Chaque écran se conçoit **d'abord à 390 px**, puis s'élargit. Jamais l'inver
 - **Typographie fluide** : les grands chiffres et la phrase de la semaine suivent la largeur (par exemple `clamp()`), dans des bornes fixées. Les textes courants restent entre 15 et 17 px (17 px à partir de 1440 px) ; lignes de 45 à 75 caractères.
 - **Cibles tactiles** de 44 px au minimum, 64 px pour les boutons plus et moins de la saisie (`--cible-saisie` de `tokens.css`). Clavier numérique sur les champs de chiffres.
 - **Panneaux de saisie** : page entière sous 600 px ; à partir de 600 px (tablette comprise), panneau latéral de 460 px, fond `--papier`, filet gauche `--filet`, sans ombre ; le reste de la page est inerte et Échap ferme le panneau.
-- **Le pouce d'abord** : sur téléphone, le bouton « Enregistrer » reste dans une barre collée en bas de l'écran pendant la saisie (`position: sticky`), fond `--fond`, filet haut, marge basse qui tient compte de la zone de sécurité des téléphones.
+- **Le pouce d'abord** : sur téléphone, le bouton « Enregistrer » reste dans une barre collée en bas de l'écran pendant la saisie (`position: sticky`), fond `--fond`, filet haut, marge basse qui tient compte de la zone de sécurité des téléphones. **Refusé le 24 octobre 2026 (T69, proposition 2)** : la barre collée n'est pas construite ; « Enregistrer » reste en pleine largeur à la fin du formulaire.
 - **Images et cartes** : la carte des départements garde ses proportions et se met à l'échelle : grille de 5 colonnes sur 3 lignes, carreaux carrés, 100 % de la largeur de son bloc, au plus 346 px sur téléphone et 380 px dans la colonne de droite. Aucune largeur fixe supérieure à l'écran.
 - **Orientation et zoom** : l'interface reste utilisable en paysage et avec un zoom du navigateur à 200 %.
 - **Chaque direction est livrée en trois formats** au minimum : téléphone (390 px), ordinateur (1440 px), et un état grand écran ou tablette pour vérifier le comportement intermédiaire.
@@ -124,6 +124,35 @@ La planche `maquettes/00-profils-qui-voit-quoi.png` récapitule qui voit quoi et
 1. Direction visuelle : **tranché, direction C** (mélange de A et B).
 2. L'EJP a-t-elle une charte (logo, couleurs, polices) à respecter ? Si oui, elle prime sur ce brief. **Question encore ouverte.**
 3. Le nom de l'outil : **tranché, « Pilotage EJP »** (30 septembre 2026). « Le point du berger » reste le nom de la direction A ; les maquettes qui l'affichent se lisent « Pilotage EJP ».
+
+## 10. Les fondations communes (T69)
+
+Un seul modèle par élément, des tailles nommées, des règles vérifiées par la machine (décision T69 du 24 octobre 2026). Un écran nouveau ou repris s'écrit avec ces fondations ; il n'écrit plus de taille, de largeur d'écran ni de bouton à la main.
+
+- **Tailles de texte par rôle** (`src/styles/fondations.css`, branchées dans la configuration Tailwind de `src/index.css`). Une taille par objet, la plus proche des maquettes :
+
+  | Classe                                                                      | Taille                | Rôle                                                                       |
+  | --------------------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------------- |
+  | `text-note`                                                                 | 13 px (14 à 1440 px)  | notes, dates, en-têtes de colonnes, surtitres                              |
+  | `text-detail`                                                               | 14 px (15 à 1440 px)  | seconde ligne d'une rangée, libellés des filtres, boutons denses (01 à 04) |
+  | `text-interface`                                                            | 15 px (16 à 1440 px)  | libellés, boutons, liens, onglets, lignes de liste                         |
+  | `text-texte`                                                                | 16 px (17 à 1440 px)  | texte courant et champs (16 px au moins : pas de zoom sur iPhone)          |
+  | `text-enregistrer`                                                          | 17 px, gras           | « Enregistrer » des saisies                                                |
+  | `text-citation`                                                             | 19 px, interligne 1,4 | texte libre cité entre guillemets, en Newsreader                           |
+  | `text-priorite`                                                             | 19 px, extra-gras     | priorité d'un point, en Big Shoulders et en capitales                      |
+  | `text-titre-point`                                                          | 22 px, 500, 1,2       | titre d'un point d'attention                                               |
+  | `text-titre-fenetre`                                                        | 28 px, 500            | titre d'une fenêtre de confirmation                                        |
+  | `text-titre-panneau`                                                        | 32 px, 34 dès 600 px  | titre d'un panneau de saisie                                               |
+  | `text-section`, `text-titre`, `text-phrase`, `text-chiffre`, `text-semaine` | fluides               | tokens de `tokens.css`                                                     |
+
+  Les grands chiffres des champs de saisie (112, 84, 64, 56, 40 px) restent dans `ChampNombre`, qui les porte.
+
+- **Largeurs d'écran nommées** (variantes Tailwind, et `LARGEURS` de `src/lib/largeurs.ts` pour le JavaScript) : `tablette:` 600 px, `tablette-large:` 768 px, `ordinateur:` 1024 px, `ordinateur-large:` 1280 px, `grand-ecran:` 1440 px (et `max-tablette:`...). À partir de 1440 px, le texte de l'interface grandit d'un cran (section 6).
+- **Bouton** (`src/components/ui/Bouton.tsx`) : `variante` principal (jaune), secondaire (bordure encre) ou sombre ; `taille` ligne (44 px), ligne-dense (44 px, 14 px), accueil (48), ajout (52), principal (56), enregistrer (58) ; `pleineLargeur`. Pendant l'envoi (`enCours`, avec `libelleEnCours`), le bouton dit ce qu'il fait, reste dans l'ordre du clavier (`aria-disabled`, jamais `disabled`) et n'est jamais grisé ; momentanément indisponible (`indisponible`), il s'estompe. Au survol (souris), un voile de 10 % de la couleur du texte arrive en 120 ms ; à l'appui, 18 %, tout de suite ; le pointeur devient une main. C'est la troisième animation de l'outil, coupée par « Réduire les animations ». `classesBouton()` donne le même dessin à un lien.
+- **Champs** (`Champ`, `ZoneDeTexte`, `ListeDeroulante`) : bordure encre, fond papier, angles droits, texte de 16 px au moins ; 52 px dans un formulaire, 44 px dans une barre de filtres (maquette 06) ; la liste déroulante perd le dessin du système et reçoit une flèche dessinée (« ▾ » de la maquette 06).
+- **Gabarit de page** (`GabaritPage`, `EnTetePage`) : titre, phrase bornée à environ 75 caractères (`max-w-lecture`), action à droite à partir de 1024 px ; un seul écart entre l'en-tête et les sections (`gap-sections`, 48 px), `gap-bloc` (24 px) dans une section, `gap-entete` (10 px) entre le titre et sa phrase.
+- **Fenêtre de confirmation** (`FenetreConfirmation`, `useFenetreModale` pour une fenêtre à champs) : l'élément `<dialog>` du navigateur, une seule largeur (480 px), titre en question, conséquence, « Annuler » et l'action ; le focus entre sur la fenêtre, y reste, Échap annule, le focus revient au bouton d'origine.
+- **Garde-fous** (`npm run lint`) : `scripts/verifier-design.mjs` refuse dans `src` les tailles et largeurs écrites à la main, `max-w-[720px]` et `max-w-prose`, `hover:bg-fond`, les `<select>` et fenêtres recopiés, les barres sur le bord d'un bloc, les animations hors décision et les arrondis. Le code d'avant les fondations a des plafonds datés du 24 octobre 2026 (`scripts/design-plafonds.json`) : un nombre peut baisser, jamais monter. ESLint refuse `disabled` sur un bouton.
 
 ## Sources
 

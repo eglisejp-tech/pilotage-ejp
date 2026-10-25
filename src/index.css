@@ -8,6 +8,7 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import './styles/tokens.css';
+@import './styles/fondations.css';
 
 /* Polices servies par @fontsource : aucun appel à Google au chargement. */
 @import '@fontsource/newsreader/400';
@@ -33,6 +34,24 @@
   --inset-shadow-*: initial;
   --drop-shadow-*: initial;
   --text-shadow-*: initial;
+
+  /*
+   * Largeurs d'écran nommées (proposition 15, T69), en px comme useLargeurMin et LARGEURS
+   * (src/lib/largeurs.ts, qui vérifie l'accord) : tablette:, tablette-large:, ordinateur:,
+   * ordinateur-large:, grand-ecran: (et max-tablette:...). Les noms de Tailwind restent le temps
+   * de la migration, aux mêmes largeurs (sm reste à 640 px) ; scripts/verifier-design.mjs en
+   * refuse toute hausse.
+   */
+  --breakpoint-*: initial;
+  --breakpoint-tablette: 600px;
+  --breakpoint-tablette-large: 768px;
+  --breakpoint-ordinateur: 1024px;
+  --breakpoint-ordinateur-large: 1280px;
+  --breakpoint-grand-ecran: 1440px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
 }
 
 /*
@@ -110,14 +129,41 @@
   --text-titre: var(--t-titre);
   --text-section: var(--t-section);
   --text-chiffre: var(--t-chiffre);
-  --text-texte: var(--t-texte);
-  --text-note: var(--t-note);
+
+  /*
+   * Tailles par rôle (proposition 16, src/styles/fondations.css) : une taille, et pour certains
+   * rôles un interligne et une graisse, par objet. Les quatre premières grandissent à 1440 px.
+   */
+  --text-note: var(--taille-note);
+  --text-detail: var(--taille-detail);
+  --text-interface: var(--taille-interface);
+  --text-texte: var(--taille-texte);
+  --text-enregistrer: var(--taille-enregistrer);
+  --text-enregistrer--font-weight: 700;
+  --text-citation: var(--taille-citation);
+  --text-citation--line-height: 1.4;
+  --text-priorite: var(--taille-priorite);
+  --text-priorite--font-weight: 800;
+  --text-priorite--letter-spacing: 0.04em;
+  --text-titre-point: var(--taille-titre-point);
+  --text-titre-point--line-height: 1.2;
+  --text-titre-point--font-weight: 500;
+  --text-titre-fenetre: var(--taille-titre-fenetre);
+  --text-titre-fenetre--line-height: 1.15;
+  --text-titre-fenetre--font-weight: 500;
+  --text-titre-panneau: var(--taille-titre-panneau);
+  --text-titre-panneau--line-height: 1.1;
+  --text-titre-panneau--font-weight: 500;
 
   /* Espacements et largeurs */
   --spacing-marge: var(--marge);
   --spacing-cible: var(--cible);
   --spacing-cible-saisie: var(--cible-saisie);
+  --spacing-sections: var(--espace-sections);
+  --spacing-bloc: var(--espace-bloc);
+  --spacing-entete: var(--espace-entete);
   --container-contenu: var(--contenu-max);
+  --container-lecture: var(--largeur-lecture);
 }
 
 :root {
@@ -146,7 +192,8 @@
 
 /*
  * Aides contextuelles (T38, docs/conception/aides-contextuelles.md). Variables du composant, pas
- * des tokens : src/styles/tokens.css reste la copie exacte de docs/reference/tokens.css.
+ * des tokens : src/styles/tokens.css reste la copie de docs/reference/tokens.css, avec ses seuls
+ * ajouts du brief (--fij-1 à --fij-5).
  * Le bouton d'aide est ROND (décidé le 6 octobre 2026) : c'est le seul élément rond de l'outil,
  * la bulle garde ses angles droits. La forme tient dans cette seule classe.
  */
@@ -167,7 +214,8 @@
  * Animations de chargement (T65, docs/decisions.md) : la flamme du logo d'EJP Tech. Les trois
  * couleurs sont celles du dégradé et des reflets du logo (public/favicon.svg), seule exception
  * aux tokens, voulue par T65 : elles vivent ici, en variables, pour que src/styles/tokens.css
- * reste la copie de la référence et qu'aucun composant n'écrive de couleur. Le reste vient des
+ * reste la copie de la référence (avec ses seuls ajouts du brief, --fij-1 à --fij-5) et qu'aucun
+ * composant n'écrive de couleur. Le reste vient des
  * tokens (--nuit pour le monogramme, --lumiere pour la lueur) ; la flamme d'un bouton prend la
  * couleur de son libellé.
  * Les styles de base sont l'état final, immobile : avec « Réduire les animations », la règle de
@@ -364,7 +412,30 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-size: var(--t-texte);
+    /* 16 px, 17 px à partir de 1440 px (src/styles/fondations.css). */
+    font-size: var(--taille-texte);
+    /*
+     * Finitions du texte (T69, proposition 8). Pas de mot seul sur la dernière ligne d'un
+     * paragraphe, d'une note ou d'une seconde ligne : la règle s'hérite, elle vaut partout. Un
+     * navigateur qui ne la connaît pas coupe comme avant.
+     */
+    text-wrap: pretty;
+  }
+  /* Des titres aux lignes équilibrées, phrase de la semaine comprise. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+  /*
+   * Chiffres de même largeur dans les tableaux et les dates (BRIEF section 10 : dates et heures
+   * en Public Sans avec tabular-nums). Big Shoulders n'a pas de chiffres tabulaires : ses
+   * valeurs gardent leur chasse, la mise en page les aligne.
+   */
+  table,
+  time {
+    font-variant-numeric: tabular-nums;
   }
   /* Focus toujours visible (BRIEF section 10, accessibilité) */
   :focus-visible {

@@ -34,7 +34,7 @@ export function ChoixSession({ sessions }: Props) {
           <li key={ligne.sessionId} className="border-b border-filet">
             <Link
               to={ligne.vers}
-              className="flex min-h-12 items-center py-2 text-[15px] text-encre hover:bg-fond"
+              className="retour-appui flex min-h-12 items-center py-2 text-interface text-encre"
             >
               <span>
                 <span className="font-semibold underline underline-offset-4">{ligne.libelle}</span>

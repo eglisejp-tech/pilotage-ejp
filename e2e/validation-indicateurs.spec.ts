@@ -61,7 +61,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
       'Communication',
       'Intégration',
     ])
-    await expect(ligne(page, 'Kumi')).toContainText('Envoyé le 1 oct.')
+    await expect(ligne(page, 'Kumi')).toContainText('Envoyé le 1er oct.')
     await expect(ligne(page, 'Kumi')).toContainText('depuis 9 jours')
     await expect(ligne(page, 'Kumi').getByText('en retard')).toBeVisible()
     await expect(ligne(page, 'Communication').getByText('en retard')).toHaveCount(0)
@@ -383,7 +383,7 @@ test.describe('bloc « À valider » (administration de l’église), aperçu', 
     // T62 : les retraits des ministères et leur motif se lisent par EJP Tech seul.
     await expect(bloc.getByText(/Retirés par les ministères/)).toHaveCount(0)
     await expect(ligne(page, 'Kumi').getByText('en retard')).toBeVisible()
-    await expect(ligne(page, 'Kumi')).toContainText('Envoyé le 1 oct.')
+    await expect(ligne(page, 'Kumi')).toContainText('Envoyé le 1er oct.')
   })
 
   test('les autres profils reçoivent la page non disponible', async ({ page }) => {

@@ -53,7 +53,7 @@ export function ChoixMentionsPoint({
       }
       className="flex min-w-0 flex-col gap-2"
     >
-      <p id={idTitre} className="text-[15px] font-semibold">
+      <p id={idTitre} className="text-interface font-semibold">
         {titre}
       </p>
       {vide ? (
@@ -77,7 +77,7 @@ export function ChoixMentionsPoint({
                     aria-describedby={erreur ? idErreur : undefined}
                     className="peer sr-only"
                   />
-                  <span className="inline-flex min-h-cible cursor-pointer items-center gap-2 border border-encre bg-papier px-3.5 text-[15px] font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
+                  <span className="inline-flex min-h-cible cursor-pointer items-center gap-2 border border-encre bg-papier px-3.5 text-interface font-medium text-encre peer-checked:bg-encre peer-checked:font-bold peer-checked:text-papier peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-encre">
                     {coche ? <span aria-hidden="true">✓</span> : null}
                     {ministere.nom}
                   </span>
@@ -88,14 +88,14 @@ export function ChoixMentionsPoint({
         </ul>
       )}
       {vide ? null : (
-        <div id={idNote} className="flex flex-col gap-1 text-sm leading-normal text-encre-3">
+        <div id={idNote} className="flex flex-col gap-1 text-detail leading-normal text-encre-3">
           {notes.map((note) => (
             <p key={note}>{note}</p>
           ))}
         </div>
       )}
       {erreur ? (
-        <p id={idErreur} className="text-[15px] leading-normal text-alerte">
+        <p id={idErreur} className="text-interface leading-normal text-alerte">
           {erreur}
         </p>
       ) : null}

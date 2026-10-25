@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import { Bouton } from '@/components/ui/Bouton'
 import type { LigneSignalement } from '@/data/signalements'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { FenetreMasquage } from '@/features/moderation/FenetreMasquage'
@@ -24,9 +25,6 @@ interface Props {
     surMasque: () => void
   }
 }
-
-const boutonSecondaire =
-  'inline-flex min-h-cible items-center border border-encre bg-papier px-4 text-[15px] font-semibold whitespace-nowrap text-encre hover:bg-fond'
 
 /**
  * Les champs libres d'un signalement que « Masquer le texte » peut encore remplacer : son texte
@@ -99,15 +97,14 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
   }
   const boutonMasquer =
     masquage && masquables.length > 0 ? (
-      <button
-        type="button"
+      <Bouton
         aria-describedby={idTitre}
         aria-haspopup="dialog"
         onClick={() => setFenetre(true)}
-        className={boutonSecondaire}
+        className="whitespace-nowrap"
       >
         {TEXTES_MODERATION.boutonMasquer}
-      </button>
+      </Bouton>
     ) : null
 
   const peutClore = (signalement.ouvert || signalement.clos_le === null) && cloture
@@ -115,7 +112,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
 
   return (
     <article aria-labelledby={idTitre} className="flex flex-col gap-3 py-[18px]">
-      <div className="grid gap-x-8 gap-y-2 min-[1024px]:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,16rem)]">
+      <div className="grid gap-x-8 gap-y-2 ordinateur:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,16rem)]">
         <div className="flex min-w-0 flex-col gap-0.5">
           <p id={idTitre} className="text-[15px] font-semibold wrap-anywhere">
             {signalement.ministere_nom}
@@ -124,12 +121,12 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
             {TEXTES_BLOC_SIGNALEMENTS.ligne(signalement.ecran, signalement.saisi_le)}
           </p>
         </div>
-        <p className="min-w-0 font-lecture text-[19px] leading-snug wrap-anywhere">
+        <p className="min-w-0 font-lecture text-citation wrap-anywhere">
           «&nbsp;
           <TexteSignale texte={signalement.texte} />
           &nbsp;»
         </p>
-        <div className="flex min-w-0 flex-col items-start gap-2 min-[1024px]:items-end min-[1024px]:text-right">
+        <div className="flex min-w-0 flex-col items-start gap-2 ordinateur:items-end ordinateur:text-right">
           {signalement.ouvert || signalement.clos_le === null ? null : (
             <>
               <p className="text-note text-encre-3">
@@ -144,20 +141,21 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
             </>
           )}
           {boutonClore || boutonMasquer ? (
-            <div className="flex flex-wrap gap-3 max-[599px]:w-full max-[599px]:flex-col min-[1024px]:justify-end">
+            // À partir de 1024 px, les boutons s'empilent dans une colonne à la largeur du plus
+            // large : même largeur, mêmes bords, sans escalier (proposition 5, T69).
+            <div className="flex flex-wrap gap-3 max-tablette:w-full max-tablette:flex-col ordinateur:w-max ordinateur:max-w-full ordinateur:flex-col">
               {boutonClore ? (
-                <button
+                <Bouton
                   ref={bouton}
-                  type="button"
                   aria-describedby={idTitre}
                   onClick={() => {
                     cloture.surOuverture?.()
                     setOuvert(true)
                   }}
-                  className={boutonSecondaire}
+                  className="whitespace-nowrap"
                 >
                   {TEXTES_BLOC_SIGNALEMENTS.boutonClore}
-                </button>
+                </Bouton>
               ) : null}
               {boutonMasquer}
             </div>
@@ -165,7 +163,7 @@ export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) 
         </div>
       </div>
       {ouvert && cloture ? (
-        <div id={idPanneau} className="min-[1024px]:ml-auto min-[1024px]:w-[32rem]">
+        <div id={idPanneau} className="ordinateur:ml-auto ordinateur:w-[32rem]">
           <FormulaireCloture
             id={`${idPanneau}-commentaire`}
             signalementId={signalement.id}

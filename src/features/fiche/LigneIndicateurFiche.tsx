@@ -9,6 +9,7 @@ import {
   COURBE_HAUTEUR,
   COURBE_LARGEUR,
   GRILLE_LIGNE,
+  SOUS_LIGNES,
 } from '@/features/fiche/grilleFiche'
 import type { LigneIndicateurFiche as Ligne } from '@/features/fiche/modeleFiche'
 import { PrecisionSensible } from '@/features/fiche/PrecisionSensible'
@@ -21,10 +22,12 @@ interface Props {
 }
 
 /**
- * Une ligne d'indicateur propre de la fiche : libellé (marque « à valider » en texte visible ; le
- * détail d'un calcul suffit, sans bulle, T66 t202), dernière valeur, petite courbe, date de la dernière saisie
- * et somme de l'année avec sa complétude. Dessous, pour un indicateur du mois, la valeur du mois
- * en cours ; pour un sensible, ses précisions et sa répartition repliée (P45 à P47).
+ * Une ligne d'indicateur propre de la fiche : libellé, dernière valeur, petite courbe et date de la
+ * dernière saisie sur la première ligne. Dessous, sous le libellé, sur toute la largeur, en petit
+ * et en gris (proposition 17, T69) : l'état « à valider » en orange (texte visible ; le détail d'un
+ * calcul suffit, sans bulle, T66 t202), l'explication d'une valeur non calculée, la somme de
+ * l'année avec sa complétude et son aide, la valeur du mois en cours d'un indicateur du mois,
+ * puis, pour un sensible, ses précisions et sa répartition repliée (P45 à P47).
  */
 export function LigneIndicateurFiche({ ligne }: Props) {
   const { aides } = ligne
@@ -33,18 +36,20 @@ export function LigneIndicateurFiche({ ligne }: Props) {
     ligne.sensible?.repartitions && ligne.sensible.repartitions.length > 0
       ? ligne.sensible.repartitions
       : null
+  // Une valeur non calculée s'explique par une phrase (« Aucune saisie de ... ») : elle passe sous
+  // le libellé, et la dernière colonne ne garde que des dates courtes.
+  const explication = ligne.valeur.etat === 'non_calcule' ? ligne.detail : null
+  const date = explication === null ? ligne.detail : null
   const sousLignes =
+    ligne.aValider !== null ||
+    explication !== null ||
+    ligne.somme !== null ||
     ligne.moisEnCours !== null ||
     (ligne.sensible !== null && (ligne.sensible.precisions.length > 0 || repartitions !== null))
   return (
     <li className="border-b border-filet py-3">
       <div className={GRILLE_LIGNE}>
-        <span className={CASE_LIBELLE}>
-          <span>{ligne.libelle}</span>
-          {ligne.aValider !== null ? (
-            <span className="block text-note font-semibold text-attention">{ligne.aValider}</span>
-          ) : null}
-        </span>
+        <span className={CASE_LIBELLE}>{ligne.libelle}</span>
         <span className={CASE_VALEUR}>
           <ValeurLigne valeur={ligne.valeur} />
         </span>
@@ -54,14 +59,22 @@ export function LigneIndicateurFiche({ ligne }: Props) {
             <Courbe courbe={ligne.courbe} largeur={COURBE_LARGEUR} hauteur={COURBE_HAUTEUR} />
           ) : null}
         </span>
-        <span className={CASE_DETAIL}>
-          {ligne.detail !== null ? (
-            <span className={cn('block', ligne.detailSignale && 'font-semibold text-attention')}>
-              {ligne.detail}
-            </span>
+        <span className={cn(CASE_DETAIL, ligne.detailSignale && 'font-semibold text-attention')}>
+          {date}
+        </span>
+      </div>
+      {sousLignes ? (
+        <div className={SOUS_LIGNES}>
+          {ligne.aValider !== null ? (
+            <p className="font-semibold text-attention">{ligne.aValider}</p>
+          ) : null}
+          {explication !== null ? (
+            <p className={cn(ligne.detailSignale && 'font-semibold text-attention')}>
+              {explication}
+            </p>
           ) : null}
           {ligne.somme !== null ? (
-            <span className="flex flex-wrap items-center">
+            <p className="flex flex-wrap items-center">
               <span>
                 {ligne.somme.texte}
                 {ligne.somme.completude !== null ? ` (${ligne.somme.completude})` : null}
@@ -73,17 +86,9 @@ export function LigneIndicateurFiche({ ligne }: Props) {
                   placement="flottante"
                 />
               ) : null}
-            </span>
-          ) : null}
-        </span>
-      </div>
-      {sousLignes ? (
-        <div className="mt-1.5 flex flex-col gap-1 text-sm text-encre-2">
-          {ligne.moisEnCours !== null ? (
-            <p className="flex min-h-7 items-center">
-              <span>{ligne.moisEnCours.texte}</span>
             </p>
           ) : null}
+          {ligne.moisEnCours !== null ? <p>{ligne.moisEnCours.texte}</p> : null}
           {ligne.sensible?.precisions.map((precision) => (
             <PrecisionSensible key={precision.mois} precision={precision} />
           ))}

@@ -1,8 +1,19 @@
-import { useCallback, useContext, useEffect, useId, useMemo, useRef, useState } from 'react'
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import type { ReactNode } from 'react'
 import { UNSAFE_DataRouterContext } from 'react-router'
+import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useLargeurMin } from '@/features/cette-semaine/useLargeurMin'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
+import { ContexteEnTeteSaisie } from '@/features/saisie/enTeteSaisie'
 import { ContexteFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import type { FermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { FenetreFermerSansEnregistrer } from '@/features/saisie/FenetreFermerSansEnregistrer'
@@ -20,7 +31,7 @@ import {
   releverValeurs,
 } from '@/features/saisie/modifications'
 import type { SuiviSaisie } from '@/features/saisie/modifications'
-import { LARGEUR_PANNEAU } from '@/features/saisie/textes'
+import { LARGEUR_PANNEAU, LIBELLE_RETOUR } from '@/features/saisie/textes'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
 
 interface Props {
@@ -52,10 +63,16 @@ interface Question {
  * « Annuler » des formulaires (`useFermetureSaisie`), le bouton Précédent du navigateur et les
  * liens qui quittent la saisie ouvrent « Fermer sans enregistrer ? ». Sans changement, ils ferment
  * directement. Pendant la question, le contenu du panneau est inerte.
+ *
+ * En page entière, dans la mise en page de l'application, « Retour » passe dans l'en-tête
+ * simplifié de la maquette 08, avec le compte (proposition 4, T69) : la saisie le prend tant
+ * qu'elle est en page entière, et le rend à sa fermeture ou dès qu'elle devient un panneau.
  */
 export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
   const idTitre = useId()
   const enPanneau = useLargeurMin(LARGEUR_PANNEAU)
+  const enTete = useContext(ContexteEnTeteSaisie)
+  const enTeteSimplifie = !enPanneau && enTete !== null
   // En fenêtre, le titre est lu quand le focus y entre : seule la page entière s'annonce (m254).
   useTitrePage(titre, { annoncer: !enPanneau })
   const routeurDeDonnees = useContext(UNSAFE_DataRouterContext) !== null
@@ -161,6 +178,17 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
   const demanderFermeture = () => demander(onFermer)
   usePiegeFocus(cadre, enPanneau, demanderFermeture)
 
+  // L'en-tête simplifié appelle toujours la dernière fermeture (son état, ses changements).
+  const derniereFermeture = useRef(demanderFermeture)
+  useLayoutEffect(() => {
+    derniereFermeture.current = demanderFermeture
+  })
+  // Avant l'affichage : l'en-tête complet ne paraît pas un instant au-dessus de la saisie.
+  useLayoutEffect(() => {
+    if (!enTeteSimplifie || enTete === null) return
+    return enTete.ouvrir(() => derniereFermeture.current())
+  }, [enTeteSimplifie, enTete])
+
   const confirmation =
     question !== null ? (
       <FenetreFermerSansEnregistrer
@@ -181,22 +209,21 @@ export function PanneauSaisie({ titre, surtitre, onFermer, children }: Props) {
 
   const contenu = (
     <>
-      <div>
-        <button
-          type="button"
-          onClick={demanderFermeture}
-          className="inline-flex min-h-cible items-center text-[15px] text-nuit underline underline-offset-4"
-        >
-          Retour
-        </button>
-      </div>
+      {enTeteSimplifie ? null : (
+        <div>
+          <button
+            type="button"
+            onClick={demanderFermeture}
+            className="inline-flex min-h-cible items-center text-interface text-nuit underline underline-offset-4"
+          >
+            {LIBELLE_RETOUR}
+          </button>
+        </div>
+      )}
       <div className="flex flex-col gap-1.5">
-        {surtitre ? <p className="text-[13px] font-semibold text-encre-3">{surtitre}</p> : null}
-        <h1
-          id={idTitre}
-          className="font-lecture text-[32px] leading-[1.1] font-medium min-[600px]:text-[34px]"
-        >
-          {titre}
+        {surtitre ? <p className="text-note font-semibold text-encre-3">{surtitre}</p> : null}
+        <h1 id={idTitre} className="font-lecture text-titre-panneau">
+          <SansCoupureAuTrait texte={titre} />
         </h1>
       </div>
       <div className="flex flex-col gap-5">{children}</div>

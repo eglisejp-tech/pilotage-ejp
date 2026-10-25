@@ -1,4 +1,4 @@
-import { COLONNES_POINTS } from '@/features/points/colonnesPoints'
+import { GRILLE_POINTS, RANGEE_POINTS } from '@/features/points/colonnesPoints'
 import { LignePoint } from '@/features/points/LignePoint'
 import type { LignePoint as DonneesLigne } from '@/features/points/modelePoints'
 import { TEXTES_POINTS } from '@/features/points/textesPoints'
@@ -12,16 +12,17 @@ interface Props {
 
 /**
  * Tableau des points (maquette 05) : en-têtes Priorité, Point, Statut, Échéance à partir de
- * 1024 px, puis une rangée par point. En dessous, chaque rangée est une carte qui porte ses
- * propres mots (« Statut : », « Priorité »), l'en-tête disparaît. L'en-tête est décoratif pour les
- * lecteurs d'écran : chaque rangée dit ce qu'elle contient.
+ * 1024 px, puis une rangée par point, toutes sur la même grille (colonnesPoints.ts). En dessous,
+ * chaque rangée est une carte qui porte ses propres mots (« Statut : », « Priorité »), l'en-tête
+ * disparaît. L'en-tête est décoratif pour les lecteurs d'écran : chaque rangée dit ce qu'elle
+ * contient.
  */
 export function ListePoints({ lignes, compte }: Props) {
   return (
-    <div>
+    <div className={GRILLE_POINTS}>
       <div
         aria-hidden="true"
-        className={cn('hidden pt-3 pb-2 text-note text-encre-3 lg:grid', COLONNES_POINTS)}
+        className={cn('hidden pt-3 pb-2 text-note text-encre-3', RANGEE_POINTS)}
       >
         <span>{TEXTES_POINTS.entetes.priorite}</span>
         <span>{TEXTES_POINTS.entetes.point}</span>
@@ -29,9 +30,9 @@ export function ListePoints({ lignes, compte }: Props) {
         <span>{TEXTES_POINTS.entetes.echeance}</span>
         <span />
       </div>
-      <ol className="flex flex-col">
+      <ol className={cn('flex flex-col', RANGEE_POINTS)}>
         {lignes.map((ligne) => (
-          <li key={ligne.id} className="border-t border-filet">
+          <li key={ligne.id} className={cn('border-t border-filet', RANGEE_POINTS)}>
             <LignePoint ligne={ligne} compte={compte} />
           </li>
         ))}

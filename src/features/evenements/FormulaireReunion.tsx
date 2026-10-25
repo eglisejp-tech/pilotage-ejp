@@ -1,6 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
+import { Champ } from '@/components/ui/Champ'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
@@ -120,19 +121,18 @@ export function FormulaireReunion({
         {...register('date')}
       />
       <div className="flex flex-col gap-1.5">
-        <label htmlFor="reunion-heure" className="text-[15px] font-semibold">
+        <label htmlFor="reunion-heure" className="text-interface font-semibold">
           {TEXTES_REUNION.libelleHeure}
         </label>
-        <input
+        <Champ
           id="reunion-heure"
           type="time"
           aria-invalid={errors.heure ? true : undefined}
           aria-describedby={errors.heure ? 'reunion-heure-erreur' : undefined}
-          className="h-13 w-full min-w-0 border border-encre bg-papier px-3.5 text-base text-encre aria-invalid:border-2 aria-invalid:border-alerte"
           {...register('heure')}
         />
         {errors.heure ? (
-          <p id="reunion-heure-erreur" className="text-[15px] leading-normal text-alerte">
+          <p id="reunion-heure-erreur" className="text-interface leading-normal text-alerte">
             {errors.heure.message}
           </p>
         ) : null}

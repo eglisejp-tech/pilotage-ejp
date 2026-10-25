@@ -133,19 +133,19 @@ export function FormulaireSession({
       <p
         className={
           comptesDansTotal(champs) === null
-            ? 'text-[15px] leading-normal text-encre-3'
-            : 'text-[15px] leading-normal font-semibold'
+            ? 'text-interface leading-normal text-encre-3'
+            : 'text-interface leading-normal font-semibold'
         }
         aria-live="polite"
       >
         {ligneComptesDansTotal(champs)}
       </p>
       {dejaSaisi ? (
-        <p className="text-sm leading-normal text-encre-3">{ligneDejaSaisi(dejaSaisi)}</p>
+        <p className="text-detail leading-normal text-encre-3">{ligneDejaSaisi(dejaSaisi)}</p>
       ) : null}
       {/* « 6 ministères sur 8 » se lit seul, et les champs sont des nombres : ni bulle, ni
           rappel (T66, t111 et t112). */}
-      <p className="text-[15px] leading-normal">
+      <p className="text-interface leading-normal">
         {completude.texte}
         {completude.manquants ? (
           <>
@@ -167,7 +167,7 @@ export function FormulaireSession({
       <div className="flex flex-col">
         <Link
           to={adresseSaisieSession()}
-          className="inline-flex min-h-cible items-center self-start text-[15px] text-nuit underline underline-offset-4"
+          className="inline-flex min-h-cible items-center self-start text-interface text-nuit underline underline-offset-4"
         >
           {TEXTES_SESSION.autreSession}
         </Link>

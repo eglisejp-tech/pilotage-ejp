@@ -218,7 +218,7 @@ describe('envoi du mois', () => {
       /^Déjà enregistré : 1\s250\s€\. Saisissez 0 ou le bon chiffre\.$/u,
     )
     expect(envoi.erreurs['mois-fonds']?.valeur).not.toBe(
-      'La valeur enregistrée (1 250 €) reste comptée. Saisissez 0 ou la bonne valeur.',
+      'La valeur enregistrée (1\xa0250\xa0€) reste comptée. Saisissez 0 ou la bonne valeur.',
     )
   })
 })

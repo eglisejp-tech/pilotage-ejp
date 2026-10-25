@@ -18,4 +18,12 @@ describe('cn', () => {
     expect(cn('font-interface font-lecture')).toBe('font-lecture')
     expect(cn('max-w-prose max-w-contenu')).toBe('max-w-contenu')
   })
+
+  it('reconnaît les tailles par rôle, les espacements et la largeur des fondations (T69)', () => {
+    expect(cn('text-interface text-encre-3')).toBe('text-interface text-encre-3')
+    expect(cn('text-[15px] text-interface')).toBe('text-interface')
+    expect(cn('text-titre-point text-citation')).toBe('text-citation')
+    expect(cn('gap-12 gap-sections')).toBe('gap-sections')
+    expect(cn('max-w-[720px] max-w-lecture')).toBe('max-w-lecture')
+  })
 })

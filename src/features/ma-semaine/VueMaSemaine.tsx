@@ -9,10 +9,11 @@ interface Props {
   donnees: DonneesMaSemaine
 }
 
-// Colonne de droite à partir de 1024 px (380 px à partir de 1280 px), comme « Cette semaine ».
+// Colonne de droite à partir de 1024 px (380 px à partir de 1280 px), comme « Cette semaine ». Un
+// seul écart entre les sections, 48 px à toutes les largeurs (proposition 14 et écart 7, T69).
 const colonnes =
-  'grid items-start gap-9 min-[600px]:gap-11 lg:grid-cols-[minmax(0,1fr)_18.75rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_23.75rem] xl:gap-x-16'
-const colonne = 'flex min-w-0 flex-col gap-9 min-[600px]:gap-11 lg:gap-13'
+  'grid items-start gap-sections ordinateur:grid-cols-[minmax(0,1fr)_18.75rem] ordinateur:gap-x-10 ordinateur-large:grid-cols-[minmax(0,1fr)_23.75rem] ordinateur-large:gap-x-16'
+const colonne = 'flex min-w-0 flex-col gap-sections'
 
 /**
  * « Ma semaine » d'un ministère (maquette 07, décision T57). L'ouverture de 07 sur toute la
@@ -24,7 +25,7 @@ const colonne = 'flex min-w-0 flex-col gap-9 min-[600px]:gap-11 lg:gap-13'
 export function VueMaSemaine({ donnees }: Props) {
   const { accueil } = donnees
   return (
-    <div className="flex flex-col gap-9 min-[600px]:gap-11 lg:gap-13">
+    <div className="flex flex-col gap-sections">
       <OuvertureMinistere semaine={donnees.semaine} ouverture={accueil.ouverture} />
       <div className={colonnes}>
         <div className={colonne}>

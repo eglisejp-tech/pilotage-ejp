@@ -38,7 +38,7 @@ export function MessageReussite({ message, envoi = 0, dureeMs = DUREE_REUSSITE_M
   return (
     <div role="status">
       {visible ? (
-        <p className="border border-bien bg-papier px-3.5 py-3 text-[15px] leading-normal font-semibold text-bien">
+        <p className="border border-bien bg-papier px-3.5 py-3 text-interface leading-normal font-semibold text-bien">
           {message}
         </p>
       ) : null}

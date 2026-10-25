@@ -12,6 +12,7 @@ import type { BlocsAccueil } from './GrilleCetteSemaine'
 import { LesMinisteres } from './LesMinisteres'
 import { OuvertureSemaine } from './OuvertureSemaine'
 import { ResumeEglise } from './ResumeEglise'
+import { LARGEURS } from '@/lib/largeurs'
 import type { DonneesCetteSemaine } from './types'
 import { useLargeurMin } from './useLargeurMin'
 
@@ -43,7 +44,7 @@ export function VueCetteSemaine({ donnees, accueil }: Props) {
     'aDecider' in donnees && !donnees.lectureSeule
       ? { type: donnees.profil, ministereId: null }
       : null
-  const telephone = !useLargeurMin(600)
+  const telephone = !useLargeurMin(LARGEURS.tablette)
 
   const ouverture =
     donnees.profil === 'ministere' && accueil ? (
@@ -76,7 +77,7 @@ export function VueCetteSemaine({ donnees, accueil }: Props) {
 
   if (donnees.profil === 'ministere' && telephone) {
     return (
-      <div className="flex flex-col gap-9">
+      <div className="flex flex-col gap-sections">
         {ouverture}
         {blocsAccueil?.vosSaisies}
         {blocsAccueil?.vosPoints}

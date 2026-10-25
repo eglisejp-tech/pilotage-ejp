@@ -26,7 +26,7 @@ export function CelluleSaisies({ saisies }: { saisies: SaisiesDeLaSession }) {
         {saisies.libelle}
       </span>
       {saisies.manquants !== null ? (
-        <span className="text-sm leading-normal text-encre-2">{saisies.manquants}</span>
+        <span className="text-detail leading-normal text-encre-2">{saisies.manquants}</span>
       ) : null}
     </span>
   )

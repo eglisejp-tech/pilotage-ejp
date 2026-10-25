@@ -31,7 +31,7 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
         complement={
           <Link
             to={lienJournal}
-            className="-my-3 inline-flex min-h-cible items-center text-sm text-nuit underline underline-offset-4"
+            className="-my-3 inline-flex min-h-cible items-center text-detail text-nuit underline underline-offset-4"
           >
             {TEXTES_FICHE.toutLeJournal}
           </Link>
@@ -59,9 +59,9 @@ export function DernieresSaisies({ bloc, lienJournal }: Props) {
               {bloc.donnees.map((ligne) => (
                 <li
                   key={ligne.id}
-                  className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-[15px]"
+                  className="grid grid-cols-[minmax(0,10.5rem)_minmax(0,1fr)] items-baseline gap-x-5 border-b border-filet py-2.5 text-interface"
                 >
-                  <span className="text-sm text-encre-3">{ligne.quand}</span>
+                  <span className="text-detail text-encre-3">{ligne.quand}</span>
                   <span className="min-w-0 break-words">
                     {ligne.texte}
                     {ligne.objet !== null ? (

@@ -20,7 +20,7 @@ export function BarreSession({ apports }: Props) {
     <div
       aria-hidden="true"
       data-testid="barre-session"
-      className="flex h-6 gap-0.5 min-[600px]:h-[30px] min-[600px]:gap-[3px] lg:h-[34px]"
+      className="flex h-6 gap-0.5 tablette:h-[30px] tablette:gap-[3px] ordinateur:h-[34px]"
     >
       {apports.map((apport) =>
         apport.valeur === null ? (
@@ -30,7 +30,7 @@ export function BarreSession({ apports }: Props) {
             style={{ flexGrow: Math.max(moyenne, 1) }}
             className="flex min-w-0 basis-0 items-center overflow-hidden border-2 border-dashed border-attention px-1.5"
           >
-            <span className="hidden truncate text-note font-semibold text-attention lg:inline">
+            <span className="hidden truncate text-note font-semibold text-attention ordinateur:inline">
               {TEXTES_VIDES.session.apportManquant}
             </span>
           </div>
@@ -38,7 +38,7 @@ export function BarreSession({ apports }: Props) {
           <div
             key={apport.ministere}
             style={{ flexGrow: Math.max(apport.valeur, 0.5) }}
-            className="flex min-w-0 basis-0 items-center overflow-hidden bg-nuit pl-1.5 font-chiffres text-base font-extrabold text-papier tabular-nums"
+            className="flex min-w-0 basis-0 items-center overflow-hidden bg-nuit pl-1.5 font-chiffres text-texte font-extrabold text-papier tabular-nums"
           >
             {nombre(apport.valeur)}
           </div>

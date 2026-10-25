@@ -193,10 +193,18 @@ function nomDuJour(date: DateIso): string {
   return JOURS_LONGS[jourDeLaSemaine(date) - 1] ?? ''
 }
 
-/** « 27 sept. » */
+/**
+ * Quantième d'une date écrite : « 1er » pour le premier jour du mois, puis « 2 », « 27 » (T69,
+ * écart 11 : comme la date des conditions d'utilisation).
+ */
+export function quantieme(jour: number): string {
+  return jour === 1 ? '1er' : String(jour)
+}
+
+/** « 27 sept. », « 1er oct. » */
 export function formaterJourCourt(date: DateIso): string {
   const { jour, mois } = lireDateIso(date)
-  return `${jour} ${moisCourt(mois)}`
+  return `${quantieme(jour)} ${moisCourt(mois)}`
 }
 
 /** « dimanche 27 sept. », dans une phrase. */
@@ -218,7 +226,7 @@ export function formaterJourAbrege(date: DateIso): string {
 /** « samedi 17 octobre », mois en entier (titre d'une session ou d'un rassemblement). */
 export function formaterJourLong(date: DateIso): string {
   const { jour, mois } = lireDateIso(date)
-  return `${nomDuJour(date)} ${jour} ${MOIS_LONGS[mois - 1] ?? ''}`
+  return `${nomDuJour(date)} ${quantieme(jour)} ${MOIS_LONGS[mois - 1] ?? ''}`
 }
 
 /** « 20 h », « 20 h 30 », « 8 h 05 », à partir d'une heure HH:MM ou HH:MM:SS (colonne `time`). */

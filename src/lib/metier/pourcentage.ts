@@ -7,7 +7,7 @@
 // Jamais une moyenne de pourcentages. Sert aussi à la fiche d'un ministère (ses deux dernières
 // valeurs) et au formulaire du dimanche (« 79 % des actifs »).
 
-import { accorder, ESPACE_FINE, nombre } from './texte'
+import { accorder, ESPACE_INSECABLE, nombre } from './texte'
 
 export const NON_CALCULE = 'Non calculé'
 
@@ -31,7 +31,7 @@ export function pourcentageFij(enFij: number | null, actifs: number | null): num
 
 /** « 77 % » (espace fine insécable), ou « Non calculé ». */
 export function formaterPourcentage(pourcentage: number | null): string {
-  return pourcentage === null ? NON_CALCULE : `${nombre(pourcentage)}${ESPACE_FINE}%`
+  return pourcentage === null ? NON_CALCULE : `${nombre(pourcentage)}${ESPACE_INSECABLE}%`
 }
 
 /** « 64 sur 83 STARs actifs », ou `null` si l'une des deux sommes manque. */

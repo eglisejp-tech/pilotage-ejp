@@ -29,7 +29,7 @@ export function CartePointFiche({ point, compte = null }: Props) {
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
         <p
           className={cn(
-            'font-chiffres text-[19px] font-extrabold tracking-[0.04em] uppercase',
+            'font-chiffres text-priorite uppercase',
             point.traite === null ? couleursPriorite[point.priorite] : 'text-encre-3',
           )}
         >
@@ -49,16 +49,16 @@ export function CartePointFiche({ point, compte = null }: Props) {
           ) : null}
         </p>
       </div>
-      <h3 id={idTitre} className="font-lecture text-[22px] leading-tight font-medium">
+      <h3 id={idTitre} className="font-lecture text-titre-point">
         <Libre texte={point.titre} />
       </h3>
       {point.description ? (
-        <p className="text-[15px] leading-normal text-encre-2">
+        <p className="text-interface leading-normal text-encre-2">
           <Libre texte={point.description} />
         </p>
       ) : null}
       {avecAttendu ? (
-        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-sm text-encre-2">
+        <p className="mt-1 flex flex-wrap items-baseline gap-x-1.5 gap-y-1 text-detail text-encre-2">
           {point.attendu ? (
             <span>
               {TEXTES_FICHE.points.attendu}{' '}
@@ -84,7 +84,7 @@ export function CartePointFiche({ point, compte = null }: Props) {
       ) : null}
       <PoseActionsPoint point={point} compte={compte} />
       {point.traite !== null ? (
-        <p className="text-sm text-encre-2">
+        <p className="text-detail text-encre-2">
           <span className="font-semibold text-bien">{point.traite.texte}</span>
           {point.traite.commentaire !== null ? (
             <>
