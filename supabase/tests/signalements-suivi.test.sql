@@ -359,9 +359,11 @@ select lives_ok($$ select public.masquer_texte('signalement_suivi', (select rm f
 select lives_ok($$ select public.masquer_texte('signalement_suivi', (select r1 from ctx), 'commentaire', 'coordonnees') $$,
   'EJP Tech masque sa première réponse');
 select tests.deconnecter();
+-- Une seule ligne agrégée dans l'ordre réel (`ordre`) : le tri de tests.lire suit la collation
+-- de la base, qui n'est pas la même en CI et sur le banc local.
 select is(tests.lire((select coo from ctx), 'aal2',
-  'select etape, commentaire from public.signalement_suivi where signalement_id = (select s from ctx) and etape in (''reponse'', ''reponse_ministere'') and commentaire like ''[%'''),
-  '[{"etape": "reponse", "commentaire": "[texte masqué par EJP Tech]"}, {"etape": "reponse_ministere", "commentaire": "[texte masqué par EJP Tech]"}]'::jsonb,
+  'select string_agg(etape::text || '' : '' || commentaire, '' ; '' order by ordre) as lignes from public.signalement_suivi where signalement_id = (select s from ctx) and etape in (''reponse'', ''reponse_ministere'') and commentaire like ''[%'''),
+  '[{"lignes": "reponse : [texte masqué par EJP Tech] ; reponse_ministere : [texte masqué par EJP Tech]"}]'::jsonb,
   'les deux textes masqués se lisent masqués, et la ligne garde son étape');
 select is(pg_temp.etat((select coo from ctx), (select s from ctx)) -> 0 ->> 'statut', 'clos',
   'le masquage ne change pas le statut');
