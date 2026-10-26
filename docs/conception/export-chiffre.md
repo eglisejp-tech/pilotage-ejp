@@ -1,8 +1,23 @@
 # Conception : export hebdomadaire chiffré par clé publique, lancé par Claude Code
 
-**Statut** : conception à valider par la personne responsable. Aucun code, aucun script, aucun hook
-ni réglage modifié. Accord de la personne du 26 octobre 2026 pour concevoir un export chiffré par
-clé publique, la clé privée restant à son coffre. Base de travail : `origin/main` (2e3aabf).
+**Décision de la personne responsable, 26 octobre 2026** : conception validée (« Oui vas-y »),
+avec les réponses « Proposé » aux questions Q1 à Q10 (décision T77). Implémentée sur la branche
+`etape-8-export-chiffre`. Base de travail : `origin/main` (2e3aabf).
+
+**Changements à la validation** (reportés dans les sections concernées) :
+
+1. **G0 disparaît comme geste de la personne** : le hook et `CLAUDE.md` refusent à Claude toute
+   commande Supabase distante hors des formes du script, et `db dump` brut doit rester refusé. La
+   première étape de l'action `export` fait donc elle-même ce contrôle : essai à blanc capturé dans
+   une variable, jamais affiché ; si la ligne `PGPASSWORD` manque ou si Docker est demandé, arrêt
+   net « option B nécessaire », sans rien montrer de la sortie de la CLI. Le premier `export` lancé
+   après la fusion sert de test.
+2. **G1 en binaires portables** : `winget` n'existe pas sur ce poste. `age` vient de la release
+   officielle de GitHub, `pg_dump` de l'archive zip d'EDB, chacun vérifié par l'empreinte publiée,
+   dans `C:/Users/GraceManassePASSIDEM/outils/` (commandes exactes : `docs/exploitation.md`, 9.2).
+   Le script y trouve les outils (sinon le PATH) et vérifie leurs versions.
+3. **G2 à G4 restent à la personne** : en attendant G4, `main` porte une valeur d'attente que
+   l'action refuse avec un message clair.
 
 **But en une phrase** : Claude Code lance l'export du lundi sur un « oui », sans détenir aucun
 secret et sans voir une seule donnée en clair ; seule la personne (et la deuxième personne du
@@ -35,8 +50,9 @@ coffre) peut le déchiffrer.
    générée dans le job et le jeu d'exemple fictif.
 9. **T52 tient** : Anthropic ne reçoit aucune donnée. La page Confidentialité ne change pas. Le
    registre des traitements corrige deux phrases.
-10. **Gestes de la personne** : un contrôle d'une minute (G0), deux outils à installer, une paire de
-    clés à créer et ranger au coffre, une clé publique à donner, une restauration d'essai.
+10. **Gestes de la personne** : deux outils à installer (Claude peut lancer l'installation après
+    relecture), une paire de clés à créer et ranger au coffre, une clé publique à donner, une
+    restauration d'essai, la copie hebdomadaire sur le Drive.
 
 Les 10 questions à trancher sont à la section 14, chacune avec sa réponse « Proposé ».
 
@@ -178,7 +194,7 @@ tronqué fait échouer `restaurer.sh` sans rien charger.
 
 | Option                                                                                                                                                                        | Verdict                                                                                                                                                                                     |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **A. Essai à blanc de la CLI** (`db dump --linked --dry-run`), lu en mémoire par le script : on n'en garde que les cinq lignes `export PG...`, puis notre `pg_dump` 17 local. | **Recommandé** (Q2). Aucun secret nouveau, le même rôle temporaire que `migrer`, nos options de `pg_dump`. À confirmer par G0 sans Docker.                                                  |
+| **A. Essai à blanc de la CLI** (`db dump --linked --dry-run`), lu en mémoire par le script : on n'en garde que les cinq lignes `export PG...`, puis notre `pg_dump` 17 local. | **Recommandé** (Q2). Aucun secret nouveau, le même rôle temporaire que `migrer`, nos options de `pg_dump`. Contrôlé par la première étape de l'action (« option B nécessaire » sinon).      |
 | B. `db dump` de la CLI en vrai, sortie vers `age`.                                                                                                                            | Secours. Plus simple, mais lance `pg_dump` dans Docker, qui ne tourne pas sur ce poste. Possible si la personne démarre Docker Desktop avant l'export.                                      |
 | C. API de gestion appelée par le script avec le jeton de la CLI.                                                                                                              | Écarté : aucun fichier de jeton sur le poste (il est sans doute dans le gestionnaire d'identifiants de Windows), il faudrait l'en extraire ; on referait à la main ce que la CLI fait déjà. |
 | D. Mot de passe de la base tapé par la personne.                                                                                                                              | Écarté : c'est la situation d'aujourd'hui.                                                                                                                                                  |
@@ -231,7 +247,7 @@ tronqué fait échouer `restaurer.sh` sans rien charger.
    `<nom>.partiel`.
 7. **Contrôles** : tous les codes de sortie à 0 ; taille au-dessus d'un seuil (Proposé : 10 Kio) ;
    en-tête `age-encryption.org/v1` ; au moins une table au sommaire. Puis `mv` vers le nom final.
-8. **Fiche** `<nom>.json`, en clair, sans donnée : date de Paris, taille, SHA-256, clé publique,
+8. **Fiche** `ejp-AAAA-MM-JJ-HHMM.json`, en clair, sans donnée : date de Paris, taille, SHA-256, clé publique,
    commit de `main`, dernière migration appliquée (`migration list`, comme `etat`), versions de
    `pg_dump`, `age` et de la CLI, nombre de tables.
 9. **Purge** (après succès seulement) : fichiers `ejp-AAAA-MM-JJ-HHMM.dump.age` et leur fiche de
@@ -343,7 +359,7 @@ exemple).
 
 | Risque                                                                                  | Effet                                    | Parade                                                                                                                                     |
 | --------------------------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| L'essai à blanc demande Docker, ou le rôle temporaire meurt avec la CLI avant `pg_dump` | L'option A ne marche pas                 | G0 avant tout code ; sinon option B (Docker démarré pour l'export)                                                                         |
+| L'essai à blanc demande Docker, ou le rôle temporaire meurt avec la CLI avant `pg_dump` | L'option A ne marche pas                 | Première étape de l'action : arrêt « option B nécessaire » ; alors option B (Docker démarré pour l'export)                                 |
 | Une version de la CLI change la forme de l'essai à blanc                                | Export en échec                          | Lecture stricte, arrêt fermé ; la CI l'essaie avec la CLI du lock                                                                          |
 | La base passe en PostgreSQL 18                                                          | `pg_dump` 17 refuse                      | Message clair ; installer le client 18                                                                                                     |
 | Clé perdue                                                                              | Exports illisibles                       | Coffre partagé à deux ; restauration d'essai chaque trimestre ; S4                                                                         |
@@ -359,21 +375,21 @@ exemple).
 
 ## 12. Gestes de la personne
 
-| Geste | Quoi                                                                                                                                                                                                                                                                                  | Quand                        |
-| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| G0    | Dans **son** terminal, dans le clone réservé : `npx supabase db dump --linked --dry-run --data-only -s public 2>/dev/null \| grep -c '^export PGPASSWORD="..*"$'`. Attendu : `1`. Rien d'autre ne s'affiche. Si Docker est demandé ou si on obtient `0`, le dire à Claude (option B). | Avant le lot 1               |
-| G1    | Installer `age` (`winget install FiloSottile.age`) et les binaires du client PostgreSQL 17 (`pg_dump`, `pg_restore`) sur le poste ; ou laisser Claude le faire, commande montrée avant.                                                                                               | Avant le premier export      |
-| G2    | Sur **sa** machine, pas dans le terminal de Claude : `age-keygen -o cle-export-ejp.txt`. Noter la ligne `Public key: age1...`.                                                                                                                                                        | Avant la fusion du lot 1     |
-| G3    | Coller le contenu du fichier au coffre, entrée « Clé privée des exports » ; supprimer le fichier ; vérifier que la deuxième personne du coffre y a accès.                                                                                                                             | Avec G2                      |
-| G4    | Donner la clé publique (`age1...`, elle n'est pas secrète) à Claude ; vérifier dans la requête de fusion ses 6 premiers et 6 derniers caractères.                                                                                                                                     | Avec G2                      |
-| G5    | Après le premier export : restauration d'essai (section 9), résultat au registre.                                                                                                                                                                                                     | La semaine du premier export |
-| G6    | Chaque lundi : copier l'export sur le Drive, supprimer ceux de plus de 28 jours, vider la corbeille.                                                                                                                                                                                  | Chaque semaine               |
+| Geste | Quoi                                                                                                                                                                                                                                            | Quand                        |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| G0    | Retiré à la validation : la première étape de l'action `export` fait ce contrôle (changement 1 en tête).                                                                                                                                        | Sans objet                   |
+| G1    | Installer `age` 1.3.2 et le client PostgreSQL 17 (archive zip d'EDB) en binaires portables dans `C:/Users/GraceManassePASSIDEM/outils/`, empreintes vérifiées (`docs/exploitation.md`, 9.2) ; Claude peut lancer ces commandes après relecture. | Avant le premier export      |
+| G2    | Sur **sa** machine, pas dans le terminal de Claude : `age-keygen -o cle-export-ejp.txt`. Noter la ligne `Public key: age1...`.                                                                                                                  | Avant la fusion du lot 1     |
+| G3    | Coller le contenu du fichier au coffre, entrée « Clé privée des exports » ; supprimer le fichier ; vérifier que la deuxième personne du coffre y a accès.                                                                                       | Avec G2                      |
+| G4    | Donner la clé publique (`age1...`, elle n'est pas secrète) à Claude ; vérifier dans la requête de fusion ses 6 premiers et 6 derniers caractères.                                                                                               | Avec G2                      |
+| G5    | Après le premier export : restauration d'essai (section 9), résultat au registre.                                                                                                                                                               | La semaine du premier export |
+| G6    | Chaque lundi : copier l'export sur le Drive, supprimer ceux de plus de 28 jours, vider la corbeille.                                                                                                                                            | Chaque semaine               |
 
 ---
 
 ## 13. Lots et tests
 
-- **Lot 0** (personne) : G0. Son résultat choisit l'option A ou B avant tout code.
+- **Lot 0** : retiré (changement 1 en tête) ; le premier `export` après la fusion fait le contrôle.
 - **Lot 1** (une branche, CI verte, accord pour `main`) : `scripts/export/commun.sh` (lecture
   stricte des identifiants, date de Paris, purge, fiche), `scripts/export/restaurer.sh`, action
   `export` et vérification de `migrer` dans `scripts/production.sh`, hook et réglage, étape
@@ -393,8 +409,8 @@ fichiers créés, égalité des lignes et des md5, fichier tronqué refusé).
 
 1. **Q1. `age` ou GPG ?** Proposé : `age` (plus simple le jour de la restauration) ; GPG par clé
    publique si vous refusez un outil de plus.
-2. **Q2. Connexion par l'essai à blanc de la CLI et `pg_dump` 17 local ?** Proposé : oui, sous
-   réserve de G0 ; sinon Docker démarré pour l'export.
+2. **Q2. Connexion par l'essai à blanc de la CLI et `pg_dump` 17 local ?** Proposé : oui, contrôlé par
+   la première étape de l'action ; sinon Docker démarré pour l'export.
 3. **Q3. Le hook demande-t-il votre confirmation pour `export` ?** Proposé : non ; Claude vous
    demande dans la conversation et lance sur votre « oui ». L'export n'écrit rien en production et
    ne peut rien effacer de moins de 28 jours.

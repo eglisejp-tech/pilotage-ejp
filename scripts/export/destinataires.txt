@@ -1,0 +1,6 @@
+# Clé publique des exports hebdomadaires chiffrés (T77, docs/exploitation.md, section 9.2).
+# Une seule ligne utile : la clé publique age (age1...) de la personne responsable, dont la clé
+# privée est au coffre et ne vient jamais sur le poste où tourne Claude Code. Elle n'est pas
+# secrète. Elle ne change que par un envoi sur main, avec l'accord écrit de la personne.
+# Tant que la valeur d'attente ci-dessous est là, l'export s'arrête avec un message clair.
+en-attente-de-la-cle-publique
