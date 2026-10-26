@@ -208,6 +208,7 @@ describe('message d’un envoi refusé', () => {
     ).toEqual({
       message: "« Dont en FIJ » dépasse « STARs actifs ». Corrigez l'un des deux chiffres.",
       champ: 'en_fij',
+      reference: null,
     })
   })
 

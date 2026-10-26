@@ -124,8 +124,6 @@ export const MESSAGES_BASE_MODERATION = {
   dejaRelu: 'Ce texte a déjà été relu.',
   motif: 'Choisissez un motif dans la liste.',
   champ: 'Ce champ ne peut pas être masqué.',
-  /** Phrase de l'écran pour un refus de droit (42501) : la forme commune (T66, t360). */
-  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 /** En tête de l'écran : « 2 indicateurs attendent votre validation, le plus ancien depuis 4 jours. » */

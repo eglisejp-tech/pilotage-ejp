@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
-import { phraseErreur } from '@/data/messagesBase'
+import { phraseErreur } from '@/data/echecEnvoi'
 import { TEXTES_FENETRE_EFFACEMENT } from '@/features/personnes/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'

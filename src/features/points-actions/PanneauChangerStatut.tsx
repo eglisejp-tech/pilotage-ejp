@@ -1,7 +1,8 @@
 import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
-import { messageDeRefusPoint, STATUTS_CHOISIS } from '@/data/pointsEcriture'
+import { lireEchecPoint, STATUTS_CHOISIS } from '@/data/pointsEcriture'
+import type { EchecLu } from '@/data/echecEnvoi'
 import type { StatutChoisi } from '@/data/pointsEcriture'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { FenetreAction } from '@/features/points-actions/FenetreAction'
@@ -42,7 +43,7 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
   const idTitre = `${id}-titre`
   const idNote = `${id}-note`
   const [choisi, setChoisi] = useState<StatutChoisi>(statutInitial(statut))
-  const [refus, setRefus] = useState<string | null>(null)
+  const [refus, setRefus] = useState<EchecLu | null>(null)
   const [enCours, setEnCours] = useState(false)
   // Appuis sur « Enregistrer » avec le statut déjà en place (0 : aucun depuis le dernier choix).
   const [inchange, setInchange] = useState(0)
@@ -63,7 +64,7 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
       await envoyer(choisi)
       onFermer()
     } catch (erreur) {
-      setRefus(messageDeRefusPoint(erreur) ?? TEXTES_ACTIONS_POINT.statut.erreurConnexion)
+      setRefus(lireEchecPoint(erreur))
     } finally {
       setEnCours(false)
     }
@@ -102,7 +103,7 @@ export function PanneauChangerStatut({ titre, statut, envoyer, onFermer }: Props
           message={inchange > 0 ? TEXTES_ACTIONS_POINT.statut.dejaEnregistre : null}
           essai={inchange}
         />
-        {refus ? <ErreurFormulaire message={refus} /> : null}
+        {refus ? <ErreurFormulaire message={refus.message} reference={refus.reference} /> : null}
         <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.statut.annuler}
         </Bouton>

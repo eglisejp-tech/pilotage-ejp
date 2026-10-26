@@ -171,7 +171,8 @@ describe('lireRefusSession', () => {
     const repli =
       "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
     expect(lireRefusSession({ code: '500', message: 'x' }, connexion)).toBe(repli)
-    expect(lireRefusSession({ message: '<html>502 Bad Gateway</html>' }, connexion)).toBe(repli)
+    // Une page 502 de passerelle : l'issue est inconnue, la phrase de connexion (T76).
+    expect(lireRefusSession({ message: '<html>502 Bad Gateway</html>' }, connexion)).toBe(connexion)
     // La suppression est une action sans formulaire : son repli ne parle pas de saisie.
     expect(
       lireRefusSession({ code: '23503', message: 'x' }, TEXTES_SESSIONS.erreurConnexionSuppression),

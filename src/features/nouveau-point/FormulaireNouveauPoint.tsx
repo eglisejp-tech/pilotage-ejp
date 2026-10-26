@@ -175,10 +175,9 @@ export function FormulaireNouveauPoint({
         enCours={isSubmitting}
         libelleEnCours={TEXTES_POINT.boutonEnCours}
       />
-      {refus?.ou === 'connexion' ? (
-        <ErreurFormulaire message={TEXTES_POINT.erreurConnexion} />
+      {refus?.ou === 'bouton' ? (
+        <ErreurFormulaire message={refus.message} reference={refus.reference} />
       ) : null}
-      {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
       <MessageReussite message={reussite} envoi={envoi} />
       <LienSignalement ecran="autre" />
     </form>

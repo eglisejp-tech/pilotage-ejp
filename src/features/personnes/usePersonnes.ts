@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { lireErreurBase } from '@/data/messagesBase'
+import { traduireErreurBase } from '@/data/messagesBase'
 import {
   effacerPrenom,
   effacerPrenomsAnciens,
@@ -78,7 +78,7 @@ export function usePersonnes(): { resultat: ResultatPersonnes; actions: ActionsP
       } catch (erreur) {
         // « Prénom introuvable ou déjà effacé. » : l'onglet a changé entre-temps, il se relit
         // derrière la fenêtre, qui dit le fait (guide, 10.10, « Changé entre-temps »).
-        const lue = lireErreurBase(erreur)
+        const lue = traduireErreurBase(erreur)
         if (lue.genre === 'message' && lue.nature === 'refus') void relire()
         throw erreur
       }

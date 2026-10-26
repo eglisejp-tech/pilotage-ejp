@@ -252,9 +252,12 @@ describe('« Nouveau point » (maquette 10)', () => {
     )
     expect(alerte).not.toHaveTextContent('Autre refus.')
     await userEvent.click(bouton())
-    expect(await screen.findByText(/La connexion a échoué/)).toHaveTextContent(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    // Une création sans réponse est peut-être enregistrée (T76) : vérifier la liste, avec la référence.
+    const connexion = await screen.findByText(/La connexion a échoué/)
+    expect(connexion).toHaveTextContent(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     )
+    expect(connexion).toHaveTextContent(/Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/)
     expect(titre()).toHaveValue('  Salle pour la soirée de louange ')
     expect(screen.getByRole('radio', { name: 'Haute' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Coordination' })).toBeChecked()

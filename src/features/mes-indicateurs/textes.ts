@@ -22,8 +22,6 @@ export const MESSAGES_BASE_SUGGESTION = {
   pourquoiCourt: 'Expliquez pourquoi (10 caractères au moins).',
   pourquoiLong: 'Raccourcissez ce texte : 280 caractères au plus.',
   inexistante: 'Cet indicateur prévu est introuvable. Rechargez la page.',
-  /** Refus de droit (42501) : la forme commune d'un élément introuvable (T66, m273). */
-  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 export const TEXTES_MES_INDICATEURS = {

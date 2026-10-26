@@ -1,4 +1,4 @@
-import { FunctionsFetchError, FunctionsHttpError } from '@supabase/supabase-js'
+import { FunctionsFetchError, FunctionsHttpError, FunctionsRelayError } from '@supabase/supabase-js'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { appelsDe, fauxRequete } from '@/test/fauxRequete'
 import type { CodeErreur } from '../../supabase/functions/_shared/http.ts'
@@ -225,13 +225,20 @@ describe('codes d’erreur traduits en français', () => {
     )
   })
 
-  it('un corps illisible ou un code inconnu : erreur_interne, jamais le texte du serveur', async () => {
+  it('un code inconnu : erreur_interne ; une page 502 illisible : issue inconnue (T76), jamais le texte du serveur', async () => {
     installer(refus(500, { erreur: 'trace interne' }))
     await expect(relancerInvitation(COMPTE)).rejects.toMatchObject({ code: 'erreur_interne' })
     installer(() =>
       Promise.resolve({
         data: null,
         error: new FunctionsHttpError(new Response('<html>502</html>', { status: 502 })),
+      }),
+    )
+    await expect(relancerInvitation(COMPTE)).rejects.toMatchObject({ code: 'connexion' })
+    installer(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsHttpError(new Response('<html>400</html>', { status: 400 })),
       }),
     )
     await expect(relancerInvitation(COMPTE)).rejects.toMatchObject({ code: 'erreur_interne' })
@@ -256,7 +263,19 @@ describe('codes d’erreur traduits en français', () => {
       code: 'connexion',
       message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     })
-    installer(() => Promise.reject(new Error('délai')))
+    installer(() => Promise.reject(new DOMException('Délai de 10 s dépassé.', 'TimeoutError')))
     await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({ code: 'connexion' })
+  })
+
+  it('la fonction n’a pas tourné (FunctionsRelayError) ou un bogue : erreur_interne, jamais « connexion » (T76)', async () => {
+    installer(() =>
+      Promise.resolve({
+        data: null,
+        error: new FunctionsRelayError(new Response('', { status: 500 })),
+      }),
+    )
+    await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({ code: 'erreur_interne' })
+    installer(() => Promise.reject(new TypeError('corps.map is not a function')))
+    await expect(reactiverCompte(COMPTE)).rejects.toMatchObject({ code: 'erreur_interne' })
   })
 })

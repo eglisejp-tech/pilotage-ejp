@@ -12,3 +12,6 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv
 }
+
+/** Version du site, posée au build par vite.config.ts (sha court du commit, ou « local »). */
+declare const __VERSION_SITE__: string

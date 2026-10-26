@@ -1,43 +1,29 @@
-import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
-import { MESSAGES_BASE_SIGNALEMENT, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
+import { lireEchec } from '@/data/echecEnvoi'
+import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
 
-// Lecture d'un refus après l'envoi d'un signalement ou d'une clôture (contrat de l'étape 4,
-// section 7), par la table de traduction de `src/data/messagesBase.ts` : un refus du texte
+// Lecture d'un échec après l'envoi d'un signalement ou d'une clôture (contrat de l'étape 4,
+// section 7), par le classement unique de `src/data/echecEnvoi.ts` (T76) : un refus du texte
 // (longueur, données personnelles, crochets) se dit sous le champ ; un autre refus (écran hors
 // liste, signalement déjà clos), un refus de droit (42501), une connexion expirée, un compte
-// désactivé ou un refus inattendu se disent sous le bouton. Seule une erreur sans réponse est un
-// problème de connexion (valeurs gardées, LISEZMOI « Erreur de formulaire ») ; après 10 s sans
-// réponse à un signalement, il est peut-être enregistré : la phrase dit de vérifier la liste avant
-// de réessayer (m259). Une clôture se refait sans doublon : la base dit « déjà clos ».
+// désactivé ou un refus inattendu se disent sous le bouton. Un signalement dont l'issue est
+// inconnue (aucune réponse, réponse perdue, délai) est peut-être enregistré : la phrase dit de
+// vérifier la liste avant de réessayer (m259). Une clôture se refait sans doublon : la base dit
+// « déjà clos ». Un échec technique porte sa référence.
 
 export type RefusSignalement =
   /** Sous le champ libre (texte du signalement ou commentaire). */
   | { ou: 'champ'; message: string }
-  /** Sous le bouton. */
-  | { ou: 'bouton'; message: string }
-  /** Erreur de formulaire de LISEZMOI (connexion), sous le bouton. */
-  | { ou: 'connexion' }
+  /** Sous le bouton, avec la référence d'un échec technique. */
+  | { ou: 'bouton'; message: string; reference: string | null }
 
-/** Place et texte d'un refus, pour le formulaire qui l'a reçu (signalement ou clôture). */
+/** Place et texte d'un échec, pour le formulaire qui l'a reçu (signalement ou clôture). */
 export function lireRefusSignalement(
   erreur: unknown,
   envoi: 'signalement' | 'cloture' = 'signalement',
 ): RefusSignalement {
-  const lue = lireErreurBase(erreur)
-  switch (lue.genre) {
-    case 'reseau':
-      return { ou: 'connexion' }
-    case 'delai':
-      return envoi === 'signalement'
-        ? { ou: 'bouton', message: MESSAGES_COMMUNS.peutEtreFait }
-        : { ou: 'connexion' }
-    case 'acces':
-      return { ou: 'bouton', message: TEXTES_SIGNALEMENT.acces }
-    case 'message':
-      return lue.nature === 'refus' && lue.champ === 'texte'
-        ? { ou: 'champ', message: lue.message }
-        : { ou: 'bouton', message: lue.message }
-  }
+  const lu = lireEchec(erreur, { nature: envoi === 'signalement' ? 'creation' : 'reprise' })
+  if (lu.nature === 'refus' && lu.champ === 'texte') return { ou: 'champ', message: lu.message }
+  return { ou: 'bouton', message: lu.message, reference: lu.reference }
 }
 
 /** La base dit que le signalement est déjà clos : la liste est à relire. */

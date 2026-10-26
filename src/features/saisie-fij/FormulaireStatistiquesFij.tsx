@@ -184,7 +184,12 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
         doublon={envoi.doublonRefuse(signature)}
       />
       {aucuneValeur ? <ErreurFormulaire message={MESSAGES_FIJ.aucuneValeur} /> : null}
-      {envoi.echec ? <ErreurFormulaire message={envoi.echec.message ?? undefined} /> : null}
+      {envoi.echec ? (
+        <ErreurFormulaire
+          message={envoi.echec.message ?? undefined}
+          reference={envoi.echec.reference}
+        />
+      ) : null}
       <MessageReussite
         message={envoi.reussite?.message ?? null}
         envoi={envoi.reussite?.envoi ?? 0}

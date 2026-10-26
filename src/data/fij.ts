@@ -7,6 +7,7 @@ import { schemaCarteFij, schemaStatistiquesFij } from '@/features/saisie-fij/sch
 import type { SaisieCarteFij, SaisieStatistiquesFij } from '@/features/saisie-fij/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 export type LigneStatistiqueFij = LigneVue<'v_fij_statistique'>
 
@@ -49,11 +50,17 @@ export async function enregistrerCarteFij(
   valeurs: SaisieCarteFij,
 ): Promise<void> {
   const lignes = schemaCarteFij.parse(valeurs)
-  const { error } = await supabase()
-    .from('fij_departement')
-    .insert(
-      lignes.map(({ departement, valeur }) => ({ ministere_id: ministereId, departement, valeur })),
-    )
+  const { error } = await envoyer('table/fij_departement', () =>
+    supabase()
+      .from('fij_departement')
+      .insert(
+        lignes.map(({ departement, valeur }) => ({
+          ministere_id: ministereId,
+          departement,
+          valeur,
+        })),
+      ),
+  )
   if (error) throw error
 }
 
@@ -63,9 +70,11 @@ export async function enregistrerCarteFij(
  */
 export async function enregistrerStatistiquesFij(saisie: SaisieStatistiquesFij): Promise<void> {
   const { dimanche, valeurs } = schemaStatistiquesFij.parse(saisie)
-  const { error } = await supabase().rpc('saisir_fij_statistiques', {
-    p_dimanche: dimanche,
-    p_valeurs: valeurs,
-  })
+  const { error } = await envoyer('rpc/saisir_fij_statistiques', () =>
+    supabase().rpc('saisir_fij_statistiques', {
+      p_dimanche: dimanche,
+      p_valeurs: valeurs,
+    }),
+  )
   if (error) throw error
 }

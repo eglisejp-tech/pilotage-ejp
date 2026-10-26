@@ -35,6 +35,4 @@ export const TEXTES_POINT = {
   bouton: 'Créer le point',
   /** Règle commune : « Enregistrement en cours » (T66, t236). */
   boutonEnCours: 'Enregistrement en cours',
-  /** Erreur de formulaire de LISEZMOI, la phrase commune (les valeurs restent ; T66, m257). */
-  erreurConnexion: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
 } as const

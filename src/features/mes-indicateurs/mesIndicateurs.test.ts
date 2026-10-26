@@ -24,6 +24,9 @@ import {
   titreRetrait,
 } from '@/features/mes-indicateurs/textes'
 
+/** Référence d'un échec technique (T76). */
+const REFERENCE = expect.stringMatching(/^[2-9A-HJKMNP-Z]{6}$/)
+
 const MINISTERE = '10000000-0000-4000-8000-000000000001'
 
 /** Les guillemets français s'écrivent avec une espace insécable : le test lit une espace simple. */
@@ -506,11 +509,21 @@ describe('T62 : retrait d’un ajout par le ministère', () => {
     ).toEqual({
       ou: 'bouton',
       message: 'Ce chiffre sert au calcul « Taux » : demandez à EJP Tech de le retirer.',
+      reference: null,
     })
     expect(lireRefusRetrait({ code: 'P0001', message: 'Cet indicateur est déjà retiré.' })).toEqual(
-      { ou: 'bouton', message: 'Cet indicateur est déjà retiré. Rechargez la page.' },
+      {
+        ou: 'bouton',
+        message: 'Cet indicateur est déjà retiré. Rechargez la page.',
+        reference: null,
+      },
     )
-    expect(lireRefusRetrait(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+    // Un retrait se refait sans doublon : la phrase de connexion, avec la référence (T76).
+    expect(lireRefusRetrait(new TypeError('Failed to fetch'))).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+      reference: REFERENCE,
+    })
   })
 })
 
@@ -552,6 +565,7 @@ describe('refus de la base après « Envoyer pour validation »', () => {
       expect(lireRefusSuggestion({ code: 'P0001', message })).toEqual({
         ou: 'bouton',
         message: phrase,
+        reference: null,
       })
     }
   })
@@ -560,12 +574,19 @@ describe('refus de la base après « Envoyer pour validation »', () => {
     expect(lireRefusSuggestion({ code: '42501', message: 'x' })).toEqual({
       ou: 'bouton',
       message: 'Cet élément est introuvable. Rechargez la page.',
+      reference: null,
     })
-    expect(lireRefusSuggestion(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+    // Une demande est une création : peut-être enregistrée, vérifier la liste (T76).
+    expect(lireRefusSuggestion(new TypeError('Failed to fetch'))).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      reference: REFERENCE,
+    })
     expect(lireRefusSuggestion({ code: '23505', message: 'duplicate key' })).toEqual({
       ou: 'bouton',
       message:
         "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+      reference: REFERENCE,
     })
   })
 })

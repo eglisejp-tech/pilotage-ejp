@@ -132,14 +132,19 @@ test.describe('Ajouter un événement (maquette 11), aperçu', () => {
     await expect(page.getByLabel("Nom de l'événement")).toHaveValue('')
   })
 
-  test('connexion perdue : erreur de formulaire, valeurs gardées', async ({ page }) => {
+  test('connexion perdue : « Vérifiez la liste », une référence, valeurs gardées (T76)', async ({
+    page,
+  }) => {
     await ouvrir(page, 'ajout', 'echec')
     await date(page).fill('2026-10-10')
     await page.getByLabel("Nom de l'événement").fill('Soirée de louange')
     await page.getByText('Brouillon').click()
     await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
-    await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    await expect(page.getByRole('alert')).toContainText(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await expect(page.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(page.getByLabel("Nom de l'événement")).toHaveValue('Soirée de louange')
   })

@@ -1,4 +1,5 @@
-import { lireErreurBase, phraseErreur } from '@/data/messagesBase'
+import { phraseErreur } from '@/data/echecEnvoi'
+import { traduireErreurBase } from '@/data/messagesBase'
 import { TEXTES_SESSIONS } from '@/features/sessions/textes'
 
 // Lecture d'un refus après « Ajouter », « Enregistrer » ou « Supprimer », par la table de
@@ -13,15 +14,17 @@ import { TEXTES_SESSIONS } from '@/features/sessions/textes'
  * Phrase d'un refus, avec la phrase de connexion propre au formulaire qui l'a reçu. La suppression
  * (phrase de connexion `erreurConnexionSuppression`) est une action sans formulaire : son repli
  * ne parle pas de saisie gardée. `acces` : la phrase d'un refus de droit (défaut : session
- * introuvable).
+ * introuvable). `creation` : une déclaration à l'issue inconnue dit « Vérifiez la liste avant de
+ * réessayer » (un nouvel essai rendrait « Une session ... existe déjà », T76).
  */
 export function lireRefusSession(
   erreur: unknown,
   connexion: string,
   acces: string = TEXTES_SESSIONS.erreurAcces,
+  creation = false,
 ): string {
   const formulaire = connexion !== TEXTES_SESSIONS.erreurConnexionSuppression
-  return phraseErreur(erreur, { connexion, acces }, { formulaire })
+  return phraseErreur(erreur, { connexion, acces, creation }, { formulaire })
 }
 
 /**
@@ -34,8 +37,8 @@ export function lireRefusDeclaration(
   connexion: string,
   ajout = false,
 ): { message: string; champ: 'date' | null } {
-  const lue = lireErreurBase(erreur)
+  const lue = traduireErreurBase(erreur)
   const champ = lue.genre === 'message' && lue.champ === 'date' ? 'date' : null
   const acces = ajout ? TEXTES_SESSIONS.erreurAccesAjout : TEXTES_SESSIONS.erreurAcces
-  return { message: lireRefusSession(erreur, connexion, acces), champ }
+  return { message: lireRefusSession(erreur, connexion, acces, ajout), champ }
 }

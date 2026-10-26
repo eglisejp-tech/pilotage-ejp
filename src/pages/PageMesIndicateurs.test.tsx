@@ -451,7 +451,7 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     expect(within(panneau).getByRole('textbox')).toHaveAttribute('aria-invalid', 'true')
   })
 
-  it('une connexion perdue garde le texte et le dit sous le bouton', async () => {
+  it('une demande restée sans réponse garde le texte et dit de vérifier la liste (T76)', async () => {
     const faux = connecte('ministere')
     faux.rpc.mockImplementation((nom: string) =>
       nom === 'limites_indicateurs'
@@ -466,9 +466,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     )
     await userEvent.type(within(panneau).getByRole('textbox'), 'Voir ce que le ministère a mené.')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
-    // La phrase commune des formulaires (T66, m257).
+    // Une demande est une création : peut-être enregistrée, un nouvel essai dirait « déjà » (T76).
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      /^La connexion a échoué\. Votre saisie est encore dans le formulaire/,
+      /^La connexion a échoué\. Vérifiez la liste avant de réessayer\. Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}$/,
     )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })

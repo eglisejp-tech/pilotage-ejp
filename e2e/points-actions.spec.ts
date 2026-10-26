@@ -149,8 +149,11 @@ test.describe('Marquer traité', () => {
     const champ = boite.getByLabel('Ce qui a été traité, et comment')
     await champ.fill('Salle confirmée pour le 10 octobre.')
     await boite.getByRole('button', { name: 'Marquer traité' }).click()
-    await expect(boite.getByRole('alert')).toHaveText(
+    await expect(boite.getByRole('alert')).toContainText(
       'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    )
+    await expect(boite.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(champ).toHaveValue('Salle confirmée pour le 10 octobre.')
     await auditer(page)
@@ -242,8 +245,11 @@ test.describe('Changer le statut', () => {
     const boite = fenetre(page)
     await boite.getByText('En cours', { exact: true }).click()
     await boite.getByRole('button', { name: 'Enregistrer le statut' }).click()
-    await expect(boite.getByRole('alert')).toHaveText(
+    await expect(boite.getByRole('alert')).toContainText(
       'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    )
+    await expect(boite.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(boite.getByRole('radio', { name: 'En cours' })).toBeChecked()
   })

@@ -7,6 +7,7 @@ import type { LigneTable, LigneVue } from '@/lib/base'
 import { schemaPrenom } from '@/lib/metier/declaration'
 import type { Declaration, MotifDeclaration } from '@/lib/metier/declaration'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /** Connexions montrées d'abord, et ajoutées par « Afficher 50 de plus ». */
 export const TAILLE_PAGE_CONNEXIONS = 50
@@ -26,10 +27,12 @@ export async function lireMaDeclaration(): Promise<Declaration | null> {
 
 /** Déclare le prénom de la personne sur cette session ; le schéma le nettoie et le contrôle. */
 export async function declarerIntervenant(prenom: string, motif: MotifDeclaration): Promise<void> {
-  const { error } = await supabase().rpc('declarer_intervenant', {
-    p_prenom: schemaPrenom.parse(prenom),
-    p_motif: motif,
-  })
+  const { error } = await envoyer('rpc/declarer_intervenant', () =>
+    supabase().rpc('declarer_intervenant', {
+      p_prenom: schemaPrenom.parse(prenom),
+      p_motif: motif,
+    }),
+  )
   if (error) throw error
 }
 
@@ -38,12 +41,14 @@ export async function declarerIntervenant(prenom: string, motif: MotifDeclaratio
  * une seconde fois le même jour ne fait rien).
  */
 export async function noterPassage(declarationId: number): Promise<void> {
-  const { error } = await supabase()
-    .from('passage')
-    .upsert(
-      { intervenant_id: declarationId },
-      { onConflict: 'intervenant_id,jour', ignoreDuplicates: true },
-    )
+  const { error } = await envoyer('table/passage', () =>
+    supabase()
+      .from('passage')
+      .upsert(
+        { intervenant_id: declarationId },
+        { onConflict: 'intervenant_id,jour', ignoreDuplicates: true },
+      ),
+  )
   if (error) throw error
 }
 
@@ -106,14 +111,18 @@ export async function lireLibellesComptes(): Promise<Map<string, string>> {
 
 /** Efface un prénom (toutes ses déclarations sur le compte) ; rend leur nombre. */
 export async function effacerPrenom(intervenantId: number): Promise<number> {
-  const { data, error } = await supabase().rpc('effacer_prenom', { p_intervenant: intervenantId })
+  const { data, error } = await envoyer('rpc/effacer_prenom', () =>
+    supabase().rpc('effacer_prenom', { p_intervenant: intervenantId }),
+  )
   if (error) throw error
   return data
 }
 
 /** Efface les prénoms déclarés il y a plus de 12 mois ; rend le nombre de déclarations changées. */
 export async function effacerPrenomsAnciens(): Promise<number> {
-  const { data, error } = await supabase().rpc('effacer_prenoms_anciens', {})
+  const { data, error } = await envoyer('rpc/effacer_prenoms_anciens', () =>
+    supabase().rpc('effacer_prenoms_anciens', {}),
+  )
   if (error) throw error
   return data
 }

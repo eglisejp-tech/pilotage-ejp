@@ -28,6 +28,14 @@ export function erreurDeConnexion(objet: ObjetSaisie): string {
   return ERREURS_CONNEXION[objet]
 }
 
+/**
+ * Référence d'un échec d'envoi (T76), sous sa phrase : la même que dans les journaux de la
+ * passerelle Supabase, à donner à EJP Tech avec une capture d'écran.
+ */
+export function texteReference(reference: string): string {
+  return `Référence pour EJP Tech : ${reference}`
+}
+
 /** Largeur à partir de laquelle une saisie s'ouvre en panneau latéral de 460 px (BRIEF section 9). */
 export const LARGEUR_PANNEAU = 600
 

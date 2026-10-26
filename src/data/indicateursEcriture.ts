@@ -6,6 +6,7 @@
 // `security invoker` et ouvertes à `authenticated` seulement ; aucun texte libre ne va au journal.
 
 import { z } from 'zod'
+import { envoyer } from '@/data/envoi'
 import { traduireMessageBase } from '@/data/messagesBase'
 import type {
   LigneTable,
@@ -162,16 +163,18 @@ export async function ajouterIndicateur(
   remplaceId: string | null = null,
 ): Promise<string> {
   const ajout = schemaAjout.parse(entree)
-  const { data, error } = await supabase().rpc('creer_indicateur', {
-    p_ministere_id: schemaIdentifiant.parse(ministereId),
-    p_libelle: ajout.libelle,
-    p_definition: ajout.definition,
-    p_nature: ajout.nature,
-    p_unite: ajout.sensible ? 'nombre' : ajout.unite,
-    p_sensible: ajout.sensible,
-    p_pas_sensible: ajout.pasSensible && !ajout.sensible,
-    p_remplace_id: remplaceId === null ? null : schemaIdentifiant.parse(remplaceId),
-  })
+  const { data, error } = await envoyer('rpc/creer_indicateur', () =>
+    supabase().rpc('creer_indicateur', {
+      p_ministere_id: schemaIdentifiant.parse(ministereId),
+      p_libelle: ajout.libelle,
+      p_definition: ajout.definition,
+      p_nature: ajout.nature,
+      p_unite: ajout.sensible ? 'nombre' : ajout.unite,
+      p_sensible: ajout.sensible,
+      p_pas_sensible: ajout.pasSensible && !ajout.sensible,
+      p_remplace_id: remplaceId === null ? null : schemaIdentifiant.parse(remplaceId),
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -186,15 +189,17 @@ export async function ajouterCalcul(
   remplaceId: string | null = null,
 ): Promise<string> {
   const calcul = schemaCalcul.parse(entree)
-  const { data, error } = await supabase().rpc('creer_calcul', {
-    p_libelle: calcul.libelle,
-    p_definition: calcul.definition,
-    p_type: calcul.type,
-    p_haut_id: calcul.hautId,
-    p_bas_id: calcul.basId,
-    p_remplace_id: remplaceId === null ? null : schemaIdentifiant.parse(remplaceId),
-    p_part: calcul.part ?? null,
-  })
+  const { data, error } = await envoyer('rpc/creer_calcul', () =>
+    supabase().rpc('creer_calcul', {
+      p_libelle: calcul.libelle,
+      p_definition: calcul.definition,
+      p_type: calcul.type,
+      p_haut_id: calcul.hautId,
+      p_bas_id: calcul.basId,
+      p_remplace_id: remplaceId === null ? null : schemaIdentifiant.parse(remplaceId),
+      p_part: calcul.part ?? null,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -208,11 +213,13 @@ export async function corrigerIndicateur(
   entree: EntreeCorrection,
 ): Promise<void> {
   const correction = schemaCorrection.parse(entree)
-  const { error } = await supabase().rpc('corriger_indicateur', {
-    p_indicateur_id: schemaIdentifiant.parse(indicateurId),
-    p_libelle: correction.libelle,
-    p_definition: correction.definition,
-  })
+  const { error } = await envoyer('rpc/corriger_indicateur', () =>
+    supabase().rpc('corriger_indicateur', {
+      p_indicateur_id: schemaIdentifiant.parse(indicateurId),
+      p_libelle: correction.libelle,
+      p_definition: correction.definition,
+    }),
+  )
   if (error) throw error
 }
 
@@ -226,10 +233,12 @@ export async function retirerIndicateur(
   motif: MotifRetraitChoisi | 'confidentialite',
 ): Promise<number> {
   const choisi = motif === 'confidentialite' ? motif : schemaMotifRetrait.parse(motif)
-  const { data, error } = await supabase().rpc('retirer_indicateur', {
-    p_indicateur_id: schemaIdentifiant.parse(indicateurId),
-    p_motif: choisi,
-  })
+  const { data, error } = await envoyer('rpc/retirer_indicateur', () =>
+    supabase().rpc('retirer_indicateur', {
+      p_indicateur_id: schemaIdentifiant.parse(indicateurId),
+      p_motif: choisi,
+    }),
+  )
   if (error) throw error
   return data
 }

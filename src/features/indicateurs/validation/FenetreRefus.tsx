@@ -187,8 +187,9 @@ export function FenetreRefus({
               </LibelleEnvoi>
             </button>
           </div>
-          {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-          {refus?.ou === 'formulaire' ? <ErreurFormulaire message={refus.message} /> : null}
+          {refus?.ou === 'formulaire' ? (
+            <ErreurFormulaire message={refus.message} reference={refus.reference} />
+          ) : null}
         </form>
       </div>
     </div>,

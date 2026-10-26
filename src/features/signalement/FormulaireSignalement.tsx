@@ -111,8 +111,9 @@ export function FormulaireSignalement({
         {envoye ? TEXTES_SIGNALEMENT.boutonFermer : TEXTES_SIGNALEMENT.boutonAnnuler}
       </button>
       {erreurEcran ? <ErreurFormulaire message={erreurEcran} /> : null}
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-      {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+      {refus?.ou === 'bouton' ? (
+        <ErreurFormulaire message={refus.message} reference={refus.reference} />
+      ) : null}
       <MessageReussite message={reussite} envoi={envoi} />
     </form>
   )
