@@ -45,7 +45,8 @@ const REFUS_FIJ_EXEMPLE = 'Les STARs en FIJ ne peuvent pas dépasser les STARs a
  * dimanche du jour avant midi), `matin-vide` (sans indicateur du matin), `matin-coupure` (le
  * matin, envoi en échec), `refuse` (date de l'adresse refusée), `chargement`, `erreur` (lecture
  * en échec), `coupure` (envoi en échec), `refus-fij` (la base refuse « Dont en FIJ » au-dessus
- * des actifs, m068).
+ * des actifs, m068), `premier-usage` (aucune valeur « à ce jour » : ni « Saisi le » ni chiffre
+ * prérempli sous les actifs et les FIJ ; cas réel de l'alignement des champs, 26 octobre 2026).
  */
 export function etatApercuDimanche(etat: string | null): EtatSaisieDimanche {
   if (etat === 'chargement') return { etat: 'chargement' }
@@ -72,7 +73,7 @@ export function etatApercuDimanche(etat: string | null): EtatSaisieDimanche {
       matin: choix.matin,
       indicateurs,
       mesuresDimanche,
-      mesuresACeJour: MESURES_A_CE_JOUR,
+      mesuresACeJour: etat === 'premier-usage' ? [] : MESURES_A_CE_JOUR,
     }),
     proposes: dimanchesProposes(
       semaine,
