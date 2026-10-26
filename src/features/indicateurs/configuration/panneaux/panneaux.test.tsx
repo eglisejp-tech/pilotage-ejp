@@ -475,7 +475,7 @@ describe('panneau « Ajouter un indicateur »', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 
-  it('une connexion perdue le dit sans effacer le formulaire', async () => {
+  it('une création restée sans réponse : « Vérifiez la liste » (T76), sans effacer le formulaire', async () => {
     const ecritures = ecrituresDe({
       ajouter: vi.fn(() => Promise.reject(new TypeError('Failed to fetch'))),
     })
@@ -487,10 +487,11 @@ describe('panneau « Ajouter un indicateur »', () => {
     )
     await utilisateur.click(within(panneau).getByRole('radio', { name: /Chaque mois/ }))
     await utilisateur.click(within(panneau).getByRole('button', { name: "Ajouter l'indicateur" }))
-    // La phrase commune des formulaires (T66, m257).
+    // Une création à l'issue inconnue (T76) : le nouvel essai dirait « La fiche a déjà ».
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     )
+    expect(within(panneau).getByLabelText('Ce que vous comptez')).toHaveValue('Tournages')
   })
 
   it('la fiche pleine le dit avant l’envoi, avec le message de la base', async () => {

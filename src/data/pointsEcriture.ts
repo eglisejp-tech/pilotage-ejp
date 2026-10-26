@@ -6,7 +6,10 @@
 // Les lectures des points sont dans `points.ts` (« À décider ») et `pointsListe.ts` (écran 05).
 
 import { z } from 'zod'
-import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
+import { lireEchec } from '@/data/echecEnvoi'
+import type { EchecLu } from '@/data/echecEnvoi'
+import { envoyer } from '@/data/envoi'
+import { MESSAGES_COMMUNS } from '@/data/messagesBase'
 import type { Priorite, StatutPoint } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
 import { COMMENTAIRE_TRAITE_MAX, COMMENTAIRE_TRAITE_MIN_MINISTERE } from '@/lib/metier/droitsPoint'
@@ -93,39 +96,28 @@ export const MESSAGES_POINT = {
 export type ContexteRefusPoint = 'creation' | 'action'
 
 /**
- * Texte à montrer sous le bouton pour un refus, ou null pour un problème de connexion (l'écran
- * garde les valeurs et dit « La connexion a échoué... »). La phrase vient de la table de
- * traduction (`src/data/messagesBase.ts`), jamais du texte brut de la base :
+ * Échec d'une écriture sur un point, par le classement unique (`src/data/echecEnvoi.ts`, T76) :
  *
- * - Valeur refusée avant l'appel (`ZodError`, levée par `creerPoint`, `changerStatutPoint` ou
- *   `marquerTraite`) : la consigne de son premier problème. Les formulaires des lots P1 et P2
- *   valident d'abord avec les schémas de ce fichier ; ce cas reste un filet.
- * - Refus de la base (`P0001`) : sa phrase dans la table ; absent de la table, le repli.
- * - Double authentification absente, jeton expiré : « Votre connexion a expiré » ; compte
- *   désactivé : « Ce compte est désactivé » (m271, m272).
- * - Autre refus de droit (`42501`) : sans dire pourquoi (point hors de portée). La création
+ * - valeur refusée avant l'appel (`ZodError`, levée par `creerPoint`, `changerStatutPoint` ou
+ *   `marquerTraite`) : la consigne de son premier problème ; les formulaires valident d'abord
+ *   avec les schémas de ce fichier, ce cas reste un filet ;
+ * - refus de la base (`P0001`) : sa phrase dans la table ; absent de la table, le repli ;
+ * - double authentification absente, jeton expiré : « Votre connexion a expiré » ; compte
+ *   désactivé : « Ce compte est désactivé » (m271, m272) ;
+ * - autre refus de droit (`42501`) : sans dire pourquoi (point hors de portée). La création
  *   réservée aux ministères garde son texte ; sinon `creationAcces` pour la création, `acces`
- *   pour une action sur un point.
- * - Création restée sans réponse après 10 s : le point est peut-être créé, vérifier la liste avant
- *   de réessayer (m259). Une action se refait sans doublon : null.
+ *   pour une action sur un point ;
+ * - création dont l'issue est inconnue (aucune réponse, réponse perdue, délai) : le point est
+ *   peut-être créé, vérifier la liste avant de réessayer (m259) ; une action se refait sans
+ *   doublon : « Votre saisie est encore dans le formulaire : réessayez. » ;
+ * - un échec technique porte sa référence.
  */
-export function messageDeRefusPoint(
-  erreur: unknown,
-  contexte: ContexteRefusPoint = 'action',
-): string | null {
-  const lue = lireErreurBase(erreur)
-  switch (lue.genre) {
-    case 'reseau':
-      return null
-    case 'delai':
-      return contexte === 'creation' ? MESSAGES_COMMUNS.peutEtreFait : null
-    case 'acces':
-      return contexte === 'creation'
-        ? MESSAGES_POINT.refus.creationAcces
-        : MESSAGES_POINT.refus.acces
-    case 'message':
-      return lue.message
-  }
+export function lireEchecPoint(erreur: unknown, contexte: ContexteRefusPoint = 'action'): EchecLu {
+  return lireEchec(erreur, {
+    nature: contexte === 'creation' ? 'creation' : 'reprise',
+    acces:
+      contexte === 'creation' ? MESSAGES_POINT.refus.creationAcces : MESSAGES_POINT.refus.acces,
+  })
 }
 
 const VALEURS_PRIORITE = ['normale', 'haute', 'urgente'] as const satisfies readonly Priorite[]
@@ -230,14 +222,16 @@ export type NouveauPoint = z.output<typeof schemaBaseNouveauPoint>
  */
 export async function creerPoint(brut: NouveauPoint): Promise<string> {
   const point = schemaBaseNouveauPoint.parse(brut)
-  const { data, error } = await supabase().rpc('creer_point', {
-    p_titre: point.titre,
-    p_description: point.description,
-    p_action_attendue: point.attendu,
-    p_priorite: point.priorite,
-    p_echeance: point.echeance,
-    p_mentions: point.mentions,
-  })
+  const { data, error } = await envoyer('rpc/creer_point', () =>
+    supabase().rpc('creer_point', {
+      p_titre: point.titre,
+      p_description: point.description,
+      p_action_attendue: point.attendu,
+      p_priorite: point.priorite,
+      p_echeance: point.echeance,
+      p_mentions: point.mentions,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -247,10 +241,12 @@ export async function creerPoint(brut: NouveauPoint): Promise<string> {
  * n'écrit rien. La base refuse un point déjà traité.
  */
 export async function changerStatutPoint(pointId: string, statut: StatutChoisi): Promise<void> {
-  const { error } = await supabase().rpc('changer_statut_point', {
-    p_point_id: schemaIdentifiant.parse(pointId),
-    p_statut: schemaBaseStatutPoint.parse(statut),
-  })
+  const { error } = await envoyer('rpc/changer_statut_point', () =>
+    supabase().rpc('changer_statut_point', {
+      p_point_id: schemaIdentifiant.parse(pointId),
+      p_statut: schemaBaseStatutPoint.parse(statut),
+    }),
+  )
   if (error) throw error
 }
 
@@ -259,10 +255,12 @@ export async function changerStatutPoint(pointId: string, statut: StatutChoisi):
  * écrit pas ; un ministère en écrit un de 10 à 280 caractères (la base le refuse sinon).
  */
 export async function marquerTraite(pointId: string, commentaire: string | null): Promise<void> {
-  const { error } = await supabase().rpc('marquer_traite', {
-    p_point_id: schemaIdentifiant.parse(pointId),
-    p_commentaire: schemaBaseCommentaireTraite.parse(commentaire),
-  })
+  const { error } = await envoyer('rpc/marquer_traite', () =>
+    supabase().rpc('marquer_traite', {
+      p_point_id: schemaIdentifiant.parse(pointId),
+      p_commentaire: schemaBaseCommentaireTraite.parse(commentaire),
+    }),
+  )
   if (error) throw error
 }
 
@@ -274,9 +272,11 @@ export async function marquerTraite(pointId: string, commentaire: string | null)
  * et un compte qui n'a pas ce droit (messages de `MESSAGES_POINT`).
  */
 export async function modifierMentionsPoint(pointId: string, mentions: string[]): Promise<void> {
-  const { error } = await supabase().rpc('modifier_mentions_point', {
-    p_point_id: schemaIdentifiant.parse(pointId),
-    p_mentions: schemaBaseMentionsPoint.parse(mentions),
-  })
+  const { error } = await envoyer('rpc/modifier_mentions_point', () =>
+    supabase().rpc('modifier_mentions_point', {
+      p_point_id: schemaIdentifiant.parse(pointId),
+      p_mentions: schemaBaseMentionsPoint.parse(mentions),
+    }),
+  )
   if (error) throw error
 }

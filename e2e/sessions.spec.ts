@@ -187,7 +187,7 @@ test.describe('Sessions (administration), aperçu', () => {
     const formulaire = await ouvrirDeclaration(page)
     await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
     await expect(formulaire.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     )
     await expect(formulaire.getByText('8 sur 8')).toBeVisible()
   })

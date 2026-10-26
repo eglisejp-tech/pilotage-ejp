@@ -19,6 +19,9 @@ import {
   schemaCreerCompte,
   type DemandeCreerCompte,
 } from '../../supabase/functions/_shared/schemas.ts'
+import { classer } from '@/data/echecEnvoi'
+import { envoyer } from '@/data/envoi'
+import { MESSAGES_COMMUNS } from '@/data/messagesBase'
 import type { LigneRaisonSuppression, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
@@ -46,7 +49,8 @@ export type CodeErreurCompte = CodeErreur | 'connexion'
  * (T60), aucune phrase ne lui dit donc de « prévenir EJP Tech ».
  */
 export const MESSAGES_ERREURS_COMPTES: Readonly<Record<CodeErreurCompte, string>> = {
-  connexion: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+  /** Issue inconnue (aucune réponse, réponse perdue ou illisible, délai) : la phrase commune (T76). */
+  connexion: MESSAGES_COMMUNS.peutEtreFait,
   /** Refus d'un panneau ; une action de ligne ou de fenêtre dit `REFUS_ACTION_COMPTE` (m186). */
   requete_invalide: 'Vérifiez les champs, puis réessayez.',
   methode_non_autorisee: "La demande n'a pas pu être envoyée. Réessayez.",
@@ -118,37 +122,52 @@ function estCodeConnu(code: unknown): code is CodeErreur {
   )
 }
 
-/** Code de la réponse `{ erreur: '<code>' }` d'une fonction ; `erreur_interne` s'il est illisible. */
-async function codeDeLaReponse(reponse: unknown): Promise<CodeErreur> {
+/**
+ * Code de la réponse `{ erreur: '<code>' }` d'une fonction ; `erreur_interne` pour un code
+ * inconnu ou un corps illisible, sauf un corps illisible en 5xx (page d'une passerelle, la
+ * fonction a peut-être agi) : l'issue est inconnue, `connexion` (T76).
+ */
+async function codeDeLaReponse(reponse: unknown): Promise<CodeErreurCompte> {
   if (!(reponse instanceof Response)) return 'erreur_interne'
+  let corps: unknown
   try {
-    const corps: unknown = await reponse.json()
-    const code =
-      typeof corps === 'object' && corps !== null ? (corps as { erreur?: unknown }).erreur : null
-    return estCodeConnu(code) ? code : 'erreur_interne'
+    corps = await reponse.json()
   } catch {
-    return 'erreur_interne'
+    return reponse.status >= 500 ? 'connexion' : 'erreur_interne'
   }
+  const code =
+    typeof corps === 'object' && corps !== null ? (corps as { erreur?: unknown }).erreur : null
+  return estCodeConnu(code) ? code : 'erreur_interne'
 }
 
 /**
  * Appelle une fonction de comptes avec le jeton de la session. `{ ok: true }` : rien à rendre.
- * Une réponse d'erreur devient une `ErreurCompte` avec son code ; une réponse qui n'arrive pas
- * (réseau, délai), une `ErreurCompte` « connexion ».
+ * Une réponse d'erreur devient une `ErreurCompte` avec son code. Sinon, le classement unique
+ * (T76) : une issue inconnue (aucune réponse, réponse perdue, délai) donne « connexion » ; une
+ * fonction qui n'a pas tourné (`FunctionsRelayError`) ou un bogue, `erreur_interne`.
  */
 async function appelerFonction(fonction: FonctionCompte, corps: object): Promise<void> {
   let resultat: Awaited<ReturnType<ReturnType<typeof supabase>['functions']['invoke']>>
   try {
-    resultat = await supabase().functions.invoke(fonction, { body: corps })
-  } catch {
-    throw new ErreurCompte('connexion')
+    resultat = await envoyer(`functions/${fonction}`, () =>
+      supabase().functions.invoke(fonction, { body: corps }),
+    )
+  } catch (erreur) {
+    throw echecDeLaFonction(erreur)
   }
   const { error } = resultat
   if (!error) return
   if (error instanceof FunctionsHttpError) {
     throw new ErreurCompte(await codeDeLaReponse(error.context))
   }
-  throw new ErreurCompte('connexion')
+  throw echecDeLaFonction(error)
+}
+
+/** Panne sûre (fonction qui n'a pas tourné, bogue) : `erreur_interne` ; sinon `connexion`. */
+function echecDeLaFonction(erreur: unknown): ErreurCompte {
+  const { genre, issue } = classer(erreur)
+  const panne = issue === 'rien_enregistre' && genre !== 'sans_reponse'
+  return new ErreurCompte(panne ? 'erreur_interne' : 'connexion')
 }
 
 /**

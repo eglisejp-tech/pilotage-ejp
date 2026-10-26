@@ -3,6 +3,10 @@ import { appelleUnSignalement, lireRefus } from '@/features/evenements/refus'
 import { MESSAGES_BASE } from '@/features/evenements/textes'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 
+/** Référence d'un échec technique (T76) : six caractères de l'alphabet sans 0, 1, I, L ni O. */
+const REFERENCE = expect.stringMatching(/^[2-9A-HJKMNP-Z]{6}$/)
+const CONNEXION = 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.'
+
 const erreurBase = (message: string, code = 'P0001') => ({
   code,
   message,
@@ -29,6 +33,7 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(erreurBase(MESSAGES_BASE.ligneIdentique))).toEqual({
       ou: 'bouton',
       message: "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
+      reference: null,
     })
     expect(TEXTES_SIGNALEMENT.ligneIdentique).toBe(
       "Ce statut et cette date sont déjà enregistrés. Changez l'un des deux.",
@@ -39,6 +44,7 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(erreurBase('Ce ministère ne peut pas être mentionné.'))).toEqual({
       ou: 'bouton',
       message: 'Un ministère coché a été désactivé. Décochez-le, puis réessayez.',
+      reference: null,
     })
   })
 
@@ -61,6 +67,7 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(erreurBase(MESSAGES_BASE.heurePrevueInvalide), 'reunion')).toEqual({
       ou: 'bouton',
       message: 'Choisissez une heure valide.',
+      reference: null,
     })
   })
 
@@ -69,6 +76,7 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
       ou: 'bouton',
       message:
         "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+      reference: REFERENCE,
     })
   })
 
@@ -76,6 +84,7 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(erreurBase('new row violates row-level security policy', '42501'))).toEqual({
       ou: 'bouton',
       message: 'Cet élément est introuvable. Rechargez la page.',
+      reference: null,
     })
   })
 
@@ -92,21 +101,29 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(erreurBase('Double authentification requise.', '42501'), 'reunion')).toEqual({
       ou: 'bouton',
       message: 'Votre connexion a expiré. Reconnectez-vous.',
+      reference: null,
     })
     expect(lireRefus(erreurBase('Compte inactif ou inconnu.', '42501'))).toEqual({
       ou: 'bouton',
       message: 'Ce compte est désactivé. Contactez EJP Tech.',
+      reference: null,
     })
     expect(lireRefus(erreurBase('JWT expired', 'PGRST303'))).toEqual({
       ou: 'bouton',
       message: 'Votre connexion a expiré. Reconnectez-vous.',
+      reference: null,
     })
   })
 
-  it('aucune réponse : un problème de connexion', () => {
-    expect(lireRefus(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
-    expect(lireRefus({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
-      ou: 'connexion',
+  it('aucune réponse : la phrase de connexion pour une mise à jour, « Vérifiez la liste » pour un ajout (T76)', () => {
+    const attendu = { ou: 'bouton', message: CONNEXION, reference: REFERENCE }
+    expect(lireRefus(new TypeError('Failed to fetch'))).toEqual(attendu)
+    expect(lireRefus({ code: '', message: 'TypeError: Failed to fetch' })).toEqual(attendu)
+    expect(lireRefus({ code: '', message: 'TypeError: Load failed' }, 'reunion')).toEqual(attendu)
+    expect(lireRefus({ code: '', message: 'TypeError: Load failed' }, 'ajout')).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      reference: REFERENCE,
     })
   })
 
@@ -115,9 +132,14 @@ describe('refus de la base (contrat de l’étape 4, section 7 ; T37 ; table de 
     expect(lireRefus(delai, 'ajout')).toEqual({
       ou: 'bouton',
       message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      reference: REFERENCE,
     })
     // La mise à jour se refait sans doublon : la base refuse la ligne identique.
-    expect(lireRefus(delai, 'evenement')).toEqual({ ou: 'connexion' })
+    expect(lireRefus(delai, 'evenement')).toEqual({
+      ou: 'bouton',
+      message: CONNEXION,
+      reference: REFERENCE,
+    })
   })
 
   it('seuls les deux messages de date refusée appellent le lien « Signaler une difficulté »', () => {

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 import { choisirModelePrevus, creerIndicateursPrevus } from '@/data/indicateursConfiguration'
-import { lireErreurBase, MESSAGES_COMMUNS } from '@/data/messagesBase'
+import { lireEchec } from '@/data/echecEnvoi'
 import { invaliderApresEcriture } from '@/features/indicateurs/configuration/cles'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import {
@@ -15,20 +15,22 @@ import {
  * Phrase d'un refus, par la table de traduction de `src/data/messagesBase.ts` (m228) : « La fiche
  * a déjà « X ». Retirez-le, puis créez les indicateurs prévus. », la connexion expirée (m271), un
  * refus de droit (42501) qui dit seulement que l'élément n'est pas accessible, ou le repli d'une
- * action. `null` : un problème de connexion (l'écran dit « La connexion a échoué. Réessayez. »).
- * `formulaire` faux : une action sans formulaire (création des prévus, fenêtre de retrait).
+ * action. `null` : un échec technique qui se refait sans risque (l'écran dit sa phrase de
+ * connexion, « La connexion a échoué. Réessayez. ») ; un bogue prend le repli (T76). `formulaire`
+ * faux : une action sans formulaire (création des prévus, fenêtre de retrait). `creation` : une
+ * création à l'issue inconnue dit « Vérifiez la liste avant de réessayer » (un nouvel essai
+ * rendrait « La fiche a déjà « X ». »).
  */
-export function messageDeRefusPrevus(erreur: unknown, formulaire = false): string | null {
-  const lue = lireErreurBase(erreur, { formulaire })
-  switch (lue.genre) {
-    case 'reseau':
-    case 'delai':
-      return null
-    case 'acces':
-      return MESSAGES_COMMUNS.acces
-    case 'message':
-      return lue.message
-  }
+export function messageDeRefusPrevus(
+  erreur: unknown,
+  formulaire = false,
+  creation = false,
+): string | null {
+  const lu = lireEchec(erreur, {
+    nature: creation ? 'creation' : formulaire ? 'reprise' : 'action',
+  })
+  if (lu.nature === 'technique' && !(creation && lu.relire)) return null
+  return lu.message
 }
 
 /** Ce que reçoit l'écran pour la création des prévus. */
@@ -89,7 +91,7 @@ export function useCreationPrevus(): CreationPrevus {
         setEnvoi((precedent) => precedent + 1)
       } catch (erreur) {
         setReussite(null)
-        setRefus(messageDeRefusPrevus(erreur) ?? TEXTES_CONFIGURATION.erreur)
+        setRefus(messageDeRefusPrevus(erreur, false, true) ?? TEXTES_CONFIGURATION.erreur)
       } finally {
         occupe.current = false
         setEnCours(null)

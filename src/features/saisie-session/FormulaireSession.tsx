@@ -159,7 +159,12 @@ export function FormulaireSession({
         dejaEnvoye={envoi.dejaEnvoye(signature)}
         doublon={envoi.doublonRefuse(signature)}
       />
-      {envoi.echec ? <ErreurFormulaire message={envoi.echec.message ?? undefined} /> : null}
+      {envoi.echec ? (
+        <ErreurFormulaire
+          message={envoi.echec.message ?? undefined}
+          reference={envoi.echec.reference}
+        />
+      ) : null}
       <MessageReussite
         message={envoi.reussite?.message ?? null}
         envoi={envoi.reussite?.envoi ?? 0}

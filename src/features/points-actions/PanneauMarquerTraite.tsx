@@ -2,10 +2,11 @@ import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
 import {
-  messageDeRefusPoint,
+  lireEchecPoint,
   schemaBaseCommentaireTraite,
   schemaCommentaireTraiteMinistere,
 } from '@/data/pointsEcriture'
+import type { EchecLu } from '@/data/echecEnvoi'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { FenetreAction } from '@/features/points-actions/FenetreAction'
 import { TEXTES_ACTIONS_POINT } from '@/features/points-actions/textes'
@@ -39,7 +40,7 @@ interface Props {
 export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, onFermer }: Props) {
   const [texte, setTexte] = useState('')
   const [erreurChamp, setErreurChamp] = useState<string | null>(null)
-  const [refus, setRefus] = useState<string | null>(null)
+  const [refus, setRefus] = useState<EchecLu | null>(null)
   const [enCours, setEnCours] = useState(false)
   const champ = useRef<HTMLTextAreaElement>(null)
 
@@ -61,7 +62,7 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
       await envoyer(lu.data)
       onFermer()
     } catch (erreur) {
-      setRefus(messageDeRefusPoint(erreur) ?? TEXTES_ACTIONS_POINT.traite.erreurConnexion)
+      setRefus(lireEchecPoint(erreur))
     } finally {
       setEnCours(false)
     }
@@ -97,7 +98,7 @@ export function PanneauMarquerTraite({ titre, commentaireObligatoire, envoyer, o
           enCours={enCours}
           libelleEnCours={TEXTES_ACTIONS_POINT.traite.boutonEnCours}
         />
-        {refus ? <ErreurFormulaire message={refus} /> : null}
+        {refus ? <ErreurFormulaire message={refus.message} reference={refus.reference} /> : null}
         <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.traite.annuler}
         </Bouton>

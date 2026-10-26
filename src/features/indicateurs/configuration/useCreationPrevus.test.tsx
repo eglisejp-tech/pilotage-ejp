@@ -64,8 +64,15 @@ describe('messageDeRefusPrevus', () => {
   })
 
   it('un refus de droit (42501) dit seulement que l’élément est introuvable (T66, m273)', () => {
+    expect(
+      messageDeRefusPrevus({
+        code: '42501',
+        message: 'new row violates row-level security policy',
+      }),
+    ).toBe('Cet élément est introuvable. Rechargez la page.')
+    // Requête partie sans jeton (rôle anon) : connexion expirée (T76, Q8).
     expect(messageDeRefusPrevus({ code: '42501', message: 'permission denied for table x' })).toBe(
-      'Cet élément est introuvable. Rechargez la page.',
+      'Votre connexion a expiré. Reconnectez-vous.',
     )
   })
 
@@ -167,13 +174,15 @@ describe('useCreationPrevus', () => {
     expect(result.current.enCours).toBeNull()
   })
 
-  it('un problème de connexion : « La connexion a échoué. Réessayez. », le bouton redevient actif', async () => {
+  it('une création des prévus restée sans réponse : « Vérifiez la liste » (T76), le bouton redevient actif', async () => {
     appel.creer.mockRejectedValue(new TypeError('Failed to fetch'))
     const { result } = monter()
     await act(async () => {
       await result.current.creer(KUMI, 'kumi')
     })
-    expect(result.current.refus).toBe('La connexion a échoué. Réessayez.')
+    expect(result.current.refus).toBe(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
     expect(result.current.enCours).toBeNull()
   })
 

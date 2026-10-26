@@ -97,6 +97,51 @@ test.describe('Communication', () => {
     ).toBe(ajoutsAvant + 1)
   })
 
+  // T76, le cas réel du 26 octobre 2026 : la base enregistre, la réponse se perd (Safari, « Load
+  // failed »). L'écran ne dit plus « réessayez » : il dit de vérifier la liste, relit le calendrier
+  // et montre la référence, la même que dans X-Client-Info (journaux de la passerelle).
+  test('réponse perdue après l’enregistrement : « Vérifiez la liste », la référence de la requête, un seul événement', async ({
+    page,
+  }) => {
+    const nom = `Essai T76 ${SUFFIXE}`
+    await page.goto('/saisir/evenement')
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    let enTete = ''
+    await page.route('**/rest/v1/rpc/ajouter_evenement', async (route) => {
+      enTete = route.request().headers()['x-client-info'] ?? ''
+      // La requête part et la base enregistre ; seule la réponse n'arrive pas au navigateur.
+      await route.fetch()
+      await route.abort('failed')
+    })
+    await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, 12))
+    await page.getByLabel("Nom de l'événement").fill(nom)
+    await page.getByText('Brouillon', { exact: true }).click()
+    for (const mention of ['Coordination', 'FIJ']) {
+      await page.getByRole('checkbox', { name: mention, exact: true }).check()
+    }
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+
+    const alerte = page.getByRole('alert')
+    await expect(alerte).toContainText(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await expect(alerte).not.toContainText('encore dans le formulaire')
+    const reference = /Référence pour EJP Tech : ([2-9A-HJKMNP-Z]{6})/.exec(
+      (await alerte.textContent()) ?? '',
+    )?.[1]
+    expect(reference).toBeDefined()
+    expect(enTete).toMatch(/; pilotage=([0-9a-f]{7}|local);/)
+    expect(enTete).toContain(`; ref=${reference ?? ''}`)
+    await expect(page.getByLabel("Nom de l'événement")).toHaveValue(nom)
+
+    const lignes = await lire<{ id: string }>(
+      page,
+      `v_evenement?select=id&titre=eq.${encodeURIComponent(nom)}`,
+    )
+    expect(lignes).toHaveLength(1)
+    expect(await journalDe(page, 'evenement_ajoute', lignes[0]?.id ?? '')).toBe(1)
+  })
+
   // m134 : la ligne identique est dite avant l'envoi (la base la refuserait aussi).
   test('une mise à jour sans changement est refusée, sans ligne ni journal', async ({ page }) => {
     expect(evenementId).not.toBe('')

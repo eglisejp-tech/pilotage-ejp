@@ -9,6 +9,7 @@
 import { z } from 'zod'
 import type { DetailJournal, LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /**
  * Lignes demandées par requête. PostgREST en rend au plus `max_rows` (1 000, `config.toml`) sans
@@ -196,10 +197,12 @@ export const schemaCreationPrevus = z.object({
  */
 export async function choisirModelePrevus(ministereId: string, modele: string): Promise<void> {
   const valeurs = schemaCreationPrevus.parse({ ministereId, modele })
-  const { error } = await supabase().rpc('choisir_modele_prevus', {
-    p_ministere_id: valeurs.ministereId,
-    p_modele: valeurs.modele,
-  })
+  const { error } = await envoyer('rpc/choisir_modele_prevus', () =>
+    supabase().rpc('choisir_modele_prevus', {
+      p_ministere_id: valeurs.ministereId,
+      p_modele: valeurs.modele,
+    }),
+  )
   if (error) throw error
 }
 
@@ -211,10 +214,12 @@ export async function choisirModelePrevus(ministereId: string, modele: string): 
  */
 export async function creerIndicateursPrevus(ministereId: string, modele: string): Promise<number> {
   const valeurs = schemaCreationPrevus.parse({ ministereId, modele })
-  const { data, error } = await supabase().rpc('creer_indicateurs_prevus', {
-    p_ministere_id: valeurs.ministereId,
-    p_modele: valeurs.modele,
-  })
+  const { data, error } = await envoyer('rpc/creer_indicateurs_prevus', () =>
+    supabase().rpc('creer_indicateurs_prevus', {
+      p_ministere_id: valeurs.ministereId,
+      p_modele: valeurs.modele,
+    }),
+  )
   if (error) throw error
   return data
 }

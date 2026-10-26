@@ -136,8 +136,9 @@ export function FormulaireSuggestion({ suggestion, envoyer, onFait, onAutre }: P
       >
         {TEXTES_PANNEAU_AJOUT.autreSuggestion}
       </button>
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-      {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+      {refus?.ou === 'bouton' ? (
+        <ErreurFormulaire message={refus.message} reference={refus.reference} />
+      ) : null}
     </form>
   )
 }

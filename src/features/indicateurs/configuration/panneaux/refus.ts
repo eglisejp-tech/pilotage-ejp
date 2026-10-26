@@ -1,5 +1,5 @@
 import type { z } from 'zod'
-import { lireErreurBase } from '@/data/messagesBase'
+import { traduireErreurBase } from '@/data/messagesBase'
 import { TEXTES_PANNEAUX } from '@/features/indicateurs/configuration/panneaux/textes'
 import { messageDeRefusPrevus } from '@/features/indicateurs/configuration/useCreationPrevus'
 import type { VerificationLibelle } from '@/lib/base'
@@ -10,7 +10,7 @@ import type { VerificationLibelle } from '@/lib/base'
  * ou null pour un refus qui se dit sous le bouton (`lireRefusEcriture`).
  */
 export function erreurDeChamp(erreur: unknown): Record<string, string> | null {
-  const lue = lireErreurBase(erreur)
+  const lue = traduireErreurBase(erreur)
   if (lue.genre !== 'message' || lue.nature !== 'refus') return null
   if (lue.champ === 'nom') return { libelle: lue.message }
   if (lue.champ === 'definition') return { definition: lue.message }
@@ -33,12 +33,13 @@ export function sansRepetition(
  * Phrase d'un refus d'écriture, par la table de traduction de `src/data/messagesBase.ts` (m233) :
  * un refus de la base ou d'un schéma prend sa phrase ; un refus de droit dit seulement que
  * l'élément n'est pas accessible ; une connexion expirée, un compte désactivé ou un refus
- * inattendu ont chacun leur phrase. Seule une erreur sans réponse prend `connexion`. La fenêtre de
+ * inattendu ont chacun leur phrase. Un échec technique prend `connexion` ; pour une création
+ * (`creation`) à l'issue inconnue, « Vérifiez la liste avant de réessayer » (T76). La fenêtre de
  * retrait (`connexionFenetre`) est une action sans formulaire : son repli ne parle pas de saisie.
  */
-export function lireRefusEcriture(erreur: unknown, connexion: string): string {
+export function lireRefusEcriture(erreur: unknown, connexion: string, creation = false): string {
   const formulaire = connexion !== TEXTES_PANNEAUX.connexionFenetre
-  return messageDeRefusPrevus(erreur, formulaire) ?? connexion
+  return messageDeRefusPrevus(erreur, formulaire, creation) ?? connexion
 }
 
 /** Les erreurs sans celle d'un champ qu'on vient de modifier. */

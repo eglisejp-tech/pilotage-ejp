@@ -3,11 +3,12 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/lib/base'
 import { cleDeStockage, espaceActif } from '@/lib/espaces'
 import type { Espace } from '@/lib/espaces'
+import { fetchAvecDelai } from '@/lib/transport'
+
+// Compte des écritures en vol (T73) et reconnaissance d'une écriture : dans le transport (T76).
+export { ecrituresEnVol, estEcriture } from '@/lib/transport'
 
 export type ClientSupabase = SupabaseClient<Database>
-
-/** Au-delà, une requête est abandonnée et l'écran affiche son erreur (LISEZMOI, « États »). */
-const DELAI_MAX_REQUETE = 10_000
 
 export class ErreurConfiguration extends Error {
   override name = 'ErreurConfiguration'
@@ -42,41 +43,6 @@ export function lireConfiguration(environnement: Environnement): { url: string; 
     )
   }
   return { url, cle }
-}
-
-let ecrituresEnCours = 0
-
-/**
- * Une écriture vers la base ou une Edge Function (tout appel autre qu'une lecture GET ou HEAD
- * vers /rest/v1/ ou /functions/v1/). Les appels à Auth ne comptent pas.
- */
-export function estEcriture(entree: RequestInfo | URL, init?: RequestInit): boolean {
-  const methode = (
-    init?.method ?? (entree instanceof Request ? entree.method : 'GET')
-  ).toUpperCase()
-  if (methode === 'GET' || methode === 'HEAD') return false
-  const adresse =
-    typeof entree === 'string' ? entree : entree instanceof URL ? entree.href : entree.url
-  return /\/(?:rest|functions)\/v1\//.test(adresse)
-}
-
-/**
- * Écritures en vol (T73) : changer d'espace attend qu'elles soient finies, pour ne jamais
- * recharger la page au milieu d'un enregistrement (sa réussite ne s'afficherait pas).
- */
-export function ecrituresEnVol(): number {
-  return ecrituresEnCours
-}
-
-/** fetch avec un délai maximal, en gardant le signal d'annulation fourni par l'appelant. */
-function fetchAvecDelai(entree: RequestInfo | URL, init?: RequestInit): Promise<Response> {
-  const delai = AbortSignal.timeout(DELAI_MAX_REQUETE)
-  const signal = init?.signal ? AbortSignal.any([init.signal, delai]) : delai
-  if (!estEcriture(entree, init)) return fetch(entree, { ...init, signal })
-  ecrituresEnCours += 1
-  return fetch(entree, { ...init, signal }).finally(() => {
-    ecrituresEnCours -= 1
-  })
 }
 
 let client: ClientSupabase | undefined

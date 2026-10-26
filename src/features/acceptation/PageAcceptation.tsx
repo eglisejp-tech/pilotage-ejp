@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { accepterConditions } from '@/data/conditions'
-import { phraseErreur } from '@/data/messagesBase'
+import { phraseErreur } from '@/data/echecEnvoi'
 import { lireMaDeclaration } from '@/data/personnes'
 import { EcranAcceptation } from '@/features/acceptation/EcranAcceptation'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'

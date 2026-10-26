@@ -10,6 +10,7 @@ import { schemaCloture, schemaSignalement } from '@/features/signalement/schemas
 import type { Cloture, Signalement } from '@/features/signalement/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 export type LigneSignalement = LigneVue<'v_signalement'>
 
@@ -54,10 +55,12 @@ export async function lireSignalementsATraiter(): Promise<LigneSignalement[]> {
  */
 export async function signalerDifficulte(brut: Signalement): Promise<string> {
   const signalement = schemaSignalement.parse(brut)
-  const { data, error } = await supabase().rpc('signaler_difficulte', {
-    p_ecran: signalement.ecran,
-    p_texte: signalement.texte,
-  })
+  const { data, error } = await envoyer('rpc/signaler_difficulte', () =>
+    supabase().rpc('signaler_difficulte', {
+      p_ecran: signalement.ecran,
+      p_texte: signalement.texte,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -65,9 +68,11 @@ export async function signalerDifficulte(brut: Signalement): Promise<string> {
 /** Clôt un signalement (EJP Tech seul, une fois), avec un commentaire facultatif. */
 export async function cloreSignalement(brut: Cloture): Promise<void> {
   const cloture = schemaCloture.parse(brut)
-  const { error } = await supabase().rpc('clore_signalement', {
-    p_signalement_id: cloture.signalementId,
-    p_commentaire: cloture.commentaire,
-  })
+  const { error } = await envoyer('rpc/clore_signalement', () =>
+    supabase().rpc('clore_signalement', {
+      p_signalement_id: cloture.signalementId,
+      p_commentaire: cloture.commentaire,
+    }),
+  )
   if (error) throw error
 }

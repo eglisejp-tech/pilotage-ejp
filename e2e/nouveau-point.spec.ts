@@ -141,15 +141,18 @@ test.describe('Nouveau point (maquette 10), aperçu', () => {
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).not.toBeChecked()
   })
 
-  test('connexion perdue : erreur de formulaire, valeurs gardées, bouton de nouveau actif', async ({
+  test('connexion perdue : « Vérifiez la liste », une référence, valeurs gardées (T76)', async ({
     page,
   }) => {
     await ouvrir(page, 'formulaire', 'echec')
     await titre(page).fill('Salle pour la soirée de louange')
     await mentionner(page, 'Intégration')
     await creer(page).click()
-    await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    await expect(page.getByRole('alert')).toContainText(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await expect(page.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(titre(page)).toHaveValue('Salle pour la soirée de louange')
     await expect(page.getByRole('checkbox', { name: 'Intégration' })).toBeChecked()

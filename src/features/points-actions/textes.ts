@@ -23,9 +23,6 @@ export const TEXTES_ACTIONS_POINT = {
     /** Règle commune : « Enregistrement en cours » (T66, t236). */
     boutonEnCours: 'Enregistrement en cours',
     annuler: 'Annuler',
-    /** Connexion perdue : le statut choisi reste dans le formulaire (phrase commune, T66 m257). */
-    erreurConnexion:
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     /** « Enregistrer le statut » avec le statut déjà en place (m146, Proposé) : rien ne part. */
     dejaEnregistre: 'Ce statut est déjà enregistré. Choisissez-en un autre.',
   },
@@ -48,8 +45,6 @@ export const TEXTES_ACTIONS_POINT = {
     annuler: 'Annuler',
     /** Suffixe d'un ministère désactivé qui reste mentionné : on peut le retirer, plus l'ajouter. */
     desactive: '(désactivé)',
-    erreurConnexion:
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
     /** « Enregistrer les mentions » sans aucun changement (m155, Proposé) : rien ne part. */
     dejaEnregistrees: 'Ces mentions sont déjà enregistrées. Cochez ou décochez un ministère.',
   },
@@ -70,8 +65,6 @@ export const TEXTES_ACTIONS_POINT = {
     bouton: 'Marquer traité',
     boutonEnCours: 'Enregistrement en cours',
     annuler: 'Annuler',
-    erreurConnexion:
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
   },
 } as const
 

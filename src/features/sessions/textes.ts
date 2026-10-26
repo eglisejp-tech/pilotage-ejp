@@ -3,6 +3,7 @@
 // 14 : troisième type, « Modifier » et « Supprimer »). « Proposé » : texte que ni le BRIEF ni la
 // maquette ne donnent (état vide, confirmation, messages de réussite), reporté dans LISEZMOI.md.
 
+import { erreurDeConnexion } from '@/features/saisie/textes'
 import type { TexteConfirmation } from '@/features/comptes/textes'
 import type { TypeSession } from '@/lib/base'
 import { ajouterJours, jourDeLaSemaine } from '@/lib/metier/dates'
@@ -69,7 +70,7 @@ export const TEXTES_SESSIONS = {
   supprimer: 'Supprimer',
   boutonSupprimer: 'Supprimer la session',
   /** La phrase commune des formulaires (T66, m257). */
-  erreurConnexion: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+  erreurConnexion: erreurDeConnexion('saisie'),
   /** Forme commune « introuvable » (T66, t310 et m207). */
   erreurAcces: 'Cette session est introuvable. Rechargez la page.',
   /** Refus de droit d'un ajout : il n'y a pas encore de session (T66, m207). */

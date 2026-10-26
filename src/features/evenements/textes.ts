@@ -42,9 +42,6 @@ export const MESSAGES_BASE = {
   heurePrevueInvalide: "L'heure prévue est invalide.",
 } as const
 
-/** Refus de droit (42501) : la forme commune d'un élément introuvable (T66, t137). */
-export const MESSAGE_ACCES_EVENEMENT = 'Cet élément est introuvable. Rechargez la page.'
-
 export const TEXTES_EVENEMENT = {
   titreAjout: 'Ajouter un événement',
   titreMiseAJour: "Mettre à jour l'événement",

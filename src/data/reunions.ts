@@ -8,6 +8,7 @@ import { schemaBaseReunion, verifierIdentifiant } from '@/features/evenements/sc
 import type { Reunion } from '@/features/evenements/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /**
  * Prochaine réunion déclarée par le ministère, si sa date n'est pas passée (« Modifier » ouvre le
@@ -29,12 +30,14 @@ export async function lireProchaineReunion(
 export async function enregistrerReunion(ministereId: string, brut: Reunion): Promise<void> {
   const reunion = schemaBaseReunion.parse(brut)
   const identifiant = verifierIdentifiant(ministereId)
-  const { error } = await supabase().from('reunion').insert({
-    ministere_id: identifiant,
-    date: reunion.date,
-    heure: reunion.heure,
-    objet: reunion.objet,
-    decision_attendue: reunion.decision,
-  })
+  const { error } = await envoyer('table/reunion', () =>
+    supabase().from('reunion').insert({
+      ministere_id: identifiant,
+      date: reunion.date,
+      heure: reunion.heure,
+      objet: reunion.objet,
+      decision_attendue: reunion.decision,
+    }),
+  )
   if (error) throw error
 }

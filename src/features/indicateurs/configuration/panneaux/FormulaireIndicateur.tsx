@@ -251,7 +251,7 @@ function CorpsIndicateur({
       // « Ce chiffre semble sensible » est déjà sous la case : elle prend le focus, sans le répéter.
       const surChamp = erreurDeChamp(erreur)
       if (surChamp === null) {
-        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire, true))
       } else if (surChamp.libelle !== undefined && surChamp.libelle === messageSensible?.message) {
         blocSensible.current?.querySelector<HTMLElement>('input:not(:disabled)')?.focus()
       } else {

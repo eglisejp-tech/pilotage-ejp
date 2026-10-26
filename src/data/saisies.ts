@@ -14,6 +14,7 @@ import { schemaSaisieDimanche, schemaSaisieMois } from '@/features/saisie-chiffr
 import type { SaisieDimanche, SaisieMois } from '@/features/saisie-chiffres/schemas'
 import { premierJourDuMois } from '@/lib/metier/periodes'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /** Ce qu'un formulaire de saisie lit d'un indicateur. */
 export type IndicateurASaisir = Pick<
@@ -110,16 +111,18 @@ export async function lirePrecisions(
  */
 export async function enregistrerChiffresDimanche(saisie: SaisieDimanche): Promise<void> {
   const { ministereId, dimanche, lignes } = schemaSaisieDimanche.parse(saisie)
-  const { error } = await supabase()
-    .from('mesure')
-    .insert(
-      lignes.map(({ indicateurId, valeur }) => ({
-        indicateur_id: indicateurId,
-        ministere_id: ministereId,
-        date_ref: dimanche,
-        valeur,
-      })),
-    )
+  const { error } = await envoyer('table/mesure', () =>
+    supabase()
+      .from('mesure')
+      .insert(
+        lignes.map(({ indicateurId, valeur }) => ({
+          indicateur_id: indicateurId,
+          ministere_id: ministereId,
+          date_ref: dimanche,
+          valeur,
+        })),
+      ),
+  )
   if (error) throw error
 }
 
@@ -129,10 +132,12 @@ export async function enregistrerChiffresDimanche(saisie: SaisieDimanche): Promi
  */
 export async function enregistrerChiffresMois(saisie: SaisieMois): Promise<number> {
   const { mois, lignes } = schemaSaisieMois.parse(saisie)
-  const { data, error } = await supabase().rpc('saisir_chiffres_mois', {
-    p_mois: premierJourDuMois(mois),
-    p_lignes: lignes,
-  })
+  const { data, error } = await envoyer('rpc/saisir_chiffres_mois', () =>
+    supabase().rpc('saisir_chiffres_mois', {
+      p_mois: premierJourDuMois(mois),
+      p_lignes: lignes,
+    }),
+  )
   if (error) throw error
   return data
 }

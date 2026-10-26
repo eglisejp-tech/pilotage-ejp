@@ -16,6 +16,7 @@ import { debutDeJourParis } from '@/features/journal/periodes'
 import type { LigneTable } from '@/lib/base'
 import { ajouterJours } from '@/lib/metier/dates'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /** Nombre de jours que garde la liste « Décidées » d'EJP Tech (validation-metier.md, 5.1). */
 export const JOURS_DECISIONS = 30
@@ -33,11 +34,13 @@ const LIMITE_DECISIONS = 100
  */
 export async function ajouterSuggestion(brut: SuggestionEnvoyee): Promise<string> {
   const suggestion = schemaSuggestion.parse(brut)
-  const { data, error } = await supabase().rpc('ajouter_suggestion', {
-    p_ministere_id: suggestion.ministereId,
-    p_code: suggestion.code,
-    p_pourquoi: suggestion.pourquoi,
-  })
+  const { data, error } = await envoyer('rpc/ajouter_suggestion', () =>
+    supabase().rpc('ajouter_suggestion', {
+      p_ministere_id: suggestion.ministereId,
+      p_code: suggestion.code,
+      p_pourquoi: suggestion.pourquoi,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -58,10 +61,12 @@ export type EtatAvantRetrait = LigneTable<'retrait_indicateur'>['etat_avant']
  */
 export async function retirerMonIndicateur(brut: RetraitEnvoye): Promise<EtatAvantRetrait | null> {
   const retrait = schemaRetrait.parse(brut)
-  const { error } = await supabase().rpc('retirer_mon_indicateur', {
-    p_indicateur_id: retrait.indicateurId,
-    p_motif: retrait.motif,
-  })
+  const { error } = await envoyer('rpc/retirer_mon_indicateur', () =>
+    supabase().rpc('retirer_mon_indicateur', {
+      p_indicateur_id: retrait.indicateurId,
+      p_motif: retrait.motif,
+    }),
+  )
   if (error) throw error
   try {
     const relu = await supabase()
@@ -81,11 +86,13 @@ export async function retirerMonIndicateur(brut: RetraitEnvoye): Promise<EtatAva
  */
 export async function validerIndicateur(brut: Decision): Promise<void> {
   const decision = schemaDecision.parse(brut)
-  const { error } = await supabase().rpc('valider_indicateur', {
-    p_demande_id: decision.demandeId,
-    p_decision: decision.decision,
-    p_motif: decision.decision === 'refuse' ? decision.motif : null,
-  })
+  const { error } = await envoyer('rpc/valider_indicateur', () =>
+    supabase().rpc('valider_indicateur', {
+      p_demande_id: decision.demandeId,
+      p_decision: decision.decision,
+      p_motif: decision.decision === 'refuse' ? decision.motif : null,
+    }),
+  )
   if (error) throw error
 }
 

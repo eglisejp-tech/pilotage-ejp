@@ -69,8 +69,11 @@ test.describe('saisie du dimanche (aperçu, maquette 08)', () => {
     const service = page.getByLabel('STARs au service ce dimanche', { exact: true })
     await service.fill('9')
     await page.getByRole('button', { name: 'Enregistrer les chiffres' }).click()
-    await expect(page.getByRole('alert')).toHaveText(
+    await expect(page.getByRole('alert')).toContainText(
       'La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez.',
+    )
+    await expect(page.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(service).toHaveValue('9')
   })

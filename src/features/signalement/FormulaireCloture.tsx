@@ -127,8 +127,9 @@ export function FormulaireCloture({
           {TEXTES_BLOC_SIGNALEMENTS.boutonAnnuler}
         </button>
       </div>
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-      {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+      {refus?.ou === 'bouton' ? (
+        <ErreurFormulaire message={refus.message} reference={refus.reference} />
+      ) : null}
       {garde ? (
         <FenetreFermerSansEnregistrer
           onFermer={() => {
