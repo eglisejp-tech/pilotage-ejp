@@ -462,6 +462,54 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     await expect(section(page, 'Ministères').getByText('7 actifs', { exact: true })).toBeVisible()
   })
 
+  test('« Supprimer » est un lien discret, jamais seul sur sa ligne (et à 360 px)', async ({
+    page,
+  }) => {
+    for (const largeur of [page.viewportSize()?.width ?? 1440, 360]) {
+      await page.setViewportSize({ width: largeur, height: 900 })
+      await ouvrir(page)
+      await bouton(page, 'Afficher les 2 ministères désactivés').click()
+      const liens = page.getByRole('main').getByRole('button', { name: /^Supprimer / })
+      // Les 10 ministères de l'aperçu, actifs et désactivés.
+      await expect(liens).toHaveCount(10)
+      for (let rang = 0; rang < 10; rang++) {
+        const lien = liens.nth(rang)
+        const nom = (await lien.getAttribute('aria-label')) ?? `rang ${rang}`
+        await lien.scrollIntoViewIfNeeded()
+        const mesures = await lien.evaluate((element) => {
+          const ligne = element.closest('[data-cle]')
+          const autres = Array.from(ligne?.querySelectorAll('button') ?? [])
+            .filter((autre) => autre !== element)
+            .map((autre) => autre.getBoundingClientRect().toJSON() as DOMRect)
+          return {
+            boite: element.getBoundingClientRect().toJSON() as DOMRect,
+            soulignement: getComputedStyle(element).textDecorationLine,
+            bordure: getComputedStyle(element).borderTopWidth,
+            autres,
+          }
+        })
+        expect(mesures.boite.height, `${nom} à ${largeur} px : 44 px`).toBeGreaterThanOrEqual(44)
+        expect(mesures.soulignement, `${nom} : un lien souligné`).toBe('underline')
+        expect(mesures.bordure, `${nom} : sans bordure`).toBe('0px')
+        if (largeur >= 600) {
+          // Tableau : un autre bouton sur la même ligne que lui (leurs hauteurs se recouvrent).
+          expect(
+            mesures.autres.some(
+              (b) => b.top < mesures.boite.bottom - 1 && b.bottom > mesures.boite.top + 1,
+            ),
+            `${nom} à ${largeur} px : jamais seul sur sa ligne`,
+          ).toBe(true)
+        } else {
+          // Téléphone : sous tous les boutons, qui ont chacun leur ligne.
+          expect(
+            mesures.autres.every((b) => b.bottom <= mesures.boite.top + 1),
+            `${nom} à ${largeur} px : sous les boutons`,
+          ).toBe(true)
+        }
+      }
+    }
+  })
+
   test('audit axe et 360 px : la fenêtre « impossible »', async ({ page }) => {
     await ouvrir(page)
     await bouton(page, 'Supprimer Communication').click()

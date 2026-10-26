@@ -11,11 +11,13 @@ import { cn } from '@/lib/utils'
  *
  * - variante : `principal` (jaune, l'un des trois usages de la lumière), `secondaire` (fond
  *   papier, bordure encre), `sombre` (fond encre, « Masquer le texte » de la maquette 15 et le
- *   « plus » de la saisie).
+ *   « plus » de la saisie), `lien` (texte souligné, sans fond ni bordure : une action rare d'une
+ *   ligne, qui n'attire pas l'œil, proposition 12 ; « Supprimer » de l'écran 13, T75).
  * - taille : `ligne` 44 px (boutons de ligne, 15 px), `ligne-dense` 44 px en 14 px (maquettes 01
  *   à 04 et lignes de 12), `accueil` 48 px (actions de l'accueil), `ajout` 52 px (« Ajouter un
  *   ministère »), `principal` 56 px (bouton principal d'un écran), `enregistrer` 58 px (17 px gras,
- *   « Enregistrer » d'une saisie : écart de la maquette 08 étendu aux saisies, LISEZMOI).
+ *   « Enregistrer » d'une saisie : écart de la maquette 08 étendu aux saisies, LISEZMOI), `lien`
+ *   44 px de haut, peu de marge sur les côtés (le soulignement désigne l'action).
  */
 export const classesBouton = cva(
   'retour-appui inline-flex items-center justify-center gap-2 text-center leading-tight font-semibold aria-disabled:cursor-not-allowed',
@@ -25,6 +27,7 @@ export const classesBouton = cva(
         principal: 'bg-lumiere text-encre',
         secondaire: 'border border-encre bg-papier text-encre',
         sombre: 'retour-clair bg-encre text-papier',
+        lien: 'font-normal text-encre-2 underline underline-offset-4',
       },
       taille: {
         ligne: 'min-h-cible px-4.5 py-2 text-interface',
@@ -33,6 +36,7 @@ export const classesBouton = cva(
         ajout: 'min-h-13 px-4.5 py-2 text-interface',
         principal: 'min-h-14 px-4.5 py-2 text-interface',
         enregistrer: 'min-h-14.5 px-4 py-2 text-enregistrer',
+        lien: 'min-h-cible px-1 py-2 text-interface',
       },
       pleineLargeur: {
         true: 'w-full',

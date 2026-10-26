@@ -28,6 +28,10 @@ interface Props {
  * compte au texte visible (« Désactiver Communication ») : la liste des boutons reste claire au
  * lecteur d'écran.
  * Pendant un envoi, le bouton reste dans l'ordre du clavier (`aria-disabled`).
+ * « Supprimer » (T75), sur chaque ministère, est un lien (variante `lien` du Bouton commun) : la
+ * suppression est rare, une seule action par ligne attire l'œil (T69, proposition 12). Dans le
+ * tableau, il reste avec le bouton qui le précède (les deux passent ensemble à la ligne) : il
+ * n'est jamais seul sur une ligne. Au téléphone, il vient sous les boutons, qui ont chacun la leur.
  */
 export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, moi }: Props) {
   if (moi != null && ligne.userId === moi) {
@@ -39,28 +43,38 @@ export function BoutonsLigne({ ligne, onAction, enCours, pleineLargeur = false, 
     )
   }
   const actions = actionsDeLaLigne(ligne)
+  const bouton = (action: ActionLigne) => {
+    const lien = action === 'supprimer'
+    return (
+      <Bouton
+        key={action}
+        variante={lien ? 'lien' : undefined}
+        taille={lien ? 'lien' : undefined}
+        pleineLargeur={pleineLargeur && !lien}
+        className={lien && pleineLargeur ? 'self-start' : undefined}
+        // Toute la ligne attend la fin de l'envoi ; seul le bouton cliqué dit « … en cours ».
+        enCours={enCours !== null}
+        // Le nom visible d'abord, puis le compte : « Désactiver Communication » (WCAG 2.5.3).
+        aria-label={`${enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]} ${ligne.nom}`}
+        onClick={() => {
+          if (enCours === null) onAction(ligne, action)
+        }}
+      >
+        <LibelleEnvoi enCours={enCours === action} libelleEnCours={TEXTES_COMPTES.enCours[action]}>
+          {LIBELLES_ACTIONS[action]}
+        </LibelleEnvoi>
+      </Bouton>
+    )
+  }
+  // Dans le tableau, « Supprimer » et le bouton qui le précède forment un bloc insécable.
+  const groupe = !pleineLargeur && actions.length >= 2 && actions.at(-1) === 'supprimer'
+  const seuls = groupe ? actions.slice(0, -2) : actions
   return (
     <div className={cn('flex gap-2', pleineLargeur ? 'flex-col' : 'flex-wrap justify-end')}>
-      {actions.map((action) => (
-        <Bouton
-          key={action}
-          pleineLargeur={pleineLargeur}
-          // Toute la ligne attend la fin de l'envoi ; seul le bouton cliqué dit « … en cours ».
-          enCours={enCours !== null}
-          // Le nom visible d'abord, puis le compte : « Désactiver Communication » (WCAG 2.5.3).
-          aria-label={`${enCours === action ? TEXTES_COMPTES.enCours[action] : LIBELLES_ACTIONS[action]} ${ligne.nom}`}
-          onClick={() => {
-            if (enCours === null) onAction(ligne, action)
-          }}
-        >
-          <LibelleEnvoi
-            enCours={enCours === action}
-            libelleEnCours={TEXTES_COMPTES.enCours[action]}
-          >
-            {LIBELLES_ACTIONS[action]}
-          </LibelleEnvoi>
-        </Bouton>
-      ))}
+      {seuls.map(bouton)}
+      {groupe ? (
+        <span className="inline-flex items-center gap-2">{actions.slice(-2).map(bouton)}</span>
+      ) : null}
     </div>
   )
 }

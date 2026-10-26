@@ -24,6 +24,20 @@ describe('Bouton', () => {
     expect(classesBouton({ variante: 'sombre' })).toContain('retour-clair')
   })
 
+  it('variante « lien » (T75) : souligné, sans fond ni bordure ni gras, 44 px de haut', () => {
+    render(
+      <Bouton variante="lien" taille="lien" aria-label="Supprimer Communication">
+        Supprimer
+      </Bouton>,
+    )
+    const lien = screen.getByRole('button', { name: 'Supprimer Communication' })
+    expect(lien).toHaveClass('underline', 'text-encre-2', 'min-h-cible', 'retour-appui')
+    expect(lien).toHaveClass('font-normal')
+    expect(lien).not.toHaveClass('font-semibold')
+    expect(lien).not.toHaveClass('border')
+    expect(lien).not.toHaveClass('bg-papier')
+  })
+
   it('pendant l’envoi : aria-disabled, jamais disabled, le libellé « en cours », le focus reste', async () => {
     const { rerender } = render(
       <Bouton variante="principal" libelleEnCours="Envoi en cours">

@@ -545,6 +545,51 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
   })
 })
 
+describe('VueComptes : « Supprimer » discret, jamais seul sur sa ligne (T75)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('tableau (1440 et 834 px) : un lien, insécable avec le bouton qui le précède', () => {
+    for (const largeur of [1440, 834]) {
+      simulerLargeur(largeur)
+      const { unmount } = render(
+        <MemoryRouter>
+          <VueComptes
+            titre="Ministères et comptes"
+            donnees={donnees()}
+            actions={actionsFausses()}
+          />
+        </MemoryRouter>,
+      )
+      const supprimer = bouton('Supprimer Communication')
+      expect(supprimer).toHaveClass('underline')
+      expect(supprimer).not.toHaveClass('w-full')
+      // Le bloc insécable : « Désactiver » et « Supprimer » passent ensemble à la ligne.
+      const bloc = supprimer.parentElement
+      expect(bloc?.tagName).toBe('SPAN')
+      expect(bloc).toContainElement(bouton('Désactiver Communication'))
+      expect(bloc).not.toContainElement(bouton("Refaire l'activation Communication"))
+      // Sans compte : « Créer le compte » et « Supprimer » ensemble.
+      expect(bouton('Supprimer Coordination').parentElement).toContainElement(
+        bouton('Créer le compte Coordination'),
+      )
+      unmount()
+    }
+  })
+
+  it('téléphone (390 px) : sous les boutons pleine largeur, aligné à gauche, sans pleine largeur', () => {
+    simulerLargeur(390)
+    afficher(donnees())
+    const supprimer = bouton('Supprimer Communication')
+    expect(supprimer).toHaveClass('underline', 'self-start')
+    expect(supprimer).not.toHaveClass('w-full')
+    expect(bouton('Désactiver Communication')).toHaveClass('w-full')
+    // Dernier de la colonne des boutons.
+    expect(supprimer.parentElement?.lastElementChild).toBe(supprimer)
+  })
+})
+
 describe('VueComptes : passage du palier de 600 px pendant une saisie', () => {
   afterEach(() => {
     vi.unstubAllGlobals()
