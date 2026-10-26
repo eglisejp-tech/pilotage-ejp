@@ -17,6 +17,7 @@ const AJOUT = {
   p_statut: 'attente_validation' as const,
   p_mentions: Array.from({ length: 8 }, (_, rang) => `10000000-0000-4000-8000-00000000010${rang}`),
   p_heure_prevue: null,
+  p_cle: 'a1000000-0000-4000-8000-000000000001',
 }
 
 beforeEach(configurer)

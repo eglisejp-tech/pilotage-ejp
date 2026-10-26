@@ -10,7 +10,7 @@ import { schemaCloture, schemaSignalement } from '@/features/signalement/schemas
 import type { Cloture, Signalement } from '@/features/signalement/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
-import { envoyer } from '@/data/envoi'
+import { envoyer, schemaNumero } from '@/data/envoi'
 
 export type LigneSignalement = LigneVue<'v_signalement'>
 
@@ -52,14 +52,21 @@ export async function lireSignalementsATraiter(): Promise<LigneSignalement[]> {
 /**
  * Envoie un signalement du ministère connecté (le ministère vient de la session, jamais d'un
  * paramètre) : rend son identifiant. Une ligne de journal `difficulte_signalee`, sans le texte.
+ * `numero` : le numéro anti-doublon tiré par le formulaire au premier envoi (T76) ; après un échec
+ * rapide, l'envoi repart une fois de lui-même (Q1).
  */
-export async function signalerDifficulte(brut: Signalement): Promise<string> {
+export async function signalerDifficulte(brut: Signalement, numero: string): Promise<string> {
   const signalement = schemaSignalement.parse(brut)
-  const { data, error } = await envoyer('rpc/signaler_difficulte', () =>
-    supabase().rpc('signaler_difficulte', {
-      p_ecran: signalement.ecran,
-      p_texte: signalement.texte,
-    }),
+  const cle = schemaNumero.parse(numero)
+  const { data, error } = await envoyer(
+    'rpc/signaler_difficulte',
+    () =>
+      supabase().rpc('signaler_difficulte', {
+        p_ecran: signalement.ecran,
+        p_texte: signalement.texte,
+        p_cle: cle,
+      }),
+    { nouvelEssai: true },
   )
   if (error) throw error
   return data

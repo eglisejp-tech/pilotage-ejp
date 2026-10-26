@@ -8,7 +8,7 @@
 import { z } from 'zod'
 import { lireEchec } from '@/data/echecEnvoi'
 import type { EchecLu } from '@/data/echecEnvoi'
-import { envoyer } from '@/data/envoi'
+import { envoyer, schemaNumero } from '@/data/envoi'
 import { MESSAGES_COMMUNS } from '@/data/messagesBase'
 import type { Priorite, StatutPoint } from '@/lib/base'
 import { estDateIso } from '@/lib/metier/dates'
@@ -218,19 +218,26 @@ export type NouveauPoint = z.output<typeof schemaBaseNouveauPoint>
 /**
  * Crée un point du ministère connecté, avec ses mentions : il naît « À traiter ». La base refuse
  * une échéance passée et un ministère qu'on ne peut pas mentionner (messages de `MESSAGES_POINT`).
- * Rend l'identifiant du point.
+ * `numero` : le numéro anti-doublon tiré par le formulaire au premier envoi (T76) ; même numéro,
+ * même contenu, la base rend le point déjà créé. Après un échec rapide, l'envoi repart une fois de
+ * lui-même (Q1). Rend l'identifiant du point.
  */
-export async function creerPoint(brut: NouveauPoint): Promise<string> {
+export async function creerPoint(brut: NouveauPoint, numero: string): Promise<string> {
   const point = schemaBaseNouveauPoint.parse(brut)
-  const { data, error } = await envoyer('rpc/creer_point', () =>
-    supabase().rpc('creer_point', {
-      p_titre: point.titre,
-      p_description: point.description,
-      p_action_attendue: point.attendu,
-      p_priorite: point.priorite,
-      p_echeance: point.echeance,
-      p_mentions: point.mentions,
-    }),
+  const cle = schemaNumero.parse(numero)
+  const { data, error } = await envoyer(
+    'rpc/creer_point',
+    () =>
+      supabase().rpc('creer_point', {
+        p_titre: point.titre,
+        p_description: point.description,
+        p_action_attendue: point.attendu,
+        p_priorite: point.priorite,
+        p_echeance: point.echeance,
+        p_mentions: point.mentions,
+        p_cle: cle,
+      }),
+    { nouvelEssai: true },
   )
   if (error) throw error
   return data

@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { MOTIFS_RETRAIT, schemaMotifRetrait } from '@/data/indicateursEcriture'
 import type { LigneConfiguration } from '@/features/indicateurs/configuration/lignes'
 import { calculsQuiPartent } from '@/features/indicateurs/configuration/panneaux/apercu'
@@ -51,6 +52,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
   const [motif, setMotif] = useState<MotifRetraitChoisi | ''>('')
   const [erreurMotif, setErreurMotif] = useState<string | undefined>(undefined)
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   usePiegeFocus(fenetre, true, () => {
     if (!occupe.current) fermer()
@@ -98,6 +100,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
       terminer(confidentialite ? reussiteConfidentialite(retires) : reussiteRetrait(retires))
     } catch (erreur) {
       setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFenetre))
+      setReference(referenceEchec(erreur))
       occupe.current = false
       setEnCours(false)
     }
@@ -173,7 +176,7 @@ export function FenetreRetrait({ controleur, ligne, genre }: Props) {
                 : TEXTES_PANNEAUX.retrait.resteIdentique
             }
           />
-          {refus !== null ? <ErreurEnvoi message={refus} /> : null}
+          {refus !== null ? <ErreurEnvoi message={refus} reference={reference} /> : null}
           {/* Les boutons restent au bas de la fenêtre quand elle défile (téléphone de 360 x 640,
               sept motifs) : la personne n'a pas à chercher « Retirer » ni « Annuler ». Un élément
               collant respecte la marge intérieure de la fenêtre : « -bottom-6 » le laisse à sa

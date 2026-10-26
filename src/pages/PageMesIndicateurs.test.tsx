@@ -467,8 +467,9 @@ describe('/ma-fiche/indicateurs, « Ajouter un indicateur »', () => {
     await userEvent.type(within(panneau).getByRole('textbox'), 'Voir ce que le ministère a mené.')
     await userEvent.click(within(panneau).getByRole('button', { name: 'Envoyer pour validation' }))
     // Une demande est une création : peut-être enregistrée, un nouvel essai dirait « déjà » (T76).
+    // La référence se voit d'un bloc et s'épelle au lecteur d'écran (« K 7 Q 4 M X »).
     expect(await within(panneau).findByRole('alert')).toHaveTextContent(
-      /^La connexion a échoué\. Vérifiez la liste avant de réessayer\. Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}$/,
+      /^La connexion a échoué\. Vérifiez la liste avant de réessayer\. Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}[2-9A-HJKMNP-Z]( [2-9A-HJKMNP-Z]){5}$/,
     )
     expect(within(panneau).getByRole('textbox')).toHaveValue('Voir ce que le ministère a mené.')
   })

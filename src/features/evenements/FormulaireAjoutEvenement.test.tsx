@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import { MESSAGES_COMMUNS } from '@/data/messagesBase'
+import { MESSAGE_ENVOI_AUTRES_VALEURS, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { FormulaireAjoutEvenement } from '@/features/evenements/FormulaireAjoutEvenement'
 import type { AjoutEvenement } from '@/features/evenements/schemas'
 import { MESSAGES_BASE, TEXTES_EVENEMENT } from '@/features/evenements/textes'
@@ -14,7 +14,7 @@ const MINISTERES = [
 ]
 
 function afficher(
-  envoyer: (evenement: AjoutEvenement) => Promise<void> = () => Promise.resolve(),
+  envoyer: (evenement: AjoutEvenement, numero: string) => Promise<void> = () => Promise.resolve(),
   ministeres = MINISTERES,
 ) {
   render(
@@ -39,6 +39,9 @@ async function remplir(date: string) {
 }
 
 const bouton = () => screen.getByRole('button', { name: 'Ajouter au calendrier' })
+
+/** Numéro anti-doublon (T76) : un uuid de version 4. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
 
 describe('« Ajouter un événement » (maquette 11)', () => {
   it('champs, une aide, rappel une seule fois sous le nom, note des mentions et lien', () => {
@@ -101,13 +104,16 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     await remplir('2026-10-10')
     await userEvent.click(bouton())
     expect(await screen.findByText('Événement ajouté au calendrier.')).toBeInTheDocument()
-    expect(envoyer).toHaveBeenCalledWith({
-      date: '2026-10-10',
-      titre: 'Soirée de louange',
-      statut: 'attente_validation',
-      mentions: ['10000000-0000-4000-8000-000000000002'],
-      heure_prevue: null,
-    })
+    expect(envoyer).toHaveBeenCalledWith(
+      {
+        date: '2026-10-10',
+        titre: 'Soirée de louange',
+        statut: 'attente_validation',
+        mentions: ['10000000-0000-4000-8000-000000000002'],
+        heure_prevue: null,
+      },
+      expect.stringMatching(UUID),
+    )
     expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('')
     expect(screen.getByRole('checkbox', { name: 'Coordination' })).not.toBeChecked()
   })
@@ -134,7 +140,10 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     await utilisateur.type(screen.getByLabelText('Heure prévue (facultatif)'), '19:05')
     await utilisateur.click(bouton())
     expect(await screen.findByText('Événement ajouté au calendrier.')).toBeInTheDocument()
-    expect(envoyer).toHaveBeenCalledWith(expect.objectContaining({ heure_prevue: 1145 }))
+    expect(envoyer).toHaveBeenCalledWith(
+      expect.objectContaining({ heure_prevue: 1145 }),
+      expect.stringMatching(UUID),
+    )
     expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveValue('')
   })
 
@@ -197,7 +206,9 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     ].map((nom, rang) => ({ id: `10000000-0000-4000-8000-00000000010${rang}`, nom }))
     const REFERENCE = /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/
 
-    function afficherCoordination(envoyer: (evenement: AjoutEvenement) => Promise<void>) {
+    function afficherCoordination(
+      envoyer: (evenement: AjoutEvenement, numero: string) => Promise<void>,
+    ) {
       render(
         <MemoryRouter>
           <FormulaireAjoutEvenement
@@ -235,6 +246,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
       expect(alerte).toHaveTextContent(REFERENCE)
       expect(envoyer).toHaveBeenCalledWith(
         expect.objectContaining({ mentions: HUIT.map((ministere) => ministere.id) }),
+        expect.stringMatching(UUID),
       )
       expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('Réunion des responsables')
       for (const { nom } of HUIT) expect(screen.getByRole('checkbox', { name: nom })).toBeChecked()
@@ -267,6 +279,95 @@ describe('« Ajouter un événement » (maquette 11)', () => {
       expect(alerte).toHaveTextContent(MESSAGES_COMMUNS.peutEtreFait)
       expect(alerte).not.toHaveTextContent('Bad Gateway')
       expect(alerte).toHaveTextContent(REFERENCE)
+    })
+
+    // Lot B : le numéro anti-doublon (Proposé, Q3). Tiré au premier envoi, renvoyé à chaque
+    // nouvel essai, oublié après la réussite ou le refus « déjà enregistré ».
+    it('nouvel essai à la main après la réponse perdue : le même numéro, puis la réussite', async () => {
+      const envoyer = vi
+        .fn<(evenement: AjoutEvenement, numero: string) => Promise<void>>()
+        .mockRejectedValueOnce({
+          code: '',
+          message: 'TypeError: Load failed',
+          details: '',
+          hint: '',
+        })
+        .mockResolvedValueOnce(undefined)
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      expect(await screen.findByRole('alert')).toHaveTextContent(MESSAGES_COMMUNS.peutEtreFait)
+      await userEvent.click(bouton())
+      expect(await screen.findByText('Événement ajouté au calendrier.')).toBeInTheDocument()
+      expect(screen.queryByRole('alert')).toBeNull()
+      const [premier, second] = envoyer.mock.calls.map(([, numero]) => numero)
+      expect(premier).toMatch(UUID)
+      expect(second).toBe(premier)
+      expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('')
+    })
+
+    it('après une réussite, un autre événement tire un autre numéro', async () => {
+      const envoyer = vi.fn<(evenement: AjoutEvenement, numero: string) => Promise<void>>(() =>
+        Promise.resolve(),
+      )
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      expect(await screen.findByText('Événement ajouté au calendrier.')).toBeInTheDocument()
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      await vi.waitFor(() => expect(envoyer).toHaveBeenCalledTimes(2))
+      const [premier, second] = envoyer.mock.calls.map(([, numero]) => numero)
+      expect(second).toMatch(UUID)
+      expect(second).not.toBe(premier)
+    })
+
+    it('même numéro, nom corrigé : « Votre premier envoi est déjà enregistré », le numéro oublié', async () => {
+      const envoyer = vi
+        .fn<(evenement: AjoutEvenement, numero: string) => Promise<void>>()
+        .mockRejectedValueOnce({
+          code: '',
+          message: 'TypeError: Load failed',
+          details: '',
+          hint: '',
+        })
+        .mockRejectedValueOnce({ code: 'P0001', message: MESSAGE_ENVOI_AUTRES_VALEURS })
+        .mockResolvedValueOnce(undefined)
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      await screen.findByRole('alert')
+      await userEvent.type(screen.getByLabelText("Nom de l'événement"), ', corrigé')
+      await userEvent.click(bouton())
+      const alerte = await screen.findByRole('alert')
+      expect(alerte).toHaveTextContent(
+        'Votre premier envoi est déjà enregistré. Vérifiez la liste avant de réessayer.',
+      )
+      expect(alerte).not.toHaveTextContent(REFERENCE)
+      expect(screen.getByLabelText("Nom de l'événement")).toHaveValue(
+        'Réunion des responsables, corrigé',
+      )
+      // Un nouvel envoi volontaire tire un autre numéro : il créera un autre événement.
+      await userEvent.click(bouton())
+      await vi.waitFor(() => expect(envoyer).toHaveBeenCalledTimes(3))
+      const [premier, second, troisieme] = envoyer.mock.calls.map(([, numero]) => numero)
+      expect(second).toBe(premier)
+      expect(troisieme).not.toBe(premier)
+    })
+
+    it('après un refus (date passée), le numéro reste : la base n’a rien gardé', async () => {
+      const envoyer = vi
+        .fn<(evenement: AjoutEvenement, numero: string) => Promise<void>>()
+        .mockRejectedValueOnce({ code: 'P0001', message: MESSAGES_BASE.datePasseeAjout })
+        .mockResolvedValueOnce(undefined)
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      await screen.findByText(/Cette date est passée\./)
+      await userEvent.click(bouton())
+      await vi.waitFor(() => expect(envoyer).toHaveBeenCalledTimes(2))
+      const [premier, second] = envoyer.mock.calls.map(([, numero]) => numero)
+      expect(second).toBe(premier)
     })
   })
 

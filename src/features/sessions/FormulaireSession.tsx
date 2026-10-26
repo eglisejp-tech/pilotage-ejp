@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
 import { ChampTexteCourt } from '@/features/evenements/ChampTexteCourt'
@@ -76,6 +77,8 @@ export function FormulaireSession({
   const annuler = useFermetureSaisie(onAnnuler ?? sansAction)
   const [erreurs, setErreurs] = useState<Erreurs>({})
   const [refus, setRefus] = useState<string | null>(null)
+  /** Référence d'un échec technique, sous le refus (T76). */
+  const [reference, setReference] = useState<string | null>(null)
   /** Refus de la date par la base (session déjà déclarée ce jour-là), sous le champ date. */
   const [refusDate, setRefusDate] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
@@ -144,6 +147,7 @@ export function FormulaireSession({
         document.getElementById(`${id}-date`)?.focus()
       } else {
         setRefus(lu.message)
+        setReference(referenceEchec(erreur))
       }
     } finally {
       setEnCours(false)
@@ -209,7 +213,9 @@ export function FormulaireSession({
           {TEXTES_SESSIONS.annuler}
         </Bouton>
       ) : null}
-      {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      {refus !== null ? (
+        <ErreurFormulaire message={refus} reference={reference} ecranEjpTech />
+      ) : null}
     </form>
   )
 }

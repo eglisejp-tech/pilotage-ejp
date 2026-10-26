@@ -88,7 +88,7 @@ export function TableauIndicateurs({ lignes, creation, idTitre }: Props) {
             {creation !== null && creation.dernier === ligne.id && creation.refus !== null ? (
               <tr>
                 <td colSpan={5} className="pb-3">
-                  <RefusCreation refus={creation.refus} />
+                  <RefusCreation refus={creation.refus} reference={creation.reference} />
                 </td>
               </tr>
             ) : null}

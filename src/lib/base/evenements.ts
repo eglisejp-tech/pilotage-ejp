@@ -129,8 +129,11 @@ export type FonctionsEvenements = {
    * Ajoute un événement du ministère connecté avec ses mentions (B6) et son heure prévue (T68) :
    * rend son identifiant. Refus de la base (clés de `src/data/messagesBase.ts`) : « La date ne
    * peut pas être passée. », « Ce ministère ne peut pas être mentionné. », « L'heure prévue est
-   * invalide. ». L'écran appelle toujours la version à cinq arguments, sans valeur par défaut :
-   * celles à quatre et trois arguments délèguent avec une heure nulle.
+   * invalide. ». L'écran appelle toujours la version à six arguments (T76), avec le numéro
+   * anti-doublon tiré au premier envoi, obligatoire et sans valeur par défaut : même numéro et
+   * même contenu, la base rend le même identifiant sans rien écrire ; même numéro et autre
+   * contenu, « Cet envoi est déjà enregistré avec d'autres valeurs. ». Les versions à cinq, quatre
+   * et trois arguments (ancien site) délèguent sans numéro.
    */
   ajouter_evenement: {
     Args: {
@@ -139,6 +142,8 @@ export type FonctionsEvenements = {
       p_statut: StatutEvenement
       p_mentions: string[]
       p_heure_prevue: number | null
+      /** Numéro anti-doublon (uuid), le même à chaque nouvel essai du même envoi. */
+      p_cle: string
     }
     Returns: string
   }

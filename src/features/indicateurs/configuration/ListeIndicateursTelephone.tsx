@@ -49,7 +49,7 @@ export function ListeIndicateursTelephone({ lignes, creation, idTitre }: Props) 
             <dd className="text-encre-2">{ligne.dernierChangement ?? textes.aucunChangement}</dd>
           </dl>
           {creation !== null && creation.dernier === ligne.id ? (
-            <RefusCreation refus={creation.refus} />
+            <RefusCreation refus={creation.refus} reference={creation.reference} />
           ) : null}
         </li>
       ))}

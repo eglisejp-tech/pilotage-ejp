@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
 import { useFenetreModale } from '@/components/ui/useFenetreModale'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { lireRefusModeration } from '@/features/moderation/refus'
 import { schemaChoixMasquage } from '@/features/moderation/schemas'
@@ -58,6 +59,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
   const [motif, setMotif] = useState<MotifMasquage | ''>('')
   const [erreurs, setErreurs] = useState<{ champ?: string; motif?: string }>({})
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   // Lu sans attendre le rendu : deux appuis rapprochés n'envoient qu'une fois.
   const verrou = useRef(false)
@@ -90,6 +92,7 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
     } catch (erreur) {
       verrou.current = false
       setRefus(lireRefusModeration(erreur))
+      setReference(referenceEchec(erreur))
       setEnCours(false)
     }
   }
@@ -215,7 +218,9 @@ export function FenetreMasquage({ contexte, champs, masquer, onFait, onAnnuler }
             {TEXTES_FENETRE_MASQUAGE.bouton}
           </Bouton>
         </div>
-        {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+        {refus !== null ? (
+          <ErreurFormulaire message={refus} reference={reference} ecranEjpTech />
+        ) : null}
       </form>
     </dialog>
   )

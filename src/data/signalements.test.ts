@@ -13,6 +13,8 @@ vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
 const SIGNALEMENT = '43000000-0000-4000-8000-000000000001'
+/** Numéro anti-doublon tiré par le formulaire (T76). */
+const NUMERO = 'a1000000-0000-4000-8000-000000000001'
 const COLONNES =
   'id, ministere_id, ministere_nom, ecran, texte, saisi_le, suivi_id, commentaire, clos_le, ouvert, clos_recent'
 
@@ -66,16 +68,20 @@ describe('lectures de v_signalement', () => {
 })
 
 describe('signalerDifficulte', () => {
-  it('appelle signaler_difficulte avec l’écran et le texte sans espaces autour, rend l’identifiant', async () => {
+  it('appelle signaler_difficulte avec l’écran, le texte sans espaces autour et le numéro, rend l’identifiant', async () => {
     const faux = installer({}, { data: SIGNALEMENT, error: null })
-    const id = await signalerDifficulte({
-      ecran: 'saisie_evenement',
-      texte: '  Je ne peux pas choisir la date.  ',
-    })
+    const id = await signalerDifficulte(
+      {
+        ecran: 'saisie_evenement',
+        texte: '  Je ne peux pas choisir la date.  ',
+      },
+      NUMERO,
+    )
     expect(id).toBe(SIGNALEMENT)
     expect(faux.rpc).toHaveBeenCalledWith('signaler_difficulte', {
       p_ecran: 'saisie_evenement',
       p_texte: 'Je ne peux pas choisir la date.',
+      p_cle: NUMERO,
     })
     // Jamais d'ajout direct dans `signalement`.
     expect(faux.from).not.toHaveBeenCalled()
@@ -83,7 +89,10 @@ describe('signalerDifficulte', () => {
 
   it('un texte trop court est refusé avant tout appel', async () => {
     const faux = installer()
-    await expect(signalerDifficulte({ ecran: 'autre', texte: 'court' })).rejects.toThrow()
+    await expect(signalerDifficulte({ ecran: 'autre', texte: 'court' }, NUMERO)).rejects.toThrow()
+    await expect(
+      signalerDifficulte({ ecran: 'autre', texte: 'Un texte assez long.' }, 'pas-un-numero'),
+    ).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
@@ -91,7 +100,7 @@ describe('signalerDifficulte', () => {
     const refus = { code: 'P0001', message: "N'écrivez aucun nom ni information personnelle." }
     installer({}, { data: null, error: refus })
     await expect(
-      signalerDifficulte({ ecran: 'autre', texte: 'Écrivez-moi à contact@exemple.test' }),
+      signalerDifficulte({ ecran: 'autre', texte: 'Écrivez-moi à contact@exemple.test' }, NUMERO),
     ).rejects.toBe(refus)
   })
 })

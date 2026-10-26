@@ -10,7 +10,7 @@ import {
   schemaBaseMiseAJourEvenement,
   verifierIdentifiant,
 } from '@/features/evenements/schemas'
-import { envoyer } from '@/data/envoi'
+import { envoyer, schemaNumero } from '@/data/envoi'
 import type { AjoutEvenement, MiseAJourEvenement } from '@/features/evenements/schemas'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -30,20 +30,28 @@ export type EvenementAMettreAJour = Pick<
 
 /**
  * Ajoute un événement du ministère connecté, avec ses mentions et son heure prévue (null : sans
- * heure), par la version à cinq arguments de `ajouter_evenement` (T68) : la base refuse une date
- * passée (« La date ne peut pas être passée. »), un ministère qu'on ne peut pas mentionner et une
- * heure hors de la journée. Rend l'identifiant de l'événement.
+ * heure), par la version à six arguments de `ajouter_evenement` (T76) : `numero` est le numéro
+ * anti-doublon que le formulaire a tiré au premier envoi. Même numéro, même contenu : la base rend
+ * l'événement déjà créé. Après un échec rapide, l'envoi repart une fois de lui-même (Q1). La base
+ * refuse une date passée (« La date ne peut pas être passée. »), un ministère qu'on ne peut pas
+ * mentionner, une heure hors de la journée et un numéro déjà servi avec d'autres valeurs. Rend
+ * l'identifiant de l'événement.
  */
-export async function ajouterEvenement(brut: AjoutEvenement): Promise<string> {
+export async function ajouterEvenement(brut: AjoutEvenement, numero: string): Promise<string> {
   const evenement = schemaBaseAjoutEvenement.parse(brut)
-  const { data, error } = await envoyer('rpc/ajouter_evenement', () =>
-    supabase().rpc('ajouter_evenement', {
-      p_titre: evenement.titre,
-      p_date: evenement.date,
-      p_statut: evenement.statut,
-      p_mentions: evenement.mentions,
-      p_heure_prevue: evenement.heure_prevue,
-    }),
+  const cle = schemaNumero.parse(numero)
+  const { data, error } = await envoyer(
+    'rpc/ajouter_evenement',
+    () =>
+      supabase().rpc('ajouter_evenement', {
+        p_titre: evenement.titre,
+        p_date: evenement.date,
+        p_statut: evenement.statut,
+        p_mentions: evenement.mentions,
+        p_heure_prevue: evenement.heure_prevue,
+        p_cle: cle,
+      }),
+    { nouvelEssai: true },
   )
   if (error) throw error
   return data

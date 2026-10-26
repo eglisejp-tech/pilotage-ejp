@@ -72,7 +72,8 @@ export type FonctionsSignalements = {
    * `src/data/messagesBase.ts`.
    */
   signaler_difficulte: {
-    Args: { p_ecran: EcranSignalement; p_texte: string }
+    /** `p_cle` : numéro anti-doublon (T76), obligatoire ; la version à deux arguments délègue. */
+    Args: { p_ecran: EcranSignalement; p_texte: string; p_cle: string }
     Returns: string
   }
   /** EJP Tech seul, une seule fois (« Ce signalement est déjà clos. »). */

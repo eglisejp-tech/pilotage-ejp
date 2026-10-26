@@ -79,6 +79,12 @@ interface Traduction {
 /** Garde-fou que l'interface ne déclenche pas : il prend le message de repli (m274). */
 const REPLI = 'repli'
 
+/**
+ * Refus du numéro anti-doublon (T76, lot B) : ce numéro a déjà servi, avec d'autres valeurs ou
+ * pour une autre création. Texte exact de `private.envoi_existant`.
+ */
+export const MESSAGE_ENVOI_AUTRES_VALEURS = "Cet envoi est déjà enregistré avec d'autres valeurs."
+
 /** Les mentions d'un point ont changé pendant que la fenêtre était ouverte (m157). */
 const MENTIONS_CHANGEES =
   'Les mentions de ce point viennent de changer. Fermez cette fenêtre pour mettre la page à jour.'
@@ -221,6 +227,13 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     champ: 'heure_debut',
   },
   "L'heure prévue est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_prevue' },
+
+  // Numéro anti-doublon (T76, lot B ; Proposé, Q2) : un événement, un point ou un signalement
+  // renvoyé avec son numéro mais d'autres valeurs (corrigé après une issue inconnue). Le premier
+  // envoi est enregistré : l'écran relit la liste et oublie le numéro (`premierEnvoiEnregistre`).
+  [MESSAGE_ENVOI_AUTRES_VALEURS]: {
+    texte: 'Votre premier envoi est déjà enregistré. Vérifiez la liste avant de réessayer.',
+  },
 
   // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions). Les textes
   // des contrôles avant l'envoi (MESSAGES_POINT.controle ; T66, t240 à t262 et m137 à m151).

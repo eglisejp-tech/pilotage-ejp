@@ -29,8 +29,8 @@ export function SaisieSignalement({ ministereId, libelleCompte, ecran }: Props) 
     queryFn: () => lireMesSignalements(ministereId, TEXTES_MES_SIGNALEMENTS.nombre),
   })
 
-  const envoyer = (signalement: Signalement) =>
-    creerPuisRelire(() => signalerDifficulte(signalement), apresEcriture)
+  const envoyer = (signalement: Signalement, numero: string) =>
+    creerPuisRelire(() => signalerDifficulte(signalement, numero), apresEcriture)
 
   let mesSignalements: ContenuMesSignalements
   if (lecture.data) mesSignalements = { etat: 'liste', signalements: lecture.data }

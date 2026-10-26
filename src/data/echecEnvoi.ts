@@ -16,6 +16,7 @@ import { suiviDe } from '@/data/envoi'
 import {
   estControleImprevu,
   lireErreurBase,
+  MESSAGE_ENVOI_AUTRES_VALEURS,
   MESSAGES_COMMUNS,
   traduireErreurBase,
 } from '@/data/messagesBase'
@@ -86,10 +87,21 @@ function referenceDe(erreur: unknown): string {
   return tiree
 }
 
-function texte(erreur: unknown, nom: 'name' | 'message'): string {
+function texte(erreur: unknown, nom: 'name' | 'message' | 'code'): string {
   if (typeof erreur !== 'object' || erreur === null) return ''
   const valeur = (erreur as Record<string, unknown>)[nom]
   return typeof valeur === 'string' ? valeur : ''
+}
+
+/**
+ * Refus du numéro anti-doublon (T76, lot B ; Proposé, Q2) : ce numéro a déjà servi, avec
+ * d'autres valeurs. Le premier envoi est donc enregistré : l'écran relit sa liste et oublie le
+ * numéro (un nouvel envoi volontaire en tirera un autre).
+ */
+export function premierEnvoiEnregistre(erreur: unknown): boolean {
+  return (
+    texte(erreur, 'code') === 'P0001' && texte(erreur, 'message') === MESSAGE_ENVOI_AUTRES_VALEURS
+  )
 }
 
 /** Une réponse de PostgREST au corps non JSON : `{ message: corps }`, sans code ni nom. */
@@ -216,7 +228,8 @@ export function lireEchec(erreur: unknown, ecran: PhrasesEcran): EchecLu {
   const classement = classer(erreur)
   const { genre, issue } = classement
   const lue = lireErreurBase(erreur, { formulaire: ecran.nature !== 'action' })
-  const relire = issue !== 'rien_enregistre'
+  // Le refus du numéro dit que le premier envoi est enregistré : la liste est relue.
+  const relire = issue !== 'rien_enregistre' || premierEnvoiEnregistre(erreur)
   const avec = (
     message: string,
     nature: NaturePhrase | 'technique',
@@ -262,4 +275,19 @@ export function phraseErreur(
       ? 'action'
       : 'reprise'
   return lireEchec(erreur, { nature, connexion: ecran.connexion, acces: ecran.acces }).message
+}
+
+/**
+ * Référence à montrer sous la phrase d'un échec (T76) : celle d'un échec technique ou d'un repli,
+ * null pour un refus que la base ou un contrôle ont dit. Sans effet (la session n'est pas relue) :
+ * pour les écrans qui gardent leur phrase par `phraseErreur` (écrans d'EJP Tech).
+ */
+export function referenceEchec(erreur: unknown): string | null {
+  // Une erreur traduite qui porte déjà sa référence (ErreurCompte des Edge Functions).
+  if (typeof erreur === 'object' && erreur !== null && 'reference' in erreur) {
+    const { reference } = erreur as { reference: unknown }
+    if (reference === null || typeof reference === 'string') return reference
+  }
+  const { genre, reference } = classer(erreur)
+  return GENRES_DITS.has(genre) ? null : reference
 }

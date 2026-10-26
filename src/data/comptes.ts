@@ -105,11 +105,17 @@ export const REFUS_ACTION_COMPTE = "L'action n'a pas abouti. Rechargez la page, 
 /** Refus d'une fonction de comptes : son code et sa phrase en français. */
 export class ErreurCompte extends Error {
   readonly code: CodeErreurCompte
+  /**
+   * Référence de l'envoi (T76), à montrer sous la phrase d'un échec technique (`connexion`,
+   * `erreur_interne`) ; null pour un refus dit par la fonction.
+   */
+  readonly reference: string | null
 
-  constructor(code: CodeErreurCompte) {
+  constructor(code: CodeErreurCompte, reference: string | null = null) {
     super(MESSAGES_ERREURS_COMPTES[code])
     this.name = 'ErreurCompte'
     this.code = code
+    this.reference = code === 'connexion' || code === 'erreur_interne' ? reference : null
   }
 }
 
@@ -158,16 +164,19 @@ async function appelerFonction(fonction: FonctionCompte, corps: object): Promise
   const { error } = resultat
   if (!error) return
   if (error instanceof FunctionsHttpError) {
-    throw new ErreurCompte(await codeDeLaReponse(error.context))
+    throw new ErreurCompte(await codeDeLaReponse(error.context), classer(error).reference)
   }
   throw echecDeLaFonction(error)
 }
 
-/** Panne sûre (fonction qui n'a pas tourné, bogue) : `erreur_interne` ; sinon `connexion`. */
+/**
+ * Panne sûre (fonction qui n'a pas tourné, bogue) : `erreur_interne` ; sinon `connexion`. La
+ * référence de l'envoi suit (T76) : la même que dans `X-Client-Info`.
+ */
 function echecDeLaFonction(erreur: unknown): ErreurCompte {
-  const { genre, issue } = classer(erreur)
+  const { genre, issue, reference } = classer(erreur)
   const panne = issue === 'rien_enregistre' && genre !== 'sans_reponse'
-  return new ErreurCompte(panne ? 'erreur_interne' : 'connexion')
+  return new ErreurCompte(panne ? 'erreur_interne' : 'connexion', reference)
 }
 
 /**

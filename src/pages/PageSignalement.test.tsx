@@ -54,8 +54,9 @@ function scenario(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}): Sce
 function connecte(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}) {
   const faux = fauxSupabase(scenario(type, lignes))
   const rpc = vi.fn((nom: string, args: unknown) => {
-    void nom
     void args
+    // La liste des incidents d'envoi, sous les signalements (T76, lot C) : vide.
+    if (nom === 'incidents_recents') return Promise.resolve({ data: [], error: null })
     return Promise.resolve({ data: '43000000-0000-4000-8000-000000000099', error: null })
   })
   courant.client = faux.clientAvecRpc(rpc)
@@ -99,6 +100,8 @@ describe('/signaler', () => {
     expect(faux.rpc).toHaveBeenCalledWith('signaler_difficulte', {
       p_ecran: 'saisie_evenement',
       p_texte: 'Je ne peux pas choisir la date de la soirée.',
+      // Numéro anti-doublon (T76), tiré au premier envoi.
+      p_cle: expect.stringMatching(/^[0-9a-f-]{36}$/) as string,
     })
     // Jamais d'ajout direct : seule la vue des signalements est lue, sous la RLS du ministère.
     expect(new Set(faux.tables)).toEqual(new Set(['compte', 'v_signalement']))
