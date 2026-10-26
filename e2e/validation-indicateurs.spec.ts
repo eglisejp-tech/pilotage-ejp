@@ -174,7 +174,7 @@ test.describe('bloc « À valider » (EJP Tech), aperçu', () => {
     await fenetre.getByRole('button', { name: 'Annuler' }).click()
     await bouton(page, /^Valider «\s*Demandes reçues\s*» de Kumi$/).click()
     await expect(ligne(page, 'Kumi').getByRole('alert')).toHaveText(
-      'La connexion a échoué. Réessayez.',
+      /^La connexion a échoué\. Réessayez\. Référence : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(ligne(page, 'Kumi')).toBeVisible()
   })

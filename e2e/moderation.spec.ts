@@ -207,14 +207,16 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await ouvrir(page, '&envoi=echec')
     await ligne(page, 'Événement, Jeunesse').getByRole('button', { name: 'Marquer relu' }).click()
     await expect(ligne(page, 'Événement, Jeunesse').getByRole('alert')).toHaveText(
-      'La connexion a échoué. Réessayez.',
+      /^La connexion a échoué\. Réessayez\. Référence : [2-9A-HJKMNP-Z]{6}/,
     )
     await ligne(page, 'Événement, Jeunesse')
       .getByRole('button', { name: 'Masquer le texte' })
       .click()
     await fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }).check()
     await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
-    await expect(fenetre(page).getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    await expect(fenetre(page).getByRole('alert')).toHaveText(
+      /^La connexion a échoué\. Réessayez\. Référence : [2-9A-HJKMNP-Z]{6}/,
+    )
     await expect(
       fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }),
     ).toBeChecked()
