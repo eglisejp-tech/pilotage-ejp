@@ -134,6 +134,7 @@ const OBJET_SANS_TEXTE: Readonly<Record<string, string>> = {
   point_attention: 'un point',
   point_suivi: 'un point',
   evenement: 'un événement',
+  evenement_titre: "le nom d'un événement",
   reunion: 'une réunion',
   indicateur: 'un indicateur',
   demande_indicateur: "une demande d'indicateur",
@@ -153,6 +154,8 @@ const TEXTE_DE_LA_MODERATION: Readonly<Record<string, string>> = {
   // Les mots de l'écran Modération (T66, t381).
   point_suivi: 'Commentaire de traitement',
   evenement: 'Événement',
+  // T78 : la version corrigée d'un nom, relue ou masquée seule (écran Modération).
+  evenement_titre: "Nom corrigé d'un événement",
   reunion: 'Réunion',
   demande_indicateur: "Demande d'indicateur",
   validation: 'Décision sur un indicateur',
@@ -347,6 +350,24 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
         heurePrevue,
         statut === null ? null : libelleStatutEvenement(statut),
         commenceA(detail?.['heure_debut']),
+      )
+    }
+    // T78 : le nom en vigueur de l'événement (jamais l'ancien ni le nouveau texte au journal).
+    case 'evenement_titre_corrige':
+      return objet(ligne)
+    case 'evenement_mention_ajoutee':
+    case 'evenement_mention_retiree': {
+      const mentionne = texteDe(detail, 'ministere')
+      const nom = mentionne === null ? undefined : contexte.ministeres.get(mentionne)
+      return avecSuite(objet(ligne), nom ?? null)
+    }
+    case 'evenement_retire': {
+      const jour = jourDe(detail, 'date')
+      const statut = texteDe(detail, 'statut')
+      return avecSuite(
+        objet(ligne),
+        jour === null ? null : formaterJourCourt(jour),
+        statut === null ? null : libelleStatutEvenement(statut),
       )
     }
     case 'reunion_saisie': {

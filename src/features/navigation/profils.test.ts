@@ -23,7 +23,8 @@ const ADRESSES_ETAPE_4: [motif: string, exemple: string, profils: TypeCompte[]][
   ['/saisir/fij', '/saisir/fij', ['ministere']],
   ['/saisir/fij-statistiques', '/saisir/fij-statistiques', ['ministere']],
   ['/saisir/evenement', '/saisir/evenement', ['ministere']],
-  ['/saisir/evenement/:id', '/saisir/evenement/e1', ['ministere']],
+  // T78 : EJP Tech y lit l'événement et peut le retirer, sans le mettre à jour.
+  ['/saisir/evenement/:id', '/saisir/evenement/e1', ['ministere', 'admin_plateforme']],
   ['/saisir/reunion', '/saisir/reunion', ['ministere']],
   ['/signaler', '/signaler?ecran=saisie_evenement', ['ministere']],
   ['/moderation', '/moderation', ['admin_plateforme']],
@@ -56,9 +57,11 @@ describe('adresses de l’étape 4', () => {
     expect(trouverAdresse('/saisir/point')?.titre).toBe('Nouveau point')
   })
 
-  it('EJP Tech lit tout et ne saisit rien : aucune adresse /saisir ni /signaler pour lui (T29)', () => {
+  it('EJP Tech lit tout et ne saisit rien : aucune adresse /saisir ni /signaler pour lui (T29), sauf le panneau d’un événement, pour le retirer (T78)', () => {
     for (const adresse of ADRESSES_APPLICATION) {
-      if (adresse.chemin.startsWith('/saisir') || adresse.chemin === '/signaler') {
+      if (adresse.chemin === '/saisir/evenement/:id') {
+        expect(adresse.profils).toEqual(['ministere', 'admin_plateforme'])
+      } else if (adresse.chemin.startsWith('/saisir') || adresse.chemin === '/signaler') {
         expect(adresse.profils, adresse.chemin).toEqual(['ministere'])
       }
     }

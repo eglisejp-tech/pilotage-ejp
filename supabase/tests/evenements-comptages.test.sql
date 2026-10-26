@@ -17,9 +17,10 @@
 --    ou son compte est désactivé.
 -- 4. Structure : sources à l'heure de Paris, colonnes de la fonction (aucun titre, aucune date
 --    d'événement, aucun ministère).
+-- 5. Événements retirés (T78, lot 1) : aucun comptage, aucun effet sur « depuis ».
 begin;
 
-select plan(32);
+select plan(39);
 
 create temp table ctx as
 select tests.creer_ministere('Comptages A') as a_m,
@@ -269,6 +270,40 @@ select results_eq($$
   select sum(cultes)::int, sum(cultes_avec_heures)::int, sum(cultes_a_l_heure)::int, sum(cultes_retard_cumule)::int
     from pg_temp.eglise((select berger from ctx))
 $$, $$ values (0, 0, 0, 0) $$, 'sans indicateur actif « Heure de début du culte » : colonnes des cultes à 0');
+
+-- 5. Événements retirés (T78, lot 1) : ils ne comptent dans aucune colonne, ni dans « depuis ».
+-- Un ministère R porte deux événements à venir, dont l'un a son premier état écrit en juin 2025
+-- (il recule « depuis »), puis les retire.
+create temp table avant_retraits as select * from pg_temp.eglise((select berger from ctx));
+alter table ctx add column r_m uuid, add column r uuid;
+update ctx set r_m = tests.creer_ministere('Comptages R');
+update ctx set r = tests.creer_compte('comptages-r@exemple.test', 'ministere', r_m);
+insert into public.evenement (ministere_id, titre, saisi_le, saisi_par)
+select c.r_m, v.titre, timestamptz '2025-06-01 10:00:00+00', c.r
+  from ctx c cross join (values ('R1'), ('R2')) as v(titre);
+insert into public.evenement_etat (evenement_id, date, statut, saisi_le, saisi_par)
+select e.id, case e.titre when 'R1' then private.aujourdhui() else private.aujourdhui() + 40 end, 'valide',
+       case e.titre when 'R1' then now() - interval '2 days' else timestamptz '2025-06-01 10:00:00+00' end, c.r
+  from public.evenement e cross join ctx c where e.ministere_id = c.r_m;
+select ok(exists (select 1 from private.comptages_evenements_mois((select r_m from ctx)) where prevus > 0)
+          and (select distinct depuis from pg_temp.eglise((select berger from ctx))) = date '2025-06-01',
+  'retraits, avant : les deux événements de R comptent, et le plus ancien recule « depuis »');
+select tests.se_connecter((select r from ctx), 'aal2');
+select lives_ok($$ select public.retirer_evenement(e.id) from public.evenement e where e.titre = 'R1' $$,
+  'retraits : R retire son événement du jour');
+select lives_ok($$ select public.retirer_evenement(e.id) from public.evenement e where e.titre = 'R2' $$,
+  'retraits : R retire son autre événement');
+select tests.deconnecter();
+select is_empty($$ select 1 from private.comptages_evenements_mois((select r_m from ctx)) $$,
+  'retraits : R n''a plus aucun comptage');
+select is(tests.compter((select berger from ctx), 'aal2',
+    $$ select 1 from public.v_evenements_mois where ministere_id = (select r_m from ctx) $$), 0,
+  'retraits : v_evenements_mois ne montre rien pour R');
+select results_eq($$ select * from pg_temp.eglise((select berger from ctx)) order by mois desc $$,
+  $$ select * from avant_retraits order by mois desc $$,
+  'retraits : les totaux de l''église sont ceux d''avant, « depuis » compris');
+select is((select distinct depuis from pg_temp.eglise((select berger from ctx))), date '2026-01-01',
+  'retraits : « depuis » ignore le premier état d''un événement retiré');
 
 -- 4. Structure
 select is(pg_get_function_result('public.evenements_eglise_mois()'::regprocedure),

@@ -53,8 +53,11 @@ export const TEXTES_EVENEMENT = {
   titreMentions: 'Ministères mentionnés (facultatif)',
   /** Note sous les mentions (BRIEF section 9, T32 ; texte revu par T66, t133). */
   noteMentions: 'Le ministère mentionné verra cet événement.',
-  /** Sous les mentions de l'ajout : prévient avant d'agir (T66, t134). */
-  mentionsFigees: 'Vous ne pourrez plus changer les mentions.',
+  /**
+   * Sous les mentions de l'ajout : prévient avant d'agir (T66, t134). Depuis T78 (Q15), les
+   * mentions se changent jusqu'à la date de l'événement.
+   */
+  mentionsModifiables: "Vous pourrez les changer jusqu'à la date de l'événement.",
   /** Aucun ministère à cocher (plan de l'étape 4, E5 ; T66, t135 : même texte que les points). */
   aucuneMention: 'Aucun autre ministère à mentionner.',
   /** Mise à jour d'un événement sans mention (proposé). */
@@ -106,9 +109,12 @@ export const TEXTES_EVENEMENT = {
   revenirFiche: 'Revenir à ma fiche',
 } as const
 
-/** « Seul Communication peut mettre à jour cet événement. » (T66, m133). */
+/**
+ * « Seul Communication peut modifier cet événement. » (T66, m133 ; T78 : le porteur met à jour,
+ * corrige le nom, change les mentions et retire).
+ */
 export function seulPorteur(nomPorteur: string): string {
-  return `Seul ${nomPorteur} peut mettre à jour cet événement.`
+  return `Seul ${nomPorteur} peut modifier cet événement.`
 }
 
 /** « Mentionnés : Coordination et Intégration. » (mise à jour, en lecture seule). */

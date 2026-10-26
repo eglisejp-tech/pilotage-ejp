@@ -33,9 +33,7 @@ describe('textes des saisies d’événement et de réunion', () => {
     expect(ligneMentions(['Coordination', 'Intégration', 'Social'])).toBe(
       'Ministères mentionnés : Coordination, Intégration et Social.',
     )
-    expect(seulPorteur('Communication')).toBe(
-      'Seul Communication peut mettre à jour cet événement.',
-    )
+    expect(seulPorteur('Communication')).toBe('Seul Communication peut modifier cet événement.')
   })
 
   it('textes de la base, clés de la table de traduction (contrat, section 7)', () => {

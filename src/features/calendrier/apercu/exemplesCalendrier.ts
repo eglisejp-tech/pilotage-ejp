@@ -4,10 +4,10 @@
 // calcule (date moins aujourd'hui ; en attente de validation à 3 jours ou moins). Données
 // fictives, sans aucune donnée personnelle.
 
-import type { EvenementDuCalendrier, EvenementLu } from '@/data/evenements'
+import type { EvenementDuCalendrier, EvenementLu, MentionEvenement } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { SOCIAL } from '@/features/fiche/apercu/exemplesFiche'
-import type { LigneTable, StatutEvenement } from '@/lib/base'
+import type { StatutEvenement } from '@/lib/base'
 import { joursEntre } from '@/lib/metier/dates'
 
 /** Jour de Paris des aperçus. */
@@ -122,13 +122,13 @@ const CALENDRIER_AVEC_ALERTE: EvenementDuCalendrier[] = [
   evenement(3, SOCIAL, 'Collecte de vêtements, tri', '2026-10-24', 'preparation'),
 ]
 
-const MENTIONS_AVEC_ALERTE: LigneTable<'evenement_mention'>[] = [
+const MENTIONS_AVEC_ALERTE: MentionEvenement[] = [
   { evenement_id: id(7), ministere_id: SOCIAL },
   { evenement_id: id(8), ministere_id: COORDINATION },
   { evenement_id: id(8), ministere_id: JEUNESSE },
 ]
 
-const MENTIONS_SANS_ALERTE: LigneTable<'evenement_mention'>[] = [
+const MENTIONS_SANS_ALERTE: MentionEvenement[] = [
   { evenement_id: id(3), ministere_id: COORDINATION },
 ]
 

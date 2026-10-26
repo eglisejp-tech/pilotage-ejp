@@ -60,13 +60,11 @@ test.describe('ministère Communication', () => {
     await expect(page.getByRole('button', { name: 'Enregistrer la mise à jour' })).toBeVisible()
   })
 
-  test('ministère mentionné : « Seul Coordination peut mettre à jour cet événement. », sans formulaire', async ({
+  test('ministère mentionné : « Seul Coordination peut modifier cet événement. », sans formulaire', async ({
     page,
   }) => {
     await page.goto(`/saisir/evenement/${EVENEMENT_COORDINATION}`)
-    await expect(
-      page.getByText('Seul Coordination peut mettre à jour cet événement.'),
-    ).toBeVisible()
+    await expect(page.getByText('Seul Coordination peut modifier cet événement.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
       '/ma-fiche',

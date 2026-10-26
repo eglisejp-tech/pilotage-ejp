@@ -221,6 +221,20 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     champ: 'heure_debut',
   },
   "L'heure prévue est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_prevue' },
+  // Corrections d'un événement (T78, Proposé) : corriger_titre_evenement,
+  // modifier_mentions_evenement, retirer_evenement, le contrôle d'un état et mention_unique. Les
+  // phrases de la conception (calendrier-evenements.md, section 8.2).
+  'Cet événement a été retiré.': { texte: 'Cet événement a été retiré. Rechargez la page.' },
+  'Les mentions de cet événement ne changent plus.': {
+    texte: "Les mentions ne changent plus : la date de l'événement est passée.",
+  },
+  'Un événement passé se retire par EJP Tech.': {
+    texte: "Un événement passé se retire par EJP Tech. S'il a été créé par erreur, signalez-le.",
+  },
+  'Ce ministère est déjà mentionné sur cet événement.': {
+    texte:
+      'Les mentions de cet événement viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',
+  },
 
   // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions). Les textes
   // des contrôles avant l'envoi (MESSAGES_POINT.controle ; T66, t240 à t262 et m137 à m151).

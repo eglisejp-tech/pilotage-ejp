@@ -1,5 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChampDate } from '@/features/evenements/ChampDate'
@@ -32,11 +33,16 @@ export interface ProprietesMiseAJourEvenement {
   aujourdhui: DateIso
   /** Nom de l'événement, en lecture seule : il ne change pas (règle 14). */
   titre: string
-  /** Noms des ministères mentionnés à la création, qui ne changent plus (T32). */
+  /** Noms des ministères mentionnés en ce moment (modifiables depuis T78, par leur fenêtre). */
   mentions: readonly string[]
   /** Dernier état lu dans la base : relu après chaque envoi réussi. */
   actuel: EtatEvenement
   envoyer: (miseAJour: MiseAJourEvenement) => Promise<void>
+  /**
+   * En-tête du porteur (T78) : nom et mentions avec « Corriger le nom » et « Modifier les
+   * mentions ». Sans lui, le nom et les mentions se lisent seulement.
+   */
+  enTete?: ReactNode
 }
 
 const ID_REPORT = 'evenement-date-report'
@@ -72,6 +78,7 @@ export function FormulaireMiseAJourEvenement({
   mentions,
   actuel: actuelLu,
   envoyer,
+  enTete,
 }: ProprietesMiseAJourEvenement) {
   // Dernier envoi réussi : tant que la lecture n'a pas rattrapé, il fait foi pour la date, le
   // statut et les heures, et la ligne « à confirmer » (calculée par la base) n'est plus fiable.
@@ -169,12 +176,13 @@ export function FormulaireMiseAJourEvenement({
         void soumettre(evenement)
       }}
     >
-      <div className="flex flex-col gap-1.5">
-        <p className="text-interface font-semibold">{TEXTES_EVENEMENT.libelleNom}</p>
-        <p className="text-texte break-words">{titre}</p>
-        {/* Rien à faire ici sur les mentions : la phrase sur les mentions figées part (t138). */}
-        <p className="text-detail leading-normal text-encre-3">{ligneMentions(mentions)}</p>
-      </div>
+      {enTete ?? (
+        <div className="flex flex-col gap-1.5">
+          <p className="text-interface font-semibold">{TEXTES_EVENEMENT.libelleNom}</p>
+          <p className="text-texte break-words">{titre}</p>
+          <p className="text-detail leading-normal text-encre-3">{ligneMentions(mentions)}</p>
+        </div>
+      )}
       <ChampDate
         id="evenement-date"
         libelle={TEXTES_EVENEMENT.libelleDate}

@@ -11,7 +11,13 @@ import type { Aucun, Vue } from './communs'
  * entre pas : il a son bloc (T39).
  */
 export type CibleTexteARelire =
-  'point_attention' | 'point_suivi' | 'evenement' | 'reunion' | 'precision_sensible'
+  | 'point_attention'
+  | 'point_suivi'
+  | 'evenement'
+  | 'reunion'
+  | 'precision_sensible'
+  // Nom corrigé d'un événement (T78) : chaque version se relit et se masque seule.
+  | 'evenement_titre'
 
 /**
  * Ce que `masquer_texte` accepte : les cibles de la file, le « Pourquoi » et le motif d'un refus

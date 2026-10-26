@@ -68,6 +68,8 @@ export const LIBELLES_CIBLE: Readonly<Record<CibleMasquable, string>> = {
   signalement: 'Signalement',
   signalement_suivi: 'Commentaire de clôture',
   retrait_indicateur: "Motif d'un retrait",
+  // T78 (Proposé) : chaque nom corrigé se relit à part.
+  evenement_titre: "Nom corrigé d'un événement",
 }
 
 /** Nom d'un champ libre, sur la ligne et dans la fenêtre : « Ce qui se passe ». */
@@ -88,11 +90,14 @@ export const ORDRE_CHAMPS: Readonly<Record<CibleTexteARelire, readonly string[]>
   evenement: ['titre'],
   reunion: ['objet', 'decision_attendue'],
   precision_sensible: ['texte'],
+  evenement_titre: ['titre'],
 }
 
 /** Nom du champ d'une cible : le titre d'un événement est « Nom », celui d'un point « Titre ». */
 export function libelleChamp(cible: CibleMasquable, champ: string): string {
-  if (cible === 'evenement' && champ === 'titre') return "Nom de l'événement"
+  if ((cible === 'evenement' || cible === 'evenement_titre') && champ === 'titre') {
+    return "Nom de l'événement"
+  }
   if (cible === 'precision_sensible' && champ === 'texte') return 'Précision'
   if (cible === 'signalement' && champ === 'texte') return 'Signalement'
   if (cible === 'signalement_suivi' && champ === 'commentaire') return 'Commentaire de clôture'

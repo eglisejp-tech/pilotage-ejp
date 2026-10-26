@@ -48,7 +48,9 @@ export function VueCalendrier({ etat: lecture, profil }: Props) {
     </Link>
   )
   const lignes = etat.etat === 'donnees' ? etat.lignes : []
-  const avecAction = lignes.some((ligne) => ligne.versMiseAJour !== null)
+  const avecAction = lignes.some(
+    (ligne) => ligne.versMiseAJour !== null || ligne.versConsultation !== null,
+  )
   return (
     <section aria-labelledby={idTitre} className="flex min-w-0 flex-col">
       <TitreSection

@@ -7,8 +7,17 @@
 // et la lecture du panneau de mise à jour sont dans `evenementsEcriture.ts` (lot E5).
 
 import { FENETRE_A_RENSEIGNER_JOURS, FENETRE_PASSE_JOURS } from '@/lib/metier/evenements'
-import type { LigneTable, LigneVue } from '@/lib/base'
+import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+
+/**
+ * Une mention en vigueur (`v_evenement_mention`, T78) : l'événement et le ministère mentionné.
+ * Une mention retirée, ou celle d'un événement retiré, n'y est plus.
+ */
+export type MentionEvenement = Pick<
+  LigneVue<'v_evenement_mention'>,
+  'evenement_id' | 'ministere_id'
+>
 
 /** Un événement lu dans `v_evenement`, avec son dernier état. */
 export type EvenementLu = Pick<
@@ -33,14 +42,14 @@ const STATUTS_SANS_ETAT_FINAL = 'brouillon,attente_validation,valide,preparation
 /**
  * Événements du calendrier d'un ministère : les siens et ceux qui le mentionnent, datés d'au plus
  * 7 jours dans le passé, plus ceux à confirmer quelle que soit leur date. Deux requêtes : les
- * événements qui mentionnent le ministère (`evenement_mention`), puis `v_evenement`, par date puis
- * titre.
+ * événements qui mentionnent encore le ministère (`v_evenement_mention`, T78), puis
+ * `v_evenement`, par date puis titre.
  */
 export async function lireEvenementsMinistere(
   ministereId: string,
 ): Promise<EvenementDuCalendrier[]> {
   const lectureMentions = await supabase()
-    .from('evenement_mention')
+    .from('v_evenement_mention')
     .select('evenement_id, ministere_id')
     .eq('ministere_id', ministereId)
   if (lectureMentions.error) throw lectureMentions.error
@@ -83,13 +92,13 @@ export async function lireEvenementsARenseigner(
   return data
 }
 
-/** Mentions des événements donnés (fixées à la création, T32), lisibles avec ces événements. */
+/** Mentions en vigueur des événements donnés (T32, modifiables depuis T78), lisibles avec eux. */
 export async function lireMentionsDesEvenements(
   evenementIds: readonly string[],
-): Promise<LigneTable<'evenement_mention'>[]> {
+): Promise<MentionEvenement[]> {
   if (evenementIds.length === 0) return []
   const { data, error } = await supabase()
-    .from('evenement_mention')
+    .from('v_evenement_mention')
     .select('evenement_id, ministere_id')
     .in('evenement_id', [...evenementIds])
   if (error) throw error

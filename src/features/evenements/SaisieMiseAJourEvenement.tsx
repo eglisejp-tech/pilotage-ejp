@@ -1,4 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import {
+  corrigerNomEvenement,
+  lireRetraitEvenement,
+  modifierMentionsEvenement,
+  retirerEvenement,
+} from '@/data/evenementsCorrections'
 import {
   lireEvenementAMettreAJour,
   lireMentionsEvenement,
@@ -27,15 +34,18 @@ const PORTEUR_SANS_NOM = 'le ministère qui le porte'
 
 /**
  * `/saisir/evenement/:id` : lit le jour de Paris, le dernier état de l'événement, ses mentions et
- * les noms des ministères, puis ouvre le formulaire de mise à jour. Un identifiant qui n'en est
- * pas un donne « Cet élément n'existe pas ou vous n'y avez pas accès. » sans aucune requête ; un
- * événement illisible aussi ; un ministère mentionné lit « Seul Communication met à jour cet
- * événement. ». Seul le porteur envoie une ligne d'état (la RLS refuse les autres).
+ * les noms des ministères, puis ouvre le formulaire de mise à jour, avec les corrections du
+ * porteur (T78 : nom, mentions, retrait). Un identifiant qui n'en est pas un donne « Cet
+ * événement est introuvable. » sans aucune requête ; un événement illisible aussi ; un événement
+ * retiré dit « Cet événement a été retiré le 26 oct. » ; un ministère mentionné lit « Seul
+ * Communication peut modifier cet événement. ». Seul le porteur écrit (la base refuse les autres).
  */
 export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Props) {
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
   const valide = estIdentifiant(id)
+  // Le retrait vient de réussir dans ce panneau : il le dit, avant toute relecture.
+  const [retireALInstant, setRetireALInstant] = useState(false)
   const semaine = useQuery({
     queryKey: ['eglise', 'semaine'],
     queryFn: lireSemaine,
@@ -57,7 +67,21 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     queryFn: lireMinisteres,
     enabled: valide,
   })
+  // Un événement absent de v_evenement a peut-être été retiré (T78) : un ancien lien le dit.
+  const retrait = useQuery({
+    queryKey: ['evenements', 'retrait', id],
+    queryFn: () => lireRetraitEvenement(id ?? ''),
+    enabled: valide && evenement.data === null,
+  })
 
+  /** Une écriture, puis la relecture de la page, même après un échec (réponse perdue, T76). */
+  const ecrire = async (ecriture: () => Promise<void>) => {
+    try {
+      await ecriture()
+    } finally {
+      apresEcriture()
+    }
+  }
   const envoyer = async (miseAJour: MiseAJourEvenement) => {
     await mettreAJourEvenement(id ?? '', miseAJour)
     apresEcriture()
@@ -71,31 +95,53 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
   // Le porteur attend aussi les mentions ; un ministère mentionné n'a que le message à lire.
 
   let contenu: ContenuPanneauEvenement
-  if (!valide || evenement.data === null) {
+  if (retireALInstant) {
+    contenu = { etat: 'retire', le: null, aLInstant: true, mode: 'mise_a_jour' }
+  } else if (!valide) {
     contenu = { etat: 'introuvable' }
+  } else if (evenement.data === null) {
+    if (retrait.data) {
+      contenu = { etat: 'retire', le: retrait.data, aLInstant: false, mode: 'mise_a_jour' }
+    } else if (retrait.data === null || retrait.isError) {
+      contenu = { etat: 'introuvable' }
+    } else {
+      contenu = { etat: 'chargement', mode: 'mise_a_jour' }
+    }
   } else if (evenement.data && !porteur && ministeres.data) {
     contenu = {
       etat: 'pas_porteur',
       nomPorteur: nomDuMinistere(evenement.data.ministere_id, ministeres.data) ?? PORTEUR_SANS_NOM,
     }
   } else if (evenement.data && semaine.data && ministeres.data && mentions.data) {
+    const lu = evenement.data
+    const idsMentions = mentions.data.map((mention) => mention.ministere_id)
     contenu = {
       etat: 'mise_a_jour',
-      evenementId: evenement.data.id,
+      evenementId: lu.id,
       aujourdhui: semaine.data.aujourdhui,
-      titre: evenement.data.titre,
-      mentions: nomsDesMentions(
-        mentions.data.map((mention) => mention.ministere_id),
-        ministeres.data,
-      ),
+      titre: lu.titre,
+      mentions: nomsDesMentions(idsMentions, ministeres.data),
       actuel: {
-        date: evenement.data.date,
-        statut: evenement.data.statut,
-        heurePrevue: evenement.data.heure_prevue,
-        heureDebut: evenement.data.heure_debut,
-        aConfirmer: evenement.data.a_confirmer,
+        date: lu.date,
+        statut: lu.statut,
+        heurePrevue: lu.heure_prevue,
+        heureDebut: lu.heure_debut,
+        aConfirmer: lu.a_confirmer,
       },
       envoyer,
+      corrections: {
+        titrePrecedent: lu.titre_precedent ?? null,
+        titreCorrigeLe: lu.titre_corrige_le ?? null,
+        porteurId: lu.ministere_id,
+        mentionIds: idsMentions,
+        ministeres: ministeres.data,
+        corrigerNom: (titre) => ecrire(() => corrigerNomEvenement(lu.id, titre)),
+        modifierMentions: (liste) => ecrire(() => modifierMentionsEvenement(lu.id, liste)),
+        retirer: async () => {
+          await ecrire(() => retirerEvenement(lu.id))
+          setRetireALInstant(true)
+        },
+      },
     }
   } else if (enEchec([semaine, evenement, ministeres, mentions]) || semaine.data === null) {
     contenu = { etat: 'probleme', mode: 'mise_a_jour', reessayer }

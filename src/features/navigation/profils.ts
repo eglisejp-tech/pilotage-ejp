@@ -115,7 +115,8 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   },
   {
     chemin: '/saisir/evenement/:id',
-    profils: ['ministere'],
+    // T78 : EJP Tech y lit l'événement et peut le retirer (Q7), sans le mettre à jour.
+    profils: ['ministere', 'admin_plateforme'],
     titre: "Mettre à jour l'événement",
     etape: 4,
   },

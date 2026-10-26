@@ -60,8 +60,42 @@ export type TablesEvenements = {
       heure_debut?: number | null
     }
   >
-  /** Mentions fixées à la création (T32), écrites par `ajouter_evenement` seulement. */
-  evenement_mention: TableEnLecture<{ evenement_id: string; ministere_id: string }>
+  /**
+   * Lignes d'ajout des mentions (T32), écrites par `ajouter_evenement` et
+   * `modifier_mentions_evenement` seulement. Une mention retirée garde sa ligne (T78) : la mention
+   * en vigueur se lit dans `v_evenement_mention`. Une ligne d'avant T78 n'a ni date ni auteur.
+   */
+  evenement_mention: TableEnLecture<{
+    id: string
+    evenement_id: string
+    ministere_id: string
+    saisi_le: string | null
+    saisi_par: string | null
+  }>
+  /** Retrait d'une mention (T78) : la ligne d'ajout qu'il annule. */
+  evenement_mention_retrait: TableEnLecture<{
+    id: string
+    mention_id: string
+    saisi_le: string
+    saisi_par: string
+  }>
+  /**
+   * Nom corrigé d'un événement (T78) : la ligne la plus récente fait foi ; `evenement.titre` garde
+   * le nom de création. Seul `masquer_texte` réécrit un nom.
+   */
+  evenement_titre: TableEnLecture<{
+    id: string
+    evenement_id: string
+    titre: string
+    saisi_le: string
+    saisi_par: string
+  }>
+  /** Retrait d'un événement créé par erreur (T78) : une ligne au plus, définitive. */
+  evenement_retrait: TableEnLecture<{
+    evenement_id: string
+    saisi_le: string
+    saisi_par: string
+  }>
   /** Déclarations de la prochaine réunion : la plus récente fait foi (règle 15). */
   reunion: TableEnAjout<
     {
@@ -112,7 +146,16 @@ export type VuesEvenements = {
     retard: number | null
     /** Retard d'au plus 5 minutes (K22b, avance comprise) ; null quand `retard` l'est. */
     a_l_heure: boolean | null
+    /** Nom en vigueur avant la dernière correction (T78), ou null sans correction. */
+    titre_precedent: string | null
+    /** Jour (heure de Paris) de la dernière correction du nom (T78), ou null. */
+    titre_corrige_le: string | null
   }>
+  /**
+   * Mentions en vigueur des événements lisibles et non retirés (T78). `saisi_le` : la date de la
+   * mention, ou celle de la création de son événement pour une mention d'avant T78.
+   */
+  v_evenement_mention: Vue<{ evenement_id: string; ministere_id: string; saisi_le: string }>
   /** Déclaration la plus récente de chaque ministère, si sa date n'est pas passée. */
   v_prochaine_reunion: Vue<{
     id: string
@@ -141,5 +184,32 @@ export type FonctionsEvenements = {
       p_heure_prevue: number | null
     }
     Returns: string
+  }
+  /**
+   * Corrige le nom d'un événement du ministère connecté (T78) : une ligne de `evenement_titre`.
+   * Même nom : rien n'est écrit. Refus : élément absent ou d'un autre ministère (42501),
+   * « Cet événement a été retiré. », nom vide ou trop long.
+   */
+  corriger_titre_evenement: {
+    Args: { p_evenement_id: string; p_titre: string }
+    Returns: undefined
+  }
+  /**
+   * Remplace les mentions d'un événement du ministère connecté par la liste donnée (T78) : la
+   * base écrit la différence. Refus : « Les mentions de cet événement ne changent plus. » (date
+   * passée), « Ce ministère ne peut pas être mentionné. », événement retiré.
+   */
+  modifier_mentions_evenement: {
+    Args: { p_evenement_id: string; p_mentions: string[] }
+    Returns: undefined
+  }
+  /**
+   * Retire un événement créé par erreur (T78) : le porteur jusqu'à sa date comprise, EJP Tech à
+   * tout moment. Définitif ; déjà retiré : rien n'est écrit. Refus : « Un événement passé se
+   * retire par EJP Tech. ».
+   */
+  retirer_evenement: {
+    Args: { p_evenement_id: string }
+    Returns: undefined
   }
 }

@@ -21,9 +21,9 @@ interface Props {
 /**
  * Mentions facultatives d'un nouvel événement (T32) : une case par ministère actif autre que
  * celui du compte, comme dans « Nouveau point ». Sous les cases, la note du BRIEF (« Le ministère
- * mentionné verra cet événement. ») et « Vous ne pourrez plus changer les mentions. » (textes revus
- * par T66, t133 et t134 ; plus de bulle, t132). Sans autre ministère actif, une phrase à la place
- * des cases, sans note.
+ * mentionné verra cet événement. ») et « Vous pourrez les changer jusqu'à la date de l'événement. »
+ * (textes revus par T66, t133 et t134, puis T78, Q15 ; plus de bulle, t132). Sans autre ministère
+ * actif, une phrase à la place des cases, sans note.
  */
 export function ChoixMentions({
   id,
@@ -83,7 +83,7 @@ export function ChoixMentions({
       {vide ? null : (
         <div id={idNote} className="flex flex-col gap-1 text-detail leading-normal text-encre-3">
           <p>{TEXTES_EVENEMENT.noteMentions}</p>
-          <p>{TEXTES_EVENEMENT.mentionsFigees}</p>
+          <p>{TEXTES_EVENEMENT.mentionsModifiables}</p>
         </div>
       )}
       {erreur ? (

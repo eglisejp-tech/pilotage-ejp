@@ -111,7 +111,8 @@ select throws_ok($$ update public.evenement_mention set ministere_id = ministere
   '42501', null, 'une mention ne se modifie pas, même par le propriétaire des tables');
 select throws_ok($$ delete from public.evenement_mention where evenement_id = (select ev from ctx) $$,
   '42501', null, 'une mention ne s''efface pas, même par le propriétaire des tables');
-select throws_ok($$ truncate public.evenement_mention $$,
+-- T78 : evenement_mention_retrait la référence ; « cascade » atteint les triggers de vidage.
+select throws_ok($$ truncate public.evenement_mention cascade $$,
   '42501', null, 'la table des mentions ne se vide pas');
 
 -- Refus de profil et de double authentification
@@ -125,8 +126,10 @@ select throws_ok($$ select public.ajouter_evenement('Mentions, berger', private.
 select tests.deconnecter();
 
 -- Structure
-select col_is_pk('public', 'evenement_mention', array['evenement_id', 'ministere_id']::name[],
-  'clé de evenement_mention : (evenement_id, ministere_id)');
+-- T78 : les mentions se modifient (modèle de T54) ; la clé devient un identifiant, un ministère
+-- retiré puis ajouté de nouveau a deux lignes (mention_unique refuse deux mentions en vigueur).
+select col_is_pk('public', 'evenement_mention', array['id']::name[],
+  'clé de evenement_mention : id (T78)');
 select ok(exists (select 1 from pg_indexes i
                    where i.schemaname = 'public' and i.tablename = 'evenement_mention'
                      and i.indexdef like '%(ministere_id)'),
