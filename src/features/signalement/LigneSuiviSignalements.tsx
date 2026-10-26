@@ -12,7 +12,7 @@ interface Props {
  */
 export function LigneSuiviSignalements({ nombre }: Props) {
   return (
-    <p className="-mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm text-encre-2">
+    <p className="-mt-6 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-detail text-encre-2">
       <span>{TEXTES_SUIVI_SEMAINE.ligne(nombre)}</span>
       <Link
         to="/signalements"

@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useEffect, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
-import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
+import { Bouton } from '@/components/ui/Bouton'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { FenetreFermerSansEnregistrer } from '@/features/saisie/FenetreFermerSansEnregistrer'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
@@ -116,24 +116,17 @@ export function FormulaireReponse({
         erreur={errors.texte?.message}
         {...register('texte')}
       />
-      {note ? <p className="text-sm leading-normal text-encre-2">{note}</p> : null}
+      {note ? <p className="text-detail leading-normal text-encre-2">{note}</p> : null}
       <div className="flex flex-wrap gap-3 max-tablette:flex-col">
-        <button
+        <Bouton
           type="submit"
-          aria-disabled={isSubmitting ? true : undefined}
-          className="inline-flex min-h-cible items-center justify-center bg-encre px-4 text-[15px] font-semibold text-papier aria-disabled:cursor-wait"
+          variante="sombre"
+          enCours={isSubmitting}
+          libelleEnCours={boutonEnCours}
         >
-          <LibelleEnvoi enCours={isSubmitting} libelleEnCours={boutonEnCours}>
-            {boutonEnvoyer}
-          </LibelleEnvoi>
-        </button>
-        <button
-          type="button"
-          onClick={annuler}
-          className="inline-flex min-h-cible items-center justify-center border border-encre bg-papier px-4 text-[15px] font-semibold text-encre hover:bg-fond"
-        >
-          {TEXTES_REPONSE.boutonAnnuler}
-        </button>
+          {boutonEnvoyer}
+        </Bouton>
+        <Bouton onClick={annuler}>{TEXTES_REPONSE.boutonAnnuler}</Bouton>
       </div>
       {refus?.ou === 'bouton' ? (
         <ErreurFormulaire message={refus.message} reference={refus.reference} />

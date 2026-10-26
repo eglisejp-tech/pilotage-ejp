@@ -16,7 +16,5 @@ export function PageSignalement() {
   if (compte.type !== 'ministere' || compte.ministereId === null) return <PageNonDisponible />
   const ecran = lireEcran(parametres.get('ecran'))
   // Un autre écran dans l'adresse : un formulaire neuf, avec sa ligne « Écran concerné ».
-  return (
-    <SaisieSignalement key={ecran} libelleCompte={compte.libelle} ecran={ecran} />
-  )
+  return <SaisieSignalement key={ecran} libelleCompte={compte.libelle} ecran={ecran} />
 }

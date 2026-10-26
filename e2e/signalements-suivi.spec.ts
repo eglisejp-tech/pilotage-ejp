@@ -142,7 +142,10 @@ test.describe('Mes signalements (ministère), aperçu', () => {
     // Critère 17 : la base refuse un numéro de téléphone ; le texte reste dans le champ.
     await champ.fill('Appelez Jean au 06 12 34 56 78')
     await envoyer.click()
-    await expect(page.getByText(RAPPEL)).toHaveCount(2)
+    await expect(
+      page.getByText('Retirez de votre texte les emails, liens, numéros et noms de personnes.'),
+    ).toBeVisible()
+    await expect(page.getByText(RAPPEL)).toHaveCount(1)
     await expect(champ).toHaveValue('Appelez Jean au 06 12 34 56 78')
 
     await champ.fill("L'événement du 15 novembre ne s'enregistre pas, un message rouge s'affiche.")

@@ -292,8 +292,9 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
     await fenetre.getByLabel("Nom d'une personne").check()
     await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
+    // L'écran dit « [texte masqué] » ; la base garde son propre marqueur (T66).
     await expect(ligne(page, 'Intégration')).toContainText(
-      'Réponse du ministère : « [texte masqué par EJP Tech] »',
+      'Réponse du ministère : « [texte masqué] »',
     )
   })
 

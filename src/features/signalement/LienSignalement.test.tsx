@@ -44,8 +44,9 @@ describe('LienSignalement', () => {
 describe('textes du signalement', () => {
   it('ne dit pas qui lit le signalement à l’écran (T66, t149), ni l’administration', () => {
     expect('phraseTitre' in TEXTES_SIGNALEMENT).toBe(false)
+    // T77 (conception 3.1 c) : la réponse se suit dans « Mes signalements ».
     expect(TEXTES_SIGNALEMENT.confirmation).toBe(
-      "Signalement envoyé. La réponse s'affichera sur cette page.",
+      "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».",
     )
     for (const texte of [...textesDe(TEXTES_SIGNALEMENT), ...Object.values(LIBELLES_ECRAN)]) {
       expect(texte).not.toMatch(/administration/i)

@@ -11,8 +11,9 @@ import type { EcranSignalement } from '@/lib/base'
 // « Clore le signalement », et les appels de `src/data/signalements.ts` (CLAUDE.md : validation
 // Zod partagée). Ils disent ce que la base accepte (B7, T77) : texte de 10 à 280 caractères après
 // `trim`, ni crochets ni « texte masqué » (T43) ; une réponse est toujours obligatoire, celle de
-// « Clore le signalement » comprise (la base l'accepte encore vide pour l'ancien site). Les familles « données personnelles »
-// (« @ », 5 chiffres de suite, civilité suivie d'un nom) restent à la base, qui les refuse : la
+// « Clore le signalement » comprise (la base l'accepte encore vide pour l'ancien site). Les
+// familles « données personnelles » (« @ », 5 chiffres de suite, civilité suivie d'un nom)
+// restent à la base, qui les refuse : la
 // table de traduction donne la phrase, sous le champ. Les messages avant l'envoi sont ceux de
 // `TEXTES_SIGNALEMENT` (T66).
 
@@ -80,12 +81,6 @@ export const schemaCloture = z.object({
 })
 
 export type Cloture = z.output<typeof schemaCloture>
-
-/** Le formulaire de clôture : la réponse seule (le signalement est celui de la ligne). */
-export const schemaFormulaireCloture = z.object({ commentaire: schemaTexteReponse })
-
-export type ValeursFormulaireCloture = z.input<typeof schemaFormulaireCloture>
-export type FormulaireCloture = z.output<typeof schemaFormulaireCloture>
 
 /**
  * Ce que reçoivent `repondre_au_ministere` (EJP Tech) et `repondre_a_ejp_tech` (le ministère) :

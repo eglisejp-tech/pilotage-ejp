@@ -127,13 +127,13 @@ describe('lirePointsMinistere', () => {
 })
 
 describe('lireDernieresSaisies', () => {
-  it('5 lignes écrites par un compte du ministère, sans les signalements, les plus récentes d’abord', async () => {
+  it('5 lignes écrites par un compte du ministère, sans les signalements ni leur suivi (T77), les plus récentes d’abord', async () => {
     const faux = client({})
     await lireDernieresSaisies('m1')
     expect(appelsDe(faux.de('v_journal')[0])).toEqual([
       'select("id, le, action, cible, cible_id, detail, cible_texte")',
       'eq("auteur_ministere_id", "m1")',
-      'not("action", "in", "(difficulte_signalee,signalement_clos)")',
+      'not("action", "in", "(difficulte_signalee,signalement_clos,signalement_pris_en_charge,signalement_repondu,signalement_regle,signalement_reponse_ministere)")',
       'order("le", {"ascending":false})',
       'order("id", {"ascending":false})',
       'limit(5)',

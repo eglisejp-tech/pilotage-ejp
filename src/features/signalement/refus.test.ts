@@ -21,10 +21,8 @@ describe('lireRefusSignalement', () => {
       MESSAGES_BASE_SIGNALEMENT.crochets,
       'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
     ],
-    [
-      MESSAGES_BASE_SIGNALEMENT.commentaireCourt,
-      'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
-    ],
+    // La réponse de « Clore le signalement » est obligatoire à l'écran (T77).
+    [MESSAGES_BASE_SIGNALEMENT.commentaireCourt, 'Écrivez au moins 10 caractères.'],
     [MESSAGES_BASE_SIGNALEMENT.commentaireLong, 'Raccourcissez ce texte : 280 caractères au plus.'],
   ])('« %s » : sous le champ, traduit', (base, message) => {
     expect(lireRefusSignalement(refus(base))).toEqual({ ou: 'champ', message })

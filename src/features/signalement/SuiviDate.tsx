@@ -16,7 +16,10 @@ interface Props {
  */
 export function SuiviDate({ etapes, sousCitation }: Props) {
   return (
-    <ol aria-label={TEXTES_SUIVI.suivi} className="flex flex-col gap-1.5 text-sm leading-normal">
+    <ol
+      aria-label={TEXTES_SUIVI.suivi}
+      className="flex flex-col gap-1.5 text-detail leading-normal"
+    >
       {etapes.map((etape) => (
         <li key={etape.cle} className="min-w-0 wrap-anywhere text-encre-2">
           <time dateTime={etape.jour} className="font-semibold text-encre">

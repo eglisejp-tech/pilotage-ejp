@@ -3,6 +3,7 @@ import { Bouton } from '@/components/ui/Bouton'
 import type { EtapeDuSuivi, LigneSignalement } from '@/data/signalements'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { FormulaireReponse } from '@/features/signalement/FormulaireReponse'
+import { idTitreSignalement } from '@/features/signalement/identifiants'
 import { lireRefusGeste } from '@/features/signalement/refusSuivi'
 import type { Reponse } from '@/features/signalement/schemas'
 import {
@@ -44,11 +45,6 @@ interface Props {
 interface EchecGeste {
   message: string
   reference: string | null
-}
-
-/** L'identifiant de l'en-tête d'un signalement, cible du focus après un geste et de l'ancre. */
-export function idTitreSignalement(signalementId: string): string {
-  return `titre-${signalementId}`
 }
 
 /**
@@ -117,7 +113,7 @@ export function ArticleSignalement({
         <h3
           id={idTitreSignalement(signalement.id)}
           tabIndex={-1}
-          className="text-[15px] font-semibold outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre"
+          className="text-interface font-semibold outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre"
         >
           {ligneSignalement(signalement.ecran, signalement.saisi_le)}
         </h3>
@@ -132,12 +128,14 @@ export function ArticleSignalement({
       </p>
       <p className="text-interface leading-normal">{ligneEtatMinistere(signalement)}</p>
       {reponse ? (
-        <p className="min-w-0 border-l-2 border-filet pl-3 leading-normal wrap-anywhere">
+        <p className="min-w-0 font-lecture text-texte leading-normal wrap-anywhere">
+          «&nbsp;
           <TexteSignale texte={reponse.texte} />
+          &nbsp;»
         </p>
       ) : null}
       {cloture ? (
-        <p className="min-w-0 text-sm leading-normal wrap-anywhere text-encre-2">
+        <p className="min-w-0 text-detail leading-normal wrap-anywhere text-encre-2">
           {TEXTES_SUIVI.reponse} <TexteSignale texte={cloture.texte} />
         </p>
       ) : null}
@@ -174,7 +172,7 @@ export function ArticleSignalement({
           </div>
           {message}
           {signalement.reponse_possible_jusquau ? (
-            <p className="text-sm text-encre-2">
+            <p className="text-detail text-encre-2">
               {TEXTES_SUIVI.delai(jourDeLaBase(signalement.reponse_possible_jusquau))}
             </p>
           ) : null}

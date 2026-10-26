@@ -7,6 +7,7 @@ import type { ChoixMasquage, Masquage } from '@/features/moderation/schemas'
 import { libelleChamp } from '@/features/moderation/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { FormulaireReponse } from '@/features/signalement/FormulaireReponse'
+import { idTitreLigne } from '@/features/signalement/identifiants'
 import { lireRefusGeste } from '@/features/signalement/refusSuivi'
 import type { Cloture, Reponse } from '@/features/signalement/schemas'
 import { etapesDuSuivi, gestesEjpTech, ligneEtatEjpTech } from '@/features/signalement/suivi'
@@ -50,11 +51,6 @@ interface Props {
     /** Texte masqué : le bloc annonce « Texte masqué. » et rend le focus à son titre. */
     surMasque: () => void
   }
-}
-
-/** L'identifiant de l'en-tête d'une ligne, cible du focus après un geste. */
-export function idTitreLigne(signalementId: string): string {
-  return `ligne-${signalementId}`
 }
 
 /** Un texte qu'on peut encore masquer : ni vide, ni déjà masqué. */
