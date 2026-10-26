@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Hook .claude/hooks/garde-production.sh (docs/exploitation.md, 7.3 bis ; T77) : les gestes de
+// Hook .claude/hooks/garde-production.sh (docs/exploitation.md, 7.3 bis ; T79) : les gestes de
 // production de Claude passent par les seules formes exactes du script, et seulement si le script
 // et ses fonctions sont ceux de origin/main dans le dossier de la commande. Déchiffrer un export
 // ou créer une paire de clés age est refusé. Le hook est lancé par bash, comme Claude Code le fait.

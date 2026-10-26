@@ -6,11 +6,11 @@
 # mise en ligne, exigé par CLAUDE.md) : bash scripts/production.sh migrer | fonction <nom>
 # Ces formes ne passent que si scripts/production.sh et scripts/export/ sont, dans le dossier de la
 # commande, identiques à origin/main (aucune différence, aucun fichier nouveau) : le script lancé
-# est celui de main (T77).
+# est celui de main (T79).
 # Refusé : toute autre forme du script ; tout appel direct de la CLI Supabase vers un projet
 # distant (db push, db dump, functions deploy, link, secrets, --workdir, --linked...), quel que
 # soit le chemin de la CLI (npx, node_modules/.bin, supabase.exe) ; déchiffrer un export
-# (age -d, age --decrypt) ou créer une paire de clés (age-keygen), réservés à la personne (T77).
+# (age -d, age --decrypt) ou créer une paire de clés (age-keygen), réservés à la personne (T79).
 # Les commandes locales passent.
 # L'entrée JSON se lit avec node (jq n'est pas requis). Échec fermé : si le hook ne peut pas
 # lire la commande, il la refuse (code 2) avec un message clair.
@@ -74,7 +74,7 @@ process.stdin.on("end", () => {
   // « export » compte seulement juste après le nom du script : le dossier scripts/export/ et la
   // commande export du shell ne sont pas des gestes de production.
   if (/production\.sh["\x27]?\s+["\x27]?export\b/.test(commande)) process.exit(4);
-  // Déchiffrer un export ou créer une paire de clés age : réservé à la personne (T77).
+  // Déchiffrer un export ou créer une paire de clés age : réservé à la personne (T79).
   const dechiffrer = /(^|[\s;&|(\/\\"\x27])age(\.exe)?["\x27]?\s+([^;&|]*\s)?(-d|--decrypt)\b/;
   const creerCle = /(^|[\s;&|(\/\\"\x27])age-keygen(\.exe)?\b/;
   if (dechiffrer.test(commande) || creerCle.test(commande)) process.exit(7);
@@ -95,7 +95,7 @@ case $? in
     exit 0
     ;;
   4) bloquer "les gestes de production passent par « bash scripts/production.sh <action> », seul dans la commande (etat, preparer <branche>, export, migrer, fonction <nom>, revenir). Les appels directs de la CLI Supabase vers un projet distant restent refusés." ;;
-  6) bloquer "scripts/production.sh ou scripts/export/ diffère de origin/main dans ce dossier (ou origin/main est introuvable). Le script lancé doit être celui de main : travailler depuis un dossier à jour de origin/main (T77)." ;;
-  7) bloquer "déchiffrer un export ou créer une paire de clés age est réservé à la personne responsable (T77) : la clé privée ne vient jamais sur ce poste." ;;
+  6) bloquer "scripts/production.sh ou scripts/export/ diffère de origin/main dans ce dossier (ou origin/main est introuvable). Le script lancé doit être celui de main : travailler depuis un dossier à jour de origin/main (T79)." ;;
+  7) bloquer "déchiffrer un export ou créer une paire de clés age est réservé à la personne responsable (T79) : la clé privée ne vient jamais sur ce poste." ;;
   *) bloquer "entrée du hook illisible, impossible de vérifier la commande. Refusée par précaution." ;;
 esac

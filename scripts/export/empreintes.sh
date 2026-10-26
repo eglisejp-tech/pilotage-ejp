@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Affiche, pour chaque table de public et private de la base Supabase LOCALE (Docker), le nombre
-# de lignes et une empreinte md5 des lignes triées (T77). Sert à comparer une base avant l'export et
+# de lignes et une empreinte md5 des lignes triées (T79). Sert à comparer une base avant l'export et
 # après la restauration : essai de la CI, restauration d'essai de la personne. Jamais la production.
 #
 #   bash scripts/export/empreintes.sh

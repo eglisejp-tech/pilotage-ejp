@@ -1,5 +1,5 @@
 // @vitest-environment node
-// Export chiffré (T77, docs/conception/export-chiffre.md) : fonctions de scripts/export/commun.sh,
+// Export chiffré (T79, docs/conception/export-chiffre.md) : fonctions de scripts/export/commun.sh,
 // lancées par bash comme dans scripts/production.sh. Ni base, ni vrai age, ni vrai pg_dump : ceux
 // du flux sont simulés. L'essai complet (vraie base locale, vrais outils, restauration) tourne dans
 // le job « base » de la CI (scripts/export/essai-restauration.sh).

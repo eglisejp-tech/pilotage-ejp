@@ -75,7 +75,7 @@ jobs:
       - run: npm ci
       - run: npx supabase db start
       - run: npx supabase test db
-      # Export chiffré (T77, docs/conception/export-chiffre.md) : age de la release officielle,
+      # Export chiffré (T79, docs/conception/export-chiffre.md) : age de la release officielle,
       # vérifié par l'empreinte que GitHub publie (même version que sur le poste, section 9.2), et
       # le client PostgreSQL 17 du dépôt PGDG.
       - name: Outils de l'export chiffré (age 1.3.2, client PostgreSQL 17)

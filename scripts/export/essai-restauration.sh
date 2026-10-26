@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Essai de l'export chiffré et de sa restauration (T77), lancé par le job « base » de la CI sur la
+# Essai de l'export chiffré et de sa restauration (T79), lancé par le job « base » de la CI sur la
 # pile locale et le jeu d'exemple fictif, jamais ailleurs. Même code que l'action « export » de
 # scripts/production.sh (scripts/export/commun.sh) : identifiants lus dans l'essai à blanc de la CLI
 # (ici --local), pg_dump vers age en flux, fiche, purge, résumé. Seule la clé change : une paire

@@ -1,5 +1,5 @@
 -- Pour chaque table de public et private : nom, nombre de lignes, empreinte md5 des lignes triées
--- (T77). Lu par scripts/export/empreintes.sh, sur la base Supabase LOCALE seulement : il sert à
+-- (T79). Lu par scripts/export/empreintes.sh, sur la base Supabase LOCALE seulement : il sert à
 -- prouver qu'une restauration rend exactement les lignes exportées (saisi_le et saisi_par compris).
 select
   format('%I.%I', table_schema, table_name),

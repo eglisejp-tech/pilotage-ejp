@@ -1705,7 +1705,7 @@ La personne responsable a décidé par écrit, le 7 octobre 2026, que le berger 
 - **Statut** : Décidé par la personne responsable (26 octobre 2026) ; textes nouveaux Proposés
 - **BRIEF** : aucune règle métier ne change ; `docs/conception/guide-de-redaction.md` (10.10 et 10.11), `docs/reference/maquettes/LISEZMOI.md` (« Erreur de formulaire »), `docs/exploitation.md` (sections 12 et 19)
 
-### T77. Export hebdomadaire chiffré par clé publique, lancé par Claude Code
+### T79. Export hebdomadaire chiffré par clé publique, lancé par Claude Code
 
 - **Date** : 26 octobre 2026 (accord pour concevoir, puis conception validée : « Oui vas-y », avec les réponses « Proposé » Q1 à Q10)
 - **Sujet** : sur l'offre gratuite, seul l'export hebdomadaire protège les données (T52). Il demandait deux secrets du coffre (mot de passe de la base, phrase secrète de `gpg`) et un moment de la personne : il était souvent en retard, et une migration est partie le 26 octobre sans export du jour. Claude Code lance déjà migrations et Edge Functions (7.3 bis), mais ne lit jamais la base (T52).

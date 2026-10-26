@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Fonctions de l'export chiffré par clé publique (T77, docs/conception/export-chiffre.md),
+# Fonctions de l'export chiffré par clé publique (T79, docs/conception/export-chiffre.md),
 # partagées par l'action « export » de scripts/production.sh, par restaurer.sh, empreintes.sh et
 # l'essai de la CI (essai-restauration.sh). Ce fichier se charge par « source » ; seul, il ne
 # lance rien.

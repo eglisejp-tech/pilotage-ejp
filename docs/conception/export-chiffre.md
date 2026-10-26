@@ -1,7 +1,7 @@
 # Conception : export hebdomadaire chiffré par clé publique, lancé par Claude Code
 
 **Décision de la personne responsable, 26 octobre 2026** : conception validée (« Oui vas-y »),
-avec les réponses « Proposé » aux questions Q1 à Q10 (décision T77). Implémentée sur la branche
+avec les réponses « Proposé » aux questions Q1 à Q10 (décision T79). Implémentée sur la branche
 `etape-8-export-chiffre`. Base de travail : `origin/main` (2e3aabf).
 
 **Changements à la validation** (reportés dans les sections concernées) :
@@ -351,7 +351,7 @@ exemple).
   depuis 7.3 bis) ; 7.3 bis (ligne `export`, ordre `preparer`, `export`, `migrer`) ; 9.2 et 9.3
   réécrites ; 12 (clé compromise, S5) ; 16 (l'export final s'ouvre avec la clé privée ; Proposé :
   la personne le rechiffre pour une clé de la coordination) ; 17 (une ligne par export) ; 18.
-- **`docs/decisions.md`** : entrée T77 après validation.
+- **`docs/decisions.md`** : entrée T79 après validation.
 
 ---
 

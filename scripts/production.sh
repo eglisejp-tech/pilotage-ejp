@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Gestes de production confiés à Claude Code (accords de la personne du 26 octobre 2026, CLAUDE.md,
 # docs/exploitation.md sections 7 et 9) : migrations, Edge Functions et export hebdomadaire chiffré
-# (T77), depuis le clone réservé relié au projet de production. Rien d'autre : aucun secret, aucun
+# (T79), depuis le clone réservé relié au projet de production. Rien d'autre : aucun secret, aucun
 # lien, et aucune donnée lisible par Claude (l'export est chiffré pour une clé dont la partie
 # privée est au coffre de la personne).
 # Le hook .claude/hooks/garde-production.sh n'accepte que les formes ci-dessous, seules dans la
@@ -84,7 +84,7 @@ case "$action" in
   migrer)
     [ $# -eq 1 ] || arreter "usage : migrer"
     verifier_clone
-    # Règle 8 de la section 7.1 (T77, Q6) : un export complet du jour, heure de Paris.
+    # Règle 8 de la section 7.1 (T79, Q6) : un export complet du jour, heure de Paris.
     export_existe_aujourdhui "$EXPORTS" ||
       arreter "aucun export complet aujourd'hui (heure de Paris) dans $EXPORTS : lancer d'abord l'action export. Une exception passe par la personne, à la main (docs/exploitation.md, 7.3)."
     decrire_clone

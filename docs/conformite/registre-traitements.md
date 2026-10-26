@@ -124,7 +124,7 @@ passage à l'offre payante, qui se fera en changeant l'offre de l'organisation, 
 données.
 
 Les données de production ne sont jamais copiées **en clair** vers le poste de développement ni la
-CI. Claude Code ne lit pas la base (T52). Depuis T77 (26 octobre 2026), il lance l'export
+CI. Claude Code ne lit pas la base (T52). Depuis T79 (26 octobre 2026), il lance l'export
 hebdomadaire : l'export est chiffré en flux pour une clé publique (`age`), la clé privée est au
 coffre et ne vient jamais sur ce poste. Le poste garde les exports chiffrés de 28 jours,
 illisibles sans cette clé ; Claude n'en voit que le nom, la taille, l'empreinte et le nombre de
@@ -159,7 +159,7 @@ les données ; Supabase en refera au passage en Pro.
 | Compte désactivé                             | Gardé jusqu'à l'arrêt de l'outil, car ses saisies restent dans l'historique                                                                                                                                            |
 | Nom et photo du profil Google                | Gardés avec le compte, jamais affichés, supprimés avec lui                                                                                                                                                             |
 | Journaux techniques (adresses IP)            | Selon les durées de Supabase et de Cloudflare, au plus 1 an (pour Cloudflare, à confirmer : voir la note sur Cloudflare)                                                                                               |
-| Sauvegardes de la base                       | Export chiffré chaque semaine, gardé 28 jours (T52, T77), sur le poste du clone réservé et le Drive de l'église. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus                    |
+| Sauvegardes de la base                       | Export chiffré chaque semaine, gardé 28 jours (T52, T79), sur le poste du clone réservé et le Drive de l'église. Un texte masqué reste dans ces copies jusqu'à leur suppression, 4 semaines au plus                    |
 | Copies des emails envoyés                    | Dans la boîte d'envoi Gmail de l'église, supprimées au plus tard à l'arrêt de l'outil                                                                                                                                  |
 | Prénoms déclarés sur un compte partagé (T56) | 12 mois, puis remplacés par « [prénom effacé] » (EJP Tech, chaque mois). 4 semaines au plus dans les sauvegardes. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la coordination (fiche 7) |
 | Export final                                 | À compléter par la coordination : durée de conservation de l'export et lieu où il est gardé                                                                                                                            |

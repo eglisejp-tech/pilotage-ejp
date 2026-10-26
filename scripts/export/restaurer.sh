@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Restaure un export chiffré (T77) dans la pile Supabase LOCALE (Docker) : jamais en production,
+# Restaure un export chiffré (T79) dans la pile Supabase LOCALE (Docker) : jamais en production,
 # jamais dans une session de Claude Code (Q8). Réservé à la personne qui détient la clé privée
 # (docs/exploitation.md, section 9.3) et à l'essai de la CI (paire d'essai, jeu d'exemple).
 #
@@ -21,7 +21,7 @@ ICI=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 source "$ICI/commun.sh"
 
 [ -z "${CLAUDECODE:-}" ] ||
-  export_arreter "la restauration ne se fait jamais dans une session de Claude Code (T77, Q8)."
+  export_arreter "la restauration ne se fait jamais dans une session de Claude Code (T79, Q8)."
 [ $# -eq 2 ] ||
   export_arreter "usage : bash scripts/export/restaurer.sh <export.dump.age> <fichier de la clé privée>"
 fichier=$1
