@@ -5,7 +5,7 @@ import {
   changerStatutPoint,
   creerPoint,
   marquerTraite,
-  messageDeRefusPoint,
+  lireEchecPoint,
   MESSAGES_POINT,
   modifierMentionsPoint,
   schemaBaseNouveauPoint,
@@ -294,7 +294,11 @@ describe('marquerTraite et les émojis', () => {
   })
 })
 
-describe('messageDeRefusPoint', () => {
+/** La phrase d'un échec sur un point (T76 : `lireEchecPoint` rend aussi la référence). */
+const messageDeRefusPoint = (erreur: unknown, contexte?: 'creation' | 'action') =>
+  lireEchecPoint(erreur, contexte).message
+
+describe('lireEchecPoint', () => {
   it('montre telle quelle une erreur de saisie de la base (P0001)', () => {
     expect(
       messageDeRefusPoint({ code: 'P0001', message: MESSAGES_POINT.refus.commentaireCourt }),
@@ -386,9 +390,12 @@ describe('messageDeRefusPoint', () => {
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
-  it('rend null pour une panne de connexion, le repli pour une erreur inconnue (m270)', () => {
-    expect(messageDeRefusPoint(new Error('Failed to fetch'))).toBeNull()
-    expect(messageDeRefusPoint({ code: '', message: 'TimeoutError: x' })).toBeNull()
+  it('une action restée sans réponse : la phrase de connexion ; le repli pour une erreur inconnue (m270, T76)', () => {
+    const connexion =
+      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.'
+    expect(messageDeRefusPoint(new Error('Failed to fetch'))).toBe(connexion)
+    expect(messageDeRefusPoint({ code: '', message: 'TimeoutError: x' })).toBe(connexion)
+    expect(lireEchecPoint(new Error('Failed to fetch')).reference).toMatch(/^[2-9A-HJKMNP-Z]{6}$/)
     const repli =
       "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech."
     expect(messageDeRefusPoint({ code: '57014', message: 'timeout' })).toBe(repli)
@@ -396,7 +403,10 @@ describe('messageDeRefusPoint', () => {
     expect(messageDeRefusPoint('boom')).toBe(repli)
   })
 
-  it('création sans réponse après 10 s : vérifier la liste avant de réessayer (m259)', () => {
+  it('création à l’issue inconnue (délai, réponse perdue) : vérifier la liste avant de réessayer (m259, T76)', () => {
+    expect(messageDeRefusPoint({ code: '', message: 'TypeError: Load failed' }, 'creation')).toBe(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
     expect(messageDeRefusPoint({ code: '', message: 'TimeoutError: x' }, 'creation')).toBe(
       'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     )

@@ -210,7 +210,7 @@ function CorpsCalcul({ controleur, remplace, termes }: Props & { termes: LigneTe
       // Un refus du nom ou de la définition se dit sous son champ, une seule fois.
       const surChamp = erreurDeChamp(erreur)
       if (surChamp === null) {
-        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+        setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire, true))
       } else {
         setErreurs(surChamp)
         setEssais((precedent) => precedent + 1)

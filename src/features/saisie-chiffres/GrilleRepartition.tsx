@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { GrilleChamps } from '@/features/saisie/GrilleChamps'
 import { MESSAGE_NOMBRE_ENTIER } from '@/features/saisie/chiffres'
 import { idGrille } from '@/features/saisie-chiffres/envoi'
 import { CATEGORIE_MAX } from '@/features/saisie-chiffres/schemas'
@@ -54,7 +55,7 @@ export function GrilleRepartition({
           {TEXTES_CHIFFRES.grilleTitre}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-3 tablette:grid-cols-3">
+      <GrilleChamps disposition="trois">
         {categories.map((categorie) => (
           <ChampNombre
             key={categorie.code}
@@ -68,7 +69,7 @@ export function GrilleRepartition({
             decritAussi={message !== null ? idEtat : undefined}
           />
         ))}
-      </div>
+      </GrilleChamps>
       <p id={idEtat} aria-live="polite" className="text-interface leading-normal">
         {message !== null ? (
           <span className="text-alerte">{message}</span>

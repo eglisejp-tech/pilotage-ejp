@@ -40,6 +40,12 @@ interface Props {
   surChange: (signalementId: string, message: string) => void
 }
 
+/** Échec d'un geste, sous les boutons : sa phrase et la référence d'un échec technique (T76). */
+interface EchecGeste {
+  message: string
+  reference: string | null
+}
+
 /** L'identifiant de l'en-tête d'un signalement, cible du focus après un geste et de l'ancre. */
 export function idTitreSignalement(signalementId: string): string {
   return `titre-${signalementId}`
@@ -65,7 +71,7 @@ export function ArticleSignalement({
   const idQuestion = useId()
   const [ouvert, setOuvert] = useState(false)
   const [enCours, setEnCours] = useState(false)
-  const [echec, setEchec] = useState<string | null>(null)
+  const [echec, setEchec] = useState<EchecGeste | null>(null)
   const boutonRepondre = useRef<HTMLButtonElement>(null)
   // Le panneau se referme par « Annuler » : le bouton reprend le focus une fois affiché.
   const rendreFocus = useRef(false)
@@ -90,17 +96,20 @@ export function ArticleSignalement({
       await gestes.confirmer(signalement.id)
       surReussite(signalement.id, TEXTES_SUIVI.reussiteRegle)
     } catch (erreur) {
-      const lu = lireRefusGeste(erreur)
-      if (lu.ou === 'connexion') setEchec(TEXTES_REPONSE.echecEnvoi)
-      else if (lu.ou === 'bouton' && lu.relire) surChange(signalement.id, lu.message)
-      else setEchec(lu.message)
+      const lu = lireRefusGeste(erreur, 'clic')
+      if (lu.ou === 'bouton' && lu.relire) surChange(signalement.id, lu.message)
+      else setEchec(lu.ou === 'bouton' ? lu : { message: lu.message, reference: null })
     } finally {
       verrou.current = false
       setEnCours(false)
     }
   }
 
-  const message = echec ?? refus
+  const erreurGeste: EchecGeste | null =
+    echec ?? (refus ? { message: refus, reference: null } : null)
+  const message = erreurGeste ? (
+    <ErreurFormulaire message={erreurGeste.message} reference={erreurGeste.reference} />
+  ) : null
 
   return (
     <article id={signalement.id} className="flex scroll-mt-6 flex-col gap-3 py-[18px]">
@@ -163,7 +172,7 @@ export function ArticleSignalement({
               </Bouton>
             </div>
           </div>
-          {message ? <ErreurFormulaire message={message} /> : null}
+          {message}
           {signalement.reponse_possible_jusquau ? (
             <p className="text-sm text-encre-2">
               {TEXTES_SUIVI.delai(jourDeLaBase(signalement.reponse_possible_jusquau))}
@@ -192,9 +201,9 @@ export function ArticleSignalement({
             ) : null}
           </div>
         </div>
-      ) : message ? (
-        <ErreurFormulaire message={message} />
-      ) : null}
+      ) : (
+        message
+      )}
 
       <SuiviDate etapes={etapesDuSuivi(signalement, lignes, 'ministere')} />
     </article>

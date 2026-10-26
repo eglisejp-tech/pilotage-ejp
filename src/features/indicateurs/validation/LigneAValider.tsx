@@ -66,9 +66,11 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
       surFait(TEXTES_A_VALIDER.reussiteValide)
     } catch (erreur) {
       // « Valider » n'a pas de formulaire : un refus inattendu dit « L'action n'a pas abouti. ».
-      const lu = lireRefusValidation(erreur, { formulaire: false })
-      if (lu.ou === 'connexion') setErreurLigne(TEXTES_A_VALIDER.erreur)
-      else if (lu.ou === 'formulaire') setErreurLigne(lu.message)
+      const lu = lireRefusValidation(erreur, {
+        formulaire: false,
+        connexion: TEXTES_A_VALIDER.erreur,
+      })
+      if (lu.ou === 'formulaire') setErreurLigne(lu.message)
       else surRefus(lu.message)
       setEnCours(false)
     }

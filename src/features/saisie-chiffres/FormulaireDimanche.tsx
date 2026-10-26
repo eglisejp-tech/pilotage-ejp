@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { GrilleChamps } from '@/features/saisie/GrilleChamps'
 import type { ChampChiffre as Champ, ChampsDimanche } from '@/features/saisie-chiffres/champs'
 import { ChampChiffre } from '@/features/saisie-chiffres/ChampChiffre'
 import { adresseSaisieDimanche } from '@/features/saisie-chiffres/choixPeriode'
@@ -161,14 +162,13 @@ export function FormulaireDimanche({ dimanche, matin, champs, proposes, enregist
           <div className="border border-filet bg-papier px-4 pt-1 pb-4">{champ(service)}</div>
         ) : null}
         {autresCommuns.length > 0 ? (
-          // Côte à côte dans le panneau (maquette 08), champs alignés en bas de leur cellule ;
-          // l'un sous l'autre sous 600 px, pour que la bulle d'aide en flux prenne toute la
-          // largeur de la colonne (T38, section 3).
-          <div className="grid grid-cols-1 gap-3 tablette:grid-cols-2">
+          // Côte à côte dans le panneau (maquette 08), titres, cases et notes alignés ; l'un
+          // sous l'autre sous 600 px (T38, section 3).
+          <GrilleChamps disposition="paire">
             {autresCommuns.map((element) =>
               champ(element, element.code === 'en_fij' ? pourcentage : undefined),
             )}
-          </div>
+          </GrilleChamps>
         ) : null}
         {champs.propres.length > 0 ? (
           <div className="flex flex-col gap-4">

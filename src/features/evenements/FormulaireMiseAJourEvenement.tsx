@@ -120,7 +120,11 @@ export function FormulaireMiseAJourEvenement({
 
   // Ce statut, cette date et ces heures sont déjà les derniers enregistrés : la base refuserait la
   // ligne identique. La phrase le dit avant l'envoi, sans aller-retour (m134).
-  const dejaEnregistre: Refus = { ou: 'bouton', message: TEXTES_SIGNALEMENT.ligneIdentique }
+  const dejaEnregistre: Refus = {
+    ou: 'bouton',
+    message: TEXTES_SIGNALEMENT.ligneIdentique,
+    reference: null,
+  }
 
   const soumettre = handleSubmit(async (miseAJour) => {
     setRefus(null)
@@ -143,7 +147,7 @@ export function FormulaireMiseAJourEvenement({
       } else if (lu.ou === 'heure_debut') {
         // Sous le champ s'il est affiché ; sinon (date à venir, statut changé), sous le bouton.
         if (avecHeureDebut) setError(lu.ou, { message: lu.message }, { shouldFocus: true })
-        else setRefus({ ou: 'bouton', message: lu.message })
+        else setRefus({ ou: 'bouton', message: lu.message, reference: null })
       } else setRefus(lu)
     }
   })

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
 import { traduireErreurBase } from '../../supabase/functions/_shared/base.ts'
+import { phraseErreur } from '@/data/echecEnvoi'
 import { MESSAGES_ECRITURE } from '@/data/indicateursEcriture'
 import {
   CLES_REFUS_DE_DROIT,
@@ -8,7 +9,6 @@ import {
   estErreurConfiguration,
   lireErreurBase,
   MESSAGES_COMMUNS,
-  phraseErreur,
   phraseLecture,
   surSessionChangee,
 } from '@/data/messagesBase'
@@ -36,63 +36,34 @@ const schemaPourquoiLong = messageDe(schemaPourquoi.safeParse('a'.repeat(281)))
 const refus = (message: string, code = 'P0001') => ({ code, message, details: null, hint: null })
 
 describe('lireErreurBase : le code décide d’abord', () => {
-  it('fetch rejeté (code vide de postgrest-js, TypeError) : réseau, l’écran dit sa phrase', () => {
-    expect(lireErreurBase({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
-      genre: 'reseau',
-    })
-    expect(lireErreurBase(new TypeError('Failed to fetch'))).toEqual({ genre: 'reseau' })
-    expect(
-      lireErreurBase(new TypeError('NetworkError when attempting to fetch resource.')),
-    ).toEqual({ genre: 'reseau' })
-  })
-
-  it('erreur de fetch des clients Supabase (Auth, Edge Functions) : réseau', () => {
-    const fetchAuth = Object.assign(new Error('Failed to send'), {
-      name: 'AuthRetryableFetchError',
-    })
-    const fetchFonction = Object.assign(new Error('Failed to send a request'), {
-      name: 'FunctionsFetchError',
-    })
-    expect(lireErreurBase(fetchAuth)).toEqual({ genre: 'reseau' })
-    expect(lireErreurBase(fetchFonction)).toEqual({ genre: 'reseau' })
-  })
-
-  it('une autre `Error` sans code (réponse inattendue, bogue) : le repli, pas la connexion (m256, m270)', () => {
-    // indicateursEcriture lève « Limites absentes. » quand le serveur répond sans ligne : la
-    // connexion a marché, la phrase de connexion tromperait.
-    for (const erreur of [new Error('Limites absentes.'), new RangeError('Curseur invalide')]) {
-      expect(lireErreurBase(erreur)).toEqual({
-        genre: 'message',
-        nature: 'repli',
-        message: MESSAGES_COMMUNS.repliSaisie,
-        champ: null,
-      })
-    }
-    expect(lireErreurBase(new Error('Limites absentes.'), { formulaire: false })).toMatchObject({
-      message: MESSAGES_COMMUNS.repliAction,
-    })
-  })
-
-  it('une TypeError qui ne vient pas de fetch (bogue du code) : le repli, pas la connexion', () => {
+  it('sans code (fetch rejeté, délai, réponse perdue, bogue) : technique, `lireEchec` en dit l’issue (T76)', () => {
     for (const erreur of [
-      new TypeError("Cannot read properties of null (reading 'map')"),
-      new TypeError('ecritures.ajouter is not a function'),
+      { code: '', message: 'TypeError: Failed to fetch' },
+      { code: '', message: 'TypeError: Load failed' },
+      { code: '', message: 'TimeoutError: signal timed out' },
+      { code: '', message: 'ReponsePerdue: statut 200, corps perdu' },
+      { code: '', message: "TypeError: undefined is not an object (evaluating 'x.y')" },
+      new TypeError('Failed to fetch'),
+      new Error('Limites absentes.'),
+      new DOMException('signal timed out', 'TimeoutError'),
+      { message: '<html>502 Bad Gateway</html>' },
+      'chaîne levée',
     ]) {
-      expect(lireErreurBase(erreur)).toEqual({
+      expect(lireErreurBase(erreur)).toEqual({ genre: 'technique' })
+    }
+  })
+
+  it('requête partie sans jeton (« permission denied for function », rôle anon) : connexion expirée (T76, Q8)', () => {
+    for (const message of [
+      'permission denied for function ajouter_evenement',
+      'permission denied for table reunion',
+    ]) {
+      expect(lireErreurBase(refus(message, '42501'))).toEqual({
         genre: 'message',
-        nature: 'repli',
-        message: MESSAGES_COMMUNS.repliSaisie,
+        nature: 'expiree',
+        message: MESSAGES_COMMUNS.connexionExpiree,
         champ: null,
       })
-    }
-    // Un fetch rejeté reste une coupure : Chrome, Firefox, Safari, Node.
-    for (const message of [
-      'Failed to fetch',
-      'NetworkError when attempting to fetch resource.',
-      'Load failed',
-      'fetch failed',
-    ]) {
-      expect(lireErreurBase(new TypeError(message))).toEqual({ genre: 'reseau' })
     }
   })
 
@@ -105,22 +76,6 @@ describe('lireErreurBase : le code décide d’abord', () => {
         champ: null,
       })
     }
-  })
-
-  it('un corps sans code qui n’est pas une `Error` (passerelle en panne) : le repli', () => {
-    expect(lireErreurBase({ message: '<html>502 Bad Gateway</html>' })).toMatchObject({
-      nature: 'repli',
-      message: MESSAGES_COMMUNS.repliSaisie,
-    })
-  })
-
-  it('10 s dépassées : délai, distinct du réseau', () => {
-    expect(lireErreurBase({ code: '', message: 'TimeoutError: signal timed out' })).toEqual({
-      genre: 'delai',
-    })
-    expect(lireErreurBase(new DOMException('signal timed out', 'TimeoutError'))).toEqual({
-      genre: 'delai',
-    })
   })
 
   it('jeton expiré ou refusé (PGRST301 à PGRST303) : se reconnecter (m271)', () => {
@@ -294,10 +249,7 @@ describe('lireErreurBase : le code décide d’abord', () => {
       refus('value out of range', '22003'),
       refus('invalid input syntax for type uuid', '22P02'),
       refus('JSON object requested, multiple (or no) rows returned', 'PGRST116'),
-      { message: '<html>502 Bad Gateway</html>' },
       Object.assign(new Error('boom'), { code: 'XX000' }),
-      null,
-      'texte',
     ]) {
       expect(lireErreurBase(erreur)).toEqual({
         genre: 'message',

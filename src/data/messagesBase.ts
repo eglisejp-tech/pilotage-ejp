@@ -6,16 +6,15 @@
 // échoue si un message n'est ni dans la table ni dans la liste des garde-fous laissés au repli.
 //
 // Le code décide d'abord, le texte ensuite :
-// - pas de code et une erreur de fetch (code vide de postgrest-js, TypeError au message de fetch,
-//   erreur de fetch des clients Auth et Edge Functions) : `reseau`, l'écran dit sa phrase de
-//   connexion ; toute autre erreur sans code (`Error` levée par le code, TypeError d'un bogue,
-//   corps illisible d'une passerelle en panne) n'est pas une coupure : elle prend le repli ;
-// - délai de 10 s dépassé : `delai`, l'écran dit « peut-être fait » pour une création ;
+// - pas de code (fetch rejeté, réponse perdue ou illisible, délai de 10 s, exception du code) :
+//   `technique` ; l'issue de l'envoi et sa phrase se lisent par `lireEchec`
+//   (src/data/echecEnvoi.ts, T76), jamais ici ;
 // - jeton expiré ou refusé (PGRST301 à PGRST303, ou « JWT » dans le message, même sans code) :
 //   connexion expirée ;
 // - 42501 : « Double authentification requise. » donne connexion expirée, « Compte inactif ou
-//   inconnu. » donne compte désactivé ; un garde-fou technique prend le repli ; tout autre 42501
-//   est un refus d'accès, que l'écran dit avec sa propre phrase ;
+//   inconnu. » donne compte désactivé ; « permission denied for ... » (requête partie sans jeton)
+//   donne connexion expirée ; un garde-fou technique prend le repli ; tout autre 42501 est un
+//   refus d'accès, que l'écran dit avec sa propre phrase ;
 // - connexion expirée et compte désactivé font aussi relire la session (`surSessionChangee`) :
 //   la garde mène à l'écran qui convient, avec la page en retour (m271) ;
 // - P0001 : la phrase de la table ;
@@ -36,7 +35,10 @@ export const MESSAGES_COMMUNS = {
     "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
   /** Refus inattendu d'une action sans formulaire (m270). */
   repliAction: "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
-  /** Délai dépassé pendant une création : la base a peut-être enregistré (m259). */
+  /**
+   * Création dont l'issue est inconnue (aucune réponse, réponse perdue ou illisible, délai) : la
+   * base a peut-être enregistré (m259, T76).
+   */
   peutEtreFait: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
   /** Lecture abandonnée après 10 s (m252). */
   delaiLecture: 'La réponse met trop de temps. Réessayez.',
@@ -617,12 +619,13 @@ function rediger(traduction: Traduction, message: string, valeurs: readonly stri
 /** Nature d'une phrase : dire quoi faire, se reconnecter, contacter EJP Tech ou réessayer. */
 export type NaturePhrase = 'refus' | 'expiree' | 'desactive' | 'repli'
 
-/** Ce qu'un écran fait d'une erreur. */
+/** Ce que la table dit d'une erreur. */
 export type ErreurLue =
-  /** Aucune réponse (réseau coupé, hors ligne) : l'écran dit sa phrase de connexion. */
-  | { genre: 'reseau' }
-  /** 10 s dépassées : rien n'est sûr, une création a peut-être abouti. */
-  | { genre: 'delai' }
+  /**
+   * Aucune réponse de la base à traduire (fetch rejeté, réponse perdue ou illisible, délai,
+   * exception du code) : `lireEchec` (src/data/echecEnvoi.ts) en dit l'issue (T76).
+   */
+  | { genre: 'technique' }
   /** Refus d'accès (42501) : l'écran dit sa propre phrase. */
   | { genre: 'acces' }
   /**
@@ -630,7 +633,12 @@ export type ErreurLue =
    * `nature` : refus de la base ou d'un contrôle (dire quoi faire), connexion expirée, compte
    * désactivé, ou repli (prévenir EJP Tech si le problème revient).
    */
-  | { genre: 'message'; nature: NaturePhrase; message: string; champ: ChampRefus | null }
+  | {
+      genre: 'message'
+      nature: NaturePhrase
+      message: string
+      champ: ChampRefus | null
+    }
 
 /** Options de lecture : un formulaire garde la saisie, une action sans formulaire non. */
 export interface OptionsLecture {
@@ -667,14 +675,12 @@ function champDuChemin(chemin: readonly PropertyKey[]): ChampRefus | null {
 /** Message par défaut de Zod (en anglais) : un contrôle imprévu, jamais montré. */
 const MESSAGE_ZOD_PAR_DEFAUT = /^(Invalid|Too (big|small)|Expected|Unrecognized|Required)\b/
 
-/** Erreur de fetch des clients Supabase (`AuthRetryableFetchError`, `FunctionsFetchError`). */
-const NOM_ERREUR_FETCH = /^\w*FetchError$/
-
-/**
- * Message d'un fetch rejeté (réseau coupé, hors ligne) : Chrome, Firefox, Safari, Node. Le nom
- * TypeError ne suffit pas : une TypeError d'un autre message est un bogue du code, pas une coupure.
- */
-const MESSAGE_ERREUR_FETCH = /Failed to fetch|NetworkError|Load failed|fetch failed/
+/** Vrai pour une consigne de Zod imprévue (message par défaut, en anglais) : un bogue du code. */
+export function estControleImprevu(erreur: unknown): boolean {
+  if (!(erreur instanceof z.ZodError)) return false
+  const probleme = erreur.issues[0]
+  return !probleme || MESSAGE_ZOD_PAR_DEFAUT.test(probleme.message)
+}
 
 /** Codes de PostgREST d'un jeton refusé, expiré ou absent (401). */
 const JETON_REFUSE: ReadonlySet<string> = new Set(['PGRST301', 'PGRST302', 'PGRST303'])
@@ -682,13 +688,28 @@ const JETON_REFUSE: ReadonlySet<string> = new Set(['PGRST301', 'PGRST302', 'PGRS
 /** Jeton refusé dit par son texte : PostgREST, ou une passerelle qui répond 401 sans code. */
 const JETON_DANS_LE_MESSAGE = /\bJWT\b/
 
-function lireChamp(erreur: object, nom: 'code' | 'message' | 'name'): string | undefined {
+/**
+ * Droit d'exécution ou de lecture absent (42501 de Postgres, jamais un `raise exception`) : toute
+ * fonction et toute table de l'API sont ouvertes à `authenticated`, ce refus dit donc que la
+ * requête est partie sans jeton valable (rôle `anon`, renouvellement raté). Connexion expirée
+ * (T76, Q8), et non « introuvable ».
+ */
+const SANS_JETON = /^permission denied for (function|table|view|schema|sequence) /
+
+function lireChamp(erreur: object, nom: 'code' | 'message'): string | undefined {
   const valeur = (erreur as Record<string, unknown>)[nom]
   return typeof valeur === 'string' ? valeur : undefined
 }
 
 function phrase(nature: NaturePhrase, message: string, champ: ChampRefus | null = null): ErreurLue {
   return { genre: 'message', nature, message, champ }
+}
+
+function sessionChangee(nature: 'expiree' | 'desactive'): ErreurLue {
+  return phrase(
+    nature,
+    nature === 'expiree' ? MESSAGES_COMMUNS.connexionExpiree : MESSAGES_COMMUNS.compteDesactive,
+  )
 }
 
 let rappelSession: (() => void) | null = null
@@ -703,22 +724,11 @@ export function surSessionChangee(rappel: (() => void) | null): void {
   rappelSession = rappel
 }
 
-/** La phrase d'une session qui a changé, et sa relecture, après la lecture en cours. */
-function sessionChangee(nature: 'expiree' | 'desactive'): ErreurLue {
-  const rappel = rappelSession
-  // Jamais pendant la lecture : un écran peut lire l'erreur pendant son rendu.
-  if (rappel) setTimeout(rappel, 0)
-  return phrase(
-    nature,
-    nature === 'expiree' ? MESSAGES_COMMUNS.connexionExpiree : MESSAGES_COMMUNS.compteDesactive,
-  )
-}
-
 /**
- * Ce qu'un écran fait d'une erreur reçue après un appel à la base (`rpc`, `insert`) ou d'une
- * validation Zod de la couche data. Ne rend jamais le texte brut de la base.
+ * Traduction d'une erreur par la table, sans effet : ce que dit `lireErreurBase`, sans relire la
+ * session. `classer` (src/data/echecEnvoi.ts) s'en sert autant de fois qu'il faut.
  */
-export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): ErreurLue {
+export function traduireErreurBase(erreur: unknown, options: OptionsLecture = {}): ErreurLue {
   const repli = phrase(
     'repli',
     options.formulaire === false ? MESSAGES_COMMUNS.repliAction : MESSAGES_COMMUNS.repliSaisie,
@@ -730,35 +740,27 @@ export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): E
   // saisit qu'une fois par envoi. ») prend le repli comme la base (T66, m098).
   if (erreur instanceof z.ZodError) {
     const probleme = erreur.issues[0]
-    if (!probleme || MESSAGE_ZOD_PAR_DEFAUT.test(probleme.message)) return repli
+    if (!probleme || estControleImprevu(erreur)) return repli
     if (REFUS_DE_SAISIE[probleme.message] === REPLI) return repli
     return phrase('refus', probleme.message, champDuChemin(probleme.path))
   }
-  if (typeof erreur !== 'object' || erreur === null) return repli
+  if (typeof erreur !== 'object' || erreur === null) return { genre: 'technique' }
 
   const code = lireChamp(erreur, 'code')
   const message = lireChamp(erreur, 'message') ?? ''
 
   if (code === undefined || code === '') {
-    if (estDelaiDepasse(erreur)) return { genre: 'delai' }
     // Une passerelle qui refuse le jeton (401) sans code PostgREST : connexion expirée (10.11).
     if (JETON_DANS_LE_MESSAGE.test(message)) return sessionChangee('expiree')
-    // Pas de code : aucune réponse de la base (guide, 10.11), seulement quand fetch a échoué.
-    // postgrest-js rend alors `code: ''` ; fetch lève une TypeError au message connu ; Auth et les
-    // Edge Functions lèvent leur `...FetchError`. Une autre `Error` sans code (« Limites
-    // absentes. », TypeError d'un bogue) ou un corps que le serveur n'a pas su donner en JSON
-    // (passerelle en panne, 502) n'est pas une coupure : réessayer la connexion n'y changerait
-    // rien, donc le repli.
-    const nom = lireChamp(erreur, 'name') ?? ''
-    if (code === '' || NOM_ERREUR_FETCH.test(nom) || MESSAGE_ERREUR_FETCH.test(message)) {
-      return { genre: 'reseau' }
-    }
-    return repli
+    // Pas de code : la base n'a rien dit. L'issue (rien n'est parti, réponse perdue, délai,
+    // bogue) se lit dans les faits de l'envoi, par `classer` (T76).
+    return { genre: 'technique' }
   }
   if (JETON_REFUSE.has(code) || JETON_DANS_LE_MESSAGE.test(message)) {
     return sessionChangee('expiree')
   }
   if (code === '42501') {
+    if (SANS_JETON.test(message)) return sessionChangee('expiree')
     const trouve = chercher(REFUS_DE_DROIT, MODELES_DROIT, message)
     const entree = trouve?.entree ?? 'acces'
     if (entree === 'expiree') return sessionChangee('expiree')
@@ -776,39 +778,21 @@ export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): E
   return repli
 }
 
-/** Phrases propres à un écran, pour les cas que la table ne dit pas. */
-export interface PhrasesEcran {
-  /** Aucune réponse : la phrase de connexion de l'écran (« Vos chiffres sont encore... »). */
-  connexion: string
-  /** Refus d'accès ; par défaut, la phrase commune. */
-  acces?: string
-  /** Une création : après 10 s sans réponse, dire de vérifier la liste avant de réessayer. */
-  creation?: boolean
-}
-
 /**
- * Phrase unique d'un échec, pour un écran qui la dit sous son bouton (sans placer de champ) :
- * sa phrase de connexion, « peut-être fait » pour une création restée sans réponse, sa phrase
- * d'accès, ou la phrase de la table.
+ * Ce qu'un écran fait d'une erreur reçue après un appel à la base (`rpc`, `insert`) ou d'une
+ * validation Zod de la couche data. Ne rend jamais le texte brut de la base. Une connexion
+ * expirée ou un compte désactivé font relire la session (m271), après la lecture en cours. Les
+ * écrans d'envoi passent par `lireEchec` (src/data/echecEnvoi.ts), qui l'appelle.
  */
-export function phraseErreur(
-  erreur: unknown,
-  ecran: PhrasesEcran,
-  options: OptionsLecture = {},
-): string {
-  const lue = lireErreurBase(erreur, options)
-  switch (lue.genre) {
-    case 'reseau':
-      return ecran.connexion
-    case 'delai':
-      return ecran.creation ? MESSAGES_COMMUNS.peutEtreFait : ecran.connexion
-    case 'acces':
-      return ecran.acces ?? MESSAGES_COMMUNS.acces
-    case 'message':
-      return lue.message
+export function lireErreurBase(erreur: unknown, options: OptionsLecture = {}): ErreurLue {
+  const lue = traduireErreurBase(erreur, options)
+  if (lue.genre === 'message' && (lue.nature === 'expiree' || lue.nature === 'desactive')) {
+    const rappel = rappelSession
+    // Jamais pendant la lecture : un écran peut lire l'erreur pendant son rendu.
+    if (rappel) setTimeout(rappel, 0)
   }
+  return lue
 }
-
 /**
  * Phrase d'un message que la base rend sans le lever (`verifier_libelle`, contrôles pendant la
  * frappe) : la même que la traduction du refus qu'il annonce, car l'interface contrôle le cas avant

@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import { lireRefusPoint } from '@/features/nouveau-point/refus'
 
+/** Référence d'un échec technique (T76). */
+const REFERENCE = expect.stringMatching(/^[2-9A-HJKMNP-Z]{6}$/)
+
 const refusDeLaBase = (message: string) => ({ code: 'P0001', message })
 
 const REPLI =
@@ -21,43 +24,60 @@ describe('refus d’une création de point', () => {
   })
 
   it('un refus absent de la table : le repli sous le bouton, jamais le texte brut (m270)', () => {
-    expect(lireRefusPoint(refusDeLaBase('Autre refus.'))).toEqual({ ou: 'bouton', message: REPLI })
+    expect(lireRefusPoint(refusDeLaBase('Autre refus.'))).toEqual({
+      ou: 'bouton',
+      message: REPLI,
+      reference: REFERENCE,
+    })
     expect(lireRefusPoint({ code: 'PGRST000', message: 'Erreur.' })).toEqual({
       ou: 'bouton',
       message: REPLI,
+      reference: REFERENCE,
     })
-    expect(lireRefusPoint(null)).toEqual({ ou: 'bouton', message: REPLI })
+    expect(lireRefusPoint(null)).toEqual({ ou: 'bouton', message: REPLI, reference: REFERENCE })
   })
 
   it('refus de droit : sous le bouton, sans dire pourquoi', () => {
     expect(lireRefusPoint({ code: '42501', message: 'row-level security' })).toEqual({
       ou: 'bouton',
       message: MESSAGES_POINT.refus.creationAcces,
+      reference: null,
     })
     expect(
       lireRefusPoint({ code: '42501', message: MESSAGES_POINT.refus.creationReservee }),
-    ).toEqual({ ou: 'bouton', message: 'Votre compte ne permet pas de créer un point.' })
+    ).toEqual({
+      ou: 'bouton',
+      message: 'Votre compte ne permet pas de créer un point.',
+      reference: null,
+    })
   })
 
   it('connexion expirée, compte désactivé : leur phrase (m271, m272)', () => {
     expect(lireRefusPoint({ code: '42501', message: 'Double authentification requise.' })).toEqual({
       ou: 'bouton',
       message: 'Votre connexion a expiré. Reconnectez-vous.',
+      reference: null,
     })
     expect(lireRefusPoint({ code: '42501', message: 'Compte inactif ou inconnu.' })).toEqual({
       ou: 'bouton',
       message: 'Ce compte est désactivé. Contactez EJP Tech.',
+      reference: null,
     })
   })
 
-  it('connexion perdue : problème de connexion, valeurs gardées', () => {
-    expect(lireRefusPoint(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
+  it('connexion perdue : le point est peut-être créé, « Vérifiez la liste » et une référence (T76)', () => {
+    expect(lireRefusPoint(new TypeError('Failed to fetch'))).toEqual({
+      ou: 'bouton',
+      message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      reference: REFERENCE,
+    })
   })
 
   it('création sans réponse après 10 s : vérifier la liste avant de réessayer (m259)', () => {
     expect(lireRefusPoint({ code: '', message: 'TimeoutError: signal timed out' })).toEqual({
       ou: 'bouton',
       message: 'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      reference: REFERENCE,
     })
   })
 })

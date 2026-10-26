@@ -77,8 +77,11 @@ test.describe('saisie d’une session (aperçu, maquette 09)', () => {
     const presents = page.getByLabel('STARs de votre ministère présents', { exact: true })
     await presents.fill('9')
     await page.getByRole('button', { name: 'Enregistrer la présence' }).click()
-    await expect(page.getByRole('alert')).toHaveText(
+    await expect(page.getByRole('alert')).toContainText(
       'La connexion a échoué. Vos chiffres sont encore dans le formulaire : réessayez.',
+    )
+    await expect(page.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(presents).toHaveValue('9')
   })

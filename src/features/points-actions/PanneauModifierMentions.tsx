@@ -4,7 +4,8 @@ import type { FormEvent } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
 import { ApresChargement } from '@/components/etats/ApresChargement'
 import { EtatVide } from '@/components/etats/EtatVide'
-import { messageDeRefusPoint } from '@/data/pointsEcriture'
+import { lireEchecPoint } from '@/data/pointsEcriture'
+import type { EchecLu } from '@/data/echecEnvoi'
 import { TEXTES_VIDES } from '@/features/cette-semaine/textesVides'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ChargementSaisie } from '@/features/evenements/ChargementSaisie'
@@ -46,7 +47,7 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
     queryFn: ecritures.lireMinisteres,
   })
   const [coches, setCoches] = useState<string[]>([...mentions])
-  const [refus, setRefus] = useState<string | null>(null)
+  const [refus, setRefus] = useState<EchecLu | null>(null)
   const [enCours, setEnCours] = useState(false)
   // Appuis sur « Enregistrer » sans changement (0 : aucun depuis la dernière case touchée).
   const [inchange, setInchange] = useState(0)
@@ -67,7 +68,7 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
       await envoyer(coches)
       onFermer()
     } catch (erreur) {
-      setRefus(messageDeRefusPoint(erreur) ?? TEXTES_ACTIONS_POINT.mentions.erreurConnexion)
+      setRefus(lireEchecPoint(erreur))
     } finally {
       setEnCours(false)
     }
@@ -98,7 +99,7 @@ export function PanneauModifierMentions({ titre, createurId, mentions, envoyer, 
           message={inchange > 0 ? TEXTES_ACTIONS_POINT.mentions.dejaEnregistrees : null}
           essai={inchange}
         />
-        {refus ? <ErreurFormulaire message={refus} /> : null}
+        {refus ? <ErreurFormulaire message={refus.message} reference={refus.reference} /> : null}
         <Bouton pleineLargeur onClick={onFermer}>
           {TEXTES_ACTIONS_POINT.mentions.annuler}
         </Bouton>

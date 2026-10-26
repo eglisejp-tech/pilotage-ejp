@@ -8,6 +8,7 @@ import {
   schemaIdentifiantSession,
   schemaMinisteresAttendus,
 } from '@/features/sessions/schemas'
+import { envoyer } from '@/data/envoi'
 import type { ValeursDeclaration } from '@/features/sessions/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -52,12 +53,14 @@ export async function lireAttendusDeLaSession(sessionId: string): Promise<string
  */
 export async function declarerSession(brut: ValeursDeclaration): Promise<string> {
   const declaration = schemaDeclaration.parse(brut)
-  const { data, error } = await supabase().rpc('declarer_session', {
-    p_type: declaration.type,
-    p_date: declaration.date,
-    p_intitule: declaration.intitule,
-    p_ministeres: declaration.ministeres,
-  })
+  const { data, error } = await envoyer('rpc/declarer_session', () =>
+    supabase().rpc('declarer_session', {
+      p_type: declaration.type,
+      p_date: declaration.date,
+      p_intitule: declaration.intitule,
+      p_ministeres: declaration.ministeres,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -67,17 +70,21 @@ export async function modifierSession(
   sessionId: string,
   ministeres: readonly string[],
 ): Promise<void> {
-  const { error } = await supabase().rpc('modifier_session', {
-    p_session_id: schemaIdentifiantSession.parse(sessionId),
-    p_ministeres: schemaMinisteresAttendus.parse(ministeres),
-  })
+  const { error } = await envoyer('rpc/modifier_session', () =>
+    supabase().rpc('modifier_session', {
+      p_session_id: schemaIdentifiantSession.parse(sessionId),
+      p_ministeres: schemaMinisteresAttendus.parse(ministeres),
+    }),
+  )
   if (error) throw error
 }
 
 /** Supprime une session que personne n'a encore saisie ; la base refuse sinon. */
 export async function supprimerSession(sessionId: string): Promise<void> {
-  const { error } = await supabase().rpc('supprimer_session', {
-    p_session_id: schemaIdentifiantSession.parse(sessionId),
-  })
+  const { error } = await envoyer('rpc/supprimer_session', () =>
+    supabase().rpc('supprimer_session', {
+      p_session_id: schemaIdentifiantSession.parse(sessionId),
+    }),
+  )
   if (error) throw error
 }

@@ -70,7 +70,7 @@ describe('useActionsComptes', () => {
   })
 
   it('réponse perdue : l’erreur « connexion » remonte, et la liste est relue quand même', async () => {
-    installer(() => Promise.reject(new Error('délai')))
+    installer(() => Promise.reject(new DOMException('Délai de 10 s dépassé.', 'TimeoutError')))
     const { actions, clesRelues } = monter()
     await expect(actions.desactiver(COMPTE)).rejects.toMatchObject({ code: 'connexion' })
     expect(clesRelues()).toEqual([['comptes'], ['ministeres']])

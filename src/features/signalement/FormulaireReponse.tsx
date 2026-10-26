@@ -40,7 +40,8 @@ export interface ProprietesFormulaireReponse {
  * ministère), « Répondre au ministère » et « Clore le signalement » (EJP Tech). Un seul champ libre,
  * obligatoire (10 à 280 caractères), avec le rappel sur les données personnelles dessous et le
  * compteur ; le focus y entre à l'ouverture. Un refus du texte se dit sous le champ, texte gardé ;
- * la connexion perdue sous le bouton ; un signalement qui a changé, par le parent. « Annuler » avec
+ * un autre échec sous le bouton, avec sa référence (T76) ; un signalement qui a changé, par le
+ * parent. « Annuler » avec
  * un texte écrit demande d'abord « Fermer sans enregistrer ? » (guide 10.7).
  */
 export function FormulaireReponse({
@@ -86,9 +87,9 @@ export function FormulaireReponse({
       await envoyer(valeurs.texte)
       surEnvoye()
     } catch (erreur) {
-      const lu = lireRefusGeste(erreur)
+      const lu = lireRefusGeste(erreur, 'panneau')
       if (lu.ou === 'champ') setError('texte', { message: lu.message }, { shouldFocus: true })
-      else if (lu.ou === 'bouton' && lu.relire) surChange(lu.message)
+      else if (lu.relire) surChange(lu.message)
       else setRefus(lu)
     }
   })
@@ -134,8 +135,9 @@ export function FormulaireReponse({
           {TEXTES_REPONSE.boutonAnnuler}
         </button>
       </div>
-      {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-      {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+      {refus?.ou === 'bouton' ? (
+        <ErreurFormulaire message={refus.message} reference={refus.reference} />
+      ) : null}
       {garde ? (
         <FenetreFermerSansEnregistrer
           onFermer={() => {

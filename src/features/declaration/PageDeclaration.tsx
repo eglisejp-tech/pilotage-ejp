@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { lireErreurBase, phraseErreur } from '@/data/messagesBase'
+import { phraseErreur } from '@/data/echecEnvoi'
+import { traduireErreurBase } from '@/data/messagesBase'
 import { declarerIntervenant } from '@/data/personnes'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { messagesConnexion } from '@/features/connexion/messages'
@@ -48,9 +49,10 @@ export function PageDeclaration() {
       await rafraichirSession()
       if (changement) void navigate(retour, { replace: true })
     } catch (echec) {
-      // Par la table de traduction (m270, m271) : seule une coupure dit « La connexion a échoué ».
+      // Par le classement unique (m270, m271, T76) : un échec technique dit « La connexion a
+      // échoué », un bogue prend le repli.
       // Les seuls refus de saisie de declarer_intervenant portent sur le prénom : sous le champ.
-      const lue = lireErreurBase(echec)
+      const lue = traduireErreurBase(echec)
       if (lue.genre === 'message' && lue.nature === 'refus') setErreurPrenom(lue.message)
       else setErreur(phraseErreur(echec, { connexion: messagesConnexion.echecReseau }))
       setEnCours(false)

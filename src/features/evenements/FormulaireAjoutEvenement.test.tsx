@@ -2,6 +2,7 @@ import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
+import { MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { FormulaireAjoutEvenement } from '@/features/evenements/FormulaireAjoutEvenement'
 import type { AjoutEvenement } from '@/features/evenements/schemas'
 import { MESSAGES_BASE, TEXTES_EVENEMENT } from '@/features/evenements/textes'
@@ -171,12 +172,102 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     await remplir('2026-10-10')
     await userEvent.click(bouton())
     expect(await screen.findByRole('alert')).toHaveTextContent(TEXTES_EVENEMENT.erreurMention)
+    expect(screen.queryByText(/Référence/)).toBeNull()
     await userEvent.click(bouton())
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
-    )
+    // Un ajout parti sans réponse a peut-être été enregistré (T76) : vérifier avant de réessayer.
+    expect(await screen.findByRole('alert')).toHaveTextContent(MESSAGES_COMMUNS.peutEtreFait)
     expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('  Soirée de louange ')
     expect(screen.getByRole('radio', { name: 'En attente de validation' })).toBeChecked()
+  })
+
+  // Erreurs d'envoi (T76) : le cas réel du 26 octobre 2026. Coordination, sur iPhone, ajoute un
+  // événement avec huit mentions dont FIJ ; la base enregistre, la réponse se perd (Safari :
+  // « Load failed », que postgrest-js rend avec un code vide). Réessayer ferait un doublon.
+  describe('erreurs d’envoi (T76), cas réel de Coordination', () => {
+    const COORDINATION = '10000000-0000-4000-8000-000000000003'
+    const HUIT = [
+      'FIJ',
+      'Communication',
+      'Intégration',
+      'Louange',
+      'Accueil',
+      'Média',
+      'Social',
+      'Prodiges Academy',
+    ].map((nom, rang) => ({ id: `10000000-0000-4000-8000-00000000010${rang}`, nom }))
+    const REFERENCE = /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/
+
+    function afficherCoordination(envoyer: (evenement: AjoutEvenement) => Promise<void>) {
+      render(
+        <MemoryRouter>
+          <FormulaireAjoutEvenement
+            aujourdhui="2026-10-26"
+            ministereId={COORDINATION}
+            ministeres={HUIT}
+            envoyer={envoyer}
+          />
+        </MemoryRouter>,
+      )
+    }
+
+    async function remplirHuitMentions() {
+      const utilisateur = userEvent.setup()
+      await utilisateur.type(screen.getByLabelText('Date'), '2026-10-26')
+      await utilisateur.type(
+        screen.getByLabelText("Nom de l'événement"),
+        'Réunion des responsables',
+      )
+      await utilisateur.click(screen.getByRole('radio', { name: 'En attente de validation' }))
+      for (const { nom } of HUIT)
+        await utilisateur.click(screen.getByRole('checkbox', { name: nom }))
+    }
+
+    it('réponse perdue (« Load failed ») : « Vérifiez la liste », une référence, saisie gardée', async () => {
+      const envoyer = vi.fn<(evenement: AjoutEvenement) => Promise<void>>(() =>
+        Promise.reject({ code: '', message: 'TypeError: Load failed', details: '', hint: '' }),
+      )
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      const alerte = await screen.findByRole('alert')
+      expect(alerte).toHaveTextContent(MESSAGES_COMMUNS.peutEtreFait)
+      expect(alerte).not.toHaveTextContent('encore dans le formulaire')
+      expect(alerte).toHaveTextContent(REFERENCE)
+      expect(envoyer).toHaveBeenCalledWith(
+        expect.objectContaining({ mentions: HUIT.map((ministere) => ministere.id) }),
+      )
+      expect(screen.getByLabelText("Nom de l'événement")).toHaveValue('Réunion des responsables')
+      for (const { nom } of HUIT) expect(screen.getByRole('checkbox', { name: nom })).toBeChecked()
+    })
+
+    it('bogue de l’application : le repli et une référence, jamais « La connexion a échoué »', async () => {
+      const envoyer = vi.fn(() =>
+        Promise.reject({
+          code: '',
+          message: "TypeError: undefined is not an object (evaluating 'x.y')",
+        }),
+      )
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      const alerte = await screen.findByRole('alert')
+      expect(alerte).toHaveTextContent(MESSAGES_COMMUNS.repliSaisie)
+      expect(alerte).not.toHaveTextContent('La connexion a échoué')
+      expect(alerte).toHaveTextContent(REFERENCE)
+    })
+
+    it('passerelle en panne (502, page HTML) : issue inconnue, « Vérifiez la liste », sans le HTML', async () => {
+      const envoyer = vi.fn(() =>
+        Promise.reject({ message: '<html><body>502 Bad Gateway</body></html>' }),
+      )
+      afficherCoordination(envoyer)
+      await remplirHuitMentions()
+      await userEvent.click(bouton())
+      const alerte = await screen.findByRole('alert')
+      expect(alerte).toHaveTextContent(MESSAGES_COMMUNS.peutEtreFait)
+      expect(alerte).not.toHaveTextContent('Bad Gateway')
+      expect(alerte).toHaveTextContent(REFERENCE)
+    })
   })
 
   it('mentions facultatives : le titre du groupe le dit', () => {

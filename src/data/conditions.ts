@@ -8,6 +8,7 @@
 import { z } from 'zod'
 import { schemaVersionConditions } from '@/lib/metier/conditions'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 /**
  * Le compte a-t-il accepté cette version ? Comptes non partagés. Lisible en aal2 seulement
@@ -46,8 +47,10 @@ export async function lireConditionsAccepteesParLaPersonne(version: string): Pro
  * une version qui n'est pas une vraie date, ou qui est à venir.
  */
 export async function accepterConditions(version: string): Promise<void> {
-  const { error } = await supabase().rpc('accepter_conditions', {
-    p_version: schemaVersionConditions.parse(version),
-  })
+  const { error } = await envoyer('rpc/accepter_conditions', () =>
+    supabase().rpc('accepter_conditions', {
+      p_version: schemaVersionConditions.parse(version),
+    }),
+  )
   if (error) throw error
 }

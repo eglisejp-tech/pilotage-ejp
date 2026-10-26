@@ -41,12 +41,23 @@ function dossierPolices(): string[] {
   }
 }
 
+/**
+ * Version du site (T76) : le sha court du commit construit, que GitHub Actions donne dans
+ * GITHUB_SHA (job « Mise en ligne » compris), sinon « local ». Elle part dans X-Client-Info de
+ * chaque appel à Supabase (src/lib/transport.ts). Ce n'est pas un secret.
+ */
+function versionSite(): string {
+  const sha = process.env.GITHUB_SHA?.trim().toLowerCase() ?? ''
+  return /^[0-9a-f]{7,40}$/.test(sha) ? sha.slice(0, 7) : 'local'
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
   // Vite lit process.env avant les fichiers .env : la valeur réduite remplace la leur.
   process.env.VITE_SITE_URL = adresseSite(loadEnv(mode, process.cwd(), 'VITE_').VITE_SITE_URL)
   return {
     plugins: [react(), tailwindcss()],
+    define: { __VERSION_SITE__: JSON.stringify(versionSite()) },
     resolve: {
       alias: [
         // Au build seulement : les aperçus de développement (src/app/routesDeDeveloppement.tsx)

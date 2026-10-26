@@ -61,7 +61,10 @@ export function FormulaireChiffres({
       />
       {erreurFormulaire !== null ? <ErreurFormulaire message={erreurFormulaire} /> : null}
       {envoi.echec && erreurSousLeBouton ? (
-        <ErreurFormulaire message={envoi.echec.message ?? undefined} />
+        <ErreurFormulaire
+          message={envoi.echec.message ?? undefined}
+          reference={envoi.echec.reference}
+        />
       ) : null}
       <MessageReussite
         message={envoi.reussite?.message ?? null}

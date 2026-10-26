@@ -8,6 +8,7 @@ import { schemaMasquage, schemaRelecture } from '@/features/moderation/schemas'
 import type { Masquage, Relecture } from '@/features/moderation/schemas'
 import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 export type LigneTexteARelire = LigneVue<'v_textes_a_relire'>
 
@@ -42,10 +43,12 @@ export async function lireDemandesEnAttente(): Promise<DemandeEnAttente[]> {
 /** « Rien à signaler » : marque un texte comme relu (une seule fois par texte). */
 export async function marquerRelu(brut: Relecture): Promise<void> {
   const relecture = schemaRelecture.parse(brut)
-  const { error } = await supabase().rpc('marquer_relu', {
-    p_cible: relecture.cible,
-    p_cible_id: relecture.cibleId,
-  })
+  const { error } = await envoyer('rpc/marquer_relu', () =>
+    supabase().rpc('marquer_relu', {
+      p_cible: relecture.cible,
+      p_cible_id: relecture.cibleId,
+    }),
+  )
   if (error) throw error
 }
 
@@ -55,11 +58,13 @@ export async function marquerRelu(brut: Relecture): Promise<void> {
  */
 export async function masquerTexte(brut: Masquage): Promise<void> {
   const masquage = schemaMasquage.parse(brut)
-  const { error } = await supabase().rpc('masquer_texte', {
-    p_cible: masquage.cible,
-    p_cible_id: masquage.cibleId,
-    p_champ: masquage.champ,
-    p_motif: masquage.motif,
-  })
+  const { error } = await envoyer('rpc/masquer_texte', () =>
+    supabase().rpc('masquer_texte', {
+      p_cible: masquage.cible,
+      p_cible_id: masquage.cibleId,
+      p_champ: masquage.champ,
+      p_motif: masquage.motif,
+    }),
+  )
   if (error) throw error
 }

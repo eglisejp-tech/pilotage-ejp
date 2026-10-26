@@ -16,6 +16,7 @@ import {
 import type { Cloture, Reponse, Signalement } from '@/features/signalement/schemas'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 export type LigneSignalement = LigneVue<'v_signalement'>
 
@@ -65,10 +66,12 @@ export async function lireSignalementsATraiter(): Promise<LigneSignalement[]> {
  */
 export async function signalerDifficulte(brut: Signalement): Promise<string> {
   const signalement = schemaSignalement.parse(brut)
-  const { data, error } = await supabase().rpc('signaler_difficulte', {
-    p_ecran: signalement.ecran,
-    p_texte: signalement.texte,
-  })
+  const { data, error } = await envoyer('rpc/signaler_difficulte', () =>
+    supabase().rpc('signaler_difficulte', {
+      p_ecran: signalement.ecran,
+      p_texte: signalement.texte,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -76,10 +79,12 @@ export async function signalerDifficulte(brut: Signalement): Promise<string> {
 /** Clôt un signalement (EJP Tech seul, une fois), avec la réponse que lira le ministère (T77). */
 export async function cloreSignalement(brut: Cloture): Promise<void> {
   const cloture = schemaCloture.parse(brut)
-  const { error } = await supabase().rpc('clore_signalement', {
-    p_signalement_id: cloture.signalementId,
-    p_commentaire: cloture.commentaire,
-  })
+  const { error } = await envoyer('rpc/clore_signalement', () =>
+    supabase().rpc('clore_signalement', {
+      p_signalement_id: cloture.signalementId,
+      p_commentaire: cloture.commentaire,
+    }),
+  )
   if (error) throw error
 }
 
@@ -120,17 +125,21 @@ export async function lireSuiviDesSignalements(ids: readonly string[]): Promise<
 /** « Prendre en charge » (EJP Tech seul) : Reçu vers En cours. */
 export async function prendreEnCharge(signalementId: string): Promise<void> {
   const id = schemaIdentifiantSignalement.parse(signalementId)
-  const { error } = await supabase().rpc('prendre_en_charge_signalement', { p_signalement_id: id })
+  const { error } = await envoyer('rpc/prendre_en_charge_signalement', () =>
+    supabase().rpc('prendre_en_charge_signalement', { p_signalement_id: id }),
+  )
   if (error) throw error
 }
 
 /** « Répondre au ministère » (EJP Tech seul) : rend l'identifiant de la ligne de réponse. */
 export async function repondreAuMinistere(brut: Reponse): Promise<string> {
   const reponse = schemaReponse.parse(brut)
-  const { data, error } = await supabase().rpc('repondre_au_ministere', {
-    p_signalement_id: reponse.signalementId,
-    p_reponse: reponse.texte,
-  })
+  const { data, error } = await envoyer('rpc/repondre_au_ministere', () =>
+    supabase().rpc('repondre_au_ministere', {
+      p_signalement_id: reponse.signalementId,
+      p_reponse: reponse.texte,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -138,16 +147,20 @@ export async function repondreAuMinistere(brut: Reponse): Promise<string> {
 /** « Oui, c'est réglé » (le ministère du signalement, à l'étape Répondu). */
 export async function confirmerSignalement(signalementId: string): Promise<void> {
   const id = schemaIdentifiantSignalement.parse(signalementId)
-  const { error } = await supabase().rpc('confirmer_signalement', { p_signalement_id: id })
+  const { error } = await envoyer('rpc/confirmer_signalement', () =>
+    supabase().rpc('confirmer_signalement', { p_signalement_id: id }),
+  )
   if (error) throw error
 }
 
 /** « Répondre à EJP Tech » (le ministère du signalement, à l'étape Répondu). */
 export async function repondreAEjpTech(brut: Reponse): Promise<void> {
   const reponse = schemaReponse.parse(brut)
-  const { error } = await supabase().rpc('repondre_a_ejp_tech', {
-    p_signalement_id: reponse.signalementId,
-    p_texte: reponse.texte,
-  })
+  const { error } = await envoyer('rpc/repondre_a_ejp_tech', () =>
+    supabase().rpc('repondre_a_ejp_tech', {
+      p_signalement_id: reponse.signalementId,
+      p_texte: reponse.texte,
+    }),
+  )
   if (error) throw error
 }

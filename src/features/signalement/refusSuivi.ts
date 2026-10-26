@@ -1,12 +1,15 @@
+import { lireEchec } from '@/data/echecEnvoi'
 import { lireErreurBase } from '@/data/messagesBase'
-import { lireRefusSignalement } from '@/features/signalement/refus'
-import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
+import { MESSAGES_BASE_SIGNALEMENT, TEXTES_REPONSE } from '@/features/signalement/textes'
 
-// Lecture d'un refus après un geste du suivi (T77) : prendre en charge, répondre, confirmer,
-// clore. Comme pour une clôture (`lireRefusSignalement`, envoi « cloture ») : un refus du texte
-// sous le champ, une coupure comme une connexion perdue, le reste sous le bouton. En plus, un
-// refus qui dit que le signalement a changé entre-temps (deux personnes d'EJP Tech, une page
-// ouverte depuis longtemps, une date limite passée) demande de relire la liste.
+// Lecture d'un échec après un geste du suivi (T77) : prendre en charge, répondre, confirmer,
+// clore, par le classement unique de `src/data/echecEnvoi.ts` (T76). Un refus du texte se dit
+// sous le champ ; le reste sous le bouton, avec la référence d'un échec technique. Aucun geste ne
+// crée de doublon quand il est refait : la base refuse le second (« déjà pris en charge », « déjà
+// clos »...), donc une issue inconnue dit de réessayer. Un geste en un clic sans réponse dit
+// « L'envoi n'a pas abouti. Réessayez. » ; un panneau garde son texte (« Votre saisie est encore
+// dans le formulaire »). Un refus qui dit que le signalement a changé entre-temps (deux personnes
+// d'EJP Tech, une page ouverte depuis longtemps, une date limite passée) demande de relire la liste.
 
 /** Messages de la base d'un signalement qui a changé de statut, et leur phrase à l'écran. */
 const STATUT_CHANGE = new Set(
@@ -25,14 +28,26 @@ const STATUT_CHANGE = new Set(
 export type RefusGeste =
   /** Sous le champ de la réponse. */
   | { ou: 'champ'; message: string }
-  /** Sous le bouton ; `relire` : le signalement a changé, la liste est à relire. */
-  | { ou: 'bouton'; message: string; relire: boolean }
-  /** Aucune réponse de la base (réseau coupé, délai dépassé). */
-  | { ou: 'connexion' }
+  /**
+   * Sous le bouton, avec la référence d'un échec technique ; `relire` : le signalement a changé,
+   * la liste est à relire.
+   */
+  | { ou: 'bouton'; message: string; reference: string | null; relire: boolean }
 
-/** Place et texte d'un refus après un geste du suivi. */
-export function lireRefusGeste(erreur: unknown): RefusGeste {
-  const lu = lireRefusSignalement(erreur, 'cloture')
-  if (lu.ou === 'bouton') return { ...lu, relire: STATUT_CHANGE.has(lu.message) }
-  return lu
+/** Un geste en un clic (« Prendre en charge », « Oui, c'est réglé ») ou un panneau de réponse. */
+export type FormeGeste = 'clic' | 'panneau'
+
+/** Place et texte d'un échec après un geste du suivi. */
+export function lireRefusGeste(erreur: unknown, forme: FormeGeste): RefusGeste {
+  const lu =
+    forme === 'clic'
+      ? lireEchec(erreur, { nature: 'action', connexion: TEXTES_REPONSE.echecEnvoi })
+      : lireEchec(erreur, { nature: 'reprise' })
+  if (lu.nature === 'refus' && lu.champ === 'texte') return { ou: 'champ', message: lu.message }
+  return {
+    ou: 'bouton',
+    message: lu.message,
+    reference: lu.reference,
+    relire: STATUT_CHANGE.has(lu.message),
+  }
 }

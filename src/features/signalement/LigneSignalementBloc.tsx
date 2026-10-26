@@ -17,7 +17,6 @@ import {
   LIBELLES_STATUT,
   ligneSignalement,
   TEXTES_BLOC_SIGNALEMENTS,
-  TEXTES_REPONSE,
 } from '@/features/signalement/textes'
 
 /** Les gestes d'EJP Tech sur un signalement (T77). */
@@ -79,7 +78,7 @@ export function LigneSignalementBloc({ signalement, lignes, suites, refus, masqu
   const idPanneau = useId()
   const [panneau, setPanneau] = useState<Panneau>(null)
   const [enCours, setEnCours] = useState(false)
-  const [echec, setEchec] = useState<string | null>(null)
+  const [echec, setEchec] = useState<{ message: string; reference: string | null } | null>(null)
   const [aMasquer, setAMasquer] = useState<CibleMasquage | null>(null)
   const boutonRepondre = useRef<HTMLButtonElement>(null)
   const boutonClore = useRef<HTMLButtonElement>(null)
@@ -114,10 +113,9 @@ export function LigneSignalementBloc({ signalement, lignes, suites, refus, masqu
       await suites.gestes.prendre(signalement.id)
       suites.surReussite(signalement.id, TEXTES_BLOC_SIGNALEMENTS.reussitePrise)
     } catch (erreur) {
-      const lu = lireRefusGeste(erreur)
-      if (lu.ou === 'connexion') setEchec(TEXTES_REPONSE.echecEnvoi)
-      else if (lu.ou === 'bouton' && lu.relire) suites.surChange(signalement.id, lu.message)
-      else setEchec(lu.message)
+      const lu = lireRefusGeste(erreur, 'clic')
+      if (lu.ou === 'bouton' && lu.relire) suites.surChange(signalement.id, lu.message)
+      else setEchec(lu.ou === 'bouton' ? lu : { message: lu.message, reference: null })
     } finally {
       verrou.current = false
       setEnCours(false)
@@ -168,7 +166,7 @@ export function LigneSignalementBloc({ signalement, lignes, suites, refus, masqu
     }
   }
 
-  const message = echec ?? refus
+  const message = echec ?? (refus ? { message: refus, reference: null } : null)
   const gestesVisibles = suites && (gestes.prendre || gestes.repondre || gestes.clore)
 
   return (
@@ -265,7 +263,9 @@ export function LigneSignalementBloc({ signalement, lignes, suites, refus, masqu
           </div>
         ) : null}
       </div>
-      {message ? <ErreurFormulaire message={message} /> : null}
+      {message ? (
+        <ErreurFormulaire message={message.message} reference={message.reference} />
+      ) : null}
       <div id={idPanneau} className="ordinateur:ml-auto ordinateur:w-[32rem]">
         {panneau === 'reponse' && suites ? (
           <FormulaireReponse

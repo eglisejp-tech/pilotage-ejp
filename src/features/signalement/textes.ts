@@ -24,8 +24,6 @@ export const TEXTES_SIGNALEMENT = {
   erreurLong: 'Raccourcissez le signalement : 280 caractères au plus.',
   erreurEcran: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
   erreurCrochets: 'Retirez de votre texte les crochets [ ] et les mots « texte masqué ».',
-  /** Refus de droit (42501) : la forme commune d'un élément introuvable (guide 10.10). */
-  acces: 'Cet élément est introuvable. Rechargez la page.',
   boutonEnvoyer: 'Envoyer le signalement',
   boutonEnCours: 'Envoi en cours',
   boutonAnnuler: 'Annuler',

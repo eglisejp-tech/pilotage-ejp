@@ -165,8 +165,11 @@ test.describe('la fenêtre', () => {
     const boite = await ouvrirFenetre(page, 'profil=ministere&envoi=echec')
     await basculer(page, boite, 'Social')
     await boite.getByRole('button', { name: 'Enregistrer les mentions' }).click()
-    await expect(boite.getByRole('alert')).toHaveText(
+    await expect(boite.getByRole('alert')).toContainText(
       'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    )
+    await expect(boite.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(boite.getByRole('checkbox', { name: 'Social' })).toBeChecked()
     await auditer(page)

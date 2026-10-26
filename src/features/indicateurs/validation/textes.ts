@@ -35,8 +35,6 @@ export const MESSAGES_BASE_VALIDATION = {
   sortie: "Cette demande a été retirée ou remplacée : il n'y a plus rien à décider.",
   choix: 'Choisissez de valider ou de refuser.',
   correction: "Une correction du nom ne se décide pas encore dans l'outil.",
-  /** Forme commune d'un élément introuvable (T66, m273). */
-  acces: 'Cet élément est introuvable. Rechargez la page.',
 } as const
 
 export const TEXTES_A_VALIDER = {

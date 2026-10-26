@@ -49,8 +49,10 @@ interface Props {
  * libellé reste un `<label>` ; l'aide, si elle existe, est son voisin. Les boutons « moins » et
  * « plus » portent le libellé du champ dans leur nom accessible (« Ajouter 1 : STARs actifs », T66
  * t063) : un formulaire en a plusieurs paires, qui ne doivent pas se confondre.
- * Dans un conteneur de grille, le champ se range en bas de sa cellule : deux champs côte à côte
- * restent alignés même si leurs textes n'ont pas la même longueur.
+ * Le champ a deux parties : sa tête (libellé, aide, définition, mention), puis sa case suivie de
+ * son pied (note, « Déjà saisi », messages). Dans une `GrilleChamps`, chacune prend la rangée de
+ * ses voisines (sous-grille) : titres, cases et notes de champs côte à côte restent alignés.
+ * Ailleurs, elles s'empilent, 6 px entre elles.
  */
 export function ChampNombre({
   id,
@@ -140,33 +142,39 @@ export function ChampNombre({
   )
 
   return (
-    <div className="flex h-full flex-col gap-1.5">
-      {aide ? (
-        <LibelleAvecAide
-          htmlFor={id}
-          libelle={libelle}
-          code={aide}
-          classeLibelle={grand ? undefined : 'text-detail'}
-        />
-      ) : (
-        <label
-          htmlFor={id}
-          className={cn('font-semibold', grand ? 'text-interface' : 'text-detail')}
-        >
-          {libelle}
-        </label>
-      )}
-      {definition ? (
-        <p id={idDefinition} className="text-detail leading-normal text-encre-3">
-          {definition}
-        </p>
-      ) : null}
-      {mention ? (
-        <p id={idMention} className="text-note text-encre-3">
-          {mention}
-        </p>
-      ) : null}
-      <div className="mt-auto flex flex-col gap-1.5">
+    // Deux parties, enfants directs : la tête, puis la case et son pied. Elles ne sont jamais
+    // vides : l'écart de 6 px de la sous-grille remplace exactement celui de la grille entre
+    // elles. Hors d'une grille, `grid-rows-subgrid` n'a pas de parent et `row-span-2` est sans
+    // effet : elles s'empilent.
+    <div className="row-span-2 grid grid-cols-1 grid-rows-subgrid gap-y-1.5">
+      <div className="flex flex-col gap-1.5">
+        {aide ? (
+          <LibelleAvecAide
+            htmlFor={id}
+            libelle={libelle}
+            code={aide}
+            classeLibelle={grand ? undefined : 'text-detail'}
+          />
+        ) : (
+          <label
+            htmlFor={id}
+            className={cn('font-semibold', grand ? 'text-interface' : 'text-detail')}
+          >
+            {libelle}
+          </label>
+        )}
+        {definition ? (
+          <p id={idDefinition} className="text-detail leading-normal text-encre-3">
+            {definition}
+          </p>
+        ) : null}
+        {mention ? (
+          <p id={idMention} className="text-note text-encre-3">
+            {mention}
+          </p>
+        ) : null}
+      </div>
+      <div className="flex flex-col gap-1.5">
         {grand ? (
           <div className="grid grid-cols-[var(--cible-saisie)_minmax(0,1fr)_var(--cible-saisie)] items-center">
             <button

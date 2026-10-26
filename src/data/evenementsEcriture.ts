@@ -10,6 +10,7 @@ import {
   schemaBaseMiseAJourEvenement,
   verifierIdentifiant,
 } from '@/features/evenements/schemas'
+import { envoyer } from '@/data/envoi'
 import type { AjoutEvenement, MiseAJourEvenement } from '@/features/evenements/schemas'
 import type { LigneTable, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
@@ -35,13 +36,15 @@ export type EvenementAMettreAJour = Pick<
  */
 export async function ajouterEvenement(brut: AjoutEvenement): Promise<string> {
   const evenement = schemaBaseAjoutEvenement.parse(brut)
-  const { data, error } = await supabase().rpc('ajouter_evenement', {
-    p_titre: evenement.titre,
-    p_date: evenement.date,
-    p_statut: evenement.statut,
-    p_mentions: evenement.mentions,
-    p_heure_prevue: evenement.heure_prevue,
-  })
+  const { data, error } = await envoyer('rpc/ajouter_evenement', () =>
+    supabase().rpc('ajouter_evenement', {
+      p_titre: evenement.titre,
+      p_date: evenement.date,
+      p_statut: evenement.statut,
+      p_mentions: evenement.mentions,
+      p_heure_prevue: evenement.heure_prevue,
+    }),
+  )
   if (error) throw error
   return data
 }
@@ -58,13 +61,15 @@ export async function mettreAJourEvenement(
 ): Promise<void> {
   const miseAJour = schemaBaseMiseAJourEvenement.parse(brut)
   const identifiant = verifierIdentifiant(evenementId)
-  const { error } = await supabase().from('evenement_etat').insert({
-    evenement_id: identifiant,
-    date: miseAJour.date,
-    statut: miseAJour.statut,
-    heure_prevue: miseAJour.heure_prevue,
-    heure_debut: miseAJour.heure_debut,
-  })
+  const { error } = await envoyer('table/evenement_etat', () =>
+    supabase().from('evenement_etat').insert({
+      evenement_id: identifiant,
+      date: miseAJour.date,
+      statut: miseAJour.statut,
+      heure_prevue: miseAJour.heure_prevue,
+      heure_debut: miseAJour.heure_debut,
+    }),
+  )
   if (error) throw error
 }
 

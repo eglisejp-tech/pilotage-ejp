@@ -100,12 +100,17 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await expect(champ(page)).toHaveValue('Écrivez-moi à contact@exemple.test')
   })
 
-  test('connexion perdue : l’erreur de formulaire, texte gardé', async ({ page }) => {
+  test('connexion perdue : « Vérifiez la liste », une référence, texte gardé (T76)', async ({
+    page,
+  }) => {
     await ouvrir(page, 'profil=ministere&envoi=echec')
     await champ(page).fill('Je ne peux pas choisir la date.')
     await envoyer(page)
-    await expect(page.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+    await expect(page.getByRole('alert')).toContainText(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await expect(page.getByRole('alert')).toContainText(
+      /Référence pour EJP Tech : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(champ(page)).toHaveValue('Je ne peux pas choisir la date.')
   })

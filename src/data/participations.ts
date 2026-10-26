@@ -7,6 +7,7 @@ import { schemaIdentifiantSession, schemaParticipation } from '@/features/saisie
 import type { SaisieParticipation } from '@/features/saisie-session/schemas'
 import type { LigneVue, TypeSession } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
+import { envoyer } from '@/data/envoi'
 
 export type SessionCompletude = LigneVue<'v_session_completude'>
 export type ParticipationCourante = LigneVue<'v_participation_courante'>
@@ -98,11 +99,13 @@ export async function lireSessionsAttendues(ministereId: string): Promise<string
  */
 export async function enregistrerParticipation(saisie: SaisieParticipation): Promise<void> {
   const { sessionId, ministereId, valeur, dejaComptes } = schemaParticipation.parse(saisie)
-  const { error } = await supabase().from('participation').insert({
-    session_id: sessionId,
-    ministere_id: ministereId,
-    valeur,
-    deja_comptes: dejaComptes,
-  })
+  const { error } = await envoyer('table/participation', () =>
+    supabase().from('participation').insert({
+      session_id: sessionId,
+      ministere_id: ministereId,
+      valeur,
+      deja_comptes: dejaComptes,
+    }),
+  )
   if (error) throw error
 }

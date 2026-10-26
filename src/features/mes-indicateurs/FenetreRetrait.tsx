@@ -176,8 +176,9 @@ export function FenetreRetrait({ libelle, demande, retirer, onFait, onAnnuler }:
               {isSubmitting ? TEXTES_RETRAIT.enCours : action}
             </button>
           </div>
-          {refus?.ou === 'connexion' ? <ErreurFormulaire objet="saisie" /> : null}
-          {refus?.ou === 'bouton' ? <ErreurFormulaire message={refus.message} /> : null}
+          {refus?.ou === 'bouton' ? (
+            <ErreurFormulaire message={refus.message} reference={refus.reference} />
+          ) : null}
         </form>
       </div>
     </div>,

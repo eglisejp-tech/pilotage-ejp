@@ -27,6 +27,9 @@ import {
   titreRefus,
 } from '@/features/indicateurs/validation/textes'
 
+/** Référence d'un échec technique (T76). */
+const REFERENCE = expect.stringMatching(/^[2-9A-HJKMNP-Z]{6}$/)
+
 const DEMANDE = '00000000-0000-4000-8000-0000000000a1'
 
 describe('motif d’un refus : 10 à 280 caractères après espaces retirés', () => {
@@ -274,14 +277,24 @@ describe('refus de la base', () => {
     })
   })
 
-  it('une erreur sans réponse (réseau, délai) est un problème de connexion', () => {
-    expect(lireRefusValidation(new TypeError('Failed to fetch'))).toEqual({ ou: 'connexion' })
-    expect(lireRefusValidation({ code: '', message: 'TypeError: Failed to fetch' })).toEqual({
-      ou: 'connexion',
-    })
-    expect(lireRefusValidation({ code: '', message: 'TimeoutError: x' })).toEqual({
-      ou: 'connexion',
-    })
+  it('une erreur sans réponse (réseau, délai) : la phrase de connexion et une référence (T76)', () => {
+    const attendu = {
+      ou: 'formulaire',
+      message: 'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+      reference: REFERENCE,
+    }
+    expect(lireRefusValidation(new TypeError('Failed to fetch'))).toEqual(attendu)
+    expect(lireRefusValidation({ code: '', message: 'TypeError: Failed to fetch' })).toEqual(
+      attendu,
+    )
+    expect(lireRefusValidation({ code: '', message: 'TimeoutError: x' })).toEqual(attendu)
+    // « Valider », sans formulaire : la phrase de la ligne.
+    expect(
+      lireRefusValidation(new TypeError('Failed to fetch'), {
+        formulaire: false,
+        connexion: 'Phrase de la ligne.',
+      }),
+    ).toEqual({ ou: 'formulaire', message: 'Phrase de la ligne.', reference: REFERENCE })
   })
 
   it('un refus inattendu prend le repli, sous les boutons, sans fermer la fenêtre (m270)', () => {
@@ -289,6 +302,7 @@ describe('refus de la base', () => {
       ou: 'formulaire',
       message:
         "L'enregistrement n'a pas abouti, votre saisie est gardée. Réessayez, et si le problème revient, prévenez EJP Tech.",
+      reference: REFERENCE,
     }
     expect(lireRefusValidation({ code: 'PGRST000', message: 'x' })).toEqual(repli)
     expect(lireRefusValidation({ code: 'P0001', message: 'Un refus inconnu.' })).toEqual(repli)
@@ -302,16 +316,22 @@ describe('refus de la base', () => {
     ).toEqual({
       ou: 'formulaire',
       message: "L'action n'a pas abouti. Réessayez, et si le problème revient, prévenez EJP Tech.",
+      reference: REFERENCE,
     })
   })
 
   it('connexion expirée et compte désactivé : leurs phrases, sans fermer la fenêtre (m271, m272)', () => {
     expect(
       lireRefusValidation({ code: '42501', message: 'Double authentification requise.' }),
-    ).toEqual({ ou: 'formulaire', message: 'Votre connexion a expiré. Reconnectez-vous.' })
+    ).toEqual({
+      ou: 'formulaire',
+      message: 'Votre connexion a expiré. Reconnectez-vous.',
+      reference: null,
+    })
     expect(lireRefusValidation({ code: '42501', message: 'Compte inactif ou inconnu.' })).toEqual({
       ou: 'formulaire',
       message: 'Ce compte est désactivé. Contactez EJP Tech.',
+      reference: null,
     })
   })
 })

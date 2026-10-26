@@ -80,13 +80,13 @@ export function FormulaireAjoutEvenement({
       setReussite(TEXTES_EVENEMENT.reussiteAjout)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
-      // Un ajout : après 10 s sans réponse, l'événement est peut-être enregistré (m259).
+      // Un ajout dont l'issue est inconnue est peut-être enregistré (m259, T76).
       const lu = lireRefus(erreur, 'ajout')
       if (lu.ou === 'date' || lu.ou === 'heure_prevue') {
         setError(lu.ou, { message: lu.message }, { shouldFocus: true })
       } else if (lu.ou === 'heure_debut') {
         // Jamais d'heure de début à l'ajout : un tel refus se dit sous le bouton.
-        setRefus({ ou: 'bouton', message: lu.message })
+        setRefus({ ou: 'bouton', message: lu.message, reference: null })
       } else setRefus(lu)
     }
   })

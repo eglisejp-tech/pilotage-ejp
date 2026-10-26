@@ -3,6 +3,7 @@
 // cadratin. Aucun composant n'écrit un de ces textes en dur. Les textes marqués « Proposé » ne sont
 // pas dans le texte de conception : ils attendent la validation de la personne responsable.
 
+import { erreurDeConnexion } from '@/features/saisie/textes'
 import { accorder, listeNoms } from '@/lib/metier/texte'
 
 export const TEXTES_PANNEAUX = {
@@ -31,8 +32,7 @@ export const TEXTES_PANNEAUX = {
   retraitEnCours: 'Retrait en cours',
   reessayer: 'Réessayer',
   /** La phrase commune des formulaires (T66, m257). */
-  connexionFormulaire:
-    'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+  connexionFormulaire: erreurDeConnexion('saisie'),
   connexionFenetre: 'La connexion a échoué. Réessayez.',
   /** Proposé : les limites de la fiche n'ont pas pu être lues. */
   limitesIllisibles:

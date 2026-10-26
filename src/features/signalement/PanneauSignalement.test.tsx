@@ -147,12 +147,12 @@ describe('« Signaler une difficulté »', () => {
     expect(champ()).toHaveValue('Appelez le 06 12 34 56 78')
   })
 
-  it('connexion perdue : l’erreur de formulaire sous le bouton, texte gardé', async () => {
+  it('connexion perdue : « Vérifiez la liste » sous le bouton (T76), texte gardé', async () => {
     afficher({ envoyer: vi.fn<Envoi>(() => Promise.reject(new TypeError('Failed to fetch'))) })
     await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
     await envoyerLeFormulaire()
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'La connexion a échoué. Votre saisie est encore dans le formulaire : réessayez.',
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
     )
     expect(champ()).toHaveValue('Je ne peux pas choisir la date.')
   })
