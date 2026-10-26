@@ -1,24 +1,51 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
-import type { LigneSignalement } from '@/data/signalements'
+import type { EtapeDuSuivi, LigneSignalement } from '@/data/signalements'
 import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { FenetreMasquage } from '@/features/moderation/FenetreMasquage'
-import type { ChampMasquable } from '@/features/moderation/FenetreMasquage'
 import type { ChoixMasquage, Masquage } from '@/features/moderation/schemas'
-import { libelleChamp, TEXTES_MODERATION } from '@/features/moderation/textes'
-import { FormulaireCloture } from '@/features/signalement/FormulaireCloture'
-import type { ProprietesFormulaireCloture } from '@/features/signalement/FormulaireCloture'
+import { libelleChamp } from '@/features/moderation/textes'
+import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
+import { FormulaireReponse } from '@/features/signalement/FormulaireReponse'
+import { lireRefusGeste } from '@/features/signalement/refusSuivi'
+import type { Cloture, Reponse } from '@/features/signalement/schemas'
+import { etapesDuSuivi, gestesEjpTech, ligneEtatEjpTech } from '@/features/signalement/suivi'
+import type { Citation } from '@/features/signalement/suivi'
+import { SuiviDate } from '@/features/signalement/SuiviDate'
 import { TexteSignale } from '@/features/signalement/TexteSignale'
-import { TEXTES_BLOC_SIGNALEMENTS } from '@/features/signalement/textes'
+import {
+  LIBELLES_STATUT,
+  ligneSignalement,
+  TEXTES_BLOC_SIGNALEMENTS,
+  TEXTES_REPONSE,
+} from '@/features/signalement/textes'
+
+/** Les gestes d'EJP Tech sur un signalement (T77). */
+export interface GestesEjpTech {
+  prendre: (signalementId: string) => Promise<void>
+  repondre: (reponse: Reponse) => Promise<void>
+  clore: (cloture: Cloture) => Promise<void>
+}
+
+/** Ce que le bloc donne à une ligne : les gestes et leurs suites. */
+export interface SuitesLigne {
+  gestes: GestesEjpTech
+  /** Geste réussi : le bloc annonce le message et met le focus sur l'en-tête de la ligne. */
+  surReussite: (signalementId: string, message: string) => void
+  /** Le signalement a changé entre-temps : le bloc dit le message et relit la liste. */
+  surChange: (signalementId: string, message: string) => void
+  /** Un panneau s'ouvre : le bloc efface son ancien message. */
+  surOuverture: () => void
+}
 
 interface Props {
   signalement: LigneSignalement
-  /** Pour un signalement ouvert : la clôture et ses suites (bloc « Signalements »). */
-  cloture?: Pick<ProprietesFormulaireCloture, 'cloturer' | 'surClos' | 'surDejaClos'> & {
-    /** Le panneau de clôture s'ouvre : le bloc efface son ancien message de refus. */
-    surOuverture?: () => void
-  }
-  /** « Masquer le texte » (lot L6) : sans lui, le bouton n'existe pas. */
+  /** Ses lignes de suivi, dans l'ordre. */
+  lignes: readonly EtapeDuSuivi[]
+  suites?: SuitesLigne
+  /** Un refus venu de la base pour ce signalement, sous ses boutons. */
+  refus: string | null
+  /** « Masquer » (lot L6) : sans lui, le bouton n'existe pas. */
   masquage?: {
     masquer: (masquage: Masquage) => Promise<void>
     /** Texte masqué : le bloc annonce « Texte masqué. » et rend le focus à son titre. */
@@ -26,164 +53,270 @@ interface Props {
   }
 }
 
-/**
- * Les champs libres d'un signalement que « Masquer le texte » peut encore remplacer : son texte
- * (cible `signalement`) et, s'il est clos avec un commentaire, ce commentaire (cible
- * `signalement_suivi`). Un champ déjà masqué n'est plus proposé.
- */
-function champsMasquables(signalement: LigneSignalement): ChampMasquable[] {
-  const champs: ChampMasquable[] = [
-    { code: 'texte', libelle: libelleChamp('signalement', 'texte'), texte: signalement.texte },
-  ]
-  if (signalement.suivi_id !== null && signalement.commentaire !== null) {
-    champs.push({
-      code: 'commentaire',
-      libelle: libelleChamp('signalement_suivi', 'commentaire'),
-      texte: signalement.commentaire,
-    })
-  }
-  return champs.filter((champ) => champ.texte.trim() !== '' && champ.texte !== TEXTE_MASQUE)
+/** L'identifiant de l'en-tête d'une ligne, cible du focus après un geste. */
+export function idTitreLigne(signalementId: string): string {
+  return `ligne-${signalementId}`
 }
 
+/** Un texte qu'on peut encore masquer : ni vide, ni déjà masqué. */
+const masquable = (texte: string) => texte.trim() !== '' && texte !== TEXTE_MASQUE
+
+type Panneau = 'reponse' | 'cloture' | null
+/** Ce que « Masquer » vise : le texte du signalement, ou une réponse du suivi. */
+type CibleMasquage = { genre: 'texte' } | { genre: 'reponse'; citation: Citation }
+
 /**
- * Une ligne du bloc « Signalements » (maquette 15, rythme de « À relire ») : le ministère, puis
- * l'écran et la date d'envoi ; le texte entre guillemets ; à droite, « Clore le signalement »
- * pour un ouvert, ou « Clos le 8 oct. » et le commentaire d'EJP Tech pour un clos, et « Masquer
- * le texte » (ouvert ou clos, tant qu'un champ n'est pas masqué). Le bouton de clôture déplie
- * sous la ligne le petit panneau de clôture et laisse sa place au bouton du panneau, qui porte le
- * même libellé (T66, point 9) : un seul « Clore le signalement » à l'écran pour la ligne, et un
- * second clic ne replie jamais le panneau avec la réponse saisie. « Annuler » le replie (après
- * « Fermer sans enregistrer ? » si une réponse est écrite) et rend le focus au bouton de la ligne.
- * « Masquer le texte » ouvre la fenêtre de l'écran Modération (`masquer_texte`).
+ * Une ligne du bloc « Signalements » d'EJP Tech (maquette 15, rythme de « À relire » ; T77) : à
+ * gauche le ministère (en-tête focusable), l'écran et la date d'envoi, l'étiquette du statut ; au
+ * milieu le texte cité (« Masquer » discret dessous), la ligne d'état (avec l'âge lu dans la base)
+ * et le suivi daté (« Masquer » sous chaque réponse) ; à droite, au plus deux boutons empilés
+ * (« Prendre en charge », « Répondre au ministère ») et « Clore le signalement » discret dessous,
+ * seul et ordinaire quand le ministère n'a plus de compte actif. « Répondre au ministère » et
+ * « Clore le signalement » ouvrent un petit panneau sous la ligne ; le bouton de clôture laisse
+ * sa place à celui du panneau, au même libellé (T66, point 9). « Annuler » rend le focus au bouton.
  */
-export function LigneSignalementBloc({ signalement, cloture, masquage }: Props) {
-  const idTitre = useId()
+export function LigneSignalementBloc({ signalement, lignes, suites, refus, masquage }: Props) {
   const idPanneau = useId()
-  const [ouvert, setOuvert] = useState(false)
-  const [fenetre, setFenetre] = useState(false)
-  const bouton = useRef<HTMLButtonElement>(null)
-  // Le bouton de la ligne revient au repli du panneau : il reprend le focus une fois affiché.
-  const rendreFocus = useRef(false)
+  const [panneau, setPanneau] = useState<Panneau>(null)
+  const [enCours, setEnCours] = useState(false)
+  const [echec, setEchec] = useState<string | null>(null)
+  const [aMasquer, setAMasquer] = useState<CibleMasquage | null>(null)
+  const boutonRepondre = useRef<HTMLButtonElement>(null)
+  const boutonClore = useRef<HTMLButtonElement>(null)
+  // Le panneau se referme par « Annuler » : son bouton reprend le focus une fois affiché.
+  const rendreFocus = useRef<Panneau>(null)
+  const verrou = useRef(false)
 
   useEffect(() => {
-    if (ouvert || !rendreFocus.current) return
-    rendreFocus.current = false
+    if (panneau !== null || rendreFocus.current === null) return
+    const bouton = rendreFocus.current === 'reponse' ? boutonRepondre : boutonClore
+    rendreFocus.current = null
     bouton.current?.focus()
-  }, [ouvert])
+  }, [panneau])
 
-  const replier = () => {
-    rendreFocus.current = true
-    setOuvert(false)
+  const gestes = gestesEjpTech(signalement)
+  const ouvrir = (choix: Panneau) => {
+    setEchec(null)
+    suites?.surOuverture()
+    setPanneau(choix)
+  }
+  const replier = (depuis: Panneau) => {
+    rendreFocus.current = depuis
+    setPanneau(null)
   }
 
-  const masquables = masquage ? champsMasquables(signalement) : []
-  // Le commentaire de clôture est un autre objet (signalement_suivi) que le texte (signalement).
+  const prendre = async () => {
+    if (!suites || verrou.current) return
+    verrou.current = true
+    setEnCours(true)
+    setEchec(null)
+    try {
+      await suites.gestes.prendre(signalement.id)
+      suites.surReussite(signalement.id, TEXTES_BLOC_SIGNALEMENTS.reussitePrise)
+    } catch (erreur) {
+      const lu = lireRefusGeste(erreur)
+      if (lu.ou === 'connexion') setEchec(TEXTES_REPONSE.echecEnvoi)
+      else if (lu.ou === 'bouton' && lu.relire) suites.surChange(signalement.id, lu.message)
+      else setEchec(lu.message)
+    } finally {
+      verrou.current = false
+      setEnCours(false)
+    }
+  }
+
+  // « Masquer » : le texte du signalement (cible signalement) ou une réponse (signalement_suivi).
   const masquer = (choix: ChoixMasquage): Promise<void> => {
-    if (!masquage) return Promise.resolve()
-    if (choix.champ === 'commentaire' && signalement.suivi_id !== null) {
+    if (!masquage || !aMasquer) return Promise.resolve()
+    if (aMasquer.genre === 'texte') {
       return masquage.masquer({
-        cible: 'signalement_suivi',
-        cibleId: signalement.suivi_id,
-        champ: 'commentaire',
+        cible: 'signalement',
+        cibleId: signalement.id,
+        champ: 'texte',
         motif: choix.motif,
       })
     }
     return masquage.masquer({
-      cible: 'signalement',
-      cibleId: signalement.id,
-      champ: 'texte',
+      cible: 'signalement_suivi',
+      cibleId: aMasquer.citation.suiviId,
+      champ: 'commentaire',
       motif: choix.motif,
     })
   }
-  const boutonMasquer =
-    masquage && masquables.length > 0 ? (
-      <Bouton
-        aria-describedby={idTitre}
-        aria-haspopup="dialog"
-        onClick={() => setFenetre(true)}
-        className="whitespace-nowrap"
-      >
-        {TEXTES_MODERATION.boutonMasquer}
-      </Bouton>
-    ) : null
+  const boutonMasquer = (cible: CibleMasquage) => (
+    <Bouton
+      variante="lien"
+      taille="lien"
+      aria-describedby={idTitreLigne(signalement.id)}
+      aria-haspopup="dialog"
+      onClick={() => setAMasquer(cible)}
+    >
+      {TEXTES_BLOC_SIGNALEMENTS.boutonMasquer}
+    </Bouton>
+  )
+  let champMasque = null
+  if (aMasquer?.genre === 'texte') {
+    champMasque = {
+      code: 'texte',
+      libelle: libelleChamp('signalement', 'texte'),
+      texte: signalement.texte,
+    }
+  } else if (aMasquer?.genre === 'reponse') {
+    champMasque = {
+      code: 'commentaire',
+      libelle: libelleChamp('signalement_suivi', 'commentaire'),
+      texte: aMasquer.citation.texte,
+    }
+  }
 
-  const peutClore = (signalement.ouvert || signalement.clos_le === null) && cloture
-  const boutonClore = peutClore && !ouvert
+  const message = echec ?? refus
+  const gestesVisibles = suites && (gestes.prendre || gestes.repondre || gestes.clore)
 
   return (
-    <article aria-labelledby={idTitre} className="flex flex-col gap-3 py-[18px]">
-      <div className="grid gap-x-8 gap-y-2 ordinateur:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,16rem)]">
+    <article
+      aria-labelledby={idTitreLigne(signalement.id)}
+      className="flex flex-col gap-3 py-[18px]"
+    >
+      <div className="grid gap-x-8 gap-y-3 ordinateur:grid-cols-[minmax(0,13rem)_minmax(0,1fr)_minmax(0,15rem)]">
         <div className="flex min-w-0 flex-col gap-0.5">
-          <p id={idTitre} className="text-[15px] font-semibold wrap-anywhere">
+          <h4
+            id={idTitreLigne(signalement.id)}
+            tabIndex={-1}
+            className="text-[15px] font-semibold wrap-anywhere outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-encre"
+          >
             {signalement.ministere_nom}
-          </p>
+          </h4>
           <p className="text-note text-encre-3">
-            {TEXTES_BLOC_SIGNALEMENTS.ligne(signalement.ecran, signalement.saisi_le)}
+            {ligneSignalement(signalement.ecran, signalement.saisi_le)}
+          </p>
+          <p className="text-note font-semibold text-encre-2">
+            {LIBELLES_STATUT[signalement.statut]}
           </p>
         </div>
-        <p className="min-w-0 font-lecture text-citation wrap-anywhere">
-          «&nbsp;
-          <TexteSignale texte={signalement.texte} />
-          &nbsp;»
-        </p>
-        <div className="flex min-w-0 flex-col items-start gap-2 ordinateur:items-end ordinateur:text-right">
-          {signalement.ouvert || signalement.clos_le === null ? null : (
-            <>
-              <p className="text-note text-encre-3">
-                {TEXTES_BLOC_SIGNALEMENTS.clos(signalement.clos_le)}
-              </p>
-              {signalement.commentaire ? (
-                <p className="text-sm leading-normal wrap-anywhere text-encre-2">
-                  {TEXTES_BLOC_SIGNALEMENTS.commentaireClos}{' '}
-                  <TexteSignale texte={signalement.commentaire} />
-                </p>
-              ) : null}
-            </>
-          )}
-          {boutonClore || boutonMasquer ? (
-            // À partir de 1024 px, les boutons s'empilent dans une colonne à la largeur du plus
-            // large : même largeur, mêmes bords, sans escalier (proposition 5, T69).
-            <div className="flex flex-wrap gap-3 max-tablette:w-full max-tablette:flex-col ordinateur:w-max ordinateur:max-w-full ordinateur:flex-col">
-              {boutonClore ? (
+        <div className="flex min-w-0 flex-col gap-2">
+          <div>
+            <p className="min-w-0 font-lecture text-citation wrap-anywhere">
+              «&nbsp;
+              <TexteSignale texte={signalement.texte} />
+              &nbsp;»
+            </p>
+            {masquage && masquable(signalement.texte) ? boutonMasquer({ genre: 'texte' }) : null}
+          </div>
+          <p className="text-interface leading-normal">{ligneEtatEjpTech(signalement)}</p>
+          <SuiviDate
+            etapes={etapesDuSuivi(signalement, lignes, 'ejp_tech')}
+            sousCitation={
+              masquage
+                ? (citation) =>
+                    masquable(citation.texte) ? boutonMasquer({ genre: 'reponse', citation }) : null
+                : undefined
+            }
+          />
+        </div>
+        {gestesVisibles ? (
+          // Au plus deux boutons empilés, à la largeur du plus large, puis « Clore » discret.
+          <div className="flex min-w-0 flex-col gap-2 ordinateur:items-end">
+            <div className="flex flex-col gap-3 max-tablette:w-full tablette:w-max tablette:max-w-full">
+              {gestes.prendre ? (
                 <Bouton
-                  ref={bouton}
-                  aria-describedby={idTitre}
-                  onClick={() => {
-                    cloture.surOuverture?.()
-                    setOuvert(true)
-                  }}
+                  aria-describedby={idTitreLigne(signalement.id)}
+                  enCours={enCours}
+                  libelleEnCours={TEXTES_BLOC_SIGNALEMENTS.boutonPrendreEnCours}
+                  onClick={() => void prendre()}
+                  className="whitespace-nowrap"
+                >
+                  {TEXTES_BLOC_SIGNALEMENTS.boutonPrendre}
+                </Bouton>
+              ) : null}
+              {gestes.repondre ? (
+                <Bouton
+                  ref={boutonRepondre}
+                  aria-describedby={idTitreLigne(signalement.id)}
+                  aria-expanded={panneau === 'reponse'}
+                  aria-controls={idPanneau}
+                  onClick={() => ouvrir('reponse')}
+                  className="whitespace-nowrap"
+                >
+                  {TEXTES_BLOC_SIGNALEMENTS.boutonRepondre}
+                </Bouton>
+              ) : null}
+              {gestes.cloreSeul && panneau !== 'cloture' ? (
+                <Bouton
+                  ref={boutonClore}
+                  aria-describedby={idTitreLigne(signalement.id)}
+                  onClick={() => ouvrir('cloture')}
                   className="whitespace-nowrap"
                 >
                   {TEXTES_BLOC_SIGNALEMENTS.boutonClore}
                 </Bouton>
               ) : null}
-              {boutonMasquer}
             </div>
-          ) : null}
-        </div>
+            {gestes.clore && !gestes.cloreSeul && panneau !== 'cloture' ? (
+              <Bouton
+                ref={boutonClore}
+                variante="lien"
+                taille="lien"
+                aria-describedby={idTitreLigne(signalement.id)}
+                onClick={() => ouvrir('cloture')}
+                className="self-start ordinateur:self-end"
+              >
+                {TEXTES_BLOC_SIGNALEMENTS.boutonClore}
+              </Bouton>
+            ) : null}
+          </div>
+        ) : null}
       </div>
-      {ouvert && cloture ? (
-        <div id={idPanneau} className="ordinateur:ml-auto ordinateur:w-[32rem]">
-          <FormulaireCloture
-            id={`${idPanneau}-commentaire`}
-            signalementId={signalement.id}
-            cloturer={cloture.cloturer}
-            surClos={cloture.surClos}
-            surDejaClos={cloture.surDejaClos}
-            onAnnuler={replier}
+      {message ? <ErreurFormulaire message={message} /> : null}
+      <div id={idPanneau} className="ordinateur:ml-auto ordinateur:w-[32rem]">
+        {panneau === 'reponse' && suites ? (
+          <FormulaireReponse
+            id={`${idPanneau}-reponse`}
+            libelle={TEXTES_BLOC_SIGNALEMENTS.libelleReponse(signalement.ministere_nom)}
+            aide={TEXTES_BLOC_SIGNALEMENTS.aideReponse}
+            note={TEXTES_BLOC_SIGNALEMENTS.noteReponse(signalement.ministere_nom)}
+            envoyer={(texte) => suites.gestes.repondre({ signalementId: signalement.id, texte })}
+            surEnvoye={() => {
+              setPanneau(null)
+              suites.surReussite(signalement.id, TEXTES_BLOC_SIGNALEMENTS.reussiteReponse)
+            }}
+            surChange={(texte) => {
+              setPanneau(null)
+              suites.surChange(signalement.id, texte)
+            }}
+            onAnnuler={() => replier('reponse')}
           />
-        </div>
-      ) : null}
-      {fenetre && masquage ? (
+        ) : null}
+        {panneau === 'cloture' && suites ? (
+          <FormulaireReponse
+            id={`${idPanneau}-cloture`}
+            libelle={TEXTES_BLOC_SIGNALEMENTS.libelleCommentaire}
+            note={TEXTES_BLOC_SIGNALEMENTS.noteCloture}
+            boutonEnvoyer={TEXTES_BLOC_SIGNALEMENTS.boutonConfirmer}
+            boutonEnCours={TEXTES_BLOC_SIGNALEMENTS.boutonClotureEnCours}
+            envoyer={(texte) =>
+              suites.gestes.clore({ signalementId: signalement.id, commentaire: texte })
+            }
+            surEnvoye={() => {
+              setPanneau(null)
+              suites.surReussite(signalement.id, TEXTES_BLOC_SIGNALEMENTS.reussite)
+            }}
+            surChange={(texte) => {
+              setPanneau(null)
+              suites.surChange(signalement.id, texte)
+            }}
+            onAnnuler={() => replier('cloture')}
+          />
+        ) : null}
+      </div>
+      {aMasquer && champMasque && masquage ? (
         <FenetreMasquage
           contexte={`Signalement, ${signalement.ministere_nom}`}
-          champs={masquables}
+          champs={[champMasque]}
           masquer={masquer}
           onFait={() => {
-            setFenetre(false)
+            setAMasquer(null)
             masquage.surMasque()
           }}
-          onAnnuler={() => setFenetre(false)}
+          onAnnuler={() => setAMasquer(null)}
         />
       ) : null}
     </article>

@@ -195,7 +195,8 @@ test.describe('EJP Tech relit et masque', () => {
     const bloc = page.getByRole('region', { name: 'Signalements', exact: true })
     const ligne = bloc.getByRole('article').filter({ hasText: SIGNALEMENT })
     await expect(ligne).toContainText('Communication')
-    await ligne.getByRole('button', { name: 'Masquer le texte' }).click()
+    // « Masquer » sous le texte cité (T77) : la fenêtre ne porte que ce texte.
+    await ligne.getByRole('button', { name: 'Masquer', exact: true }).first().click()
     await fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }).check()
     await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
@@ -237,8 +238,9 @@ test.describe('Communication relit ses textes', () => {
     await expect(surFiche).not.toContainText(TITRE_MASQUE)
     await expect(surFiche.locator('.text-encre-3', { hasText: TEXTE_MASQUE })).toBeVisible()
 
-    await page.goto('/signaler')
-    const liste = page.getByRole('region', { name: 'Vos derniers signalements' })
+    // « Mes signalements » (T77) remplace « Vos derniers signalements » de /signaler.
+    await page.goto('/signalements')
+    const liste = page.getByRole('main')
     await expect(liste.getByText(TEXTE_MASQUE).first()).toBeVisible()
     await expect(liste).not.toContainText(SIGNALEMENT)
     const [lu] = await lire<{ ministere_id: string; texte: string }>(

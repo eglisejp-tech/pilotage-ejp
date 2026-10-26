@@ -1,6 +1,8 @@
 import { BlocVosPoints } from '@/features/accueil-ministere/BlocVosPoints'
 import { BlocVosSaisies } from '@/features/accueil-ministere/BlocVosSaisies'
 import { OuvertureMinistere } from '@/features/accueil-ministere/OuvertureMinistere'
+import { BandeauSuiviSignalements } from '@/features/signalement/BandeauSuiviSignalements'
+import { LigneSuiviSignalements } from '@/features/signalement/LigneSuiviSignalements'
 import { ChiffresDeLaSemaine } from './ChiffresDeLaSemaine'
 import { DansLEglise } from './DansLEglise'
 import type { DonneesMaSemaine } from './types'
@@ -17,8 +19,9 @@ const colonne = 'flex min-w-0 flex-col gap-sections'
 
 /**
  * « Ma semaine » d'un ministère (maquette 07, décision T57). L'ouverture de 07 sur toute la
- * largeur, puis « Vos saisies » et « Vos chiffres de la semaine » à gauche, « Vos points » et
- * « Dans l'église » à droite. Sur téléphone et tablette, une seule colonne dans cet ordre : saisies,
+ * largeur, le bandeau du suivi des signalements s'il y a lieu (T77 : EJP Tech a répondu), puis
+ * « Vos saisies » et « Vos chiffres de la semaine » à gauche, « Vos points » (et la ligne discrète
+ * des signalements suivis) et « Dans l'église » à droite. Sur téléphone et tablette, une seule colonne dans cet ordre : saisies,
  * chiffres, points, église. Aucun bloc du berger : ni session détaillée par ministère, ni tableau
  * des ministères, ni carte des FIJ (sauf pour le ministère FIJ, dans ses chiffres).
  */
@@ -27,6 +30,12 @@ export function VueMaSemaine({ donnees }: Props) {
   return (
     <div className="flex flex-col gap-sections">
       <OuvertureMinistere semaine={donnees.semaine} ouverture={accueil.ouverture} />
+      {donnees.signalements?.genre === 'bandeau' ? (
+        <BandeauSuiviSignalements
+          nombre={donnees.signalements.nombre}
+          plusAncien={donnees.signalements.plusAncien}
+        />
+      ) : null}
       <div className={colonnes}>
         <div className={colonne}>
           <BlocVosSaisies lignes={accueil.vosSaisies} />
@@ -37,6 +46,9 @@ export function VueMaSemaine({ donnees }: Props) {
             bloc={accueil.vosPoints}
             compte={{ type: 'ministere', ministereId: accueil.ministereId }}
           />
+          {donnees.signalements?.genre === 'ligne' ? (
+            <LigneSuiviSignalements nombre={donnees.signalements.nombre} />
+          ) : null}
           <DansLEglise lignes={donnees.eglise} />
         </div>
       </div>

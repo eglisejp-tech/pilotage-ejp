@@ -1,54 +1,76 @@
 import { useState } from 'react'
 import {
   attendre,
-  clore,
+  cloreSimule,
   ECHEC_CONNEXION,
+  masquerSimule,
+  prendreSimule,
   refusDeLaBase,
   refuseParLaBase,
+  repondreAuMinistereSimule,
   signalementsDuBloc,
 } from '@/features/signalement/apercu/exemples'
 import type { VueApercu } from '@/features/signalement/apercu/exemples'
 import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSignalements'
 import type { ContenuBloc } from '@/features/signalement/ContenuBlocSignalements'
+import type { GestesEjpTech } from '@/features/signalement/LigneSignalementBloc'
 import { EcranModeration } from '@/features/moderation/EcranModeration'
-import type { Cloture } from '@/features/signalement/schemas'
 import { MESSAGES_BASE_SIGNALEMENT } from '@/features/signalement/textes'
 
 interface Props {
   vue: VueApercu
-  /** `envoi=echec` : la clôture échoue comme une connexion perdue. */
-  echec: boolean
+  /** `envoi=echec` : connexion perdue ; `envoi=deja` : déjà pris en charge par une autre personne. */
+  envoi: string | null
 }
 
 const reessayer = () => undefined
 
 /**
- * L'écran `/moderation` d'EJP Tech dans l'aperçu : le vrai bloc « Signalements », avec des
- * signalements d'exemple. Une clôture simulée fait passer la ligne dans les clos, comme la base ;
- * un commentaire avec « @ » est refusé avec le message de la base.
+ * L'écran `/moderation` d'EJP Tech dans l'aperçu : le vrai bloc « Signalements » (T77), avec des
+ * signalements d'exemple. Prendre en charge, répondre, clore et masquer font passer la ligne
+ * dans son nouveau groupe, comme la base ; une réponse avec « @ » ou un numéro est refusée avec le
+ * message de la base.
  */
-export function ApercuBlocSignalements({ vue, echec }: Props) {
-  const [signalements, setSignalements] = useState(() => signalementsDuBloc(vue))
+export function ApercuBlocSignalements({ vue, envoi }: Props) {
+  const [etat, setEtat] = useState(() => signalementsDuBloc(vue))
 
-  const cloturer = async ({ signalementId, commentaire }: Cloture) => {
+  const essayer = async (texte?: string) => {
     await attendre()
-    if (echec) throw ECHEC_CONNEXION
-    if (commentaire !== null && refuseParLaBase(commentaire)) {
+    if (envoi === 'echec') throw ECHEC_CONNEXION
+    if (envoi === 'deja') throw refusDeLaBase(MESSAGES_BASE_SIGNALEMENT.dejaPrisEnCharge)
+    if (texte !== undefined && refuseParLaBase(texte)) {
       throw refusDeLaBase(MESSAGES_BASE_SIGNALEMENT.donneesPersonnelles)
     }
-    const ligne = signalements.find((signalement) => signalement.id === signalementId)
-    if (!ligne?.ouvert) throw refusDeLaBase(MESSAGES_BASE_SIGNALEMENT.dejaClos)
-    setSignalements((avant) =>
-      avant.map((signalement) =>
-        signalement.id === signalementId ? clore(signalement, commentaire) : signalement,
-      ),
-    )
+  }
+  const gestes: GestesEjpTech = {
+    prendre: async (id) => {
+      await essayer()
+      setEtat((avant) => prendreSimule(avant, id))
+    },
+    repondre: async ({ signalementId, texte }) => {
+      await essayer(texte)
+      setEtat((avant) => repondreAuMinistereSimule(avant, signalementId, texte))
+    },
+    clore: async ({ signalementId, commentaire }) => {
+      await essayer(commentaire)
+      setEtat((avant) => cloreSimule(avant, signalementId, commentaire))
+    },
   }
 
   let contenu: ContenuBloc
   if (vue === 'bloc-chargement') contenu = { etat: 'chargement' }
   else if (vue === 'bloc-probleme') contenu = { etat: 'probleme', reessayer }
-  else contenu = { etat: 'liste', signalements, cloturer, relire: () => undefined }
+  else
+    contenu = {
+      etat: 'liste',
+      ...etat,
+      gestes,
+      relire: () => undefined,
+      masquer: async (masquage) => {
+        await attendre()
+        setEtat((avant) => masquerSimule(avant, masquage))
+      },
+    }
 
   return (
     <EcranModeration

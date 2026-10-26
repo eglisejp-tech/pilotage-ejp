@@ -17,11 +17,6 @@ export function PageSignalement() {
   const ecran = lireEcran(parametres.get('ecran'))
   // Un autre écran dans l'adresse : un formulaire neuf, avec sa ligne « Écran concerné ».
   return (
-    <SaisieSignalement
-      key={ecran}
-      ministereId={compte.ministereId}
-      libelleCompte={compte.libelle}
-      ecran={ecran}
-    />
+    <SaisieSignalement key={ecran} libelleCompte={compte.libelle} ecran={ecran} />
   )
 }

@@ -39,7 +39,7 @@ select format($$
   'update public.moderation set motif = motif where cible_id in (select cible_id from essai_moderation)'),
   $$ select 'EJP Tech', tech from ctx union all select 'ministère', ministere from ctx $$;
 
-select plan(79 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
+select plan(83 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
 
 -- Listes attendues
 create temp table attendu_action (code text primary key);
@@ -54,7 +54,9 @@ insert into attendu_action values
   ('difficulte_signalee'), ('signalement_clos'),
   ('point_mention_ajoutee'), ('point_mention_retiree'),
   ('modele_prevus_choisi'),
-  ('adresse_corrigee'), ('ministere_supprime');
+  ('adresse_corrigee'), ('ministere_supprime'),
+  ('signalement_pris_en_charge'), ('signalement_repondu'), ('signalement_regle'),
+  ('signalement_reponse_ministere');
 
 create temp table attendu_cible_journal (code text primary key);
 insert into attendu_cible_journal values
@@ -97,7 +99,7 @@ $$, 'les cinq contraintes du journal et de la modération portent le nom fixé p
 -- Listes exactes
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_action_check') $$,
               $$ select code from attendu_action $$,
-  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, les 2 codes des mentions modifiables (T54), le choix de la liste des prévus (T72), la correction d''une adresse et la suppression d''un ministère (T74), rien d''autre');
+  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, les 2 codes des mentions modifiables (T54), le choix de la liste des prévus (T72), la correction d''une adresse et la suppression d''un ministère (T74), les 4 codes du suivi des signalements (T77), rien d''autre');
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_cible_check') $$,
               $$ select code from attendu_cible_journal $$,
   'journal.cible : les 7 cibles des étapes 1 à 3, indicateur, signalement et les cibles de la modération (precision_sensible comprise, B8), rien d''autre');
@@ -110,11 +112,16 @@ select is_empty($$
   select pg_temp.valeurs_du_check('public.journal', 'journal_cible_check')
 $$, 'toute cible de la modération est une cible du journal (texte_relu et texte_masque)');
 
--- Une ligne de journal par code d'action, puis par cible (au nom de Système, sans détail).
-select lives_ok(format('insert into public.journal (ministere_id, action) values (%L, %L)',
-                       (select m from ctx), a.code),
+-- Une ligne de journal par code d'action, puis par cible (au nom de Système, sans détail). Les
+-- quatre codes du suivi des signalements (T77) portent toujours la cible signalement.
+select lives_ok(format('insert into public.journal (ministere_id, action, cible, cible_id) values (%L, %L, %L, %L)',
+                       (select m from ctx), a.code,
+                       case when a.suivi then 'signalement' end,
+                       case when a.suivi then gen_random_uuid() end),
                 'journal : le code d''action ' || a.code || ' est accepté')
-  from attendu_action a
+  from (select x.code, x.code in ('signalement_pris_en_charge', 'signalement_repondu', 'signalement_regle',
+                                  'signalement_reponse_ministere') as suivi
+          from attendu_action x) as a
  order by a.code;
 select lives_ok(format('insert into public.journal (ministere_id, action, cible, cible_id) values (%L, %L, %L, %L)',
                        (select m from ctx), 'texte_masque', c.code, gen_random_uuid()),
