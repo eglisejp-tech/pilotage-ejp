@@ -141,12 +141,15 @@ export const TEXTES_COMPTES = {
   boutonRefaireActivation: "Refaire l'activation",
   boutonSupprimerMinistere: 'Supprimer le ministère',
 
-  // Fenêtre « impossible » d'une suppression (T75, Proposé dans la conception validée)
-  impossible: (nom: string) => `${nom} ne peut pas être supprimé`,
-  dejaDesDonnees: "Il a déjà des données dans l'outil :",
-  jamaisSupprimes: 'Coordination et FIJ ne se suppriment jamais.',
+  // Fenêtre « impossible » d'une suppression (T75, Proposé dans la conception validée, revu
+  // après la revue produit : le ministère nommé comme tel, l'accord ne dépend plus du nom)
+  impossible: (nom: string) => `Le ministère ${nom} ne peut pas être supprimé`,
+  dejaDesDonnees: "Ce ministère a déjà des données dans l'outil :",
+  jamaisSupprimes:
+    'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
   desactiverAPlace:
     'Désactivez-le à la place : plus personne ne se connecte, son historique reste.',
+  dejaDesactive: 'Il est déjà désactivé : plus personne ne se connecte, son historique reste.',
   fermer: 'Fermer',
 } as const
 
@@ -224,6 +227,8 @@ export interface TexteConfirmation {
   enCours: string
   /** Bouton foncé : l'action perd quelque chose pour de bon (suppression, T74). */
   definitif?: boolean
+  /** Second paragraphe, annoncé avec le premier (suppression d'un ministère attendu, T75). */
+  suite?: string
 }
 
 /**
@@ -243,16 +248,21 @@ export function confirmationSupprimerMinistere(
   if (email !== null) avec.push(`son compte (${email})`)
   // « Tech », « Tech et son compte (...) », « Tech, ses 8 indicateurs et son compte (...) ».
   const sujet = avec.length === 2 ? `${nom}, ${avec.join(' et ')}` : [nom, ...avec].join(' et ')
-  const quitte =
-    sessions === 0
-      ? ''
-      : ` Il sort aussi de la liste des ministères attendus ${sessions === 1 ? "d'une session" : `de ${nombre(sessions)} sessions`}.`
-  return {
+  const disparait = `${sujet} ${avec.length === 0 ? 'disparaît' : 'disparaissent'} de l'outil.`
+  const trace = "Le journal garde la trace de la suppression. C'est définitif."
+  const confirmation = {
     titre: `Supprimer ${nom} ?`,
-    texte: `${sujet} ${avec.length === 0 ? 'disparaît' : 'disparaissent'} de l'outil.${quitte} Le journal garde la trace de la suppression. C'est définitif.`,
     bouton: TEXTES_COMPTES.boutonSupprimerMinistere,
     enCours: TEXTES_COMPTES.enCours.supprimer,
     definitif: true,
+  }
+  if (sessions === 0) return { ...confirmation, texte: `${disparait} ${trace}` }
+  // Attendu par des sessions : elles restent, il n'y est plus attendu (deux paragraphes).
+  const attendu = sessions === 1 ? 'dans une session' : `dans ${nombre(sessions)} sessions`
+  return {
+    ...confirmation,
+    texte: `${disparait} ${nom} ne sera plus attendu ${attendu}.`,
+    suite: trace,
   }
 }
 
@@ -283,12 +293,13 @@ export function texteRaison({ code, nombre: n }: RaisonSuppression): string {
       return compte("répartition d'un chiffre sensible", 'répartitions de chiffres sensibles')
     case 'precisions':
       return compte("précision d'un chiffre sensible", 'précisions de chiffres sensibles')
+    // Créés par lui, ou qui le mentionnent : deux raisons qui ne se lisent pas l'une pour l'autre.
     case 'points':
-      return compte("point d'attention", "points d'attention")
+      return compte("point d'attention créé", "points d'attention créés")
     case 'mentions_points':
       return `mentionné dans ${compte("point d'attention", "points d'attention")}`
     case 'evenements':
-      return compte('événement', 'événements')
+      return compte('événement créé', 'événements créés')
     case 'mentions_evenements':
       return `mentionné dans ${compte('événement', 'événements')}`
     case 'reunions':
@@ -316,30 +327,45 @@ export interface TexteRefusSuppression {
   texte: string
   /** Les raisons chiffrées, en liste ; vide pour Coordination et FIJ. */
   raisons: string[]
-  /** Ce qu'on peut faire à la place ; null s'il n'y a rien à désactiver. */
+  /** Ce qu'on peut faire à la place, ou ce qui est déjà fait ; null sans compte. */
   suite: string | null
   /** Le bouton « Désactiver » ; null s'il n'y a rien à désactiver. */
   desactiver: string | null
   fermer: string
 }
 
+/** Ce que la fenêtre « impossible » propose : désactiver, rien (déjà désactivé), ou rien du tout. */
+export type ApresRefus = 'desactiver' | 'deja_desactive' | 'sans_compte'
+
+/** Le compte activé se lit après les données saisies : la raison la moins parlante en dernier. */
+function rangAffiche(raison: RaisonSuppression): number {
+  return raison.code === 'compte_deja_active' ? 1 : 0
+}
+
 /**
- * « Communication ne peut pas être supprimé » (T75) : pourquoi, puis « Désactiver » à la place
- * quand un compte actif existe (déjà désactivé ou sans compte : « Fermer » seul). FIJ et
- * Coordination : une seule phrase, sans liste.
+ * « Le ministère Communication ne peut pas être supprimé » (T75) : pourquoi (ses données, puis
+ * son compte activé), puis « Désactiver » à la place quand un compte actif existe ; déjà
+ * désactivé, une phrase le dit ; sans compte, « Fermer » seul. FIJ et Coordination : une seule
+ * phrase, sans liste.
  */
 export function refusSuppression(
   nom: string,
   raisons: readonly RaisonSuppression[],
-  peutDesactiver: boolean,
+  apres: ApresRefus,
 ): TexteRefusSuppression {
   const reference = raisons.some((raison) => raison.code === 'ministere_de_reference')
+  const ordonnees = [...raisons].sort((a, b) => rangAffiche(a) - rangAffiche(b))
   return {
     titre: TEXTES_COMPTES.impossible(nom),
     texte: reference ? TEXTES_COMPTES.jamaisSupprimes : TEXTES_COMPTES.dejaDesDonnees,
-    raisons: reference ? [] : raisons.map(texteRaison),
-    suite: peutDesactiver ? TEXTES_COMPTES.desactiverAPlace : null,
-    desactiver: peutDesactiver ? TEXTES_COMPTES.desactiver : null,
+    raisons: reference ? [] : ordonnees.map(texteRaison),
+    suite:
+      apres === 'desactiver'
+        ? TEXTES_COMPTES.desactiverAPlace
+        : apres === 'deja_desactive'
+          ? TEXTES_COMPTES.dejaDesactive
+          : null,
+    desactiver: apres === 'desactiver' ? TEXTES_COMPTES.desactiver : null,
     fermer: TEXTES_COMPTES.fermer,
   }
 }

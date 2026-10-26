@@ -21,7 +21,7 @@
 -- échouent d'abord, puis le fichier s'arrête à la première lecture des raisons.
 begin;
 
-select plan(69);
+select plan(70);
 
 -- pgTAP au nom de service_role et d'authenticated (droits annulés avec la transaction).
 do $$
@@ -192,6 +192,13 @@ select is(tests.essai(p.compte, 'aal2', 'select * from public.raisons_suppressio
                ('l''administration de l''église', tests.compte('Administration de l''église'))) as p(profil, compte);
 select is(tests.essai(null, null, 'select * from public.raisons_suppression_ministere()'), '42501',
   'l''anonyme est refusé');
+-- Revue de sécurité : un compte EJP Tech désactivé dont le jeton aal2 vaut encore (jusqu'à une
+-- heure, BRIEF section 7) ; seul exige_aal2 l'arrête (mon_type() est vide).
+alter table ctx add column tech_des uuid;
+update ctx set tech_des = tests.creer_compte('essai-t75-tech-desactive@exemple.test', 'admin_plateforme');
+update public.compte set desactive_le = now() where user_id = (select tech_des from ctx);
+select is(tests.essai((select tech_des from ctx), 'aal2', 'select * from public.raisons_suppression_ministere()'),
+  '42501', 'un compte EJP Tech désactivé, jeton aal2 encore valable, est refusé');
 select ok(not has_function_privilege('anon', 'public.raisons_suppression_ministere(uuid)', 'execute')
           and not has_function_privilege('service_role', 'public.raisons_suppression_ministere(uuid)', 'execute')
           and not has_function_privilege('authenticated', 'private.raisons_suppression(uuid)', 'execute')

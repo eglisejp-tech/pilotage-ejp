@@ -333,7 +333,9 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     // dit pourquoi, la base calcule la raison ; « Désactiver » est proposé à la place.
     await expect(bouton(page, `Corriger l'adresse ${NOM}`)).toBeVisible()
     await bouton(page, `Supprimer ${NOM}`).click()
-    const refus = page.getByRole('alertdialog', { name: `${NOM} ne peut pas être supprimé` })
+    const refus = page.getByRole('alertdialog', {
+      name: `Le ministère ${NOM} ne peut pas être supprimé`,
+    })
     await expect(refus.getByRole('listitem')).toHaveText(['son compte a déjà été activé'])
     await expect(refus.getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
     await refus.getByRole('button', { name: 'Fermer' }).click()

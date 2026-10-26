@@ -69,12 +69,12 @@ describe('raisons d’un refus de suppression (T75)', () => {
     ['repartitions', 2, '2 répartitions de chiffres sensibles'],
     ['precisions', 1, "1 précision d'un chiffre sensible"],
     ['precisions', 2, '2 précisions de chiffres sensibles'],
-    ['points', 1, "1 point d'attention"],
-    ['points', 3, "3 points d'attention"],
+    ['points', 1, "1 point d'attention créé"],
+    ['points', 3, "3 points d'attention créés"],
     ['mentions_points', 1, "mentionné dans 1 point d'attention"],
     ['mentions_points', 2, "mentionné dans 2 points d'attention"],
-    ['evenements', 1, '1 événement'],
-    ['evenements', 2, '2 événements'],
+    ['evenements', 1, '1 événement créé'],
+    ['evenements', 2, '2 événements créés'],
     ['mentions_evenements', 1, 'mentionné dans 1 événement'],
     ['mentions_evenements', 3, 'mentionné dans 3 événements'],
     ['reunions', 1, '1 réunion'],
@@ -103,7 +103,7 @@ describe('raisons d’un refus de suppression (T75)', () => {
     }
   })
 
-  it('fenêtre « impossible » : le titre, les raisons chiffrées, puis « Désactiver » à la place', () => {
+  it('fenêtre « impossible » : le titre, les données puis le compte, puis « Désactiver » à la place', () => {
     expect(
       refusSuppression(
         'Communication',
@@ -112,50 +112,75 @@ describe('raisons d’un refus de suppression (T75)', () => {
           { code: 'chiffres', nombre: 12 },
           { code: 'points', nombre: 3 },
         ],
-        true,
+        'desactiver',
       ),
     ).toEqual({
-      titre: 'Communication ne peut pas être supprimé',
-      texte: "Il a déjà des données dans l'outil :",
-      raisons: ['son compte a déjà été activé', '12 chiffres saisis', "3 points d'attention"],
+      titre: 'Le ministère Communication ne peut pas être supprimé',
+      texte: "Ce ministère a déjà des données dans l'outil :",
+      // Le compte activé, la raison la moins parlante, en dernier (revue produit).
+      raisons: ['12 chiffres saisis', "3 points d'attention créés", 'son compte a déjà été activé'],
       suite: 'Désactivez-le à la place : plus personne ne se connecte, son historique reste.',
       desactiver: 'Désactiver',
       fermer: 'Fermer',
     })
   })
 
-  it('déjà désactivé, ou sans compte : « Fermer » seul', () => {
-    const refus = refusSuppression('Merch', [{ code: 'chiffres', nombre: 30 }], false)
-    expect(refus.suite).toBeNull()
-    expect(refus.desactiver).toBeNull()
-    expect(refus.fermer).toBe('Fermer')
+  it('déjà désactivé : une phrase le dit, « Fermer » seul ; sans compte : « Fermer » seul', () => {
+    const desactive = refusSuppression(
+      'Merch',
+      [{ code: 'chiffres', nombre: 30 }],
+      'deja_desactive',
+    )
+    expect(desactive.suite).toBe(
+      'Il est déjà désactivé : plus personne ne se connecte, son historique reste.',
+    )
+    expect(desactive.desactiver).toBeNull()
+    const sansCompte = refusSuppression('Accueil', [{ code: 'chiffres', nombre: 2 }], 'sans_compte')
+    expect(sansCompte.suite).toBeNull()
+    expect(sansCompte.desactiver).toBeNull()
+    expect(sansCompte.fermer).toBe('Fermer')
   })
 
-  it('Coordination et FIJ : une seule phrase, sans liste', () => {
+  it('Coordination et FIJ : une seule phrase, qui dit pourquoi, sans liste', () => {
     expect(
-      refusSuppression('Coordination', [{ code: 'ministere_de_reference', nombre: 1 }], false),
+      refusSuppression(
+        'Coordination',
+        [{ code: 'ministere_de_reference', nombre: 1 }],
+        'sans_compte',
+      ),
     ).toEqual({
-      titre: 'Coordination ne peut pas être supprimé',
-      texte: 'Coordination et FIJ ne se suppriment jamais.',
+      titre: 'Le ministère Coordination ne peut pas être supprimé',
+      texte: 'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
       raisons: [],
       suite: null,
       desactiver: null,
       fermer: 'Fermer',
     })
-    const fij = refusSuppression('FIJ', [{ code: 'ministere_de_reference', nombre: 1 }], true)
-    expect(fij.texte).toBe('Coordination et FIJ ne se suppriment jamais.')
+    const fij = refusSuppression(
+      'FIJ',
+      [{ code: 'ministere_de_reference', nombre: 1 }],
+      'desactiver',
+    )
+    expect(fij.texte).toBe(
+      'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
+    )
     expect(fij.desactiver).toBe('Désactiver')
   })
 
-  it('fenêtre « supprimable » : les sessions qu’il quitte, au singulier et au pluriel', () => {
-    expect(confirmationSupprimerMinistere('EJP TECH', 'tech@exemple.test', 8, 1).texte).toBe(
-      "EJP TECH, ses 8 indicateurs et son compte (tech@exemple.test) disparaissent de l'outil. Il sort aussi de la liste des ministères attendus d'une session. Le journal garde la trace de la suppression. C'est définitif.",
-    )
-    expect(confirmationSupprimerMinistere('Social', null, 0, 2).texte).toBe(
-      "Social disparaît de l'outil. Il sort aussi de la liste des ministères attendus de 2 sessions. Le journal garde la trace de la suppression. C'est définitif.",
-    )
-    expect(confirmationSupprimerMinistere('EJP Formation', null, 0).texte).toBe(
+  it('fenêtre « supprimable » : les sessions où il ne sera plus attendu, dans un second paragraphe', () => {
+    expect(confirmationSupprimerMinistere('EJP TECH', 'tech@exemple.test', 8, 1)).toMatchObject({
+      texte:
+        "EJP TECH, ses 8 indicateurs et son compte (tech@exemple.test) disparaissent de l'outil. EJP TECH ne sera plus attendu dans une session.",
+      suite: "Le journal garde la trace de la suppression. C'est définitif.",
+    })
+    expect(confirmationSupprimerMinistere('Social', null, 0, 2)).toMatchObject({
+      texte: "Social disparaît de l'outil. Social ne sera plus attendu dans 2 sessions.",
+      suite: "Le journal garde la trace de la suppression. C'est définitif.",
+    })
+    const sansSession = confirmationSupprimerMinistere('EJP Formation', null, 0)
+    expect(sansSession.texte).toBe(
       "EJP Formation disparaît de l'outil. Le journal garde la trace de la suppression. C'est définitif.",
     )
+    expect(sansSession.suite).toBeUndefined()
   })
 })

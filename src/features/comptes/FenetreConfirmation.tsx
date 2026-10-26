@@ -26,7 +26,17 @@ export function FenetreConfirmation({
   return (
     <Fenetre
       titre={confirmation.titre}
-      texte={confirmation.texte}
+      texte={
+        confirmation.suite === undefined ? (
+          confirmation.texte
+        ) : (
+          // Deux paragraphes, annoncés ensemble avec le titre (T75).
+          <>
+            <p>{confirmation.texte}</p>
+            <p className="mt-3">{confirmation.suite}</p>
+          </>
+        )
+      }
       confirmer={confirmation.bouton}
       libelleEnCours={confirmation.enCours}
       varianteConfirmer={confirmation.definitif ? 'sombre' : 'principal'}

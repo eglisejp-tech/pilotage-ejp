@@ -259,7 +259,10 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await bouton(page, 'Supprimer EJP TECH').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP TECH ?')
     await expect(fenetre(page)).toContainText(
-      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Il sort aussi de la liste des ministères attendus d'une session. Le journal garde la trace de la suppression. C'est définitif.",
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. EJP TECH ne sera plus attendu dans une session.",
+    )
+    await expect(fenetre(page)).toContainText(
+      "Le journal garde la trace de la suppression. C'est définitif.",
     )
     await page.keyboard.press('Escape')
     await expect(fenetre(page)).toHaveCount(0)
@@ -281,7 +284,7 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
     // L'écran relit les raisons ; l'aperçu n'en connaît aucune : « une autre donnée ».
     await expect(fenetre(page).getByRole('heading')).toHaveText(
-      'EJP TECH ne peut pas être supprimé',
+      'Le ministère EJP TECH ne peut pas être supprimé',
     )
     await expect(fenetre(page).getByRole('listitem')).toHaveText([
       "une autre donnée le relie encore à l'outil",
@@ -365,9 +368,7 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     ).toBeVisible()
     await bouton(page, 'Supprimer EJP TECH').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP TECH ?')
-    await expect(fenetre(page)).toContainText(
-      "Il sort aussi de la liste des ministères attendus d'une session.",
-    )
+    await expect(fenetre(page)).toContainText('EJP TECH ne sera plus attendu dans une session.')
     await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
     await expect(reussite(page)).toHaveText('Ministère EJP TECH supprimé.')
     await expect(section(page, 'Ministères')).not.toContainText('EJP TECH')
@@ -377,7 +378,7 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     await ouvrir(page)
     await bouton(page, 'Supprimer EJP Formation').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP Formation ?')
-    await expect(fenetre(page)).not.toContainText('Il sort aussi')
+    await expect(fenetre(page)).not.toContainText('ne sera plus attendu')
     await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
     await expect(reussite(page)).toHaveText('Ministère EJP Formation supprimé.')
   })
@@ -388,16 +389,16 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     await ouvrir(page)
     await bouton(page, 'Supprimer Communication').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText(
-      'Communication ne peut pas être supprimé',
+      'Le ministère Communication ne peut pas être supprimé',
     )
     await expect(fenetre(page).getByRole('listitem')).toHaveText([
-      'son compte a déjà été activé',
       '12 chiffres saisis',
       'des présences saisies pour 3 sessions',
-      "3 points d'attention",
+      "3 points d'attention créés",
       "mentionné dans 2 points d'attention",
-      '2 événements',
+      '2 événements créés',
       '1 réunion',
+      'son compte a déjà été activé',
     ])
     await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
     await fenetre(page).getByRole('button', { name: 'Fermer' }).click()
@@ -414,15 +415,19 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     await ouvrir(page)
     await bouton(page, 'Supprimer Coordination').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText(
-      'Coordination ne peut pas être supprimé',
+      'Le ministère Coordination ne peut pas être supprimé',
     )
-    await expect(fenetre(page)).toContainText('Coordination et FIJ ne se suppriment jamais.')
+    await expect(fenetre(page)).toContainText(
+      'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
+    )
     await expect(fenetre(page).getByRole('listitem')).toHaveCount(0)
     // Sans compte : rien à désactiver.
     await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer'])
     await page.keyboard.press('Escape')
     await bouton(page, 'Supprimer FIJ').click()
-    await expect(fenetre(page)).toContainText('Coordination et FIJ ne se suppriment jamais.')
+    await expect(fenetre(page)).toContainText(
+      'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
+    )
     await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
   })
 
@@ -432,12 +437,17 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
     await ouvrir(page)
     await bouton(page, 'Afficher les 2 ministères désactivés').click()
     await bouton(page, 'Supprimer Merch').click()
-    await expect(fenetre(page).getByRole('heading')).toHaveText('Merch ne peut pas être supprimé')
+    await expect(fenetre(page).getByRole('heading')).toHaveText(
+      'Le ministère Merch ne peut pas être supprimé',
+    )
     await expect(fenetre(page).getByRole('listitem')).toHaveText([
-      'son compte a déjà été activé',
       '30 chiffres saisis',
       '4 réunions',
+      'son compte a déjà été activé',
     ])
+    await expect(fenetre(page)).toContainText(
+      'Il est déjà désactivé : plus personne ne se connecte, son historique reste.',
+    )
     await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer'])
   })
 
@@ -446,9 +456,7 @@ test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aper�
   }) => {
     await ouvrir(page)
     await bouton(page, 'Supprimer Social').click()
-    await expect(fenetre(page)).toContainText(
-      'Il sort aussi de la liste des ministères attendus de 2 sessions.',
-    )
+    await expect(fenetre(page)).toContainText('Social ne sera plus attendu dans 2 sessions.')
     await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
     await expect(reussite(page)).toHaveText('Ministère Social supprimé.')
     await expect(section(page, 'Ministères').getByText('7 actifs', { exact: true })).toBeVisible()

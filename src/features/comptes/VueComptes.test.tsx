@@ -324,8 +324,9 @@ describe('VueComptes (écran 13)', () => {
     await afficherDesactives()
     await userEvent.click(bouton('Supprimer EJP TECH'))
     const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP TECH ?' })
-    expect(fenetre).toHaveTextContent(
-      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Il sort aussi de la liste des ministères attendus d'une session. Le journal garde la trace de la suppression. C'est définitif.",
+    // T75 : deux paragraphes, la session qu'il quitte, puis la trace au journal.
+    expect(fenetre).toHaveAccessibleDescription(
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. EJP TECH ne sera plus attendu dans une session. Le journal garde la trace de la suppression. C'est définitif.",
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
     expect(await screen.findByText('Ministère EJP TECH supprimé.')).toBeInTheDocument()
@@ -382,9 +383,7 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     ).toBeInTheDocument()
     await userEvent.click(bouton('Supprimer EJP TECH'))
     const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP TECH ?' })
-    expect(fenetre).toHaveTextContent(
-      "Il sort aussi de la liste des ministères attendus d'une session.",
-    )
+    expect(fenetre).toHaveTextContent('EJP TECH ne sera plus attendu dans une session.')
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
     expect(await screen.findByText('Ministère EJP TECH supprimé.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Supprimer EJP TECH' })).toBeNull()
@@ -394,7 +393,7 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     afficherApercu()
     await userEvent.click(bouton('Supprimer EJP Formation'))
     const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP Formation ?' })
-    expect(fenetre).not.toHaveTextContent('Il sort aussi')
+    expect(fenetre).not.toHaveTextContent('ne sera plus attendu')
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
     expect(await screen.findByText('Ministère EJP Formation supprimé.')).toBeInTheDocument()
   })
@@ -403,17 +402,17 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     afficherApercu()
     await userEvent.click(bouton('Supprimer Communication'))
     const fenetre = screen.getByRole('alertdialog', {
-      name: 'Communication ne peut pas être supprimé',
+      name: 'Le ministère Communication ne peut pas être supprimé',
     })
-    expect(fenetre).toHaveAccessibleDescription("Il a déjà des données dans l'outil :")
+    expect(fenetre).toHaveAccessibleDescription("Ce ministère a déjà des données dans l'outil :")
     expect(puces(fenetre)).toEqual([
-      'son compte a déjà été activé',
       '12 chiffres saisis',
       'des présences saisies pour 3 sessions',
-      "3 points d'attention",
+      "3 points d'attention créés",
       "mentionné dans 2 points d'attention",
-      '2 événements',
+      '2 événements créés',
       '1 réunion',
+      'son compte a déjà été activé',
     ])
     expect(fenetre).toHaveTextContent(
       'Désactivez-le à la place : plus personne ne se connecte, son historique reste.',
@@ -441,9 +440,11 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     afficherApercu()
     await userEvent.click(bouton('Supprimer Coordination'))
     let fenetre = screen.getByRole('alertdialog', {
-      name: 'Coordination ne peut pas être supprimé',
+      name: 'Le ministère Coordination ne peut pas être supprimé',
     })
-    expect(fenetre).toHaveAccessibleDescription('Coordination et FIJ ne se suppriment jamais.')
+    expect(fenetre).toHaveAccessibleDescription(
+      'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
+    )
     expect(puces(fenetre)).toEqual([])
     // Sans compte : rien à désactiver, « Fermer » seul.
     expect(
@@ -454,8 +455,12 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('alertdialog')).toBeNull()
     await userEvent.click(bouton('Supprimer FIJ'))
-    fenetre = screen.getByRole('alertdialog', { name: 'FIJ ne peut pas être supprimé' })
-    expect(fenetre).toHaveAccessibleDescription('Coordination et FIJ ne se suppriment jamais.')
+    fenetre = screen.getByRole('alertdialog', {
+      name: 'Le ministère FIJ ne peut pas être supprimé',
+    })
+    expect(fenetre).toHaveAccessibleDescription(
+      'Coordination et FIJ sont des ministères de référence : ils ne se suppriment jamais.',
+    )
     expect(within(fenetre).getByRole('button', { name: 'Désactiver' })).toBeInTheDocument()
   })
 
@@ -463,13 +468,19 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     afficherApercu()
     await afficherDesactives()
     await userEvent.click(bouton('Supprimer Merch'))
-    const fenetre = screen.getByRole('alertdialog', { name: 'Merch ne peut pas être supprimé' })
+    const fenetre = screen.getByRole('alertdialog', {
+      name: 'Le ministère Merch ne peut pas être supprimé',
+    })
     expect(puces(fenetre)).toEqual([
-      'son compte a déjà été activé',
       '30 chiffres saisis',
       '4 réunions',
+      'son compte a déjà été activé',
     ])
     expect(fenetre).not.toHaveTextContent('Désactivez-le')
+    // Ce qui explique l'absence de « Désactiver » (revue produit).
+    expect(fenetre).toHaveTextContent(
+      'Il est déjà désactivé : plus personne ne se connecte, son historique reste.',
+    )
     expect(
       within(fenetre)
         .getAllByRole('button')
@@ -481,8 +492,8 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     afficherApercu()
     await userEvent.click(bouton('Supprimer Social'))
     const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer Social ?' })
-    expect(fenetre).toHaveTextContent(
-      "Il sort aussi de la liste des ministères attendus de 2 sessions. Le journal garde la trace de la suppression. C'est définitif.",
+    expect(fenetre).toHaveAccessibleDescription(
+      "Social et son compte (social@exemple.test) disparaissent de l'outil. Social ne sera plus attendu dans 2 sessions. Le journal garde la trace de la suppression. C'est définitif.",
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
     expect(await screen.findByText('Ministère Social supprimé.')).toBeInTheDocument()
@@ -499,7 +510,7 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     await userEvent.click(bouton('Supprimer EJP Formation'))
     await userEvent.click(bouton('Supprimer le ministère'))
     const fenetre = await screen.findByRole('alertdialog', {
-      name: 'EJP Formation ne peut pas être supprimé',
+      name: 'Le ministère EJP Formation ne peut pas être supprimé',
     })
     expect(actions.lireSuppression).toHaveBeenCalledWith('10000000-0000-4000-8000-000000000008')
     expect(puces(fenetre)).toEqual(['1 chiffre saisi'])
@@ -513,7 +524,7 @@ describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75
     await userEvent.click(bouton('Supprimer EJP Formation'))
     await userEvent.click(bouton('Supprimer le ministère'))
     const fenetre = await screen.findByRole('alertdialog', {
-      name: 'EJP Formation ne peut pas être supprimé',
+      name: 'Le ministère EJP Formation ne peut pas être supprimé',
     })
     expect(puces(fenetre)).toEqual(["une autre donnée le relie encore à l'outil"])
   })

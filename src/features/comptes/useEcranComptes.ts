@@ -16,7 +16,11 @@ import {
   refusSuppression,
   REUSSITES_COMPTES,
 } from '@/features/comptes/textes'
-import type { TexteConfirmation, TexteRefusSuppression } from '@/features/comptes/textes'
+import type {
+  ApresRefus,
+  TexteConfirmation,
+  TexteRefusSuppression,
+} from '@/features/comptes/textes'
 import type { ActionsComptes, LigneCompte } from '@/features/comptes/types'
 
 /** Fenêtre de confirmation ouverte : son texte et l'action qu'elle confirme. */
@@ -38,9 +42,11 @@ const REFUS_DE_SUPPRESSION: ReadonlySet<CodeErreurCompte> = new Set([
   'ministere_de_reference',
 ])
 
-/** Un compte actif à désactiver à la place (ni désactivé, ni ministère sans compte). */
-function peutDesactiver(ligne: LigneCompte): boolean {
-  return ligne.userId !== null && ligne.etat !== 'desactive' && ligne.etat !== 'sans_compte'
+/** Ce que propose la fenêtre « impossible » : désactiver un compte actif, ou rien. */
+function apresRefus(ligne: LigneCompte): ApresRefus {
+  if (ligne.etat === 'desactive') return 'deja_desactive'
+  if (ligne.userId === null || ligne.etat === 'sans_compte') return 'sans_compte'
+  return 'desactiver'
 }
 
 /**
@@ -246,13 +252,14 @@ export function useEcranComptes(actions: ActionsComptes) {
     refus === null
       ? null
       : {
-          texte: refusSuppression(refus.ligne.nom, refus.raisons, peutDesactiver(refus.ligne)),
-          desactiver: peutDesactiver(refus.ligne)
-            ? () => {
-                flushSync(() => setRefus(null))
-                desactiver(refus.ligne)
-              }
-            : null,
+          texte: refusSuppression(refus.ligne.nom, refus.raisons, apresRefus(refus.ligne)),
+          desactiver:
+            apresRefus(refus.ligne) === 'desactiver'
+              ? () => {
+                  flushSync(() => setRefus(null))
+                  desactiver(refus.ligne)
+                }
+              : null,
         }
 
   return {
