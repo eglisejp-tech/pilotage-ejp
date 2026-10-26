@@ -138,7 +138,7 @@ case "$action" in
     export_flux "$EXPORTS" "$nom" "$cle" "$pg_dump" "$age"
     export_effacer_identifiants
     # 4. Fiche sans donnée, purge des exports de plus de 28 jours, résumé de sept lignes.
-    derniere=$(export_derniere_migration "$("$CLI" --workdir "$CLONE" migration list 2>/dev/null || true)")
+    derniere=$(export_derniere_migration "$("$CLI" --workdir "$CLONE" migration list 2>&1 || true)")
     export_ecrire_fiche "$EXPORTS" "$nom" "$cle" "$(git -C "$CLONE" rev-parse --short origin/main)" \
       "$derniere" "$version_pg_dump" "$version_age" "$("$CLI" --version 2>/dev/null | head -n 1)"
     export_purger "$EXPORTS"

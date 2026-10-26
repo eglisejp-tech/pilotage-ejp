@@ -295,6 +295,16 @@ describe('fiche, dernière migration, résumé', LENT, () => {
       '20261026084227\n',
     )
     expect(bash('export_derniere_migration ""').sortie).toBe('inconnue\n')
+    const tableau = [
+      'Connecting to local database...',
+      '  Local          │ Remote         │ Time (UTC)',
+      '  ───────────────┼────────────────┼────────────────────',
+      '  20261010100000 │ 20261010100000 │ 2026-10-10 10:00:00',
+      '  20261026084227 │ 20261026084227 │ 2026-10-26 08:42:27',
+    ].join('\n')
+    expect(bash('export_derniere_migration "$LISTE"', { LISTE: tableau }).sortie).toBe(
+      '20261026084227\n',
+    )
   })
 
   it('fiche sans donnée, résumé de sept lignes autorisées', () => {

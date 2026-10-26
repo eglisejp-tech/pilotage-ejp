@@ -46,14 +46,19 @@ sortie=""
 nom="ejp-$(export_date_paris).dump.age"
 export_flux "$exports" "$nom" "$cle" "$pg_dump" "$age"
 export_effacer_identifiants
-derniere=$(export_derniere_migration "$(npx supabase migration list --local 2>/dev/null || true)")
+liste=$(npx supabase migration list --local 2>&1 || true)
+derniere=$(export_derniere_migration "$liste")
 export_ecrire_fiche "$exports" "$nom" "$cle" "$(git rev-parse --short HEAD)" "$derniere" \
   "$version_pg_dump" "$version_age" "$(npx supabase --version 2>/dev/null | head -n 1)"
 export_purger "$exports"
 export_resume "$nom" "$cle" "$derniere" >"$travail/resume.txt"
 cat "$travail/resume.txt"
 export_verifier_resume <"$travail/resume.txt"
-[ "$derniere" != inconnue ] || export_arreter "dernière migration illisible dans « migration list »."
+if [ "$derniere" = inconnue ]; then
+  # Base locale de la CI, sans donnée réelle : la sortie brute aide à corriger la lecture.
+  printf '%s\n' "$liste" | head -n 40 >&2
+  export_arreter "dernière migration illisible dans « migration list »."
+fi
 
 presents=$(ls -A "$exports" | sort)
 attendus=$(printf '%s\n' "$nom" "${nom%.dump.age}.json" | sort)

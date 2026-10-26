@@ -273,9 +273,9 @@ export_existe_aujourdhui() {
 }
 
 # Dernière migration appliquée, lue dans la sortie de « migration list » ($1) : la plus grande
-# version de 14 chiffres de la colonne Remote, sinon « inconnue ».
+# version de 14 chiffres de la colonne Remote (colonnes séparées par | ou │), sinon « inconnue ».
 export_derniere_migration() {
-  printf '%s\n' "$1" | awk -F'|' '
+  printf '%s\n' "$1" | sed 's/│/|/g' | awk -F'|' '
     { v = $2; gsub(/[ \t\r]/, "", v); if (v ~ /^[0-9]+$/ && length(v) == 14 && v > m) m = v }
     END { if (m == "") print "inconnue"; else print m }'
 }
