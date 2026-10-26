@@ -4,7 +4,8 @@
 --
 -- Objets lus par l'écran : v_etat_comptes (et private.etat_comptes, qu'elle lit), compte et
 -- ministere (lecture, aucune écriture directe) et indicateur, avec la requête exacte de
--- src/data/comptes.ts (indicateurs propres actifs ou à valider, colonne « Indicateurs ») ; les
+-- src/data/comptes.ts (indicateurs propres actifs ou à valider, colonne « Indicateurs ») et,
+-- depuis T75, public.raisons_suppression_ministere (EJP Tech seul, en aal2) ; les
 -- écritures passent par les Edge Functions, dont les fonctions serveur restent fermées à
 -- authenticated (comptes-serveur-droits.test.sql).
 -- Profils (huit comptes) : les ministères Communication et FIJ, le berger, le conseil,
@@ -113,7 +114,11 @@ create temp view matrice_l1_aal2 (profil, objet, action, aal, attendu, requete) 
      -- Requête de lireIndicateursDesMinisteres : un ministère ne lit que les siens (tous états),
      -- le berger, le conseil, l'administration et EJP Tech lisent tout ; le retiré est écarté.
      ('indicateur (colonne Indicateurs)', 'lire', array['2', '0', '2', '2', '2', '2', '0', '0'],
-      'select 1 from public.indicateur where ministere_id is not null and etat in (''actif'', ''en_attente'') and id in (select ind_actif from ctx union all select ind_att from ctx union all select ind_ret from ctx)')
+      'select 1 from public.indicateur where ministere_id is not null and etat in (''actif'', ''en_attente'') and id in (select ind_actif from ctx union all select ind_att from ctx union all select ind_ret from ctx)'),
+     -- T75 : les raisons d'un refus de suppression (bouton « Supprimer »), à EJP Tech seul.
+     -- Communication a des chiffres : une ligne « chiffres ».
+     ('raisons_suppression_ministere', 'lire', array['42501', '42501', '42501', '42501', '42501', '1', '42501', '42501'],
+      'select 1 from public.raisons_suppression_ministere((select com_m from ctx)) where code = ''chiffres''')
    ) as m(objet, action, attendu, requete);
 create temp view matrice_l1 (profil, objet, action, aal, attendu, requete) as
   select * from matrice_l1_aal2

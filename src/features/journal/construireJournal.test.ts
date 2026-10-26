@@ -348,6 +348,23 @@ describe('une ligne du journal, en mots', () => {
         detail: { nom: 'Tech', indicateurs: 0, comptes: 0 },
       }),
     ).toBe('Tech')
+    // T75 : les sessions qu'il a quittées (validé le 26 octobre 2026).
+    expect(
+      texteDe({
+        action: 'ministere_supprime',
+        cible: 'ministere',
+        cible_texte: 'Tech',
+        detail: { nom: 'Tech', indicateurs: 8, comptes: 1, sessions: 2 },
+      }),
+    ).toBe('Tech, 8 indicateurs supprimés avec lui, retiré de 2 sessions')
+    expect(
+      texteDe({
+        action: 'ministere_supprime',
+        cible: 'ministere',
+        cible_texte: 'Tech',
+        detail: { nom: 'Tech', indicateurs: 0, comptes: 0, sessions: 1 },
+      }),
+    ).toBe("Tech, retiré d'une session")
   })
 
   it('texte relu ou masqué : l’objet et le motif, jamais le texte', () => {

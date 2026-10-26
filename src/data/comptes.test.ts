@@ -10,7 +10,7 @@ import {
   lireComptesJamaisActives,
   lireEtatComptes,
   lireIndicateursDesMinisteres,
-  lireMinisteresSupprimables,
+  lireRaisonsSuppression,
   MESSAGES_ERREURS_COMPTES,
   reactiverCompte,
   reinitialiserDoubleAuthentification,
@@ -71,12 +71,26 @@ describe('lectures de l’écran 13', () => {
     ])
   })
 
-  it('T74 : ministères supprimables et comptes jamais activés, leurs seuls identifiants', async () => {
+  it('T74 : comptes jamais activés, leurs seuls identifiants', async () => {
     const faux = installer()
-    await lireMinisteresSupprimables()
     await lireComptesJamaisActives()
-    expect(appelsDe(faux.de('v_ministeres_supprimables')[0])).toEqual(['select("ministere_id")'])
     expect(appelsDe(faux.de('v_comptes_jamais_actives')[0])).toEqual(['select("user_id")'])
+  })
+
+  it('T75 : raisons d’un refus de suppression, de tous les ministères ou d’un seul', async () => {
+    const lignes = [{ ministere_id: FIJ, code: 'ministere_de_reference', nombre: 1, bloque: true }]
+    const rpc = vi.fn(() => Promise.resolve({ data: lignes, error: null }))
+    courant.client = { rpc }
+    await expect(lireRaisonsSuppression()).resolves.toEqual(lignes)
+    expect(rpc).toHaveBeenLastCalledWith('raisons_suppression_ministere', {})
+    await lireRaisonsSuppression(FIJ)
+    expect(rpc).toHaveBeenLastCalledWith('raisons_suppression_ministere', { p_ministere_id: FIJ })
+  })
+
+  it('T75 : une lecture des raisons refusée remonte son erreur', async () => {
+    const erreur = { code: '42501', message: 'refusé' }
+    courant.client = { rpc: vi.fn(() => Promise.resolve({ data: null, error: erreur })) }
+    await expect(lireRaisonsSuppression()).rejects.toBe(erreur)
   })
 })
 

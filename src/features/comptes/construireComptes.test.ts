@@ -100,9 +100,21 @@ const INDICATEURS = [
   { ministere_id: null },
 ]
 
-// Lectures d'EJP Tech (T74) : Social et Tech sont vides ; Tech, Social et le conseil 10 n'ont
-// jamais été activés.
-const GESTION = { supprimables: [m(1), m(7)], jamaisActives: [u(1), u(7), u(13)] }
+// Lectures d'EJP Tech (T74, T75) : les raisons d'un refus de suppression, comme la base les rend
+// (Social est vide, Tech n'a qu'une session à quitter, Communication a des chiffres et un compte
+// activé, Merch des chiffres, Coordination et FIJ sont de référence) ; Tech, Social et le
+// conseil 10 n'ont jamais été activés.
+const GESTION = {
+  raisons: [
+    { ministere_id: m(2), code: 'ministere_de_reference', nombre: 1, bloque: true },
+    { ministere_id: m(3), code: 'ministere_de_reference', nombre: 1, bloque: true },
+    { ministere_id: m(4), code: 'chiffres', nombre: 30, bloque: true },
+    { ministere_id: m(6), code: 'compte_deja_active', nombre: 1, bloque: true },
+    { ministere_id: m(6), code: 'chiffres', nombre: 12, bloque: true },
+    { ministere_id: m(7), code: 'sessions_attendues', nombre: 1, bloque: false },
+  ],
+  jamaisActives: [u(1), u(7), u(13)],
+}
 
 describe('construireComptes (écran 13)', () => {
   const donnees = construireComptes(COMPTES, MINISTERES, INDICATEURS, GESTION)
@@ -121,7 +133,7 @@ describe('construireComptes (écran 13)', () => {
   it('un ministère sans compte : aucune adresse, la seule action « Créer le compte »', () => {
     const coordination = donnees.ministeres[1]
     expect(coordination).toMatchObject({ userId: null, email: null, ministereId: m(2) })
-    expect(actionsDeLaLigne({ etat: 'sans_compte', supprimable: false })).toEqual(['creer'])
+    expect(actionsDeLaLigne({ etat: 'sans_compte', suppression: null })).toEqual(['creer'])
   })
 
   it('le dernier compte désactivé d’un ministère, avec le jour de Paris', () => {
@@ -146,17 +158,34 @@ describe('construireComptes (écran 13)', () => {
     expect(jamais('Conseil, compte 3')).toBe(false)
   })
 
-  it('supprimable : les ministères vides lus par EJP Tech, jamais une personne', () => {
-    expect(donnees.ministeres.filter((l) => l.supprimable).map((l) => l.nom)).toEqual(['Social'])
-    expect(donnees.ministeresDesactives.filter((l) => l.supprimable).map((l) => l.nom)).toEqual([
-      'Tech',
+  it('suppression (T75) : chaque ministère a ses raisons et ses sessions, jamais une personne', () => {
+    const suppression = (nom: string) =>
+      [...donnees.ministeres, ...donnees.ministeresDesactives].find((l) => l.nom === nom)
+        ?.suppression
+    expect(suppression('Social')).toEqual({ raisons: [], sessions: 0 })
+    expect(suppression('Tech')).toEqual({ raisons: [], sessions: 1 })
+    expect(suppression('Communication')).toEqual({
+      raisons: [
+        { code: 'compte_deja_active', nombre: 1 },
+        { code: 'chiffres', nombre: 12 },
+      ],
+      sessions: 0,
+    })
+    expect(suppression('Merch')?.raisons).toEqual([{ code: 'chiffres', nombre: 30 }])
+    expect(suppression('Coordination')?.raisons).toEqual([
+      { code: 'ministere_de_reference', nombre: 1 },
     ])
-    expect(donnees.bergerConseil.some((ligne) => ligne.supprimable)).toBe(false)
-    // En lecture seule (administration), rien n'est supprimable.
+    expect(suppression('FIJ')?.raisons.map((r) => r.code)).toEqual(['ministere_de_reference'])
+    expect(
+      [...donnees.bergerConseil, ...donnees.bergerConseilDesactives, ...donnees.ejpTech].every(
+        (ligne) => ligne.suppression === null,
+      ),
+    ).toBe(true)
+    // En lecture seule (administration), aucune suppression.
     const lecture = construireComptes(COMPTES, MINISTERES, INDICATEURS)
     expect(
-      [...lecture.ministeres, ...lecture.ministeresDesactives].some((ligne) => ligne.supprimable),
-    ).toBe(false)
+      [...lecture.ministeres, ...lecture.ministeresDesactives].every((l) => l.suppression === null),
+    ).toBe(true)
   })
 
   it('indicateurs propres comptés par ministère ; FIJ marqué', () => {
@@ -212,7 +241,7 @@ describe('construireComptes (écran 13)', () => {
 
 describe('actions et textes d’une ligne', () => {
   it('chaque état a ses boutons (BRIEF, section 9 ; T74)', () => {
-    const sans = { supprimable: false }
+    const sans = { suppression: null }
     expect(actionsDeLaLigne({ etat: 'invitation_envoyee', ...sans })).toEqual([
       'relancer',
       'corriger',
@@ -223,18 +252,38 @@ describe('actions et textes d’une ligne', () => {
     expect(actionsDeLaLigne({ etat: 'desactive', ...sans })).toEqual(['reactiver'])
   })
 
-  it('« Supprimer » en dernier, seulement pour un ministère vide (T74)', () => {
-    const vide = { supprimable: true }
-    expect(actionsDeLaLigne({ etat: 'invitation_envoyee', ...vide })).toEqual([
-      'relancer',
-      'corriger',
-      'desactiver',
-      'supprimer',
-    ])
-    expect(actionsDeLaLigne({ etat: 'desactive', ...vide })).toEqual(['reactiver', 'supprimer'])
-    expect(actionsDeLaLigne({ etat: 'sans_compte', ...vide })).toEqual(['creer', 'supprimer'])
-    // Un compte activé : jamais supprimé (la base refuserait aussi).
-    expect(actionsDeLaLigne({ etat: 'activee', ...vide })).toEqual(['refaire', 'desactiver'])
+  it('« Supprimer » en dernier sur chaque ministère, qu’il se supprime ou non (T75)', () => {
+    const vide = { suppression: { raisons: [], sessions: 0 } }
+    const refuse = {
+      suppression: { raisons: [{ code: 'chiffres' as const, nombre: 12 }], sessions: 0 },
+    }
+    for (const ministere of [vide, refuse]) {
+      expect(actionsDeLaLigne({ etat: 'invitation_envoyee', ...ministere })).toEqual([
+        'relancer',
+        'corriger',
+        'desactiver',
+        'supprimer',
+      ])
+      expect(actionsDeLaLigne({ etat: 'a_activer', ...ministere })).toEqual([
+        'corriger',
+        'desactiver',
+        'supprimer',
+      ])
+      // Un compte activé aussi : la fenêtre dira pourquoi il ne se supprime pas.
+      expect(actionsDeLaLigne({ etat: 'activee', ...ministere })).toEqual([
+        'refaire',
+        'desactiver',
+        'supprimer',
+      ])
+      expect(actionsDeLaLigne({ etat: 'desactive', ...ministere })).toEqual([
+        'reactiver',
+        'supprimer',
+      ])
+      expect(actionsDeLaLigne({ etat: 'sans_compte', ...ministere })).toEqual([
+        'creer',
+        'supprimer',
+      ])
+    }
   })
 
   it('libellés des états et de l’en-tête', () => {

@@ -6,9 +6,15 @@
 -- Les données d'essai de chaque cas de refus s'ajoutent sans les triggers de leur table (désactivés
 -- le temps d'un ajout, dans cette transaction annulée) : seule compte la ligne qui vise le
 -- ministère, pas le parcours de saisie, que d'autres fichiers testent.
+-- Revu par T75 (migration 20261026090000_supprimer_partout.sql) : chaque cas a sa raison
+-- (private.raisons_suppression_ministere, un code et un nombre) ; le cas « session saisie »
+-- (une session saisie par un AUTRE ministère qui l'attend) ne bloque plus, c'est l'erreur de
+-- T74 qui refusait EJP TECH ; une trace écrite par le compte (journal, déclaration, conditions)
+-- dit que le compte a été activé. Les six critères d'acceptation de T75 sont dans
+-- comptes-suppression.test.sql.
 begin;
 
-select plan(86);
+select plan(107);
 
 -- pgTAP au nom de service_role (droits annulés avec la transaction), comme comptes-serveur.
 do $$
@@ -211,16 +217,37 @@ select is(private.refus_suppression_ministere(tests.ministere('FIJ')), 'minister
   'FIJ (code posé par une migration) : jamais supprimé');
 select is(private.refus_suppression_ministere(tests.ministere('Coordination')), 'ministere_de_reference',
   'Coordination (code posé par une migration) : jamais supprimé');
+-- T75 : la session saisie par un autre ministère ne bloque plus ; une trace écrite par le compte
+-- dit qu'il a été activé.
 select is(private.refus_suppression_ministere(c.ministere),
-          case when c.nom in ('compte activé', 'activation refaite') then 'compte_deja_active'
+          case when c.nom = 'session saisie' then null
+               when c.nom in ('compte activé', 'activation refaite', 'journal', 'déclaration', 'conditions')
+                 then 'compte_deja_active'
                else 'ministere_non_vide' end,
           'refus : ' || c.nom)
   from cas c order by c.nom;
+-- T75 : la raison de chaque cas, son code et son nombre (une ligne visée), seule raison qui bloque.
+select results_eq(
+         format('select r.code, r.nombre from private.raisons_suppression_ministere(%L) r where r.bloque', c.ministere),
+         case when r.code is null then 'select null::text, null::integer where false'
+              else format('values (%L::text, 1)', r.code) end,
+         'raison : ' || c.nom || coalesce(' (' || r.code || ')', ', aucune'))
+  from cas c
+  join (values ('mesure', 'chiffres'), ('participation', 'presences'), ('carte FIJ', 'carte_fij'),
+               ('statistique FIJ', 'statistiques_fij'), ('répartition', 'repartitions'),
+               ('précision', 'precisions'), ('point', 'points'), ('mention de point', 'mentions_points'),
+               ('événement', 'evenements'), ('mention d''événement', 'mentions_evenements'),
+               ('réunion', 'reunions'), ('signalement', 'signalements'), ('demande', 'demandes'),
+               ('validation', 'validations'), ('retrait', 'retraits'), ('session saisie', null),
+               ('journal', 'compte_deja_active'), ('déclaration', 'compte_deja_active'),
+               ('conditions', 'compte_deja_active'), ('compte activé', 'compte_deja_active'),
+               ('activation refaite', 'compte_deja_active')) as r(nom, code) on r.nom = c.nom
+ order by c.nom;
 
 -- 2. Lectures de l'écran : EJP Tech seul, en aal2
 select is(tests.essai((select tech from ctx), 'aal2',
   'select 1 from public.v_ministeres_supprimables where ministere_id in (select vide from ctx union all select sans_compte from ctx union all select ministere from cas)',
-  'lignes'), '2', 'EJP Tech en aal2 lit les deux ministères vides, aucun des cas de refus');
+  'lignes'), '3', 'EJP Tech en aal2 lit les deux ministères vides et celui de la session saisie par un autre (T75), aucun des cas de refus');
 select is(tests.essai((select tech from ctx), 'aal1',
   'select 1 from public.v_ministeres_supprimables', 'lignes'), '0', 'EJP Tech en aal1 ne lit rien');
 select is(tests.essai(p.compte, 'aal2', 'select 1 from public.v_ministeres_supprimables', 'lignes'), '0',
@@ -381,8 +408,8 @@ select results_eq($$
   select j.compte, j.ministere_id, j.cible, j.detail from public.journal j
    where j.action = 'ministere_supprime' and j.cible_id = (select vide from ctx)
 $$, $$ values ((select tech from ctx), (select vide from ctx), 'ministere'::text,
-               '{"nom": "Essai T74 vide", "comptes": 1, "indicateurs": 8}'::jsonb) $$,
-  'suppression : une ligne ministere_supprime au nom d''EJP Tech, avec le nom, jamais d''adresse');
+               '{"nom": "Essai T74 vide", "comptes": 1, "sessions": 1, "indicateurs": 8}'::jsonb) $$,
+  'suppression : une ligne ministere_supprime au nom d''EJP Tech, avec le nom et la session quittée (T75), jamais d''adresse');
 select is(tests.compter((select tech from ctx), 'aal2',
   'select 1 from public.v_journal where ministere_id = (select vide from ctx) and ministere_nom = ''Essai T74 vide'''),
   (select lignes_vide + 1 from ctx), 'v_journal : chaque ligne du ministère supprimé garde son nom');

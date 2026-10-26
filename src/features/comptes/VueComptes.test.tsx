@@ -35,6 +35,7 @@ function actionsFausses(): {
     refaireActivation: vi.fn(() => Promise.resolve()),
     corriger: vi.fn(() => Promise.resolve()),
     supprimer: vi.fn(() => Promise.resolve()),
+    lireSuppression: vi.fn(() => Promise.resolve({ raisons: [], sessions: 0 })),
   }
 }
 
@@ -229,10 +230,14 @@ describe('VueComptes (écran 13)', () => {
     expect(bouton('Masquer les 2 ministères désactivés')).toHaveAttribute('aria-expanded', 'true')
     expect(bouton('Réactiver Merch')).toBeInTheDocument()
     expect(bouton('Réactiver EJP TECH')).toBeInTheDocument()
-    // Tech est vide : « Supprimer » ; Merch a des données : pas de « Supprimer ».
-    expect(bouton('Supprimer EJP TECH')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Supprimer Merch' })).toBeNull()
-    expect(screen.queryByRole('button', { name: 'Supprimer Communication' })).toBeNull()
+    // T75 : « Supprimer » sur chaque ministère, qu'il se supprime (Tech) ou non (Merch, qui a des
+    // données ; Communication, actif ; Coordination et FIJ, de référence).
+    for (const nom of ['EJP TECH', 'Merch', 'Communication', 'Coordination', 'FIJ']) {
+      expect(bouton(`Supprimer ${nom}`)).toBeInTheDocument()
+    }
+    // Jamais sur une personne.
+    expect(screen.queryByRole('button', { name: 'Supprimer Berger' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Supprimer Conseil, compte 1' })).toBeNull()
   })
 
   it('« Corriger l’adresse » : adresse actuelle, refus d’une adresse identique, puis l’appel', async () => {
@@ -320,7 +325,7 @@ describe('VueComptes (écran 13)', () => {
     await userEvent.click(bouton('Supprimer EJP TECH'))
     const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP TECH ?' })
     expect(fenetre).toHaveTextContent(
-      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Le journal garde la trace de la suppression. C'est définitif.",
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Il sort aussi de la liste des ministères attendus d'une session. Le journal garde la trace de la suppression. C'est définitif.",
     )
     await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
     expect(await screen.findByText('Ministère EJP TECH supprimé.')).toBeInTheDocument()
@@ -342,6 +347,190 @@ describe('VueComptes (écran 13)', () => {
     expect(champ).toHaveAccessibleDescription(
       'Cette adresse a déjà un compte. Choisissez une autre adresse.',
     )
+  })
+})
+
+/** L'aperçu de la gestion (EJP Tech), avec ses actions simulées. */
+function afficherApercu() {
+  render(
+    <MemoryRouter initialEntries={['/apercu/comptes?profil=admin_plateforme']}>
+      <ApercuComptes />
+    </MemoryRouter>,
+  )
+}
+
+/** Les phrases de la liste d'une fenêtre. */
+function puces(fenetre: HTMLElement): string[] {
+  return within(fenetre)
+    .queryAllByRole('listitem')
+    .map((puce) => puce.textContent ?? '')
+}
+
+describe('VueComptes : « Supprimer » partout, avec la raison d’un refus (T75)', () => {
+  it('critère 1 : EJP TECH, réactivé en corrigeant l’adresse, se supprime et quitte sa session', async () => {
+    afficherApercu()
+    await afficherDesactives()
+    await userEvent.click(bouton('Réactiver EJP TECH'))
+    const champ = screen.getByRole('textbox', { name: 'Adresse email' })
+    await userEvent.clear(champ)
+    await userEvent.type(champ, 'ejptech1+ministere@exemple.test')
+    await userEvent.click(bouton("Réactiver et envoyer l'invitation"))
+    expect(
+      await screen.findByText(
+        'Ministère EJP TECH réactivé. Invitation envoyée à ejptech1+ministere@exemple.test.',
+      ),
+    ).toBeInTheDocument()
+    await userEvent.click(bouton('Supprimer EJP TECH'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP TECH ?' })
+    expect(fenetre).toHaveTextContent(
+      "Il sort aussi de la liste des ministères attendus d'une session.",
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
+    expect(await screen.findByText('Ministère EJP TECH supprimé.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Supprimer EJP TECH' })).toBeNull()
+  })
+
+  it('critère 2 : EJP Formation se supprime, sans phrase de session', async () => {
+    afficherApercu()
+    await userEvent.click(bouton('Supprimer EJP Formation'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP Formation ?' })
+    expect(fenetre).not.toHaveTextContent('Il sort aussi')
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
+    expect(await screen.findByText('Ministère EJP Formation supprimé.')).toBeInTheDocument()
+  })
+
+  it('critère 3 : Communication ne se supprime pas, ses raisons chiffrées, « Désactiver » à la place', async () => {
+    afficherApercu()
+    await userEvent.click(bouton('Supprimer Communication'))
+    const fenetre = screen.getByRole('alertdialog', {
+      name: 'Communication ne peut pas être supprimé',
+    })
+    expect(fenetre).toHaveAccessibleDescription("Il a déjà des données dans l'outil :")
+    expect(puces(fenetre)).toEqual([
+      'son compte a déjà été activé',
+      '12 chiffres saisis',
+      'des présences saisies pour 3 sessions',
+      "3 points d'attention",
+      "mentionné dans 2 points d'attention",
+      '2 événements',
+      '1 réunion',
+    ])
+    expect(fenetre).toHaveTextContent(
+      'Désactivez-le à la place : plus personne ne se connecte, son historique reste.',
+    )
+    expect(within(fenetre).queryByRole('button', { name: /Supprimer/ })).toBeNull()
+    // « Fermer » ne change rien, le focus revient au bouton.
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Fermer' }))
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    expect(bouton('Supprimer Communication')).toHaveFocus()
+    // « Désactiver » ouvre la confirmation de la désactivation, qui revient au même bouton.
+    await userEvent.click(bouton('Supprimer Communication'))
+    await userEvent.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Désactiver' }),
+    )
+    const desactiver = await screen.findByRole('alertdialog', {
+      name: 'Désactiver Communication ?',
+    })
+    await userEvent.click(
+      within(desactiver).getByRole('button', { name: 'Désactiver le ministère' }),
+    )
+    expect(await screen.findByText('Ministère Communication désactivé.')).toBeInTheDocument()
+  })
+
+  it('critère 4 : Coordination et FIJ ne se suppriment jamais ; « Désactiver » si un compte est actif', async () => {
+    afficherApercu()
+    await userEvent.click(bouton('Supprimer Coordination'))
+    let fenetre = screen.getByRole('alertdialog', {
+      name: 'Coordination ne peut pas être supprimé',
+    })
+    expect(fenetre).toHaveAccessibleDescription('Coordination et FIJ ne se suppriment jamais.')
+    expect(puces(fenetre)).toEqual([])
+    // Sans compte : rien à désactiver, « Fermer » seul.
+    expect(
+      within(fenetre)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['Fermer'])
+    await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('alertdialog')).toBeNull()
+    await userEvent.click(bouton('Supprimer FIJ'))
+    fenetre = screen.getByRole('alertdialog', { name: 'FIJ ne peut pas être supprimé' })
+    expect(fenetre).toHaveAccessibleDescription('Coordination et FIJ ne se suppriment jamais.')
+    expect(within(fenetre).getByRole('button', { name: 'Désactiver' })).toBeInTheDocument()
+  })
+
+  it('critère 5 : Merch, désactivé avec son historique : ses raisons, « Fermer » seul', async () => {
+    afficherApercu()
+    await afficherDesactives()
+    await userEvent.click(bouton('Supprimer Merch'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Merch ne peut pas être supprimé' })
+    expect(puces(fenetre)).toEqual([
+      'son compte a déjà été activé',
+      '30 chiffres saisis',
+      '4 réunions',
+    ])
+    expect(fenetre).not.toHaveTextContent('Désactivez-le')
+    expect(
+      within(fenetre)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['Fermer'])
+  })
+
+  it('critère 6 : Social, attendu par deux sessions sans saisie de lui, se supprime et les quitte', async () => {
+    afficherApercu()
+    await userEvent.click(bouton('Supprimer Social'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer Social ?' })
+    expect(fenetre).toHaveTextContent(
+      "Il sort aussi de la liste des ministères attendus de 2 sessions. Le journal garde la trace de la suppression. C'est définitif.",
+    )
+    await userEvent.click(within(fenetre).getByRole('button', { name: 'Supprimer le ministère' }))
+    expect(await screen.findByText('Ministère Social supprimé.')).toBeInTheDocument()
+  })
+
+  it('refus au dernier moment : la base a vu une donnée, l’écran relit les raisons et les montre', async () => {
+    const actions = actionsFausses()
+    actions.supprimer.mockRejectedValue(new ErreurCompte('ministere_non_vide'))
+    actions.lireSuppression.mockResolvedValue({
+      raisons: [{ code: 'chiffres', nombre: 1 }],
+      sessions: 0,
+    })
+    afficher(donnees(), actions)
+    await userEvent.click(bouton('Supprimer EJP Formation'))
+    await userEvent.click(bouton('Supprimer le ministère'))
+    const fenetre = await screen.findByRole('alertdialog', {
+      name: 'EJP Formation ne peut pas être supprimé',
+    })
+    expect(actions.lireSuppression).toHaveBeenCalledWith('10000000-0000-4000-8000-000000000008')
+    expect(puces(fenetre)).toEqual(['1 chiffre saisi'])
+    expect(within(fenetre).getByRole('button', { name: 'Désactiver' })).toBeInTheDocument()
+  })
+
+  it('refus au dernier moment, sans raison connue : « une autre donnée »', async () => {
+    const actions = actionsFausses()
+    actions.supprimer.mockRejectedValue(new ErreurCompte('ministere_non_vide'))
+    afficher(donnees(), actions)
+    await userEvent.click(bouton('Supprimer EJP Formation'))
+    await userEvent.click(bouton('Supprimer le ministère'))
+    const fenetre = await screen.findByRole('alertdialog', {
+      name: 'EJP Formation ne peut pas être supprimé',
+    })
+    expect(puces(fenetre)).toEqual(["une autre donnée le relie encore à l'outil"])
+  })
+
+  it('réponse perdue : la fenêtre de suppression reste ouverte avec l’erreur, rien n’est relu', async () => {
+    const actions = actionsFausses()
+    actions.supprimer.mockRejectedValue(new ErreurCompte('connexion'))
+    afficher(donnees(), actions)
+    await userEvent.click(bouton('Supprimer EJP Formation'))
+    await userEvent.click(bouton('Supprimer le ministère'))
+    const fenetre = screen.getByRole('alertdialog', { name: 'Supprimer EJP Formation ?' })
+    expect(
+      await within(fenetre).findByText(
+        'La connexion a échoué. Fermez cette fenêtre et vérifiez la liste avant de réessayer.',
+      ),
+    ).toBeInTheDocument()
+    expect(actions.lireSuppression).not.toHaveBeenCalled()
   })
 })
 

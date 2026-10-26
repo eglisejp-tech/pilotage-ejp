@@ -55,8 +55,12 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await desactives.click()
     await expect(ministeres).toContainText('Désactivé le 2 oct.')
     await expect(bouton(page, 'Réactiver Merch')).toBeVisible()
+    // T75 : « Supprimer » sur chaque ministère, qu'il se supprime ou non.
     await expect(bouton(page, 'Supprimer EJP TECH')).toBeVisible()
-    await expect(bouton(page, 'Supprimer Merch')).toHaveCount(0)
+    await expect(bouton(page, 'Supprimer Merch')).toBeVisible()
+    await expect(bouton(page, 'Supprimer Communication')).toBeVisible()
+    await expect(bouton(page, 'Supprimer Coordination')).toBeVisible()
+    await expect(bouton(page, 'Supprimer Berger')).toHaveCount(0)
     const lien = page.getByRole('link', { name: '2 indicateurs pour Communication' })
     await expect(lien).toHaveAttribute('href', /^\/indicateurs\/10000000-/)
     await expect(ministeres).toContainText('et les chiffres par département')
@@ -255,7 +259,7 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await bouton(page, 'Supprimer EJP TECH').click()
     await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP TECH ?')
     await expect(fenetre(page)).toContainText(
-      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Le journal garde la trace de la suppression. C'est définitif.",
+      "EJP TECH, ses 8 indicateurs et son compte (ejptech1+ministre@exemple.test) disparaissent de l'outil. Il sort aussi de la liste des ministères attendus d'une session. Le journal garde la trace de la suppression. C'est définitif.",
     )
     await page.keyboard.press('Escape')
     await expect(fenetre(page)).toHaveCount(0)
@@ -268,16 +272,21 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await expect(page.getByRole('heading', { level: 1 })).toBeFocused()
   })
 
-  test('« Supprimer » refusé (le ministère a maintenant des données) : la fenêtre le dit', async ({
+  test('« Supprimer » refusé au dernier moment (T75) : la fenêtre « impossible » remplace la confirmation', async ({
     page,
   }) => {
     await ouvrir(page, 'refus=ministere_non_vide')
     await bouton(page, 'Afficher les 2 ministères désactivés').click()
     await bouton(page, 'Supprimer EJP TECH').click()
     await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
-    await expect(fenetre(page).getByRole('alert')).toHaveText(
-      'Ce ministère a maintenant des données : il ne peut plus être supprimé.',
+    // L'écran relit les raisons ; l'aperçu n'en connaît aucune : « une autre donnée ».
+    await expect(fenetre(page).getByRole('heading')).toHaveText(
+      'EJP TECH ne peut pas être supprimé',
     )
+    await expect(fenetre(page).getByRole('listitem')).toHaveText([
+      "une autre donnée le relie encore à l'outil",
+    ])
+    await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer'])
   })
 
   test('refaire l’activation : texte du ministère, puis « À activer »', async ({ page }) => {
@@ -334,6 +343,148 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
       await expect(page.getByRole('main')).not.toContainText('@exemple.test')
     })
   }
+})
+
+// T75 : « Supprimer » partout, avec la raison d'un refus. Les six critères d'acceptation de la
+// conception validée le 26 octobre 2026, aux trois formats (projets Playwright).
+test.describe('« Supprimer » partout, avec la raison d’un refus (T75), aperçu', () => {
+  test('critère 1 : EJP TECH tel qu’en production (réactivé en corrigeant l’adresse, invitation relancée) se supprime', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Réactiver EJP TECH').click()
+    await champ(page, 'Adresse email').fill('ejptech1+ministere@exemple.test')
+    await bouton(page, "Réactiver et envoyer l'invitation").click()
+    await expect(reussite(page)).toHaveText(
+      'Ministère EJP TECH réactivé. Invitation envoyée à ejptech1+ministere@exemple.test.',
+    )
+    await bouton(page, "Renvoyer l'invitation EJP TECH").click()
+    await expect(
+      page.getByText('Invitation renvoyée à ejptech1+ministere@exemple.test.'),
+    ).toBeVisible()
+    await bouton(page, 'Supprimer EJP TECH').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP TECH ?')
+    await expect(fenetre(page)).toContainText(
+      "Il sort aussi de la liste des ministères attendus d'une session.",
+    )
+    await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(reussite(page)).toHaveText('Ministère EJP TECH supprimé.')
+    await expect(section(page, 'Ministères')).not.toContainText('EJP TECH')
+  })
+
+  test('critère 2 : EJP Formation se supprime, sans phrase de session', async ({ page }) => {
+    await ouvrir(page)
+    await bouton(page, 'Supprimer EJP Formation').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText('Supprimer EJP Formation ?')
+    await expect(fenetre(page)).not.toContainText('Il sort aussi')
+    await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(reussite(page)).toHaveText('Ministère EJP Formation supprimé.')
+  })
+
+  test('critère 3 : Communication ne se supprime pas ; ses raisons chiffrées ; « Désactiver » à la place', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Supprimer Communication').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText(
+      'Communication ne peut pas être supprimé',
+    )
+    await expect(fenetre(page).getByRole('listitem')).toHaveText([
+      'son compte a déjà été activé',
+      '12 chiffres saisis',
+      'des présences saisies pour 3 sessions',
+      "3 points d'attention",
+      "mentionné dans 2 points d'attention",
+      '2 événements',
+      '1 réunion',
+    ])
+    await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
+    await fenetre(page).getByRole('button', { name: 'Fermer' }).click()
+    await expect(fenetre(page)).toHaveCount(0)
+    await expect(bouton(page, 'Supprimer Communication')).toBeFocused()
+    await bouton(page, 'Supprimer Communication').click()
+    await fenetre(page).getByRole('button', { name: 'Désactiver' }).click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText('Désactiver Communication ?')
+    await fenetre(page).getByRole('button', { name: 'Désactiver le ministère' }).click()
+    await expect(reussite(page)).toHaveText('Ministère Communication désactivé.')
+  })
+
+  test('critère 4 : Coordination et FIJ ne se suppriment jamais', async ({ page }) => {
+    await ouvrir(page)
+    await bouton(page, 'Supprimer Coordination').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText(
+      'Coordination ne peut pas être supprimé',
+    )
+    await expect(fenetre(page)).toContainText('Coordination et FIJ ne se suppriment jamais.')
+    await expect(fenetre(page).getByRole('listitem')).toHaveCount(0)
+    // Sans compte : rien à désactiver.
+    await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer'])
+    await page.keyboard.press('Escape')
+    await bouton(page, 'Supprimer FIJ').click()
+    await expect(fenetre(page)).toContainText('Coordination et FIJ ne se suppriment jamais.')
+    await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
+  })
+
+  test('critère 5 : Merch, désactivé avec son historique : ses raisons, « Fermer » seul', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Supprimer Merch').click()
+    await expect(fenetre(page).getByRole('heading')).toHaveText('Merch ne peut pas être supprimé')
+    await expect(fenetre(page).getByRole('listitem')).toHaveText([
+      'son compte a déjà été activé',
+      '30 chiffres saisis',
+      '4 réunions',
+    ])
+    await expect(fenetre(page).getByRole('button')).toHaveText(['Fermer'])
+  })
+
+  test('critère 6 : Social, attendu par deux sessions sans saisie de lui, se supprime et les quitte', async ({
+    page,
+  }) => {
+    await ouvrir(page)
+    await bouton(page, 'Supprimer Social').click()
+    await expect(fenetre(page)).toContainText(
+      'Il sort aussi de la liste des ministères attendus de 2 sessions.',
+    )
+    await fenetre(page).getByRole('button', { name: 'Supprimer le ministère' }).click()
+    await expect(reussite(page)).toHaveText('Ministère Social supprimé.')
+    await expect(section(page, 'Ministères').getByText('7 actifs', { exact: true })).toBeVisible()
+  })
+
+  test('audit axe et 360 px : la fenêtre « impossible »', async ({ page }) => {
+    await ouvrir(page)
+    await bouton(page, 'Supprimer Communication').click()
+    await auditer(page)
+    await page.setViewportSize({ width: 360, height: 800 })
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    ).toBeLessThanOrEqual(0)
+  })
+
+  test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+    const largeur = page.viewportSize()?.width ?? 0
+    const dossier = 'test-results/captures'
+    await ouvrir(page)
+    await bouton(page, 'Supprimer Communication').click()
+    await page.screenshot({ path: `${dossier}/comptes-t75-impossible-${largeur}.png` })
+    await page.keyboard.press('Escape')
+    await bouton(page, 'Supprimer Coordination').click()
+    await page.screenshot({ path: `${dossier}/comptes-t75-reference-${largeur}.png` })
+    await page.keyboard.press('Escape')
+    await bouton(page, 'Supprimer Social').click()
+    await page.screenshot({ path: `${dossier}/comptes-t75-sessions-${largeur}.png` })
+    await page.keyboard.press('Escape')
+    await bouton(page, 'Afficher les 2 ministères désactivés').click()
+    await bouton(page, 'Supprimer Merch').click()
+    await page.screenshot({ path: `${dossier}/comptes-t75-desactive-${largeur}.png` })
+    await page.keyboard.press('Escape')
+    await page.screenshot({ path: `${dossier}/comptes-t75-page-${largeur}.png`, fullPage: true })
+  })
 })
 
 test.describe('Ministères et comptes (administration de l’église, en lecture, T60), aperçu', () => {

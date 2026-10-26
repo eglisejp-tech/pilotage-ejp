@@ -329,9 +329,15 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     })
     expect(ancien).not.toBeNull()
     // « À activer » de nouveau : l'adresse se corrige ; activé un jour, le ministère ne se
-    // supprime plus (T74, migration 20261025204627).
+    // supprime plus (T74, migration 20261025204627). T75 : « Supprimer » est là et la fenêtre
+    // dit pourquoi, la base calcule la raison ; « Désactiver » est proposé à la place.
     await expect(bouton(page, `Corriger l'adresse ${NOM}`)).toBeVisible()
-    await expect(bouton(page, `Supprimer ${NOM}`)).toHaveCount(0)
+    await bouton(page, `Supprimer ${NOM}`).click()
+    const refus = page.getByRole('alertdialog', { name: `${NOM} ne peut pas être supprimé` })
+    await expect(refus.getByRole('listitem')).toHaveText(['son compte a déjà été activé'])
+    await expect(refus.getByRole('button')).toHaveText(['Fermer', 'Désactiver'])
+    await refus.getByRole('button', { name: 'Fermer' }).click()
+    await expect(refus).toHaveCount(0)
   })
 
   test('supprime un ministère vide : il disparaît avec son compte, le journal garde son nom (T74)', async ({
@@ -388,7 +394,10 @@ test.describe("EJP Tech gère le compte d'un nouveau ministère (T60)", () => {
     )
     expect(journal).toEqual([
       { action: 'ministere_cree', detail: {} },
-      { action: 'ministere_supprime', detail: { nom: NOM_VIDE, comptes: 1, indicateurs: 0 } },
+      {
+        action: 'ministere_supprime',
+        detail: { nom: NOM_VIDE, comptes: 1, indicateurs: 0, sessions: 0 },
+      },
     ])
     expect(JSON.stringify(journal)).not.toContain('@')
   })

@@ -96,4 +96,27 @@ describe('useActionsComptes', () => {
     })
     expect(clesRelues()).toEqual([['comptes'], ['ministeres']])
   })
+
+  it('lireSuppression : les raisons d’un ministère, relues après un refus, puis la liste (T75)', async () => {
+    const ministere = '10000000-0000-4000-8000-000000000010'
+    const rpc = vi.fn(() =>
+      Promise.resolve({
+        data: [
+          { ministere_id: ministere, code: 'chiffres', nombre: 2, bloque: true },
+          { ministere_id: ministere, code: 'sessions_attendues', nombre: 1, bloque: false },
+        ],
+        error: null,
+      }),
+    )
+    courant.client = { rpc }
+    const { actions, clesRelues } = monter()
+    await expect(actions.lireSuppression(ministere)).resolves.toEqual({
+      raisons: [{ code: 'chiffres', nombre: 2 }],
+      sessions: 1,
+    })
+    expect(rpc).toHaveBeenCalledWith('raisons_suppression_ministere', {
+      p_ministere_id: ministere,
+    })
+    expect(clesRelues()).toEqual([['comptes'], ['ministeres']])
+  })
 })
