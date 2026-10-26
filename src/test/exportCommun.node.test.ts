@@ -305,6 +305,20 @@ describe('fiche, dernière migration, résumé', LENT, () => {
     expect(bash('export_derniere_migration "$LISTE"', { LISTE: tableau }).sortie).toBe(
       '20261026084227\n',
     )
+    // Forme relevée dans la CI le 26 octobre 2026 (CLI 2.122, migration list --local).
+    const cli = [
+      'Connecting to local database...',
+      '',
+      '  ',
+      '   Local            | Remote           | Time (UTC)            ',
+      '  ------------------|------------------|-----------------------',
+      '   `20261013100000` | `20261013100000` | `2026-10-13 10:00:00` ',
+      '   `20261013110000` | `20261013110000` | `2026-10-13 11:00:00` ',
+      '   `20261027090000` |                  | `20261027090000`      ',
+    ].join('\n')
+    expect(bash('export_derniere_migration "$LISTE"', { LISTE: cli }).sortie).toBe(
+      '20261013110000\n',
+    )
   })
 
   it('fiche sans donnée, résumé de sept lignes autorisées', () => {
