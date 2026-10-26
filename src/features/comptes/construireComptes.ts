@@ -1,7 +1,9 @@
 import type { LigneEtatCompte } from '@/data/comptes'
 import type { MinistereListe } from '@/data/ministeres'
+import { SUPPRESSION_LIBRE, suppressionsParMinistere } from '@/features/comptes/raisons'
+import type { SuppressionMinistere } from '@/features/comptes/raisons'
 import type { DonneesComptes, LigneCompte } from '@/features/comptes/types'
-import type { TypeCompte } from '@/lib/base'
+import type { LigneRaisonSuppression, TypeCompte } from '@/lib/base'
 import { jourDeParis } from '@/lib/metier/dates'
 import { comparerNoms } from '@/lib/metier/texte'
 
@@ -27,18 +29,28 @@ export function prochainLibelle(
   return `${type === 'conseil' ? 'Conseil' : 'EJP Tech'}, compte ${suivant}`
 }
 
-/** Lectures réservées à EJP Tech (T74) : vides en lecture seule. */
+/** Lectures réservées à EJP Tech (T74, T75) : absentes en lecture seule. */
 export interface LecturesGestion {
-  /** Ministères vides qu'EJP Tech peut supprimer. */
-  supprimables?: readonly string[]
+  /** Raisons d'un refus de suppression, de tous les ministères (T75). */
+  raisons?: readonly LigneRaisonSuppression[]
   /** Comptes jamais activés, désactivés compris. */
   jamaisActives?: readonly string[]
 }
 
 interface Contexte {
   nombres: ReadonlyMap<string, number>
-  supprimables: ReadonlySet<string>
+  /** null en lecture seule : aucun ministère n'a « Supprimer ». */
+  suppressions: ReadonlyMap<string, SuppressionMinistere> | null
   jamaisActives: ReadonlySet<string>
+}
+
+/** La suppression d'un ministère : ses raisons lues, ou aucune (il se supprime). */
+function suppressionDuMinistere(
+  ministereId: string | null,
+  contexte: Contexte,
+): SuppressionMinistere | null {
+  if (ministereId === null || contexte.suppressions === null) return null
+  return contexte.suppressions.get(ministereId) ?? SUPPRESSION_LIBRE
 }
 
 function ligneDuCompte(
@@ -65,7 +77,7 @@ function ligneDuCompte(
       compte.etat === 'invitation_envoyee' ||
       compte.etat === 'a_activer' ||
       (compte.etat === 'desactive' && contexte.jamaisActives.has(compte.user_id)),
-    supprimable: ministere !== null && contexte.supprimables.has(ministere),
+    suppression: suppressionDuMinistere(ministere, contexte),
   }
 }
 
@@ -109,7 +121,7 @@ function lignesMinisteres(
         indicateurs,
         fij,
         jamaisActive: false,
-        supprimable: contexte.supprimables.has(ministere.id),
+        suppression: suppressionDuMinistere(ministere.id, contexte),
       })
     } else {
       const dernier = [...siens].sort(plusRecent)[0]
@@ -168,7 +180,7 @@ export function construireComptes(
   }
   const contexte: Contexte = {
     nombres,
-    supprimables: new Set(gestion.supprimables ?? []),
+    suppressions: gestion.raisons === undefined ? null : suppressionsParMinistere(gestion.raisons),
     jamaisActives: new Set(gestion.jamaisActives ?? []),
   }
   const lignesDesMinisteres = lignesMinisteres(comptes, ministeres, contexte)

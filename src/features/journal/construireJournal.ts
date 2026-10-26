@@ -422,13 +422,20 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
     case 'adresse_corrigee':
       return objet(ligne)
     case 'ministere_supprime': {
-      // T74 : le nom gardé par la ligne, et ce qui est parti avec le ministère (jamais d'adresse).
+      // T74 : le nom gardé par la ligne, et ce qui est parti avec le ministère (jamais d'adresse) ;
+      // T75 : les sessions dont il est sorti (leur complétude passée ne le compte plus).
       const total = nombreDe(detail, 'indicateurs')
+      const sessions = nombreDe(detail, 'sessions')
       return avecSuite(
         objet(ligne),
         total === null || total === 0
           ? null
           : `${nombre(total)} ${accorder(total, 'indicateur supprimé', 'indicateurs supprimés')} avec lui`,
+        sessions === null || sessions === 0
+          ? null
+          : sessions === 1
+            ? "retiré d'une session"
+            : `retiré de ${nombre(sessions)} sessions`,
       )
     }
     case 'compte_desactive':

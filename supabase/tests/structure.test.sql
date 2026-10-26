@@ -374,6 +374,8 @@ $$, $$ values
   ('masquer_texte', 4, false, true, false),
   ('modifier_mentions_point', 2, false, true, false),
   ('modifier_session', 2, false, true, false),
+  -- T75 : raisons d'un refus de suppression (EJP Tech seul)
+  ('raisons_suppression_ministere', 1, false, true, false),
   ('retirer_indicateur', 2, false, true, false),
   ('retirer_mention_point', 2, false, true, false),
   ('retirer_mon_indicateur', 2, false, true, false),
@@ -398,7 +400,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 50 fonctions de public : 35 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 51 fonctions de public : 36 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -424,6 +426,7 @@ $$, $$ values
   ('communs_de_fiche', 0, true, true, false),
   ('comptages_evenements_mois', 1, false, true, false),
   ('compte_active', 1, false, false, false),
+  ('compte_active_un_jour', 1, false, false, false),
   ('comptes_jamais_actives', 0, true, true, false),
   ('conditions_acceptees', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
@@ -525,6 +528,9 @@ $$, $$ values
   ('refuser_modification_sauf_masquage', 0, false, false, false),
   ('refuser_modification_sauf_ministere_supprime', 0, false, false, false),
   ('refus_suppression_ministere', 1, false, false, false),
+  -- T75 : les raisons (aide interne), puis leur lecture par l'écran (EJP Tech seul, aal2)
+  ('raisons_suppression', 1, false, false, false),
+  ('raisons_suppression_ministere', 1, true, true, false),
   ('reprendre_modeles', 0, false, false, false),
   ('retard_minutes', 2, false, true, false),
   ('retirer_calculs_de', 1, false, false, false),
@@ -568,7 +574,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 162 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 165 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

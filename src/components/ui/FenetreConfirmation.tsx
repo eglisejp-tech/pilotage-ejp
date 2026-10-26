@@ -12,8 +12,11 @@ interface Props {
   texte: ReactNode
   /** Ce qui suit la phrase : un champ (motif), une liste. */
   children?: ReactNode
-  /** Le bouton d'action, qui dit ce qu'il fait (« Désactiver le ministère »). */
-  confirmer: string
+  /**
+   * Le bouton d'action, qui dit ce qu'il fait (« Désactiver le ministère »). Sans lui, la fenêtre
+   * informe seulement : un seul bouton, `annuler` (« Fermer », T75).
+   */
+  confirmer?: string
   /** Pendant l'action : « Désactivation en cours ». Sans lui, l'action est immédiate. */
   libelleEnCours?: string
   /** Défaut : « Annuler ». Échap vaut ce bouton. */
@@ -23,7 +26,7 @@ interface Props {
   /** Faux tant que l'action n'est pas prête (motif à choisir) : bouton indisponible. */
   pret?: boolean
   /** L'action. Un refus (exception) s'affiche sous les boutons, la fenêtre reste ouverte. */
-  onConfirmer: () => Promise<void> | void
+  onConfirmer?: () => Promise<void> | void
   onAnnuler: () => void
   /** La phrase d'un refus de l'action. Obligatoire pour une action qui peut échouer. */
   lireMessage?: (refus: unknown) => string
@@ -64,7 +67,7 @@ export function FenetreConfirmation({
   useFenetreModale(fenetre, annulerSiLibre)
 
   const lancer = async () => {
-    if (verrou.current || !pret) return
+    if (verrou.current || !pret || !onConfirmer) return
     verrou.current = true
     setEnCours(true)
     setErreur(null)
@@ -101,15 +104,17 @@ export function FenetreConfirmation({
         <Bouton enCours={enCours} onClick={annulerSiLibre}>
           {annuler}
         </Bouton>
-        <Bouton
-          variante={varianteConfirmer}
-          enCours={enCours}
-          indisponible={!pret}
-          libelleEnCours={libelleEnCours}
-          onClick={() => void lancer()}
-        >
-          {confirmer}
-        </Bouton>
+        {confirmer === undefined ? null : (
+          <Bouton
+            variante={varianteConfirmer}
+            enCours={enCours}
+            indisponible={!pret}
+            libelleEnCours={libelleEnCours}
+            onClick={() => void lancer()}
+          >
+            {confirmer}
+          </Bouton>
+        )}
       </div>
       {erreur !== null ? <ErreurFormulaire message={erreur} /> : null}
     </dialog>

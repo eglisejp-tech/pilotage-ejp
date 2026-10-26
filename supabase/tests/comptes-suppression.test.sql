@@ -1,5 +1,5 @@
 -- « Supprimer » partout, avec la raison d'un refus (décision T75, migration
--- 20261026090000_supprimer_partout.sql). Les six critères d'acceptation de la conception
+-- 20261026084227_supprimer_partout.sql). Les six critères d'acceptation de la conception
 -- validée le 26 octobre 2026 :
 --   1. EJP TECH tel qu'en production : créé avec une adresse mal tapée, 8 indicateurs prévus,
 --      attendu par une session saisie par d'autres ministères, désactivé, adresse corrigée,
@@ -149,28 +149,28 @@ select is(private.refus_suppression_ministere((select m_deux from ctx)), null,
   'critère 6 : le ministère attendu par deux sessions, sans saisie de lui, se supprime');
 
 -- Les raisons, dans l'ordre d'affichage (code, nombre, bloque)
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select m_tech from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select m_tech from ctx)) r $$,
   $$ values ('sessions_attendues'::text, 1, false) $$,
   'critère 1 : EJP TECH n''a qu''une information, la session saisie par d''autres qu''il quittera');
-select is_empty($$ select 1 from private.raisons_suppression_ministere((select m_formation from ctx)) $$,
+select is_empty($$ select 1 from private.raisons_suppression((select m_formation from ctx)) $$,
   'critère 2 : EJP FORMATION n''a aucune raison, aucune session');
-select ok(exists (select 1 from private.raisons_suppression_ministere((select com from ctx)) r
+select ok(exists (select 1 from private.raisons_suppression((select com from ctx)) r
                    where r.code = 'chiffres' and r.bloque
                      and r.nombre = (select count(*) from public.mesure x where x.ministere_id = (select com from ctx))),
   'critère 3 : Communication : ses chiffres, avec leur nombre exact');
 select ok((select bool_and(r.bloque = (r.code <> 'sessions_attendues')) and count(*) >= 2
-             from private.raisons_suppression_ministere((select com from ctx)) r),
+             from private.raisons_suppression((select com from ctx)) r),
   'critère 3 : Communication : plusieurs raisons, toutes bloquent (sauf l''information des sessions)');
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select coordination from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select coordination from ctx)) r $$,
   $$ values ('ministere_de_reference'::text, 1, true) $$,
   'critère 4 : Coordination : une seule raison, le ministère de référence');
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select fij from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select fij from ctx)) r $$,
   $$ values ('ministere_de_reference'::text, 1, true) $$,
   'critère 4 : FIJ : une seule raison, malgré toutes ses saisies');
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select m_hist from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select m_hist from ctx)) r $$,
   $$ values ('chiffres'::text, 1, true) $$,
   'critère 5 : le ministère désactivé : « 1 chiffre saisi », son compte jamais activé ne compte pas');
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select m_deux from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select m_deux from ctx)) r $$,
   $$ values ('sessions_attendues'::text, 2, false) $$,
   'critère 6 : une information, les deux sessions qu''il quittera');
 
@@ -194,7 +194,7 @@ select is(tests.essai(null, null, 'select * from public.raisons_suppression_mini
   'l''anonyme est refusé');
 select ok(not has_function_privilege('anon', 'public.raisons_suppression_ministere(uuid)', 'execute')
           and not has_function_privilege('service_role', 'public.raisons_suppression_ministere(uuid)', 'execute')
-          and not has_function_privilege('authenticated', 'private.raisons_suppression_ministere(uuid)', 'execute')
+          and not has_function_privilege('authenticated', 'private.raisons_suppression(uuid)', 'execute')
           and not has_function_privilege('authenticated', 'private.compte_active_un_jour(uuid)', 'execute'),
   'droits : la lecture à authenticated seulement, les aides à personne');
 
@@ -313,7 +313,7 @@ set local role service_role;
 select lives_ok($$ select public.serveur_reactiver_compte((select tech from ctx), (select sa from ctx),
                    (select u_gestes from ctx)) $$, 'gestes : réactivé');
 reset role;
-select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression_ministere((select m_gestes from ctx)) r $$,
+select results_eq($$ select r.code, r.nombre, r.bloque from private.raisons_suppression((select m_gestes from ctx)) r $$,
   $$ values ('sessions_attendues'::text, 1, false) $$,
   'gestes : après la réactivation, aucune raison qui bloque, une session à quitter');
 set local role service_role;

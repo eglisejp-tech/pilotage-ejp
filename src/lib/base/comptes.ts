@@ -45,8 +45,6 @@ export type VuesComptes = {
     desactive_le: string | null
     etat: EtatCompte
   }>
-  /** Ministères vides qu'EJP Tech peut supprimer (T74) ; aucune ligne pour les autres profils. */
-  v_ministeres_supprimables: Vue<{ ministere_id: string }>
   /**
    * Comptes jamais activés, désactivés compris, hors administration de l'église (T74) ; aucune
    * ligne pour les autres profils qu'EJP Tech.
@@ -69,4 +67,24 @@ export type FonctionsComptes = {
   modifier_session: { Args: { p_session_id: string; p_ministeres: string[] }; Returns: undefined }
   /** Supprime une session sans aucune saisie. */
   supprimer_session: { Args: { p_session_id: string }; Returns: undefined }
+  /**
+   * Raisons d'un refus de suppression (T75), EJP Tech seul, en aal2 : de tous les ministères sans
+   * identifiant, d'un seul avec. Refusée (42501) pour tout autre profil.
+   */
+  raisons_suppression_ministere: {
+    Args: { p_ministere_id?: string }
+    Returns: LigneRaisonSuppression[]
+  }
+}
+
+/**
+ * Une raison pour laquelle un ministère ne se supprime pas (T75), calculée par la base : un code
+ * stable (`chiffres`, `points`, `compte_deja_active`, `ministere_de_reference`...), un nombre, et
+ * `bloque` faux pour la seule information (`sessions_attendues`, les sessions qu'il quittera).
+ */
+export type LigneRaisonSuppression = {
+  ministere_id: string
+  code: string
+  nombre: number
+  bloque: boolean
 }

@@ -6,8 +6,8 @@
 -- Les données d'essai de chaque cas de refus s'ajoutent sans les triggers de leur table (désactivés
 -- le temps d'un ajout, dans cette transaction annulée) : seule compte la ligne qui vise le
 -- ministère, pas le parcours de saisie, que d'autres fichiers testent.
--- Revu par T75 (migration 20261026090000_supprimer_partout.sql) : chaque cas a sa raison
--- (private.raisons_suppression_ministere, un code et un nombre) ; le cas « session saisie »
+-- Revu par T75 (migration 20261026084227_supprimer_partout.sql) : chaque cas a sa raison
+-- (private.raisons_suppression, un code et un nombre) ; le cas « session saisie »
 -- (une session saisie par un AUTRE ministère qui l'attend) ne bloque plus, c'est l'erreur de
 -- T74 qui refusait EJP TECH ; une trace écrite par le compte (journal, déclaration, conditions)
 -- dit que le compte a été activé. Les six critères d'acceptation de T75 sont dans
@@ -228,7 +228,7 @@ select is(private.refus_suppression_ministere(c.ministere),
   from cas c order by c.nom;
 -- T75 : la raison de chaque cas, son code et son nombre (une ligne visée), seule raison qui bloque.
 select results_eq(
-         format('select r.code, r.nombre from private.raisons_suppression_ministere(%L) r where r.bloque', c.ministere),
+         format('select r.code, r.nombre from private.raisons_suppression(%L) r where r.bloque', c.ministere),
          case when r.code is null then 'select null::text, null::integer where false'
               else format('values (%L::text, 1)', r.code) end,
          'raison : ' || c.nom || coalesce(' (' || r.code || ')', ', aucune'))

@@ -6,6 +6,7 @@ import { EnTetePage } from '@/components/ui/EnTetePage'
 import { GabaritPage } from '@/components/ui/GabaritPage'
 import { BoutonAjout } from '@/features/comptes/BoutonAjout'
 import { FenetreConfirmation } from '@/features/comptes/FenetreConfirmation'
+import { FenetreRefusSuppression } from '@/features/comptes/FenetreRefusSuppression'
 import { ListesEglise } from '@/features/comptes/ListesEglise'
 import { PanneauCompte } from '@/features/comptes/PanneauCompte'
 import { SectionComptes } from '@/features/comptes/SectionComptes'
@@ -41,8 +42,9 @@ function focusPerdu(): boolean {
  * Écran 13, « Ministères et comptes » (EJP Tech, qui gère, et l'administration de l'église, qui
  * lit : décision T60 ; maquette 13, BRIEF section 9) : titre, phrase et « Ajouter un ministère »,
  * puis les sections Ministères, Berger et conseil, EJP Tech et Listes. Les panneaux d'ajout
- * s'ouvrent en page entière sous 600 px, en panneau de 460 px au-delà ; désactiver et refaire
- * l'activation passent par une fenêtre de confirmation. La réussite d'une création s'affiche en
+ * s'ouvrent en page entière sous 600 px, en panneau de 460 px au-delà ; désactiver, refaire
+ * l'activation et supprimer passent par une fenêtre de confirmation, et un ministère qui ne se
+ * supprime pas ouvre la fenêtre « impossible », avec ses raisons (T75). La réussite d'une création s'affiche en
  * haut de la page ; le résultat d'une action de ligne, sous les boutons de sa ligne. Quand le
  * bouton qui avait le focus disparaît, le focus va au premier bouton de la même ligne, ou au titre
  * après une création. En lecture seule, ni bouton d'ajout ni bouton de ligne.
@@ -236,6 +238,13 @@ export function VueComptes({
             confirmation={ecran.confirmation.texte}
             onConfirmer={ecran.confirmation.confirmer}
             onAnnuler={ecran.annulerConfirmation}
+          />
+        ) : null}
+        {ecran.refus ? (
+          <FenetreRefusSuppression
+            refus={ecran.refus.texte}
+            onDesactiver={ecran.refus.desactiver}
+            onFermer={ecran.fermerRefus}
           />
         ) : null}
       </GabaritPage>

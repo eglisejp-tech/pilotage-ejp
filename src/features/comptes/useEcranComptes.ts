@@ -1,6 +1,11 @@
 import { useState } from 'react'
+import { flushSync } from 'react-dom'
+import { ErreurCompte } from '@/data/comptes'
+import type { CodeErreurCompte } from '@/data/comptes'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import type { PanneauOuvert } from '@/features/comptes/PanneauCompte'
+import { RAISON_INCONNUE } from '@/features/comptes/raisons'
+import type { RaisonSuppression } from '@/features/comptes/raisons'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import type { ResultatAction } from '@/features/comptes/ResultatLigne'
 import {
@@ -8,9 +13,10 @@ import {
   confirmationDesactiverMinistere,
   confirmationRefaireActivation,
   confirmationSupprimerMinistere,
+  refusSuppression,
   REUSSITES_COMPTES,
 } from '@/features/comptes/textes'
-import type { TexteConfirmation } from '@/features/comptes/textes'
+import type { TexteConfirmation, TexteRefusSuppression } from '@/features/comptes/textes'
 import type { ActionsComptes, LigneCompte } from '@/features/comptes/types'
 
 /** Fenêtre de confirmation ouverte : son texte et l'action qu'elle confirme. */
@@ -19,15 +25,38 @@ export interface ConfirmationOuverte {
   confirmer: () => Promise<void>
 }
 
+/** Fenêtre « impossible » d'une suppression (T75) : ses textes, et « Désactiver » s'il y a lieu. */
+export interface RefusOuvert {
+  texte: TexteRefusSuppression
+  desactiver: (() => void) | null
+}
+
+/** Refus de supprimer-ministere qui disent pourquoi le ministère reste : l'écran relit ses raisons. */
+const REFUS_DE_SUPPRESSION: ReadonlySet<CodeErreurCompte> = new Set([
+  'ministere_non_vide',
+  'compte_deja_active',
+  'ministere_de_reference',
+])
+
+/** Un compte actif à désactiver à la place (ni désactivé, ni ministère sans compte). */
+function peutDesactiver(ligne: LigneCompte): boolean {
+  return ligne.userId !== null && ligne.etat !== 'desactive' && ligne.etat !== 'sans_compte'
+}
+
 /**
- * État de l'écran 13 : panneau ouvert, fenêtre de confirmation, action directe en cours
- * (relance, réactivation), message de réussite d'une création (en haut de la page, 6 secondes)
- * et résultat de la dernière action d'une ligne (sous les boutons de cette ligne).
- * Les actions viennent de la page (Edge Functions) ou de l'aperçu (simulées).
+ * État de l'écran 13 : panneau ouvert, fenêtre de confirmation, fenêtre « impossible » d'une
+ * suppression (T75), action directe en cours (relance, réactivation), message de réussite d'une
+ * création (en haut de la page, 6 secondes) et résultat de la dernière action d'une ligne (sous
+ * les boutons de cette ligne). Les actions viennent de la page (Edge Functions) ou de l'aperçu
+ * (simulées).
  */
 export function useEcranComptes(actions: ActionsComptes) {
   const [panneau, setPanneau] = useState<PanneauOuvert | null>(null)
   const [confirmation, setConfirmation] = useState<ConfirmationOuverte | null>(null)
+  const [refus, setRefus] = useState<{
+    ligne: LigneCompte
+    raisons: readonly RaisonSuppression[]
+  } | null>(null)
   const [enCours, setEnCours] = useState<{ cle: string; action: ActionLigne } | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
@@ -98,9 +127,68 @@ export function useEcranComptes(actions: ActionsComptes) {
     setEnvoi((precedent) => precedent + 1)
   }
 
+  const libelleDe = (ligne: LigneCompte) =>
+    ligne.type === 'ministere' ? `Ministère ${ligne.nom}` : ligne.nom
+
+  const desactiver = (ligne: LigneCompte) => {
+    const userId = ligne.userId
+    if (userId === null) return
+    confirmerPuis(
+      ligne,
+      ligne.type === 'ministere'
+        ? confirmationDesactiverMinistere(ligne.nom, ligne.email)
+        : confirmationDesactiverCompte(ligne.nom, ligne.email),
+      () => actions.desactiver(userId),
+      REUSSITES_COMPTES.desactive(libelleDe(ligne)),
+    )
+  }
+
+  /**
+   * « Supprimer » (T75) : un ministère sans raison ouvre la confirmation (avec les sessions qu'il
+   * quitte) ; sinon, la fenêtre « impossible » dit pourquoi. La base revérifie : si elle refuse au
+   * dernier moment, l'écran relit les raisons et la fenêtre « impossible » remplace la
+   * confirmation (« une autre donnée » si la base n'en nomme aucune).
+   */
+  const supprimer = (ligne: LigneCompte) => {
+    const ministereId = ligne.ministereId
+    const suppression = ligne.suppression
+    if (ministereId === null || suppression === null) return
+    setResultat(null)
+    if (suppression.raisons.length > 0) {
+      setRefus({ ligne, raisons: suppression.raisons })
+      return
+    }
+    setConfirmation({
+      texte: confirmationSupprimerMinistere(
+        ligne.nom,
+        ligne.email,
+        ligne.indicateurs ?? 0,
+        suppression.sessions,
+      ),
+      confirmer: async () => {
+        try {
+          await actions.supprimer(ministereId)
+        } catch (erreur) {
+          if (!(erreur instanceof ErreurCompte) || !REFUS_DE_SUPPRESSION.has(erreur.code)) {
+            throw erreur
+          }
+          const relue = await actions.lireSuppression(ministereId).catch(() => null)
+          if (relue === null) throw erreur
+          // La confirmation part d'abord : le focus revient au bouton « Supprimer », où la
+          // fenêtre « impossible » le rendra à sa fermeture.
+          flushSync(() => setConfirmation(null))
+          setRefus({ ligne, raisons: relue.raisons.length > 0 ? relue.raisons : [RAISON_INCONNUE] })
+          return
+        }
+        setConfirmation(null)
+        annoncer(REUSSITES_COMPTES.supprime(libelleDe(ligne)))
+      },
+    })
+  }
+
   const surAction = (ligne: LigneCompte, action: ActionLigne) => {
     const ministere = ligne.type === 'ministere'
-    const libelle = ministere ? `Ministère ${ligne.nom}` : ligne.nom
+    const libelle = libelleDe(ligne)
     const userId = ligne.userId
     if (action === 'creer') {
       if (ligne.ministereId !== null) {
@@ -113,17 +201,7 @@ export function useEcranComptes(actions: ActionsComptes) {
       return
     }
     if (action === 'supprimer') {
-      const ministereId = ligne.ministereId
-      if (ministereId === null) return
-      setResultat(null)
-      setConfirmation({
-        texte: confirmationSupprimerMinistere(ligne.nom, ligne.email, ligne.indicateurs ?? 0),
-        confirmer: async () => {
-          await actions.supprimer(ministereId)
-          setConfirmation(null)
-          annoncer(REUSSITES_COMPTES.supprime(libelle))
-        },
-      })
+      supprimer(ligne)
       return
     }
     if (userId === null) return
@@ -149,14 +227,7 @@ export function useEcranComptes(actions: ActionsComptes) {
         void agirDirectement(ligne, action, actions.reactiver, REUSSITES_COMPTES.reactive(libelle))
         return
       case 'desactiver':
-        confirmerPuis(
-          ligne,
-          ministere
-            ? confirmationDesactiverMinistere(ligne.nom, ligne.email)
-            : confirmationDesactiverCompte(ligne.nom, ligne.email),
-          () => actions.desactiver(userId),
-          REUSSITES_COMPTES.desactive(libelle),
-        )
+        desactiver(ligne)
         return
       case 'refaire':
         confirmerPuis(
@@ -169,6 +240,21 @@ export function useEcranComptes(actions: ActionsComptes) {
     }
   }
 
+  // « Désactiver » dans la fenêtre « impossible » : elle part d'abord (le focus revient au bouton
+  // « Supprimer »), puis la confirmation de la désactivation s'ouvre et y reviendra.
+  const refusOuvert: RefusOuvert | null =
+    refus === null
+      ? null
+      : {
+          texte: refusSuppression(refus.ligne.nom, refus.raisons, peutDesactiver(refus.ligne)),
+          desactiver: peutDesactiver(refus.ligne)
+            ? () => {
+                flushSync(() => setRefus(null))
+                desactiver(refus.ligne)
+              }
+            : null,
+        }
+
   return {
     panneau,
     ouvrirPanneau,
@@ -177,6 +263,8 @@ export function useEcranComptes(actions: ActionsComptes) {
     apresCreation: annoncer,
     confirmation,
     annulerConfirmation: () => setConfirmation(null),
+    refus: refusOuvert,
+    fermerRefus: () => setRefus(null),
     enCours,
     reussite,
     envoi,

@@ -2,7 +2,7 @@ import { ErreurCompte, MESSAGES_ERREURS_COMPTES } from '@/data/comptes'
 import type { CodeErreurCompte, LigneEtatCompte } from '@/data/comptes'
 import type { MinistereListe } from '@/data/ministeres'
 import type { CreationCompte } from '@/features/comptes/types'
-import type { EtatCompte, TypeCompte } from '@/lib/base'
+import type { EtatCompte, LigneRaisonSuppression, TypeCompte } from '@/lib/base'
 
 // Données d'exemple de l'aperçu de l'écran 13 (/apercu/comptes) : jamais la base, jamais le nom
 // d'une personne, des adresses en @exemple.test comme le jeu d'exemple. Les dates sont fixes
@@ -31,14 +31,20 @@ export interface CompteApercu {
   ligne: LigneEtatCompte
   confirme: boolean
   facteur: boolean
+  /** Activé un jour, puis « Refaire l'activation » : la suppression reste refusée (T74, T75). */
+  activeUnJour?: boolean
 }
 
 export interface DonneesApercu {
   comptes: CompteApercu[]
   ministeres: MinistereListe[]
   indicateurs: { ministere_id: string | null }[]
-  /** Ministères qui ont des saisies (ou des points, des événements...) : jamais supprimés (T74). */
-  avecDonnees: string[]
+  /**
+   * Ce que la base compte pour chaque ministère (T75), dans son ordre : ses saisies et ses
+   * traces (elles bloquent la suppression), et les sessions qui l'attendent (information).
+   * Coordination et FIJ, et un compte activé, se lisent ailleurs (codes, facteurs).
+   */
+  raisons: LigneRaisonSuppression[]
 }
 
 const m = (n: number) => `10000000-0000-4000-8000-${String(n).padStart(12, '0')}`
@@ -89,15 +95,45 @@ const MINISTERES: MinistereListe[] = [
   { id: m(10), code: null, nom: 'EJP TECH', desactive_le: '2026-10-02T09:30:00+02:00' },
 ]
 
+/** Une ligne de raison, comme la base la rend. */
+function raison(n: number, code: string, nombre: number): LigneRaisonSuppression {
+  return { ministere_id: m(n), code, nombre, bloque: code !== 'sessions_attendues' }
+}
+
+/**
+ * Les raisons de l'aperçu (T75), les six cas de la conception : Communication a des chiffres,
+ * des présences, des points et des événements ; Merch, désactivé, son historique ; Social (« À
+ * activer ») n'a rien saisi et deux sessions l'attendent ; EJP TECH n'a rien saisi et une session
+ * saisie par d'autres l'attend ; EJP Formation n'a rien du tout.
+ */
+const RAISONS: LigneRaisonSuppression[] = [
+  raison(1, 'chiffres', 12),
+  raison(1, 'presences', 3),
+  raison(1, 'points', 3),
+  raison(1, 'mentions_points', 2),
+  raison(1, 'evenements', 2),
+  raison(1, 'reunions', 1),
+  raison(2, 'chiffres', 8),
+  raison(2, 'signalements', 1),
+  raison(4, 'chiffres', 5),
+  raison(4, 'mentions_evenements', 1),
+  raison(5, 'sessions_attendues', 2),
+  raison(7, 'chiffres', 3),
+  raison(7, 'demandes', 1),
+  raison(9, 'chiffres', 30),
+  raison(9, 'reunions', 4),
+  raison(10, 'sessions_attendues', 1),
+]
+
 /**
  * Le jeu de l'aperçu : Coordination sans compte (comme en production), Merch désactivé, et EJP TECH,
  * désactivé, vide, son compte jamais activé (adresse mal tapée) : il se réactive en corrigeant
- * l'adresse, ou se supprime (T74).
+ * l'adresse, ou se supprime (T74). EJP Formation, invité, n'a rien saisi : il se supprime (T75).
  */
 export function donneesExemple(): DonneesApercu {
   return {
     ministeres: MINISTERES.map((ministere) => ({ ...ministere })),
-    avecDonnees: MINISTERES.filter((ministere) => ministere.id !== m(10)).map((x) => x.id),
+    raisons: RAISONS.map((ligne) => ({ ...ligne })),
     comptes: [
       compte(1, 'ministere', 'Ministère Communication', 'communication@exemple.test', {
         ministere: m(1),
@@ -116,6 +152,8 @@ export function donneesExemple(): DonneesApercu {
       }),
       compte(8, 'ministere', 'Ministère EJP Formation', 'formation@exemple.test', {
         ministere: m(8),
+        confirme: false,
+        facteur: false,
       }),
       compte(9, 'ministere', 'Ministère Merch', 'merch@exemple.test', {
         ministere: m(9),
@@ -158,30 +196,51 @@ export function donneesPremierUsage(): DonneesApercu {
       compte(31, 'admin_plateforme', 'EJP Tech, compte 1', 'ejptech1@exemple.test'),
     ],
     indicateurs: [],
-    avecDonnees: [],
+    raisons: [],
   }
 }
 
 /**
- * Ce que lit EJP Tech pour la gestion (T74), comme la base le calcule : les ministères vides
- * (aucune donnée, aucun compte activé, ni FIJ ni Coordination) et les comptes jamais activés.
+ * Raisons d'un ministère, comme la base les rend (T75) : Coordination et FIJ, seule raison ; sinon
+ * un compte activé un jour, ses saisies et ses traces, puis les sessions qui l'attendent.
+ */
+function raisonsDe(donnees: DonneesApercu, ministere: MinistereListe): LigneRaisonSuppression[] {
+  if (ministere.code !== null) {
+    return [{ ministere_id: ministere.id, code: 'ministere_de_reference', nombre: 1, bloque: true }]
+  }
+  const actives = donnees.comptes.filter(
+    (c) => c.ligne.ministere_id === ministere.id && (c.facteur || c.activeUnJour === true),
+  ).length
+  return [
+    ...(actives > 0
+      ? [{ ministere_id: ministere.id, code: 'compte_deja_active', nombre: actives, bloque: true }]
+      : []),
+    ...donnees.raisons.filter((ligne) => ligne.ministere_id === ministere.id),
+  ]
+}
+
+/**
+ * Ce que lit EJP Tech pour la gestion (T74, T75), comme la base le calcule : les raisons d'un
+ * refus de suppression de chaque ministère et les comptes jamais activés.
  */
 export function lecturesGestionApercu(donnees: DonneesApercu): {
-  supprimables: string[]
+  raisons: LigneRaisonSuppression[]
   jamaisActives: string[]
 } {
   const jamaisActives = donnees.comptes
     .filter((c) => !c.facteur && c.ligne.type !== 'admin_eglise')
     .map((c) => c.ligne.user_id)
-  const supprimables = donnees.ministeres
-    .filter(
-      (x) =>
-        x.code === null &&
-        !donnees.avecDonnees.includes(x.id) &&
-        !donnees.comptes.some((c) => c.ligne.ministere_id === x.id && c.facteur),
-    )
-    .map((x) => x.id)
-  return { supprimables, jamaisActives }
+  const raisons = donnees.ministeres.flatMap((ministere) => raisonsDe(donnees, ministere))
+  return { raisons, jamaisActives }
+}
+
+/** Les raisons d'un ministère, relues après un refus de la suppression (T75). */
+export function raisonsApercu(
+  donnees: DonneesApercu,
+  ministereId: string,
+): LigneRaisonSuppression[] {
+  const ministere = donnees.ministeres.find((x) => x.id === ministereId)
+  return ministere ? raisonsDe(donnees, ministere) : []
 }
 
 /** Attente d'une réponse simulée : le bouton dit « Envoi en cours ». */
@@ -296,7 +355,7 @@ export function simulerAction(
       break
     case 'refaire':
       if (desactive) throw new ErreurCompte('compte_desactive')
-      suivant = { ...cible, facteur: false }
+      suivant = { ...cible, facteur: false, activeUnJour: true }
       break
   }
   return {
@@ -330,21 +389,22 @@ export function simulerCorrection(
 }
 
 /**
- * Suppression simulée d'un ministère vide (T74), avec les refus de `supprimer-ministere` : le
- * ministère, ses comptes et ses indicateurs disparaissent.
+ * Suppression simulée (T74, T75), avec les refus de `supprimer-ministere`, que la base tire de la
+ * première raison qui bloque : le ministère, ses comptes, ses indicateurs et ses places dans les
+ * sessions disparaissent.
  */
 export function simulerSuppression(donnees: DonneesApercu, ministereId: string): DonneesApercu {
   const ministere = donnees.ministeres.find((x) => x.id === ministereId)
   if (!ministere) throw new ErreurCompte('ministere_inconnu')
-  if (ministere.code !== null) throw new ErreurCompte('ministere_de_reference')
-  if (donnees.comptes.some((c) => c.ligne.ministere_id === ministereId && c.facteur)) {
-    throw new ErreurCompte('compte_deja_active')
-  }
-  if (donnees.avecDonnees.includes(ministereId)) throw new ErreurCompte('ministere_non_vide')
+  const bloque = raisonsDe(donnees, ministere).find((ligne) => ligne.bloque)
+  if (bloque?.code === 'ministere_de_reference') throw new ErreurCompte('ministere_de_reference')
+  if (bloque?.code === 'compte_deja_active') throw new ErreurCompte('compte_deja_active')
+  if (bloque) throw new ErreurCompte('ministere_non_vide')
   return {
     ...donnees,
     ministeres: donnees.ministeres.filter((x) => x.id !== ministereId),
     comptes: donnees.comptes.filter((c) => c.ligne.ministere_id !== ministereId),
     indicateurs: donnees.indicateurs.filter((i) => i.ministere_id !== ministereId),
+    raisons: donnees.raisons.filter((ligne) => ligne.ministere_id !== ministereId),
   }
 }

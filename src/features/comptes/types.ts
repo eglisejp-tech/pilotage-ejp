@@ -1,3 +1,4 @@
+import type { SuppressionMinistere } from '@/features/comptes/raisons'
 import type { EtatCompte, TypeCompte } from '@/lib/base'
 import type { DateIso } from '@/lib/metier/dates'
 
@@ -27,8 +28,12 @@ export interface LigneCompte {
    * à la réactivation aussi. Faux sans compte.
    */
   jamaisActive: boolean
-  /** Ministère vide qu'EJP Tech peut supprimer (T74) ; toujours faux hors des ministères. */
-  supprimable: boolean
+  /**
+   * Suppression d'un ministère, lue par EJP Tech (T75) : ses raisons (vide : il se supprime) et
+   * les sessions qu'il quittera. « Supprimer » est sur chaque ministère ; null hors des ministères
+   * et en lecture seule (administration), sans bouton.
+   */
+  suppression: SuppressionMinistere | null
 }
 
 /** Ce que l'écran affiche, construit à partir des lectures. */
@@ -67,4 +72,6 @@ export interface ActionsComptes {
   corriger: (userId: string, email: string) => Promise<void>
   /** T74 : supprime un ministère vide, son compte et ses indicateurs. */
   supprimer: (ministereId: string) => Promise<void>
+  /** T75 : relit les raisons d'un ministère, après un refus de la suppression. */
+  lireSuppression: (ministereId: string) => Promise<SuppressionMinistere>
 }

@@ -6,7 +6,7 @@ import {
   lireComptesJamaisActives,
   lireEtatComptes,
   lireIndicateursDesMinisteres,
-  lireMinisteresSupprimables,
+  lireRaisonsSuppression,
   reactiverCompte,
   reinitialiserDoubleAuthentification,
   relancerInvitation,
@@ -14,6 +14,7 @@ import {
 } from '@/data/comptes'
 import { lireMinisteres } from '@/data/ministeres'
 import { construireComptes } from '@/features/comptes/construireComptes'
+import { suppressionDe } from '@/features/comptes/raisons'
 import { demandeDeCreation } from '@/features/comptes/schemas'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import type { EtatBloc } from '@/features/fiche/modeleFiche'
@@ -25,8 +26,9 @@ const AUCUN: readonly string[] = []
 
 /**
  * Lectures de l'écran 13 : `v_etat_comptes`, les ministères (même clé que les autres écrans) et
- * les indicateurs propres de chaque ministère ; pour EJP Tech, qui gère (`gestion`), les
- * ministères supprimables et les comptes jamais activés (T74). Une lecture en échec donne l'erreur
+ * les indicateurs propres de chaque ministère ; pour EJP Tech, qui gère (`gestion`), les raisons
+ * d'un refus de suppression de chaque ministère (T75) et les comptes jamais activés (T74). Une
+ * lecture en échec donne l'erreur
  * de page, avec « Réessayer » qui les relance toutes.
  */
 export function useComptes(gestion = false): EtatBloc<DonneesComptes> {
@@ -36,9 +38,9 @@ export function useComptes(gestion = false): EtatBloc<DonneesComptes> {
     queryKey: [...CLE_COMPTES, 'indicateurs'],
     queryFn: lireIndicateursDesMinisteres,
   })
-  const supprimables = useQuery({
-    queryKey: [...CLE_COMPTES, 'supprimables'],
-    queryFn: lireMinisteresSupprimables,
+  const raisons = useQuery({
+    queryKey: [...CLE_COMPTES, 'raisons-suppression'],
+    queryFn: () => lireRaisonsSuppression(),
     enabled: gestion,
   })
   const jamaisActives = useQuery({
@@ -47,7 +49,7 @@ export function useComptes(gestion = false): EtatBloc<DonneesComptes> {
     enabled: gestion,
   })
   const lectures = gestion
-    ? [comptes, ministeres, indicateurs, supprimables, jamaisActives]
+    ? [comptes, ministeres, indicateurs, raisons, jamaisActives]
     : [comptes, ministeres, indicateurs]
   if (lectures.some((lecture) => lecture.isError)) {
     return {
@@ -61,16 +63,18 @@ export function useComptes(gestion = false): EtatBloc<DonneesComptes> {
     !comptes.isSuccess ||
     !ministeres.isSuccess ||
     !indicateurs.isSuccess ||
-    (gestion && (!supprimables.isSuccess || !jamaisActives.isSuccess))
+    (gestion && (!raisons.isSuccess || !jamaisActives.isSuccess))
   ) {
     return { etat: 'chargement' }
   }
   return {
     etat: 'donnees',
-    donnees: construireComptes(comptes.data, ministeres.data, indicateurs.data, {
-      supprimables: supprimables.data ?? AUCUN,
-      jamaisActives: jamaisActives.data ?? AUCUN,
-    }),
+    donnees: construireComptes(
+      comptes.data,
+      ministeres.data,
+      indicateurs.data,
+      gestion ? { raisons: raisons.data ?? [], jamaisActives: jamaisActives.data ?? AUCUN } : {},
+    ),
   }
 }
 
@@ -110,5 +114,11 @@ export function useActionsComptes(): ActionsComptes {
     refaireActivation: surCompte(reinitialiserDoubleAuthentification),
     corriger: (userId, email) => puisRelire(() => corrigerAdresse(userId, email)),
     supprimer: (ministereId) => puisRelire(() => supprimerMinistere(ministereId)),
+    // Après un refus de la suppression : les raisons de ce ministère, puis la liste relue.
+    lireSuppression: async (ministereId) => {
+      const lignes = await lireRaisonsSuppression(ministereId)
+      await relire()
+      return suppressionDe(lignes)
+    },
   }
 }

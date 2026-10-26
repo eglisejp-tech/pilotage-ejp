@@ -88,7 +88,8 @@ describe('raisons d’un refus de suppression (T75)', () => {
     ['retraits', 1, '1 indicateur retiré par le ministère'],
     ['retraits', 2, '2 indicateurs retirés par le ministère'],
     ['autre_donnee', 1, "une autre donnée le relie encore à l'outil"],
-    ['chiffres', 1234, '1 234 chiffres saisis'],
+    // Le séparateur des milliers est insécable (nombre(), src/lib/metier/texte.ts).
+    ['chiffres', 1234, '1 234 chiffres saisis'],
   ])('%s (%i) : « %s »', (code, nombre, texte) => {
     expect(texteRaison({ code, nombre })).toBe(texte)
   })

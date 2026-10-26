@@ -10,8 +10,8 @@ import type { ProprietesPage } from '@/pages/proprietesPage'
  * l'administration de l'église, qui lit sans aucun bouton (décision T60) : `PageApplication`
  * donne la page non disponible aux autres profils, sans requête. Les lectures passent par la RLS
  * (`v_etat_comptes` ne rend rien aux autres profils), les écritures par les sept Edge Functions
- * de comptes, qui n'acceptent qu'EJP Tech. Les lectures de la gestion (ministères supprimables,
- * comptes jamais activés, T74) ne partent que pour EJP Tech.
+ * de comptes, qui n'acceptent qu'EJP Tech. Les lectures de la gestion (raisons d'un refus de
+ * suppression, T75 ; comptes jamais activés, T74) ne partent que pour EJP Tech.
  */
 export function PageComptes({ titre }: ProprietesPage) {
   useTitrePage(titre)

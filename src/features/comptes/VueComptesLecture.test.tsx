@@ -32,6 +32,7 @@ function afficherEnLecture(etat: EtatBloc<DonneesComptes>) {
     refaireActivation: vi.fn(() => Promise.resolve()),
     corriger: vi.fn(() => Promise.resolve()),
     supprimer: vi.fn(() => Promise.resolve()),
+    lireSuppression: vi.fn(() => Promise.resolve({ raisons: [], sessions: 0 })),
   } satisfies ActionsComptes
   render(
     <MemoryRouter>

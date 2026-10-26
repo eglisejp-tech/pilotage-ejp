@@ -965,7 +965,8 @@ describe('supprimer-ministere', () => {
       ministere_id: ministereId,
       cible: 'ministere',
       cible_id: ministereId,
-      detail: { nom, comptes: 1, indicateurs: 0 },
+      // T75 : le nombre de sessions qu'il quitte (aucune : créé après les sessions du jeu d'exemple).
+      detail: { nom, comptes: 1, indicateurs: 0, sessions: 0 },
     })
     expect(JSON.stringify(lignes)).not.toContain('@')
     // La ligne de création du compte reste, lisible avec le nom du ministère.

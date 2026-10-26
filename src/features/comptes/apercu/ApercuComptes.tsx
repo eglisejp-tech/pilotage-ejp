@@ -8,6 +8,7 @@ import {
   lecturesGestionApercu,
   lireRefusApercu,
   lireVueApercuComptes,
+  raisonsApercu,
   simulerAction,
   simulerCorrection,
   simulerCreation,
@@ -15,6 +16,7 @@ import {
 } from '@/features/comptes/apercu/exemples'
 import type { DonneesApercu } from '@/features/comptes/apercu/exemples'
 import { construireComptes } from '@/features/comptes/construireComptes'
+import { suppressionDe } from '@/features/comptes/raisons'
 import type { ActionsComptes, DonneesComptes } from '@/features/comptes/types'
 import { VueComptes } from '@/features/comptes/VueComptes'
 import { useTitrePage } from '@/features/connexion/useTitrePage'
@@ -86,6 +88,11 @@ function EcranApercu({ vue, refus, echec, lectureSeule }: Props) {
     refaireActivation: (id) => appliquer((avant) => simulerAction(avant, id, 'refaire')),
     corriger: (id, email) => appliquer((avant) => simulerCorrection(avant, id, email)),
     supprimer: (id) => appliquer((avant) => simulerSuppression(avant, id)),
+    // Lecture de la base (T75) : jamais refusée par `refus=` ni `envoi=`, qui visent les fonctions.
+    lireSuppression: async (id) => {
+      await attendre()
+      return suppressionDe(raisonsApercu(courantes.current, id))
+    },
   }
 
   let etat: EtatBloc<DonneesComptes>

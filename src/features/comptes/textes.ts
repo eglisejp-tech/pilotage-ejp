@@ -5,6 +5,7 @@
 // réussite, confirmation d'un compte personnel), reporté dans LISEZMOI.md (écarts de 13 et
 // section « États »).
 
+import type { RaisonSuppression } from '@/features/comptes/raisons'
 import type { EtatCompte } from '@/lib/base'
 import { formaterJourCourt } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
@@ -139,6 +140,14 @@ export const TEXTES_COMPTES = {
   boutonDesactiverCompte: 'Désactiver le compte',
   boutonRefaireActivation: "Refaire l'activation",
   boutonSupprimerMinistere: 'Supprimer le ministère',
+
+  // Fenêtre « impossible » d'une suppression (T75, Proposé dans la conception validée)
+  impossible: (nom: string) => `${nom} ne peut pas être supprimé`,
+  dejaDesDonnees: "Il a déjà des données dans l'outil :",
+  jamaisSupprimes: 'Coordination et FIJ ne se suppriment jamais.',
+  desactiverAPlace:
+    'Désactivez-le à la place : plus personne ne se connecte, son historique reste.',
+  fermer: 'Fermer',
 } as const
 
 /** Libellé de l'état d'un compte (BRIEF, section 9 ; LISEZMOI, écarts de 13). */
@@ -219,12 +228,14 @@ export interface TexteConfirmation {
 
 /**
  * « Supprimer Tech ? » (T74, Proposé) : ce qui disparaît (le ministère, ses indicateurs, son
- * compte et son adresse), puis ce qui reste (le journal). Action définitive.
+ * compte et son adresse), les sessions dont il sort (T75, validé le 26 octobre 2026 : leur
+ * complétude passée ne le compte plus), puis ce qui reste (le journal). Action définitive.
  */
 export function confirmationSupprimerMinistere(
   nom: string,
   email: string | null,
   indicateurs: number,
+  sessions = 0,
 ): TexteConfirmation {
   const avec: string[] = []
   if (indicateurs === 1) avec.push('son indicateur')
@@ -232,12 +243,104 @@ export function confirmationSupprimerMinistere(
   if (email !== null) avec.push(`son compte (${email})`)
   // « Tech », « Tech et son compte (...) », « Tech, ses 8 indicateurs et son compte (...) ».
   const sujet = avec.length === 2 ? `${nom}, ${avec.join(' et ')}` : [nom, ...avec].join(' et ')
+  const quitte =
+    sessions === 0
+      ? ''
+      : ` Il sort aussi de la liste des ministères attendus ${sessions === 1 ? "d'une session" : `de ${nombre(sessions)} sessions`}.`
   return {
     titre: `Supprimer ${nom} ?`,
-    texte: `${sujet} ${avec.length === 0 ? 'disparaît' : 'disparaissent'} de l'outil. Le journal garde la trace de la suppression. C'est définitif.`,
+    texte: `${sujet} ${avec.length === 0 ? 'disparaît' : 'disparaissent'} de l'outil.${quitte} Le journal garde la trace de la suppression. C'est définitif.`,
     bouton: TEXTES_COMPTES.boutonSupprimerMinistere,
     enCours: TEXTES_COMPTES.enCours.supprimer,
     definitif: true,
+  }
+}
+
+/**
+ * Une raison d'un refus de suppression, en mots simples et chiffrés (T75, Proposé dans la
+ * conception validée) : « 12 chiffres saisis », « mentionné dans 2 points d'attention », « son
+ * compte a déjà été activé ».
+ */
+export function texteRaison({ code, nombre: n }: RaisonSuppression): string {
+  const compte = (singulier: string, pluriel: string) =>
+    `${nombre(n)} ${accorder(n, singulier, pluriel)}`
+  switch (code) {
+    case 'ministere_de_reference':
+      return TEXTES_COMPTES.jamaisSupprimes
+    case 'compte_deja_active':
+      return n > 1
+        ? `ses ${nombre(n)} comptes ont déjà été activés`
+        : 'son compte a déjà été activé'
+    case 'chiffres':
+      return compte('chiffre saisi', 'chiffres saisis')
+    case 'presences':
+      return `des présences saisies pour ${compte('session', 'sessions')}`
+    case 'carte_fij':
+      return compte('chiffre de la carte des FIJ', 'chiffres de la carte des FIJ')
+    case 'statistiques_fij':
+      return compte('statistique FIJ par département', 'statistiques FIJ par département')
+    case 'repartitions':
+      return compte("répartition d'un chiffre sensible", 'répartitions de chiffres sensibles')
+    case 'precisions':
+      return compte("précision d'un chiffre sensible", 'précisions de chiffres sensibles')
+    case 'points':
+      return compte("point d'attention", "points d'attention")
+    case 'mentions_points':
+      return `mentionné dans ${compte("point d'attention", "points d'attention")}`
+    case 'evenements':
+      return compte('événement', 'événements')
+    case 'mentions_evenements':
+      return `mentionné dans ${compte('événement', 'événements')}`
+    case 'reunions':
+      return compte('réunion', 'réunions')
+    case 'signalements':
+      return compte('signalement', 'signalements')
+    case 'demandes':
+      return compte("demande d'indicateur", "demandes d'indicateur")
+    case 'validations':
+      return compte(
+        "décision sur ses demandes d'indicateur",
+        "décisions sur ses demandes d'indicateur",
+      )
+    case 'retraits':
+      return compte('indicateur retiré par le ministère', 'indicateurs retirés par le ministère')
+    case 'autre_donnee':
+      return "une autre donnée le relie encore à l'outil"
+  }
+}
+
+/** Contenu de la fenêtre « impossible » d'une suppression (T75). */
+export interface TexteRefusSuppression {
+  titre: string
+  /** La phrase annoncée avec le titre. */
+  texte: string
+  /** Les raisons chiffrées, en liste ; vide pour Coordination et FIJ. */
+  raisons: string[]
+  /** Ce qu'on peut faire à la place ; null s'il n'y a rien à désactiver. */
+  suite: string | null
+  /** Le bouton « Désactiver » ; null s'il n'y a rien à désactiver. */
+  desactiver: string | null
+  fermer: string
+}
+
+/**
+ * « Communication ne peut pas être supprimé » (T75) : pourquoi, puis « Désactiver » à la place
+ * quand un compte actif existe (déjà désactivé ou sans compte : « Fermer » seul). FIJ et
+ * Coordination : une seule phrase, sans liste.
+ */
+export function refusSuppression(
+  nom: string,
+  raisons: readonly RaisonSuppression[],
+  peutDesactiver: boolean,
+): TexteRefusSuppression {
+  const reference = raisons.some((raison) => raison.code === 'ministere_de_reference')
+  return {
+    titre: TEXTES_COMPTES.impossible(nom),
+    texte: reference ? TEXTES_COMPTES.jamaisSupprimes : TEXTES_COMPTES.dejaDesDonnees,
+    raisons: reference ? [] : raisons.map(texteRaison),
+    suite: peutDesactiver ? TEXTES_COMPTES.desactiverAPlace : null,
+    desactiver: peutDesactiver ? TEXTES_COMPTES.desactiver : null,
+    fermer: TEXTES_COMPTES.fermer,
   }
 }
 

@@ -2,7 +2,8 @@
 // Tech, puis appels des sept Edge Functions de comptes, par EJP Tech seul (T60 et T74 ; BRIEF,
 // section 8, « Les Edge Functions »). Une fonction par requête. Les lectures passent par la RLS :
 // `v_etat_comptes` ne rend des lignes qu'à l'administration et à EJP Tech, en aal2 ;
-// `v_ministeres_supprimables` et `v_comptes_jamais_actives` (T74), qu'à EJP Tech. Les
+// `v_comptes_jamais_actives` (T74), qu'à EJP Tech ; la fonction `raisons_suppression_ministere`
+// (T75) refuse tout autre profil qu'EJP Tech. Les
 // écritures ne passent jamais par une table : chaque action appelle
 // sa fonction par `functions.invoke`, avec le jeton de la session (la clé secrète reste dans la
 // fonction). Chaque demande est validée par les schémas partagés avec les fonctions
@@ -18,7 +19,7 @@ import {
   schemaCreerCompte,
   type DemandeCreerCompte,
 } from '../../supabase/functions/_shared/schemas.ts'
-import type { LigneVue } from '@/lib/base'
+import type { LigneRaisonSuppression, LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
 export type LigneEtatCompte = LigneVue<'v_etat_comptes'>
@@ -179,13 +180,20 @@ export async function lireIndicateursDesMinisteres(): Promise<{ ministere_id: st
 }
 
 /**
- * Ministères qu'EJP Tech peut supprimer (T74) : vides, sans compte activé, hors FIJ et
- * Coordination. La base le vérifie de nouveau à la suppression.
+ * Raisons pour lesquelles un ministère ne se supprime pas (T75), calculées par la base : de tous
+ * les ministères (avec la liste), ou d'un seul (relues après un refus de la suppression). Une
+ * ligne `sessions_attendues` (bloque faux) dit les sessions qu'il quittera. La base revérifie
+ * avec les mêmes règles à la suppression.
  */
-export async function lireMinisteresSupprimables(): Promise<string[]> {
-  const { data, error } = await supabase().from('v_ministeres_supprimables').select('ministere_id')
+export async function lireRaisonsSuppression(
+  ministereId?: string,
+): Promise<LigneRaisonSuppression[]> {
+  const { data, error } = await supabase().rpc(
+    'raisons_suppression_ministere',
+    ministereId === undefined ? {} : { p_ministere_id: ministereId },
+  )
   if (error) throw error
-  return data.map((ligne) => ligne.ministere_id)
+  return data
 }
 
 /**

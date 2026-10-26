@@ -10,10 +10,11 @@ export type ActionLigne =
  * l'invitation » tant que l'adresse n'est pas confirmée, « Corriger l'adresse » tant que le compte
  * n'est pas activé (T74), « Refaire l'activation » une fois le code activé, « Réactiver » pour un
  * compte désactivé, « Créer le compte » pour un ministère actif qui n'en a pas. « Désactiver » sur
- * tout compte actif ; « Supprimer » en dernier, pour un ministère vide seulement (T74).
+ * tout compte actif ; « Supprimer » en dernier sur chaque ministère, qu'il se supprime ou non :
+ * la fenêtre dit pourquoi s'il ne se supprime pas (T75).
  */
-export function actionsDeLaLigne(ligne: Pick<LigneCompte, 'etat' | 'supprimable'>): ActionLigne[] {
-  const suppression: ActionLigne[] = ligne.supprimable ? ['supprimer'] : []
+export function actionsDeLaLigne(ligne: Pick<LigneCompte, 'etat' | 'suppression'>): ActionLigne[] {
+  const suppression: ActionLigne[] = ligne.suppression === null ? [] : ['supprimer']
   switch (ligne.etat) {
     case 'sans_compte':
       return ['creer', ...suppression]
@@ -22,7 +23,7 @@ export function actionsDeLaLigne(ligne: Pick<LigneCompte, 'etat' | 'supprimable'
     case 'a_activer':
       return ['corriger', 'desactiver', ...suppression]
     case 'activee':
-      return ['refaire', 'desactiver']
+      return ['refaire', 'desactiver', ...suppression]
     case 'desactive':
       return ['reactiver', ...suppression]
   }
