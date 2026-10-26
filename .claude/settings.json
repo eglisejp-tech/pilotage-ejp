@@ -36,7 +36,12 @@
       "Bash(git show *)",
       "Bash(git ls-files *)",
       "Bash(git push -u origin etape-*)",
-      "Bash(git push origin etape-*)"
+      "Bash(git push origin etape-*)",
+      "Bash(bash scripts/production.sh etat)",
+      "Bash(bash scripts/production.sh revenir)",
+      "Bash(bash scripts/production.sh preparer *)",
+      "Bash(bash scripts/production.sh migrer)",
+      "Bash(bash scripts/production.sh fonction *)"
     ],
     "deny": [
       "Read(.env)",
@@ -80,6 +85,11 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/garde-push.sh\"",
+            "timeout": 30
+          },
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/garde-production.sh\"",
             "timeout": 30
           }
         ]

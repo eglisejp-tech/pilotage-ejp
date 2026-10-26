@@ -9,7 +9,7 @@ Outil web temporaire de prise d'information pour le berger et le conseil de l'EJ
 - `npm run build` · `npm run e2e` : build et parcours Playwright (1440, 834 et 390 px)
 - `npx supabase migration new nom` : nouvelle migration (fichier vide, à remplir avec Edit ou Write)
 - `npx supabase start` · `npx supabase db reset` · `npx supabase test db` : base locale (Docker) et tests pgTAP. **Sur ce poste, Docker ne tourne pas : les tests de base tournent dans la CI (job « base »).**
-- La CLI Supabase s'appelle toujours par `npx supabase`, en local seulement. `link`, `db push`, `functions deploy`, `secrets`, `--linked` et `--db-url` sont refusés : la préproduction et la production se gèrent à la main par la personne.
+- La CLI Supabase s'appelle par `npx supabase`, en local seulement. Seule exception, les gestes de production confiés à Claude par la personne (26 octobre 2026) : `bash scripts/production.sh etat | preparer <branche> | migrer | fonction <nom> | revenir`, seul dans la commande (hook `.claude/hooks/garde-production.sh`). `migrer` et `fonction` n'ont lieu qu'après une CI verte et l'accord écrit de la personne pour cette mise en ligne ; le hook demande en plus sa confirmation. Tout appel direct de la CLI vers un projet distant reste refusé (`link`, `login`, `db push`, `functions deploy`, `secrets`, `--linked`, `--db-url`), comme toute lecture des données de production (SQL, MCP, journaux, export) et tout réglage Supabase : ils restent à la personne.
 - `/verifier` : lance toute la chaîne de vérification (skill du projet)
 - Sur Windows, les commandes passent par Git Bash (outil Bash) : l'outil PowerShell est désactivé pour ce projet.
 
