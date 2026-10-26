@@ -451,8 +451,10 @@ archivage du dépôt du code.
 - **Destinataires** :
   - un ministère lit les lignes de son ministère et de son compte ;
   - EJP Tech lit tout le journal ; le berger et le conseil le lisent aussi, sauf les lignes d'un
-    signalement (`difficulte_signalee`, `signalement_clos`), que seuls le ministère concerné et EJP
-    Tech lisent ;
+    signalement et de son suivi (`difficulte_signalee`, `signalement_clos`, et depuis T77
+    `signalement_pris_en_charge`, `signalement_repondu`, `signalement_regle`,
+    `signalement_reponse_ministere`), que seuls le ministère concerné et EJP Tech lisent. Ces
+    lignes portent le code de l'écran concerné, jamais le texte d'un signalement ni d'une réponse ;
   - l'administration de l'église lit une liste limitée d'actions, fixée dans la base. Elle ne lit pas
     les lignes de relecture et de masquage d'un texte quand il s'agit d'une demande d'indicateur,
     d'une précision, d'un point, d'un événement ou d'une réunion (P51, T47) ;
@@ -509,31 +511,42 @@ archivage du dépôt du code.
 
 - **Statut** : décidé le 6 octobre 2026 par la personne responsable (T39, question 14 du plan de
   l'étape 4), conçu par EJP Tech. La base est construite et fusionnée (lot B7, 7 octobre 2026) ;
-  les écrans suivent à l'étape 4. Cette fiche est remise à la coordination avec le reste du
-  registre.
+  les écrans suivent à l'étape 4. Suivi dans l'outil décidé le 26 octobre 2026 (T77, qui révise
+  T39) : statuts, réponses d'EJP Tech et du ministère, sans email. Cette fiche est remise à la
+  coordination avec le reste du registre.
 - **Finalité** : permettre à un ministère de signaler une difficulté avec l'outil, par
   exemple quand il ne peut pas enregistrer une date (la base refuse une nouvelle date déjà passée
-  pour un événement), pour qu'EJP Tech l'aide en dehors de l'outil.
+  pour un événement), et en suivre le traitement : EJP Tech l'aide et lui répond dans l'outil, le
+  ministère répond à son tour ou confirme que c'est réglé.
 - **Base légale** : intérêt légitime de l'association (article 6.1.f).
-- **Personnes concernées** : les titulaires des comptes de ministère ; les personnes citées par
-  erreur dans le texte.
+- **Personnes concernées** : les titulaires des comptes de ministère et d'EJP Tech ; les personnes
+  citées par erreur dans un texte ou une réponse.
 - **Catégories de données** : ministère et compte qui signalent, date, écran concerné
-  (choisi dans une liste fermée), court texte libre (10 à 280 caractères) ; clôture par EJP Tech
-  (compte, date, commentaire facultatif de 10 à 280 caractères).
-- **Destinataires** (décidé) : le ministère lit ses signalements et leur clôture ; EJP Tech les lit
-  tous et les clôt ; ni l'administration de l'église, ni le berger, ni le conseil, ni les autres
-  ministères n'y ont accès (l'administration ne voit ni les pages des ministères ni les points, et
-  un signalement parle du contenu d'une page). Les lignes de journal de l'envoi et de la clôture
-  (ministère, compte, date, écran, sans le texte) ne sont lues, elles aussi, que par le ministère
-  et EJP Tech : la base les retire au berger et au conseil, qui lisent le reste du journal. EJP
-  Tech transmet à l'administration, hors de l'outil, ce qui la concerne. Un problème de compte ou
-  de connexion ne passe pas par ce signalement.
-- **Mesures** : rappel sous le champ, 280 caractères au plus, refus par la base d'un texte qui
+  (choisi dans une liste fermée), court texte libre (10 à 280 caractères) ; étapes du suivi (prise
+  en charge, réponse d'EJP Tech, réponse du ministère, confirmation que c'est réglé, clôture), avec
+  pour chacune le compte et la date ; réponses d'EJP Tech et du ministère (10 à 280 caractères
+  chacune) ; réponse de clôture d'EJP Tech (10 à 280 caractères, obligatoire à l'écran depuis
+  T77 ; une clôture plus ancienne peut ne pas en avoir). Le statut (Reçu, En cours, Répondu, Clos)
+  et la date limite de réponse du ministère se calculent : ils ne s'enregistrent pas.
+- **Destinataires** (décidé) : le ministère lit ses signalements, leur suivi daté et les réponses
+  d'EJP Tech, dans l'outil (« Mes signalements » et « Ma semaine ») ; EJP Tech les lit tous, les
+  prend en charge, y répond et les clôt ; ni l'administration de l'église, ni le berger, ni le
+  conseil, ni les autres ministères n'y ont accès (l'administration ne voit ni les pages des
+  ministères ni les points, et un signalement parle du contenu d'une page). Les lignes de journal
+  de l'envoi, de chaque étape du suivi et de la clôture (ministère, compte, date, écran, sans le
+  texte) ne sont lues, elles aussi, que par le ministère et EJP Tech : la base les retire au berger
+  et au conseil, qui lisent le reste du journal. EJP Tech transmet à l'administration, hors de
+  l'outil, ce qui la concerne. Un problème de compte ou de connexion ne passe pas par ce
+  signalement.
+- **Mesures** : rappel sous chaque champ, 280 caractères au plus, refus par la base d'un texte qui
   ressemble à un email, à un numéro de téléphone (une suite d'au moins 5 chiffres, même séparés) ou
   à une civilité suivie d'un nom ; refus des crochets, pour qu'un texte écrit par un ministère ne
   passe jamais pour un texte masqué par EJP Tech (T43, 7 octobre 2026) ; les mêmes règles
-  s'appliquent au commentaire de clôture ; relecture et masquage par EJP Tech ; ajout seulement ;
-  journal avec le code de l'écran, sans le texte ; aucun email.
+  s'appliquent à chaque réponse, d'EJP Tech comme du ministère, et à la réponse de clôture ;
+  relecture et masquage par EJP Tech ; ajout seulement : chaque étape est une ligne ajoutée, un
+  signalement clos ne se rouvre pas ; clôture calculée par la base 7 jours pleins après une
+  réponse d'EJP Tech restée sans retour, sans écriture ; journal avec le code de l'écran, sans le
+  texte ; aucun email : les réponses se lisent dans l'outil.
 - **Prestataires et lieu** : Supabase (région Paris), Cloudflare (site).
 - **Durées** : toute la vie de l'outil, comme les autres écritures.
 
@@ -614,7 +627,9 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
     elle (à la coordination).
 12. Confirmation par la coordination de la fiche 6 (signalement d'une difficulté), décidée le 6
     octobre 2026 et construite dans la base : lue par le ministère qui l'écrit et par EJP Tech
-    seulement.
+    seulement. Son suivi dans l'outil (T77, 26 octobre 2026 : étapes, réponses d'EJP Tech et du
+    ministère) est à valider avant sa mise en ligne, avec l'article « Signalements » de la page
+    Confidentialité.
 13. Confirmation par la coordination, pour la fiche 2, du mois en cours, du texte « Précision » et de
     la répartition par catégories des indicateurs sensibles, décidés le 6 octobre 2026. Listes de
     catégories par indicateur sensible (à la coordination).
@@ -645,5 +660,12 @@ acceptées par chaque personne d'un compte partagé (T61) ; fiche 7, prénom red
 Ajout du 20 octobre 2026 (sans changer la version du document, Proposé, à valider par la personne
 responsable) : fiche 2, motif du retrait d'un ajout par son ministère et « Pourquoi » d'une demande
 retirée, lus et masqués par EJP Tech (T62) ; 162 indicateurs saisis (T64).
+
+Ajout du 26 octobre 2026 (sans changer la version du document, Proposé, à valider par la
+coordination avant la mise en ligne) : fiche 6, suivi des signalements dans l'outil (T77, qui
+révise T39) : étapes datées, réponses d'EJP Tech et du ministère, clôture calculée, aide dans
+l'outil et non plus en dehors ; fiche 4, les quatre codes de journal du suivi, lus par le
+ministère concerné et EJP Tech seulement ; « Ce qui reste à compléter », point 12. Aucun email :
+le courriel de suivi d'un signalement n'est pas construit.
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.
