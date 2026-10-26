@@ -80,7 +80,7 @@ create temp view profil_envoi (profil, compte) as
   union all select 'administration', c.admin from ctx c union all select 'EJP Tech', c.tech from ctx c;
 grant select on matrice_envoi, profil_envoi to authenticated, anon;
 
-select plan(68 + tests.nombre_essais('select * from matrice_envoi', 'select * from profil_envoi', true));
+select plan(73 + tests.nombre_essais('select * from matrice_envoi', 'select * from profil_envoi', true));
 
 -- 1. Le cas réel : deux envois du même numéro, un seul événement
 
@@ -324,8 +324,7 @@ select is_empty($$
   select r.rolname, x.privilege
     from pg_roles r
    cross join (values ('SELECT'), ('INSERT'), ('UPDATE'), ('DELETE'), ('TRUNCATE'), ('REFERENCES'), ('TRIGGER')) as x(privilege)
-   where r.rolname in ('anon', 'authenticated', 'service_role', 'public')
-     and r.rolname <> 'public'
+   where r.rolname in ('anon', 'authenticated', 'service_role')
      and has_table_privilege(r.rolname, 'private.envoi', x.privilege)
 $$, 'private.envoi : aucun droit pour anon, authenticated ni service_role');
 select throws_ok($$ update private.envoi set le = le $$, '42501', null,
@@ -351,6 +350,47 @@ select is((select count(*)::int from private.envoi where cle = (select k_recent 
   'purge : le numéro de 6 jours reste');
 select is((select count(*)::int from public.evenement where id = (select ev_com from ctx)), 1,
   'purge : l''événement, lui, reste (ajout seulement)');
+-- Sous le réglage de la purge, le propriétaire ne supprime ni ne modifie un numéro récent.
+select set_config('pilotage.purge_envoi', 'oui', true);
+select throws_ok($$ delete from private.envoi where cle = (select k_recent from ctx) $$, '42501', null,
+  'réglage de la purge posé : un numéro de moins de 7 jours ne se supprime pas');
+select throws_ok($$ update private.envoi set le = le where cle = (select k_recent from ctx) $$, '42501', null,
+  'réglage de la purge posé : aucune modification');
+select set_config('pilotage.purge_envoi', '', true);
+
+-- Deux requêtes du même numéro en même temps : la seconde attend la première sur la clé
+-- primaire, puis relit son numéro. Simulé par un trigger qui pose le même numéro juste avant
+-- (comme une requête concurrente validée entre la lecture du numéro et sa pose).
+create function tests.devancer_envoi() returns trigger
+language plpgsql as $$
+begin
+  if pg_trigger_depth() = 1 then
+    insert into private.envoi (compte, cle, operation, cible_id, empreinte)
+    values (new.compte, new.cle, new.operation, 'b1000000-0000-4000-8000-000000000001',
+            case when coalesce(current_setting('tests.devancer', true), '') = 'autre'
+                 then md5('autre contenu') else new.empreinte end);
+  end if;
+  return new;
+end $$;
+create trigger devancer before insert on private.envoi
+  for each row execute function tests.devancer_envoi();
+select tests.se_connecter((select coo from ctx), 'aal2');
+select is(public.ajouter_evenement('Envoi concurrent', (select jour from ctx) + 2, 'valide', '{}'::uuid[],
+  null::smallint, 'a1000000-0000-4000-8000-0000000000c1'::uuid),
+  'b1000000-0000-4000-8000-000000000001'::uuid,
+  'concurrence, même contenu : l''identifiant de la requête qui a validé d''abord');
+select set_config('tests.devancer', 'autre', true);
+select throws_ok($$
+  select public.creer_point('Point concurrent', null, null, 'normale', null, '{}'::uuid[],
+    'a1000000-0000-4000-8000-0000000000c2'::uuid)
+$$, 'P0001', 'Cet envoi est déjà enregistré avec d''autres valeurs.',
+  'concurrence, autre contenu : le refus');
+select set_config('tests.devancer', '', true);
+select tests.deconnecter();
+drop trigger devancer on private.envoi;
+select is((select count(*)::int from public.evenement where titre = 'Envoi concurrent')
+          + (select count(*)::int from public.point_attention where titre = 'Point concurrent'), 0,
+  'concurrence : rien d''écrit par la seconde requête');
 
 -- 10. Signatures et aides
 

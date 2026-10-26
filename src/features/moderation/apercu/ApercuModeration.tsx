@@ -4,6 +4,7 @@ import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { BandeauIndicateurs } from '@/features/moderation/BandeauIndicateurs'
 import { construireTextesARelire } from '@/features/moderation/construire'
 import { EcranModeration } from '@/features/moderation/EcranModeration'
+import { ApercuIncidents } from '@/features/moderation/apercu/ApercuIncidents'
 import { FileARelire } from '@/features/moderation/FileARelire'
 import type { ContenuFile } from '@/features/moderation/FileARelire'
 import {
@@ -115,7 +116,13 @@ function EcranApercu({
           }}
         />
       }
-      file={<FileARelire contenu={file} />}
+      file={
+        <>
+          {/* Incidents d'envoi (T76, lot C), repliés sous les signalements. */}
+          <ApercuIncidents />
+          <FileARelire contenu={file} />
+        </>
+      }
     />
   )
 }

@@ -25,14 +25,18 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * par la coordination. La version des conditions ne change pas (T70). Mise à jour du 25 octobre
  * 2026 : plusieurs comptes ouverts sur un même navigateur (T73, « Changer d'espace »), dans
  * « Cookies et traceurs » ; phrase proposée. La version des conditions ne change pas : même
- * stockage, strictement nécessaire, sans nouvelle donnée ni nouvelle finalité (T73).
+ * stockage, strictement nécessaire, sans nouvelle donnée ni nouvelle finalité (T73). Mise à jour
+ * du 26 octobre 2026 : les incidents d'envoi (T76, lot C), dans « Données traitées » et « Durées
+ * de conservation » (90 jours) ; phrases proposées, à valider par la coordination. La version des
+ * conditions ne change pas (Proposé, Q7) : aucun prestataire, aucun destinataire, aucune donnée
+ * de nature nouvelle (un journal technique, sans adresse IP).
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
   return (
     <ColonneConnexion>
       <TitreConnexion surtitre="Pilotage EJP" titre="Confidentialité" taille="moyenne">
-        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 25 octobre
+        Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 26 octobre
         2026.
       </TitreConnexion>
       <div className="flex flex-col gap-6 text-[15px] leading-normal text-encre-2">
@@ -80,6 +84,12 @@ export function PageConfidentialite() {
               ministère, avec l'heure de chaque connexion, les jours d'utilisation et les actions
               faites ensuite. EJP Tech seul le lit, pour suivre l'utilisation de l'outil et savoir
               qui a fait quoi en cas de problème. Il ne sert pas à évaluer les personnes.
+            </li>
+            <li>
+              Les incidents d'envoi : quand un enregistrement échoue, l'heure, l'écran, le type
+              d'erreur, le nom et la version du navigateur et la version du site, avec le ministère
+              ou le profil du compte. Jamais ce qui a été saisi. EJP Tech seul les lit, pour
+              corriger l'outil.
             </li>
             <li>
               Les signalements (« Signaler une difficulté ») : un court message qu'un ministère
@@ -175,6 +185,9 @@ export function PageConfidentialite() {
               puis remplacés par « [prénom effacé] ». Ils restent dans les sauvegardes 4 semaines au
               plus. Ceux qui restent à l'arrêt de l'outil figurent dans l'export final remis à la
               coordination.
+            </li>
+            <li>
+              <strong className="text-encre">Incidents d'envoi</strong> : 90 jours, puis effacés.
             </li>
             <li>
               <strong className="text-encre">Journaux techniques (adresses IP)</strong> : selon les

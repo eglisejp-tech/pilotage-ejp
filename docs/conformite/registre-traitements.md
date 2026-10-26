@@ -446,7 +446,17 @@ archivage du dépôt du code.
     (un identifiant), détail (codes, nombres, dates et identifiants seulement). Jamais un texte libre,
     jamais un email, aucune valeur d'indicateur propre ;
   - journaux techniques : adresses IP, connexions, erreurs, dans les tableaux de bord de Supabase et
-    de Cloudflare, hors de l'application.
+    de Cloudflare, hors de l'application ;
+  - incidents d'envoi (T76) : quand un enregistrement échoue sur un appareil, la référence de
+    l'envoi, l'heure du téléphone et celle de la base, le profil et le ministère du compte (jamais le
+    compte lui-même), l'écran (son modèle d'adresse, jamais un identifiant), l'écriture visée, le
+    genre de l'échec et son issue, le statut HTTP, le code d'erreur (jamais le message), la durée,
+    en ligne ou non, page visible ou non, la version du site, la famille et la version majeure du
+    navigateur et le système. Jamais ce qui a été saisi, ni une adresse email, ni une adresse IP, ni
+    l'user agent complet, ni un prénom ;
+  - numéros anti-doublon (T76) : pour un événement, un point ou un signalement, le compte, un numéro
+    tiré par le téléphone, ce qui a été créé et une empreinte (md5) des valeurs envoyées, jamais
+    lisible par personne. Ils servent seulement à ne pas créer deux fois la même chose.
 - **Données sensibles** : aucune.
 - **Destinataires** :
   - un ministère lit les lignes de son ministère et de son compte ;
@@ -464,13 +474,22 @@ archivage du dépôt du code.
     EJP Tech lit ;
   - les journaux techniques sont lus par EJP Tech dans les tableaux de bord. À compléter par EJP
     Tech : nombre de personnes qui ont accès aux tableaux de bord de Supabase et de Cloudflare, et
-    double authentification activée sur ces accès.
+    double authentification activée sur ces accès ;
+  - les incidents d'envoi ne sont lus que par EJP Tech, dans l'écran Modération, pour corriger
+    l'outil ; les numéros anti-doublon ne sont lus par personne (seule la base les relit).
 - **Prestataires et lieu** : Supabase (région Paris), Cloudflare (réseau mondial, journaux d'accès
   seulement).
 - **Transferts hors UE** : journaux techniques de Cloudflare, voir « Transferts ».
-- **Durées** : journal de l'application toute la vie de l'outil ; journaux techniques au plus 1 an.
+- **Durées** : journal de l'application toute la vie de l'outil ; journaux techniques au plus 1 an ;
+  incidents d'envoi 90 jours, puis effacés à la première écriture ou lecture qui suit ; numéros
+  anti-doublon 7 jours, puis effacés au premier envoi numéroté ou incident qui suit (T76). Aucun
+  prestataire
+  nouveau, aucun transfert nouveau : ces deux tables vivent dans la base Supabase (région Paris).
 - **Mesures propres** :
   - personne ne peut modifier ni effacer le journal, pas même le propriétaire de la base ;
+  - incidents d'envoi et numéros anti-doublon : aucun droit direct pour aucun compte, aucune
+    modification ; seule leur purge les efface. Un incident ne s'écrit qu'en double
+    authentification, 20 par envoi et 100 par jour et par ministère (ou profil) au plus ;
   - un envoi de formulaire produit une seule ligne ;
   - un compte désactivé reste cité dans le journal par son libellé, jamais par son email.
 
@@ -645,5 +664,10 @@ acceptées par chaque personne d'un compte partagé (T61) ; fiche 7, prénom red
 Ajout du 20 octobre 2026 (sans changer la version du document, Proposé, à valider par la personne
 responsable) : fiche 2, motif du retrait d'un ajout par son ministère et « Pourquoi » d'une demande
 retirée, lus et masqués par EJP Tech (T62) ; 162 indicateurs saisis (T64).
+
+Ajout du 26 octobre 2026 (sans changer la version du document, Proposé, à valider par la
+coordination avec la page Confidentialité) : fiche 4, incidents d'envoi (90 jours, lus par EJP Tech
+seul) et numéros anti-doublon (7 jours, lus par personne), T76. Base légale inchangée (intérêt
+légitime : sécurité et fonctionnement du service, comme les journaux techniques).
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.
