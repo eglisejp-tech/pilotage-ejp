@@ -118,8 +118,9 @@ test.describe('Communication, porteur', () => {
   test('S5 : modifie les mentions ; deux lignes de journal, l’identifiant du ministère seulement', async ({
     page,
   }) => {
-    const fij = await idDuMinistere(page, 'FIJ')
+    // La page d'abord : le jeton de la session se lit dans son stockage.
     await page.goto(`/saisir/evenement/${premier}`)
+    const fij = await idDuMinistere(page, 'FIJ')
     await page.getByRole('button', { name: 'Modifier les mentions' }).click()
     const fenetre = page.getByRole('dialog', { name: 'Modifier les mentions' })
     // La case est cachée : on clique son libellé (comme « Modifier les mentions » d'un point).
