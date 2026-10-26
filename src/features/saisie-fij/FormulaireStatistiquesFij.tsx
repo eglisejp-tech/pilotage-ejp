@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 import type { LigneStatistiqueFij } from '@/data/fij'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { GrilleChamps } from '@/features/saisie/GrilleChamps'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { useRepartirSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
@@ -150,7 +151,7 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
             {statistiques.find((ligne) => ligne.rubrique === rubrique.code)?.rubrique_libelle ??
               rubrique.libelle}
           </legend>
-          <div className="clear-both grid grid-cols-2 items-start gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
+          <GrilleChamps disposition="quatre">
             {DEPARTEMENTS_FIJ.map((departement) => {
               const cle: CleChamp = `${rubrique.code}-${departement.code}`
               const effacee = effacees.find(
@@ -171,7 +172,7 @@ export function FormulaireStatistiquesFij({ dimancheReference, statistiques, enr
                 />
               )
             })}
-          </div>
+          </GrilleChamps>
           <p className="text-[15px] leading-normal font-semibold" aria-live="polite">
             {ligneTotalRubrique(champs[rubrique.code])}
           </p>

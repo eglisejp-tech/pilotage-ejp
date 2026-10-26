@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { ChampNombre } from '@/features/saisie/ChampNombre'
+import { GrilleChamps } from '@/features/saisie/GrilleChamps'
 import { normaliserChamp } from '@/features/saisie/chiffres'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
@@ -88,7 +89,7 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
       {/* Le titre suffit : pas de bulle (T66, t116). */}
       <p className="text-[15px] leading-normal font-semibold">Nombre de FIJ par département</p>
       <p className="text-sm leading-normal text-encre-3">{ligneDernierEnvoi(carte)}</p>
-      <div className="grid grid-cols-2 items-start gap-x-3 gap-y-4 min-[600px]:grid-cols-4">
+      <GrilleChamps disposition="quatre">
         {DEPARTEMENTS_FIJ.map((departement) => (
           <ChampNombre
             key={departement.code}
@@ -101,7 +102,7 @@ export function FormulaireCarteFij({ carte, enregistrer }: Props) {
             erreur={erreurs[departement.code]}
           />
         ))}
-      </div>
+      </GrilleChamps>
       <p className="text-[15px] leading-normal font-semibold" aria-live="polite">
         {ligneTotalCarte(champs)}
       </p>
