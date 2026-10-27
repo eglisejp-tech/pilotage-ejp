@@ -1,6 +1,8 @@
+import type { MinistereListe } from '@/data/ministeres'
 import { etatApresEnvoi, memeEtat } from '@/features/evenements/etatEvenement'
 import type { EtatEnregistre } from '@/features/evenements/etatEvenement'
 import type { EtatEvenement } from '@/features/evenements/FormulaireMiseAJourEvenement'
+import type { CorrectionsEvenement } from '@/features/evenements/MiseAJourAvecCorrections'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauReunion } from '@/features/evenements/PanneauReunion'
 import { MESSAGES_BASE } from '@/features/evenements/textes'
@@ -25,14 +27,26 @@ export const MINISTERES_EXEMPLE: MinistreAMentionner[] = [
   { id: '10000000-0000-4000-8000-000000000008', nom: 'Social' },
 ]
 
+/** Tous les ministères, Communication compris, comme `lireMinisteres` les rend (T78). */
+const MINISTERES_LISTE_EXEMPLE: MinistereListe[] = [
+  { id: MINISTERE_EXEMPLE, code: null, nom: 'Communication', desactive_le: null },
+  ...MINISTERES_EXEMPLE.map(({ id, nom }) => ({ id, code: null, nom, desactive_le: null })),
+]
+
 /** Les écrans de l'aperçu, choisis par `?ecran=` (ajout par défaut). */
 export const ECRANS_APERCU = [
   'ajout',
   'sans-mention',
   'mise-a-jour',
+  // T78 : un nom corrigé (« Ancien nom : ... »), un événement retiré, et le panneau d'EJP Tech.
+  'nom-corrige',
   'a-confirmer',
   // Un événement passé, Terminé sans heure de début : le champ « Heure de début » paraît (T68).
   'termine',
+  // T78, 27 octobre 2026 : un événement à venir, Annulé ; le porteur ne le retire plus.
+  'annule',
+  'retire',
+  'consultation',
   'pas-porteur',
   'introuvable',
   'chargement',
@@ -51,7 +65,14 @@ export function lireEcranApercu(valeur: string | null): EcranApercu {
 }
 
 /** Dernier état des événements à mettre à jour, heures en minutes depuis minuit (T68). */
-const ACTUELS: Record<'mise-a-jour' | 'a-confirmer' | 'termine', EtatEvenement> = {
+const ACTUELS: Record<'mise-a-jour' | 'a-confirmer' | 'termine' | 'annule', EtatEvenement> = {
+  annule: {
+    date: '2026-10-10',
+    statut: 'annule',
+    heurePrevue: 1140,
+    heureDebut: null,
+    aConfirmer: false,
+  },
   'mise-a-jour': {
     date: '2026-10-10',
     statut: 'preparation',
@@ -96,7 +117,37 @@ function envoiSimule(echec: boolean, refus?: () => string | null) {
   }
 }
 
-export function contenuEvenement(ecran: EcranApercu, echec: boolean): ContenuPanneauEvenement {
+/**
+ * Corrections du porteur (T78), envois simulés : un nom corrigé montre « Ancien nom : Soirée de
+ * lounge, corrigé le 6 oct. » ; le retrait réussi appelle `surRetrait` (le panneau le dit).
+ */
+function correctionsExemple(
+  echec: boolean,
+  corrige: boolean,
+  surRetrait: () => void,
+): CorrectionsEvenement {
+  return {
+    titrePrecedent: corrige ? 'Soirée de lounge' : null,
+    titreCorrigeLe: corrige ? AUJOURDHUI_EXEMPLE : null,
+    porteurId: MINISTERE_EXEMPLE,
+    mentionIds: ['10000000-0000-4000-8000-000000000002'],
+    ministeres: MINISTERES_LISTE_EXEMPLE,
+    // Le dernier état dit seul l'état final des exemples (« Terminé », « Annulé »).
+    etatFinal: null,
+    corrigerNom: envoiSimule(echec),
+    modifierMentions: envoiSimule(echec),
+    retirer: async () => {
+      await envoiSimule(echec)()
+      surRetrait()
+    },
+  }
+}
+
+export function contenuEvenement(
+  ecran: EcranApercu,
+  echec: boolean,
+  surRetrait: () => void = () => undefined,
+): ContenuPanneauEvenement {
   const reessayer = () => undefined
   switch (ecran) {
     case 'sans-mention':
@@ -107,10 +158,30 @@ export function contenuEvenement(ecran: EcranApercu, echec: boolean): ContenuPan
         ministeres: [],
         envoyer: envoiSimule(echec),
       }
+    case 'retire':
+      return { etat: 'retire', le: '2026-10-05', aLInstant: false, mode: 'mise_a_jour' }
+    case 'consultation':
+      return {
+        etat: 'consultation',
+        evenementId: ecran,
+        titre: 'Soirée de louange',
+        titrePrecedent: 'Soirée de lounge',
+        titreCorrigeLe: AUJOURDHUI_EXEMPLE,
+        date: '2026-10-03',
+        statut: 'valide',
+        nomPorteur: 'Communication',
+        mentions: ['Coordination'],
+        retirer: async () => {
+          await envoiSimule(echec)()
+          surRetrait()
+        },
+      }
     case 'mise-a-jour':
+    case 'nom-corrige':
     case 'a-confirmer':
-    case 'termine': {
-      const actuel = ACTUELS[ecran]
+    case 'termine':
+    case 'annule': {
+      const actuel = ACTUELS[ecran === 'nom-corrige' ? 'mise-a-jour' : ecran]
       let enregistre: EtatEnregistre = actuel
       return {
         etat: 'mise_a_jour',
@@ -118,6 +189,7 @@ export function contenuEvenement(ecran: EcranApercu, echec: boolean): ContenuPan
         aujourdhui: AUJOURDHUI_EXEMPLE,
         titre: ecran === 'termine' ? 'Soirée jeunesse' : 'Soirée de louange',
         mentions: ['Coordination'],
+        corrections: correctionsExemple(echec, ecran === 'nom-corrige', surRetrait),
         actuel,
         envoyer: async (miseAJour) => {
           const apres = etatApresEnvoi(enregistre, miseAJour)

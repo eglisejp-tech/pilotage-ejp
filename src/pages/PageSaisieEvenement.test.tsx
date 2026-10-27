@@ -55,6 +55,9 @@ function evenement(ministereId: string) {
     // Heures (T68) : prévue à 19 h, pas encore de début.
     heure_prevue: 1140,
     heure_debut: null,
+    // Nom corrigé (T78) : « Réunion des responsable » est devenu le nom en vigueur le 5 oct.
+    titre_precedent: 'Réunion des responsable',
+    titre_corrige_le: '2026-10-05',
   }
 }
 
@@ -126,7 +129,7 @@ describe('/saisir/evenement (ajout, maquette 11)', () => {
     expect(screen.queryByRole('button', { name: 'Ajouter au calendrier' })).toBeNull()
   })
 
-  it.each(['berger', 'conseil', 'admin_eglise', 'admin_plateforme'] as const)(
+  it.each(['berger', 'conseil', 'admin_eglise'] as const)(
     '%s : la page non disponible, sans aucune requête de données ni bouton de saisie',
     async (type) => {
       const faux = connecte(type)
@@ -135,19 +138,28 @@ describe('/saisir/evenement (ajout, maquette 11)', () => {
         expect(
           await screen.findByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE }),
         ).toBeInTheDocument()
-        expect(screen.queryByRole('button', { name: /Ajouter|Enregistrer/ })).toBeNull()
+        expect(screen.queryByRole('button', { name: /Ajouter|Enregistrer|Retirer/ })).toBeNull()
         unmount()
       }
       expect(faux.tables.every((table) => table === 'compte')).toBe(true)
     },
   )
+
+  it('admin_plateforme : « Ajouter un événement » lui reste fermé, sans requête de données', async () => {
+    const faux = connecte('admin_plateforme')
+    afficher('/saisir/evenement')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE }),
+    ).toBeInTheDocument()
+    expect(faux.tables.every((table) => table === 'compte')).toBe(true)
+  })
 })
 
 describe('/saisir/evenement/:id (mise à jour)', () => {
-  it('porteur : nom et mentions en lecture seule, date et statut préremplis, ligne « à confirmer »', async () => {
+  it('porteur : nom et mentions, date et statut préremplis, ligne « à confirmer »', async () => {
     connecte('ministere', {
       v_evenement: [evenement(COMMUNICATION)],
-      evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
+      v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
     })
     afficher(`/saisir/evenement/${EVENEMENT}`)
     expect(
@@ -162,18 +174,68 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(screen.getByText(/^Cet événement attend toujours sa validation\./)).toBeInTheDocument()
   })
 
-  it('ministère mentionné : « Seul Coordination peut mettre à jour cet événement. », sans formulaire ni lecture des mentions', async () => {
+  it('porteur (T78) : « Corriger le nom », l’ancien nom, et après la date, chaque action dit sa raison', async () => {
+    const faux = connecte('ministere', {
+      v_evenement: [evenement(COMMUNICATION)],
+      v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
+    })
+    afficher(`/saisir/evenement/${EVENEMENT}`)
+    expect(await screen.findByRole('button', { name: 'Corriger le nom' })).toBeInTheDocument()
+    expect(
+      screen.getByText('Ancien nom : Réunion des responsable, corrigé le 5 oct.'),
+    ).toBeInTheDocument()
+    // L'événement est daté du 26 sept., avant aujourd'hui (6 oct.) : ni mentions ni retrait.
+    expect(screen.queryByRole('button', { name: 'Modifier les mentions' })).toBeNull()
+    expect(
+      screen.getByText("Les mentions ne changent plus : la date de l'événement est passée."),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(
+      screen.getByText(/^Un événement passé se retire par EJP Tech\. S'il a été créé par erreur/),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+    expect(faux.tables).toContain('v_evenement_mention')
+    expect(faux.tables).not.toContain('evenement_mention')
+  })
+
+  it('porteur (T78, 27 oct.) : un « Annulé » enregistré puis remplacé, lu dans les états, garde la raison', async () => {
+    const faux = connecte('ministere', {
+      // Le dernier état est « En préparation », à venir ; un « Annulé » a été enregistré avant.
+      v_evenement: [{ ...evenement(COMMUNICATION), date: '2026-10-10', statut: 'preparation' }],
+      v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
+      evenement_etat: [{ statut: 'annule' }],
+    })
+    afficher(`/saisir/evenement/${EVENEMENT}`)
+    expect(
+      await screen.findByText(
+        'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+    // Les mentions suivent la date seule : l'événement est à venir.
+    expect(screen.getByRole('button', { name: 'Modifier les mentions' })).toBeInTheDocument()
+    expect(faux.tables).toContain('evenement_etat')
+    expect(faux.filtres).toContainEqual({
+      table: 'evenement_etat',
+      operateur: 'eq',
+      colonne: 'evenement_id',
+      valeur: EVENEMENT,
+    })
+  })
+
+  it('ministère mentionné : « Seul Coordination peut modifier cet événement. », sans formulaire ni lecture des mentions', async () => {
     const faux = connecte('ministere', { v_evenement: [evenement(COORDINATION)] })
     afficher(`/saisir/evenement/${EVENEMENT}`)
     expect(
-      await screen.findByText('Seul Coordination peut mettre à jour cet événement.'),
+      await screen.findByText('Seul Coordination peut modifier cet événement.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
       '/ma-fiche',
     )
     expect(screen.queryByRole('radio')).toBeNull()
-    expect(faux.tables).not.toContain('evenement_mention')
+    expect(faux.tables).not.toContain('v_evenement_mention')
   })
 
   it('événement illisible (autre ministère) : « Cet événement n’existe pas ou vous n’y avez pas accès. »', async () => {
@@ -181,6 +243,33 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     afficher(`/saisir/evenement/${EVENEMENT}`)
     expect(await screen.findByText('Cet événement est introuvable.')).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
+  })
+
+  it('événement retiré (T78), ouvert par un ancien lien : « Cet événement a été retiré le 5 oct. »', async () => {
+    connecte('ministere', {
+      v_evenement: [],
+      evenement_retrait: [
+        { evenement_id: EVENEMENT, saisi_le: '2026-10-05T10:00:00Z', saisi_par: 'u-ministere' },
+      ],
+    })
+    afficher(`/saisir/evenement/${EVENEMENT}`)
+    expect(await screen.findByText('Cet événement a été retiré le 5 oct.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).toBeNull()
+  })
+
+  it('EJP Tech (T78) : l’événement en lecture, « Retirer l’événement », aucun formulaire', async () => {
+    connecte('admin_plateforme', {
+      v_evenement: [{ ...evenement(COORDINATION), date: '2026-10-08' }],
+      v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COMMUNICATION }],
+    })
+    afficher(`/saisir/evenement/${EVENEMENT}`)
+    expect(await screen.findByRole('button', { name: "Retirer l'événement" })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Événement')
+    expect(screen.getByText('Coordination')).toBeInTheDocument()
+    expect(screen.getByText(/^Ministères mentionnés : Communication\./)).toBeInTheDocument()
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(screen.queryByRole('button', { name: /Enregistrer|Corriger/ })).toBeNull()
   })
 
   it('identifiant qui n’en est pas un : le même message, sans aucune requête de données', async () => {

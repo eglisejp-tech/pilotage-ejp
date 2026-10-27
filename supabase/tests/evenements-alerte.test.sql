@@ -126,8 +126,8 @@ $$, $$ values ('id', 'uuid'), ('ministere_id', 'uuid'), ('titre', 'text'), ('dat
               ('statut', 'USER-DEFINED'), ('mis_a_jour_le', 'timestamp with time zone'),
               ('jours', 'integer'), ('a_confirmer', 'boolean'), ('reporte_du', 'date'),
               ('heure_prevue', 'smallint'), ('heure_debut', 'smallint'), ('retard', 'integer'),
-              ('a_l_heure', 'boolean') $$,
-  'v_evenement : les six colonnes de l''étape 3, puis jours, a_confirmer et reporte_du, puis les heures, le retard et « à l''heure » (T68)');
+              ('a_l_heure', 'boolean'), ('titre_precedent', 'text'), ('titre_corrige_le', 'date') $$,
+  'v_evenement : les six colonnes de l''étape 3, puis jours, a_confirmer et reporte_du, puis les heures, le retard et « à l''heure » (T68), puis le nom précédent et le jour de la correction (T78, à la fin)');
 select ok(coalesce((select c.reloptions @> array['security_invoker=true'] from pg_class c
                      where c.oid = 'public.v_evenement'::regclass), false),
   'v_evenement reste security_invoker');

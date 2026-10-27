@@ -224,7 +224,7 @@ describe('lectures de la mise à jour', () => {
     const faux = installer({ v_evenement: { data: ligne, error: null } })
     expect(await lireEvenementAMettreAJour('20000000-0000-4000-8000-000000000001')).toBe(ligne)
     expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
-      'select("id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut")',
+      'select("id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut, titre_precedent, titre_corrige_le")',
       'eq("id", "20000000-0000-4000-8000-000000000001")',
       'maybeSingle()',
     ])
@@ -232,9 +232,9 @@ describe('lectures de la mise à jour', () => {
     expect(await lireEvenementAMettreAJour('20000000-0000-4000-8000-000000000002')).toBeNull()
   })
 
-  it('mentions d’un événement', async () => {
+  it('mentions en vigueur d’un événement (T78)', async () => {
     const faux = installer({
-      evenement_mention: {
+      v_evenement_mention: {
         data: [
           {
             evenement_id: '20000000-0000-4000-8000-000000000001',
@@ -250,7 +250,7 @@ describe('lectures de la mise à jour', () => {
         ministere_id: '10000000-0000-4000-8000-000000000002',
       },
     ])
-    expect(appelsDe(faux.de('evenement_mention')[0])).toEqual([
+    expect(appelsDe(faux.de('v_evenement_mention')[0])).toEqual([
       'select("evenement_id, ministere_id")',
       'eq("evenement_id", "20000000-0000-4000-8000-000000000001")',
     ])

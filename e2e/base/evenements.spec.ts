@@ -60,13 +60,11 @@ test.describe('ministère Communication', () => {
     await expect(page.getByRole('button', { name: 'Enregistrer la mise à jour' })).toBeVisible()
   })
 
-  test('ministère mentionné : « Seul Coordination peut mettre à jour cet événement. », sans formulaire', async ({
+  test('ministère mentionné : « Seul Coordination peut modifier cet événement. », sans formulaire', async ({
     page,
   }) => {
     await page.goto(`/saisir/evenement/${EVENEMENT_COORDINATION}`)
-    await expect(
-      page.getByText('Seul Coordination peut mettre à jour cet événement.'),
-    ).toBeVisible()
+    await expect(page.getByText('Seul Coordination peut modifier cet événement.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toHaveAttribute(
       'href',
       '/ma-fiche',
@@ -116,7 +114,9 @@ test.describe('ministère Communication', () => {
 })
 
 // Le berger, le conseil, l'administration et EJP Tech : ni ces adresses, ni aucun bouton de
-// saisie, sans aucune requête de données (seule la ligne du compte est lue).
+// saisie, sans aucune requête de données (seule la ligne du compte est lue). Depuis T78, EJP Tech
+// ouvre le panneau d'un événement en lecture, pour le retirer (e2e/base/evenements-corrections) :
+// pour lui, seuls l'ajout et la réunion restent fermés.
 for (const compte of COMPTES_PROFILS.filter((profil) => profil.profil !== 'ministere')) {
   test.describe(`profil ${compte.profil}`, () => {
     test.use({ storageState: fichierSession(compte.profil) })
@@ -125,11 +125,14 @@ for (const compte of COMPTES_PROFILS.filter((profil) => profil.profil !== 'minis
       page,
     }) => {
       const requetes = suivreRequetesDeDonnees(page)
-      for (const adresse of [
+      const adresses = [
         '/saisir/evenement',
-        `/saisir/evenement/${EVENEMENT_COORDINATION}`,
+        ...(compte.profil === 'admin_plateforme'
+          ? []
+          : [`/saisir/evenement/${EVENEMENT_COORDINATION}`]),
         '/saisir/reunion',
-      ]) {
+      ]
+      for (const adresse of adresses) {
         await page.goto(adresse)
         await expect(
           page.getByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE }),

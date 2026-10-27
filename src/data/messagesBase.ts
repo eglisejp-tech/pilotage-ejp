@@ -227,6 +227,28 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     champ: 'heure_debut',
   },
   "L'heure prévue est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_prevue' },
+  // Corrections d'un événement (T78, Proposé) : corriger_titre_evenement,
+  // modifier_mentions_evenement, retirer_evenement, le contrôle d'un état et mention_unique. Les
+  // phrases de la conception (calendrier-evenements.md, section 8.2).
+  'Cet événement a été retiré.': { texte: 'Cet événement a été retiré. Rechargez la page.' },
+  'Les mentions de cet événement ne changent plus.': {
+    texte: "Les mentions ne changent plus : la date de l'événement est passée.",
+  },
+  'Un événement passé se retire par EJP Tech.': {
+    texte: "Un événement passé se retire par EJP Tech. S'il a été créé par erreur, signalez-le.",
+  },
+  // Après « Terminé » ou « Annulé », le porteur ne retire plus (décision du 27 octobre 2026) : la
+  // phrase que le panneau dit déjà sous le bouton (TEXTES_CORRECTIONS.retraitTermine et Annule).
+  'Un événement terminé se retire par EJP Tech.': {
+    texte: 'Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.',
+  },
+  'Un événement annulé se retire par EJP Tech.': {
+    texte: 'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+  },
+  'Ce ministère est déjà mentionné sur cet événement.': {
+    texte:
+      'Les mentions de cet événement viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',
+  },
 
   // Numéro anti-doublon (T76, lot B ; Proposé, Q2) : un événement, un point ou un signalement
   // renvoyé avec son numéro mais d'autres valeurs (corrigé après une issue inconnue). Le premier

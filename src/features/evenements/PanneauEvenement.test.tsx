@@ -35,9 +35,7 @@ describe('états du panneau d’événement (T36)', () => {
 
   it('pas pour ce profil : un ministère mentionné lit qui met à jour, sans formulaire', () => {
     afficher({ etat: 'pas_porteur', nomPorteur: 'Coordination' })
-    expect(
-      screen.getByText('Seul Coordination peut mettre à jour cet événement.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('Seul Coordination peut modifier cet événement.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Revenir à ma fiche' })).toBeInTheDocument()
     expect(screen.queryByRole('radio')).toBeNull()
     expect(screen.queryByRole('button', { name: /Enregistrer/ })).toBeNull()

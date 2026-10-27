@@ -12,7 +12,9 @@ import {
 } from '@/features/evenements/schemas'
 import { envoyer, schemaNumero } from '@/data/envoi'
 import type { AjoutEvenement, MiseAJourEvenement } from '@/features/evenements/schemas'
-import type { LigneTable, LigneVue } from '@/lib/base'
+import type { MentionEvenement } from '@/data/evenements'
+import type { NomCorrige } from '@/data/evenementsCorrections'
+import type { LigneVue } from '@/lib/base'
 import { supabase } from '@/lib/supabase'
 
 export type EvenementAMettreAJour = Pick<
@@ -83,13 +85,16 @@ export async function mettreAJourEvenement(
 
 /**
  * Dernier état d'un événement, s'il est lisible par le compte (ses événements et ceux qui le
- * mentionnent) ; null sinon, sans dire pourquoi.
+ * mentionnent) et pas retiré ; null sinon, sans dire pourquoi. Avec son nom en vigueur, l'ancien
+ * nom et le jour de la correction (T78).
  */
-export async function lireEvenementAMettreAJour(id: string): Promise<EvenementAMettreAJour | null> {
+export async function lireEvenementAMettreAJour(
+  id: string,
+): Promise<(EvenementAMettreAJour & NomCorrige) | null> {
   const { data, error } = await supabase()
     .from('v_evenement')
     .select(
-      'id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut',
+      'id, ministere_id, titre, date, statut, a_confirmer, reporte_du, heure_prevue, heure_debut, titre_precedent, titre_corrige_le',
     )
     .eq('id', id)
     .maybeSingle()
@@ -97,12 +102,10 @@ export async function lireEvenementAMettreAJour(id: string): Promise<EvenementAM
   return data
 }
 
-/** Ministères mentionnés par un événement, fixés à sa création (T32). */
-export async function lireMentionsEvenement(
-  evenementId: string,
-): Promise<LigneTable<'evenement_mention'>[]> {
+/** Ministères mentionnés en ce moment par un événement (`v_evenement_mention`, T78). */
+export async function lireMentionsEvenement(evenementId: string): Promise<MentionEvenement[]> {
   const { data, error } = await supabase()
-    .from('evenement_mention')
+    .from('v_evenement_mention')
     .select('evenement_id, ministere_id')
     .eq('evenement_id', evenementId)
   if (error) throw error

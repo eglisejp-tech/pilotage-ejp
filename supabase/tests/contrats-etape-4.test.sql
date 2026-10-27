@@ -20,14 +20,14 @@ update ctx set ministere = tests.creer_compte('contrats-ministere@exemple.test',
 grant select on ctx to authenticated, anon;
 
 -- Petite matrice de l'aide (fin du fichier), écrite avant plan() pour que tests.nombre_essais
--- compte ses essais : EJP Tech lit les 18 lignes de modération écrites plus bas, un ministère
+-- compte ses essais : EJP Tech lit les 19 lignes de modération écrites plus bas, un ministère
 -- aucune ; personne n'ajoute ni ne modifie. La ligne aal1 d'EJP Tech est écrite : elle remplace
 -- la ligne dérivée.
 create temp table matrice_essai (texte text, profils text);
 insert into matrice_essai
 select format($$
     values
-      ('EJP Tech', 'moderation', 'lire', 'aal2', '18', %1$L),
+      ('EJP Tech', 'moderation', 'lire', 'aal2', '19', %1$L),
       ('EJP Tech', 'moderation', 'lire', 'aal1', '0', %1$L),
       ('ministère', 'moderation', 'lire', 'aal2', '0', %1$L),
       ('EJP Tech', 'moderation', 'ajouter', 'aal2', '42501', %2$L),
@@ -39,7 +39,7 @@ select format($$
   'update public.moderation set motif = motif where cible_id in (select cible_id from essai_moderation)'),
   $$ select 'EJP Tech', tech from ctx union all select 'ministère', ministere from ctx $$;
 
-select plan(83 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
+select plan(89 + tests.nombre_essais((select texte from matrice_essai), (select profils from matrice_essai), true));
 
 -- Listes attendues
 create temp table attendu_action (code text primary key);
@@ -55,20 +55,24 @@ insert into attendu_action values
   ('point_mention_ajoutee'), ('point_mention_retiree'),
   ('modele_prevus_choisi'),
   ('adresse_corrigee'), ('ministere_supprime'),
+  -- T77 (suivi des signalements)
   ('signalement_pris_en_charge'), ('signalement_repondu'), ('signalement_regle'),
-  ('signalement_reponse_ministere');
+  ('signalement_reponse_ministere'),
+  -- T78, lot 1 (corrections d'un événement)
+  ('evenement_titre_corrige'), ('evenement_mention_ajoutee'), ('evenement_mention_retiree'),
+  ('evenement_retire');
 
 create temp table attendu_cible_journal (code text primary key);
 insert into attendu_cible_journal values
   ('session'), ('evenement'), ('reunion'), ('point_attention'), ('point_suivi'), ('compte'), ('ministere'),
   ('indicateur'), ('demande_indicateur'), ('validation'), ('signalement'), ('signalement_suivi'),
-  ('precision_sensible'), ('retrait_indicateur');
+  ('precision_sensible'), ('retrait_indicateur'), ('evenement_titre');
 
 create temp table attendu_cible_moderation (code text primary key);
 insert into attendu_cible_moderation values
   ('point_attention'), ('point_suivi'), ('evenement'), ('reunion'),
   ('demande_indicateur'), ('validation'), ('signalement'), ('signalement_suivi'), ('precision_sensible'),
-  ('retrait_indicateur');
+  ('retrait_indicateur'), ('evenement_titre');
 
 create temp table attendu_couple (rang int primary key, cible text not null, champ text not null);
 insert into attendu_couple values
@@ -77,7 +81,7 @@ insert into attendu_couple values
   (6, 'reunion', 'objet'), (7, 'reunion', 'decision_attendue'),
   (8, 'demande_indicateur', 'pourquoi'), (9, 'validation', 'motif'),
   (10, 'signalement', 'texte'), (11, 'signalement_suivi', 'commentaire'),
-  (12, 'precision_sensible', 'texte'), (13, 'retrait_indicateur', 'motif');
+  (12, 'precision_sensible', 'texte'), (13, 'retrait_indicateur', 'motif'), (14, 'evenement_titre', 'titre');
 
 -- Valeurs écrites dans un check « colonne in (...) », lues dans sa définition.
 create function pg_temp.valeurs_du_check(p_table regclass, p_contrainte name) returns setof text
@@ -99,7 +103,7 @@ $$, 'les cinq contraintes du journal et de la modération portent le nom fixé p
 -- Listes exactes
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_action_check') $$,
               $$ select code from attendu_action $$,
-  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, les 2 codes des mentions modifiables (T54), le choix de la liste des prévus (T72), la correction d''une adresse et la suppression d''un ministère (T74), les 4 codes du suivi des signalements (T77), rien d''autre');
+  'journal.action : les 20 codes des étapes 1 à 3, les 7 codes du lot 1 des indicateurs et des statistiques FIJ, les 2 codes des signalements, les 2 codes des mentions modifiables (T54), le choix de la liste des prévus (T72), la correction d''une adresse et la suppression d''un ministère (T74), les 4 codes du suivi des signalements (T77), les 4 codes des corrections d''un événement (T78), rien d''autre');
 select set_eq($$ select pg_temp.valeurs_du_check('public.journal', 'journal_cible_check') $$,
               $$ select code from attendu_cible_journal $$,
   'journal.cible : les 7 cibles des étapes 1 à 3, indicateur, signalement et les cibles de la modération (precision_sensible comprise, B8), rien d''autre');
@@ -164,7 +168,7 @@ select set_eq($$
    cross join (select champ from attendu_couple union select 'libelle') as h(champ)
    where pg_temp.couple_accepte(c.cible, h.champ)
 $$, $$ select cible, champ from attendu_couple $$,
-  'moderation : les 13 couples (cible, champ) de la liste, et eux seuls, se masquent');
+  'moderation : les 14 couples (cible, champ) de la liste, et eux seuls, se masquent');
 
 select lives_ok(format('insert into public.moderation (cible, cible_id, decision, par) values (%L, %L, %L, %L)',
                        c.code, gen_random_uuid(), 'rien_a_signaler', (select tech from ctx)),
@@ -191,7 +195,7 @@ select is(tests.nombre_essais((select texte from matrice_essai), (select profils
 -- lignes) fait échouer son test. check_test retire ce test du compte et vérifie son échec.
 select * from check_test(
   (select * from tests.verifier_matrice(
-     $$ values ('ministère', 'moderation', 'lire', 'aal2', '18',
+     $$ values ('ministère', 'moderation', 'lire', 'aal2', '19',
                 'select 1 from public.moderation where cible_id in (select cible_id from essai_moderation)') $$,
      $$ select 'ministère', ministere from ctx $$)),
   false,

@@ -24,7 +24,7 @@
 -- .claude/skills/nouvelle-table/SKILL.md, « Pièges connus des tests pgTAP »).
 begin;
 
-select plan(72);
+select plan(75);
 
 -- Politique restrictive de référence, écrite à l'identique de la migration (BRIEF, section 8),
 -- sur une table temporaire : chaque table de public doit avoir exactement la même. Un contrôle
@@ -51,8 +51,10 @@ select tables_are('public', array[
   -- étape 8 (T61)
   'acceptation_personne',
   -- étape 6 (T62)
-  'retrait_indicateur'
-]::name[], 'public contient les 33 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4, 1 de l''étape 5, 2 de l''étape 6, 4 de l''étape 8), rien de plus');
+  'retrait_indicateur',
+  -- étape 8 (T78, lot 1)
+  'evenement_titre', 'evenement_mention_retrait', 'evenement_retrait'
+]::name[], 'public contient les 36 tables du modèle (16 des étapes 1 à 3, 10 de l''étape 4, 1 de l''étape 5, 2 de l''étape 6, 7 de l''étape 8), rien de plus');
 select tables_are('private', array[
   'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun',
   -- étape 8 (T72)
@@ -78,8 +80,10 @@ select views_are('public', array[
   -- étape 8 (T72)
   'v_ministere_modele',
   -- étape 8 (T74)
-  'v_ministeres_supprimables', 'v_comptes_jamais_actives'
-]::name[], 'public contient les 39 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 6 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
+  'v_ministeres_supprimables', 'v_comptes_jamais_actives',
+  -- étape 8 (T78, lot 1)
+  'v_evenement_mention'
+]::name[], 'public contient les 40 vues de lecture (18 des étapes 1 à 3, 13 de l''étape 4, 1 de l''étape 5, 7 de l''étape 8, 1 de l''étape 4 bis), rien de plus');
 select is_empty($$
   select c.relname from pg_class c
    where c.relnamespace = 'public'::regnamespace and c.relkind in ('m', 'p', 'f')
@@ -141,6 +145,12 @@ $$, $$ values
   ('evenement_etat', 'ajout', 'INSERT', 'PERMISSIVE'),
   ('evenement_etat', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('evenement_etat', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement_mention_retrait', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement_mention_retrait', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement_retrait', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement_retrait', 'lecture', 'SELECT', 'PERMISSIVE'),
+  ('evenement_titre', 'double_authentification', 'ALL', 'RESTRICTIVE'),
+  ('evenement_titre', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('evenement_mention', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('evenement_mention', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('fij_departement', 'ajout', 'INSERT', 'PERMISSIVE'),
@@ -198,7 +208,7 @@ $$, $$ values
   ('validation', 'lecture', 'SELECT', 'PERMISSIVE'),
   ('ventilation_sensible', 'double_authentification', 'ALL', 'RESTRICTIVE'),
   ('ventilation_sensible', 'lecture', 'SELECT', 'PERMISSIVE')
-$$, 'les 72 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère et sur passage, rien d''autre');
+$$, 'les 78 politiques de public : lecture et double authentification sur chaque table, ajout sur les cinq tables remplies par un ministère et sur passage, rien d''autre');
 
 -- GRANT des tables
 select is_empty($$
@@ -207,7 +217,7 @@ select is_empty($$
      and has_any_column_privilege('authenticated', c.oid, 'INSERT')
      and c.relname not in ('mesure', 'fij_departement', 'participation', 'evenement_etat', 'reunion', 'passage')
 $$, 'authenticated : insert seulement sur les tables remplies directement par un ministère et sur passage (colonnes comprises)');
--- Droits exacts d'authenticated sur chacune des 33 tables : lecture (sous la RLS) partout, ajout
+-- Droits exacts d'authenticated sur chacune des 36 tables : lecture (sous la RLS) partout, ajout
 -- en plus sur les cinq tables remplies directement par un ministère et sur passage (T56 : jour
 -- d'utilisation, déclaration et jour imposés par la base).
 select table_privs_are('public', t.nom::name, 'authenticated',
@@ -221,7 +231,8 @@ select table_privs_are('public', t.nom::name, 'authenticated',
     'indicateur_terme', 'fij_statistique', 'evenement_mention', 'demande_indicateur', 'validation',
     'categorie_sensible', 'ventilation_sensible', 'precision_sensible', 'signalement',
     'signalement_suivi', 'acceptation_conditions', 'point_mention_retrait',
-    'intervenant', 'journal_intervenant', 'passage', 'acceptation_personne', 'retrait_indicateur']) as t(nom)
+    'intervenant', 'journal_intervenant', 'passage', 'acceptation_personne', 'retrait_indicateur',
+    'evenement_titre', 'evenement_mention_retrait', 'evenement_retrait']) as t(nom)
  order by t.nom;
 select is_empty($$
   with droits as (
@@ -364,6 +375,10 @@ $$, $$ values
   ('conditions_acceptees', 1, false, true, false),
   ('confirmer_signalement', 1, false, true, false),
   ('corriger_indicateur', 3, false, true, false),
+  -- T78, lot 1 : corrections d'un événement
+  ('corriger_titre_evenement', 2, false, true, false),
+  ('modifier_mentions_evenement', 2, false, true, false),
+  ('retirer_evenement', 1, false, true, false),
   ('creer_calcul', 7, false, true, false),
   ('creer_indicateur', 9, false, true, false),
   ('creer_indicateurs_prevus', 2, false, true, false),
@@ -413,7 +428,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 60 fonctions de public : 45 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 63 fonctions de public : 48 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -454,6 +469,12 @@ $$, $$ values
   ('controler_correction_adresse', 3, false, false, false),
   ('controler_creation_compte', 3, false, false, false),
   ('controler_evenement_etat', 0, true, false, false),
+  -- T78, lot 1 : contrôles communs aux corrections du porteur, unicité d'une mention en vigueur
+  ('controler_evenement_du_porteur', 1, true, false, false),
+  ('refuser_mention_evenement_double', 0, false, false, false),
+  ('corriger_titre_evenement', 2, true, true, false),
+  ('modifier_mentions_evenement', 2, true, true, false),
+  ('retirer_evenement', 1, true, true, false),
   ('controler_indicateur', 0, true, false, false),
   ('controler_invitation_en_attente', 1, false, false, false),
   ('controler_journal_ministere', 0, true, false, false),
@@ -613,7 +634,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 190 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 195 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -742,6 +763,18 @@ $$, $$ values
   ('public.evenement_etat', 'journal_evenement_etat'),
   ('public.evenement_mention', 'ajout_seulement'),
   ('public.evenement_mention', 'ajout_seulement_vider'),
+  -- T78, lot 1 : mentions datées et uniques, nom, retraits de mention et d'événement
+  ('public.evenement_mention', 'forcer_auteur'),
+  ('public.evenement_mention', 'mention_unique'),
+  ('public.evenement_mention_retrait', 'ajout_seulement'),
+  ('public.evenement_mention_retrait', 'ajout_seulement_vider'),
+  ('public.evenement_mention_retrait', 'forcer_auteur'),
+  ('public.evenement_retrait', 'ajout_seulement'),
+  ('public.evenement_retrait', 'ajout_seulement_vider'),
+  ('public.evenement_retrait', 'forcer_auteur'),
+  ('public.evenement_titre', 'ajout_seulement'),
+  ('public.evenement_titre', 'ajout_seulement_vider'),
+  ('public.evenement_titre', 'forcer_auteur'),
   ('public.fij_departement', 'forcer_auteur'),
   ('public.fij_departement', 'journal_fij_departement'),
   ('public.fij_statistique', 'ajout_seulement'),
@@ -809,7 +842,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 91 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles (ministère du journal compris, T74), mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72 ; suppression d''un ministère vide, T74 ; numéros d''envoi purgés à 7 jours et incidents d''envoi purgés à 90 jours, T76), termes complets, et eux seuls');
+$$, 'les 102 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles (ministère du journal compris, T74), mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72 ; suppression d''un ministère vide, T74 ; numéros d''envoi purgés à 7 jours et incidents d''envoi purgés à 90 jours, T76 ; corrections d''un événement, T78), termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

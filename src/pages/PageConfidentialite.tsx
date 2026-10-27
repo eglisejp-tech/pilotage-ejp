@@ -27,12 +27,12 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * « Cookies et traceurs » ; phrase proposée. La version des conditions ne change pas : même
  * stockage, strictement nécessaire, sans nouvelle donnée ni nouvelle finalité (T73). Mise à jour
  * du 26 octobre 2026 : suivi des signalements dans l'outil (T77, lots 1 et 2), dans « Données
- * traitées » ; phrase proposée, à valider par la coordination avant la mise en ligne. La version
- * des conditions ne change pas : même adresse, même usage de service (conception T77, ancienne
- * Q9). Aucun mot sur un courriel : il n'est pas construit. Même jour : les incidents d'envoi
- * (T76, lot C), dans « Données traitées » et « Durées de conservation » (90 jours) ; phrases
- * proposées, à valider par la coordination. La version des conditions ne change pas (Proposé,
- * Q7) : aucun prestataire, aucun destinataire, aucune donnée de nature nouvelle (un journal
+ * traitées » (article « Signalements ») ; texte validé par la coordination le 27 octobre 2026. La
+ * version des conditions ne change pas : même adresse, même usage de service (conception T77,
+ * ancienne Q9). Aucun mot sur un courriel : il n'est pas construit. Même jour : les incidents
+ * d'envoi (T76, lot C), dans « Données traitées » et « Durées de conservation » (90 jours) ;
+ * textes validés par la coordination le 27 octobre 2026. La version des conditions ne change pas
+ * (Q7) : aucun prestataire, aucun destinataire, aucune donnée de nature nouvelle (un journal
  * technique, sans adresse IP).
  */
 export function PageConfidentialite() {

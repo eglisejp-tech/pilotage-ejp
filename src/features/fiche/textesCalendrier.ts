@@ -15,6 +15,8 @@ export const TEXTES_CALENDRIER = {
   ajouter: 'Ajouter un événement',
   /** Bouton de chaque événement que le ministère porte. */
   metteAJour: 'Mettre à jour',
+  /** Bouton de chaque événement pour EJP Tech (T78, Proposé) : le panneau, pour le retirer. */
+  ouvrir: 'Ouvrir',
   /** LISEZMOI, « États » : vide du calendrier. */
   aucun: 'Aucun événement prévu.',
   /** « Mentionné par Communication » : un événement qui mentionne ce ministère (T32). */

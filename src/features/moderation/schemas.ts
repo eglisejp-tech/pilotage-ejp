@@ -19,6 +19,8 @@ export const CIBLES_MASQUABLES = [
   'signalement',
   'signalement_suivi',
   'retrait_indicateur',
+  // Nom corrigé d'un événement (T78, 20261026235900_evenements_corrections.sql).
+  'evenement_titre',
 ] as const satisfies readonly CibleMasquable[]
 
 /** Les motifs de la liste, dans l'ordre du BRIEF. */

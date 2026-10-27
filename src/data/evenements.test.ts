@@ -26,7 +26,7 @@ describe('lireEvenementsMinistere', () => {
   it('sans mention : les événements du ministère, 7 jours dans le passé ou à confirmer, triés', async () => {
     const faux = client({})
     await lireEvenementsMinistere('m1')
-    expect(appelsDe(faux.de('evenement_mention')[0])).toEqual([
+    expect(appelsDe(faux.de('v_evenement_mention')[0])).toEqual([
       'select("evenement_id, ministere_id")',
       'eq("ministere_id", "m1")',
     ])
@@ -41,7 +41,7 @@ describe('lireEvenementsMinistere', () => {
 
   it('avec des mentions : ajoute les événements qui mentionnent le ministère', async () => {
     const faux = client({
-      evenement_mention: {
+      v_evenement_mention: {
         data: [
           { evenement_id: 'e1', ministere_id: 'm1' },
           { evenement_id: 'e2', ministere_id: 'm1' },
@@ -54,7 +54,7 @@ describe('lireEvenementsMinistere', () => {
   })
 
   it('une erreur de la base remonte, pour les mentions comme pour les événements', async () => {
-    client({ evenement_mention: ECHEC })
+    client({ v_evenement_mention: ECHEC })
     await expect(lireEvenementsMinistere('m1')).rejects.toMatchObject({ code: '42501' })
     client({ v_evenement: ECHEC })
     await expect(lireEvenementsMinistere('m1')).rejects.toMatchObject({ code: '42501' })
@@ -75,7 +75,7 @@ describe('lireEvenementsARenseigner (T68)', () => {
       'order("titre", {"ascending":true})',
     ])
     // Aucune lecture des mentions : un ministère mentionné n'a rien à y faire.
-    expect(faux.de('evenement_mention')).toHaveLength(0)
+    expect(faux.de('v_evenement_mention')).toHaveLength(0)
   })
 
   it('une erreur de la base remonte', async () => {
@@ -94,7 +94,7 @@ describe('lireMentionsDesEvenements', () => {
   it('lit les mentions des événements donnés', async () => {
     const faux = client({})
     await lireMentionsDesEvenements(['e1', 'e2'])
-    expect(appelsDe(faux.de('evenement_mention')[0])).toEqual([
+    expect(appelsDe(faux.de('v_evenement_mention')[0])).toEqual([
       'select("evenement_id, ministere_id")',
       'in("evenement_id", ["e1","e2"])',
     ])

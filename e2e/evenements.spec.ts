@@ -14,6 +14,12 @@ const ECRANS = [
   'a-confirmer',
   // Un événement passé, Terminé sans heure de début (T68).
   'termine',
+  // T78, 27 octobre 2026 : un événement à venir, Annulé (le porteur ne le retire plus).
+  'annule',
+  // T78 : un nom corrigé, un événement retiré (ancien lien), le panneau d'EJP Tech.
+  'nom-corrige',
+  'retire',
+  'consultation',
   'pas-porteur',
   'introuvable',
   'probleme',
@@ -95,7 +101,10 @@ test.describe('Ajouter un événement (maquette 11), aperçu', () => {
     await expect(page.getByRole('checkbox', { name: 'Communication' })).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).toBeVisible()
     await expect(page.getByText('Le ministère mentionné verra cet événement.')).toBeVisible()
-    await expect(page.getByText('Vous ne pourrez plus changer les mentions.')).toBeVisible()
+    // T78 (Q15) : les mentions se changent jusqu'à la date de l'événement.
+    await expect(
+      page.getByText("Vous pourrez les changer jusqu'à la date de l'événement."),
+    ).toBeVisible()
     await expect(page.getByRole('button', { name: 'Ajouter au calendrier' })).toBeVisible()
     await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',
@@ -209,9 +218,7 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
 
   test('états : pas pour ce profil, aucun résultat, problème passager', async ({ page }) => {
     await ouvrir(page, 'pas-porteur')
-    await expect(
-      page.getByText('Seul Coordination peut mettre à jour cet événement.'),
-    ).toBeVisible()
+    await expect(page.getByText('Seul Coordination peut modifier cet événement.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
     await expect(page.getByRole('radio')).toHaveCount(0)
 
@@ -222,6 +229,121 @@ test.describe("Mettre à jour l'événement, aperçu", () => {
     await ouvrir(page, 'probleme')
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
     await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
+  })
+})
+
+// T78, lot 1 (conception calendrier-evenements.md, 8.2) : les corrections du porteur et le
+// panneau d'EJP Tech, sur l'aperçu (envois simulés). « Aujourd'hui » : mardi 6 octobre 2026.
+test.describe('corrections d’un événement (T78), aperçu', () => {
+  test('S4 : « Corriger le nom », la fenêtre, puis « Nom corrigé. »', async ({ page }) => {
+    await ouvrir(page, 'mise-a-jour')
+    await page.getByRole('button', { name: 'Corriger le nom' }).click()
+    const fenetre = page.getByRole('dialog', { name: 'Corriger le nom' })
+    const champ = fenetre.getByLabel("Nom de l'événement")
+    await expect(champ).toHaveValue('Soirée de louange')
+    // Le rappel sur les données personnelles sous le seul champ libre de la fenêtre.
+    await expect(champ).toHaveAccessibleDescription(
+      "N'écrivez aucun nom ni information personnelle.",
+    )
+    await champ.fill('Soirée de louange et de prière')
+    await fenetre.getByRole('button', { name: 'Enregistrer le nom' }).click()
+    await expect(fenetre).toHaveCount(0)
+    await expect(page.getByText('Nom corrigé.')).toBeVisible()
+  })
+
+  test('un nom corrigé : « Ancien nom : Soirée de lounge, corrigé le 6 oct. »', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'nom-corrige')
+    await expect(page.getByText('Ancien nom : Soirée de lounge, corrigé le 6 oct.')).toBeVisible()
+  })
+
+  test('S5 : « Modifier les mentions », mentions actuelles cochées, puis « Mentions enregistrées. »', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'mise-a-jour')
+    await page.getByRole('button', { name: 'Modifier les mentions' }).click()
+    const fenetre = page.getByRole('dialog', { name: 'Modifier les mentions' })
+    await expect(fenetre.getByRole('checkbox', { name: /Coordination/ })).toBeChecked()
+    await expect(fenetre.getByRole('checkbox', { name: /Communication/ })).toHaveCount(0)
+    // La case est cachée : on clique son libellé (comme « Modifier les mentions » d'un point).
+    for (const nom of ['Coordination', 'Social']) {
+      await fenetre
+        .locator('label')
+        .filter({ has: page.getByRole('checkbox', { name: nom, exact: true }) })
+        .click()
+    }
+    await expect(fenetre.getByRole('checkbox', { name: 'Social', exact: true })).toBeChecked()
+    await fenetre.getByRole('button', { name: 'Enregistrer les mentions' }).click()
+    await expect(fenetre).toHaveCount(0)
+    await expect(page.getByText('Mentions enregistrées.')).toBeVisible()
+  })
+
+  test('S3 : « Retirer l’événement », la fenêtre, « Garder », puis le retrait', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'mise-a-jour')
+    await page.getByRole('button', { name: "Retirer l'événement" }).click()
+    const fenetre = page.getByRole('alertdialog', { name: 'Retirer cet événement ?' })
+    await expect(fenetre).toContainText('Ce retrait est définitif.')
+    await expect(fenetre).toContainText('choisissez plutôt le statut Annulé')
+    await fenetre.getByRole('button', { name: "Garder l'événement" }).click()
+    await expect(fenetre).toHaveCount(0)
+    await page.getByRole('button', { name: "Retirer l'événement" }).click()
+    await page.getByRole('alertdialog').getByRole('button', { name: "Retirer l'événement" }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'retiré' })).toContainText(
+      'Événement retiré du calendrier.',
+    )
+    await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
+  })
+
+  test('passé et terminé : les mentions et le retrait disent leur raison, un seul lien', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'termine')
+    await expect(page.getByRole('button', { name: 'Modifier les mentions' })).toHaveCount(0)
+    await expect(
+      page.getByText("Les mentions ne changent plus : la date de l'événement est passée."),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: "Retirer l'événement" })).toHaveCount(0)
+    // L'état final passe avant la date (décision du 27 octobre 2026).
+    await expect(
+      page.getByText('Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveCount(1)
+    await expect(page.getByRole('button', { name: 'Corriger le nom' })).toBeVisible()
+  })
+
+  test('à venir et annulé : la raison à la place du bouton, un seul lien, les mentions changent encore', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'annule')
+    await expect(page.getByRole('button', { name: "Retirer l'événement" })).toHaveCount(0)
+    const raison = page.getByText(
+      'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+    )
+    await expect(raison).toBeVisible()
+    const lien = page.getByRole('link', { name: 'Signaler une difficulté' })
+    await expect(lien).toHaveCount(1)
+    await expect(raison.getByRole('link', { name: 'Signaler une difficulté' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Modifier les mentions' })).toBeVisible()
+  })
+
+  test('ancien lien : « Cet événement a été retiré le 5 oct. »', async ({ page }) => {
+    await ouvrir(page, 'retire')
+    await expect(page.getByText('Cet événement a été retiré le 5 oct.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
+  })
+
+  test('EJP Tech : l’événement en lecture, « Retirer l’événement », sans formulaire', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'consultation')
+    await expect(titre(page)).toHaveText('Événement')
+    await expect(page.getByRole('radio')).toHaveCount(0)
+    await expect(page.getByRole('button', { name: /Corriger|Modifier|Enregistrer/ })).toHaveCount(0)
+    await page.getByRole('button', { name: "Retirer l'événement" }).click()
+    await expect(page.getByRole('alertdialog')).toContainText('chez le ministère qui le porte')
   })
 })
 
@@ -299,6 +421,8 @@ test.describe('accessibilité et largeurs', () => {
 })
 
 test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+  // Seize écrans puis les états ouverts (T78 ajoute « annule ») : près de 30 s sur un poste chargé.
+  test.setTimeout(90_000)
   const largeur = page.viewportSize()?.width ?? 0
   const capturer = (nom: string) =>
     page.screenshot({
@@ -326,4 +450,17 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await ouvrir(page, 'mise-a-jour')
   await date(page).fill('2026-10-17')
   await capturer('mise-a-jour-report')
+  // T78 : les trois fenêtres du porteur.
+  await ouvrir(page, 'mise-a-jour')
+  await page.getByRole('button', { name: 'Corriger le nom' }).click()
+  await expect(page.getByRole('dialog', { name: 'Corriger le nom' })).toBeVisible()
+  await capturer('corriger-nom')
+  await ouvrir(page, 'mise-a-jour')
+  await page.getByRole('button', { name: 'Modifier les mentions' }).click()
+  await expect(page.getByRole('dialog', { name: 'Modifier les mentions' })).toBeVisible()
+  await capturer('modifier-mentions')
+  await ouvrir(page, 'mise-a-jour')
+  await page.getByRole('button', { name: "Retirer l'événement" }).click()
+  await expect(page.getByRole('alertdialog')).toBeVisible()
+  await capturer('retirer')
 })

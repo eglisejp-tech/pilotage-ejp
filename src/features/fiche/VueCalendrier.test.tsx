@@ -86,14 +86,20 @@ describe('VueCalendrier', () => {
     expect(within(ligneMentionnee).getByText('Mentionné par Coordination.')).toBeInTheDocument()
   })
 
-  it.each(['berger', 'conseil', 'admin_plateforme'] as const)(
-    '%s : aucun bouton de saisie',
-    (profil) => {
-      afficher(profil, [aConfirmer, mentionnant])
-      expect(screen.queryByRole('link')).toBeNull()
-      expect(screen.queryByRole('button')).toBeNull()
-    },
-  )
+  it.each(['berger', 'conseil'] as const)('%s : aucun bouton de saisie', (profil) => {
+    afficher(profil, [aConfirmer, mentionnant])
+    expect(screen.queryByRole('link')).toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('EJP Tech : aucun « Mettre à jour », un « Ouvrir » par événement, vers son panneau (T78)', () => {
+    afficher('admin_plateforme', [aConfirmer, mentionnant])
+    expect(screen.queryByRole('link', { name: /^Mettre à jour/ })).toBeNull()
+    expect(screen.queryByRole('button')).toBeNull()
+    const ouvrir = screen.getAllByRole('link', { name: /^Ouvrir/ })
+    expect(ouvrir).toHaveLength(2)
+    expect(ouvrir[0]?.getAttribute('href')).toMatch(/^\/saisir\/evenement\//)
+  })
 
   it('le statut s’écrit en mots, et le texte de la date suit « En attente de validation »', () => {
     afficher('ministere', [aConfirmer])
