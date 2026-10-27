@@ -78,12 +78,19 @@ describe('clé publique des exports', LENT, () => {
     expect(r.code).toBe(0)
     expect(r.sortie).toBe(`${CLE}\n`)
   })
-  it('la valeur d attente de main est refusée avec un message clair', () => {
-    const texte = readFileSync(join(racine, 'scripts/export/destinataires.txt'), 'utf8')
-    const r = bash('export_lire_cle "$TEXTE"', { TEXTE: texte })
+  it('la valeur d attente est refusée avec un message clair', () => {
+    const r = bash('export_lire_cle "$TEXTE"', {
+      TEXTE: '# commentaire\nen-attente-de-la-cle-publique\n',
+    })
     expect(r.code).toBe(1)
     expect(r.erreur).toContain("valeur d'attente")
     expect(r.erreur).toContain('G2 à G4')
+  })
+  it('le fichier de main porte une seule clé age valide', () => {
+    const texte = readFileSync(join(racine, 'scripts/export/destinataires.txt'), 'utf8')
+    const r = bash('export_lire_cle "$TEXTE"', { TEXTE: texte })
+    expect(r.code).toBe(0)
+    expect(r.sortie).toMatch(/^age1[a-z0-9]{58}\n$/)
   })
   it('aucune, deux ou une clé invalide : refusé', () => {
     expect(bash('export_lire_cle "$TEXTE"', { TEXTE: '# rien\n' }).erreur).toContain('trouvé : 0')
