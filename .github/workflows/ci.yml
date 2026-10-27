@@ -199,9 +199,26 @@ jobs:
           echo "VITE_SUPABASE_URL=$API_URL" >> "$GITHUB_ENV"
           echo "VITE_SUPABASE_PUBLISHABLE_KEY=$PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           echo "E2E_CLE_SECRETE_LOCALE=$SECRET_KEY" >> "$GITHUB_ENV"
+      # Paquets système de Playwright (polices, X, 26 Mo) : le miroir Ubuntu tombe parfois à 40 Ko/s
+      # (9 min 43 le 27 octobre 2026, sur 3 jobs sur 13). Les .deb se gardent en cache d'un run à
+      # l'autre ; apt les reprend au lieu de les télécharger. Mêmes paquets, même rendu.
+      - name: Restaurer les paquets système de Playwright
+        uses: actions/cache@v6
+        with:
+          path: ~/paquets-playwright
+          key: paquets-playwright-ubuntu-24.04-${{ hashFiles('package-lock.json') }}
+          restore-keys: paquets-playwright-ubuntu-24.04-
       # Parcours sans fenêtre et sans channel (playwright.config.ts) : le « headless shell » suffit,
       # sans télécharger le Chromium complet (playwright.dev/docs/browsers).
-      - run: npx playwright install --with-deps --only-shell chromium
+      - name: Installer Chromium (headless shell) et ses paquets système
+        run: |
+          mkdir -p ~/paquets-playwright
+          sudo rm -f /etc/apt/apt.conf.d/docker-clean
+          echo 'APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/99-garder-paquets
+          sudo cp ~/paquets-playwright/*.deb /var/cache/apt/archives/ 2>/dev/null || true
+          npx playwright install --with-deps --only-shell chromium
+          cp /var/cache/apt/archives/*.deb ~/paquets-playwright/ 2>/dev/null || true
+          echo "Paquets gardés : $(ls ~/paquets-playwright | wc -l)"
       # Le projet choisi entraîne la connexion (dépendance) ; les écritures, seules, n'attendent qu'elle.
       - run: npm run e2e -- --project=${{ matrix.partie.projet }} --shard=${{ matrix.partie.morceau }}
       - uses: actions/upload-artifact@v7
