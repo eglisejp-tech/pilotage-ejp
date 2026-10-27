@@ -65,6 +65,9 @@ export function MiseEnPageApercu() {
       }
       onSignOut={() => undefined}
       avecBandeau={pathname === '/apercu/avancement'}
+      // ?octobre-rose=1 : le bandeau Octobre rose, en octobre seulement comme l'application. Les
+      // autres aperçus ne l'ont pas : leurs parcours restent les mêmes en octobre.
+      avecOctobreRose={parametres.get('octobre-rose') === '1'}
     >
       <Outlet />
     </MiseEnPage>

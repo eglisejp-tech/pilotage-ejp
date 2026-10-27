@@ -7,6 +7,7 @@ import { MenuEspaces } from '@/features/espaces/MenuEspaces'
 import type { ProprietesEspaces } from '@/features/espaces/MenuEspaces'
 import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import type { Onglet } from '@/features/navigation/profils'
+import { RubanOctobreRose } from '@/features/octobre-rose/RubanOctobreRose'
 import { cn } from '@/lib/utils'
 
 type Proprietes = {
@@ -66,13 +67,17 @@ export function MenuTelephone({
     <div className={partout ? undefined : 'lg:hidden'} onKeyDown={surTouche}>
       <div className={cn('flex items-center justify-between gap-4 px-5 py-3.5', aligne)}>
         <div className="min-w-0">
-          {/* Cible de 44 px ; les marges négatives gardent la hauteur de ligne dessinée. */}
-          <Link
-            to={accueil}
-            className="-my-2.5 inline-flex min-h-11 items-center font-lecture text-[19px] leading-tight font-semibold"
-          >
-            Pilotage EJP
-          </Link>
+          {/* Cible de 44 px ; les marges négatives gardent la hauteur de ligne dessinée. Le ruban
+              d'Octobre rose (en octobre seulement) suit le nom, hors du lien. */}
+          <div className="flex items-center gap-1.5">
+            <Link
+              to={accueil}
+              className="-my-2.5 inline-flex min-h-11 items-center font-lecture text-[19px] leading-tight font-semibold"
+            >
+              Pilotage EJP
+            </Link>
+            <RubanOctobreRose className="h-4.5" />
+          </div>
           <p className="mt-0.5 text-sm wrap-anywhere text-encre-2">
             <span className="sr-only">Compte connecté : </span>
             {libelleCompte}

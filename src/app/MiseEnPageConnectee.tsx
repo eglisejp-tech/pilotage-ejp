@@ -43,6 +43,7 @@ export function MiseEnPageConnectee() {
           : { prenom, lienChangement: adresseChangement(`${pathname}${search}`) }
       }
       avecBandeau
+      avecOctobreRose
     >
       <AnnonceSuivante dans="page" />
       <Outlet />
