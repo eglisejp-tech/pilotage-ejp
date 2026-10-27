@@ -72,7 +72,9 @@ select set_eq($$
     join public.evenement e on e.id = x.evenement_id
    where e.serie_id = (select serie from ctx)
 $$, $$
-  select d, null::date, 'valide'::text, 1140::smallint, 1260::smallint from ctx, unnest(lundis) as d
+  select d as date, null::date as date_fin, 'valide'::text as statut, 1140::smallint as heure_prevue,
+         1260::smallint as heure_fin
+    from ctx, unnest(lundis) as d
 $$, 'S1 : un état par lundi, Validé, de 19 h à 21 h, sans date de fin');
 select is((select count(*)::integer from public.evenement_etat x
              join public.evenement e on e.id = x.evenement_id where e.serie_id = (select serie from ctx)), 7,

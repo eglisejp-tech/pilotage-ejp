@@ -45,7 +45,8 @@ test.describe('Communication, porteur (S1 à la place de Coordination)', () => {
     await page.getByLabel("Nom de l'événement").fill(NOM)
     await page.getByRole('radio', { name: 'Validé' }).check({ force: true })
     await page.getByRole('checkbox', { name: 'Coordination' }).check()
-    await expect(page.getByText(/^7 dates : lun\. /)).toBeVisible()
+    // Espaces insécables dans chaque date de l'aperçu : `\s` les reconnaît.
+    await expect(page.getByText(/^7 dates : lun\.\s\d/)).toBeVisible()
     await page.getByRole('button', { name: 'Ajouter 7 événements au calendrier' }).click()
     await expect(page.getByText('7 événements ajoutés au calendrier.')).toBeVisible()
 

@@ -238,7 +238,7 @@ export function FormulaireMiseAJourEvenement({
           {...register('date_fin', { onChange: () => setFinTouchee(true) })}
         />
       ) : null}
-      <div className="grid gap-5 min-[600px]:grid-cols-2">
+      <div className="grid gap-5 tablette:grid-cols-2">
         <ChampHeure
           id="evenement-heure-prevue"
           libelle={TEXTES_EVENEMENT.libelleHeurePrevue}
