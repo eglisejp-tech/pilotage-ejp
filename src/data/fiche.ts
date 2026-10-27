@@ -178,7 +178,11 @@ export async function lireDernieresSaisies(ministereId: string): Promise<LigneDe
     .from('v_journal')
     .select('id, le, action, cible, cible_id, detail, cible_texte')
     .eq('auteur_ministere_id', ministereId)
-    .not('action', 'in', '(difficulte_signalee,signalement_clos)')
+    .not(
+      'action',
+      'in',
+      '(difficulte_signalee,signalement_clos,signalement_pris_en_charge,signalement_repondu,signalement_regle,signalement_reponse_ministere)',
+    )
     .order('le', { ascending: false })
     .order('id', { ascending: false })
     .limit(NOMBRE_DERNIERES_SAISIES)

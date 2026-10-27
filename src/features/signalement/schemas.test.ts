@@ -5,7 +5,9 @@ import {
   lireEcran,
   longueurEnCaracteres,
   schemaCloture,
-  schemaFormulaireCloture,
+  schemaFormulaireReponse,
+  schemaIdentifiantSignalement,
+  schemaReponse,
   schemaSignalement,
 } from '@/features/signalement/schemas'
 import { LIBELLES_ECRAN } from '@/features/signalement/textes'
@@ -82,32 +84,47 @@ describe('schemaSignalement', () => {
   })
 })
 
-describe('schemaCloture', () => {
-  it('commentaire vide ou fait d’espaces : null (facultatif)', () => {
-    expect(schemaCloture.parse({ signalementId: ID, commentaire: '' })).toEqual({
-      signalementId: ID,
-      commentaire: null,
-    })
-    expect(schemaFormulaireCloture.parse({ commentaire: '    ' })).toEqual({ commentaire: null })
+describe('réponses du suivi et clôture (T77)', () => {
+  it('la réponse de « Clore le signalement » est obligatoire à l’écran : vide refusé', () => {
+    for (const commentaire of ['', '    ']) {
+      expect(erreurs(schemaCloture.safeParse({ signalementId: ID, commentaire }))).toEqual([
+        'Écrivez au moins 10 caractères.',
+      ])
+    }
+    expect(
+      schemaCloture.parse({ signalementId: ID, commentaire: ' Transmis à l’administration. ' }),
+    ).toEqual({ signalementId: ID, commentaire: 'Transmis à l’administration.' })
   })
 
-  it('10 et 280 caractères acceptés ; 9 et 281 refusés avec les textes de T66 (t369, t370)', () => {
-    expect(schemaFormulaireCloture.parse({ commentaire: ' 0123456789 ' })).toEqual({
-      commentaire: '0123456789',
+  it('10 et 280 caractères acceptés ; 9 et 281 refusés, pour la réponse et la clôture', () => {
+    expect(schemaFormulaireReponse.parse({ texte: ' 0123456789 ' })).toEqual({
+      texte: '0123456789',
     })
-    expect(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(280) }).success).toBe(true)
-    expect(erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(9) }))).toEqual([
-      'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+    expect(schemaFormulaireReponse.safeParse({ texte: 'a'.repeat(280) }).success).toBe(true)
+    expect(erreurs(schemaFormulaireReponse.safeParse({ texte: 'a'.repeat(9) }))).toEqual([
+      'Écrivez au moins 10 caractères.',
     ])
-    expect(erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'a'.repeat(281) }))).toEqual([
+    expect(erreurs(schemaFormulaireReponse.safeParse({ texte: 'a'.repeat(281) }))).toEqual([
       'Raccourcissez la réponse : 280 caractères au plus.',
     ])
+    expect(
+      erreurs(schemaCloture.safeParse({ signalementId: ID, commentaire: 'a'.repeat(281) })),
+    ).toEqual(['Raccourcissez la réponse : 280 caractères au plus.'])
   })
 
-  it('crochets refusés dans le commentaire ; identifiant qui n’est pas un uuid refusé', () => {
+  it('« Répondre à EJP Tech » du cas de Coordination (critère 5) : accepté tel quel', () => {
+    const texte = "L'événement du 15 novembre ne s'enregistre pas, un message rouge s'affiche."
+    expect(schemaReponse.parse({ signalementId: ID, texte })).toEqual({ signalementId: ID, texte })
+  })
+
+  it('crochets refusés dans une réponse ; identifiant qui n’est pas un uuid refusé', () => {
     expect(
-      erreurs(schemaFormulaireCloture.safeParse({ commentaire: 'Réglé : [voir la fiche]' })),
+      erreurs(schemaReponse.safeParse({ signalementId: ID, texte: 'Réglé : [voir la fiche]' })),
     ).toEqual(['Retirez de votre texte les crochets [ ] et les mots « texte masqué ».'])
-    expect(schemaCloture.safeParse({ signalementId: 'abc', commentaire: '' }).success).toBe(false)
+    expect(
+      schemaCloture.safeParse({ signalementId: 'abc', commentaire: 'a'.repeat(20) }).success,
+    ).toBe(false)
+    expect(schemaIdentifiantSignalement.safeParse('abc').success).toBe(false)
+    expect(schemaIdentifiantSignalement.parse(ID)).toBe(ID)
   })
 })

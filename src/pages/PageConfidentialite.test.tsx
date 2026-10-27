@@ -125,13 +125,15 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(textePage()).not.toMatch(/1 ou 2/)
   })
 
-  it('place les signalements dans « Données traitées », avant la règle des champs libres', () => {
+  it('place les signalements et leur suivi dans « Données traitées », avant la règle des champs libres (T77)', () => {
     afficher()
     const donnees = partie('Données traitées')
     const signalements = elementExact(
       'li',
-      "Les signalements (« Signaler une difficulté ») : un court message qu'un ministère adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech les lisent.",
+      "Les signalements (« Signaler une difficulté ») : un court message qu'un ministère adresse à EJP Tech pour obtenir de l'aide avec l'outil, puis les réponses d'EJP Tech et du ministère, et la date de chaque étape. Ces réponses se lisent dans l'outil. Seuls ce ministère et EJP Tech lisent les signalements et leurs réponses.",
     )
+    // Le courriel de suivi (lot 3 de T77) n'est pas construit : la page n'en dit rien.
+    expect(texteDe(signalements)).not.toMatch(/courriel|email/i)
     const champsLibres = elementExact(
       'li',
       "Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une personne : ce qui y est écrit par erreur est masqué.",

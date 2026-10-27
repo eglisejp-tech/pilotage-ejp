@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
-import type { LigneSignalement } from '@/data/signalements'
+import type { EtapeDuSuivi, LigneSignalement } from '@/data/signalements'
 import type { LigneTexteARelire } from '@/data/moderation'
 import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSignalements'
 import { construireTextesARelire } from './construire'
@@ -202,7 +202,7 @@ describe('file « Textes à relire »', () => {
   })
 })
 
-describe('bloc « Signalements » : « Masquer le texte »', () => {
+describe('bloc « Signalements » : « Masquer » (T77)', () => {
   const OUVERT: LigneSignalement = {
     id: '43000000-0000-4000-8000-000000000001',
     ministere_id: 'm-social',
@@ -215,16 +215,35 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
     clos_le: null,
     ouvert: true,
     clos_recent: false,
+    statut: 'recu',
+    derniere_etape: null,
+    statut_le: '2026-10-02T18:40:00+02:00',
+    jours_depuis: 0,
+    fin: null,
+    reponse_possible_jusquau: null,
+    compte_actif: true,
+  }
+  const CLOTURE: EtapeDuSuivi = {
+    id: '43000000-0000-4000-8000-000000000011',
+    signalement_id: '43000000-0000-4000-8000-000000000002',
+    etape: 'clos',
+    commentaire: 'Un commentaire de clôture.',
+    saisi_le: '2026-10-03T10:00:00+02:00',
+    ordre: 1,
   }
   const CLOS: LigneSignalement = {
     ...OUVERT,
     id: '43000000-0000-4000-8000-000000000002',
     ministere_nom: 'Jeunesse',
-    suivi_id: '43000000-0000-4000-8000-000000000011',
-    commentaire: 'Un commentaire de clôture.',
-    clos_le: '2026-10-03T10:00:00+02:00',
+    suivi_id: CLOTURE.id,
+    commentaire: CLOTURE.commentaire,
+    clos_le: CLOTURE.saisi_le,
     ouvert: false,
     clos_recent: true,
+    statut: 'clos',
+    derniere_etape: 'clos',
+    statut_le: CLOTURE.saisi_le,
+    fin: 'ejp_tech',
   }
 
   function bloc(signalements: LigneSignalement[], avecMasquer = true) {
@@ -234,7 +253,12 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
         contenu={{
           etat: 'liste',
           signalements,
-          cloturer: vi.fn(() => Promise.resolve()),
+          suivi: [CLOTURE],
+          gestes: {
+            prendre: vi.fn(() => Promise.resolve()),
+            repondre: vi.fn(() => Promise.resolve()),
+            clore: vi.fn(() => Promise.resolve()),
+          },
           relire: vi.fn(),
           ...(avecMasquer ? { masquer } : {}),
         }}
@@ -245,7 +269,7 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
 
   it('le texte d’un signalement ouvert se masque par la cible « signalement »', async () => {
     const masquer = bloc([OUVERT])
-    await userEvent.click(screen.getByRole('button', { name: 'Masquer le texte' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Masquer' }))
     await userEvent.click(screen.getByRole('radio', { name: 'Santé ou situation personnelle' }))
     await userEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', { name: 'Masquer le texte' }),
@@ -261,14 +285,15 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
     expect(await screen.findByText('Texte masqué.')).toBeInTheDocument()
   })
 
-  it('le commentaire d’un signalement clos se masque par la cible « signalement_suivi »', async () => {
+  it('la réponse de clôture d’un signalement clos se masque par la cible « signalement_suivi »', async () => {
     const masquer = bloc([CLOS])
-    await userEvent.click(screen.getByRole('button', { name: 'Masquer le texte' }))
+    // Un « Masquer » sous chaque texte : le signalement, puis la réponse de clôture du suivi.
+    const boutons = screen.getAllByRole('button', { name: 'Masquer' })
+    expect(boutons).toHaveLength(2)
+    await userEvent.click(boutons[1]!)
     const fenetre = screen.getByRole('dialog')
-    expect(
-      within(fenetre).getAllByRole('radio', { name: /Signalement|Commentaire de clôture/ }),
-    ).toHaveLength(2)
-    await userEvent.click(within(fenetre).getByRole('radio', { name: /Commentaire de clôture/ }))
+    expect(fenetre).toHaveTextContent('Réponse à un signalement')
+    expect(fenetre).toHaveTextContent('Un commentaire de clôture.')
     await userEvent.click(
       within(fenetre).getByRole('radio', { name: 'Autre information personnelle' }),
     )
@@ -276,21 +301,21 @@ describe('bloc « Signalements » : « Masquer le texte »', () => {
     await waitFor(() =>
       expect(masquer).toHaveBeenCalledWith({
         cible: 'signalement_suivi',
-        cibleId: CLOS.suivi_id,
+        cibleId: CLOTURE.id,
         champ: 'commentaire',
         motif: 'autre',
       }),
     )
   })
 
-  it('un signalement dont tout est masqué n’a plus le bouton ; sans fonction, il n’existe pas', () => {
+  it('un signalement dont tout est masqué n’a plus le bouton ; « Clore » reste', () => {
     bloc([{ ...OUVERT, texte: MASQUE }])
-    expect(screen.queryByRole('button', { name: 'Masquer le texte' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Masquer' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
   })
 
   it('sans fonction « masquer », aucun bouton (aperçus et tests existants)', () => {
     bloc([OUVERT, CLOS], false)
-    expect(screen.queryByRole('button', { name: 'Masquer le texte' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Masquer' })).not.toBeInTheDocument()
   })
 })

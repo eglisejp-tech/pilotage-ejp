@@ -44,6 +44,8 @@ const PAGES_PAR_PROFIL: Record<Profil, string[]> = {
     '/saisir/evenement',
     '/saisir/reunion',
     '/signaler',
+    // « Mes signalements » (T77) : une page, sans panneau.
+    '/signalements',
     '/saisir/point',
     '/ma-fiche/indicateurs',
     '/points',

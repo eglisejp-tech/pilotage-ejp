@@ -10,51 +10,261 @@ import {
   plusJours,
 } from './outils-evenements.ts'
 
-// Signalements (lot E8, T39) qui écrivent dans la base locale : projet « ecritures » (en série, à
-// 1440 px, après les projets de lecture). Communication part du refus d'une date passée sur le
-// formulaire 11, suit le lien « Signaler une difficulté » et envoie un signalement créé par le
-// test (texte suffixé) ; un autre ministère ne le voit pas ; EJP Tech le voit dans son bloc et le
-// clôt avec un commentaire ; Communication lit « Clos ». Le journal reçoit une ligne par envoi
-// et par clôture, avec le code de l'écran, jamais le texte ni le commentaire.
+// Le cas de Coordination (T77, conception du 26 octobre 2026, critères 1 à 7), avec la base
+// locale : projet « ecritures » (en série, à 1440 px, après les projets de lecture). Coordination
+// signale une difficulté depuis « Ajouter un événement » ; EJP Tech la voit à traiter, la prend en
+// charge et répond par une question ; Coordination lit le bandeau de « Ma semaine », ouvre le
+// signalement par son ancre, répond ; EJP Tech répond de nouveau ; Coordination confirme que
+// c'est réglé. Une ligne de journal par geste, avec le seul code de l'écran, jamais un texte. Un
+// autre ministère ne lit rien et ne peut rien. Puis « Clore le signalement » (critère 15) :
+// Communication signale depuis le refus d'une date passée sur le formulaire 11, EJP Tech clôt avec
+// une réponse obligatoire, Communication lit « Clos par EJP Tech » et la réponse. Le berger et
+// l'administration n'ont pas la page.
 
 // Le suffixe s'écrit en lettres : 5 chiffres de suite tombent dans la famille « données
 // personnelles » de `private.verifier_texte`, et la base refuserait le texte.
 const SUFFIXE = `${Date.now()}`.replace(/\d/g, (chiffre) => 'abcdefghij'.charAt(Number(chiffre)))
-const TEXTE = `Essai E8 ${SUFFIXE} : le formulaire refuse ma date.`
-const COMMENTAIRE = `Essai E8 ${SUFFIXE} : réglé avec le ministère.`
+const TEXTE = `Problème au niveau de la saisie des événement dans le calendrier ${SUFFIXE}`
+const QUESTION = `Quel événement, à quelle date, et quel message voyez-vous ? ${SUFFIXE}`
+const RETOUR = `L'événement du 15 novembre ne s'enregistre pas, message rouge ${SUFFIXE}`
+const SOLUTION = `Corrigé, la date du 15 novembre s'enregistre de nouveau ${SUFFIXE}`
+/** Le signalement de Communication que « Clore le signalement » termine (critère 15). */
+const TEXTE_CLOS = `Essai E8 ${SUFFIXE} : le formulaire refuse ma date.`
+const REPONSE_CLOTURE = `Essai E8 ${SUFFIXE} : transmis à l'administration de l'église.`
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
+const ECRAN = { ecran: 'saisie_evenement' }
 
 test.describe.configure({ mode: 'serial' })
 
-type LigneJournal = { id: number; detail: Record<string, unknown> | null }
+type LigneJournal = { id: number; action: string; detail: Record<string, unknown> | null }
+type LigneSignalement = { id: string; statut: string; fin: string | null; ouvert: boolean }
 
-/** Lignes de journal d'un signalement, lues par le compte de la page. */
-const journalDe = (page: Page, action: string, signalementId: string) =>
+/** Lignes de journal d'un signalement, lues par le compte de la page, dans l'ordre. */
+const journalDe = (page: Page, signalementId: string) =>
   lire<LigneJournal>(
     page,
-    `journal?select=id,detail&action=eq.${action}&cible=eq.signalement&cible_id=eq.${signalementId}`,
+    `journal?select=id,action,detail&cible=eq.signalement&cible_id=eq.${signalementId}&order=id`,
   )
 
-/** Le signalement du test, lu sous la RLS du compte de la page. */
-const signalementDuTest = (page: Page) =>
-  lire<{ id: string; ministere_id: string; ecran: string; ouvert: boolean; commentaire: string }>(
+/** Un signalement du test, par son texte, lu sous la RLS du compte de la page. */
+const signalementDe = (page: Page, texte: string) =>
+  lire<LigneSignalement>(
     page,
-    `v_signalement?select=id,ministere_id,ecran,ouvert,commentaire&texte=eq.${encodeURIComponent(TEXTE)}`,
+    `v_signalement?select=id,statut,fin,ouvert&texte=eq.${encodeURIComponent(texte)}`,
   )
+const signalementDuTest = (page: Page) => signalementDe(page, TEXTE)
+
+const annonce = (page: Page, debut: string) => page.getByRole('status').filter({ hasText: debut })
+const groupe = (page: Page, nom: string) => page.getByRole('region', { name: nom, exact: true })
+const article = (page: Page, nom: string, texte = TEXTE) =>
+  groupe(page, nom).getByRole('article').filter({ hasText: texte })
+const lignesDuJournal = (page: Page) =>
+  page.getByRole('list', { name: 'Lignes du journal' }).getByRole('listitem')
 
 let signalementId = ''
+let signalementClos = ''
 
-test.describe('Communication', () => {
+test('le cas de Coordination : signalement, prise en charge, question, réponse, seconde réponse, « Oui, c’est réglé »', async ({
+  browser,
+}) => {
+  test.setTimeout(240_000)
+  const contexteCoordination = await browser.newContext()
+  const coordination = await contexteCoordination.newPage()
+  await seConnecter(coordination, 'coordination@exemple.test')
+  const contexteTech = await browser.newContext({
+    storageState: fichierSession('admin_plateforme'),
+  })
+  const tech = await contexteTech.newPage()
+
+  // Critère 1 : Coordination signale depuis « Ajouter un événement ».
+  await coordination.goto('/signaler?ecran=saisie_evenement')
+  await expect(coordination.getByText('Écran concerné : Ajouter un événement')).toBeVisible()
+  await coordination.getByLabel('Quelle difficulté rencontrez-vous ?').fill(TEXTE)
+  await coordination.getByRole('button', { name: 'Envoyer le signalement' }).click()
+  await expect(annonce(coordination, 'Signalement envoyé')).toHaveText(
+    "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».",
+  )
+  const [envoye] = await signalementDuTest(coordination)
+  expect(envoye).toMatchObject({ statut: 'recu', ouvert: true, fin: null })
+  signalementId = envoye?.id ?? ''
+  expect((await journalDe(coordination, signalementId)).map((l) => l.action)).toEqual([
+    'difficulte_signalee',
+  ])
+
+  // « Ma semaine » : la ligne discrète, pas de bandeau ; « Mes signalements » le montre Reçu.
+  await coordination.goto('/')
+  await expect(coordination.getByText(/^\d+ signalements? suivis? par EJP Tech\.$/)).toBeVisible()
+  await expect(coordination.getByRole('link', { name: 'Voir la réponse' })).toHaveCount(0)
+  await coordination.getByRole('link', { name: 'Voir le suivi' }).click()
+  await expect(coordination).toHaveURL((url) => url.pathname === '/signalements')
+  await expect(coordination).toHaveTitle('Mes signalements, Pilotage EJP')
+  await expect(article(coordination, 'En cours')).toContainText('Reçu')
+  await expect(article(coordination, 'En cours')).toContainText(
+    /EJP Tech a reçu votre signalement le \d{1,2}(?:er)?\s/,
+  )
+
+  // Critère 1, EJP Tech : à traiter, reçu aujourd'hui, les trois gestes.
+  await tech.goto('/moderation')
+  const aTraiter = article(tech, 'À traiter')
+  await expect(aTraiter).toContainText('Coordination')
+  await expect(aTraiter).toContainText("Reçu aujourd'hui.")
+  await expect(aTraiter.getByRole('button', { name: /^(Prendre|Répondre|Clore)/ })).toHaveText([
+    'Prendre en charge',
+    'Répondre au ministère',
+    'Clore le signalement',
+  ])
+
+  // Critère 2 : « Prendre en charge ».
+  await aTraiter.getByRole('button', { name: 'Prendre en charge' }).click()
+  await expect(annonce(tech, 'pris en charge')).toHaveText('Signalement pris en charge.')
+  await expect(aTraiter).toContainText("Pris en charge aujourd'hui.")
+
+  // Critère 3 : « Répondre au ministère », une question.
+  await aTraiter.getByRole('button', { name: 'Répondre au ministère' }).click()
+  await tech.getByLabel('Votre réponse à Coordination').fill(QUESTION)
+  await tech.getByRole('button', { name: 'Envoyer la réponse' }).click()
+  await expect(annonce(tech, 'Réponse envoyée')).toHaveText('Réponse envoyée.')
+  await expect(article(tech, 'En attente du ministère')).toContainText(
+    /Le ministère peut répondre jusqu'au \d{1,2}(?:er)?\s/,
+  )
+  expect((await signalementDuTest(tech))[0]?.statut).toBe('repondu')
+
+  // Critère 4 : le bandeau de « Ma semaine », puis le signalement par son ancre.
+  await coordination.goto('/')
+  await expect(
+    coordination.getByText(
+      /^EJP Tech a répondu à (votre signalement du \d{1,2}(?:er)?\s\S+|\d+ de vos signalements)\. Dites-nous si c'est réglé\.$/,
+    ),
+  ).toBeVisible()
+  await expect(coordination.getByRole('link', { name: 'Voir la réponse' })).toHaveAttribute(
+    'href',
+    /^\/signalements#/,
+  )
+  await coordination.goto(`/signalements#${signalementId}`)
+  const aVerifier = article(coordination, 'À vérifier')
+  await expect(aVerifier).toContainText(QUESTION)
+  await expect(aVerifier.getByRole('heading', { level: 3 })).toBeFocused()
+  await expect(
+    aVerifier.getByRole('group', { name: 'Est-ce réglé ?' }).getByRole('button'),
+  ).toHaveText(["Oui, c'est réglé", 'Répondre à EJP Tech'])
+  await expect(aVerifier).toContainText(/Vous pouvez répondre jusqu'au \d{1,2}(?:er)?\s/)
+
+  // Critère 5 : « Répondre à EJP Tech ».
+  await aVerifier.getByRole('button', { name: 'Répondre à EJP Tech' }).click()
+  await coordination.getByLabel('Votre réponse à EJP Tech').fill(RETOUR)
+  await coordination.getByRole('button', { name: 'Envoyer la réponse' }).click()
+  await expect(annonce(coordination, 'Réponse envoyée')).toHaveText(
+    'Réponse envoyée. EJP Tech reprend votre signalement.',
+  )
+  await expect(article(coordination, 'En cours')).toContainText(
+    /Vous avez répondu le \d{1,2}(?:er)?\s\S+ EJP Tech reprend votre signalement\./,
+  )
+  await tech.goto('/moderation')
+  await expect(article(tech, 'À traiter')).toContainText("Le ministère a répondu aujourd'hui.")
+  await expect(article(tech, 'À traiter')).toContainText(RETOUR)
+
+  // Critère 6 : seconde réponse d'EJP Tech.
+  await article(tech, 'À traiter').getByRole('button', { name: 'Répondre au ministère' }).click()
+  await tech.getByLabel('Votre réponse à Coordination').fill(SOLUTION)
+  await tech.getByRole('button', { name: 'Envoyer la réponse' }).click()
+  await expect(annonce(tech, 'Réponse envoyée')).toHaveText('Réponse envoyée.')
+
+  // Critère 7 : de nouveau le bandeau, puis « Oui, c'est réglé ». Le passage par « Ma semaine »
+  // recharge aussi la page : une adresse qui ne change que d'ancre ne relirait rien.
+  await coordination.goto('/')
+  await expect(coordination.getByRole('link', { name: 'Voir la réponse' })).toBeVisible()
+  await coordination.goto(`/signalements#${signalementId}`)
+  await expect(article(coordination, 'À vérifier')).toContainText(SOLUTION)
+  await article(coordination, 'À vérifier')
+    .getByRole('button', { name: "Oui, c'est réglé" })
+    .click()
+  await expect(annonce(coordination, 'Merci')).toHaveText('Merci. Le signalement est clos.')
+  const clos = article(coordination, 'Clos ces 30 derniers jours')
+  await expect(clos).toContainText(/Vous avez confirmé que c'est réglé le \d{1,2}(?:er)?\s/)
+  await expect(clos.getByRole('button')).toHaveCount(0)
+  expect((await signalementDuTest(coordination))[0]).toMatchObject({
+    statut: 'clos',
+    fin: 'confirme',
+    ouvert: false,
+  })
+  const seconde = await appeler(coordination, 'confirmer_signalement', {
+    p_signalement_id: signalementId,
+  })
+  expect(seconde.status()).toBe(400)
+  expect(((await seconde.json()) as { message: string }).message).toBe(
+    'Ce signalement est déjà clos.',
+  )
+  await tech.goto('/moderation')
+  await expect(article(tech, 'Clos ces 30 derniers jours')).toContainText(
+    /Confirmé par le ministère le \d{1,2}(?:er)?\s/,
+  )
+
+  // Le journal : une ligne par geste, le seul code de l'écran, aucun texte.
+  const journal = await journalDe(coordination, signalementId)
+  expect(journal.map((l) => l.action)).toEqual([
+    'difficulte_signalee',
+    'signalement_pris_en_charge',
+    'signalement_repondu',
+    'signalement_reponse_ministere',
+    'signalement_repondu',
+    'signalement_regle',
+  ])
+  for (const l of journal) expect(l.detail).toEqual(ECRAN)
+  expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
+  // « Mon journal » de Coordination nomme ces gestes, ceux d'EJP Tech compris (conception 3.1 d).
+  await coordination.goto('/journal')
+  for (const libelle of [
+    'A signalé une difficulté',
+    'A pris en charge un signalement',
+    'A répondu à un signalement',
+    'A répondu à EJP Tech sur un signalement',
+    "A confirmé qu'un signalement est réglé",
+  ]) {
+    await expect(
+      lignesDuJournal(coordination).filter({ hasText: libelle }).first(),
+      libelle,
+    ).toBeVisible()
+  }
+
+  await contexteCoordination.close()
+  await contexteTech.close()
+})
+
+test.describe('un autre ministère (Intégration)', () => {
+  test('ne lit ni le signalement de Coordination, ni son suivi, ni son journal, et ne peut rien', async ({
+    page,
+  }) => {
+    test.setTimeout(120_000)
+    expect(signalementId).not.toBe('')
+    await seConnecter(page, 'integration@exemple.test')
+    await page.goto('/signalements')
+    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
+    await expect(page.getByText(TEXTE)).toHaveCount(0)
+    expect(await signalementDuTest(page)).toHaveLength(0)
+    expect(
+      await compter(page, `signalement_suivi?select=id&signalement_id=eq.${signalementId}`),
+    ).toBe(0)
+    expect(await journalDe(page, signalementId)).toHaveLength(0)
+    for (const [nom, args] of [
+      ['confirmer_signalement', { p_signalement_id: signalementId }],
+      ['repondre_a_ejp_tech', { p_signalement_id: signalementId, p_texte: `Essai ${SUFFIXE}` }],
+      ['prendre_en_charge_signalement', { p_signalement_id: signalementId }],
+    ] as const) {
+      const reponse = await appeler(page, nom, args)
+      expect(reponse.status(), nom).toBe(403)
+      expect(((await reponse.json()) as { code: string }).code, nom).toBe('42501')
+    }
+  })
+})
+
+test.describe('Communication signale depuis le formulaire 11', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('date refusée sur le formulaire 11, lien suivi, signalement envoyé : une ligne, une ligne de journal sans le texte', async ({
+  test('date refusée, lien suivi, signalement envoyé, puis « Voir mes signalements »', async ({
     page,
   }) => {
     await page.goto('/saisir/evenement')
     const aujourdhui = await aujourdhuiDeLaBase(page)
-    const requeteJournal = `journal?select=id&action=eq.difficulte_signalee&ministere_id=eq.${MINISTERE_COMMUNICATION}`
-    const journalAvant = await compter(page, requeteJournal)
-
     // Une date passée : le formulaire la refuse sous le champ, avec le lien.
     await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, -1))
     await page.getByLabel("Nom de l'événement").fill(`Essai E8 ${SUFFIXE}`)
@@ -71,100 +281,82 @@ test.describe('Communication', () => {
 
     await expect(page).toHaveURL((url) => url.pathname === '/signaler')
     await expect(page.getByText('Écran concerné : Ajouter un événement')).toBeVisible()
-    await page.getByLabel('Quelle difficulté rencontrez-vous ?').fill(TEXTE)
+    await page.getByLabel('Quelle difficulté rencontrez-vous ?').fill(TEXTE_CLOS)
     await page.getByRole('button', { name: 'Envoyer le signalement' }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      "Signalement envoyé. La réponse s'affichera sur cette page.",
+    await expect(annonce(page, 'Signalement envoyé')).toHaveText(
+      "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».",
     )
-
-    const lignes = await signalementDuTest(page)
-    expect(lignes).toHaveLength(1)
-    expect(lignes[0]).toMatchObject({
-      ministere_id: MINISTERE_COMMUNICATION,
-      ecran: 'saisie_evenement',
-      ouvert: true,
-    })
-    signalementId = lignes[0]?.id ?? ''
-    expect(await compter(page, requeteJournal)).toBe(journalAvant + 1)
-    const journal = await journalDe(page, 'difficulte_signalee', signalementId)
-    expect(journal).toHaveLength(1)
-    expect(journal[0]?.detail).toEqual({ ecran: 'saisie_evenement' })
+    const [envoye] = await signalementDe(page, TEXTE_CLOS)
+    expect(envoye).toMatchObject({ statut: 'recu', ouvert: true })
+    signalementClos = envoye?.id ?? ''
+    const journal = await journalDe(page, signalementClos)
+    expect(journal).toEqual([
+      expect.objectContaining({ action: 'difficulte_signalee', detail: ECRAN }),
+    ])
     expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
 
-    // « Vos derniers signalements » le montre, ouvert.
-    await expect(
-      page
-        .getByRole('region', { name: 'Vos derniers signalements' })
-        .getByRole('listitem')
-        .filter({ hasText: TEXTE }),
-    ).toContainText('Ouvert')
+    // Le seul lien sous le formulaire mène au suivi : le signalement y est Reçu.
+    await page.getByRole('link', { name: 'Voir mes signalements' }).click()
+    await expect(page).toHaveURL((url) => url.pathname === '/signalements')
+    await expect(article(page, 'En cours', TEXTE_CLOS)).toContainText('Reçu')
   })
 })
 
-test.describe('un autre ministère (Intégration)', () => {
-  test('ne lit ni le signalement de Communication, ni ses lignes de journal', async ({ page }) => {
-    test.setTimeout(120_000)
-    expect(signalementId).not.toBe('')
-    await seConnecter(page, 'integration@exemple.test')
-    await expect(page).toHaveURL((url) => url.pathname === '/')
-    await page.goto('/signaler')
-    await expect(page.getByText('Écran concerné : Autre écran')).toBeVisible()
-    await expect(page.locator('[aria-busy="true"]')).toHaveCount(0, { timeout: 15_000 })
-    await expect(page.getByText(TEXTE)).toHaveCount(0)
-    expect(await signalementDuTest(page)).toHaveLength(0)
-    expect(
-      await compter(page, `v_signalement?select=id&ministere_id=eq.${MINISTERE_COMMUNICATION}`),
-    ).toBe(0)
-    expect(await journalDe(page, 'difficulte_signalee', signalementId)).toHaveLength(0)
-  })
-})
-
-test.describe('EJP Tech', () => {
+test.describe('EJP Tech clôt le signalement de Communication (critère 15)', () => {
   test.use({ storageState: fichierSession('admin_plateforme') })
 
-  test('voit le signalement dans son bloc, le clôt avec un commentaire ; une seconde clôture est refusée', async ({
+  test('« Clore le signalement » : réponse obligatoire, la ligne passe dans les clos, sans geste de plus', async ({
     page,
   }) => {
-    expect(signalementId).not.toBe('')
+    expect(signalementClos).not.toBe('')
     await page.goto('/moderation')
-    const ligne = page
-      .getByRole('region', { name: 'Signalements', exact: true })
-      .getByRole('list')
-      .first()
-      .getByRole('article')
-      .filter({ hasText: TEXTE })
+    const ligne = article(page, 'À traiter', TEXTE_CLOS)
     await expect(ligne).toContainText('Communication')
     await expect(ligne).toContainText('Ajouter un événement')
     await ligne.getByRole('button', { name: 'Clore le signalement' }).click()
-    await page.getByLabel('Réponse au ministère (facultatif)').fill(COMMENTAIRE)
+    const champ = page.getByLabel('Réponse au ministère', { exact: true })
+    await expect(champ).toBeFocused()
     // Le même libellé confirme (T66) : le bouton de la ligne a laissé sa place à celui du panneau.
     await ligne.getByRole('button', { name: 'Clore le signalement' }).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      'Signalement clos.',
-    )
-    await expect(
-      page
-        .getByRole('region', { name: 'Clos ces 30 derniers jours' })
-        .getByRole('article')
-        .filter({ hasText: TEXTE }),
-    ).toContainText(COMMENTAIRE)
+    await expect(champ).toHaveAccessibleDescription(/Écrivez au moins 10 caractères\./)
+    expect(
+      (await journalDe(page, signalementClos)).filter((l) => l.action === 'signalement_clos'),
+    ).toHaveLength(0)
 
-    // Une ligne de journal, avec l'écran et la présence d'un commentaire, jamais le commentaire.
-    const journal = await journalDe(page, 'signalement_clos', signalementId)
-    expect(journal).toHaveLength(1)
-    expect(journal[0]?.detail).toEqual({ ecran: 'saisie_evenement', avec_commentaire: true })
-    expect(JSON.stringify(journal)).not.toContain(SUFFIXE)
+    await champ.fill(REPONSE_CLOTURE)
+    await ligne.getByRole('button', { name: 'Clore le signalement' }).click()
+    await expect(annonce(page, 'Signalement clos')).toHaveText('Signalement clos.')
+    const close = article(page, 'Clos ces 30 derniers jours', TEXTE_CLOS)
+    await expect(close).toContainText(/Clos par EJP Tech le \d{1,2}(?:er)?\s/)
+    await expect(close).toContainText(REPONSE_CLOTURE)
+    await expect(close.getByRole('button', { name: /^(Prendre|Répondre|Clore)/ })).toHaveCount(0)
+    expect((await signalementDe(page, TEXTE_CLOS))[0]).toMatchObject({
+      statut: 'clos',
+      fin: 'ejp_tech',
+      ouvert: false,
+    })
+
+    // Une ligne de journal, avec l'écran et la présence d'une réponse, jamais la réponse.
+    const clotures = (await journalDe(page, signalementClos)).filter(
+      (l) => l.action === 'signalement_clos',
+    )
+    expect(clotures.map((l) => l.detail)).toEqual([
+      { ecran: 'saisie_evenement', avec_commentaire: true },
+    ])
+    expect(JSON.stringify(clotures)).not.toContain(SUFFIXE)
 
     // Une seconde clôture : refusée par la base, aucune ligne de journal de plus.
     const seconde = await appeler(page, 'clore_signalement', {
-      p_signalement_id: signalementId,
+      p_signalement_id: signalementClos,
       p_commentaire: null,
     })
     expect(seconde.status()).toBe(400)
     expect(((await seconde.json()) as { message: string }).message).toBe(
       'Ce signalement est déjà clos.',
     )
-    expect(await journalDe(page, 'signalement_clos', signalementId)).toHaveLength(1)
+    expect(
+      (await journalDe(page, signalementClos)).filter((l) => l.action === 'signalement_clos'),
+    ).toHaveLength(1)
 
     // EJP Tech ne signale pas (refus de droit, 42501).
     const signal = await appeler(page, 'signaler_difficulte', {
@@ -179,15 +371,30 @@ test.describe('EJP Tech', () => {
 test.describe('Communication, après la clôture', () => {
   test.use({ storageState: fichierSession('ministere') })
 
-  test('lit « Clos » et la réponse d’EJP Tech', async ({ page }) => {
-    await page.goto('/signaler')
-    const ligne = page
-      .getByRole('region', { name: 'Vos derniers signalements' })
-      .getByRole('listitem')
-      .filter({ hasText: TEXTE })
-    await expect(ligne).toContainText(/Clos le \d{1,2} /)
-    await expect(ligne).toContainText(`Réponse : ${COMMENTAIRE}`)
-    expect(await journalDe(page, 'signalement_clos', signalementId)).toHaveLength(1)
+  test('« Mes signalements » : « Clos par EJP Tech » et sa réponse, plus aucun geste', async ({
+    page,
+  }) => {
+    expect(signalementClos).not.toBe('')
+    await page.goto('/signalements')
+    const clos = article(page, 'Clos ces 30 derniers jours', TEXTE_CLOS)
+    await expect(clos).toContainText(/Clos par EJP Tech le \d{1,2}(?:er)?\s/)
+    await expect(clos).toContainText(`Réponse : ${REPONSE_CLOTURE}`)
+    await expect(clos.getByRole('button')).toHaveCount(0)
+    expect(
+      await compter(
+        page,
+        `v_signalement?select=id&ministere_id=eq.${MINISTERE_COMMUNICATION}&id=eq.${signalementClos}`,
+      ),
+    ).toBe(1)
+    // Un clos ne se rouvre pas : le ministère ne peut plus répondre.
+    const reponse = await appeler(page, 'repondre_a_ejp_tech', {
+      p_signalement_id: signalementClos,
+      p_texte: `Essai E8 ${SUFFIXE} : toujours pas réglé.`,
+    })
+    expect(reponse.status()).toBe(400)
+    expect(((await reponse.json()) as { message: string }).message).toBe(
+      'Ce signalement est déjà clos.',
+    )
   })
 })
 
@@ -195,14 +402,21 @@ for (const profil of ['berger', 'admin_eglise'] as const) {
   test.describe(`profil ${profil}`, () => {
     test.use({ storageState: fichierSession(profil) })
 
-    test('/signaler : la page non disponible ; ni le signalement ni ses lignes de journal', async ({
+    test('/signalements et /signaler : la page non disponible ; ni le signalement, ni son suivi, ni son journal', async ({
       page,
     }) => {
-      await page.goto('/signaler?ecran=saisie_evenement')
-      await expect(page.getByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE })).toBeVisible()
+      for (const adresse of ['/signalements', '/signaler?ecran=saisie_evenement']) {
+        await page.goto(adresse)
+        await expect(
+          page.getByRole('heading', { level: 1, name: PAGE_NON_DISPONIBLE }),
+          adresse,
+        ).toBeVisible()
+      }
       expect(await compter(page, `v_signalement?select=id&id=eq.${signalementId}`)).toBe(0)
-      expect(await journalDe(page, 'difficulte_signalee', signalementId)).toHaveLength(0)
-      expect(await journalDe(page, 'signalement_clos', signalementId)).toHaveLength(0)
+      expect(
+        await compter(page, `signalement_suivi?select=id&signalement_id=eq.${signalementId}`),
+      ).toBe(0)
+      expect(await journalDe(page, signalementId)).toHaveLength(0)
     })
   })
 }

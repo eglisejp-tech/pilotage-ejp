@@ -12,6 +12,7 @@ import { lireMesuresCommunsMinistere } from '@/data/fiche'
 import { CODE_MINISTERE_FIJ, lireCodeMinistere, lireStatistiquesFij } from '@/data/fij'
 import { lireCommunsFiche, lireSuiviIndicateurs } from '@/data/indicateurs'
 import { lireMesParticipations, lireSessionsAttendues } from '@/data/participations'
+import { lireMesSignalementsOuverts } from '@/data/signalements'
 import {
   CLE_SESSIONS_TOTAUX,
   cleMesParticipations,
@@ -19,6 +20,7 @@ import {
 } from '@/features/accueil-ministere/useAccueilMinistere'
 import { DELAI_MAX_CHARGEMENT } from '@/features/cette-semaine/useCetteSemaine'
 import { CLE_STATISTIQUES_FIJ } from '@/features/saisie-fij/useSaisiesFij'
+import { suiviDeLaSemaine } from '@/features/signalement/suivi'
 import { libellePeriode } from '@/lib/metier/semaine'
 import {
   construireChiffres,
@@ -46,7 +48,10 @@ export type ResultatMaSemaine =
  * autres lectures (semaine, indicateurs communs, totaux du dimanche, carte FIJ) ne portent aucun
  * nom. Toutes les clés sont sous `eglise` (une saisie les relit) ; celles de l'accueil sont
  * partagées, rien n'est lu deux fois. Sans réponse au bout de 10 s, ou lecture en échec :
- * « Réessayer ». Aucune date du navigateur : le jour de Paris vient de `v_semaine`.
+ * « Réessayer ». Aucune date du navigateur : le jour de Paris vient de `v_semaine`. Le suivi
+ * des signalements (T77, ses ouverts) se lit avec le reste, pour que le bandeau ou la ligne
+ * arrivent avec la page, sans saut ; si cette lecture échoue (ou tarde au-delà de 10 s), la page
+ * s'affiche sans bandeau ni ligne.
  */
 export function useMaSemaine(ministereId: string): ResultatMaSemaine {
   const accueil = useAccueilMinistere(ministereId)
@@ -91,6 +96,10 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
     queryFn: lireStatistiquesFij,
     enabled: estFij,
   })
+  const signalements = useQuery({
+    queryKey: ['signalements', 'ouverts', ministereId],
+    queryFn: () => lireMesSignalementsOuverts(ministereId),
+  })
 
   const sessionsLues: SessionLue[] = (sessions.data ?? []).map(versSessionLue)
   const idsSessions =
@@ -123,7 +132,10 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
   if (estFij) necessaires.push(carte, statistiques)
   const enEchec =
     necessaires.some((requete) => requete.isError) || (semaine.isSuccess && semaine.data === null)
-  const pret = !enEchec && necessaires.every((requete) => requete.isSuccess)
+  const pretSansSuivi = !enEchec && necessaires.every((requete) => requete.isSuccess)
+  // Le suivi des signalements n'empêche jamais la page : réussi ou en échec, il est réglé.
+  const suiviRegle = signalements.isSuccess || signalements.isError
+  const pret = pretSansSuivi && suiviRegle
 
   // 10 s par essai, comme l'accueil : sans réponse, la page passe en erreur.
   const [essai, setEssai] = useState(0)
@@ -139,19 +151,21 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
   const reessayer = () => {
     setEssai((precedent) => precedent + 1)
     if (accueil.etat === 'erreur') accueil.reessayer()
-    for (const requete of necessaires) {
+    for (const requete of [...necessaires, signalements]) {
       if (requete.isError || requete.isFetching || requete.data === null) {
         void requete.refetch({ cancelRefetch: true })
       }
     }
   }
 
-  if (accueil.etat === 'erreur' || enEchec || essaiEnDelai === essai) {
+  // 10 s dépassées alors que seul le suivi des signalements manque : la page, sans lui.
+  const sansSuivi = essaiEnDelai === essai && pretSansSuivi && !suiviRegle
+  if (accueil.etat === 'erreur' || enEchec || (essaiEnDelai === essai && !sansSuivi)) {
     return { etat: 'erreur', reessayer }
   }
   if (
     accueil.etat !== 'pret' ||
-    !pret ||
+    !(pret || sansSuivi) ||
     !semaine.data ||
     !communs.data ||
     !libellesCommuns.data ||
@@ -190,6 +204,7 @@ export function useMaSemaine(ministereId: string): ResultatMaSemaine {
       chiffres: construireChiffres(lectures),
       fij: construireFij(lectures),
       eglise: construireDansLEglise(lectures),
+      signalements: signalements.data ? suiviDeLaSemaine(signalements.data) : null,
     },
   }
 }

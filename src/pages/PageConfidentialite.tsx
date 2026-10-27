@@ -26,10 +26,14 @@ const liste = 'flex list-disc flex-col gap-2 pl-5'
  * 2026 : plusieurs comptes ouverts sur un même navigateur (T73, « Changer d'espace »), dans
  * « Cookies et traceurs » ; phrase proposée. La version des conditions ne change pas : même
  * stockage, strictement nécessaire, sans nouvelle donnée ni nouvelle finalité (T73). Mise à jour
- * du 26 octobre 2026 : les incidents d'envoi (T76, lot C), dans « Données traitées » et « Durées
- * de conservation » (90 jours) ; phrases proposées, à valider par la coordination. La version des
- * conditions ne change pas (Proposé, Q7) : aucun prestataire, aucun destinataire, aucune donnée
- * de nature nouvelle (un journal technique, sans adresse IP).
+ * du 26 octobre 2026 : suivi des signalements dans l'outil (T77, lots 1 et 2), dans « Données
+ * traitées » ; phrase proposée, à valider par la coordination avant la mise en ligne. La version
+ * des conditions ne change pas : même adresse, même usage de service (conception T77, ancienne
+ * Q9). Aucun mot sur un courriel : il n'est pas construit. Même jour : les incidents d'envoi
+ * (T76, lot C), dans « Données traitées » et « Durées de conservation » (90 jours) ; phrases
+ * proposées, à valider par la coordination. La version des conditions ne change pas (Proposé,
+ * Q7) : aucun prestataire, aucun destinataire, aucune donnée de nature nouvelle (un journal
+ * technique, sans adresse IP).
  */
 export function PageConfidentialite() {
   useTitrePage('Confidentialité')
@@ -93,8 +97,9 @@ export function PageConfidentialite() {
             </li>
             <li>
               Les signalements (« Signaler une difficulté ») : un court message qu'un ministère
-              adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech
-              les lisent.
+              adresse à EJP Tech pour obtenir de l'aide avec l'outil, puis les réponses d'EJP Tech
+              et du ministère, et la date de chaque étape. Ces réponses se lisent dans l'outil.
+              Seuls ce ministère et EJP Tech lisent les signalements et leurs réponses.
             </li>
             <li>
               Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une

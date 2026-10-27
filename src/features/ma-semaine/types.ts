@@ -1,5 +1,6 @@
 import type { DonneesAccueilMinistere } from '@/features/accueil-ministere/types'
 import type { LigneCommune } from '@/features/fiche/modeleFiche'
+import type { SuiviDeLaSemaine } from '@/features/signalement/suivi'
 
 /**
  * Une ligne de « Dans l'église » : un total de l'église avec sa complétude. Jamais le nom, la
@@ -38,4 +39,9 @@ export interface DonneesMaSemaine {
   fij: LigneCommune[]
   /** Deux totaux de l'église au plus, avec leur complétude. */
   eglise: LigneEglise[]
+  /**
+   * Suivi des signalements (T77) : le bandeau d'une réponse d'EJP Tech, la ligne discrète, ou
+   * rien (aucun ouvert, ou lecture en échec : la page s'affiche sans).
+   */
+  signalements: SuiviDeLaSemaine
 }

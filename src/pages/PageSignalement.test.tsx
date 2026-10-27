@@ -3,7 +3,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { routes } from '@/app/routes'
 import { ContexteSession } from '@/features/session/contexte'
 import { BlocSignalements } from '@/features/signalement/BlocSignalements'
@@ -12,28 +12,66 @@ import { clientRequetes } from '@/lib/requetes'
 import { fauxSupabase } from '@/test/fauxSupabase'
 import type { ScenarioSession } from '@/test/fauxSupabase'
 
-// « Signaler une difficulté » (`/signaler`) et le bloc « Signalements » (`/moderation`), lot E8,
-// par les routes de l'application : chaque profil, l'écran venu de l'adresse, l'envoi par
-// `signaler_difficulte`. Seuls le ministère (les siens) et EJP Tech (tous) lisent un signalement.
+// « Signaler une difficulté » (`/signaler`), « Mes signalements » (`/signalements`, T77) et le
+// bloc « Signalements » (`/moderation`), par les routes de l'application : chaque profil, l'écran
+// venu de l'adresse, l'envoi par `signaler_difficulte`, les gestes du suivi par leurs fonctions.
+// Seuls le ministère (les siens) et EJP Tech (tous) lisent un signalement.
 
 const courant = vi.hoisted(() => ({ client: undefined as unknown }))
 vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
 const COMMUNICATION = '10000000-0000-4000-8000-000000000001'
+const ID = '43000000-0000-4000-8000-000000000006'
+const QUESTION = 'Quel événement, à quelle date, et quel message s’affiche quand vous enregistrez ?'
 
-const SIGNALEMENT_CLOS = {
-  id: '43000000-0000-4000-8000-000000000002',
+/** Le signalement de Coordination (conception T77, critère 1), Reçu, tel que la vue le rend. */
+const RECU = {
+  id: ID,
   ministere_id: COMMUNICATION,
-  ministere_nom: 'Communication',
-  ecran: 'saisie_dimanche',
-  texte: 'Le bouton Envoyer reste grisé après la saisie.',
-  saisi_le: '2026-09-27T13:10:00+02:00',
-  suivi_id: '43000000-0000-4000-8000-000000000011',
-  commentaire: 'Réglé avec le ministère.',
-  clos_le: '2026-09-29T10:00:00+02:00',
-  ouvert: false,
-  clos_recent: true,
+  ministere_nom: 'Coordination',
+  ecran: 'saisie_evenement',
+  texte: 'Problème au niveau de la saisie des événement dans le calendrier',
+  saisi_le: '2026-10-26T10:15:00+01:00',
+  suivi_id: null,
+  commentaire: null,
+  clos_le: null,
+  ouvert: true,
+  clos_recent: false,
+  statut: 'recu',
+  derniere_etape: null,
+  statut_le: '2026-10-26T10:15:00+01:00',
+  jours_depuis: 0,
+  fin: null,
+  reponse_possible_jusquau: null,
+  compte_actif: true,
 }
+
+/** Le même, après la question d'EJP Tech du 27 octobre (critères 3 et 4). */
+const REPONDU = {
+  ...RECU,
+  statut: 'repondu',
+  derniere_etape: 'reponse',
+  statut_le: '2026-10-27T09:05:00+01:00',
+  reponse_possible_jusquau: '2026-11-03',
+}
+const LIGNES_REPONDU = [
+  {
+    id: 'd1000000-0000-4000-8000-000000000001',
+    signalement_id: ID,
+    etape: 'en_cours',
+    commentaire: null,
+    saisi_le: '2026-10-27T09:00:00+01:00',
+    ordre: 1,
+  },
+  {
+    id: 'd1000000-0000-4000-8000-000000000002',
+    signalement_id: ID,
+    etape: 'reponse',
+    commentaire: QUESTION,
+    saisi_le: '2026-10-27T09:05:00+01:00',
+    ordre: 2,
+  },
+]
 
 function scenario(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}): ScenarioSession {
   return {
@@ -43,7 +81,7 @@ function scenario(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}): Sce
       user_id: `u-${type}`,
       type,
       ministere_id: type === 'ministere' ? COMMUNICATION : null,
-      libelle: type === 'ministere' ? 'Ministère Communication' : 'Compte',
+      libelle: type === 'ministere' ? 'Ministère Coordination' : 'Compte',
       desactive_le: null,
     },
     facteursVerifies: ['f1'],
@@ -64,12 +102,19 @@ function connecte(type: TypeCompte, lignes: ScenarioSession['lignes'] = {}) {
 }
 
 function afficher(adresse: string) {
-  return render(
+  const routeur = createMemoryRouter(routes, { initialEntries: [adresse] })
+  render(
     <QueryClientProvider client={clientRequetes}>
-      <RouterProvider router={createMemoryRouter(routes, { initialEntries: [adresse] })} />
+      <RouterProvider router={routeur} />
     </QueryClientProvider>,
   )
+  return routeur
 }
+
+beforeAll(() => {
+  // jsdom ne fait pas défiler : l'ancre `/signalements#<id>` appelle `scrollIntoView`.
+  Element.prototype.scrollIntoView = vi.fn()
+})
 
 afterEach(() => {
   clientRequetes.clear()
@@ -77,6 +122,8 @@ afterEach(() => {
 })
 
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
+const lues = (faux: { tables: string[] }, table: string) =>
+  faux.tables.filter((lue) => lue === table).length
 
 describe('/signaler', () => {
   it('ministère, code inconnu dans l’adresse : « Écran concerné : Autre écran »', async () => {
@@ -92,37 +139,32 @@ describe('/signaler', () => {
     const champ = await screen.findByLabelText('Quelle difficulté rencontrez-vous ?')
     // Coller plutôt que taper touche par touche : un poste chargé dépasse sinon les 5 secondes.
     await userEvent.click(champ)
-    await userEvent.paste('Je ne peux pas choisir la date de la soirée.')
+    await userEvent.paste('Problème au niveau de la saisie des événement dans le calendrier')
     await userEvent.click(screen.getByRole('button', { name: 'Envoyer le signalement' }))
     expect(
-      await screen.findByText("Signalement envoyé. La réponse s'affichera sur cette page."),
+      await screen.findByText(
+        "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».",
+      ),
     ).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('signaler_difficulte', {
       p_ecran: 'saisie_evenement',
-      p_texte: 'Je ne peux pas choisir la date de la soirée.',
+      p_texte: 'Problème au niveau de la saisie des événement dans le calendrier',
       // Numéro anti-doublon (T76), tiré au premier envoi.
       p_cle: expect.stringMatching(/^[0-9a-f-]{36}$/) as string,
     })
-    // Jamais d'ajout direct : seule la vue des signalements est lue, sous la RLS du ministère.
-    expect(new Set(faux.tables)).toEqual(new Set(['compte', 'v_signalement']))
+    // Jamais d'ajout direct, et plus aucune lecture : le suivi est sur « Mes signalements » (T77).
+    expect(faux.tables).toEqual(['compte'])
   })
 
-  it('ministère : « Vos derniers signalements » sous le formulaire', async () => {
-    connecte('ministere', { v_signalement: [SIGNALEMENT_CLOS] })
-    afficher('/signaler')
-    const liste = await screen.findByRole('region', { name: 'Vos derniers signalements' })
-    expect(within(liste).getByText('Clos le 29 sept.')).toBeInTheDocument()
-    expect(liste).toHaveTextContent('Réponse : Réglé avec le ministère.')
-  })
-
-  it('lecture de la liste en échec : le formulaire reste, « Réessayer » sous lui', async () => {
-    const faux = fauxSupabase({ ...scenario('ministere'), enEchec: ['v_signalement'] })
-    courant.client = faux.client
-    afficher('/signaler')
+  it('ministère : « Voir mes signalements » mène à /signalements, qui lit ses signalements', async () => {
+    const faux = connecte('ministere', { v_signalement: [RECU] })
+    const routeur = afficher('/signaler')
+    await userEvent.click(await screen.findByRole('link', { name: 'Voir mes signalements' }))
     expect(
-      await screen.findByRole('button', { name: 'Réessayer' }, { timeout: 5000 }),
+      await screen.findByRole('heading', { level: 1, name: 'Mes signalements' }),
     ).toBeInTheDocument()
-    expect(screen.getByLabelText('Quelle difficulté rencontrez-vous ?')).toBeInTheDocument()
+    expect(routeur.state.location.pathname).toBe('/signalements')
+    await waitFor(() => expect(lues(faux, 'v_signalement')).toBe(1))
   })
 
   it.each<TypeCompte>(['berger', 'conseil', 'admin_eglise', 'admin_plateforme'])(
@@ -140,35 +182,106 @@ describe('/signaler', () => {
   )
 })
 
-describe('/moderation, bloc « Signalements »', () => {
-  it('EJP Tech : clôture par clore_signalement, puis la liste relue', async () => {
-    const faux = connecte('admin_plateforme', {
-      v_signalement: [
-        {
-          ...SIGNALEMENT_CLOS,
-          suivi_id: null,
-          commentaire: null,
-          clos_le: null,
-          ouvert: true,
-          clos_recent: false,
-        },
-      ],
+describe('/signalements, « Mes signalements » (T77)', () => {
+  it('critère 1 : le Reçu de Coordination dans « En cours », sans bouton', async () => {
+    connecte('ministere', { v_signalement: [RECU] })
+    afficher('/signalements')
+    const enCours = await screen.findByRole('region', { name: 'En cours' })
+    expect(within(enCours).getByText('Reçu')).toBeInTheDocument()
+    expect(enCours).toHaveTextContent('EJP Tech a reçu votre signalement le 26 oct.')
+    expect(within(enCours).queryByRole('button')).toBeNull()
+  })
+
+  it('critère 7 : « Oui, c’est réglé » par confirmer_signalement, annoncé, puis la liste relue', async () => {
+    const faux = connecte('ministere', {
+      v_signalement: [REPONDU],
+      signalement_suivi: LIGNES_REPONDU,
     })
+    afficher('/signalements')
+    const aVerifier = await screen.findByRole('region', { name: 'À vérifier' })
+    expect(aVerifier).toHaveTextContent(QUESTION)
+    await userEvent.click(within(aVerifier).getByRole('button', { name: "Oui, c'est réglé" }))
+    expect(await screen.findByText('Merci. Le signalement est clos.')).toBeInTheDocument()
+    expect(faux.rpc).toHaveBeenCalledWith('confirmer_signalement', { p_signalement_id: ID })
+    await waitFor(() => expect(lues(faux, 'v_signalement')).toBe(2))
+    // Jamais un ajout direct dans le suivi.
+    expect(faux.rpc).not.toHaveBeenCalledWith('repondre_a_ejp_tech', expect.anything())
+  })
+
+  it('critère 5 : « Répondre à EJP Tech » par repondre_a_ejp_tech, avec le texte', async () => {
+    const faux = connecte('ministere', {
+      v_signalement: [REPONDU],
+      signalement_suivi: LIGNES_REPONDU,
+    })
+    afficher('/signalements')
+    await userEvent.click(await screen.findByRole('button', { name: 'Répondre à EJP Tech' }))
+    await userEvent.click(screen.getByLabelText('Votre réponse à EJP Tech'))
+    await userEvent.paste(
+      "L'événement du 15 novembre ne s'enregistre pas, un message rouge s'affiche.",
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Envoyer la réponse' }))
+    expect(
+      await screen.findByText('Réponse envoyée. EJP Tech reprend votre signalement.'),
+    ).toBeInTheDocument()
+    expect(faux.rpc).toHaveBeenCalledWith('repondre_a_ejp_tech', {
+      p_signalement_id: ID,
+      p_texte: "L'événement du 15 novembre ne s'enregistre pas, un message rouge s'affiche.",
+    })
+  })
+
+  it('critère 4 : l’ancre du lien de « Ma semaine » met le focus sur l’en-tête du signalement', async () => {
+    connecte('ministere', { v_signalement: [REPONDU], signalement_suivi: LIGNES_REPONDU })
+    afficher(`/signalements#${ID}`)
+    const entete = await screen.findByRole('heading', {
+      level: 3,
+      name: 'Ajouter un événement, 26 oct.',
+    })
+    await waitFor(() => expect(entete).toHaveFocus())
+    expect(Element.prototype.scrollIntoView).toHaveBeenCalled()
+  })
+
+  it('lecture en échec : « Réessayer », jamais une page blanche', async () => {
+    const faux = fauxSupabase({ ...scenario('ministere'), enEchec: ['v_signalement'] })
+    courant.client = faux.client
+    afficher('/signalements')
+    expect(
+      await screen.findByRole('button', { name: 'Réessayer' }, { timeout: 5000 }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'Mes signalements' })).toBeInTheDocument()
+  })
+})
+
+describe('/moderation, bloc « Signalements »', () => {
+  it('EJP Tech : clôture par clore_signalement, réponse obligatoire, puis la liste relue', async () => {
+    const faux = connecte('admin_plateforme', { v_signalement: [RECU] })
     afficher('/moderation')
     await userEvent.click(await screen.findByRole('button', { name: 'Clore le signalement' }))
-    await userEvent.click(screen.getByLabelText('Réponse au ministère (facultatif)'))
-    await userEvent.paste('transmis à l’administration')
     // Le même libellé ouvre le panneau et confirme (T66) : le bouton de la ligne a laissé sa
-    // place à celui du panneau.
+    // place à celui du panneau. Sans réponse, rien ne part (T77).
+    await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
+    expect(await screen.findByText('Écrivez au moins 10 caractères.')).toBeInTheDocument()
+    // Seule la lecture des incidents d'envoi (T76, lot C) est partie : aucune écriture.
+    expect(faux.rpc).not.toHaveBeenCalledWith('clore_signalement', expect.anything())
+    expect(faux.rpc.mock.calls.every(([nom]) => nom === 'incidents_recents')).toBe(true)
+    await userEvent.click(screen.getByLabelText('Réponse au ministère'))
+    await userEvent.paste('transmis à l’administration')
     await userEvent.click(screen.getByRole('button', { name: 'Clore le signalement' }))
     expect(await screen.findByText('Signalement clos.')).toBeInTheDocument()
     expect(faux.rpc).toHaveBeenCalledWith('clore_signalement', {
-      p_signalement_id: SIGNALEMENT_CLOS.id,
+      p_signalement_id: ID,
       p_commentaire: 'transmis à l’administration',
     })
-    await waitFor(() =>
-      expect(faux.tables.filter((table) => table === 'v_signalement')).toHaveLength(2),
-    )
+    await waitFor(() => expect(lues(faux, 'v_signalement')).toBe(2))
+  })
+
+  it('EJP Tech, critère 2 : « Prendre en charge » par prendre_en_charge_signalement', async () => {
+    const faux = connecte('admin_plateforme', { v_signalement: [RECU] })
+    afficher('/moderation')
+    await userEvent.click(await screen.findByRole('button', { name: 'Prendre en charge' }))
+    expect(await screen.findByText('Signalement pris en charge.')).toBeInTheDocument()
+    expect(faux.rpc).toHaveBeenCalledWith('prendre_en_charge_signalement', {
+      p_signalement_id: ID,
+    })
   })
 
   it('EJP Tech sans signalement : « Aucun signalement. »', async () => {

@@ -362,6 +362,7 @@ $$, $$ values
   ('choisir_modele_prevus', 2, false, true, false),
   ('clore_signalement', 2, false, true, false),
   ('conditions_acceptees', 1, false, true, false),
+  ('confirmer_signalement', 1, false, true, false),
   ('corriger_indicateur', 3, false, true, false),
   ('creer_calcul', 7, false, true, false),
   ('creer_indicateur', 9, false, true, false),
@@ -382,8 +383,11 @@ $$, $$ values
   ('modifier_mentions_point', 2, false, true, false),
   ('modifier_session', 2, false, true, false),
   ('noter_incidents', 1, false, true, false),
+  ('prendre_en_charge_signalement', 1, false, true, false),
   -- T75 : raisons d'un refus de suppression (EJP Tech seul)
   ('raisons_suppression_ministere', 1, false, true, false),
+  ('repondre_a_ejp_tech', 2, false, true, false),
+  ('repondre_au_ministere', 2, false, true, false),
   ('retirer_indicateur', 2, false, true, false),
   ('retirer_mention_point', 2, false, true, false),
   ('retirer_mon_indicateur', 2, false, true, false),
@@ -409,7 +413,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 56 fonctions de public : 41 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 60 fonctions de public : 45 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -433,12 +437,14 @@ $$, $$ values
   ('changer_statut_point', 2, true, true, false),
   ('choisir_modele_prevus', 2, true, true, false),
   ('clore_signalement', 2, true, true, false),
+  ('cloture_automatique_le', 1, false, true, false),
   ('communs_de_fiche', 0, true, true, false),
   ('comptages_evenements_mois', 1, false, true, false),
   ('compte_active', 1, false, false, false),
   ('compte_active_un_jour', 1, false, false, false),
   ('comptes_jamais_actives', 0, true, true, false),
   ('conditions_acceptees', 1, true, true, false),
+  ('confirmer_signalement', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
   ('controler_appelant', 1, false, false, false),
   ('codes_incident', 0, false, false, false),
@@ -542,6 +548,7 @@ $$, $$ values
   ('poser_mention', 3, true, false, false),
   ('poser_modele', 3, false, false, false),
   ('precisions_sensibles', 0, true, true, false),
+  ('prendre_en_charge_signalement', 1, true, true, false),
   ('purger_envois', 0, false, false, false),
   ('purger_incidents', 0, false, false, false),
   ('refuser_mention_double', 0, false, false, false),
@@ -554,6 +561,9 @@ $$, $$ values
   -- T75 : les raisons (aide interne), puis leur lecture par l'écran (EJP Tech seul, aal2)
   ('raisons_suppression', 1, false, false, false),
   ('raisons_suppression_ministere', 1, true, true, false),
+  ('repondre_a_ejp_tech', 2, true, true, false),
+  ('repondre_au_ministere', 2, true, true, false),
+  ('reponse_possible_jusquau', 1, false, true, false),
   ('reprendre_modeles', 0, false, false, false),
   ('retard_minutes', 2, false, true, false),
   ('retenir_envoi', 4, true, false, false),
@@ -580,11 +590,15 @@ $$, $$ values
   ('serveur_revoquer_sessions', 3, true, false, true),
   ('serveur_supprimer_ministere', 3, true, false, true),
   ('session_courante', 0, false, true, false),
+  ('signalement_a_verifier', 1, false, false, false),
   ('signaler_difficulte', 2, true, true, false),
   ('signaler_difficulte', 3, true, true, false),
+  ('statut_du_signalement', 1, false, false, false),
+  ('statut_signalement', 3, false, true, false),
   ('suggestions', 0, true, true, false),
   ('supprimer_session', 1, true, true, false),
   ('tableau_ministeres', 0, true, true, false),
+  ('texte_de_reponse', 1, false, false, false),
   ('texte_libre_refuse', 1, false, false, false),
   ('texte_refuse', 5, false, false, false),
   ('textes_a_relire', 0, true, true, false),
@@ -599,7 +613,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 180 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 190 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

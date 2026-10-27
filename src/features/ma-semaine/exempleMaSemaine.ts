@@ -151,6 +151,7 @@ export function exempleMaSemaine(
     chiffres: construireChiffres(lectures),
     fij: construireFij(lectures),
     eglise: construireDansLEglise(lectures),
+    signalements: null,
   }
 }
 

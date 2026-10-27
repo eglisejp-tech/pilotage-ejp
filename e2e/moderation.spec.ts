@@ -47,7 +47,8 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     await expect(
       page.getByRole('link', { name: 'Ouvrir les indicateurs à valider' }),
     ).toHaveAttribute('href', '/indicateurs#a-valider')
-    await expect(signalements(page).getByText('2 signalements ouverts')).toBeVisible()
+    // Le bloc du suivi (T77) : ce qui attend un geste d'EJP Tech (Reçu et En cours).
+    await expect(signalements(page).getByText('4 signalements à traiter')).toBeVisible()
     await expect(page.getByRole('heading', { level: 2 })).toHaveText([
       'Signalements',
       'Textes à relire',
@@ -222,31 +223,35 @@ test.describe('Écran Modération (EJP Tech), aperçu', () => {
     ).toBeChecked()
   })
 
-  test("masquer le texte d'un signalement ouvert, puis le commentaire d'un signalement clos", async ({
+  test("« Masquer » sous le texte d'un signalement ouvert, puis sous la réponse d'un clos (T77)", async ({
     page,
   }) => {
     await ouvrir(page)
+    // Intégration : son texte, la réponse d'EJP Tech et celle du ministère, un « Masquer » chacun.
     const ouvert = signalements(page).getByRole('article', { name: 'Intégration' })
-    await ouvert.getByRole('button', { name: 'Masquer le texte' }).click()
+    const masquer = ouvert.getByRole('button', { name: 'Masquer', exact: true })
+    await expect(masquer).toHaveCount(3)
+    await masquer.first().click()
+    await expect(fenetre(page)).toContainText("La session de samedi n'apparaît pas")
     await fenetre(page).getByRole('radio', { name: "Nom d'une personne" }).check()
     await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
     await expect(ouvert).toContainText(`« ${TEXTE_MASQUE} »`)
-    // Plus rien à masquer sur ce signalement : le bouton a disparu, « Clore » reste.
-    await expect(ouvert.getByRole('button', { name: 'Masquer le texte' })).toHaveCount(0)
+    // Ce texte n'a plus de « Masquer » ; les réponses gardent le leur, les gestes restent.
+    await expect(masquer).toHaveCount(2)
     await expect(ouvert.getByRole('button', { name: 'Clore le signalement' })).toBeVisible()
     await expect(signalements(page).getByRole('heading', { level: 2 })).toBeFocused()
 
-    // Le signalement clos : son texte et le commentaire de clôture, deux champs.
-    const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
-    await clos.getByRole('button', { name: 'Masquer le texte' }).click()
-    const boite = fenetre(page)
-    await expect(boite.getByRole('radio', { name: /Signalement/ })).toBeVisible()
-    await boite.getByRole('radio', { name: /Commentaire de clôture/ }).check()
-    await boite.getByRole('radio', { name: 'Autre information personnelle' }).check()
-    await boite.getByRole('button', { name: 'Masquer le texte' }).click()
-    await expect(clos).toContainText(`Réponse : ${TEXTE_MASQUE}`)
-    await expect(clos).toContainText('Le bouton Envoyer reste grisé')
+    // FIJ, clos par EJP Tech : « Masquer » sous sa réponse de clôture vise ce texte seul.
+    const clos = page
+      .getByRole('region', { name: 'Clos ces 30 derniers jours' })
+      .getByRole('article', { name: 'FIJ' })
+    await clos.getByRole('button', { name: 'Masquer', exact: true }).last().click()
+    await expect(fenetre(page)).toContainText("Transmis à l'administration de l'église")
+    await fenetre(page).getByRole('radio', { name: 'Autre information personnelle' }).check()
+    await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
+    await expect(clos).toContainText(`Clos par EJP Tech : « ${TEXTE_MASQUE} »`)
+    await expect(clos).toContainText('La carte des FIJ ne garde pas le département choisi.')
   })
 
   test('états : file vide, chargement, problème passager, sans indicateur', async ({ page }) => {
@@ -375,6 +380,10 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await fenetre(page).getByRole('button', { name: 'Masquer le texte' }).click()
   await capturer('fenetre-erreur')
   await ouvrir(page)
-  await signalements(page).getByRole('button', { name: 'Masquer le texte' }).first().click()
+  await signalements(page).getByRole('button', { name: 'Masquer', exact: true }).first().click()
   await capturer('fenetre-signalement')
+  // Le panneau « Répondre au ministère » ouvert dans le bloc (T77).
+  await page.keyboard.press('Escape')
+  await signalements(page).getByRole('button', { name: 'Répondre au ministère' }).first().click()
+  await capturer('reponse-ministere')
 })

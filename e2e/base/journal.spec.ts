@@ -13,13 +13,32 @@ import { compter, lire, MINISTERE_COMMUNICATION } from './outils-evenements.ts'
 const PAGE_NON_DISPONIBLE = 'Page non disponible'
 const TAILLE_PAGE = 50
 
-/** Actions qu'une ligne de signalement porte (T39) : le berger et le conseil n'en lisent aucune. */
-const SIGNALEMENTS = 'action=in.(difficulte_signalee,signalement_clos)'
+/** Codes des lignes de signalement (T39) et de leur suivi (T77). */
+const CODES_SIGNALEMENTS = [
+  'difficulte_signalee',
+  'signalement_clos',
+  'signalement_pris_en_charge',
+  'signalement_repondu',
+  'signalement_regle',
+  'signalement_reponse_ministere',
+].join(',')
+
+/** Actions qu'une ligne de signalement porte : le berger et le conseil n'en lisent aucune. */
+const SIGNALEMENTS = `action=in.(${CODES_SIGNALEMENTS})`
+
+/** Leurs libellés, que le filtre « Action » du berger, du conseil et de l'administration tait. */
+const LIBELLES_SIGNALEMENTS = [
+  'A signalé une difficulté',
+  'A clos un signalement',
+  'A pris en charge un signalement',
+  'A répondu à un signalement',
+  "A confirmé qu'un signalement est réglé",
+  'A répondu à EJP Tech sur un signalement',
+]
 
 /** Libellés des actions que la liste fermée de l'administration ne laisse pas lire (T47, P50, P51). */
 const ACTIONS_HORS_ADMINISTRATION = [
-  'A signalé une difficulté',
-  'A clos un signalement',
+  ...LIBELLES_SIGNALEMENTS,
   'A saisi les chiffres par département',
   'A ajouté un événement',
   'A mis à jour un événement',
@@ -58,10 +77,10 @@ test.describe('le berger', () => {
     expect(await compter(page, 'journal?select=id&cible=in.(signalement,signalement_suivi)')).toBe(
       0,
     )
-    await expect(lignes(page).filter({ hasText: 'A signalé une difficulté' })).toHaveCount(0)
-    await expect(lignes(page).filter({ hasText: 'A clos un signalement' })).toHaveCount(0)
-    await expect(actions(page).filter({ hasText: 'A signalé une difficulté' })).toHaveCount(0)
-    await expect(actions(page).filter({ hasText: 'A clos un signalement' })).toHaveCount(0)
+    for (const libelle of LIBELLES_SIGNALEMENTS) {
+      await expect(lignes(page).filter({ hasText: libelle }), libelle).toHaveCount(0)
+      await expect(actions(page).filter({ hasText: libelle }), libelle).toHaveCount(0)
+    }
 
     // Le nombre de lignes lues est celui de la base : 50 d'abord, puis 50 de plus tant qu'il en reste.
     const total = await compter(page, 'v_journal?select=id')
@@ -111,8 +130,12 @@ test.describe('le ministère Communication', () => {
     await attendreLeJournal(page, 'Mon journal', true)
     await expect(page.getByRole('combobox', { name: 'Compte' })).toHaveCount(0)
     await expect(page.getByRole('combobox')).toHaveCount(2)
-    // Il ne déclare aucune session : le filtre ne propose pas ces actions.
+    // Il ne déclare aucune session : le filtre ne propose pas ces actions. Il lit les gestes sur
+    // ses signalements, ceux d'EJP Tech compris (T77).
     await expect(actions(page).filter({ hasText: 'A ajouté une session' })).toHaveCount(0)
+    for (const libelle of LIBELLES_SIGNALEMENTS) {
+      await expect(actions(page).filter({ hasText: libelle }), libelle).toHaveCount(1)
+    }
 
     // Par l'API : toute ligne lue est celle de son ministère, ou écrite par son compte (le seul
     // compte qui apparaisse hors de son ministère).
@@ -139,7 +162,7 @@ test.describe("l'administration de l'église", () => {
 
     // Par l'API, la RLS et la vue ne rendent aucune de ces lignes.
     const horsListe =
-      'journal?select=id&or=(action.in.(difficulte_signalee,signalement_clos,fij_statistiques_saisies,' +
+      `journal?select=id&or=(action.in.(${CODES_SIGNALEMENTS},fij_statistiques_saisies,` +
       'evenement_ajoute,evenement_modifie,reunion_saisie,point_cree,point_statut,point_traite),' +
       'cible.in.(precision_sensible,signalement,signalement_suivi,point_attention,point_suivi,' +
       'evenement,reunion))'
@@ -171,9 +194,11 @@ test.describe('EJP Tech', () => {
     await attendreLeJournal(page, 'Journal technique', false)
     await expect(page.getByRole('combobox', { name: 'Compte' })).toBeVisible()
 
-    // Le filtre « Action » propose les signalements, et la liste en rend autant que la base.
-    await expect(actions(page).filter({ hasText: 'A signalé une difficulté' })).toHaveCount(1)
-    await expect(actions(page).filter({ hasText: 'A clos un signalement' })).toHaveCount(1)
+    // Le filtre « Action » propose les signalements et leur suivi (T77), et la liste en rend
+    // autant que la base.
+    for (const libelle of LIBELLES_SIGNALEMENTS) {
+      await expect(actions(page).filter({ hasText: libelle }), libelle).toHaveCount(1)
+    }
     await page
       .getByRole('combobox', { name: 'Action' })
       .selectOption({ label: 'A signalé une difficulté' })

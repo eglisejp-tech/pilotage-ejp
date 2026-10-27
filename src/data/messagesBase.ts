@@ -295,11 +295,35 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Choisissez l'écran concerné dans la liste.": {
     texte: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
   },
+  // La réponse de « Clore le signalement » est obligatoire à l'écran (T77) ; la base l'accepte
+  // encore vide pour l'ancien site.
   'Le commentaire fait 10 caractères au moins, ou reste vide.': {
-    texte: 'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+    texte: 'Écrivez au moins 10 caractères.',
     champ: 'texte',
   },
   'Ce signalement est déjà clos.': {},
+  // Suivi des signalements (T77) : un geste refusé parce que le signalement a changé (deux
+  // personnes d'EJP Tech, une page ouverte depuis longtemps) ; l'écran relit la liste.
+  'Ce signalement est déjà pris en charge.': {
+    texte: 'Ce signalement a déjà été pris en charge. La liste est à jour.',
+  },
+  'Ce signalement attend le retour du ministère.': {
+    texte: 'EJP Tech a déjà répondu à ce signalement. La liste est à jour.',
+  },
+  "Ce signalement n'attend pas votre réponse.": {
+    texte: 'Ce signalement a changé entre-temps. La liste est à jour.',
+  },
+  "Ce ministère n'a plus de compte actif.": {
+    texte: "Ce ministère n'a plus de compte actif : utilisez « Clore le signalement ».",
+  },
+  'Écrivez votre réponse (10 caractères au moins).': {
+    texte: 'Écrivez au moins 10 caractères.',
+    champ: 'texte',
+  },
+  'La réponse dépasse 280 caractères.': {
+    texte: 'Raccourcissez la réponse : 280 caractères au plus.',
+    champ: 'texte',
+  },
 
   // Modération (marquer_relu, masquer_texte, auteur_texte).
   'Texte introuvable, vide ou déjà masqué.': {
