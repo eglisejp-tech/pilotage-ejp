@@ -7,6 +7,7 @@ import { BoutonDeconnexion } from '@/features/navigation/BoutonDeconnexion'
 import { MenuTelephone } from '@/features/navigation/MenuTelephone'
 import { NavigationOnglets } from '@/features/navigation/NavigationOnglets'
 import type { Onglet } from '@/features/navigation/profils'
+import { RubanOctobreRose } from '@/features/octobre-rose/RubanOctobreRose'
 import { cn } from '@/lib/utils'
 
 export type ProprietesEnTete = {
@@ -50,12 +51,16 @@ export function EnTete(proprietes: ProprietesEnTete) {
         )}
       >
         <div className="flex shrink-0 items-baseline gap-4 self-center">
-          <Link
-            to={accueil}
-            className="inline-flex min-h-11 items-center font-lecture text-[22px] font-semibold"
-          >
-            Pilotage EJP
-          </Link>
+          {/* Le ruban d'Octobre rose (en octobre seulement) suit le nom, hors du lien. */}
+          <div className="flex items-center gap-1.5">
+            <Link
+              to={accueil}
+              className="inline-flex min-h-11 items-center font-lecture text-[22px] font-semibold"
+            >
+              Pilotage EJP
+            </Link>
+            <RubanOctobreRose className="h-5" />
+          </div>
           <span className="hidden text-sm text-encre-3 xl:inline">Église des Jeunes Prodiges</span>
         </div>
         <NavigationOnglets onglets={onglets} />

@@ -129,7 +129,8 @@ test.describe('bloc « Chiffres par département » de la fiche (aperçu)', () =
     await expect(page.getByRole('heading', { name: 'Chiffres par département' })).toBeVisible()
     await expect(page.getByText('6 départements sur 8')).toHaveCount(4)
     await expect(page.getByText('Pas de saisie').first()).toBeVisible()
-    await expect(page.getByRole('img')).toHaveCount(4)
+    // Les courbes du bloc, dans le contenu : en octobre, l'en-tête porte aussi le ruban rose.
+    await expect(page.getByRole('main').getByRole('img')).toHaveCount(4)
   })
 
   test('premier usage : l’action pour le ministère FIJ seulement, rien pour EJP Tech', async ({

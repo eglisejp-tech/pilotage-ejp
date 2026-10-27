@@ -1,7 +1,8 @@
 /*
  * Fondations communes (T69, docs/decisions.md ; mode d'emploi : BRIEF_DESIGN.md, section 10).
  * Ces variables ne sont pas des tokens : src/styles/tokens.css reste la copie de la référence,
- * avec ses seuls ajouts du brief (--fij-1 à --fij-5). Elles nomment, par rôle, des valeurs qui
+ * avec ses seuls ajouts du brief (--fij-1 à --fij-5) et le rose d'Octobre rose (--octobre-rose,
+ * 27 octobre 2026). Elles nomment, par rôle, des valeurs qui
  * étaient écrites à la main dans les composants. La configuration Tailwind (src/index.css) les
  * branche : text-note, text-detail, text-interface, text-texte, gap-sections, max-w-lecture...
  */
