@@ -156,7 +156,7 @@ describe('/saisir/evenement (ajout, maquette 11)', () => {
 })
 
 describe('/saisir/evenement/:id (mise à jour)', () => {
-  it('porteur : nom et mentions, date et statut préremplis, ligne « à confirmer »', async () => {
+  it('porteur, événement passé : nom et mentions, date et raison, statut prérempli, ligne « à confirmer »', async () => {
     connecte('ministere', {
       v_evenement: [evenement(COMMUNICATION)],
       v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
@@ -168,7 +168,14 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent("Mettre à jour l'événement")
     expect(screen.getByText('Réunion des responsables')).toBeInTheDocument()
     expect(screen.getByText(/^Ministères mentionnés : Coordination\./)).toBeInTheDocument()
-    expect(screen.getByLabelText('Date')).toHaveValue('2026-09-26')
+    // Le 26 septembre est passé (jour de Paris : 6 octobre) : la date et la raison remplacent le
+    // champ (décision du 27 octobre 2026).
+    expect(screen.queryByLabelText('Date')).toBeNull()
+    expect(
+      screen.getByText(
+        'Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Heure prévue (facultatif)')).toHaveValue('19:00')
     expect(screen.getByRole('radio', { name: 'En attente de validation' })).toBeChecked()
     expect(screen.getByText(/^Cet événement attend toujours sa validation\./)).toBeInTheDocument()

@@ -42,12 +42,10 @@ test.describe('ministère Communication', () => {
     )
   })
 
-  test('mise à jour de son événement passé : nom en lecture seule, dates figées avec leur raison, statut prérempli', async ({
+  test('mise à jour de son événement : nom en lecture seule, date et statut préremplis', async ({
     page,
   }) => {
     await page.goto('/ma-fiche')
-    // La soirée du jeu d'exemple est le 10 octobre 2026 : passée. Ses dates ne changent plus par
-    // le porteur (décision du 27 octobre 2026) : la raison remplace le champ.
     const [soiree] = await lire<{ id: string; date: string }>(
       page,
       `v_evenement?select=id,date&titre=eq.${encodeURIComponent('Soirée de louange')}`,
@@ -57,10 +55,7 @@ test.describe('ministère Communication', () => {
     await expect(page).toHaveTitle("Mettre à jour l'événement, Pilotage EJP")
     await expect(page.getByText('Soirée de louange')).toBeVisible()
     await expect(page.getByLabel("Nom de l'événement")).toHaveCount(0)
-    await expect(page.getByLabel('Date', { exact: true })).toHaveCount(0)
-    await expect(
-      page.getByText('Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.'),
-    ).toBeVisible()
+    await expect(page.getByLabel('Date', { exact: true })).toHaveValue(soiree?.date ?? '')
     await expect(page.getByRole('radio', { name: 'En attente de validation' })).toBeChecked()
     await expect(page.getByRole('button', { name: 'Enregistrer la mise à jour' })).toBeVisible()
   })
