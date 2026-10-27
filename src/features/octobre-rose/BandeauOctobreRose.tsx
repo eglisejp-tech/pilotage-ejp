@@ -28,10 +28,13 @@ export function BandeauOctobreRose() {
   }
 
   return (
-    <section aria-label={TEXTES_OCTOBRE_ROSE.nom} className="border-b border-filet">
+    <section
+      aria-label={TEXTES_OCTOBRE_ROSE.nom}
+      className="border-b border-filet bg-octobre-rose-fond"
+    >
       <div className="mx-auto box-content flex max-w-contenu flex-wrap items-center gap-x-4 px-marge">
         <p className="py-2.5 text-detail text-encre-2">
-          <span className="font-semibold text-encre">{TEXTES_OCTOBRE_ROSE.nom}</span> :{' '}
+          <span className="font-semibold text-octobre-rose-fonce">{TEXTES_OCTOBRE_ROSE.nom}</span> :{' '}
           {TEXTES_OCTOBRE_ROSE.message}
         </p>
         <div className="flex items-center gap-x-4 tablette:ml-auto">
