@@ -51,6 +51,7 @@ export default defineConfig([
     files: [
       'e2e/**/*.ts',
       'tests/**/*.ts',
+      'src/**/*.node.test.ts',
       'playwright.config.ts',
       'vite.config.ts',
       'vitest.fonctions.config.ts',
