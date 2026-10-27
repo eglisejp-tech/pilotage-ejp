@@ -92,6 +92,8 @@
   --color-fij-4: var(--fij-4);
   --color-fij-5: var(--fij-5);
   --color-octobre-rose: var(--octobre-rose);
+  --color-octobre-rose-fond: var(--octobre-rose-fond);
+  --color-octobre-rose-fonce: var(--octobre-rose-fonce);
   --color-black: var(--encre);
   --color-white: var(--papier);
 

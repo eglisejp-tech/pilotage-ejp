@@ -53,6 +53,11 @@
    * #d6336c, se lisait framboise). Pas de thème sombre dans l'outil. À retirer avec la fonction
    * si elle cesse. */
   --octobre-rose: #ec4899;
+  /* Bandeau Octobre rose (même demande, 27 octobre 2026 : « ça n'a rien de rose ») : fond rose
+   * pâle, et « Octobre rose » en rose foncé. Sur ce fond : --octobre-rose-fonce 5,14:1, --encre-2
+   * 7,62:1, --encre-3 4,59:1, au-dessus des 4,5:1 demandés pour un texte. */
+  --octobre-rose-fond: #fce7f3;
+  --octobre-rose-fonce: #be185d;
 
   /* Typographie */
   --f-lecture: 'Newsreader', Georgia, serif;
