@@ -8,6 +8,7 @@
 #   - le clair ne touche jamais le disque : pg_dump écrit vers age, en flux ;
 #   - les identifiants temporaires de la base vivent dans des variables du script (ident_*),
 #     jamais à l'écran, jamais dans un fichier, jamais dans les arguments d'un programme ;
+#   - pg_dump ne reçoit que les variables PG* utiles, rien d'hérité (PGSERVICE, PGHOSTADDR...) ;
 #   - la sortie ne dit que la forme du fichier : nom, taille, empreinte, nombre de tables ;
 #   - tout écart arrête le script (« Arrêt : ... »), sans rien garder.
 
@@ -19,9 +20,109 @@ EXPORT_TAILLE_MIN=10240
 EXPORT_CLE_ATTENTE='en-attente-de-la-cle-publique'
 EXPORT_ENTETE_AGE='age-encryption.org/v1'
 
+# Binaires du poste (docs/exploitation.md, 9.2), relevés le 27 octobre 2026 sur les fichiers
+# installés depuis les archives vérifiées (age 1.3.2, PostgreSQL 17.11-5 d'EDB) : age.exe,
+# pg_dump.exe et les DLL que pg_dump charge depuis pgsql/bin. Une autre version demande de relever
+# ces sommes à nouveau, sur une branche, avec l'accord de la personne pour main.
+EXPORT_EMPREINTES_POSTE=(
+  '2821a4ed191da07372acd302e5f6feae7a7985e285e1417765ebe74025af45f0  age/age.exe'
+  'eaa2d00935e0dd55a6ad7aa2f106d013dcb4e793b7e7d2c6df64bf5b60fbdcd7  pgsql/bin/pg_dump.exe'
+  '9ed093bb84a0b93603ceb11011442342a4f8789fb1af44d96f6e1923f75b4812  pgsql/bin/libpq.dll'
+  '1125ac8dc0c4f5c3ed4712e0d8ad29474099fcb55bb0e563a352ce9d03ef1d78  pgsql/bin/libintl-9.dll'
+  '096af775241b3bd4b1c3d79c83b103bb8f02da54ec4cd76c5d49eef61a68ad01  pgsql/bin/liblz4.dll'
+  '287e7e474961e8886a3d961e2c07da647a7ac8d60d97023545f3a3ecf604daba  pgsql/bin/libzstd.dll'
+  '54c0a88da398559c3daec198d7af8f020ff6fbeead38dbacd97d21ae920c3a00  pgsql/bin/libcrypto-3-x64.dll'
+  'ffe2d56375bb4e8bdee9037df6befc5016ddd8871d0d85027314dd5792f8fdc9  pgsql/bin/libwinpthread-1.dll'
+  '3ee9786ab3eb8dfd791bdbd17c7e791dbe025734befcded0ee4170e1089f79df  pgsql/bin/libiconv-2.dll'
+  '0ac3d836a2fa84dee83bd06a4abfaf8ab7ded689420edc76febc185500e2d6e1  pgsql/bin/libssl-3-x64.dll'
+)
+# DLL de l'archive d'EDB dans pgsql/bin. Une DLL en plus (au nom d'une DLL du système, par
+# exemple) serait chargée avant celle du système : elle est refusée. Aucune DLL dans age/.
+EXPORT_DLL_PGSQL=(
+  icudt67.dll icuin67.dll icuio67.dll icutu67.dll icuuc67.dll libcrypto-3-x64.dll libcurl.dll
+  libecpg.dll libecpg_compat.dll libiconv-2.dll libintl-9.dll liblz4.dll libpgtypes.dll libpq.dll
+  libssl-3-x64.dll libwinpthread-1.dll libxml2.dll libxslt.dll libzstd.dll testplug.dll
+  wxbase3211u_net_vc_x64_custom.dll wxbase3211u_vc_x64_custom.dll wxbase3211u_xml_vc_x64_custom.dll
+  wxmsw3211u_adv_vc_x64_custom.dll wxmsw3211u_aui_vc_x64_custom.dll
+  wxmsw3211u_core_vc_x64_custom.dll wxmsw3211u_html_vc_x64_custom.dll
+  wxmsw3211u_xrc_vc_x64_custom.dll zlib1.dll
+)
+# Variables gardées quand le script se relance sous env -i (PATH est fixé à part) : celles dont
+# Windows, node, npm, git et la CLI ont besoin. Ni BASH_ENV, ni SHELLOPTS, ni PG*, ni GIT_*, ni
+# EXPORT_*.
+EXPORT_VARIABLES_GARDEES=(
+  HOME USERPROFILE APPDATA LOCALAPPDATA TEMP TMP SYSTEMROOT SYSTEMDRIVE WINDIR COMSPEC PATHEXT
+  PROGRAMFILES PROGRAMDATA USERNAME USERDOMAIN COMPUTERNAME HOMEDRIVE HOMEPATH
+  NUMBER_OF_PROCESSORS PROCESSOR_ARCHITECTURE OS MSYSTEM
+)
+# Variables que pg_dump garde en plus des PG* utiles (Windows en a besoin pour le réseau).
+EXPORT_VARIABLES_PG_DUMP=(SYSTEMROOT SYSTEMDRIVE WINDIR TEMP TMP MSYS_NO_PATHCONV)
+
 export_arreter() {
   echo "Arrêt : $1" >&2
   exit 1
+}
+
+# Vrai si l'environnement est déjà propre : aucune trace (-x, -v), ni BASH_ENV ni ENV, PATH égal à
+# $1, aucune fonction exportée, et seulement des variables exportées de EXPORT_VARIABLES_GARDEES
+# (plus PATH, MSYS_NO_PATHCONV, EXPORT_RELANCE et celles que bash pose lui-même).
+export_environnement_propre() {
+  local nom
+  [[ $- != *x* && $- != *v* ]] || return 1
+  [ -z "${BASH_ENV+x}" ] && [ -z "${ENV+x}" ] || return 1
+  [[ :${SHELLOPTS:-}: != *:xtrace:* && :${SHELLOPTS:-}: != *:verbose:* ]] || return 1
+  [ "$PATH" = "$1" ] || return 1
+  [ -z "$(declare -Fx)" ] || return 1
+  for nom in $(compgen -e); do
+    case " PATH MSYS_NO_PATHCONV EXPORT_RELANCE PWD OLDPWD SHLVL _ ${EXPORT_VARIABLES_GARDEES[*]} " in
+      *" $nom "*) ;;
+      *) return 1 ;;
+    esac
+  done
+}
+
+# Relance le script $2 (ses arguments ensuite) sous env -i, PATH fixé à $1, par /usr/bin/bash
+# --noprofile --norc, si l'environnement n'est pas propre. Une seule relance : si l'environnement
+# reste sale après elle, arrêt.
+export_relancer_propre() {
+  local chemin=$1 script=$2 nom
+  shift 2
+  if export_environnement_propre "$chemin"; then return 0; fi
+  [ "${EXPORT_RELANCE:-}" != 1 ] ||
+    export_arreter "environnement impossible à nettoyer après la relance sous env -i."
+  local variables=("PATH=$chemin" MSYS_NO_PATHCONV=1 EXPORT_RELANCE=1)
+  for nom in "${EXPORT_VARIABLES_GARDEES[@]}"; do
+    if [ -n "${!nom+x}" ]; then variables+=("$nom=${!nom}"); fi
+  done
+  exec /usr/bin/env -i "${variables[@]}" /usr/bin/bash --noprofile --norc "$script" "$@"
+}
+
+# git dans le dépôt $1, sans configuration globale ni système (ni règle url.*.insteadOf, ni
+# assistant d'identification), sans objets de remplacement.
+export__git_isole() {
+  local depot=$1
+  shift
+  GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0 GIT_NO_REPLACE_OBJECTS=1 \
+    git -C "$depot" "$@"
+}
+
+# Branche $3 du dépôt officiel $2 récupérée dans le clone $1 : refspec explicite vers
+# refs/remotes/origin/$3 (le « origin » configuré n'est jamais lu), adresse neutralisée par -c
+# contre toute réécriture, seul le protocole de $2 permis (file pour un chemin, dans les tests).
+# Affiche le SHA. Une règle
+# url.*.insteadOf dans la configuration du clone arrête tout.
+export_recuperer() {
+  local clone=$1 depot=$2 branche=$3 protocole=file regles sha
+  case $depot in *://*) protocole=${depot%%://*} ;; esac
+  regles=$(export__git_isole "$clone" config --get-regexp '^url\..*\.(insteadof|pushinsteadof)$' || true)
+  [ -z "$regles" ] || export_arreter "le clone a une règle url.*.insteadOf : rien n'est lancé."
+  export__git_isole "$clone" -c "url.$depot.insteadOf=$depot" -c http.sslVerify=true \
+    -c protocol.allow=never -c "protocol.$protocole.allow=always" \
+    fetch --quiet --no-tags "$depot" "+refs/heads/$branche:refs/remotes/origin/$branche" ||
+    export_arreter "impossible de récupérer $branche depuis $depot."
+  sha=$(export__git_isole "$clone" rev-parse --verify --quiet "refs/remotes/origin/$branche^{commit}") ||
+    export_arreter "$branche introuvable après la récupération."
+  echo "$sha"
 }
 
 # Date de Paris calculée par node (Git Bash ignore TZ=Europe/Paris). $1 : horodatage (AAAA-MM-JJ-HHMM),
@@ -129,8 +230,9 @@ export_effacer_identifiants() {
   ident_hote="" ident_port="" ident_utilisateur="" ident_mot_de_passe="" ident_base=""
 }
 
-# Outil de l'export : $EXPORT_OUTILS/age/<nom>.exe, $EXPORT_OUTILS/pgsql/bin/<nom>.exe (binaires
-# portables du poste, section 9.2), $EXPORT_PG_BIN/<nom> (CI), puis le PATH.
+# Outil de l'export (CI et restauration ; jamais en production, voir export_outils_poste) :
+# $EXPORT_OUTILS/age/<nom>.exe, $EXPORT_OUTILS/pgsql/bin/<nom>.exe, $EXPORT_PG_BIN/<nom>, puis le
+# PATH.
 export_trouver_outil() {
   local nom=$1 chemin candidats=()
   if [ -n "${EXPORT_OUTILS:-}" ]; then
@@ -148,6 +250,57 @@ export_trouver_outil() {
     return 0
   fi
   export_arreter "outil absent : $nom (docs/exploitation.md, section 9.2, installation des outils)."
+}
+
+# Empreintes des binaires : $1 dossier des outils, puis des lignes « sha256  chemin » (chemin
+# relatif à $1). Arrêt au premier fichier absent ou différent, ou si une DLL hors de
+# EXPORT_DLL_PGSQL est dans pgsql/bin (ou une DLL quelconque dans age/).
+export_verifier_binaires() {
+  local dossier=$1 ligne attendue chemin reelle fichier nom
+  shift
+  for ligne in "$@"; do
+    attendue=${ligne%%  *}
+    chemin=${ligne#*  }
+    [ -f "$dossier/$chemin" ] && [ ! -L "$dossier/$chemin" ] ||
+      export_arreter "binaire absent : $chemin (docs/exploitation.md, section 9.2)."
+    reelle=$(sha256sum "$dossier/$chemin" | cut -d ' ' -f 1)
+    [ "$reelle" = "$attendue" ] ||
+      export_arreter "empreinte inattendue pour $chemin, binaire refusé (docs/exploitation.md, section 9.2)."
+  done
+  for fichier in "$dossier"/pgsql/bin/*.[dD][lL][lL] "$dossier"/age/*.[dD][lL][lL]; do
+    [ -e "$fichier" ] || continue
+    nom=${fichier##*/}
+    if [[ $fichier == "$dossier/age/"* ]] || [[ " ${EXPORT_DLL_PGSQL[*]} " != *" ${nom,,} "* ]]; then
+      export_arreter "DLL inattendue : ${fichier#"$dossier/"} (docs/exploitation.md, section 9.2)."
+    fi
+  done
+}
+
+# Outils de l'export en production : ceux du dossier $1 seulement (ni EXPORT_PG_BIN, ni PATH),
+# empreintes de EXPORT_EMPREINTES_POSTE vérifiées. Remplit EXPORT_AGE et EXPORT_PG_DUMP.
+export_outils_poste() {
+  export_verifier_binaires "$1" "${EXPORT_EMPREINTES_POSTE[@]}"
+  EXPORT_AGE="$1/age/age.exe"
+  EXPORT_PG_DUMP="$1/pgsql/bin/pg_dump.exe"
+}
+
+# Mode TLS de pg_dump en production : verify-full avec le certificat d'autorité de Supabase ($1,
+# fichier public du dépôt) s'il est là ; sinon require, annoncé à l'écran. Un fichier présent mais
+# illisible arrête l'export : jamais de repli vers require. Remplit EXPORT_SSLMODE et
+# EXPORT_SSLROOTCERT.
+export_mode_ssl() {
+  if [ -e "$1" ]; then
+    { [ -f "$1" ] && grep -q -- '-----BEGIN CERTIFICATE-----' "$1" &&
+      grep -q -- '-----END CERTIFICATE-----' "$1"; } ||
+      export_arreter "le certificat de Supabase ($1) n'est pas un certificat PEM : rien n'est lancé, sans repli vers require."
+    EXPORT_SSLMODE=verify-full
+    EXPORT_SSLROOTCERT=$1
+    echo "Connexion : TLS vérifié (verify-full, certificat d'autorité de Supabase du dépôt)."
+  else
+    EXPORT_SSLMODE=require
+    EXPORT_SSLROOTCERT=""
+    echo "Connexion : TLS chiffré, serveur non vérifié (require) : certificat de Supabase absent du dépôt (geste G7, docs/exploitation.md, section 9.2)."
+  fi
 }
 
 # Majeure de PostgreSQL de la base : supabase/.temp/postgres-version du dossier $1 (écrit par la
@@ -195,22 +348,57 @@ export_filtrer_erreurs() {
     cut -c 1-200 | head -n 10 || true
 }
 
+# pg_dump ($1) avec les seules variables utiles : toutes les variables exportées héritées sont
+# retirées (PGSERVICE, PGHOSTADDR, PGSSLMODE, PGPASSFILE...), sauf EXPORT_VARIABLES_PG_DUMP. Les
+# valeurs passent par l'environnement, jamais par les arguments. Sous-shell : rien ne fuit.
+export__pg_dump() (
+  local nom garde
+  for nom in $(compgen -e); do
+    garde=non
+    for g in "${EXPORT_VARIABLES_PG_DUMP[@]}"; do if [ "$nom" = "$g" ]; then garde=oui; fi; done
+    if [ "$garde" = non ]; then export -n "$nom"; fi
+  done
+  export LC_ALL=C LC_MESSAGES=C PGHOST="$ident_hote" PGPORT="$ident_port" \
+    PGUSER="$ident_utilisateur" PGPASSWORD="$ident_mot_de_passe" PGDATABASE="$ident_base" \
+    PGSSLMODE="$EXPORT_SSLMODE" PGCONNECT_TIMEOUT=30 PGAPPNAME=export-ejp
+  if [ -n "${EXPORT_SSLROOTCERT:-}" ]; then export PGSSLROOTCERT="$EXPORT_SSLROOTCERT"; fi
+  exec "$1" --format=custom --schema=public --schema=private --no-owner --no-privileges \
+    --role=postgres --verbose
+)
+
+# Vrai si le fichier $1 commence par l'en-tête d'age, suivi d'une fin de ligne.
+export__entete_age() {
+  [ "$(head -c $((${#EXPORT_ENTETE_AGE} + 1)) "$1" | od -An -c | tr -d ' \n')" = \
+    "$(printf '%s\\n' "$EXPORT_ENTETE_AGE")" ]
+}
+
 # Export en flux des schémas public et private vers age. $1 dossier, $2 nom final, $3 clé
-# publique, $4 pg_dump, $5 age. Identifiants : ident_* (export_lire_identifiants).
+# publique, $4 pg_dump, $5 age. Identifiants : ident_* (export_lire_identifiants). Mode TLS :
+# EXPORT_SSLMODE (obligatoire) et EXPORT_SSLROOTCERT (export_mode_ssl en production).
 # Remplit EXPORT_TAILLE, EXPORT_SHA256 et EXPORT_TABLES. Écrit d'abord <nom>.partiel (déjà chiffré),
-# renommé seulement si tous les contrôles passent ; sinon rien n'est gardé.
+# renommé seulement si tous les contrôles passent ; sinon rien n'est gardé. Le journal de pg_dump
+# (<nom>.journal, noms de tables et erreurs) reste dans le dossier des exports, jamais dans le
+# dossier temporaire du système, et s'efface à la fin comme au démarrage suivant.
 export_flux() {
   local dossier=$1 nom=$2 cle=$3 pg_dump=$4 age=$5
   [ ! -e "$dossier/$nom" ] || export_arreter "$nom existe déjà dans $dossier."
+  case ${EXPORT_SSLMODE:-} in
+    verify-full)
+      [ -f "${EXPORT_SSLROOTCERT:-}" ] ||
+        export_arreter "verify-full sans certificat d'autorité : rien n'est lancé."
+      ;;
+    require | disable)
+      [ -z "${EXPORT_SSLROOTCERT:-}" ] ||
+        export_arreter "certificat d'autorité présent : seul verify-full est accepté."
+      ;;
+    *) export_arreter "mode TLS de la connexion non fixé (EXPORT_SSLMODE)." ;;
+  esac
   EXPORT_PARTIEL="$dossier/$nom.partiel"
-  EXPORT_JOURNAL=$(mktemp)
+  EXPORT_JOURNAL="$dossier/$nom.journal"
+  rm -f -- "$EXPORT_PARTIEL" "$EXPORT_JOURNAL"
   trap 'rm -f -- "$EXPORT_PARTIEL" "$EXPORT_JOURNAL"' EXIT
   trap 'exit 130' INT TERM
-  if ! LC_ALL=C LC_MESSAGES=C PGHOST="$ident_hote" PGPORT="$ident_port" PGUSER="$ident_utilisateur" \
-    PGPASSWORD="$ident_mot_de_passe" PGDATABASE="$ident_base" PGSSLMODE="${EXPORT_SSLMODE:-require}" \
-    PGCONNECT_TIMEOUT=30 PGAPPNAME=export-ejp \
-    "$pg_dump" --format=custom --schema=public --schema=private --no-owner --no-privileges \
-    --role=postgres --verbose 2>"$EXPORT_JOURNAL" |
+  if ! export__pg_dump "$pg_dump" 2>"$EXPORT_JOURNAL" |
     "$age" -e -r "$cle" -o "$EXPORT_PARTIEL" 2>>"$EXPORT_JOURNAL"; then
     echo "Arrêt : export incomplet, aucun fichier gardé." >&2
     export_filtrer_erreurs <"$EXPORT_JOURNAL" >&2
@@ -219,7 +407,7 @@ export_flux() {
   EXPORT_TAILLE=$(wc -c <"$EXPORT_PARTIEL" | tr -d ' ')
   [ "$EXPORT_TAILLE" -ge "$EXPORT_TAILLE_MIN" ] ||
     export_arreter "export trop petit ($EXPORT_TAILLE octets), aucun fichier gardé."
-  [ "$(head -n 1 "$EXPORT_PARTIEL")" = "$EXPORT_ENTETE_AGE" ] ||
+  export__entete_age "$EXPORT_PARTIEL" ||
     export_arreter "le fichier produit n'a pas l'en-tête d'age, aucun fichier gardé."
   EXPORT_TABLES=$(grep -c -E 'dumping contents of table|contenu de la table' "$EXPORT_JOURNAL" || true)
   [ "$EXPORT_TABLES" -ge 1 ] || export_arreter "aucune table au sommaire de l'export, aucun fichier gardé."
@@ -229,10 +417,11 @@ export_flux() {
   trap - EXIT INT TERM
 }
 
-# Restes d'un export tué sans nettoyage : fichiers .partiel du dossier $1 (déjà chiffrés).
+# Restes d'un export tué sans nettoyage, effacés au démarrage suivant : fichiers .partiel (déjà
+# chiffrés) et .journal du dossier $1.
 export_nettoyer_partiels() {
   local fichier
-  for fichier in "$1"/ejp-*.dump.age.partiel; do
+  for fichier in "$1"/ejp-*.dump.age.partiel "$1"/ejp-*.dump.age.journal; do
     if [ -f "$fichier" ]; then rm -f -- "$fichier"; fi
   done
 }
@@ -267,9 +456,27 @@ export_existe_aujourdhui() {
   jour=$(export__date jour "${2:-}") || return 1
   [ -n "$jour" ] || return 1
   for fichier in "$1"/ejp-"$jour"-[0-9][0-9][0-9][0-9].dump.age; do
-    if [ -f "$fichier" ] && [ -s "$fichier" ]; then return 0; fi
+    if export__export_complet "$fichier"; then return 0; fi
   done
   return 1
+}
+
+# Vrai si l'export $1 est complet : fichier ordinaire, au moins EXPORT_TAILLE_MIN octets, en-tête
+# d'age, fiche .json à côté dont le nom, la taille et l'empreinte SHA-256 sont ceux du fichier.
+export__export_complet() {
+  local fichier=$1 fiche taille sha
+  fiche="${fichier%.dump.age}.json"
+  [ -f "$fichier" ] && [ ! -L "$fichier" ] && [ -f "$fiche" ] || return 1
+  taille=$(wc -c <"$fichier" | tr -d ' ')
+  [ "$taille" -ge "$EXPORT_TAILLE_MIN" ] || return 1
+  export__entete_age "$fichier" || return 1
+  sha=$(sha256sum "$fichier" | cut -d ' ' -f 1)
+  node -e '
+const [chemin, sha, nom, taille] = process.argv.slice(1);
+let f;
+try { f = JSON.parse(require("node:fs").readFileSync(chemin, "utf8")); } catch { process.exit(1); }
+process.exit(f && f.sha256 === sha && f.fichier === nom && f.taille_octets === Number(taille) ? 0 : 1);
+' "$fiche" "$sha" "${fichier##*/}" "$taille" 2>/dev/null
 }
 
 # Dernière migration appliquée, lue dans la sortie de « migration list » ($1) : la plus grande
@@ -299,13 +506,14 @@ process.stdout.write(JSON.stringify(fiche, null, 2) + "\n");
     >"$1/${2%.dump.age}.json"
 }
 
-# Les sept lignes que Claude voit après un export : $1 nom, $2 clé publique, $3 dernière migration.
+# Les sept lignes que Claude voit après un export : $1 nom, $2 clé publique (affichée entière,
+# elle n'est pas secrète), $3 dernière migration.
 export_resume() {
   echo "Export chiffré : $1"
   echo "Taille : $EXPORT_TAILLE octets ($(((EXPORT_TAILLE + 1023) / 1024)) Kio)"
   echo "Empreinte SHA-256 : $EXPORT_SHA256"
   echo "Sommaire : $EXPORT_TABLES tables exportées"
-  echo "Clé : ${2:0:10}...${2: -6}"
+  echo "Clé : $2"
   echo "Dernière migration en production : $3"
   echo "Exports gardés : $EXPORT_GARDES ($EXPORT_SUPPRIMES supprimé(s), plus vieux que $EXPORT_JOURS_GARDES jours)"
 }
@@ -317,7 +525,7 @@ export_verifier_resume() {
     '^Taille : [0-9]+ octets \([0-9]+ Kio\)$'
     '^Empreinte SHA-256 : [0-9a-f]{64}$'
     '^Sommaire : [0-9]+ tables exportées$'
-    '^Clé : age1[a-z0-9]{6}\.\.\.[a-z0-9]{6}$'
+    '^Clé : age1[qpzry9x8gf2tvdw0s3jn54khce6mua7l]{58}$'
     '^Dernière migration en production : ([0-9]{14}|inconnue)$'
     '^Exports gardés : [0-9]+ \([0-9]+ supprimé\(s\), plus vieux que [0-9]+ jours\)$'
   )

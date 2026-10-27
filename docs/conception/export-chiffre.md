@@ -37,8 +37,9 @@ coffre) peut le déchiffrer.
    `pg_dump`. Ils ne s'affichent jamais. Il faut installer `pg_dump` 17 et `age` sur le poste.
 4. **Une seule forme nouvelle** : `bash scripts/production.sh export`, sans argument, seule dans la
    commande. Le hook l'accepte sans demander (elle n'écrit rien en production) ; Claude demande
-   d'abord « Je lance l'export ? » dans la conversation. Le hook refuse le script s'il diffère de
-   celui de `origin/main`.
+   d'abord « Je lance l'export ? » dans la conversation. Le hook refuse le script s'il diffère, octet
+   pour octet, de celui de `main` lu sur l'adresse officielle du dépôt, et lance à la place une
+   copie extraite de ce `main` (section 6).
 5. **Ce que Claude voit** : nom du fichier, taille, empreinte SHA-256, nombre de tables du
    sommaire, clé utilisée, dernière migration. Aucune ligne, aucun nombre de lignes, aucun texte.
 6. **Contenu inchangé** : schémas `public` et `private`, structure et données, comme la section 9.2
@@ -108,7 +109,7 @@ clone propre et relié, `age` et `pg_dump` 17 installés, la clé publique sur `
 demande « Je lance l'export du lundi ? » et que la personne répond « oui », alors Claude lance
 `bash scripts/production.sh export`, le hook l'accepte sans confirmation, et la sortie tient en
 sept lignes : fichier `ejp-2026-11-02-0910.dump.age`, taille, empreinte SHA-256, nombre de tables du
-sommaire, clé (`age1` suivi des 6 premiers et 6 derniers caractères), dernière migration, exports
+sommaire, clé publique entière (`age1...`, elle n'est pas secrète), dernière migration, exports
 gardés. Claude propose la ligne du registre des opérations. Aucune donnée n'apparaît.
 
 **S2. L'export avant une migration.** Étant donné une migration validée et `preparer` fait ; quand
@@ -154,9 +155,11 @@ coupées à 200 caractères, après masquage de tout `PGPASSWORD=`, `password=` 
 `postgres://...`. Rien n'est gardé.
 
 **S9. Une forme inexacte.** Quand Claude écrit `bash scripts/production.sh export --verbose`,
-`... export; ls`, ou lance le script alors que `scripts/production.sh` ou `scripts/export/` diffère
-de `origin/main` dans son dossier, alors le hook refuse. `age -d`, `age --decrypt` et `age-keygen`
-lancés par Claude sont refusés aussi.
+`... export; ls`, une écriture découpée (`"export"`, `produ"ction".sh`, `prod*.sh`, une variable, une
+copie renommée, `source`, `env`), ou lance le script alors que `scripts/production.sh` ou un fichier
+de `scripts/export/` diffère de `main` dans son dossier (même caché par `assume-unchanged`,
+`skip-worktree`, un filtre ou un `origin/main` local déplacé), alors le hook refuse. `age -d`,
+`age --decrypt` et `age-keygen` lancés par Claude sont refusés aussi, même écrits autrement.
 
 **S10. Un texte masqué pour donnée personnelle.** Étant donné un masquage (`masquer_texte`) ; alors
 Claude propose un export tout de suite ; après le « oui » et l'export, Claude supprime les exports
@@ -205,9 +208,10 @@ tronqué fait échouer `restaurer.sh` sans rien charger.
 ### 4.4 Où vit la clé publique
 
 - **Recommandé** : `scripts/export/destinataires.txt` sur `main`, lu par le script dans le clone
-  réservé par `git show origin/main:...` après `fetch`. Une clé changée dans une branche de
-  travail ne sert jamais ; tout changement passe par l'accord de la personne pour `main` et se voit
-  dans l'historique. Le script affiche la clé utilisée (6 premiers et 6 derniers caractères).
+  réservé par `git show <SHA>:...`, après un `fetch` depuis l'adresse officielle du dépôt (refspec
+  explicite, réécritures d'adresse neutralisées), jamais depuis le `origin` du clone. Une clé
+  changée dans une branche de travail ne sert jamais ; tout changement passe par l'accord de la
+  personne pour `main` et se voit dans l'historique. Le script affiche la clé utilisée, entière.
 - Écarté : un fichier du poste hors dépôt (Claude pourrait le remplacer sans que personne ne le
   voie) ; une variable GitHub (rien ne la lit sur le poste).
 
@@ -227,20 +231,32 @@ tronqué fait échouer `restaurer.sh` sans rien charger.
 
 ## 5. L'action `export`, pas à pas
 
+0. **Environnement propre** (toutes les actions) : `set +xv` en première ligne, puis le script se
+   relance sous `env -i` (PATH fixé, sans `~/bin` ; seules les variables utiles à Windows, node,
+   git et la CLI), par `/usr/bin/bash --noprofile --norc`. Aucune trace héritée (`-x`,
+   `SHELLOPTS`, `BASH_ENV`, profil) ne peut donc afficher le mot de passe temporaire.
 1. **Garde-fous existants** : clone relié à `ugbitornbspatpcowlvg`, sans modification locale, CLI
-   du lock (`scripts/production.sh:28-47`). `set -euo pipefail`, `umask 077`, jamais `set -x`.
-2. **Outils** : `pg_dump` et `pg_restore` de majeure au moins égale à celle de la base (17), `age`.
-   Sinon : « Arrêt : outil absent (age) ».
-3. **Clé** : `git -C <clone> fetch`, puis `git show origin/main:scripts/export/destinataires.txt` ;
-   exactement une ligne `age1` valide, sinon arrêt.
+   du lock. `set -euo pipefail`, `umask 077`, jamais `set -x`.
+2. **Outils** : `age` et `pg_dump` du dossier des outils seulement (ni `EXPORT_PG_BIN`, ni PATH),
+   chacun avec les DLL que `pg_dump` charge, à l'empreinte SHA-256 épinglée dans
+   `scripts/export/commun.sh` ; une DLL inconnue dans `pgsql/bin` est refusée. `pg_dump` de la
+   majeure de la base (17), `age` 1.x. Sinon : « Arrêt : outil absent », « empreinte inattendue »
+   ou « DLL inattendue ».
+3. **Clé** : `fetch` du clone depuis l'adresse officielle du dépôt (refspec explicite, sans
+   configuration globale ni système, une règle `url.*.insteadOf` du clone arrête tout), puis
+   `git show <SHA de main>:scripts/export/destinataires.txt` ; exactement une ligne `age1` valide,
+   sinon arrêt.
 4. **Nom** : date et heure de Paris calculées par `node` (Git Bash ignore `TZ`) :
-   `ejp-AAAA-MM-JJ-HHMM.dump.age`, dans le dossier des exports (section 8). Les `.partiel` restants
-   sont effacés.
+   `ejp-AAAA-MM-JJ-HHMM.dump.age`, dans le dossier des exports (section 8). Les `.partiel` et
+   `.journal` restants sont effacés. Mode TLS : `verify-full` avec le certificat d'autorité de
+   Supabase (`scripts/export/supabase-ca.crt`, public) dès qu'il est dans le dépôt, sans repli ;
+   `require` tant qu'il n'y est pas, annoncé à l'écran (geste G7).
 5. **Identifiants** : la sortie de l'essai à blanc de la CLI va dans une variable, jamais à
    l'écran ni sur le disque. Le script y cherche exactement une ligne
    `export PGHOST|PGPORT|PGUSER|PGPASSWORD|PGDATABASE="..."` de chaque sorte, sans `eval` ; sinon
    « Arrêt : identifiants temporaires introuvables », sans rien montrer de la sortie. La variable
-   est vidée aussitôt ; les cinq valeurs ne vont qu'à l'environnement de `pg_dump`.
+   est vidée aussitôt ; les cinq valeurs ne vont qu'à l'environnement de `pg_dump`, lancé sans
+   aucune variable héritée (ni `PGSERVICE`, ni `PGHOSTADDR`, ni `PGSSLMODE`...).
 6. **Flux** : `pg_dump --format=custom --schema=public --schema=private --no-owner --no-privileges
 --role=postgres`, puis `tee` vers un contrôle de forme (`pg_restore --list`, qui compte les
    entrées `TABLE DATA` puis lit le flux jusqu'au bout), puis `age --encrypt -R <clé>` vers
@@ -254,27 +270,44 @@ tronqué fait échouer `restaurer.sh` sans rien charger.
    plus de 28 jours (date du nom), jamais le plus récent, rien d'autre.
 10. **Sortie** : les sept lignes de S1. En cas d'échec : l'étape, le code, et l'extrait filtré de S8.
 
-`migrer` gagne une vérification (Q6) : un `.dump.age` complet daté d'aujourd'hui (Paris) existe.
+Le journal de `pg_dump` (noms de tables, erreurs) s'écrit dans le dossier des exports
+(`<nom>.journal`), jamais dans le dossier temporaire du système, et s'efface à la fin.
+
+`migrer` gagne une vérification (Q6) : un `.dump.age` complet daté d'aujourd'hui (Paris) existe,
+avec sa fiche `.json`, au moins 10 Kio, l'en-tête `age-encryption.org/v1`, et le nom, la taille et
+l'empreinte SHA-256 notés dans la fiche.
 
 ---
 
 ## 6. Garanties techniques
 
-| Garantie                                    | Comment                                                                                                                                                                            | Preuve                                       |
-| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| Claude ne peut pas déchiffrer               | La clé privée n'est jamais sur le poste ; le hook refuse `age -d`, `age --decrypt`, `age-keygen`                                                                                   | Cryptographie ; test du hook                 |
-| Une seule forme exacte                      | Hook : `^bash scripts/production\.sh export$` accepté sans demander ; toute autre forme qui cite le script et `export` refusée ; réglage `Bash(bash scripts/production.sh export)` | Test du hook (vitest, job `qualite`)         |
-| Le script lancé est celui de `main`         | Le hook refuse toute forme du script si `git diff --quiet origin/main -- scripts/production.sh scripts/export/` échoue dans le dossier de travail                                  | Test du hook                                 |
-| La sortie ne montre que la forme du fichier | Lignes fixes ; erreurs filtrées et masquées (S8) ; sortie de la CLI jetée en cas de succès                                                                                         | CI : sortie comparée à une liste blanche     |
-| Le clair ne touche jamais le disque         | Tube `pg_dump`, `tee`, `age` ; aucune option `--file` ; le `.partiel` est déjà chiffré                                                                                             | CI : seuls `.dump.age` et `.json` sont créés |
-| Le mot de passe temporaire ne s'affiche pas | Variable du script, jamais `echo` ; masquage dans les erreurs ; le hook refuse déjà tout `db dump` direct de Claude (`.claude/hooks/garde-production.sh:45`)                       | Test de la lecture stricte                   |
-| Un export incomplet ne passe pas pour bon   | Nom final seulement après tous les contrôles ; `age` authentifie le flux, un fichier tronqué ne se déchiffre pas                                                                   | CI : fichier tronqué refusé                  |
-| Les données restaurées sont exactes         | Mode réplique, une transaction, deux passages (intégrité puis chargement)                                                                                                          | CI : lignes et md5 égaux                     |
+| Garantie                                    | Comment                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Preuve                                                         |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Claude ne peut pas déchiffrer               | La clé privée n'est jamais sur le poste ; le hook refuse `age -d`, `age --decrypt`, `age-keygen`, après normalisation (guillemets et barres obliques inverses retirés, motifs et variables en position de commande, `-decrypt`, `--decrypt=...`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Cryptographie ; test du hook                                   |
+| Une seule forme exacte                      | Hook : `^bash scripts/production\.sh export$` accepté sans demander. Refusés, après normalisation : toute autre forme qui cite le script avec une action ; `bash`, `sh`, `source`, `.` ou `env` qui vise un fichier de `scripts/` (seul `bash -n scripts/<fichier>.sh` passe) ; un interpréteur ou un fichier `.sh` suivi d'une action (copie renommée, motif, variable, lecture sur l'entrée standard) ; une copie du script (`cp`, `tee`, redirection)                                                                                                                                                                                                                                                                                                                                                                       | Test du hook (vitest, job `qualite`)                           |
+| Le script lancé est celui de `main`         | Le hook lit le SHA de `main` par `git ls-remote` sur l'adresse officielle fixe (`https://github.com/eglisejp-tech/pilotage-ejp.git`, sans configuration globale ni système), vérifie les objets de ce commit par leur empreinte, puis compare octet pour octet (le calcul de `git hash-object --no-filters`) `scripts/production.sh` et chaque fichier de `scripts/export/` du dossier de la commande à leurs blobs ; un fichier en plus (suivi, ignoré ou non) ou un lien est refusé. `assume-unchanged`, `skip-worktree`, un filtre `clean` ou un `origin/main` local déplacé ne cachent donc plus rien. Le hook réécrit ensuite la commande (`updatedInput`) : `/usr/bin/bash --noprofile --norc '<copie>/scripts/production.sh' <action>`, où `<copie>` est un dossier temporaire neuf rempli à partir des objets vérifiés | Test du hook                                                   |
+| La clé publique est celle de `main`         | `fetch` du clone depuis l'adresse officielle, refspec explicite vers `refs/remotes/origin/main`, réécritures d'adresse neutralisées (`-c`, configuration globale et système ignorées, règle du clone refusée), puis `git show <SHA>:...` ; la clé s'affiche entière                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            | Test de `export_recuperer`                                     |
+| Les binaires sont ceux installés            | `age.exe`, `pg_dump.exe` et ses DLL de `pgsql/bin` : empreintes SHA-256 épinglées dans `scripts/export/commun.sh`, DLL inconnue refusée ; jamais `EXPORT_PG_BIN` ni le PATH en production                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Test des empreintes ; contrôle sur le poste                    |
+| `pg_dump` ne reçoit rien d'hérité           | Variables exportées retirées dans un sous-shell (ni `PGSERVICE`, ni `PGHOSTADDR`, ni `PGSSLMODE`, ni `PGPASSFILE`...), puis seulement les `PG*` utiles, par l'environnement, jamais par les arguments. Mode TLS fixé par le script : `verify-full` avec le certificat de Supabase du dépôt, sinon `require` annoncé, sans repli                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Test du flux (outils simulés)                                  |
+| La sortie ne montre que la forme du fichier | Lignes fixes ; erreurs filtrées et masquées (S8) ; sortie de la CLI jetée en cas de succès                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | CI : sortie comparée à une liste blanche                       |
+| Le clair ne touche jamais le disque         | Tube `pg_dump`, `tee`, `age` ; aucune option `--file` ; le `.partiel` est déjà chiffré                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | CI : seuls `.dump.age` et `.json` sont créés                   |
+| Le mot de passe temporaire ne s'affiche pas | Variable du script, jamais `echo` ; relance sous `env -i` sans trace héritée (`set +xv`, ni `SHELLOPTS`, ni `BASH_ENV`, ni profil) ; masquage dans les erreurs ; journal de `pg_dump` dans le dossier des exports, effacé ; le hook refuse tout `db dump` direct de Claude                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Test de la lecture stricte ; test de la relance sous `bash -x` |
+| Un export incomplet ne passe pas pour bon   | Nom final seulement après tous les contrôles ; `age` authentifie le flux, un fichier tronqué ne se déchiffre pas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | CI : fichier tronqué refusé                                    |
+| Les données restaurées sont exactes         | Mode réplique, une transaction, deux passages (intégrité puis chargement)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | CI : lignes et md5 égaux                                       |
 
-**Limite honnête** : les hooks protègent contre l'erreur, pas contre un agent qui chercherait à les
-contourner. Le jeton de la CLI est sur ce poste depuis le 26 octobre ; cette conception n'ajoute
-aucun accès à la base, et la seule garantie absolue est celle du chiffrement : un export produit ne
-se lit pas sans la clé du coffre.
+**Risque résiduel de la copie** : la copie lancée vit dans un dossier temporaire du même compte
+Windows. Entre sa création par le hook et son lancement (le temps de votre confirmation pour
+`migrer` et `fonction`), un programme de ce compte pourrait la modifier ; une fois lancée, le
+script se relit encore une fois, à la relance sous `env -i`. Le hook nettoie les copies de plus de
+12 heures. La première ligne du script dit d'où il tourne (« Script : copie de main <SHA> ») : si
+elle ne cite pas la copie, Claude Code n'a pas appliqué la réécriture et le script vérifié dans le
+dossier a été lancé tel quel. La CLI Supabase du clone n'est pas épinglée : elle change à chaque
+mise à jour du `package-lock.json`, et `npm ci` en vérifie l'intégrité à l'installation.
+
+**Limite de fond** : Claude Code, le jeton de la CLI, `pg_dump` et les outils tournent sous le
+même compte Windows. Les gardes du hook et du script protègent contre une erreur, pas contre un
+agent qui chercherait à les contourner ; la garantie forte est que le fichier exporté ne se lit pas
+sans la clé privée du coffre.
 
 ---
 
@@ -375,15 +408,16 @@ exemple).
 
 ## 12. Gestes de la personne
 
-| Geste | Quoi                                                                                                                                                                                                                                            | Quand                        |
-| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
-| G0    | Retiré à la validation : la première étape de l'action `export` fait ce contrôle (changement 1 en tête).                                                                                                                                        | Sans objet                   |
-| G1    | Installer `age` 1.3.2 et le client PostgreSQL 17 (archive zip d'EDB) en binaires portables dans `C:/Users/GraceManassePASSIDEM/outils/`, empreintes vérifiées (`docs/exploitation.md`, 9.2) ; Claude peut lancer ces commandes après relecture. | Avant le premier export      |
-| G2    | Sur **sa** machine, pas dans le terminal de Claude : `age-keygen -o cle-export-ejp.txt`. Noter la ligne `Public key: age1...`.                                                                                                                  | Avant la fusion du lot 1     |
-| G3    | Coller le contenu du fichier au coffre, entrée « Clé privée des exports » ; supprimer le fichier ; vérifier que la deuxième personne du coffre y a accès.                                                                                       | Avec G2                      |
-| G4    | Donner la clé publique (`age1...`, elle n'est pas secrète) à Claude ; vérifier dans la requête de fusion ses 6 premiers et 6 derniers caractères.                                                                                               | Avec G2                      |
-| G5    | Après le premier export : restauration d'essai (section 9), résultat au registre.                                                                                                                                                               | La semaine du premier export |
-| G6    | Chaque lundi : copier l'export sur le Drive, supprimer ceux de plus de 28 jours, vider la corbeille.                                                                                                                                            | Chaque semaine               |
+| Geste | Quoi                                                                                                                                                                                                                                                                                                                                                                                                                 | Quand                            |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| G0    | Retiré à la validation : la première étape de l'action `export` fait ce contrôle (changement 1 en tête).                                                                                                                                                                                                                                                                                                             | Sans objet                       |
+| G1    | Installer `age` 1.3.2 et le client PostgreSQL 17 (archive zip d'EDB) en binaires portables dans `C:/Users/GraceManassePASSIDEM/outils/`, empreintes vérifiées (`docs/exploitation.md`, 9.2) ; Claude peut lancer ces commandes après relecture.                                                                                                                                                                      | Avant le premier export          |
+| G2    | Sur **sa** machine, pas dans le terminal de Claude : `age-keygen -o cle-export-ejp.txt`. Noter la ligne `Public key: age1...`.                                                                                                                                                                                                                                                                                       | Avant la fusion du lot 1         |
+| G3    | Coller le contenu du fichier au coffre, entrée « Clé privée des exports » ; supprimer le fichier ; vérifier que la deuxième personne du coffre y a accès.                                                                                                                                                                                                                                                            | Avec G2                          |
+| G4    | Donner la clé publique (`age1...`, elle n'est pas secrète) à Claude ; vérifier la clé entière dans la requête de fusion, puis dans la ligne « Clé » du premier export.                                                                                                                                                                                                                                               | Avec G2                          |
+| G5    | Après le premier export : restauration d'essai (section 9), résultat au registre.                                                                                                                                                                                                                                                                                                                                    | La semaine du premier export     |
+| G6    | Chaque lundi : copier l'export sur le Drive, supprimer ceux de plus de 28 jours, vider la corbeille.                                                                                                                                                                                                                                                                                                                 | Chaque semaine                   |
+| G7    | Dans le tableau de bord de Supabase (Database Settings, SSL Configuration, « Download certificate ») : télécharger le certificat d'autorité (public, publié seulement là) et le donner à Claude, qui l'ajoute sur une branche (`scripts/export/supabase-ca.crt`) ; vérifier l'empreinte SHA-256 affichée dans la requête de fusion. Dès son arrivée sur `main`, l'export passe en `verify-full` et refuse `require`. | Avant ou après le premier export |
 
 ---
 
