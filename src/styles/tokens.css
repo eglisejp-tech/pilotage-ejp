@@ -48,9 +48,11 @@
   /* Ajout de l'application (demande de la personne responsable, 27 octobre 2026), absent de la
    * référence : le ruban d'Octobre rose à côté du nom de l'outil, affiché chaque année du 1er au
    * 31 octobre (heure de Paris) et seulement alors (src/features/octobre-rose). Élément graphique
-   * qui porte un sens : 4,62:1 sur --papier (fond de l'en-tête) et 4,16:1 sur --fond, au-dessus
-   * des 3:1 demandés. Pas de thème sombre dans l'outil. À retirer avec la fonction si elle cesse. */
-  --octobre-rose: #d6336c;
+   * qui porte un sens : 3,53:1 sur --papier (fond de l'en-tête) et 3,18:1 sur --fond, au-dessus
+   * des 3:1 demandés. Un rose franc, demandé par la personne le 27 octobre 2026 (le premier,
+   * #d6336c, se lisait framboise). Pas de thème sombre dans l'outil. À retirer avec la fonction
+   * si elle cesse. */
+  --octobre-rose: #ec4899;
 
   /* Typographie */
   --f-lecture: 'Newsreader', Georgia, serif;
