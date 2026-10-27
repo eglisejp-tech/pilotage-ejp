@@ -55,6 +55,13 @@ export const TEXTES_PLAGES = {
   /** Panneau d'une date d'une série (8.2). */
   porteeEvenement: 'Cet événement seulement',
   porteeSerie: 'Toute la série',
+  /**
+   * Le dernier jour passé, le porteur ne change plus les dates (décision du 27 octobre 2026) :
+   * le libellé d'un événement sur plusieurs jours (« Date » pour un jour), puis la raison, à la
+   * place des champs. La même phrase traduit le refus de la base.
+   */
+  libelleDates: 'Dates',
+  datesFigees: 'Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.',
 } as const
 
 /** « lun. 2 nov. » : un jour abrégé dans une phrase. */
@@ -93,6 +100,36 @@ export function porteeSerieAVenir(nombre: number): string {
   return nombre === 1
     ? `${TEXTES_PLAGES.porteeSerie} (la date à venir)`
     : `${TEXTES_PLAGES.porteeSerie} (les ${nombre} dates à venir)`
+}
+
+/** « 3 dates déjà terminées ou annulées », « 1 date passée ». */
+function nombreDeDates(nombre: number, singulier: string, pluriel: string): string {
+  return nombre === 1 ? `1 date ${singulier}` : `${nombre} dates ${pluriel}`
+}
+
+/**
+ * Les dates d'une série que le retrait par le porteur laisse au calendrier (décision du
+ * 27 octobre 2026) : « 3 dates déjà terminées ou annulées restent. », « 2 dates passées
+ * restent. », ou les deux ; null quand toutes partent.
+ */
+export function datesQuiRestent(termineesOuAnnulees: number, passees: number): string | null {
+  const finales = nombreDeDates(
+    termineesOuAnnulees,
+    'déjà terminée ou annulée',
+    'déjà terminées ou annulées',
+  )
+  const passe = nombreDeDates(passees, 'passée', 'passées')
+  if (termineesOuAnnulees > 0 && passees > 0) return `${finales} et ${passe} restent.`
+  const seul = termineesOuAnnulees > 0 ? finales : passees > 0 ? passe : null
+  if (seul === null) return null
+  return `${seul} ${termineesOuAnnulees + passees === 1 ? 'reste' : 'restent'}.`
+}
+
+/** « 4 dates retirées du calendrier. 3 dates déjà terminées ou annulées restent. » */
+export function reussiteRetraitSerie(retirees: number, restent: string | null): string {
+  const phrase =
+    retirees === 1 ? '1 date retirée du calendrier.' : `${retirees} dates retirées du calendrier.`
+  return restent === null ? phrase : `${phrase} ${restent}`
 }
 
 /**

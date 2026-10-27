@@ -242,6 +242,17 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   'Une série compte au moins deux dates.': {
     texte: 'Une série compte au moins deux dates. Pour une seule date, choisissez Un jour.',
   },
+  // Le dernier jour passé, le porteur ne change plus les dates ; une série dont aucune date ne
+  // se retire plus par lui (décisions du 27 octobre 2026). La première phrase est celle qui
+  // remplace les champs de dates (TEXTES_PLAGES.datesFigees).
+  "Les dates d'un événement passé se corrigent par EJP Tech.": {
+    texte: 'Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.',
+    champ: 'date',
+  },
+  'Les dates terminées, annulées ou passées se retirent par EJP Tech.': {
+    texte:
+      'Les dates qui restent sont terminées, annulées ou passées : pour les retirer, signalez-le à EJP Tech.',
+  },
   // Corrections d'un événement (T78, Proposé) : corriger_titre_evenement,
   // modifier_mentions_evenement, retirer_evenement, le contrôle d'un état et mention_unique. Les
   // phrases de la conception (calendrier-evenements.md, section 8.2).

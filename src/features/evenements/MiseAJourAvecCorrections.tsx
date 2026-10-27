@@ -12,7 +12,12 @@ import {
   raisonRetraitImpossible,
   TEXTES_CORRECTIONS,
 } from '@/features/evenements/textesCorrections'
-import { ligneSerie, porteeSerieAVenir, TEXTES_PLAGES } from '@/features/evenements/textesPlages'
+import {
+  datesQuiRestent,
+  ligneSerie,
+  porteeSerieAVenir,
+  TEXTES_PLAGES,
+} from '@/features/evenements/textesPlages'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import type { DateIso } from '@/lib/metier/dates'
 
@@ -45,8 +50,15 @@ export interface SerieDeLEvenement {
   nombre: number
   /** Dates à venir (dernier jour compris) : celles dont les mentions changent. */
   aVenir: number
-  /** Dates à venir sans état final : celles que le porteur retire. */
+  /** Dates à venir sans état final enregistré : celles que le porteur retire. */
   retirables: number
+  /**
+   * Dates qui restent au calendrier quand le porteur retire « Toute la série » (décision du
+   * 27 octobre 2026) : celles où « Terminé » ou « Annulé » a été enregistré, et les autres dates
+   * passées (EJP Tech les retire).
+   */
+  termineesOuAnnulees: number
+  passees: number
   corrigerNom: (titre: string) => Promise<void>
   modifierMentions: (mentions: string[]) => Promise<void>
   retirer: () => Promise<void>
@@ -114,6 +126,7 @@ export function MiseAJourAvecCorrections({ corrections, ...formulaire }: Props) 
         raison={raisonRetrait}
         texte={TEXTES_CORRECTIONS.texteRetrait}
         retirer={corrections.retirer}
+        restentSerie={serie ? datesQuiRestent(serie.termineesOuAnnulees, serie.passees) : null}
         serie={
           serie && serie.retirables > 0
             ? {

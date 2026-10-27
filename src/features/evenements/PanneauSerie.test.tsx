@@ -6,6 +6,7 @@ import type { SerieDeLEvenement } from '@/features/evenements/MiseAJourAvecCorre
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import { TEXTES_CORRECTIONS } from '@/features/evenements/textesCorrections'
+import { datesQuiRestent, reussiteRetraitSerie } from '@/features/evenements/textesPlages'
 
 // Panneau d'une date d'une série et d'un événement sur plusieurs jours (T78, lot 2 ; conception
 // calendrier-evenements.md, 6.4, 7 (S8) et 8.2). Jour de Paris : lundi 26 octobre 2026.
@@ -57,6 +58,8 @@ function serie(surcharge: Partial<SerieDeLEvenement> = {}): SerieDeLEvenement {
     nombre: 7,
     aVenir: 7,
     retirables: 7,
+    termineesOuAnnulees: 0,
+    passees: 0,
     corrigerNom: vi.fn(() => Promise.resolve()),
     modifierMentions: vi.fn(() => Promise.resolve()),
     retirer: vi.fn(() => Promise.resolve()),
@@ -87,6 +90,39 @@ describe('une date d’une série (T78, lot 2)', () => {
     await userEvent.click(within(fenetre).getByRole('button', { name: TEXTES_CORRECTIONS.retirer }))
     expect(laSerie.retirer).toHaveBeenCalledTimes(1)
     expect(corrections.retirer).not.toHaveBeenCalled()
+  })
+
+  it('S8, des dates déjà terminées ou annulées : la fenêtre dit qu’elles restent, avant de confirmer (27 oct. 2026)', async () => {
+    const laSerie = serie({ retirables: 4, termineesOuAnnulees: 3 })
+    afficher(contenu({ serie: laSerie }).valeur)
+    await userEvent.click(screen.getByRole('button', { name: TEXTES_CORRECTIONS.retirer }))
+    const fenetre = screen.getByRole('alertdialog')
+    const note = '3 dates déjà terminées ou annulées restent.'
+    // « Cet événement seulement » : rien à dire sur la série.
+    expect(within(fenetre).queryByText(note)).toBeNull()
+    await userEvent.click(
+      within(fenetre).getByRole('radio', { name: 'Toute la série (les 4 dates à venir)' }),
+    )
+    expect(within(fenetre).getByText(note)).toBeInTheDocument()
+    await userEvent.click(within(fenetre).getByRole('button', { name: TEXTES_CORRECTIONS.retirer }))
+    expect(laSerie.retirer).toHaveBeenCalledTimes(1)
+  })
+
+  it('les dates qui restent : terminées ou annulées, passées, ou les deux ; aucune : rien', () => {
+    expect(datesQuiRestent(3, 0)).toBe('3 dates déjà terminées ou annulées restent.')
+    expect(datesQuiRestent(1, 0)).toBe('1 date déjà terminée ou annulée reste.')
+    expect(datesQuiRestent(0, 2)).toBe('2 dates passées restent.')
+    expect(datesQuiRestent(0, 1)).toBe('1 date passée reste.')
+    expect(datesQuiRestent(1, 1)).toBe('1 date déjà terminée ou annulée et 1 date passée restent.')
+    expect(datesQuiRestent(0, 0)).toBeNull()
+  })
+
+  it('la réussite du retrait de la série dit les dates retirées et celles qui restent', () => {
+    const phrase = '4 dates retirées du calendrier. 3 dates déjà terminées ou annulées restent.'
+    expect(reussiteRetraitSerie(4, '3 dates déjà terminées ou annulées restent.')).toBe(phrase)
+    expect(reussiteRetraitSerie(1, null)).toBe('1 date retirée du calendrier.')
+    afficher({ etat: 'retire', le: null, aLInstant: true, message: phrase, mode: 'mise_a_jour' })
+    expect(screen.getByRole('status')).toHaveTextContent(phrase)
   })
 
   it('« Corriger le nom », « Toute la série » : le nouveau nom part pour la série', async () => {

@@ -2,7 +2,9 @@
 -- « B6 ») : le trigger private.controler_evenement_etat() refuse une nouvelle date passée et une
 -- ligne identique au dernier état, avec les messages repris par le formulaire 11. Une date
 -- inchangée, même passée, reste permise. Un refus n'écrit aucune ligne de journal. Les dates se
--- calculent à l'heure de Paris (bascule de minuit).
+-- calculent à l'heure de Paris (bascule de minuit). Depuis la décision du 27 octobre 2026
+-- (20261027164105_plages_regles.sql), un événement passé ne se reporte plus par le porteur,
+-- même à aujourd'hui : ses dates se corrigent par EJP Tech.
 begin;
 
 select plan(25);
@@ -103,12 +105,13 @@ $$, 'P0001', 'Rien n''a changé : ce statut et cette date sont déjà enregistr�
 select throws_ok($$
   insert into public.evenement_etat (evenement_id, date, statut)
   select ev2, private.aujourdhui() - 9, 'termine' from ctx
-$$, 'P0001', 'La nouvelle date doit être aujourd''hui ou plus tard.',
+$$, 'P0001', 'Les dates d''un événement passé se corrigent par EJP Tech.',
   'événement passé : une autre date passée est refusée');
-select lives_ok($$
+select throws_ok($$
   insert into public.evenement_etat (evenement_id, date, statut)
   select ev2, private.aujourdhui(), 'attente_validation' from ctx
-$$, 'événement passé : un report à aujourd''hui est accepté');
+$$, 'P0001', 'Les dates d''un événement passé se corrigent par EJP Tech.',
+  'événement passé : le porteur ne le reporte plus, même à aujourd''hui (27 octobre 2026)');
 select tests.deconnecter();
 
 select results_eq($$
@@ -116,9 +119,8 @@ select results_eq($$
    where j.cible_id = (select ev2 from ctx) order by j.id
 $$, $$
   values ('evenement_ajoute', null::text),
-         ('evenement_modifie', (private.aujourdhui() - 10)::text),
          ('evenement_modifie', (private.aujourdhui() - 10)::text)
-$$, 'événement passé : deux mises à jour acceptées, deux lignes de journal');
+$$, 'événement passé : une mise à jour acceptée, une ligne de journal');
 
 -- Aucun refus ne renseigne un autre compte sur l'état : la RLS refuse d'abord (42501).
 select tests.se_connecter((select b from ctx), 'aal2');

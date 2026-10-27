@@ -14,6 +14,7 @@ import {
 } from '@/data/messagesBase'
 import { MESSAGES_POINT } from '@/data/pointsEcriture'
 import { TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { TEXTES_PLAGES } from '@/features/evenements/textesPlages'
 import { MESSAGES_MOIS, schemaPourquoi } from '@/features/indicateurs/schemas'
 import { MOTIF_TROP_LONG } from '@/features/indicateurs/validation/textes'
 import {
@@ -371,6 +372,8 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
       TEXTES_EVENEMENT.erreurHeureDebutSansTermine,
     ],
     ["L'heure prévue est invalide.", TEXTES_EVENEMENT.erreurHeure],
+    // Dates d'un événement passé (décision du 27 octobre 2026) : la raison qui remplace les champs.
+    ["Les dates d'un événement passé se corrigent par EJP Tech.", TEXTES_PLAGES.datesFigees],
     [
       "L'heure de début se saisit le jour de l'événement ou après.",
       "L'heure de début se saisit le jour de l'événement ou après.",

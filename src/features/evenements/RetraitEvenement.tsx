@@ -21,6 +21,11 @@ interface Props {
   retirer: () => Promise<void>
   /** Une date d'une série (T78, lot 2) : le choix « Toute la série » dans la fenêtre. */
   serie?: ChoixSerie<void>
+  /**
+   * Les dates que « Toute la série » laisse au calendrier (`datesQuiRestent`, décision du
+   * 27 octobre 2026), dites dans la fenêtre quand « Toute la série » est choisie ; null : aucune.
+   */
+  restentSerie?: string | null
 }
 
 /**
@@ -32,7 +37,7 @@ interface Props {
  * signalez-le à EJP Tech. »), suivie du lien « Signaler une difficulté » : le seul du panneau,
  * celui du formulaire ne s'affiche pas alors (décision du 27 octobre 2026).
  */
-export function RetraitEvenement({ raison, texte, retirer, serie }: Props) {
+export function RetraitEvenement({ raison, texte, retirer, serie, restentSerie = null }: Props) {
   const id = useId()
   const [ouverte, setOuverte] = useState(false)
   const [portee, setPortee] = useState<Portee>('evenement')
@@ -70,6 +75,12 @@ export function RetraitEvenement({ raison, texte, retirer, serie }: Props) {
               valeur={portee}
               onChange={setPortee}
             />
+          ) : null}
+          {serie && restentSerie !== null ? (
+            // Toujours dans la fenêtre, pour que la phrase qui paraît avec « Toute la série » soit lue.
+            <p aria-live="polite" className="text-detail leading-normal text-encre-2">
+              {portee === 'serie' ? restentSerie : ''}
+            </p>
           ) : null}
         </FenetreConfirmation>
       ) : null}

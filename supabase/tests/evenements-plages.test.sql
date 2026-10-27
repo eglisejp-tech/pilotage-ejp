@@ -8,12 +8,14 @@
 -- et une fin avant le début sont refusés ; le journal porte la date de fin et l'heure de fin.
 -- S7, le report par l'ancien site (sans les champs de fin) : la base garde la durée et l'heure de
 -- fin. Puis : retour à un seul jour (dernier jour égal au premier), une nouvelle date de fin passée
--- refusée, « Rien n'a changé » qui compare aussi la fin, les mentions et le retrait permis jusqu'au
+-- refusée, les dates d'un événement passé figées pour le porteur et corrigées par EJP Tech
+-- (20261027164105_plages_regles.sql), « Rien n'a changé » qui compare aussi la fin, les
+-- mentions et le retrait permis jusqu'au
 -- dernier jour compris, les anciennes signatures inchangées (même numéro, même événement) et des
 -- signatures sans valeur par défaut.
 begin;
 
-select plan(40);
+select plan(46);
 
 create temp table ctx as
 select tests.creer_ministere('Plages, Jeunesse') as j_m,
@@ -188,12 +190,33 @@ select is((select c.avec_heures from private.comptages_evenements_mois((select j
 -- Une nouvelle date de fin passée est refusée ; raccourcir jusqu'à aujourd'hui est permis.
 select tests.se_connecter((select j from ctx), 'aal2');
 select throws_ok($$
-  insert into public.evenement_etat (evenement_id, date, date_fin, statut) select fini, jour - 4, jour - 3, 'annule' from ctx
+  insert into public.evenement_etat (evenement_id, date, date_fin, statut) select encours, jour - 1, jour - 1, 'termine' from ctx
 $$, 'P0001', 'La date de fin doit être aujourd''hui ou plus tard.', 'une nouvelle date de fin passée : refusée');
 select lives_ok($$
   insert into public.evenement_etat (evenement_id, date, date_fin, statut) select encours, jour - 1, jour, 'termine' from ctx
 $$, 'raccourcir le camp en cours jusqu''à aujourd''hui : permis');
+
+-- Le dernier jour passé, le porteur ne change plus les dates (décision de la personne responsable
+-- du 27 octobre 2026) : ni prolonger, ni avancer la fin, ni reporter. Le statut, oui ; EJP Tech
+-- corrige les dates à la demande du ministère (éditeur SQL, en propriétaire des tables).
+select throws_ok($$
+  insert into public.evenement_etat (evenement_id, date, date_fin, statut) select fini, jour - 4, jour + 1, 'valide' from ctx
+$$, 'P0001', 'Les dates d''un événement passé se corrigent par EJP Tech.', 'un camp fini : le porteur ne le prolonge pas');
+select throws_ok($$
+  insert into public.evenement_etat (evenement_id, date, date_fin, statut) select fini, jour - 4, jour - 3, 'annule' from ctx
+$$, 'P0001', 'Les dates d''un événement passé se corrigent par EJP Tech.', 'un camp fini : le porteur n''avance pas sa fin');
+select throws_ok($$
+  insert into public.evenement_etat (evenement_id, date, date_fin, statut) select fini, jour + 3, jour + 5, 'valide' from ctx
+$$, 'P0001', 'Les dates d''un événement passé se corrigent par EJP Tech.', 'un camp fini : le porteur ne le reporte pas');
+select lives_ok($$
+  insert into public.evenement_etat (evenement_id, date, statut) select fini, jour - 4, 'termine' from ctx
+$$, 'un camp fini : « Terminé » sans changer les dates (ancien site, sans fin) reste permis');
 select tests.deconnecter();
+select lives_ok($$
+  insert into public.evenement_etat (evenement_id, date, date_fin, statut, saisi_le, saisi_par)
+  select fini, jour - 4, jour - 1, 'termine', clock_timestamp(), tests.compte('EJP Tech, compte 1') from ctx
+$$, 'EJP Tech corrige le dernier jour d''un camp fini');
+select is(pg_temp.vue((select fini from ctx)) ->> 'fin', '-1', 'le dernier jour corrigé par EJP Tech se lit au calendrier');
 
 -- Mentions et retrait : jusqu'au dernier jour compris (un camp commencé hier, fini dans deux jours).
 with nouveau as (

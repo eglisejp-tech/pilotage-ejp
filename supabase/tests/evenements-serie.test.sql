@@ -17,7 +17,7 @@
 -- rls-evenements-matrice.test.sql.
 begin;
 
-select plan(44);
+select plan(45);
 
 create temp table ctx as
 select tests.compte('Ministère Coordination') as coo,
@@ -235,23 +235,36 @@ select is((select count(*)::integer from public.journal j join public.evenement 
               and j.action in ('evenement_mention_ajoutee', 'evenement_mention_retiree')), 14,
   'les mentions : une ligne de journal par ministère et par date (sept retraits, sept ajouts)');
 
--- S8 : la série est au mauvais jour. Une date à venir est déjà annulée : elle reste, comme la
--- date passée ; les six autres sortent du calendrier.
+-- S8 : la série est au mauvais jour. Une date à venir est déjà annulée, une autre a été annulée
+-- puis remise en « Validé » : elles restent, comme la date passée (décision de la personne
+-- responsable du 27 octobre 2026 : seules les dates sans état final enregistré partent) ; les
+-- cinq autres sortent du calendrier.
 select tests.se_connecter((select coo from ctx), 'aal2');
 insert into public.evenement_etat (evenement_id, date, statut)
 select e.id, c.lundis[7], 'annule' from ctx c join public.evenement e on e.serie_id = c.serie
   join public.evenement_etat x on x.evenement_id = e.id and x.date = c.lundis[7];
+insert into public.evenement_etat (evenement_id, date, statut)
+select e.id, c.lundis[6], 'annule' from ctx c join public.evenement e on e.serie_id = c.serie
+  join public.evenement_etat x on x.evenement_id = e.id and x.date = c.lundis[6];
+insert into public.evenement_etat (evenement_id, date, statut)
+select distinct e.id, c.lundis[6], 'valide'::public.statut_evenement from ctx c join public.evenement e on e.serie_id = c.serie
+  join public.evenement_etat x on x.evenement_id = e.id and x.date = c.lundis[6];
 select lives_ok($$ select public.retirer_serie((select serie from ctx)) $$, 'S8 : Coordination retire toute la série');
 select tests.deconnecter();
 select is((select count(*)::integer from public.evenement_retrait r join public.evenement e on e.id = r.evenement_id
-            where e.serie_id = (select serie from ctx)), 6,
-  'S8 : les six dates à venir sans état final sont retirées');
+            where e.serie_id = (select serie from ctx)), 5,
+  'S8 : les cinq dates à venir sans état final sont retirées');
 select is((select count(*)::integer from public.journal j join public.evenement e on e.id = j.cible_id
-            where e.serie_id = (select serie from ctx) and j.action = 'evenement_retire'), 6,
-  'S8 : six lignes evenement_retire');
+            where e.serie_id = (select serie from ctx) and j.action = 'evenement_retire'), 5,
+  'S8 : cinq lignes evenement_retire');
 select is(tests.compter((select coo from ctx), 'aal2',
-            format('select 1 from public.v_evenement where serie_id = %L', (select serie from ctx))), 2,
-  'S8 : la date passée et la date annulée restent au calendrier');
+            format('select 1 from public.v_evenement where serie_id = %L', (select serie from ctx))), 3,
+  'S8 : la date passée, la date annulée et la date annulée puis remise en Validé restent au calendrier');
+select tests.se_connecter((select coo from ctx), 'aal2');
+select throws_ok($$ select public.retirer_serie((select serie from ctx)) $$,
+  'P0001', 'Les dates terminées, annulées ou passées se retirent par EJP Tech.',
+  'S8, de nouveau : plus rien à retirer pour Coordination, la phrase le dit');
+select tests.deconnecter();
 select tests.se_connecter((select tech from ctx), 'aal2');
 select lives_ok($$ select public.retirer_serie((select serie from ctx)) $$, 'EJP Tech retire le reste de la série');
 select tests.deconnecter();

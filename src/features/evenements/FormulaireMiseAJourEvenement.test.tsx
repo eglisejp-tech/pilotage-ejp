@@ -6,6 +6,7 @@ import { FormulaireMiseAJourEvenement } from '@/features/evenements/FormulaireMi
 import type { EtatEvenement } from '@/features/evenements/FormulaireMiseAJourEvenement'
 import type { MiseAJourEvenement } from '@/features/evenements/schemas'
 import { MESSAGES_BASE, TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { TEXTES_PLAGES } from '@/features/evenements/textesPlages'
 import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
 
 const EN_PREPARATION: EtatEvenement = {
@@ -110,10 +111,67 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
     expect(screen.getByText('samedi 17 octobre 2026')).toBeInTheDocument()
   })
 
-  it('date actuelle passée : le champ n’est pas invalide à l’ouverture (plancher sur la date actuelle)', () => {
-    afficher(A_CONFIRMER('2026-10-01'))
-    expect(champDate()).toHaveAttribute('min', '2026-10-01')
-    expect(champDate()).toBeValid()
+  it('premier jour passé, dernier jour à venir : le champ n’est pas invalide à l’ouverture (plancher sur la date actuelle)', () => {
+    afficher({ ...A_CONFIRMER('2026-10-01'), dateFin: '2026-10-08' })
+    const premier = screen.getByLabelText('Premier jour')
+    expect(premier).toHaveAttribute('min', '2026-10-01')
+    expect(premier).toBeValid()
+    expect(screen.getByLabelText('Dernier jour')).toHaveValue('2026-10-08')
+    expect(screen.queryByText(TEXTES_PLAGES.datesFigees)).toBeNull()
+  })
+
+  it('événement passé : sa date et la raison à la place du champ, la ligne « à confirmer » sans « changez sa date » (27 oct. 2026)', () => {
+    afficher(A_CONFIRMER('2026-10-02'))
+    expect(screen.queryByLabelText('Date')).toBeNull()
+    expect(screen.getByText('Ven. 2 oct.')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
+    const groupe = screen.getByRole('group', { name: 'Statut' })
+    expect(groupe).toHaveAccessibleDescription(
+      'Cet événement attend toujours sa validation. Choisissez son nouveau statut.',
+    )
+    expect(screen.queryByText(TEXTES_EVENEMENT.aConfirmer)).toBeNull()
+    expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toBeInTheDocument()
+  })
+
+  it('événement sur plusieurs jours passé : « Dates », du premier au dernier jour, sans champ', () => {
+    afficher({ ...EN_PREPARATION, date: '2026-10-02', dateFin: '2026-10-04' })
+    expect(screen.queryByLabelText('Premier jour')).toBeNull()
+    expect(screen.queryByLabelText('Dernier jour')).toBeNull()
+    expect(screen.getByText('Dates')).toBeInTheDocument()
+    expect(screen.getByText('Du ven. 2 oct. au dim. 4 oct.')).toBeInTheDocument()
+    expect(screen.getByText(TEXTES_PLAGES.datesFigees)).toBeInTheDocument()
+  })
+
+  it('événement passé : « Terminé » part avec les dates enregistrées', async () => {
+    const envoyer = vi.fn<(miseAJour: MiseAJourEvenement) => Promise<void>>(() => Promise.resolve())
+    afficher({ ...EN_PREPARATION, date: '2026-10-02', dateFin: '2026-10-04' }, envoyer)
+    await userEvent.click(screen.getByRole('radio', { name: 'Terminé' }))
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Événement mis à jour.')).toBeInTheDocument()
+    expect(envoyer).toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2026-10-02', date_fin: '2026-10-04', statut: 'termine' }),
+    )
+  })
+
+  it('refus de la base sur les dates d’un événement passé (minuit passé) : sa phrase sous le champ date', async () => {
+    afficher(undefined, () =>
+      Promise.reject({
+        code: 'P0001',
+        message: "Les dates d'un événement passé se corrigent par EJP Tech.",
+      }),
+    )
+    await changerDate('2026-10-17')
+    await userEvent.click(bouton())
+    expect(
+      await screen.findByText(
+        'Cet événement est passé : pour corriger ses dates, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
+    expect(champDate()).toHaveAttribute('aria-invalid', 'true')
   })
 
   it('après une réussite, le bouton reste inactif tant que le formulaire n’a pas changé', async () => {
@@ -373,11 +431,16 @@ describe("« Mettre à jour l'événement » : heures (T68)", () => {
   })
 
   it('refus de la base sur l’heure de début, champ caché : sous le bouton', async () => {
-    // Terminé avec une heure, reporté à une date à venir : la base reprend l'heure et refuse (E1).
-    afficher({ ...TERMINE_SANS_DEBUT, heureDebut: 1152 }, () =>
-      Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heureDebutAVenir }),
+    // Terminé avec une heure, un événement commencé qui n'est pas fini (un événement passé ne se
+    // reporte plus, 27 octobre 2026), reporté à une date à venir : la base reprend l'heure et
+    // refuse (E1).
+    afficher(
+      { ...TERMINE_SANS_DEBUT, date: '2026-10-05', dateFin: '2026-10-08', heureDebut: 1152 },
+      () => Promise.reject({ code: 'P0001', message: MESSAGES_BASE.heureDebutAVenir }),
     )
-    await changerDate('2026-10-17')
+    const premier = screen.getByLabelText('Premier jour')
+    await userEvent.clear(premier)
+    await userEvent.type(premier, '2026-10-17')
     expect(champHeureDebut()).toBeNull()
     await userEvent.click(bouton())
     expect(await screen.findByRole('alert')).toHaveTextContent(
