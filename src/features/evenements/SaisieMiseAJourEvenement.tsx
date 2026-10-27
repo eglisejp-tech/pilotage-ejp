@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   corrigerNomEvenement,
+  lireEtatFinalEvenement,
   lireRetraitEvenement,
   modifierMentionsEvenement,
   retirerEvenement,
@@ -62,6 +63,12 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     queryFn: () => lireMentionsEvenement(id ?? ''),
     enabled: valide && porteur,
   })
+  // Un « Terminé » ou un « Annulé » déjà enregistré : le porteur ne retire plus (27 oct. 2026).
+  const etatFinal = useQuery({
+    queryKey: ['evenements', 'etat-final', id],
+    queryFn: () => lireEtatFinalEvenement(id ?? ''),
+    enabled: valide && porteur,
+  })
   const ministeres = useQuery({
     queryKey: ['ministeres', 'liste'],
     queryFn: lireMinisteres,
@@ -90,7 +97,10 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     void semaine.refetch()
     void evenement.refetch()
     void ministeres.refetch()
-    if (porteur) void mentions.refetch()
+    if (porteur) {
+      void mentions.refetch()
+      void etatFinal.refetch()
+    }
   }
   // Le porteur attend aussi les mentions ; un ministère mentionné n'a que le message à lire.
 
@@ -112,7 +122,13 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
       etat: 'pas_porteur',
       nomPorteur: nomDuMinistere(evenement.data.ministere_id, ministeres.data) ?? PORTEUR_SANS_NOM,
     }
-  } else if (evenement.data && semaine.data && ministeres.data && mentions.data) {
+  } else if (
+    evenement.data &&
+    semaine.data &&
+    ministeres.data &&
+    mentions.data &&
+    etatFinal.isSuccess
+  ) {
     const lu = evenement.data
     const idsMentions = mentions.data.map((mention) => mention.ministere_id)
     contenu = {
@@ -135,6 +151,7 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
         porteurId: lu.ministere_id,
         mentionIds: idsMentions,
         ministeres: ministeres.data,
+        etatFinal: etatFinal.data,
         corrigerNom: (titre) => ecrire(() => corrigerNomEvenement(lu.id, titre)),
         modifierMentions: (liste) => ecrire(() => modifierMentionsEvenement(lu.id, liste)),
         retirer: async () => {
@@ -143,7 +160,10 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
         },
       },
     }
-  } else if (enEchec([semaine, evenement, ministeres, mentions]) || semaine.data === null) {
+  } else if (
+    enEchec([semaine, evenement, ministeres, mentions, etatFinal]) ||
+    semaine.data === null
+  ) {
     contenu = { etat: 'probleme', mode: 'mise_a_jour', reessayer }
   } else {
     contenu = { etat: 'chargement', mode: 'mise_a_jour' }

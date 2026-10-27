@@ -193,8 +193,35 @@ describe('/saisir/evenement/:id (mise à jour)', () => {
     expect(
       screen.getByText(/^Un événement passé se retire par EJP Tech\. S'il a été créé par erreur/),
     ).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
     expect(faux.tables).toContain('v_evenement_mention')
     expect(faux.tables).not.toContain('evenement_mention')
+  })
+
+  it('porteur (T78, 27 oct.) : un « Annulé » enregistré puis remplacé, lu dans les états, garde la raison', async () => {
+    const faux = connecte('ministere', {
+      // Le dernier état est « En préparation », à venir ; un « Annulé » a été enregistré avant.
+      v_evenement: [{ ...evenement(COMMUNICATION), date: '2026-10-10', statut: 'preparation' }],
+      v_evenement_mention: [{ evenement_id: EVENEMENT, ministere_id: COORDINATION }],
+      evenement_etat: [{ statut: 'annule' }],
+    })
+    afficher(`/saisir/evenement/${EVENEMENT}`)
+    expect(
+      await screen.findByText(
+        'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+    // Les mentions suivent la date seule : l'événement est à venir.
+    expect(screen.getByRole('button', { name: 'Modifier les mentions' })).toBeInTheDocument()
+    expect(faux.tables).toContain('evenement_etat')
+    expect(faux.filtres).toContainEqual({
+      table: 'evenement_etat',
+      operateur: 'eq',
+      colonne: 'evenement_id',
+      valeur: EVENEMENT,
+    })
   })
 
   it('ministère mentionné : « Seul Coordination peut modifier cet événement. », sans formulaire ni lecture des mentions', async () => {

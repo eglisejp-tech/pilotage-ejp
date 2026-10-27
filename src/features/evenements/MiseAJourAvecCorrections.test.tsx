@@ -36,6 +36,7 @@ function contenu(
     porteurId: COMMUNICATION,
     mentionIds: [COORDINATION],
     ministeres: MINISTERES,
+    etatFinal: null,
     corrigerNom: vi.fn(() => Promise.resolve()),
     modifierMentions: vi.fn(() => Promise.resolve()),
     retirer: vi.fn(() => Promise.resolve()),
@@ -193,9 +194,91 @@ describe('panneau du porteur, après la date (T78)', () => {
     expect(screen.getByText(TEXTES_CORRECTIONS.mentionsFigees)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
     expect(screen.getByText(/^Un événement passé se retire par EJP Tech\./)).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(2)
+    // Un seul lien « Signaler une difficulté » : celui de la raison (T78, 27 octobre 2026).
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
     // Le nom se corrige à tout moment, tant que l'événement n'est pas retiré (Q5).
     expect(screen.getByRole('button', { name: 'Corriger le nom' })).toBeInTheDocument()
+  })
+})
+
+// Décision de la personne responsable du 27 octobre 2026 : une fois « Terminé » ou « Annulé »
+// enregistré, le porteur ne retire plus l'événement (son retard sortirait de la ponctualité) ;
+// EJP Tech le retire, à la demande du ministère par un signalement.
+describe('panneau du porteur, après un état final (T78)', () => {
+  /** Le panneau d'un événement dont le dernier état est `statut`, à la date `date`. */
+  function avecStatut(date: string, statut: 'termine' | 'annule' | 'preparation') {
+    const { valeur } = contenu(date)
+    if (valeur.etat !== 'mise_a_jour') throw new Error('contenu')
+    return { ...valeur, actuel: { ...valeur.actuel, statut } }
+  }
+
+  it('« Terminé » le jour même : la raison sous le bouton, un seul lien de signalement', () => {
+    afficher(avecStatut('2026-10-26', 'termine'))
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(
+      screen.getByText('Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+    // Les mentions suivent la date seule : le jour même, elles changent encore.
+    expect(screen.getByRole('button', { name: 'Modifier les mentions' })).toBeInTheDocument()
+  })
+
+  it('« Annulé » avant la date : la raison de l’annulation', () => {
+    afficher(avecStatut('2026-10-30', 'annule'))
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(
+      screen.getByText('Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+  })
+
+  it('un « Terminé » enregistré puis remplacé compte encore (la base le lit dans l’historique)', () => {
+    const valeur = avecStatut('2026-10-30', 'preparation')
+    if (!valeur.corrections) throw new Error('contenu')
+    afficher({ ...valeur, corrections: { ...valeur.corrections, etatFinal: 'termine' } })
+    expect(screen.queryByRole('button', { name: "Retirer l'événement" })).toBeNull()
+    expect(
+      screen.getByText('Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeInTheDocument()
+  })
+
+  it('après la date et terminé : la raison de l’état final passe avant celle de la date', () => {
+    afficher(avecStatut('2026-10-25', 'termine'))
+    expect(
+      screen.getByText('Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/^Un événement passé/)).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+  })
+
+  it('avant tout état final : le bouton, sans raison, et le lien du formulaire seulement', () => {
+    afficher(avecStatut('2026-10-30', 'preparation'))
+    expect(screen.getByRole('button', { name: "Retirer l'événement" })).toBeInTheDocument()
+    expect(screen.queryByText(/pour le retirer, signalez-le/)).toBeNull()
+    expect(screen.getAllByRole('link', { name: 'Signaler une difficulté' })).toHaveLength(1)
+  })
+
+  it('le refus de la base, si l’état a changé entre-temps, se dit traduit dans la fenêtre', async () => {
+    const utilisateur = userEvent.setup()
+    const { valeur } = contenu('2026-10-26')
+    if (valeur.etat !== 'mise_a_jour' || !valeur.corrections) throw new Error('contenu')
+    afficher({
+      ...valeur,
+      corrections: {
+        ...valeur.corrections,
+        retirer: () =>
+          Promise.reject({ code: 'P0001', message: 'Un événement annulé se retire par EJP Tech.' }),
+      },
+    })
+    await utilisateur.click(screen.getByRole('button', { name: "Retirer l'événement" }))
+    await utilisateur.click(
+      within(screen.getByRole('alertdialog')).getByRole('button', { name: "Retirer l'événement" }),
+    )
+    expect(
+      await screen.findByText(
+        'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+      ),
+    ).toBeInTheDocument()
   })
 })
 

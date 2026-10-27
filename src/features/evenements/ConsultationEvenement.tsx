@@ -68,7 +68,11 @@ export function ConsultationEvenement({
           <dd className="text-detail leading-normal text-encre-3">{ligneMentions(mentions)}</dd>
         </div>
       </dl>
-      <RetraitEvenement possible texte={TEXTES_CORRECTIONS.texteRetraitEjpTech} retirer={retirer} />
+      <RetraitEvenement
+        raison={null}
+        texte={TEXTES_CORRECTIONS.texteRetraitEjpTech}
+        retirer={retirer}
+      />
     </div>
   )
 }

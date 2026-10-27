@@ -14,7 +14,7 @@ import {
   schemaMentionsEvenement,
   schemaNomEvenement,
 } from '@/features/evenements/schemasCorrections'
-import type { LigneVue } from '@/lib/base'
+import type { LigneVue, StatutEvenement } from '@/lib/base'
 import { jourDeParis } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 import { supabase } from '@/lib/supabase'
@@ -65,6 +65,35 @@ export async function retirerEvenement(evenementId: string): Promise<void> {
     supabase().rpc('retirer_evenement', { p_evenement_id: identifiant }),
   )
   if (error) throw error
+}
+
+/** Les états finals d'un événement : une fois l'un d'eux enregistré, seul EJP Tech le retire. */
+export type EtatFinal = Extract<StatutEvenement, 'termine' | 'annule'>
+
+const ETATS_FINALS = ['termine', 'annule'] as const satisfies readonly EtatFinal[]
+
+/** Vrai pour « Terminé » et « Annulé ». */
+export function estEtatFinal(statut: StatutEvenement): statut is EtatFinal {
+  return (ETATS_FINALS as readonly StatutEvenement[]).includes(statut)
+}
+
+/**
+ * Le dernier état final (« Terminé » ou « Annulé ») enregistré pour un événement que le compte
+ * lit, même remplacé depuis par un autre état, ou null (décision du 27 octobre 2026) : la base
+ * refuse alors le retrait au porteur (`retirer_evenement`), l'écran le dit sous le bouton.
+ */
+export async function lireEtatFinalEvenement(evenementId: string): Promise<EtatFinal | null> {
+  const { data, error } = await supabase()
+    .from('evenement_etat')
+    .select('statut')
+    .eq('evenement_id', evenementId)
+    .in('statut', [...ETATS_FINALS])
+    .order('saisi_le', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return data !== null && estEtatFinal(data.statut) ? data.statut : null
 }
 
 /**

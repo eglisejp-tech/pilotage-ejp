@@ -4,6 +4,7 @@
 // base passent par la table de traduction (`src/data/messagesBase.ts`). « Proposé » : texte que la
 // conception ne donnait pas.
 
+import type { EtatFinal } from '@/data/evenementsCorrections'
 import { formaterJourCourt } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 
@@ -40,6 +41,12 @@ export const TEXTES_CORRECTIONS = {
   /** À la place du bouton, après la date, pour le porteur : la raison et le lien de signalement. */
   retraitPasse:
     "Un événement passé se retire par EJP Tech. S'il a été créé par erreur, signalez-le.",
+  /**
+   * À la place du bouton, pour le porteur, une fois « Terminé » ou « Annulé » enregistré (décision
+   * du 27 octobre 2026, Proposé) : la raison et le lien de signalement. Elle passe avant la date.
+   */
+  retraitTermine: 'Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.',
+  retraitAnnule: 'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
 
   enCours: 'Enregistrement en cours',
   annuler: 'Annuler',
@@ -63,6 +70,20 @@ export function ligneAncienNom(ancien: string, corrigeLe: DateIso | null): strin
   return corrigeLe === null
     ? finDePhrase(`Ancien nom : ${ancien}`)
     : finDePhrase(`Ancien nom : ${ancien}, corrigé le ${formaterJourCourt(corrigeLe)}`)
+}
+
+/**
+ * La raison qui remplace « Retirer l'événement » pour le porteur, ou null s'il peut le retirer :
+ * un état final enregistré d'abord (« Terminé » ou « Annulé », décision du 27 octobre 2026), puis
+ * la date passée. Le même ordre que la base (`retirer_evenement`).
+ */
+export function raisonRetraitImpossible(
+  etatFinal: EtatFinal | null,
+  datePassee: boolean,
+): string | null {
+  if (etatFinal === 'termine') return TEXTES_CORRECTIONS.retraitTermine
+  if (etatFinal === 'annule') return TEXTES_CORRECTIONS.retraitAnnule
+  return datePassee ? TEXTES_CORRECTIONS.retraitPasse : null
 }
 
 /** « Cet événement a été retiré le 26 oct. » (panneau ouvert par un ancien lien). */

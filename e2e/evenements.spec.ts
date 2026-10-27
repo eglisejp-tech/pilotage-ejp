@@ -14,6 +14,8 @@ const ECRANS = [
   'a-confirmer',
   // Un événement passé, Terminé sans heure de début (T68).
   'termine',
+  // T78, 27 octobre 2026 : un événement à venir, Annulé (le porteur ne le retire plus).
+  'annule',
   // T78 : un nom corrigé, un événement retiré (ancien lien), le panneau d'EJP Tech.
   'nom-corrige',
   'retire',
@@ -295,7 +297,7 @@ test.describe('corrections d’un événement (T78), aperçu', () => {
     await expect(page.getByRole('link', { name: 'Revenir à ma fiche' })).toBeVisible()
   })
 
-  test('après la date : les mentions et le retrait disent leur raison, avec le lien', async ({
+  test('passé et terminé : les mentions et le retrait disent leur raison, un seul lien', async ({
     page,
   }) => {
     await ouvrir(page, 'termine')
@@ -304,8 +306,27 @@ test.describe('corrections d’un événement (T78), aperçu', () => {
       page.getByText("Les mentions ne changent plus : la date de l'événement est passée."),
     ).toBeVisible()
     await expect(page.getByRole('button', { name: "Retirer l'événement" })).toHaveCount(0)
-    await expect(page.getByText(/^Un événement passé se retire par EJP Tech\./)).toBeVisible()
+    // L'état final passe avant la date (décision du 27 octobre 2026).
+    await expect(
+      page.getByText('Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.'),
+    ).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Signaler une difficulté' })).toHaveCount(1)
     await expect(page.getByRole('button', { name: 'Corriger le nom' })).toBeVisible()
+  })
+
+  test('à venir et annulé : la raison à la place du bouton, un seul lien, les mentions changent encore', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'annule')
+    await expect(page.getByRole('button', { name: "Retirer l'événement" })).toHaveCount(0)
+    const raison = page.getByText(
+      'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+    )
+    await expect(raison).toBeVisible()
+    const lien = page.getByRole('link', { name: 'Signaler une difficulté' })
+    await expect(lien).toHaveCount(1)
+    await expect(raison.getByRole('link', { name: 'Signaler une difficulté' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Modifier les mentions' })).toBeVisible()
   })
 
   test('ancien lien : « Cet événement a été retiré le 5 oct. »', async ({ page }) => {
@@ -400,6 +421,8 @@ test.describe('accessibilité et largeurs', () => {
 })
 
 test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) => {
+  // Seize écrans puis les états ouverts (T78 ajoute « annule ») : près de 30 s sur un poste chargé.
+  test.setTimeout(90_000)
   const largeur = page.viewportSize()?.width ?? 0
   const capturer = (nom: string) =>
     page.screenshot({

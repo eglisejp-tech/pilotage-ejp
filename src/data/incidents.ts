@@ -82,6 +82,10 @@ export const OPERATIONS_INCIDENT = [
   'repondre_au_ministere',
   'confirmer_signalement',
   'repondre_a_ejp_tech',
+  // Corrections d'un événement (T78, lot 1 ; 20261027091106_retrait_apres_etat_final.sql).
+  'corriger_titre_evenement',
+  'modifier_mentions_evenement',
+  'retirer_evenement',
   'evenement_etat',
   'fij_departement',
   'mesure',

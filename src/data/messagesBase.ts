@@ -237,6 +237,14 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   'Un événement passé se retire par EJP Tech.': {
     texte: "Un événement passé se retire par EJP Tech. S'il a été créé par erreur, signalez-le.",
   },
+  // Après « Terminé » ou « Annulé », le porteur ne retire plus (décision du 27 octobre 2026) : la
+  // phrase que le panneau dit déjà sous le bouton (TEXTES_CORRECTIONS.retraitTermine et Annule).
+  'Un événement terminé se retire par EJP Tech.': {
+    texte: 'Cet événement est terminé : pour le retirer, signalez-le à EJP Tech.',
+  },
+  'Un événement annulé se retire par EJP Tech.': {
+    texte: 'Cet événement est annulé : pour le retirer, signalez-le à EJP Tech.',
+  },
   'Ce ministère est déjà mentionné sur cet événement.': {
     texte:
       'Les mentions de cet événement viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',

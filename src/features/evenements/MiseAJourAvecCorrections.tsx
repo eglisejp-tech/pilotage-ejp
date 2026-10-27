@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { estEtatFinal } from '@/data/evenementsCorrections'
+import type { EtatFinal } from '@/data/evenementsCorrections'
 import type { MinistereListe } from '@/data/ministeres'
 import { EnTeteCorrections } from '@/features/evenements/EnTeteCorrections'
 import { FenetreMentionsEvenement } from '@/features/evenements/FenetreMentionsEvenement'
@@ -6,7 +8,10 @@ import { FenetreNomEvenement } from '@/features/evenements/FenetreNomEvenement'
 import { FormulaireMiseAJourEvenement } from '@/features/evenements/FormulaireMiseAJourEvenement'
 import type { ProprietesMiseAJourEvenement } from '@/features/evenements/FormulaireMiseAJourEvenement'
 import { RetraitEvenement } from '@/features/evenements/RetraitEvenement'
-import { TEXTES_CORRECTIONS } from '@/features/evenements/textesCorrections'
+import {
+  raisonRetraitImpossible,
+  TEXTES_CORRECTIONS,
+} from '@/features/evenements/textesCorrections'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import type { DateIso } from '@/lib/metier/dates'
 
@@ -21,6 +26,11 @@ export interface CorrectionsEvenement {
   mentionIds: readonly string[]
   /** Tous les ministères, désactivés compris. */
   ministeres: readonly MinistereListe[]
+  /**
+   * Dernier état final (« Terminé » ou « Annulé ») enregistré, même remplacé depuis, ou null
+   * (`lireEtatFinalEvenement`) : le porteur ne retire plus l'événement (27 octobre 2026).
+   */
+  etatFinal: EtatFinal | null
   corrigerNom: (titre: string) => Promise<void>
   modifierMentions: (mentions: string[]) => Promise<void>
   retirer: () => Promise<void>
@@ -32,15 +42,23 @@ type Props = ProprietesMiseAJourEvenement & { corrections: CorrectionsEvenement 
  * Panneau du porteur (dérivé de 11, `/saisir/evenement/:id` ; conception
  * calendrier-evenements.md, 8.2) : en tête le nom avec « Corriger le nom » et les mentions avec
  * « Modifier les mentions », puis le formulaire de mise à jour, et en bas le bouton discret
- * « Retirer l'événement ». Les mentions et le retrait suivent la date de l'événement (heure de
- * Paris, `aujourdhui` de `v_semaine`) : après elle, chacun dit sa raison. Une seule action qui
- * attire l'œil : « Enregistrer la mise à jour ».
+ * « Retirer l'événement ». Les mentions suivent la date de l'événement (heure de Paris,
+ * `aujourdhui` de `v_semaine`) ; le retrait aussi, et s'arrête dès qu'un « Terminé » ou un
+ * « Annulé » est enregistré (décision du 27 octobre 2026) : chacun dit alors sa raison, et le
+ * lien « Signaler une difficulté » de la raison du retrait est le seul du panneau. Une seule
+ * action qui attire l'œil : « Enregistrer la mise à jour ».
  */
 export function MiseAJourAvecCorrections({ corrections, ...formulaire }: Props) {
   const [fenetre, setFenetre] = useState<'nom' | 'mentions' | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const jusquALaDate = formulaire.actuel.date >= formulaire.aujourdhui
+  // Le dernier état, s'il est final, est aussi le dernier état final enregistré ; sinon, la
+  // lecture des états (un « Terminé » remplacé depuis compte encore, comme dans la base).
+  const etatFinal = estEtatFinal(formulaire.actuel.statut)
+    ? formulaire.actuel.statut
+    : corrections.etatFinal
+  const raisonRetrait = raisonRetraitImpossible(etatFinal, !jusquALaDate)
   const nom = { texte: formulaire.titre, masque: formulaire.titre === TEXTE_MASQUE }
 
   const reussir = (message: string) => {
@@ -53,6 +71,7 @@ export function MiseAJourAvecCorrections({ corrections, ...formulaire }: Props) 
     <div className="flex flex-col gap-5">
       <FormulaireMiseAJourEvenement
         {...formulaire}
+        lienSignalement={raisonRetrait === null}
         enTete={
           <EnTeteCorrections
             titre={formulaire.titre}
@@ -68,7 +87,7 @@ export function MiseAJourAvecCorrections({ corrections, ...formulaire }: Props) 
         }
       />
       <RetraitEvenement
-        possible={jusquALaDate}
+        raison={raisonRetrait}
         texte={TEXTES_CORRECTIONS.texteRetrait}
         retirer={corrections.retirer}
       />

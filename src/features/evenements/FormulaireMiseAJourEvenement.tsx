@@ -43,6 +43,11 @@ export interface ProprietesMiseAJourEvenement {
    * mentions ». Sans lui, le nom et les mentions se lisent seulement.
    */
   enTete?: ReactNode
+  /**
+   * Faux quand le panneau dit déjà, sous le formulaire, pourquoi le porteur ne retire plus
+   * l'événement, avec son propre lien « Signaler une difficulté » : un seul lien (T78).
+   */
+  lienSignalement?: boolean
 }
 
 const ID_REPORT = 'evenement-date-report'
@@ -79,6 +84,7 @@ export function FormulaireMiseAJourEvenement({
   actuel: actuelLu,
   envoyer,
   enTete,
+  lienSignalement = true,
 }: ProprietesMiseAJourEvenement) {
   // Dernier envoi réussi : tant que la lecture n'a pas rattrapé, il fait foi pour la date, le
   // statut et les heures, et la ligne « à confirmer » (calculée par la base) n'est plus fiable.
@@ -242,7 +248,7 @@ export function FormulaireMiseAJourEvenement({
         dejaEnvoye={dejaEnvoye}
       />
       <ResultatEnvoi refus={refus} reussite={reussite} envoi={envoi} />
-      <LienSignalement ecran="saisie_evenement" />
+      {lienSignalement ? <LienSignalement ecran="saisie_evenement" /> : null}
     </form>
   )
 }

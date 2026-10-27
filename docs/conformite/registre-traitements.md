@@ -647,8 +647,8 @@ Faits que les sources du projet ne donnent pas, à compléter avant la remise à
 12. Confirmation par la coordination de la fiche 6 (signalement d'une difficulté), décidée le 6
     octobre 2026 et construite dans la base : lue par le ministère qui l'écrit et par EJP Tech
     seulement. Son suivi dans l'outil (T77, 26 octobre 2026 : étapes, réponses d'EJP Tech et du
-    ministère) est à valider avant sa mise en ligne, avec l'article « Signalements » de la page
-    Confidentialité.
+    ministère) : l'article « Signalements » de la page Confidentialité est validé par la
+    coordination le 27 octobre 2026 ; reste la confirmation de la fiche 6 elle-même.
 13. Confirmation par la coordination, pour la fiche 2, du mois en cours, du texte « Précision » et de
     la répartition par catégories des indicateurs sensibles, décidés le 6 octobre 2026. Listes de
     catégories par indicateur sensible (à la coordination).
@@ -691,5 +691,10 @@ Ajout du 26 octobre 2026 (sans changer la version du document, Proposé, à vali
 coordination avec la page Confidentialité) : fiche 4, incidents d'envoi (90 jours, lus par EJP Tech
 seul) et numéros anti-doublon (7 jours, lus par personne), T76. Base légale inchangée (intérêt
 légitime : sécurité et fonctionnement du service, comme les journaux techniques).
+
+Ajout du 27 octobre 2026 (sans changer la version du document) : la coordination a validé les
+textes de la page Confidentialité de T77 (article « Signalements », suivi des signalements dans
+l'outil) et de T76, lot C (incidents d'envoi, conservés 90 jours) ; « Ce qui reste à compléter »,
+point 12, mis à jour.
 
 Ce document n'est pas un avis juridique. En cas de doute, demandez conseil à la CNIL ou à un avocat.

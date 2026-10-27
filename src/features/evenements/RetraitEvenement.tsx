@@ -7,10 +7,12 @@ import { LienSignalement } from '@/features/signalement/LienSignalement'
 
 interface Props {
   /**
-   * Vrai pour le porteur jusqu'à la date de l'événement comprise, et pour EJP Tech ; faux pour le
-   * porteur après la date : la raison et « Signaler une difficulté » remplacent le bouton.
+   * Pourquoi le porteur ne retire plus l'événement (`raisonRetraitImpossible` : « Terminé » ou
+   * « Annulé » enregistré, puis la date passée) : la raison et « Signaler une difficulté »
+   * remplacent le bouton. Null quand le retrait est possible (porteur avant tout état final et
+   * jusqu'à la date comprise ; EJP Tech toujours).
    */
-  possible: boolean
+  raison: string | null
   /** La phrase de la fenêtre : celle du porteur, ou celle d'EJP Tech. */
   texte: string
   /** Écrit le retrait (`retirer_evenement`) ; le panneau dit ensuite que l'événement est retiré. */
@@ -21,16 +23,17 @@ interface Props {
  * « Retirer l'événement » (T78, conception calendrier-evenements.md, 6.3 et 8.2) : un bouton
  * discret en bas du panneau, qui ouvre « Retirer cet événement ? » (ce que fait le retrait, qu'il
  * est définitif, et Annulé pour un événement qui n'aura pas lieu), avec « Retirer l'événement » et
- * « Garder l'événement ». Un refus de la base se dit dans la fenêtre. Après la date, pour le
- * porteur, l'action reste visible avec sa raison : « Un événement passé se retire par EJP Tech.
- * S'il a été créé par erreur, signalez-le. », suivie du lien « Signaler une difficulté ».
+ * « Garder l'événement ». Un refus de la base se dit dans la fenêtre. Quand le porteur ne peut plus
+ * retirer, l'action reste visible avec sa raison (« Cet événement est terminé : pour le retirer,
+ * signalez-le à EJP Tech. »), suivie du lien « Signaler une difficulté » : le seul du panneau,
+ * celui du formulaire ne s'affiche pas alors (décision du 27 octobre 2026).
  */
-export function RetraitEvenement({ possible, texte, retirer }: Props) {
+export function RetraitEvenement({ raison, texte, retirer }: Props) {
   const [ouverte, setOuverte] = useState(false)
-  if (!possible) {
+  if (raison !== null) {
     return (
       <p className="text-detail leading-normal text-encre-2">
-        {TEXTES_CORRECTIONS.retraitPasse} <LienSignalement ecran="saisie_evenement" enLigne />
+        {raison} <LienSignalement ecran="saisie_evenement" enLigne />
       </p>
     )
   }

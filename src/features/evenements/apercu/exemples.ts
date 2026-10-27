@@ -43,6 +43,8 @@ export const ECRANS_APERCU = [
   'a-confirmer',
   // Un événement passé, Terminé sans heure de début : le champ « Heure de début » paraît (T68).
   'termine',
+  // T78, 27 octobre 2026 : un événement à venir, Annulé ; le porteur ne le retire plus.
+  'annule',
   'retire',
   'consultation',
   'pas-porteur',
@@ -63,7 +65,14 @@ export function lireEcranApercu(valeur: string | null): EcranApercu {
 }
 
 /** Dernier état des événements à mettre à jour, heures en minutes depuis minuit (T68). */
-const ACTUELS: Record<'mise-a-jour' | 'a-confirmer' | 'termine', EtatEvenement> = {
+const ACTUELS: Record<'mise-a-jour' | 'a-confirmer' | 'termine' | 'annule', EtatEvenement> = {
+  annule: {
+    date: '2026-10-10',
+    statut: 'annule',
+    heurePrevue: 1140,
+    heureDebut: null,
+    aConfirmer: false,
+  },
   'mise-a-jour': {
     date: '2026-10-10',
     statut: 'preparation',
@@ -123,6 +132,8 @@ function correctionsExemple(
     porteurId: MINISTERE_EXEMPLE,
     mentionIds: ['10000000-0000-4000-8000-000000000002'],
     ministeres: MINISTERES_LISTE_EXEMPLE,
+    // Le dernier état dit seul l'état final des exemples (« Terminé », « Annulé »).
+    etatFinal: null,
     corrigerNom: envoiSimule(echec),
     modifierMentions: envoiSimule(echec),
     retirer: async () => {
@@ -168,7 +179,8 @@ export function contenuEvenement(
     case 'mise-a-jour':
     case 'nom-corrige':
     case 'a-confirmer':
-    case 'termine': {
+    case 'termine':
+    case 'annule': {
       const actuel = ACTUELS[ecran === 'nom-corrige' ? 'mise-a-jour' : ecran]
       let enregistre: EtatEnregistre = actuel
       return {
