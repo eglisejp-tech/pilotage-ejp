@@ -87,15 +87,16 @@ describe('useMaSemaine', () => {
   })
 
   it('l’accueil en échec : erreur, et « Réessayer » relance aussi l’accueil', async () => {
-    const faux = installer({ v_semaine: [SEMAINE] }, ['evenement_mention'])
+    // Les mentions en vigueur se lisent dans v_evenement_mention (T78).
+    const faux = installer({ v_semaine: [SEMAINE] }, ['v_evenement_mention'])
     const { result } = rendre()
     await waitFor(() => expect(result.current.etat).toBe('erreur'), { timeout: 5000 })
-    const avant = lectures(faux, 'evenement_mention')
+    const avant = lectures(faux, 'v_evenement_mention')
     expect(avant).toBeGreaterThan(0)
     const erreur = result.current
     if (erreur.etat !== 'erreur') return
     act(() => erreur.reessayer())
-    await waitFor(() => expect(lectures(faux, 'evenement_mention')).toBeGreaterThan(avant))
+    await waitFor(() => expect(lectures(faux, 'v_evenement_mention')).toBeGreaterThan(avant))
   })
 
   it('T77 : le suivi des signalements se lit avec le reste, puis le bandeau d’un Répondu', async () => {

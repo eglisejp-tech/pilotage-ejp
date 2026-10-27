@@ -55,7 +55,9 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     )
     expect(screen.queryByText(/Ici, on reporte/)).not.toBeInTheDocument()
     expect(screen.getByText('Le ministère mentionné verra cet événement.')).toBeInTheDocument()
-    expect(screen.getByText('Vous ne pourrez plus changer les mentions.')).toBeInTheDocument()
+    expect(
+      screen.getByText("Vous pourrez les changer jusqu'à la date de l'événement."),
+    ).toBeInTheDocument()
     expect(screen.getByLabelText('Date')).toHaveAttribute('min', '2026-10-06')
     expect(screen.getByRole('link', { name: 'Signaler une difficulté' })).toHaveAttribute(
       'href',

@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import {
   contenuEvenement,
@@ -6,11 +6,13 @@ import {
   lireEcranApercu,
 } from '@/features/evenements/apercu/exemples'
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
+import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import { PanneauReunion } from '@/features/evenements/PanneauReunion'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const fermer = () => undefined
 const COMPTE_EXEMPLE = 'Ministère Communication'
+const COMPTE_EJP_TECH = 'EJP Tech, compte 1'
 
 /**
  * Aperçu de développement des saisies d'événement et de réunion (maquette 11 et panneaux
@@ -19,7 +21,11 @@ const COMPTE_EXEMPLE = 'Ministère Communication'
  * - `ajout` (par défaut) : « Ajouter un événement », trois aides (date, statut, mentions), lues
  *   par `e2e/aide.spec.ts` et `routes.test.tsx` ; `sans-mention` : aucun autre ministère actif ;
  * - `mise-a-jour`, `a-confirmer` : « Mettre à jour l'événement » (une ligne identique est refusée
- *   comme par la base, une nouvelle date fait paraître « Report : ... » et son aide) ;
+ *   comme par la base, une nouvelle date fait paraître « Report : ... » et son aide), avec les
+ *   corrections du porteur (T78) ; `nom-corrige` : l'ancien nom sous le nom ; `termine` : un
+ *   événement passé (mentions et retrait disent leur raison) ;
+ * - `retire` : un événement retiré, ouvert par un ancien lien ; `consultation` : le panneau
+ *   d'EJP Tech, en lecture, avec « Retirer l'événement » (T78) ;
  * - `pas-porteur`, `introuvable`, `chargement`, `probleme` : les états du panneau ;
  * - `reunion`, `reunion-modifier`, `reunion-probleme` : « Prochaine réunion ».
  * `&envoi=echec` simule une connexion perdue à l'envoi ; `&profil=berger` (ou `conseil`,
@@ -30,9 +36,23 @@ export function ApercuEvenements() {
   const [parametres] = useSearchParams()
   const ecran = lireEcranApercu(parametres.get('ecran'))
   const echec = parametres.get('envoi') === 'echec'
+  // Un retrait réussi (T78) : le panneau le dit, comme sur la vraie page.
+  const [retire, setRetire] = useState<string | null>(null)
   // Un contenu par écran : ses envois simulés gardent l'état enregistré d'un envoi à l'autre.
-  const evenement = useMemo(() => contenuEvenement(ecran, echec), [ecran, echec])
+  const evenement = useMemo(
+    () => contenuEvenement(ecran, echec, () => setRetire(ecran)),
+    [ecran, echec],
+  )
   const reunion = useMemo(() => contenuReunion(ecran, echec), [ecran, echec])
+  const contenu: ContenuPanneauEvenement =
+    retire === ecran
+      ? {
+          etat: 'retire',
+          le: null,
+          aLInstant: true,
+          mode: ecran === 'consultation' ? 'consultation' : 'mise_a_jour',
+        }
+      : evenement
 
   // Un autre profil que le ministère (`?profil=berger`...) voit « Page non disponible », comme sur
   // la vraie page : la revue visuelle couvre les cinq profils.
@@ -43,6 +63,11 @@ export function ApercuEvenements() {
   return ecran.startsWith('reunion') ? (
     <PanneauReunion key={ecran} contenu={reunion} onFermer={fermer} surtitre={COMPTE_EXEMPLE} />
   ) : (
-    <PanneauEvenement key={ecran} contenu={evenement} onFermer={fermer} surtitre={COMPTE_EXEMPLE} />
+    <PanneauEvenement
+      key={ecran}
+      contenu={contenu}
+      onFermer={fermer}
+      surtitre={ecran === 'consultation' ? COMPTE_EJP_TECH : COMPTE_EXEMPLE}
+    />
   )
 }

@@ -2,13 +2,13 @@
 // d'alerte (T31) à partir des lectures de `src/data/evenements.ts`. Fonctions pures : le nombre de
 // jours, le retard et « à l'heure » (T68) viennent de `v_evenement`, aucune date du navigateur.
 
-import type { EvenementDuCalendrier } from '@/data/evenements'
+import type { EvenementDuCalendrier, MentionEvenement } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { libelleStatut } from '@/features/evenements/textes'
 import type { TexteLibre } from '@/features/cette-semaine/types'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import { TEXTES_BANDEAU, TEXTES_CALENDRIER } from '@/features/fiche/textesCalendrier'
-import type { LigneTable, StatutEvenement, TypeCompte } from '@/lib/base'
+import type { StatutEvenement, TypeCompte } from '@/lib/base'
 import { formaterJourAbrege } from '@/lib/metier/dates'
 import {
   dansLeCalendrier,
@@ -68,11 +68,17 @@ export interface LigneCalendrier {
   mentionnePar: string | null
   /** Adresse de « Mettre à jour » : le ministère porteur seul (sa propre fiche), sinon null. */
   versMiseAJour: string | null
+  /**
+   * Adresse de « Ouvrir » pour EJP Tech (T78) : le panneau de l'événement, en lecture, avec
+   * « Retirer l'événement ». Null pour tout autre profil.
+   */
+  versConsultation: string | null
 }
 
 export interface LecturesCalendrier {
   evenements: readonly EvenementDuCalendrier[]
-  mentions: readonly LigneTable<'evenement_mention'>[]
+  /** Mentions en vigueur (`v_evenement_mention`, T78). */
+  mentions: readonly MentionEvenement[]
   ministeres: readonly MinistereListe[]
 }
 
@@ -128,6 +134,8 @@ export function construireCalendrier(
           ? null
           : TEXTES_CALENDRIER.mentionnePar(nom(evenement.ministere_id)),
         versMiseAJour: peutMettreAJour ? `/saisir/evenement/${evenement.id}` : null,
+        versConsultation:
+          contexte.profil === 'admin_plateforme' ? `/saisir/evenement/${evenement.id}` : null,
       }
     },
   )

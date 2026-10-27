@@ -105,6 +105,12 @@ export function LigneEvenement({ ligne, avecAction }: Props) {
               <span className="sr-only"> l'événement {ligne.titre.texte}</span>
             </Link>
           ) : null}
+          {ligne.versConsultation !== null ? (
+            <Link to={ligne.versConsultation} className={classeBouton}>
+              {TEXTES_CALENDRIER.ouvrir}
+              <span className="sr-only"> l'événement {ligne.titre.texte}</span>
+            </Link>
+          ) : null}
         </span>
       ) : null}
     </li>

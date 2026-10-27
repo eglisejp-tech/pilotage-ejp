@@ -247,7 +247,11 @@ navigateur.
   signalement. Raison : un événement passé est déjà dans les comptages et la ponctualité que le
   berger et le conseil ont lus ; le porteur ne doit pas pouvoir faire disparaître un retard, et
   EJP Tech vérifie que c'est bien une erreur. EJP Tech peut aussi retirer un événement à venir
-  (doublon d'un ministère qui n'y arrive pas).
+  (doublon d'un ministère qui n'y arrive pas). Complété le 27 octobre 2026 (décision T78) : une
+  fois « Terminé » ou « Annulé » enregistré, le porteur ne le retire plus, même avant la date ;
+  EJP Tech seul, sur signalement. Raison affichée : « Cet événement est terminé : pour le
+  retirer, signalez-le à EJP Tech. » (ou « annulé »), avec un seul lien « Signaler une
+  difficulté ».
 - **Comment** : une ligne dans `evenement_retrait` (une seule par événement). Rien n'est effacé :
   `evenement`, ses états, ses mentions, ses noms et ses lignes de journal restent.
 - **Effet** : l'événement sort de `v_evenement` (donc du calendrier, des alertes, de « Vos
