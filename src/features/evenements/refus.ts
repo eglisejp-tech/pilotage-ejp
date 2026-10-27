@@ -19,7 +19,9 @@ export type Refus =
    * Sous un champ heure d'un événement (T68) ; le formulaire le dit sous le bouton quand le champ
    * n'est pas affiché (heure de début d'un événement qui n'est pas Terminé ou pas encore passé).
    */
-  | { ou: 'heure_prevue' | 'heure_debut'; message: string }
+  | { ou: 'heure_prevue' | 'heure_debut' | 'heure_fin'; message: string }
+  /** Sous le dernier jour d'un événement sur plusieurs jours, ou la dernière date d'une série. */
+  | { ou: 'date_fin'; message: string }
   /** Sous le bouton d'enregistrement, tel quel, avec la référence d'un échec technique. */
   | { ou: 'bouton'; message: string; reference: string | null }
 
@@ -38,9 +40,14 @@ export function lireRefus(
     return { ou: 'date', message: TEXTES_REUNION.erreurDatePassee }
   }
   if (lu.champ === 'date') return { ou: 'date', message: lu.message }
-  if (saisie !== 'reunion' && (lu.champ === 'heure_prevue' || lu.champ === 'heure_debut')) {
+  if (
+    saisie !== 'reunion' &&
+    (lu.champ === 'heure_prevue' || lu.champ === 'heure_debut' || lu.champ === 'heure_fin')
+  ) {
     return { ou: lu.champ, message: lu.message }
   }
+  if (saisie !== 'reunion' && lu.champ === 'date_fin')
+    return { ou: 'date_fin', message: lu.message }
   return { ou: 'bouton', message: lu.message, reference: lu.reference }
 }
 

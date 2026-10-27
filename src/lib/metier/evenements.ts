@@ -25,20 +25,24 @@ export function estEtatFinal(statut: StatutEvenement): boolean {
 export interface EvenementARenseigner {
   statut: StatutEvenement
   jours: number
+  /** Jours jusqu'au dernier jour (T78, lot 2) ; absent, celui du premier jour (`jours`). */
+  jours_fin?: number
   heure_debut: number | null
 }
 
 /**
- * Ce qui reste à saisir pour un événement du ministère (T68), d'après `jours` (heure de Paris) :
- * `statut` pour un événement passé depuis 30 jours au plus sans état final ; `heure_debut` pour un
- * Terminé du jour ou des 30 derniers jours sans heure de début ; null sinon. Un événement du jour
- * qui n'est pas terminé n'est pas en retard.
+ * Ce qui reste à saisir pour un événement du ministère (T68), d'après `jours` et `jours_fin`
+ * (heure de Paris) : `statut` pour un événement fini depuis 30 jours au plus (dernier jour passé,
+ * T78 lot 2) sans état final ; `heure_debut` pour un Terminé commencé (premier jour au plus
+ * aujourd'hui), fini depuis 30 jours au plus, sans heure de début ; null sinon. Un événement du
+ * jour, ou en cours, qui n'est pas terminé n'est pas en retard.
  */
 export function resteARenseigner(evenement: EvenementARenseigner): 'statut' | 'heure_debut' | null {
   const { statut, jours } = evenement
-  if (jours > 0 || jours < -FENETRE_A_RENSEIGNER_JOURS) return null
+  const fin = evenement.jours_fin ?? jours
+  if (jours > 0 || fin < -FENETRE_A_RENSEIGNER_JOURS) return null
   if (statut === 'termine') return evenement.heure_debut === null ? 'heure_debut' : null
-  if (!estEtatFinal(statut) && jours < 0) return 'statut'
+  if (!estEtatFinal(statut) && fin < 0) return 'statut'
   return null
 }
 
@@ -111,8 +115,11 @@ export function tonDesJours(jours: number): 'attention' | 'alerte' {
  * ou s'il est à confirmer, même plus ancien (exception de l'alerte, 4.4). La lecture de la base
  * applique déjà ce filtre ; cette fonction le redit pour les lignes d'exemple et les tests.
  */
-export function dansLeCalendrier(evenement: Pick<EvenementDatable, 'jours' | 'a_confirmer'>) {
-  return evenement.a_confirmer || evenement.jours >= -FENETRE_PASSE_JOURS
+export function dansLeCalendrier(
+  evenement: Pick<EvenementDatable, 'jours' | 'a_confirmer'> & { jours_fin?: number },
+) {
+  // Sur plusieurs jours (T78, lot 2), la fenêtre part du dernier jour.
+  return evenement.a_confirmer || (evenement.jours_fin ?? evenement.jours) >= -FENETRE_PASSE_JOURS
 }
 
 /** Tri par date, puis par nom (ordre alphabétique français). Rend une copie. */

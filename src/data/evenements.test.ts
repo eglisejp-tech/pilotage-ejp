@@ -31,9 +31,9 @@ describe('lireEvenementsMinistere', () => {
       'eq("ministere_id", "m1")',
     ])
     expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
-      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure")',
+      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure, date_fin, heure_fin, jours_fin, serie_id")',
       'or("ministere_id.eq.m1")',
-      'or("jours.gte.-7,a_confirmer.is.true")',
+      'or("jours_fin.gte.-7,a_confirmer.is.true")',
       'order("date", {"ascending":true})',
       'order("titre", {"ascending":true})',
     ])
@@ -66,9 +66,9 @@ describe('lireEvenementsARenseigner (T68)', () => {
     const faux = client({})
     await lireEvenementsARenseigner('m1')
     expect(appelsDe(faux.de('v_evenement')[0])).toEqual([
-      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure")',
+      'select("id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure, date_fin, heure_fin, jours_fin, serie_id")',
       'eq("ministere_id", "m1")',
-      'gte("jours", -30)',
+      'gte("jours_fin", -30)',
       'lte("jours", 0)',
       'or("statut.in.(brouillon,attente_validation,valide,preparation),and(statut.eq.termine,heure_debut.is.null)")',
       'order("date", {"ascending":true})',

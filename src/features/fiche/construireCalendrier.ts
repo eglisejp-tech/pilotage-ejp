@@ -5,6 +5,7 @@
 import type { EvenementDuCalendrier, MentionEvenement } from '@/data/evenements'
 import type { MinistereListe } from '@/data/ministeres'
 import { libelleStatut } from '@/features/evenements/textes'
+import { texteDesDates, texteDesHeures } from '@/features/evenements/textesPlages'
 import type { TexteLibre } from '@/features/cette-semaine/types'
 import { TEXTE_MASQUE } from '@/features/fiche/textesFiche'
 import { TEXTES_BANDEAU, TEXTES_CALENDRIER } from '@/features/fiche/textesCalendrier'
@@ -17,7 +18,6 @@ import {
   tonDesJours,
   trierEvenements,
 } from '@/lib/metier/evenements'
-import { formaterHeureEnMinutes } from '@/lib/metier/unites'
 
 /** Couleur d'un statut : un carré, toujours doublé du mot (BRIEF, section 9). Null : sans couleur. */
 export type TonStatut = 'bien' | 'attention' | 'alerte'
@@ -32,11 +32,11 @@ const TON_DU_STATUT: Partial<Record<StatutEvenement, TonStatut>> = {
 export interface LigneCalendrier {
   id: string
   titre: TexteLibre
-  /** « Sam. 3 oct. ». */
+  /** « Sam. 3 oct. », ou « Du sam. 31 oct. au lun. 2 nov. » sur plusieurs jours (T78, lot 2). */
   jour: string
   /**
-   * Heure prévue (T68), « 19 h » ou « 19 h 30 », écrite après le jour : « Sam. 3 oct., 19 h ».
-   * Null sans heure prévue.
+   * Heure prévue (T68), « 19 h » ou « 19 h 30 », écrite après le jour : « Sam. 3 oct., 19 h » ;
+   * avec l'heure de fin (T78, lot 2), « 10 h à 17 h ». Null sans heure.
    */
   heure: string | null
   /** Le statut en mots : « En attente de validation ». */
@@ -110,9 +110,9 @@ export function construireCalendrier(
       return {
         id: evenement.id,
         titre: { texte: evenement.titre, masque: evenement.titre === TEXTE_MASQUE },
-        jour: formaterJourAbrege(evenement.date),
-        heure:
-          evenement.heure_prevue === null ? null : formaterHeureEnMinutes(evenement.heure_prevue),
+        // Plages (T78, lot 2) : « Du sam. 31 oct. au lun. 2 nov. », « 10 h à 17 h ».
+        jour: texteDesDates(evenement.date, evenement.date_fin),
+        heure: texteDesHeures(evenement.heure_prevue, evenement.heure_fin),
         libelleStatut: libelleStatut(evenement.statut),
         debut: evenement.statut === 'termine' ? texteDuDebut(evenement) : null,
         heureDebutAIndiquer:

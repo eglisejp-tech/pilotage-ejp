@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
-import { lireRetraitEvenement, retirerEvenement } from '@/data/evenementsCorrections'
+import {
+  lireDatesSerie,
+  lireRetraitEvenement,
+  retirerEvenement,
+  retirerSerie,
+} from '@/data/evenementsCorrections'
 import { lireEvenementAMettreAJour, lireMentionsEvenement } from '@/data/evenementsEcriture'
 import { lireMinisteres } from '@/data/ministeres'
 import { enEchec, estIdentifiant } from '@/features/evenements/lectures'
@@ -51,10 +56,26 @@ export function SaisieConsultationEvenement({ id, libelleCompte }: Props) {
     queryFn: () => lireRetraitEvenement(id ?? ''),
     enabled: valide && evenement.data === null,
   })
+  // Une date d'une série (T78, lot 2) : EJP Tech peut retirer toute la série.
+  const serieId = evenement.data?.serie_id ?? null
+  const datesSerie = useQuery({
+    queryKey: ['evenements', 'serie', serieId],
+    queryFn: () => lireDatesSerie(serieId ?? ''),
+    enabled: valide && serieId !== null,
+  })
+  const ecrireRetrait = async (ecriture: () => Promise<void>) => {
+    try {
+      await ecriture()
+    } finally {
+      apresEcriture()
+    }
+    setRetireALInstant(true)
+  }
   const reessayer = () => {
     void evenement.refetch()
     void mentions.refetch()
     void ministeres.refetch()
+    if (serieId !== null) void datesSerie.refetch()
   }
 
   let contenu: ContenuPanneauEvenement
@@ -70,7 +91,12 @@ export function SaisieConsultationEvenement({ id, libelleCompte }: Props) {
     } else {
       contenu = { etat: 'chargement', mode: 'consultation' }
     }
-  } else if (evenement.data && mentions.data && ministeres.data) {
+  } else if (
+    evenement.data &&
+    mentions.data &&
+    ministeres.data &&
+    (serieId === null || datesSerie.data)
+  ) {
     const lu = evenement.data
     contenu = {
       etat: 'consultation',
@@ -79,22 +105,25 @@ export function SaisieConsultationEvenement({ id, libelleCompte }: Props) {
       titrePrecedent: lu.titre_precedent ?? null,
       titreCorrigeLe: lu.titre_corrige_le ?? null,
       date: lu.date,
+      dateFin: lu.date_fin,
+      serie:
+        serieId === null
+          ? null
+          : {
+              nombre: datesSerie.data?.length ?? 0,
+              retirer: () => ecrireRetrait(() => retirerSerie(serieId)),
+            },
       statut: lu.statut,
       nomPorteur: nomDuMinistere(lu.ministere_id, ministeres.data) ?? PORTEUR_SANS_NOM,
       mentions: nomsDesMentions(
         mentions.data.map((mention) => mention.ministere_id),
         ministeres.data,
       ),
-      retirer: async () => {
-        try {
-          await retirerEvenement(lu.id)
-        } finally {
-          apresEcriture()
-        }
-        setRetireALInstant(true)
-      },
+      retirer: () => ecrireRetrait(() => retirerEvenement(lu.id)),
     }
-  } else if (enEchec([evenement, mentions, ministeres])) {
+  } else if (
+    enEchec([evenement, mentions, ministeres, ...(serieId === null ? [] : [datesSerie])])
+  ) {
     contenu = { etat: 'probleme', mode: 'consultation', reessayer }
   } else {
     contenu = { etat: 'chargement', mode: 'consultation' }

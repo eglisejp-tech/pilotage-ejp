@@ -86,6 +86,11 @@ export const OPERATIONS_INCIDENT = [
   'corriger_titre_evenement',
   'modifier_mentions_evenement',
   'retirer_evenement',
+  // Plages des événements (T78, lot 2 ; 20261027141108_evenements_plages.sql).
+  'ajouter_evenements_serie',
+  'corriger_titre_serie',
+  'modifier_mentions_serie',
+  'retirer_serie',
   'evenement_etat',
   'fij_departement',
   'mesure',

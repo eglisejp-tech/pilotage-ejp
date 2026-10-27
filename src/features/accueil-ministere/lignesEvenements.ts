@@ -11,7 +11,11 @@ const NBSP = String.fromCodePoint(0xa0)
 export const PREFIXE_HEURE_DEBUT = 'heure-debut:'
 
 /** Un événement du ministère lu pour « Vos saisies » : son dernier état et son heure de début. */
-export type EvenementARappeler = EvenementLu & { heure_debut: number | null }
+export type EvenementARappeler = EvenementLu & {
+  heure_debut: number | null
+  /** Jours jusqu'au dernier jour (T78, lot 2) ; absent, ceux du premier jour. */
+  jours_fin?: number
+}
 
 const MISE_A_JOUR = (id: string) => ({ libelle: 'Mettre à jour', vers: `/saisir/evenement/${id}` })
 
@@ -87,7 +91,8 @@ export function lignesEvenements(
         detail:
           reste === 'heure_debut'
             ? 'À faire : heure de début à indiquer'
-            : `À faire : statut à mettre à jour, ${texteDesJours(evenement.jours)}`,
+            : // Sur plusieurs jours (T78, lot 2), la date passée se compte depuis le dernier jour.
+              `À faire : statut à mettre à jour, ${texteDesJours(evenement.jours_fin ?? evenement.jours)}`,
         action: MISE_A_JOUR(evenement.id),
       },
     })

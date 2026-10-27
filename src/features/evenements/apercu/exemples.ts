@@ -157,6 +157,7 @@ export function contenuEvenement(
         ministereId: MINISTERE_EXEMPLE,
         ministeres: [],
         envoyer: envoiSimule(echec),
+        envoyerSerie: envoiSimule(echec),
       }
     case 'retire':
       return { etat: 'retire', le: '2026-10-05', aLInstant: false, mode: 'mise_a_jour' }
@@ -228,6 +229,8 @@ export function contenuEvenement(
           envoiSimule(echec, () =>
             evenement.date < AUJOURDHUI_EXEMPLE ? MESSAGES_BASE.datePasseeAjout : null,
           )(),
+        // Une série (T78, lot 2) : la même simulation, sans refus de date.
+        envoyerSerie: envoiSimule(echec),
       }
   }
 }

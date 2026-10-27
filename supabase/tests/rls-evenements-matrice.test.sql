@@ -12,6 +12,10 @@
 -- lecture (événements lisibles), aucune écriture directe dans ces tables, un état refusé sur un
 -- événement retiré, et les trois fonctions : corriger_titre_evenement et
 -- modifier_mentions_evenement pour le porteur seul, retirer_evenement pour le porteur et EJP Tech.
+-- Plages (T78, lot 2 ; même section) : essais 28 à 34, ajouter_evenement à huit arguments et
+-- ajouter_evenements_serie (tout ministère, pour lui-même), les colonnes de plage de v_evenement,
+-- un état avec une date de fin (porteur), et les trois gestes de série : corriger_titre_serie et
+-- modifier_mentions_serie pour le porteur seul, retirer_serie pour le porteur et EJP Tech.
 begin;
 
 -- Jeu d'essai : A porte l'événement et mentionne B ; C est un autre ministère ; D, actif, sert
@@ -23,7 +27,7 @@ select tests.creer_ministere('Matrice B6 A') as a_m,
        tests.creer_ministere('Matrice B6 D') as d_m;
 alter table ctx add column a uuid, add column b uuid, add column c uuid, add column berger uuid,
   add column conseil uuid, add column admin uuid, add column tech uuid, add column ev uuid,
-  add column ev2 uuid, add column ev3 uuid;
+  add column ev2 uuid, add column ev3 uuid, add column serie uuid;
 update ctx set a = tests.creer_compte('matrice-b6-a@exemple.test', 'ministere', a_m),
                b = tests.creer_compte('matrice-b6-b@exemple.test', 'ministere', b_m),
                c = tests.creer_compte('matrice-b6-c@exemple.test', 'ministere', c_m),
@@ -116,7 +120,28 @@ cross join lateral (values
   (26, 'modifier_mentions_evenement', 'appeler', '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
       format('select public.modifier_mentions_evenement(%L, array[%L, %L]::uuid[])', ctx.ev2, ctx.b_m, ctx.d_m)),
   (27, 'retirer_evenement', 'appeler', '{ok, 42501, 42501, 42501, 42501, 42501, ok}'::text[],
-      format('select public.retirer_evenement(%L)', ctx.ev2))
+      format('select public.retirer_evenement(%L)', ctx.ev2)),
+  -- T78, lot 2 : la série du jeu d'essai (deux dates, mentionne B).
+  (28, 'ajouter_evenement à 8 arguments', 'appeler', '{ok, ok, ok, 42501, 42501, 42501, 42501}'::text[],
+      format('select public.ajouter_evenement(%L, %L, %L, %L, array[%L]::uuid[], %s::smallint, %s::smallint, gen_random_uuid())',
+             'Matrice T78, camp', private.aujourdhui() + 5, private.aujourdhui() + 7, 'brouillon', ctx.d_m, 600, 1020)),
+  (29, 'ajouter_evenements_serie', 'appeler', '{ok, ok, ok, 42501, 42501, 42501, 42501}'::text[],
+      format('select public.ajouter_evenements_serie(%L, array[%L, %L]::date[], %L, array[%L]::uuid[], null::smallint, '
+             'null::smallint, gen_random_uuid())',
+             'Matrice T78, série d''essai', private.aujourdhui() + 5, private.aujourdhui() + 12, 'brouillon', ctx.d_m)),
+  (30, 'v_evenement (plages)', 'lire', '{1, 1, 0, 1, 1, 0, 1}'::text[],
+      format('select date_fin, heure_fin, jours_fin, serie_id from public.v_evenement where id = %L', ctx.ev)),
+  (31, 'evenement_etat (date de fin)', 'ajouter', '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
+      format('insert into public.evenement_etat (evenement_id, date, date_fin, statut) values (%L, %L, %L, %L)',
+             ctx.ev, private.aujourdhui() + 12, private.aujourdhui() + 13, 'valide')),
+  (32, 'corriger_titre_serie', 'appeler', '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
+      format('select public.corriger_titre_serie(%L, %L)', ctx.serie, 'Matrice T78, série corrigée')),
+  (33, 'modifier_mentions_serie', 'appeler', '{ok, 42501, 42501, 42501, 42501, 42501, 42501}'::text[],
+      format('select public.modifier_mentions_serie(%L, array[%L, %L]::uuid[])', ctx.serie, ctx.b_m, ctx.d_m)),
+  (34, 'retirer_serie', 'appeler', '{ok, 42501, 42501, 42501, 42501, 42501, ok}'::text[],
+      format('select public.retirer_serie(%L)', ctx.serie)),
+  (35, 'v_evenement (dates d''une série)', 'lire', '{2, 2, 0, 2, 2, 0, 2}'::text[],
+      format('select date, serie_id from public.v_evenement where serie_id = %L', ctx.serie))
 ) as o(rang, objet, action, attendus, requete)
 cross join profil p
 -- Ligne 24 en aal1 pour le porteur, écrite (un refus en aal2 n'a pas de ligne dérivée) : la
@@ -128,10 +153,10 @@ select 1000, 'ministère porteur', 'evenement_etat (événement retiré)', 'ajou
   from ctx;
 grant select on matrice, profil to authenticated, anon;
 
--- Le plan compte les 9 tests fixes (jeu d'essai, 2 contrôles finaux) et, par tests.nombre_essais,
+-- Le plan compte les 10 tests fixes (jeu d'essai, 2 contrôles finaux) et, par tests.nombre_essais,
 -- les essais de la matrice (lignes dérivées comprises). La matrice est une vue : elle lit
 -- ctx.ev, ctx.ev2 et ctx.ev3 au moment de l'essai, une fois le jeu d'essai posé.
-select plan(9 + tests.nombre_essais(
+select plan(10 + tests.nombre_essais(
   'select profil, objet, action, aal, attendu, requete from matrice order by rang',
   'select nom, compte from profil',
   true));
@@ -164,8 +189,16 @@ select lives_ok($$ select public.modifier_mentions_evenement((select ev2 from ct
 select lives_ok($$ select public.retirer_evenement((select ev3 from ctx)) $$,
   'jeu d''essai : A retire ev3');
 select tests.deconnecter();
-select ok((select count(*) from ctx where ev is not null and ev2 is not null and ev3 is not null) = 1,
-  'le jeu d''essai a ses trois événements');
+-- T78, lot 2 : A ajoute une série de deux dates qui mentionne B.
+select tests.se_connecter((select a from ctx), 'aal2');
+select lives_ok($$
+  select public.ajouter_evenements_serie('Matrice T78, série', array[private.aujourdhui() + 10, private.aujourdhui() + 17],
+    'valide', array[(select b_m from ctx)], null::smallint, null::smallint, gen_random_uuid())
+$$, 'jeu d''essai : A ajoute une série de deux dates, qui mentionne B');
+select tests.deconnecter();
+update ctx set serie = (select distinct e.serie_id from public.evenement e where e.titre = 'Matrice T78, série');
+select ok((select count(*) from ctx where ev is not null and ev2 is not null and ev3 is not null and serie is not null) = 1,
+  'le jeu d''essai a ses trois événements et sa série');
 
 
 select * from tests.verifier_matrice(

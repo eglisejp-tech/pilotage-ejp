@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
@@ -18,9 +18,10 @@ import {
 } from '@/features/evenements/schemas'
 import type { MiseAJourEvenement, ValeursMiseAJourEvenement } from '@/features/evenements/schemas'
 import { ligneMentions, ligneReport, TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { TEXTES_PLAGES } from '@/features/evenements/textesPlages'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
-import { estDateIso } from '@/lib/metier/dates'
+import { ajouterJours, estDateIso, joursEntre } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
 
 /** État actuel de l'événement, tel que la base le donne (dernière ligne d'état). */
@@ -56,9 +57,11 @@ const ID_REPORT = 'evenement-date-report'
 function valeursDe(etat: EtatEnregistre): ValeursMiseAJourEvenement {
   return {
     date: etat.date,
+    date_fin: etat.dateFin ?? '',
     statut: etat.statut,
     heure_prevue: valeurChampHeure(etat.heurePrevue),
     heure_debut: valeurChampHeure(etat.heureDebut),
+    heure_fin: valeurChampHeure(etat.heureFin ?? null),
   }
 }
 
@@ -94,21 +97,31 @@ export function FormulaireMiseAJourEvenement({
     ...(enregistre ?? actuelLu),
     aConfirmer: relu && actuelLu.aConfirmer,
   }
-  const schema = useMemo(
-    () => schemaMiseAJourEvenement({ aujourdhui, dateActuelle: actuel.date }),
-    [aujourdhui, actuel.date],
-  )
+  // Sur plusieurs jours (T78, lot 2) : « Premier jour » et « Dernier jour », la durée suit un report.
+  const dateActuelle = actuel.date
+  const finActuelle = actuel.dateFin ?? null
+  const plusieursJours = finActuelle !== null
+  // Sans useMemo : le compilateur React mémorise le schéma (ses entrées sont des valeurs simples).
+  const schema = schemaMiseAJourEvenement({ aujourdhui, dateActuelle, plusieursJours })
   const {
     register,
     control,
     handleSubmit,
     setError,
+    setValue,
     reset,
     formState: { errors, isSubmitting, isDirty },
   } = useForm<ValeursMiseAJourEvenement, unknown, MiseAJourEvenement>({
     resolver: zodResolver(schema),
     defaultValues: valeursDe(actuelLu),
   })
+  const dateFin = useWatch({ control, name: 'date_fin' }) ?? ''
+  // Un nouveau premier jour décale le dernier, tant que la personne n'a pas changé le dernier.
+  const [finTouchee, setFinTouchee] = useState(false)
+  const deplacerFin = (premier: string) => {
+    if (finActuelle === null || !estDateIso(premier) || finTouchee) return
+    setValue('date_fin', ajouterJours(premier, joursEntre(dateActuelle, finActuelle)))
+  }
   const date = useWatch({ control, name: 'date' })
   const statut = useWatch({ control, name: 'statut' })
   const avecHeureDebut = heureDebutPossible({ statut, date, aujourdhui })
@@ -155,8 +168,15 @@ export function FormulaireMiseAJourEvenement({
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
       const lu = lireRefus(erreur, 'evenement')
-      if (lu.ou === 'date' || lu.ou === 'heure_prevue') {
+      if (
+        lu.ou === 'date' ||
+        lu.ou === 'heure_prevue' ||
+        lu.ou === 'heure_fin' ||
+        (lu.ou === 'date_fin' && plusieursJours)
+      ) {
         setError(lu.ou, { message: lu.message }, { shouldFocus: true })
+      } else if (lu.ou === 'date_fin') {
+        setRefus({ ou: 'bouton', message: lu.message, reference: null })
       } else if (lu.ou === 'heure_debut') {
         // Sous le champ s'il est affiché ; sinon (date à venir, statut changé), sous le bouton.
         if (avecHeureDebut) setError(lu.ou, { message: lu.message }, { shouldFocus: true })
@@ -191,7 +211,7 @@ export function FormulaireMiseAJourEvenement({
       )}
       <ChampDate
         id="evenement-date"
-        libelle={TEXTES_EVENEMENT.libelleDate}
+        libelle={plusieursJours ? TEXTES_PLAGES.libellePremierJour : TEXTES_EVENEMENT.libelleDate}
         // La date actuelle reste choisissable même passée (T37) : le plancher ne la rend pas
         // invalide dès l'ouverture.
         min={actuel.date < aujourdhui ? actuel.date : aujourdhui}
@@ -206,14 +226,32 @@ export function FormulaireMiseAJourEvenement({
             </p>
           ) : null
         }
-        {...register('date')}
+        {...register('date', { onChange: (evenement) => deplacerFin(evenement.target.value) })}
       />
-      <ChampHeure
-        id="evenement-heure-prevue"
-        libelle={TEXTES_EVENEMENT.libelleHeurePrevue}
-        erreur={errors.heure_prevue?.message}
-        {...register('heure_prevue')}
-      />
+      {plusieursJours ? (
+        <ChampDate
+          id="evenement-date-fin"
+          libelle={TEXTES_PLAGES.libelleDernierJour}
+          min={estDateIso(date) ? date : aujourdhui}
+          dateChoisie={dateFin}
+          erreur={errors.date_fin?.message}
+          {...register('date_fin', { onChange: () => setFinTouchee(true) })}
+        />
+      ) : null}
+      <div className="grid gap-5 min-[600px]:grid-cols-2">
+        <ChampHeure
+          id="evenement-heure-prevue"
+          libelle={TEXTES_EVENEMENT.libelleHeurePrevue}
+          erreur={errors.heure_prevue?.message}
+          {...register('heure_prevue')}
+        />
+        <ChampHeure
+          id="evenement-heure-fin"
+          libelle={TEXTES_PLAGES.libelleHeureFin}
+          erreur={errors.heure_fin?.message}
+          {...register('heure_fin')}
+        />
+      </div>
       <Controller
         control={control}
         name="statut"

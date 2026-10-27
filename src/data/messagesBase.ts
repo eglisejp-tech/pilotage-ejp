@@ -65,6 +65,8 @@ export type ChampRefus =
   | 'prenom'
   | 'heure_prevue'
   | 'heure_debut'
+  | 'heure_fin'
+  | 'date_fin'
 
 /**
  * Une entrée de la table. `texte` absent : la phrase de la base est déjà écrite pour la personne
@@ -227,6 +229,19 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
     champ: 'heure_debut',
   },
   "L'heure prévue est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_prevue' },
+  // Plages (T78, lot 2) : les phrases de la conception (calendrier-evenements.md, section 8.1),
+  // sous le champ qu'elles visent ; « au moins deux dates » est un texte nouveau (Proposé).
+  "L'heure de fin est invalide.": { texte: 'Choisissez une heure valide.', champ: 'heure_fin' },
+  'Le dernier jour doit suivre le premier.': { champ: 'date_fin' },
+  'Un événement dure 31 jours au plus. Pour des dates séparées, choisissez Se répète.': {
+    champ: 'date_fin',
+  },
+  "La date de fin doit être aujourd'hui ou plus tard.": { champ: 'date_fin' },
+  'Une série compte 31 dates au plus. Raccourcissez la période.': { champ: 'date_fin' },
+  'Une série tient sur 12 mois au plus.': { champ: 'date_fin' },
+  'Une série compte au moins deux dates.': {
+    texte: 'Une série compte au moins deux dates. Pour une seule date, choisissez Un jour.',
+  },
   // Corrections d'un événement (T78, Proposé) : corriger_titre_evenement,
   // modifier_mentions_evenement, retirer_evenement, le contrôle d'un état et mention_unique. Les
   // phrases de la conception (calendrier-evenements.md, section 8.2).
@@ -697,6 +712,8 @@ const CHAMPS: ReadonlySet<string> = new Set<ChampRefus>([
   'prenom',
   'heure_prevue',
   'heure_debut',
+  'heure_fin',
+  'date_fin',
 ])
 
 /** Nom d'un champ de schéma Zod vers le champ de la table (« pourquoi », « motif » : un texte). */

@@ -67,6 +67,57 @@ export async function retirerEvenement(evenementId: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * « Toute la série » (T78, lot 2, Q8) : le nom de toutes les dates non retirées de la série. Même
+ * contrôle que pour un événement ; la base n'écrit rien pour une date qui a déjà ce nom.
+ */
+export async function corrigerNomSerie(serieId: string, titre: string): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const nom = schemaNomEvenement.parse({ titre }).titre
+  const { error } = await envoyer('rpc/corriger_titre_serie', () =>
+    supabase().rpc('corriger_titre_serie', { p_serie_id: identifiant, p_titre: nom }),
+  )
+  if (error) throw error
+}
+
+/** « Toute la série » : les mentions des dates à venir de la série (dernier jour compris). */
+export async function modifierMentionsSerie(
+  serieId: string,
+  mentions: readonly string[],
+): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const liste = schemaMentionsEvenement.parse({ mentions: [...mentions] }).mentions
+  const { error } = await envoyer('rpc/modifier_mentions_serie', () =>
+    supabase().rpc('modifier_mentions_serie', { p_serie_id: identifiant, p_mentions: liste }),
+  )
+  if (error) throw error
+}
+
+/**
+ * « Toute la série » : le porteur retire les dates à venir sans « Terminé » ni « Annulé » (les
+ * autres restent au calendrier) ; EJP Tech retire toutes les dates.
+ */
+export async function retirerSerie(serieId: string): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const { error } = await envoyer('rpc/retirer_serie', () =>
+    supabase().rpc('retirer_serie', { p_serie_id: identifiant }),
+  )
+  if (error) throw error
+}
+
+/** Une date d'une série, telle que le panneau la compte (T78, lot 2). */
+export type DateDeSerie = Pick<LigneVue<'v_evenement'>, 'id' | 'statut' | 'jours_fin'>
+
+/** Les dates non retirées d'une série que le compte lit (`v_evenement`). */
+export async function lireDatesSerie(serieId: string): Promise<DateDeSerie[]> {
+  const { data, error } = await supabase()
+    .from('v_evenement')
+    .select('id, statut, jours_fin')
+    .eq('serie_id', serieId)
+  if (error) throw error
+  return data
+}
+
 /** Les états finals d'un événement : une fois l'un d'eux enregistré, seul EJP Tech le retire. */
 export type EtatFinal = Extract<StatutEvenement, 'termine' | 'annule'>
 

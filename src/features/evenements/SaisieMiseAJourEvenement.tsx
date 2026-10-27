@@ -2,10 +2,15 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   corrigerNomEvenement,
+  corrigerNomSerie,
+  estEtatFinal,
+  lireDatesSerie,
   lireEtatFinalEvenement,
   lireRetraitEvenement,
   modifierMentionsEvenement,
+  modifierMentionsSerie,
   retirerEvenement,
+  retirerSerie,
 } from '@/data/evenementsCorrections'
 import {
   lireEvenementAMettreAJour,
@@ -74,6 +79,13 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     queryFn: lireMinisteres,
     enabled: valide,
   })
+  // Une date d'une série (T78, lot 2) : les dates de la série, pour « Toute la série ».
+  const serieId = evenement.data?.serie_id ?? null
+  const datesSerie = useQuery({
+    queryKey: ['evenements', 'serie', serieId],
+    queryFn: () => lireDatesSerie(serieId ?? ''),
+    enabled: valide && porteur && serieId !== null,
+  })
   // Un événement absent de v_evenement a peut-être été retiré (T78) : un ancien lien le dit.
   const retrait = useQuery({
     queryKey: ['evenements', 'retrait', id],
@@ -100,6 +112,7 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     if (porteur) {
       void mentions.refetch()
       void etatFinal.refetch()
+      if (serieId !== null) void datesSerie.refetch()
     }
   }
   // Le porteur attend aussi les mentions ; un ministère mentionné n'a que le message à lire.
@@ -127,10 +140,12 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     semaine.data &&
     ministeres.data &&
     mentions.data &&
-    etatFinal.isSuccess
+    etatFinal.isSuccess &&
+    (serieId === null || datesSerie.data)
   ) {
     const lu = evenement.data
     const idsMentions = mentions.data.map((mention) => mention.ministere_id)
+    const dates = datesSerie.data ?? []
     contenu = {
       etat: 'mise_a_jour',
       evenementId: lu.id,
@@ -142,6 +157,8 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
         statut: lu.statut,
         heurePrevue: lu.heure_prevue,
         heureDebut: lu.heure_debut,
+        dateFin: lu.date_fin,
+        heureFin: lu.heure_fin,
         aConfirmer: lu.a_confirmer,
       },
       envoyer,
@@ -158,10 +175,33 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
           await ecrire(() => retirerEvenement(lu.id))
           setRetireALInstant(true)
         },
+        serie:
+          serieId === null
+            ? null
+            : {
+                nombre: dates.length,
+                aVenir: dates.filter((date) => date.jours_fin >= 0).length,
+                retirables: dates.filter(
+                  (date) => date.jours_fin >= 0 && !estEtatFinal(date.statut),
+                ).length,
+                corrigerNom: (titre) => ecrire(() => corrigerNomSerie(serieId, titre)),
+                modifierMentions: (liste) => ecrire(() => modifierMentionsSerie(serieId, liste)),
+                retirer: async () => {
+                  await ecrire(() => retirerSerie(serieId))
+                  setRetireALInstant(true)
+                },
+              },
       },
     }
   } else if (
-    enEchec([semaine, evenement, ministeres, mentions, etatFinal]) ||
+    enEchec([
+      semaine,
+      evenement,
+      ministeres,
+      mentions,
+      etatFinal,
+      ...(serieId === null ? [] : [datesSerie]),
+    ]) ||
     semaine.data === null
   ) {
     contenu = { etat: 'probleme', mode: 'mise_a_jour', reessayer }

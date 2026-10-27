@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
 import { MESSAGE_ENVOI_AUTRES_VALEURS, MESSAGES_COMMUNS } from '@/data/messagesBase'
 import { FormulaireAjoutEvenement } from '@/features/evenements/FormulaireAjoutEvenement'
-import type { AjoutEvenement } from '@/features/evenements/schemas'
+import type { AjoutEvenement, AjoutSerie } from '@/features/evenements/schemas'
 import { MESSAGES_BASE, TEXTES_EVENEMENT } from '@/features/evenements/textes'
 import { RAPPEL_DONNEES_PERSONNELLES } from '@/features/saisie/textes'
 
@@ -16,6 +16,7 @@ const MINISTERES = [
 function afficher(
   envoyer: (evenement: AjoutEvenement, numero: string) => Promise<void> = () => Promise.resolve(),
   ministeres = MINISTERES,
+  envoyerSerie: (serie: AjoutSerie, numero: string) => Promise<void> = () => Promise.resolve(),
 ) {
   render(
     <MemoryRouter>
@@ -24,6 +25,7 @@ function afficher(
         ministereId="10000000-0000-4000-8000-000000000001"
         ministeres={ministeres}
         envoyer={envoyer}
+        envoyerSerie={envoyerSerie}
       />
     </MemoryRouter>,
   )
@@ -113,6 +115,9 @@ describe('« Ajouter un événement » (maquette 11)', () => {
         statut: 'attente_validation',
         mentions: ['10000000-0000-4000-8000-000000000002'],
         heure_prevue: null,
+        // « Un jour » (T78, lot 2) : ni dernier jour ni heure de fin.
+        date_fin: null,
+        heure_fin: null,
       },
       expect.stringMatching(UUID),
     )
@@ -218,6 +223,7 @@ describe('« Ajouter un événement » (maquette 11)', () => {
             ministereId={COORDINATION}
             ministeres={HUIT}
             envoyer={envoyer}
+            envoyerSerie={() => Promise.resolve()}
           />
         </MemoryRouter>,
       )
@@ -390,7 +396,10 @@ describe('« Ajouter un événement » (maquette 11)', () => {
     await userEvent.type(screen.getByLabelText("Nom de l'événement"), 'Soirée')
     await userEvent.click(bouton())
     const erreur = await screen.findByText('Choisissez un statut.')
-    for (const radio of screen.getAllByRole('radio')) {
+    // Les boutons du statut seulement (« Quand ? » a les siens, T78 lot 2).
+    for (const radio of within(screen.getByRole('group', { name: 'Statut' })).getAllByRole(
+      'radio',
+    )) {
       expect(radio).toHaveAttribute('aria-invalid', 'true')
       expect(radio).toHaveAccessibleDescription(
         expect.stringContaining(erreur.textContent ?? 'absent'),

@@ -53,6 +53,9 @@ export const MINISTERES_EXEMPLE: MinistereListe[] = [
 interface HeuresExemple {
   prevue?: number
   debut?: number
+  /** Heure de fin et dernier jour d'un événement sur plusieurs jours (T78, lot 2). */
+  fin?: number
+  dernierJour?: string
 }
 
 /** Tolérance de la base (`private.tolerance_ponctualite()`, K22b) : 5 minutes. */
@@ -85,6 +88,10 @@ function evenement(
     heure_debut: debut,
     retard,
     a_l_heure: retard === null ? null : retard <= TOLERANCE_EXEMPLE,
+    date_fin: heures.dernierJour ?? null,
+    heure_fin: heures.fin ?? null,
+    jours_fin: joursEntre(AUJOURDHUI_EXEMPLE, heures.dernierJour ?? date),
+    serie_id: null,
   }
 }
 
@@ -106,6 +113,12 @@ const CALENDRIER_SANS_ALERTE: EvenementDuCalendrier[] = [
     prevue: 1170,
   }),
   evenement(3, SOCIAL, 'Collecte de vêtements, tri', '2026-10-24', 'preparation'),
+  // Plusieurs jours (T78, lot 2) : « Du sam. 31 oct. au lun. 2 nov., 10 h à 17 h ».
+  evenement(19, SOCIAL, 'Camp de Toussaint', '2026-10-31', 'valide', null, {
+    prevue: 600,
+    fin: 1020,
+    dernierJour: '2026-11-02',
+  }),
   evenement(4, SOCIAL, 'Maraude de Noël', '2026-11-07', 'brouillon', '2026-11-01'),
   evenement(5, SOCIAL, "Collecte d'hiver", '2026-11-14', 'annule'),
 ]

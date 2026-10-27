@@ -5,6 +5,8 @@ import { lireEchecCorrection } from '@/data/evenementsCorrections'
 import type { EchecLu } from '@/data/echecEnvoi'
 import type { MinistereListe } from '@/data/ministeres'
 import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
+import { ChoixPortee } from '@/features/evenements/ChoixPortee'
+import type { ChoixSerie, Portee } from '@/features/evenements/ChoixPortee'
 import { TEXTES_CORRECTIONS } from '@/features/evenements/textesCorrections'
 import { ChoixMentionsPoint } from '@/features/nouveau-point/ChoixMentionsPoint'
 import { memesMentions, ministeresDeLaFenetre } from '@/features/points-actions/choixMentions'
@@ -27,6 +29,8 @@ interface Props {
   onReussite: () => void
   /** « Annuler », « Retour », Échap et le fond ferment sans rien écrire. */
   onFermer: () => void
+  /** Une date d'une série (T78, lot 2) : le choix « Toute la série » (dates à venir). */
+  serie?: ChoixSerie<string[]>
 }
 
 /**
@@ -45,8 +49,11 @@ export function FenetreMentionsEvenement({
   envoyer,
   onReussite,
   onFermer,
+  serie,
 }: Props) {
   const id = useId()
+  const [portee, setPortee] = useState<Portee>('evenement')
+  const surLaSerie = serie !== undefined && portee === 'serie'
   const [coches, setCoches] = useState<string[]>([...mentions])
   const [refus, setRefus] = useState<EchecLu | null>(null)
   const [enCours, setEnCours] = useState(false)
@@ -55,7 +62,8 @@ export function FenetreMentionsEvenement({
   const soumettre = async (evenement: FormEvent<HTMLFormElement>) => {
     evenement.preventDefault()
     if (enCours) return
-    if (memesMentions(coches, mentions)) {
+    // Sur toute la série, les autres dates peuvent avoir d'autres mentions : la liste part.
+    if (!surLaSerie && memesMentions(coches, mentions)) {
       setRefus(null)
       setInchange((essais) => essais + 1)
       return
@@ -64,7 +72,7 @@ export function FenetreMentionsEvenement({
     setRefus(null)
     setEnCours(true)
     try {
-      await envoyer(coches)
+      await (surLaSerie ? serie.envoyer(coches) : envoyer(coches))
       onReussite()
     } catch (erreur) {
       setRefus(lireEchecCorrection(erreur))
@@ -76,6 +84,19 @@ export function FenetreMentionsEvenement({
   return (
     <FenetreAction titre={TEXTES_CORRECTIONS.modifierMentions} point={nom} onFermer={onFermer}>
       <form noValidate className="flex flex-col gap-5" onSubmit={(e) => void soumettre(e)}>
+        {serie ? (
+          <ChoixPortee
+            id={`${id}-portee`}
+            nombre={serie.nombre}
+            libelleSerie={serie.libelle}
+            valeur={portee}
+            onChange={(choix) => {
+              setPortee(choix)
+              setInchange(0)
+              setRefus(null)
+            }}
+          />
+        ) : null}
         <ChoixMentionsPoint
           id={`${id}-mentions`}
           ministeres={ministeresDeLaFenetre(ministeres, porteurId, mentions)}

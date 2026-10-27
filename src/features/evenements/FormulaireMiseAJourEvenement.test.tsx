@@ -152,6 +152,8 @@ describe("« Mettre à jour l'événement » (dérivé de 11)", () => {
       statut: 'termine',
       heure_prevue: null,
       heure_debut: null,
+      date_fin: null,
+      heure_fin: null,
     })
     // L'état enregistré change : la ligne « à confirmer » disparaît.
     expect(screen.queryByText(TEXTES_EVENEMENT.aConfirmer)).toBeNull()
@@ -309,6 +311,8 @@ describe("« Mettre à jour l'événement » : heures (T68)", () => {
       statut: 'termine',
       heure_prevue: 1140,
       heure_debut: 1152,
+      date_fin: null,
+      heure_fin: null,
     })
     // L'état enregistré fait foi : un second appui ne renvoie rien.
     expect(champHeureDebut()).toHaveValue('19:12')
@@ -325,6 +329,8 @@ describe("« Mettre à jour l'événement » : heures (T68)", () => {
       statut: 'preparation',
       heure_prevue: 1170,
       heure_debut: null,
+      date_fin: null,
+      heure_fin: null,
     })
   })
 

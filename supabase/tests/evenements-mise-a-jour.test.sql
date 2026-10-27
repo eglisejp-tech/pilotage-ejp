@@ -145,12 +145,13 @@ select ok((select p.prosrc from pg_proc p where p.oid = 'private.controler_evene
                 !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
   'le trigger compare la nouvelle date à private.aujourdhui(), jamais à current_date ni à now()');
 -- Depuis T68, la version à quatre arguments délègue à celle à cinq (heure prévue) ; depuis T76,
--- celle à cinq délègue à celle à six (numéro anti-doublon), qui porte le contrôle de la date.
+-- celle à cinq délègue à celle à six (numéro anti-doublon) ; depuis T78 (lot 2), celle à six
+-- délègue à celle à huit (date de fin, heure de fin), qui porte le contrôle de la date.
 select ok((select p.prosrc from pg_proc p
-            where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[], smallint, uuid)'::regprocedure)
+            where p.oid = 'private.ajouter_evenement(text, date, date, public.statut_evenement, uuid[], smallint, smallint, uuid)'::regprocedure)
             like '%p_date < private.aujourdhui()%'
           and (select p.prosrc from pg_proc p
-                where p.oid = 'private.ajouter_evenement(text, date, public.statut_evenement, uuid[], smallint, uuid)'::regprocedure)
+                where p.oid = 'private.ajouter_evenement(text, date, date, public.statut_evenement, uuid[], smallint, smallint, uuid)'::regprocedure)
                 !~* '(current_date|now\(\)|localtimestamp|current_timestamp)',
   'à l''ajout, la date est comparée à private.aujourdhui(), jamais à current_date ni à now()');
 select ok(pg_get_viewdef('public.v_evenement'::regclass) like '%private.aujourdhui()%'

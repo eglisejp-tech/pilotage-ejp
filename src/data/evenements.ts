@@ -30,11 +30,22 @@ export type EvenementLu = Pick<
  * et « à l'heure » calculés par la base (jamais recalculés à l'écran).
  */
 export type EvenementDuCalendrier = EvenementLu &
-  Pick<LigneVue<'v_evenement'>, 'heure_prevue' | 'heure_debut' | 'retard' | 'a_l_heure'>
+  Pick<
+    LigneVue<'v_evenement'>,
+    | 'heure_prevue'
+    | 'heure_debut'
+    | 'retard'
+    | 'a_l_heure'
+    | 'date_fin'
+    | 'heure_fin'
+    | 'jours_fin'
+    | 'serie_id'
+  >
 
 const COLONNES_EVENEMENT = 'id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du'
+// Plages (T78, lot 2) : le dernier jour, l'heure de fin, `jours_fin` et la série, en fin de liste.
 const COLONNES_CALENDRIER =
-  'id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure'
+  'id, ministere_id, titre, date, statut, jours, a_confirmer, reporte_du, heure_prevue, heure_debut, retard, a_l_heure, date_fin, heure_fin, jours_fin, serie_id'
 
 /** Statuts qui ne sont pas un état final (K10 : Terminé et Annulé le sont). */
 const STATUTS_SANS_ETAT_FINAL = 'brouillon,attente_validation,valide,preparation'
@@ -63,7 +74,8 @@ export async function lireEvenementsMinistere(
     .from('v_evenement')
     .select(COLONNES_CALENDRIER)
     .or(duMinistere)
-    .or(`jours.gte.${-FENETRE_PASSE_JOURS},a_confirmer.is.true`)
+    // Visible jusqu'au dernier jour plus 7 (T78, lot 2 : `jours_fin`, le premier jour pour un jour).
+    .or(`jours_fin.gte.${-FENETRE_PASSE_JOURS},a_confirmer.is.true`)
     .order('date', { ascending: true })
     .order('titre', { ascending: true })
   if (error) throw error
@@ -83,7 +95,8 @@ export async function lireEvenementsARenseigner(
     .from('v_evenement')
     .select(COLONNES_CALENDRIER)
     .eq('ministere_id', ministereId)
-    .gte('jours', -FENETRE_A_RENSEIGNER_JOURS)
+    // Commencé (premier jour au plus aujourd'hui), fini depuis 30 jours au plus (T78, lot 2).
+    .gte('jours_fin', -FENETRE_A_RENSEIGNER_JOURS)
     .lte('jours', 0)
     .or(`statut.in.(${STATUTS_SANS_ETAT_FINAL}),and(statut.eq.termine,heure_debut.is.null)`)
     .order('date', { ascending: true })
