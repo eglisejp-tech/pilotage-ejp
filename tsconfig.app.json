@@ -30,5 +30,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  // Tests qui lancent bash, git et node (scripts et hooks) : typés par tsconfig.node.json.
+  "exclude": ["src/**/*.node.test.ts"]
 }

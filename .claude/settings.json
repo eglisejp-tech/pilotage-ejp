@@ -41,7 +41,8 @@
       "Bash(bash scripts/production.sh revenir)",
       "Bash(bash scripts/production.sh preparer *)",
       "Bash(bash scripts/production.sh migrer)",
-      "Bash(bash scripts/production.sh fonction *)"
+      "Bash(bash scripts/production.sh fonction *)",
+      "Bash(bash scripts/production.sh export)"
     ],
     "deny": [
       "Read(.env)",
