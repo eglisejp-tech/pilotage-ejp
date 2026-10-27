@@ -56,6 +56,8 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
   const [enCours, setEnCours] = useState(false)
   /** Phrase sous la ligne : connexion perdue ou expirée, refus inattendu (la ligne reste). */
   const [erreurLigne, setErreurLigne] = useState<string | null>(null)
+  /** Référence d'un échec technique (T76), sous la phrase. */
+  const [reference, setReference] = useState<string | null>(null)
 
   const valider = async () => {
     if (enCours || actions === null) return
@@ -70,8 +72,10 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
         formulaire: false,
         connexion: TEXTES_A_VALIDER.erreur,
       })
-      if (lu.ou === 'formulaire') setErreurLigne(lu.message)
-      else surRefus(lu.message)
+      if (lu.ou === 'formulaire') {
+        setErreurLigne(lu.message)
+        setReference(lu.reference)
+      } else surRefus(lu.message)
       setEnCours(false)
     }
   }
@@ -172,7 +176,9 @@ export function LigneAValider({ ligne, actions, surFait, surRefus }: Props) {
           </div>
         ) : null}
       </div>
-      {erreurLigne !== null ? <ErreurFormulaire message={erreurLigne} /> : null}
+      {erreurLigne !== null ? (
+        <ErreurFormulaire message={erreurLigne} reference={reference} ecranEjpTech />
+      ) : null}
       {fenetre && actions !== null ? (
         <FenetreRefus
           ministere={ligne.ministere}

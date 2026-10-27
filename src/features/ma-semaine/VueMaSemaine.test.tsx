@@ -127,6 +127,85 @@ describe('VueMaSemaine', () => {
   })
 })
 
+describe('suivi des signalements sur « Ma semaine » (T77, conception 3.1 b)', () => {
+  const ID = '43000000-0000-4000-8000-000000000006'
+  const avant = (a: Node, b: Node) =>
+    Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+  it('critère 4 : un Répondu, le bandeau sous l’ouverture et avant les blocs, vers son ancre', () => {
+    afficher({
+      ...exempleMaSemaine(),
+      signalements: {
+        genre: 'bandeau',
+        nombre: 1,
+        plusAncien: { id: ID, saisi_le: '2026-10-26T10:15:00+01:00' },
+      },
+    })
+    const phrase = screen.getByText(
+      "EJP Tech a répondu à votre signalement du 26 oct. Dites-nous si c'est réglé.",
+    )
+    expect(screen.getByRole('link', { name: 'Voir la réponse' })).toHaveAttribute(
+      'href',
+      `/signalements#${ID}`,
+    )
+    // Sous l'ouverture (le titre de 07), et non en tête ; avant « Vos saisies ».
+    expect(avant(screen.getByRole('heading', { level: 1 }), phrase)).toBe(true)
+    expect(avant(phrase, screen.getByRole('heading', { level: 2, name: 'Vos saisies' }))).toBe(true)
+    // Pas d'alerte : ce bandeau n'est pas une erreur. Pas de ligne discrète en plus.
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByText(/suivis? par EJP Tech/)).toBeNull()
+  })
+
+  it('plusieurs Répondu : « EJP Tech a répondu à 2 de vos signalements. », lien vers le plus ancien', () => {
+    afficher({
+      ...exempleMaSemaine(),
+      signalements: {
+        genre: 'bandeau',
+        nombre: 2,
+        plusAncien: { id: ID, saisi_le: '2026-10-20T10:15:00+02:00' },
+      },
+    })
+    expect(
+      screen.getByText("EJP Tech a répondu à 2 de vos signalements. Dites-nous si c'est réglé."),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voir la réponse' })).toHaveAttribute(
+      'href',
+      `/signalements#${ID}`,
+    )
+  })
+
+  it('critère 1 : un Reçu ou En cours, la ligne discrète sous « Mes points », pas de bandeau', () => {
+    afficher({ ...exempleMaSemaine(), signalements: { genre: 'ligne', nombre: 1 } })
+    const ligne = screen.getByText('1 signalement suivi par EJP Tech.')
+    expect(screen.getByRole('link', { name: 'Voir le suivi' })).toHaveAttribute(
+      'href',
+      '/signalements',
+    )
+    expect(avant(screen.getByRole('heading', { level: 2, name: 'Mes points' }), ligne)).toBe(true)
+    expect(avant(ligne, screen.getByRole('heading', { level: 2, name: "Dans l'église" }))).toBe(
+      true,
+    )
+    expect(screen.queryByText(/Dites-nous si c'est réglé/)).toBeNull()
+  })
+
+  it('deux suivis : « 2 signalements suivis par EJP Tech. »', () => {
+    afficher({ ...exempleMaSemaine(), signalements: { genre: 'ligne', nombre: 2 } })
+    expect(screen.getByText('2 signalements suivis par EJP Tech.')).toBeInTheDocument()
+  })
+
+  it('aucun ouvert (ou lecture du suivi en échec) : ni bandeau ni ligne, les quatre blocs', () => {
+    afficher({ ...exempleMaSemaine(), signalements: null })
+    expect(screen.queryByRole('link', { name: 'Voir la réponse' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Voir le suivi' })).toBeNull()
+    expect(titres()).toEqual([
+      'Vos saisies',
+      'Vos chiffres de la semaine',
+      'Mes points',
+      "Dans l'église",
+    ])
+  })
+})
+
 describe('ChargementMaSemaine', () => {
   it('les titres tout de suite, « Chargement » après 300 ms, avec aria-busy', () => {
     vi.useFakeTimers()

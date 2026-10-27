@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { TEXTE_MASQUE } from '@/features/cette-semaine/textesVides'
 import { BandeauIndicateurs } from '@/features/moderation/BandeauIndicateurs'
 import { construireTextesARelire } from '@/features/moderation/construire'
 import { EcranModeration } from '@/features/moderation/EcranModeration'
+import { ApercuIncidents } from '@/features/moderation/apercu/ApercuIncidents'
 import { FileARelire } from '@/features/moderation/FileARelire'
 import type { ContenuFile } from '@/features/moderation/FileARelire'
 import {
@@ -14,39 +14,24 @@ import {
   MINISTERES_EXEMPLE,
   relu,
 } from '@/features/moderation/apercu/exemples'
-import type { Masquage } from '@/features/moderation/schemas'
 import { ContenuBlocSignalements } from '@/features/signalement/ContenuBlocSignalements'
-import {
-  attendre,
-  ECHEC_CONNEXION,
-  signalementsDuBloc,
-} from '@/features/signalement/apercu/exemples'
-import type { LigneSignalement } from '@/data/signalements'
+import { attendre, ECHEC_CONNEXION } from '@/features/signalement/apercu/exemples'
+import { useBlocSimule } from '@/features/signalement/apercu/useBlocSimule'
 import { PageNonDisponible } from '@/pages/PageNonDisponible'
 
 const reessayer = () => undefined
-
-/** Masquage simulé d'un signalement : son texte ou son commentaire devient le texte masqué. */
-function masquerSignalement(ligne: LigneSignalement, masquage: Masquage): LigneSignalement {
-  if (masquage.cible === 'signalement_suivi' && ligne.suivi_id === masquage.cibleId) {
-    return { ...ligne, commentaire: TEXTE_MASQUE }
-  }
-  if (masquage.cible === 'signalement' && ligne.id === masquage.cibleId) {
-    return { ...ligne, texte: TEXTE_MASQUE }
-  }
-  return ligne
-}
 
 /**
  * Aperçu de développement de l'écran Modération (lot L6), sans base : le vrai écran, avec des
  * données d'exemple et des décisions simulées. Adresse : /apercu/moderation.
  * - `?profil=admin_plateforme` (ou sans profil) : l'écran d'EJP Tech, avec « N indicateurs
- *   attendent votre validation », le bloc « Signalements » et la file « Champs libres à relire » ;
- *   `vue=ecran` (défaut), `sans-indicateur`, `file-vide`, `file-chargement`, `file-probleme`,
- *   `lien-long` (un lien de 90 caractères collé dans un texte et un libellé) ;
+ *   attendent votre validation », le bloc « Signalements » (T77, gestes du suivi simulés) et la
+ *   file « Champs libres à relire » ; `vue=ecran` (défaut), `sans-indicateur`, `file-vide`,
+ *   `file-chargement`, `file-probleme`, `lien-long` (un lien de 90 caractères collé dans un texte
+ *   et un libellé) ;
  * - `?profil=ministere`, `berger`, `conseil` ou `admin_eglise` : « Page non disponible ».
- * `&envoi=echec` simule une connexion perdue à chaque décision. Enregistrée seulement en
- * développement.
+ * `&envoi=echec` simule une connexion perdue à chaque décision et à chaque geste. Enregistrée
+ * seulement en développement.
  */
 export function ApercuModeration() {
   const [parametres] = useSearchParams()
@@ -64,7 +49,7 @@ function EcranApercu({
   echec: boolean
 }) {
   const [lignes, setLignes] = useState(() => lignesDeLaFile(vue))
-  const [signalements, setSignalements] = useState(() => signalementsDuBloc('bloc'))
+  const bloc = useBlocSimule('bloc', echec ? 'echec' : null)
 
   let file: ContenuFile
   if (vue === 'file-chargement') file = { etat: 'chargement' }
@@ -102,20 +87,20 @@ function EcranApercu({
         <ContenuBlocSignalements
           contenu={{
             etat: 'liste',
-            signalements,
-            cloturer: async () => {
-              await attendre()
-            },
+            ...bloc.etat,
+            gestes: bloc.gestes,
             relire: () => undefined,
-            masquer: async (masquage) => {
-              await attendre()
-              if (echec) throw ECHEC_CONNEXION
-              setSignalements((avant) => avant.map((ligne) => masquerSignalement(ligne, masquage)))
-            },
+            masquer: bloc.masquer,
           }}
         />
       }
-      file={<FileARelire contenu={file} />}
+      file={
+        <>
+          {/* Incidents d'envoi (T76, lot C), repliés sous les signalements. */}
+          <ApercuIncidents />
+          <FileARelire contenu={file} />
+        </>
+      }
     />
   )
 }

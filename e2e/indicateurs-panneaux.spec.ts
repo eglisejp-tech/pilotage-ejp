@@ -341,7 +341,10 @@ test.describe('retirer un indicateur', () => {
     const fenetre = page.getByRole('alertdialog')
     await fenetre.getByRole('radio', { name: "N'est plus suivi" }).check()
     await fenetre.getByRole('button', { name: "Retirer l'indicateur" }).click()
-    await expect(fenetre.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
+    // Écran d'EJP Tech : la référence de l'échec suit, « Référence : » (T76).
+    await expect(fenetre.getByRole('alert')).toHaveText(
+      /^La connexion a échoué\. Réessayez\. Référence : [2-9A-HJKMNP-Z]{6}/,
+    )
   })
 })
 

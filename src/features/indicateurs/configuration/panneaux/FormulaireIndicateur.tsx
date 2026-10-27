@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { referenceEchec } from '@/data/echecEnvoi'
 import {
   LONGUEUR_DEFINITION_MAX,
   LONGUEUR_LIBELLE_MAX,
@@ -158,6 +159,7 @@ function CorpsIndicateur({
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
   const [essais, setEssais] = useState(0)
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
   const sensibleVerrouille = remplace?.sensible === true
 
@@ -252,6 +254,7 @@ function CorpsIndicateur({
       const surChamp = erreurDeChamp(erreur)
       if (surChamp === null) {
         setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire, true))
+        setReference(referenceEchec(erreur))
       } else if (surChamp.libelle !== undefined && surChamp.libelle === messageSensible?.message) {
         blocSensible.current?.querySelector<HTMLElement>('input:not(:disabled)')?.focus()
       } else {
@@ -379,7 +382,7 @@ function CorpsIndicateur({
               : TEXTES_PANNEAUX.remplacementEnCours
           }
         />
-        {refus !== null ? <ErreurEnvoi message={refus} /> : null}
+        {refus !== null ? <ErreurEnvoi message={refus} reference={reference} /> : null}
         <button
           type="button"
           onClick={annuler}

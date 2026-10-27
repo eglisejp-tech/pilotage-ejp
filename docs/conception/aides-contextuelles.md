@@ -553,7 +553,9 @@ plus de phrase sous le titre ; « Signalement envoyé. La réponse s'affichera s
 Choisissez aujourd'hui ou une date à venir. », comme à l'ajout ; côté EJP Tech, « Réponse au
 ministère (facultatif) », « Un signalement clos ne se rouvre pas. » et « Clore le signalement » ; la
 consigne « transmis à l'administration » est dans `docs/exploitation.md` (section 11). Le tableau
-ci-dessous garde les textes du 7 octobre.
+ci-dessous garde les textes du 7 octobre. Le suivi des signalements (T77, 26 octobre 2026) en
+remplace une partie (confirmation, « Vos derniers signalements », état d'une ligne, clôture) : ses
+textes sont plus bas, dans « Suivi des signalements (T77) ».
 
 | Élément                                                                         | Texte                                                                                                                            |
 | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -604,6 +606,76 @@ Note : les deux messages de date refusée remplacent « Choisissez une date à v
 `LISEZMOI.md` pour l'ajout et le texte proposé « La nouvelle date doit être aujourd'hui ou plus
 tard. » du plan (lot E5) pour la mise à jour : même sens, avec la sortie en plus.
 
+### Suivi des signalements (T77)
+
+Textes du suivi, lots 1 et 2 de `docs/conception/signalements-suivi.md` (26 octobre 2026), tels
+qu'ils sont écrits dans `src/features/signalement/textes.ts` (et, pour les refus, le journal et la
+modération, dans `src/data/messagesBase.ts`, `src/features/journal/libellesActions.ts` et
+`src/features/moderation/textes.ts`). Statut : **Proposé**, en attendant la réponse de la
+coordination. Aucun texte ne parle d'un courriel : la réponse se lit dans l'outil. Les dates
+viennent de la base (jour de Paris) ; celles du tableau sont des exemples. Chaque champ de
+réponse porte le rappel commun dessous : « N'écrivez aucun nom ni information personnelle. ».
+
+| Élément                                                      | Texte                                                                                                                                                                                |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Formulaire : confirmation après l'envoi                      | Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».                                                                                                          |
+| Formulaire : lien sous le formulaire                         | Voir mes signalements                                                                                                                                                                |
+| Étiquettes de statut (du texte, jamais une couleur seule)    | Reçu ; En cours ; Répondu ; Clos                                                                                                                                                     |
+| Ministère : titre de la page `/signalements`                 | Mes signalements                                                                                                                                                                     |
+| Ministère : chargement                                       | Chargement de vos signalements                                                                                                                                                       |
+| Ministère : aucun signalement                                | Aucun signalement. En cas de difficulté sur un formulaire de saisie, utilisez le lien « Signaler une difficulté » en bas du formulaire.                                              |
+| Ministère : seulement des clos                               | Aucun signalement ouvert.                                                                                                                                                            |
+| Ministère : groupes                                          | À vérifier ; En cours ; Clos ces 30 derniers jours                                                                                                                                   |
+| Ministère : nom du suivi daté                                | Suivi                                                                                                                                                                                |
+| Ministère : état, Reçu                                       | EJP Tech a reçu votre signalement le 26 oct.                                                                                                                                         |
+| Ministère : état, En cours                                   | EJP Tech s'en occupe depuis le 27 oct.                                                                                                                                               |
+| Ministère : état, En cours après sa réponse                  | Vous avez répondu le 28 oct. EJP Tech reprend votre signalement.                                                                                                                     |
+| Ministère : état, Répondu                                    | EJP Tech vous a répondu le 27 oct.                                                                                                                                                   |
+| Ministère : état, Clos par sa confirmation                   | Vous avez confirmé que c'est réglé le 28 oct.                                                                                                                                        |
+| Ministère : état, Clos sans retour                           | Clos le 4 nov., sans retour de votre part. Si la difficulté revient, faites un nouveau signalement.                                                                                  |
+| Ministère : état, Clos par EJP Tech                          | Clos par EJP Tech le 27 oct.                                                                                                                                                         |
+| Ministère : devant la réponse de clôture                     | Réponse :                                                                                                                                                                            |
+| Ministère : question, à l'étape Répondu                      | Est-ce réglé ?                                                                                                                                                                       |
+| Ministère : date limite                                      | Vous pouvez répondre jusqu'au 3 nov.                                                                                                                                                 |
+| Ministère : boutons                                          | Oui, c'est réglé ; Répondre à EJP Tech                                                                                                                                               |
+| Ministère : panneau de réponse, libellé et aide              | Votre réponse à EJP Tech ; Répondez à sa question, ou dites ce qui ne va toujours pas.                                                                                               |
+| Ministère : réussites                                        | Merci. Le signalement est clos. ; Réponse envoyée. EJP Tech reprend votre signalement.                                                                                               |
+| Ministère : étapes du suivi daté                             | Signalement envoyé ; Pris en charge par EJP Tech ; Réponse d'EJP Tech : ; Votre réponse : ; Vous avez confirmé que c'est réglé ; Clos, sans retour de votre part ; Clos par EJP Tech |
+| « Ma semaine » : bandeau, une réponse                        | EJP Tech a répondu à votre signalement du 26 oct. Dites-nous si c'est réglé.                                                                                                         |
+| « Ma semaine » : bandeau, plusieurs réponses                 | EJP Tech a répondu à 2 de vos signalements. Dites-nous si c'est réglé.                                                                                                               |
+| « Ma semaine » : lien du bandeau                             | Voir la réponse                                                                                                                                                                      |
+| « Ma semaine » : ligne discrète, sous « Mes points »         | 1 signalement suivi par EJP Tech. (2 signalements suivis par EJP Tech.)                                                                                                              |
+| « Ma semaine » : lien de la ligne                            | Voir le suivi                                                                                                                                                                        |
+| Bloc EJP Tech : à droite du titre                            | 2 signalements à traiter (Aucun signalement à traiter)                                                                                                                               |
+| Bloc EJP Tech : chargement                                   | Chargement des signalements                                                                                                                                                          |
+| Bloc EJP Tech : groupes                                      | À traiter ; En attente du ministère ; Clos ces 30 derniers jours                                                                                                                     |
+| Bloc EJP Tech : état, Reçu (âge lu dans la base)             | Reçu aujourd'hui. ; Reçu hier. ; Reçu le 26 oct., il y a 9 jours.                                                                                                                    |
+| Bloc EJP Tech : état, En cours                               | Pris en charge aujourd'hui. (hier ; le 27 oct., il y a 8 jours)                                                                                                                      |
+| Bloc EJP Tech : état, En cours après la réponse du ministère | Le ministère a répondu aujourd'hui. (hier ; le 28 oct., il y a 7 jours)                                                                                                              |
+| Bloc EJP Tech : ministère sans compte actif                  | Ce ministère n'a plus de compte actif.                                                                                                                                               |
+| Bloc EJP Tech : état, Répondu                                | Réponse envoyée le 27 oct. Le ministère peut répondre jusqu'au 3 nov.                                                                                                                |
+| Bloc EJP Tech : état, Clos                                   | Confirmé par le ministère le 28 oct. ; Clos le 4 nov., sans retour du ministère. ; Clos par EJP Tech le 27 oct.                                                                      |
+| Bloc EJP Tech : étapes propres du suivi daté                 | Réponse du ministère : ; Confirmé par le ministère ; Clos, sans retour du ministère                                                                                                  |
+| Bloc EJP Tech : boutons                                      | Prendre en charge (Enregistrement en cours) ; Répondre au ministère ; Clore le signalement (discret, ordinaire et seul sans compte actif)                                            |
+| Bloc EJP Tech : panneau de réponse                           | Votre réponse à Coordination ; Posez une question, ou dites ce que vous avez fait. ; Coordination lit votre réponse dans Pilotage EJP.                                               |
+| Bloc EJP Tech : panneau de clôture                           | Réponse au ministère ; Le ministère lit cette réponse dans « Mes signalements ». Un signalement clos ne se rouvre pas.                                                               |
+| Bloc EJP Tech : bouton du panneau de clôture                 | Clore le signalement (Enregistrement en cours)                                                                                                                                       |
+| Bloc EJP Tech : sous chaque texte cité                       | Masquer                                                                                                                                                                              |
+| Bloc EJP Tech : réussites                                    | Signalement pris en charge. ; Réponse envoyée. ; Signalement clos.                                                                                                                   |
+| Réponse : boutons du panneau                                 | Envoyer la réponse (Envoi en cours) ; Annuler                                                                                                                                        |
+| Réponse : erreurs sous le champ                              | Écrivez au moins 10 caractères. ; Raccourcissez la réponse : 280 caractères au plus.                                                                                                 |
+| Geste en un clic sans réponse de la base                     | L'envoi n'a pas abouti. Réessayez.                                                                                                                                                   |
+| Refus : déjà pris en charge                                  | Ce signalement a déjà été pris en charge. La liste est à jour.                                                                                                                       |
+| Refus : EJP Tech a déjà répondu                              | EJP Tech a déjà répondu à ce signalement. La liste est à jour.                                                                                                                       |
+| Refus : le signalement a changé (ministère)                  | Ce signalement a changé entre-temps. La liste est à jour.                                                                                                                            |
+| Refus : ministère sans compte actif                          | Ce ministère n'a plus de compte actif : utilisez « Clore le signalement ».                                                                                                           |
+| Journal                                                      | A pris en charge un signalement ; A répondu à un signalement ; A confirmé qu'un signalement est réglé ; A répondu à EJP Tech sur un signalement                                      |
+| Modération : nom du champ d'une réponse                      | Réponse à un signalement                                                                                                                                                             |
+
+Dans le tableau, « ; » sépare des textes distincts et les parenthèses donnent une variante (pendant
+l'envoi, au pluriel ou au singulier). « Coordination » est un exemple : le panneau d'EJP Tech nomme
+le ministère du signalement.
+
 ### Ce que cela demande (T39, question 14)
 
 Le signalement contient un **champ libre** : il suit donc toutes les règles des champs libres
@@ -617,6 +689,12 @@ par le ministère pour les siens, par EJP Tech pour tous, rien pour l'administra
 le berger et le conseil (l'administration ne voit ni les pages des ministères ni les points, et un
 signalement parle du contenu d'une page). EJP Tech transmet à l'administration ce qui la concerne
 et écrit « transmis à l'administration » en clôturant. Ce changement de modèle est approuvé.
+
+T77 (26 octobre 2026) révise ce modèle : `signalement_suivi` porte une ligne par étape (prise en
+charge, réponse d'EJP Tech, réponse du ministère, confirmation, clôture), toujours en ajout
+seulement ; chaque réponse est un champ libre de 10 à 280 caractères, avec le rappel dessous et
+les mêmes refus ; quatre codes de journal s'ajoutent, sans texte. Le détail est dans
+`docs/decisions.md` (T77) et `docs/conception/signalements-suivi.md`.
 
 ## 8. Ce qui n'est pas une aide
 

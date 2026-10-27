@@ -41,6 +41,11 @@ export const LIBELLES_ACTIONS = {
   indicateur_retire: 'A retiré un indicateur',
   difficulte_signalee: 'A signalé une difficulté',
   signalement_clos: 'A clos un signalement',
+  // T77 (Proposé) : le suivi des signalements.
+  signalement_pris_en_charge: 'A pris en charge un signalement',
+  signalement_repondu: 'A répondu à un signalement',
+  signalement_regle: "A confirmé qu'un signalement est réglé",
+  signalement_reponse_ministere: 'A répondu à EJP Tech sur un signalement',
   texte_relu: 'A relu un texte',
   texte_masque: 'A masqué un texte',
 } as const
@@ -63,7 +68,14 @@ export function libelleAction(code: string): string {
 }
 
 /** Les signalements ne se lisent que par le ministère concerné et par EJP Tech (T39). */
-const ACTIONS_DES_SIGNALEMENTS: readonly CodeAction[] = ['difficulte_signalee', 'signalement_clos']
+const ACTIONS_DES_SIGNALEMENTS: readonly CodeAction[] = [
+  'difficulte_signalee',
+  'signalement_clos',
+  'signalement_pris_en_charge',
+  'signalement_repondu',
+  'signalement_regle',
+  'signalement_reponse_ministere',
+]
 
 /** Ce qu'un ministère ne fait pas : il ne déclare aucune session (sa liste n'en porte aucune). */
 const ACTIONS_DES_SESSIONS: readonly CodeAction[] = [

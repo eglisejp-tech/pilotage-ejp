@@ -1,5 +1,6 @@
 import { useId, useState } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { ChampLibre } from '@/features/cette-semaine/ChampLibre'
 import { RANGEE_FILE } from '@/features/moderation/colonnesFile'
 import type { TexteARelire } from '@/features/moderation/construire'
@@ -40,6 +41,7 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
   const [fenetre, setFenetre] = useState(false)
   const [enCours, setEnCours] = useState(false)
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
 
   const marquerRelu = async () => {
     if (enCours) return
@@ -50,6 +52,7 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
       surFait(TEXTES_MODERATION.reussiteRelu)
     } catch (erreur) {
       setRefus(lireRefusModeration(erreur))
+      setReference(referenceEchec(erreur))
       setEnCours(false)
     }
   }
@@ -120,7 +123,7 @@ export function LigneARelire({ texte, relire, masquer, surFait }: Props) {
       </div>
       {refus !== null ? (
         <div className="ordinateur:col-span-full">
-          <ErreurFormulaire message={refus} />
+          <ErreurFormulaire message={refus} reference={reference} ecranEjpTech />
         </div>
       ) : null}
       {fenetre ? (

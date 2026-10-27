@@ -15,6 +15,7 @@ import type { NouveauPoint, ValeursFormulairePoint } from '@/features/nouveau-po
 import { TEXTES_POINT } from '@/features/nouveau-point/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
+import { useNumeroEnvoi } from '@/features/saisie/useNumeroEnvoi'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import type { DateIso } from '@/lib/metier/dates'
@@ -27,8 +28,11 @@ export interface ProprietesFormulaireNouveauPoint {
   ministereId: string
   /** Ministères actifs qu'il peut mentionner (tous les autres), dans l'ordre alphabétique. */
   ministeres: readonly MinistreAMentionner[]
-  /** Envoie le point ; une erreur levée est un refus de la base ou un échec de connexion. */
-  envoyer: (point: NouveauPoint) => Promise<void>
+  /**
+   * Envoie le point avec son numéro anti-doublon (T76) ; une erreur levée est un refus de la base
+   * ou un échec d'envoi.
+   */
+  envoyer: (point: NouveauPoint, numero: string) => Promise<void>
 }
 
 const VIDE: ValeursFormulairePoint = {
@@ -79,16 +83,19 @@ export function FormulaireNouveauPoint({
   )
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+  const numero = useNumeroEnvoi()
 
   const soumettre = handleSubmit(async (point) => {
     setRefus(null)
     setReussite(null)
     try {
-      await envoyer(point)
+      await envoyer(point, numero.tirer())
+      numero.oublier()
       reset(VIDE)
       setReussite(MESSAGES_POINT.reussite.creation)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
+      numero.apresEchec(erreur)
       const lu = lireRefusPoint(erreur)
       if (lu.ou === 'champ') setError(lu.champ, { message: lu.message }, { shouldFocus: true })
       else setRefus(lu)

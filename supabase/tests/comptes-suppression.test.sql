@@ -21,7 +21,7 @@
 -- échouent d'abord, puis le fichier s'arrête à la première lecture des raisons.
 begin;
 
-select plan(70);
+select plan(74);
 
 -- pgTAP au nom de service_role et d'authenticated (droits annulés avec la transaction).
 do $$
@@ -330,6 +330,30 @@ reset role;
 select ok(not exists (select 1 from public.ministere m where m.id = (select m_gestes from ctx))
           and not exists (select 1 from auth.sessions s where s.user_id = (select u_gestes from ctx)),
   'gestes : le ministère n''existe plus, la session ouverte par le clic sur l''invitation est supprimée');
+
+-- 8. T76 (lot B) : une ligne de private.envoi (numéro anti-doublon) n'existe qu'à côté d'une
+-- création du compte, qui bloque déjà la suppression ; sa clé étrangère vers compte ne change
+-- rien au contrat (même refus, rien d'effacé).
+alter table ctx add column m_envoi uuid, add column u_envoi uuid, add column refus_envoi text;
+update ctx set m_envoi = tests.creer_ministere('Essai T76 envoi numéroté');
+update ctx set u_envoi = tests.creer_compte('essai-t76-envoi@exemple.test', 'ministere', m_envoi);
+select tests.se_connecter((select u_envoi from ctx), 'aal2');
+select lives_ok($$
+  select public.ajouter_evenement('Essai T76, envoi numéroté', private.aujourdhui(), 'valide', '{}'::uuid[],
+    null::smallint, gen_random_uuid())
+$$, 'T76 : le ministère ajoute un événement avec un numéro');
+select tests.deconnecter();
+update ctx set refus_envoi = private.refus_suppression_ministere(m_envoi);
+select ok((select refus_envoi is not null from ctx)
+          and exists (select 1 from private.envoi e where e.compte = (select u_envoi from ctx)),
+  'T76 : un ministère avec une ligne de numéro d''envoi n''est pas supprimable (déjà vrai par son événement)');
+set local role service_role;
+select throws_ok($$ select public.serveur_supprimer_ministere((select tech from ctx), (select sa from ctx), (select m_envoi from ctx)) $$,
+  'P0001', (select refus_envoi from ctx), 'T76 : la suppression est refusée, avec le code de la base');
+reset role;
+select ok(exists (select 1 from public.ministere m where m.id = (select m_envoi from ctx))
+          and exists (select 1 from private.envoi e where e.compte = (select u_envoi from ctx)),
+  'T76 : le ministère et sa ligne de numéro restent');
 
 select * from finish();
 rollback;

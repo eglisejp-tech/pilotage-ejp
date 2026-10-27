@@ -186,8 +186,9 @@ test.describe('Sessions (administration), aperçu', () => {
     await ouvrir(page, 'envoi=echec')
     const formulaire = await ouvrirDeclaration(page)
     await formulaire.getByRole('button', { name: 'Ajouter la session' }).click()
+    // Écran d'EJP Tech : la référence de l'échec suit, « Référence : » (T76).
     await expect(formulaire.getByRole('alert')).toHaveText(
-      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+      /^La connexion a échoué\. Vérifiez la liste avant de réessayer\. Référence : [2-9A-HJKMNP-Z]{6}/,
     )
     await expect(formulaire.getByText('8 sur 8')).toBeVisible()
   })

@@ -4,11 +4,14 @@
 -- (000-outils.test.sql).
 --
 -- Objets : signalement et signalement_suivi (lecture, ajout direct, modification, suppression),
--- signaler_difficulte, clore_signalement, les couples de modération (signalement, texte) et
+-- signaler_difficulte, clore_signalement, les gestes du suivi (T77 : prendre_en_charge_signalement,
+-- repondre_au_ministere, confirmer_signalement, repondre_a_ejp_tech) et leurs lignes de journal,
+-- les couples de modération (signalement, texte) et
 -- (signalement_suivi, commentaire) (moderation, masquer_texte, marquer_relu), les lignes de
 -- journal des signalements (journal, v_journal) et les lignes texte_relu et texte_masque de
 -- cible demande_indicateur (P51).
--- Profils : un ministère porteur (A, deux signalements, dont un clos avec un commentaire), un
+-- Profils : un ministère porteur (A, trois signalements : un ouvert au texte masqué, un clos avec
+-- un commentaire, un auquel EJP Tech a répondu), un
 -- autre ministère (B, un signalement), les ministères FIJ et Coordination du jeu d'exemple, le
 -- berger, le conseil, l'administration de l'église et EJP Tech, en aal2 ; la dérivation ajoute
 -- la ligne aal1 de chacun (zéro ligne lue, toute autre action refusée) et la ligne de l'anonyme
@@ -35,7 +38,8 @@ select tests.creer_ministere('Matrice B7 porteur') as a_m,
        tests.compte('Administration de l''église') as admin,
        tests.compte('EJP Tech, compte 1') as tech;
 alter table ctx add column a uuid, add column b uuid, add column c uuid,
-  add column s1 uuid, add column s2 uuid, add column sb uuid, add column sc uuid, add column x2 uuid,
+  add column s1 uuid, add column s2 uuid, add column s3 uuid, add column sb uuid, add column sc uuid,
+  add column x2 uuid,
   add column d1 uuid, add column d2 uuid;
 update ctx set a = tests.creer_compte('matrice-b7-a@exemple.test', 'ministere', a_m),
                b = tests.creer_compte('matrice-b7-b@exemple.test', 'ministere', b_m),
@@ -47,17 +51,19 @@ insert into private.indicateur_prevu (code, modele, libelle, definition, nature,
   ('essai_b7_s1', 'suggestion', 'Essai matrice signalements un', 'Première suggestion d''essai des signalements.', 'mois', 1),
   ('essai_b7_s2', 'suggestion', 'Essai matrice signalements deux', 'Deuxième suggestion d''essai des signalements.', 'mois', 2);
 
--- A signale deux difficultés et ajoute deux suggestions ; B signale une difficulté.
+-- A signale trois difficultés et ajoute deux suggestions ; B signale une difficulté.
 do $$
 declare
   v_s1 uuid;
   v_s2 uuid;
+  v_s3 uuid;
   v_sb uuid;
   v_sc uuid;
 begin
   perform tests.se_connecter((select a from ctx), 'aal2');
   v_s1 := public.signaler_difficulte('saisie_evenement', 'Le formulaire refuse la date de notre soirée.');
   v_s2 := public.signaler_difficulte('saisie_mois', 'Le mois de septembre ne se propose plus.');
+  v_s3 := public.signaler_difficulte('saisie_reunion', 'La prochaine réunion ne se propose pas.');
   perform public.ajouter_suggestion((select a_m from ctx), 'essai_b7_s1', 'Pourquoi d''essai des signalements, numéro un.');
   perform public.ajouter_suggestion((select a_m from ctx), 'essai_b7_s2', 'Pourquoi d''essai des signalements, numéro deux.');
   perform tests.deconnecter();
@@ -68,7 +74,7 @@ begin
   perform tests.se_connecter((select c from ctx), 'aal2');
   v_sc := public.signaler_difficulte('saisie_session', 'Une difficulté d''essai du ministère C.');
   perform tests.deconnecter();
-  update ctx set s1 = v_s1, s2 = v_s2, sb = v_sb, sc = v_sc;
+  update ctx set s1 = v_s1, s2 = v_s2, s3 = v_s3, sb = v_sb, sc = v_sc;
 end $$;
 update ctx set
   d1 = (select d.id from public.demande_indicateur d join public.indicateur i on i.id = d.indicateur_id
@@ -76,12 +82,13 @@ update ctx set
   d2 = (select d.id from public.demande_indicateur d join public.indicateur i on i.id = d.indicateur_id
          where i.modele_code = 'essai_b7_s2' and d.ministere_id = ctx.a_m);
 
--- EJP Tech clôt s2 avec un commentaire, masque le texte de s1, relit le commentaire de la
--- clôture, relit le « Pourquoi » de d1 et masque celui de d2.
+-- EJP Tech clôt s2 avec un commentaire, répond à s3 (Répondu, T77), masque le texte de s1,
+-- relit le commentaire de la clôture, relit le « Pourquoi » de d1 et masque celui de d2.
 do $$
 begin
   perform tests.se_connecter((select tech from ctx), 'aal2');
   perform public.clore_signalement((select s2 from ctx), 'Transmis à l''administration, merci.');
+  perform public.repondre_au_ministere((select s3 from ctx), 'Quelle date voulez-vous saisir pour la réunion ?');
   perform public.masquer_texte('signalement', (select s1 from ctx), 'texte', 'nom_personne');
   perform public.clore_signalement((select sc from ctx), 'Clôture d''essai du ministère C.');
   perform tests.deconnecter();
@@ -133,6 +140,24 @@ create temp view matrice_b7 (profil, objet, action, aal, attendu, requete) as
       'select public.clore_signalement((select s1 from ctx), ''Commentaire d''''essai de la matrice.'')'),
      ('clore_signalement (sans commentaire)', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
       'select public.clore_signalement((select sb from ctx))'),
+     -- Suivi (T77) : EJP Tech prend en charge et répond ; seul le ministère du signalement
+     -- confirme ou répond à EJP Tech, à l'étape Répondu (s3).
+     ('signalement_suivi (réponse d''EJP Tech)', 'lire', array['1', '0', '0', '0', '0', '0', '0', '1'],
+      'select 1 from public.signalement_suivi where signalement_id = (select s3 from ctx)'),
+     ('v_signalement (Répondu)', 'lire', array['1', '0', '0', '0', '0', '0', '0', '1'],
+      'select 1 from public.v_signalement where id = (select s3 from ctx) and statut = ''repondu'''),
+     ('prendre_en_charge_signalement', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
+      'select public.prendre_en_charge_signalement((select sb from ctx))'),
+     ('repondre_au_ministere', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
+      'select public.repondre_au_ministere((select sb from ctx), ''Réponse d''''essai de la matrice.'')'),
+     ('confirmer_signalement', 'appeler', array['ok', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'select public.confirmer_signalement((select s3 from ctx))'),
+     ('repondre_a_ejp_tech', 'appeler', array['ok', '42501', '42501', '42501', '42501', '42501', '42501', '42501'],
+      'select public.repondre_a_ejp_tech((select s3 from ctx), ''Réponse d''''essai du ministère porteur.'')'),
+     ('journal (signalement_repondu)', 'lire', array['1', '0', '0', '0', '0', '0', '0', '1'],
+      'select 1 from public.journal where action = ''signalement_repondu'' and cible_id = (select s3 from ctx)'),
+     ('v_journal (signalement_repondu)', 'lire', array['1', '0', '0', '0', '0', '0', '0', '1'],
+      'select 1 from public.v_journal where action = ''signalement_repondu'' and cible_id = (select s3 from ctx)'),
      ('moderation (signalements)', 'lire', array['0', '0', '0', '0', '0', '0', '0', '2'],
       'select 1 from public.moderation where cible in (''signalement'', ''signalement_suivi'') and cible_id in (select s1 from ctx union all select x2 from ctx)'),
      ('masquer_texte (signalement, texte)', 'appeler', array['42501', '42501', '42501', '42501', '42501', '42501', '42501', 'ok'],
@@ -180,7 +205,14 @@ insert into lecture_b7 values
    'select 1 from public.journal where action in (''difficulte_signalee'', ''signalement_clos'') or cible in (''signalement'', ''signalement_suivi'')'),
   (4, 'v_journal (lignes des signalements)',
    'select 1 from public.v_journal where action in (''difficulte_signalee'', ''signalement_clos'') or cible in (''signalement'', ''signalement_suivi'')'),
-  (5, 'v_signalement', 'select 1 from public.v_signalement');
+  (5, 'v_signalement', 'select 1 from public.v_signalement'),
+  -- Ici seul signalement_repondu existe au journal : la lecture des quatre codes par le ministère
+  -- concerné et leur absence pour ces trois profils sont prouvées sur le cas de Coordination
+  -- (signalements-suivi.test.sql, où Coordination lit ses six lignes).
+  (6, 'journal (codes du suivi, T77)',
+   'select 1 from public.journal where action in (''signalement_pris_en_charge'', ''signalement_repondu'', ''signalement_regle'', ''signalement_reponse_ministere'')'),
+  (7, 'v_journal (codes du suivi, T77)',
+   'select 1 from public.v_journal where action in (''signalement_pris_en_charge'', ''signalement_repondu'', ''signalement_regle'', ''signalement_reponse_ministere'')');
 
 -- Le ministère désactivé (C) ne lit plus rien de ses signalements, écrits et clos avant sa
 -- désactivation ; EJP Tech les lit (preuve que le zéro ne vient pas d'un jeu vide).
@@ -195,18 +227,19 @@ insert into desactive_b7 values
   (5, 'v_signalement', 'select 1 from public.v_signalement where id = (select sc from ctx)', 1);
 grant select on matrice_b7, profil_b7, lecture_b7, desactive_b7 to authenticated, anon;
 
--- Le plan compte les 41 tests fixes (contexte, 15 lectures vides, 3 textes de v_journal, 12 pour
+-- Le plan compte les 49 tests fixes (contexte, 21 lectures vides, 3 textes de v_journal, 14 pour
 -- l'inaltérabilité et le masquage, 10 pour le ministère désactivé) et, par
 -- tests.nombre_essais, les essais de la matrice (lignes dérivées comprises).
-select plan(41
+select plan(49
   + tests.nombre_essais('select profil, objet, action, aal, attendu, requete from matrice_b7',
                         'select profil, compte from profil_b7', true));
 
 select ok((select count(*) from ctx where a is not null and b is not null and fij is not null and coo is not null
              and berger is not null and conseil is not null and admin is not null and tech is not null
-             and c is not null and s1 is not null and s2 is not null and sb is not null and sc is not null
+             and c is not null and s1 is not null and s2 is not null and s3 is not null and sb is not null
+             and sc is not null
              and x2 is not null and d1 is not null and d2 is not null) = 1,
-  'le jeu d''exemple et le contexte fournissent les comptes, les quatre signalements, la clôture et les deux demandes');
+  'le jeu d''exemple et le contexte fournissent les comptes, les cinq signalements, la clôture et les deux demandes');
 
 select * from tests.verifier_matrice(
   'select profil, objet, action, aal, attendu, requete from matrice_b7',
@@ -279,6 +312,12 @@ select throws_ok($$ update public.signalement set texte = '[texte masqué par EJ
   'sous le réglage de masquage, le signalement ne change aucune autre colonne');
 select lives_ok($$ update public.signalement set texte = '[texte masqué par EJP Tech]' where id = (select s2 from ctx) $$,
   'sous le réglage de masquage, le masquage du signalement passe (masquer_texte)');
+-- Les colonnes du suivi (T77) ne changent pas non plus sous le masquage : seule la réponse.
+select throws_ok($$ update public.signalement_suivi set commentaire = '[texte masqué par EJP Tech]', etape = 'regle' where id = (select x2 from ctx) $$,
+  '42501', 'La table signalement_suivi est en ajout seul : elle ne se modifie pas et ne s''efface pas.',
+  'sous le réglage de masquage, une ligne de suivi ne change pas d''étape');
+select lives_ok($$ update public.signalement_suivi set commentaire = '[texte masqué par EJP Tech]' where id = (select x2 from ctx) $$,
+  'sous le réglage de masquage, le masquage de la seule réponse passe (masquer_texte)');
 select set_config('pilotage.masquage', '', true);
 
 select * from finish();

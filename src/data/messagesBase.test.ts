@@ -24,7 +24,7 @@ import {
 } from '@/features/mes-indicateurs/textes'
 import { messageSommeDepasse, TEXTES_CHIFFRES } from '@/features/saisie-chiffres/textes'
 import { MESSAGES_FIJ } from '@/features/saisie-fij/schemas'
-import { TEXTES_BLOC_SIGNALEMENTS, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
+import { TEXTES_REPONSE, TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import { MESSAGES_PRENOM } from '@/lib/metier/declaration'
 
 /** Les messages du « Pourquoi » que le schéma partagé dit avant l'envoi (m233). */
@@ -358,10 +358,11 @@ describe('le même texte avant l’envoi et après le refus de la base (guide, 1
       'Les crochets et « texte masqué » sont réservés à la modération.',
       TEXTES_SIGNALEMENT.erreurCrochets,
     ],
-    [
-      'Le commentaire fait 10 caractères au moins, ou reste vide.',
-      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireCourt,
-    ],
+    // La réponse de « Clore le signalement » est obligatoire à l'écran (T77).
+    ['Le commentaire fait 10 caractères au moins, ou reste vide.', TEXTES_REPONSE.erreurCourt],
+    // Suivi des signalements (T77) : la réponse d'EJP Tech ou du ministère.
+    ['Écrivez votre réponse (10 caractères au moins).', TEXTES_REPONSE.erreurCourt],
+    ['La réponse dépasse 280 caractères.', TEXTES_REPONSE.erreurLong],
     // Sessions (T66, t313 et m124) et événements (m124).
     ["Un ministère coché n'est pas actif.", TEXTES_EVENEMENT.erreurMention],
     // Heures d'un événement (T68) : E2 et E3 reprennent les consignes du contrôle avant l'envoi.

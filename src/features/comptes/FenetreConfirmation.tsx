@@ -44,6 +44,7 @@ export function FenetreConfirmation({
       onConfirmer={onConfirmer}
       onAnnuler={onAnnuler}
       lireMessage={lireMessage}
+      ecranEjpTech
     />
   )
 }

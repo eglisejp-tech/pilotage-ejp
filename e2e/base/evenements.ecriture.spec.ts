@@ -142,6 +142,125 @@ test.describe('Communication', () => {
     expect(await journalDe(page, 'evenement_ajoute', lignes[0]?.id ?? '')).toBe(1)
   })
 
+  // T76, lot B : le numéro anti-doublon. La réponse se perd une fois après l'enregistrement ;
+  // l'outil renvoie seul le même envoi (Proposé, Q1) : la base reconnaît le numéro et rend le même
+  // événement. La réussite s'affiche dès le premier toucher, un seul événement, un seul journal.
+  test('numéro anti-doublon : réponse perdue une fois, le nouvel essai automatique rend le même événement', async ({
+    page,
+  }) => {
+    const nom = `Essai T76 B1 ${SUFFIXE}`
+    await page.goto('/saisir/evenement')
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    const numeros: string[] = []
+    await page.route('**/rest/v1/rpc/ajouter_evenement', async (route) => {
+      numeros.push((route.request().postDataJSON() as { p_cle?: string }).p_cle ?? '')
+      if (numeros.length > 1) {
+        await route.continue()
+        return
+      }
+      // Le premier envoi part et la base enregistre ; seule sa réponse se perd.
+      await route.fetch()
+      await route.abort('failed')
+    })
+    await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, 13))
+    await page.getByLabel("Nom de l'événement").fill(nom)
+    await page.getByText('Brouillon', { exact: true }).click()
+    for (const mention of ['Coordination', 'FIJ']) {
+      await page.getByRole('checkbox', { name: mention, exact: true }).check()
+    }
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement ajouté au calendrier.',
+    )
+    await expect(page.getByRole('alert')).toHaveCount(0)
+    expect(numeros).toHaveLength(2)
+    expect(numeros[1]).toBe(numeros[0])
+
+    const lignes = await lire<{ id: string }>(
+      page,
+      `v_evenement?select=id&titre=eq.${encodeURIComponent(nom)}`,
+    )
+    expect(lignes).toHaveLength(1)
+    expect(await journalDe(page, 'evenement_ajoute', lignes[0]?.id ?? '')).toBe(1)
+  })
+
+  // Les deux essais perdent leur réponse : « Vérifiez la liste ». Un second toucher renvoie le
+  // même numéro : la base rend l'événement déjà créé, l'écran dit la réussite, rien n'est doublé.
+  test('numéro anti-doublon : second toucher après « Vérifiez la liste », la réussite et un seul événement', async ({
+    page,
+  }) => {
+    const nom = `Essai T76 B2 ${SUFFIXE}`
+    await page.goto('/saisir/evenement')
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    await page.route(
+      '**/rest/v1/rpc/ajouter_evenement',
+      async (route) => {
+        await route.fetch()
+        await route.abort('failed')
+      },
+      { times: 2 },
+    )
+    await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, 14))
+    await page.getByLabel("Nom de l'événement").fill(nom)
+    await page.getByText('Brouillon', { exact: true }).click()
+    await page.getByRole('checkbox', { name: 'FIJ', exact: true }).check()
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('alert')).toContainText(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await expect(page.getByLabel("Nom de l'événement")).toHaveValue(nom)
+
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Événement' })).toHaveText(
+      'Événement ajouté au calendrier.',
+    )
+    await expect(page.getByLabel("Nom de l'événement")).toHaveValue('')
+    const lignes = await lire<{ id: string }>(
+      page,
+      `v_evenement?select=id&titre=eq.${encodeURIComponent(nom)}`,
+    )
+    expect(lignes).toHaveLength(1)
+    expect(await journalDe(page, 'evenement_ajoute', lignes[0]?.id ?? '')).toBe(1)
+  })
+
+  // Même numéro, nom corrigé après « Vérifiez la liste » : la base refuse, l'écran dit que le
+  // premier envoi est enregistré, et rien n'est écrit de plus.
+  test('numéro anti-doublon : nom corrigé avant le second toucher, « Votre premier envoi est déjà enregistré »', async ({
+    page,
+  }) => {
+    const nom = `Essai T76 B3 ${SUFFIXE}`
+    await page.goto('/saisir/evenement')
+    const aujourdhui = await aujourdhuiDeLaBase(page)
+    await page.route(
+      '**/rest/v1/rpc/ajouter_evenement',
+      async (route) => {
+        await route.fetch()
+        await route.abort('failed')
+      },
+      { times: 2 },
+    )
+    await page.getByLabel('Date', { exact: true }).fill(plusJours(aujourdhui, 15))
+    await page.getByLabel("Nom de l'événement").fill(nom)
+    await page.getByText('Brouillon', { exact: true }).click()
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('alert')).toContainText('Vérifiez la liste avant de réessayer.')
+
+    await page.getByLabel("Nom de l'événement").fill(`${nom}, corrigé`)
+    await page.getByRole('button', { name: 'Ajouter au calendrier' }).click()
+    await expect(page.getByRole('alert')).toContainText(
+      'Votre premier envoi est déjà enregistré. Vérifiez la liste avant de réessayer.',
+    )
+    expect(
+      await lire<{ id: string }>(page, `v_evenement?select=id&titre=eq.${encodeURIComponent(nom)}`),
+    ).toHaveLength(1)
+    expect(
+      await lire<{ id: string }>(
+        page,
+        `v_evenement?select=id&titre=eq.${encodeURIComponent(`${nom}, corrigé`)}`,
+      ),
+    ).toHaveLength(0)
+  })
+
   // m134 : la ligne identique est dite avant l'envoi (la base la refuserait aussi).
   test('une mise à jour sans changement est refusée, sans ligne ni journal', async ({ page }) => {
     expect(evenementId).not.toBe('')

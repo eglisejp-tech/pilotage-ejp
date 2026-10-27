@@ -44,8 +44,8 @@ $$, $$ values ('id'), ('ministere_id'), ('ecran'), ('texte'), ('saisi_le'), ('sa
 select results_eq($$
   select column_name::text collate "default" from information_schema.columns
    where table_schema = 'public' and table_name = 'signalement_suivi' order by ordinal_position
-$$, $$ values ('id'), ('signalement_id'), ('commentaire'), ('saisi_le'), ('saisi_par') $$,
-  'signalement_suivi : les colonnes du contrat, dans l''ordre');
+$$, $$ values ('id'), ('signalement_id'), ('commentaire'), ('saisi_le'), ('saisi_par'), ('etape'), ('ordre') $$,
+  'signalement_suivi : les colonnes du contrat, puis etape et ordre (T77), dans l''ordre');
 select function_returns('public', 'signaler_difficulte', array['text', 'text'], 'uuid',
   'signaler_difficulte(p_ecran, p_texte) rend l''identifiant du signalement');
 select function_returns('public', 'clore_signalement', array['uuid', 'text'], 'void',
@@ -263,12 +263,12 @@ select throws_ok($$ insert into public.signalement (ministere_id, ecran, texte, 
 select throws_ok($$ insert into public.signalement (ministere_id, ecran, texte, saisi_par)
                     select a_m, 'autre', '  Texte avec des espaces de bord.  ', a from ctx $$,
   '23514', null, 'la base refuse un texte avec des espaces de bord');
-select throws_ok($$ insert into public.signalement_suivi (signalement_id, saisi_par) select s1, tech from ctx $$,
-  '23505', null, 'la base refuse une seconde clôture');
+select throws_ok($$ insert into public.signalement_suivi (signalement_id, etape, saisi_par) select s1, 'clos', tech from ctx $$,
+  '23505', null, 'la base refuse une seconde clôture (une seule fin par signalement, T77)');
 select throws_ok($$ with n as (insert into public.signalement (ministere_id, ecran, texte, saisi_par)
                                select a_m, 'autre', 'Signalement d''essai des contraintes.', a from ctx returning id)
-                    insert into public.signalement_suivi (signalement_id, commentaire, saisi_par)
-                    select n.id, 'Court.', (select tech from ctx) from n $$,
+                    insert into public.signalement_suivi (signalement_id, etape, commentaire, saisi_par)
+                    select n.id, 'clos', 'Court.', (select tech from ctx) from n $$,
   '23514', null, 'la base refuse un commentaire de moins de 10 caractères');
 
 -- 6. v_signalement : ouvert et clos_recent (30 jours, heure de Paris). Trois signalements de A :
@@ -284,16 +284,18 @@ with n as (
   select a_m, 'saisie_session', 'Signalement ancien de la vue.', now() - interval '50 days', a from ctx
   returning id),
 x as (
-  insert into public.signalement_suivi (signalement_id, saisi_le, saisi_par)
-  select n.id, now() - interval '40 days', (select tech from ctx) from n)
+  insert into public.signalement_suivi (signalement_id, etape, saisi_le, saisi_par)
+  select n.id, 'clos', now() - interval '40 days', (select tech from ctx) from n)
 update ctx set v2 = (select id from n);
 
 select results_eq($$
   select column_name::text collate "default" from information_schema.columns
    where table_schema = 'public' and table_name = 'v_signalement' order by ordinal_position
 $$, $$ values ('id'), ('ministere_id'), ('ministere_nom'), ('ecran'), ('texte'), ('saisi_le'), ('suivi_id'),
-              ('commentaire'), ('clos_le'), ('ouvert'), ('clos_recent') $$,
-  'v_signalement : les colonnes annoncées à E8, dans l''ordre');
+              ('commentaire'), ('clos_le'), ('ouvert'), ('clos_recent'),
+              ('statut'), ('derniere_etape'), ('statut_le'), ('jours_depuis'), ('fin'),
+              ('reponse_possible_jusquau'), ('compte_actif') $$,
+  'v_signalement : les colonnes annoncées à E8, dans l''ordre, puis les 7 du suivi (T77)');
 select is(tests.lire((select tech from ctx), 'aal2',
   'select ouvert, clos_recent from public.v_signalement where id in (select s1 from ctx union all select v1 from ctx union all select v2 from ctx)'),
   '[{"ouvert": false, "clos_recent": false}, {"ouvert": false, "clos_recent": true}, {"ouvert": true, "clos_recent": false}]'::jsonb,

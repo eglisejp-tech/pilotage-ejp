@@ -91,7 +91,7 @@ export function VueIndicateurs({ titre, profil, configuration, creation, blocAVa
             <ReussiteCreation creation={creation} />
             {/* Le refus s'affiche sur la ligne du ministère ; sans cette ligne, ici. */}
             {configuration.donnees.lignes.some((ligne) => ligne.id === creation.dernier) ? null : (
-              <RefusCreation refus={creation.refus} />
+              <RefusCreation refus={creation.refus} reference={creation.reference} />
             )}
             {configuration.donnees.lignes.length === 0 ? null : (
               <div className="mt-4">

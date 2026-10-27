@@ -5,6 +5,7 @@ import { BoutonEnregistrer } from '@/features/evenements/BoutonEnregistrer'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { useFermetureSaisie } from '@/features/saisie/fermetureSaisie'
 import { MessageReussite } from '@/features/saisie/MessageReussite'
+import { useNumeroEnvoi } from '@/features/saisie/useNumeroEnvoi'
 import { ChampTexteLibre } from '@/features/signalement/ChampTexteLibre'
 import { lireRefusSignalement } from '@/features/signalement/refus'
 import type { RefusSignalement } from '@/features/signalement/refus'
@@ -16,7 +17,8 @@ import type { EcranSignalement } from '@/lib/base'
 export interface ProprietesFormulaireSignalement {
   /** Écran d'origine, venu de l'adresse (`?ecran=`), « autre » sinon. */
   ecran: EcranSignalement
-  envoyer: (signalement: Signalement) => Promise<void>
+  /** Envoie le signalement avec son numéro anti-doublon (T76). */
+  envoyer: (signalement: Signalement, numero: string) => Promise<void>
   /** « Annuler » : retour à la page d'origine, sans rien envoyer. */
   onAnnuler: () => void
 }
@@ -51,16 +53,19 @@ export function FormulaireSignalement({
   const [refus, setRefus] = useState<RefusSignalement | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+  const numero = useNumeroEnvoi()
 
   const soumettre = handleSubmit(async (signalement) => {
     setRefus(null)
     setReussite(null)
     try {
-      await envoyer(signalement)
+      await envoyer(signalement, numero.tirer())
+      numero.oublier()
       reset({ ecran, texte: '' })
       setReussite(TEXTES_SIGNALEMENT.confirmation)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
+      numero.apresEchec(erreur)
       const lu = lireRefusSignalement(erreur)
       if (lu.ou === 'champ') setError('texte', { message: lu.message }, { shouldFocus: true })
       else setRefus(lu)

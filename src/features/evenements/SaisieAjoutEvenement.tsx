@@ -27,8 +27,8 @@ export function SaisieAjoutEvenement({
   const semaine = useQuery({ queryKey: ['eglise', 'semaine'], queryFn: lireSemaine })
   const ministeres = useQuery({ queryKey: ['ministeres', 'liste'], queryFn: lireMinisteres })
 
-  const envoyer = (evenement: AjoutEvenement) =>
-    creerPuisRelire(() => ajouterEvenement(evenement), apresEcriture)
+  const envoyer = (evenement: AjoutEvenement, numero: string) =>
+    creerPuisRelire(() => ajouterEvenement(evenement, numero), apresEcriture)
 
   let contenu: ContenuPanneauEvenement
   if (semaine.data && ministeres.data) {

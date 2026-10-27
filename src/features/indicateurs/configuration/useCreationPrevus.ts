@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 import { choisirModelePrevus, creerIndicateursPrevus } from '@/data/indicateursConfiguration'
-import { lireEchec } from '@/data/echecEnvoi'
+import { lireEchec, referenceEchec } from '@/data/echecEnvoi'
 import { invaliderApresEcriture } from '@/features/indicateurs/configuration/cles'
 import { MODELE_AUCUN } from '@/features/indicateurs/configuration/catalogue'
 import {
@@ -56,6 +56,8 @@ export interface CreationPrevus {
   envoi: number
   /** Refus de la base, tel quel, ou la phrase de connexion ; `null` : aucun problème. */
   refus: string | null
+  /** Référence d'un échec technique (T76), sous le refus ; absente ou null : aucune. */
+  reference?: string | null
 }
 
 /**
@@ -70,6 +72,7 @@ export function useCreationPrevus(): CreationPrevus {
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   // Un second clic arrive avant que le rendu ait mis `enCours` à jour : la référence le retient.
   const occupe = useRef(false)
 
@@ -92,6 +95,7 @@ export function useCreationPrevus(): CreationPrevus {
       } catch (erreur) {
         setReussite(null)
         setRefus(messageDeRefusPrevus(erreur, false, true) ?? TEXTES_CONFIGURATION.erreur)
+        setReference(referenceEchec(erreur))
       } finally {
         occupe.current = false
         setEnCours(null)
@@ -116,6 +120,7 @@ export function useCreationPrevus(): CreationPrevus {
       } catch (erreur) {
         setReussite(null)
         setRefus(messageDeRefusPrevus(erreur) ?? TEXTES_CONFIGURATION.erreur)
+        setReference(referenceEchec(erreur))
         return false
       } finally {
         occupe.current = false
@@ -125,5 +130,5 @@ export function useCreationPrevus(): CreationPrevus {
     [client],
   )
 
-  return { creer, choisir, enCours, dernier, reussite, envoi, refus }
+  return { creer, choisir, enCours, dernier, reussite, envoi, refus, reference }
 }

@@ -16,8 +16,11 @@ const MINISTERES = [
   { id: '10000000-0000-4000-8000-000000000005', nom: 'Intégration' },
 ]
 
+/** Numéro anti-doublon (T76) : un uuid de version 4. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/
+
 function afficher(
-  envoyer: (point: NouveauPoint) => Promise<void> = () => Promise.resolve(),
+  envoyer: (point: NouveauPoint, numero: string) => Promise<void> = () => Promise.resolve(),
   ministeres = MINISTERES,
 ) {
   render(
@@ -178,14 +181,17 @@ describe('« Nouveau point » (maquette 10)', () => {
     await userEvent.click(bouton())
     expect(await screen.findByText('Point créé.')).toBeInTheDocument()
     expect(envoyer).toHaveBeenCalledTimes(1)
-    expect(envoyer).toHaveBeenCalledWith({
-      titre: 'Salle pour la soirée de louange',
-      description: 'La salle du 10 octobre n’est pas confirmée.',
-      priorite: 'haute',
-      attendu: 'Confirmer',
-      echeance: '2026-10-10',
-      mentions: ['10000000-0000-4000-8000-000000000002'],
-    })
+    expect(envoyer).toHaveBeenCalledWith(
+      {
+        titre: 'Salle pour la soirée de louange',
+        description: 'La salle du 10 octobre n’est pas confirmée.',
+        priorite: 'haute',
+        attendu: 'Confirmer',
+        echeance: '2026-10-10',
+        mentions: ['10000000-0000-4000-8000-000000000002'],
+      },
+      expect.stringMatching(UUID),
+    )
     expect(titre()).toHaveValue('')
     expect(screen.getByRole('radio', { name: 'Normale' })).toBeChecked()
     expect(screen.getByRole('checkbox', { name: 'Coordination' })).not.toBeChecked()
@@ -197,14 +203,39 @@ describe('« Nouveau point » (maquette 10)', () => {
     await userEvent.type(titre(), 'Un point')
     await userEvent.click(bouton())
     expect(await screen.findByText('Point créé.')).toBeInTheDocument()
-    expect(envoyer).toHaveBeenCalledWith({
-      titre: 'Un point',
-      description: null,
-      priorite: 'normale',
-      attendu: null,
-      echeance: null,
-      mentions: [],
-    })
+    expect(envoyer).toHaveBeenCalledWith(
+      {
+        titre: 'Un point',
+        description: null,
+        priorite: 'normale',
+        attendu: null,
+        echeance: null,
+        mentions: [],
+      },
+      expect.stringMatching(UUID),
+    )
+  })
+
+  it('numéro anti-doublon (T76) : le même au nouvel essai après une réponse perdue, un autre après la réussite', async () => {
+    const envoyer = vi
+      .fn<(point: NouveauPoint, numero: string) => Promise<void>>()
+      .mockRejectedValueOnce({ code: '', message: 'TypeError: Load failed' })
+      .mockResolvedValue(undefined)
+    afficher(envoyer)
+    await userEvent.type(titre(), 'Un point')
+    await userEvent.click(bouton())
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await userEvent.click(bouton())
+    expect(await screen.findByText('Point créé.')).toBeInTheDocument()
+    await userEvent.type(titre(), 'Un autre point')
+    await userEvent.click(bouton())
+    await vi.waitFor(() => expect(envoyer).toHaveBeenCalledTimes(3))
+    const [premier, second, troisieme] = envoyer.mock.calls.map(([, numero]) => numero)
+    expect(premier).toMatch(UUID)
+    expect(second).toBe(premier)
+    expect(troisieme).not.toBe(premier)
   })
 
   it('double clic pendant l’envoi : un seul envoi', async () => {

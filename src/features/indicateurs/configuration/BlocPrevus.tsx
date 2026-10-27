@@ -124,7 +124,10 @@ export function BlocPrevus({ donnees, creation }: Props) {
           {lienChanger}
         </div>
       ) : null}
-      <RefusCreation refus={creation.dernier === donnees.id ? creation.refus : null} />
+      <RefusCreation
+        refus={creation.dernier === donnees.id ? creation.refus : null}
+        reference={creation.reference}
+      />
     </section>
   )
 }

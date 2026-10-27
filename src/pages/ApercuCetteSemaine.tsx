@@ -29,6 +29,9 @@ type EtatApercu =
   | 'session-jamais-tenue'
   | 'fij'
   | 'evenements'
+  | 'signalement-repondu'
+  | 'signalements-repondus'
+  | 'signalement-suivi'
   | 'chargement'
   | 'erreur'
 
@@ -47,9 +50,19 @@ const etatsMinistere: { valeur: EtatApercu; libelle: string }[] = [
   { valeur: 'fij', libelle: 'Ministère FIJ' },
   // Événements à mettre à jour : à confirmer, sans état final, sans heure de début (T68).
   { valeur: 'evenements', libelle: 'Événements' },
+  // Suivi des signalements (T77) : le bandeau d'une réponse d'EJP Tech, ou la ligne discrète.
+  { valeur: 'signalement-repondu', libelle: 'Signalement répondu' },
+  { valeur: 'signalements-repondus', libelle: 'Deux signalements répondus' },
+  { valeur: 'signalement-suivi', libelle: 'Signalement suivi' },
   { valeur: 'chargement', libelle: 'Chargement' },
   { valeur: 'erreur', libelle: 'Erreur' },
 ]
+
+/** Le signalement de Coordination de l'aperçu des signalements, Répondu (T77). */
+const SIGNALEMENT_REPONDU = {
+  id: '77000000-0000-4000-8000-0000000000a1',
+  saisi_le: '2026-10-26T10:15:00+01:00',
+}
 
 function etatsDuProfil(profil: ProfilVue) {
   return profil === 'ministere' ? etatsMinistere : etatsEglise
@@ -103,6 +116,26 @@ export function ApercuCetteSemaine() {
         return <VueMaSemaine donnees={exempleFij()} />
       case 'evenements':
         return <VueMaSemaine donnees={exempleEvenements()} />
+      case 'signalement-repondu':
+      case 'signalements-repondus':
+        return (
+          <VueMaSemaine
+            donnees={{
+              ...exempleMaSemaine(),
+              signalements: {
+                genre: 'bandeau',
+                nombre: etat === 'signalement-repondu' ? 1 : 2,
+                plusAncien: SIGNALEMENT_REPONDU,
+              },
+            }}
+          />
+        )
+      case 'signalement-suivi':
+        return (
+          <VueMaSemaine
+            donnees={{ ...exempleMaSemaine(), signalements: { genre: 'ligne', nombre: 1 } }}
+          />
+        )
       case 'chargement':
         return <ChargementMaSemaine />
       case 'erreur':

@@ -14,6 +14,7 @@ import { ResultatEnvoi } from '@/features/evenements/ResultatEnvoi'
 import { schemaAjoutEvenement } from '@/features/evenements/schemas'
 import type { AjoutEvenement, ValeursAjoutEvenement } from '@/features/evenements/schemas'
 import { TEXTES_EVENEMENT } from '@/features/evenements/textes'
+import { useNumeroEnvoi } from '@/features/saisie/useNumeroEnvoi'
 import { LienSignalement } from '@/features/signalement/LienSignalement'
 import type { DateIso } from '@/lib/metier/dates'
 
@@ -24,8 +25,11 @@ export interface ProprietesAjoutEvenement {
   ministereId: string
   /** Ministères actifs qu'il peut mentionner (tous les autres), dans l'ordre alphabétique. */
   ministeres: readonly MinistreAMentionner[]
-  /** Envoie l'événement ; une erreur levée est un refus de la base ou un échec de connexion. */
-  envoyer: (evenement: AjoutEvenement) => Promise<void>
+  /**
+   * Envoie l'événement avec son numéro anti-doublon (T76) ; une erreur levée est un refus de la
+   * base ou un échec d'envoi.
+   */
+  envoyer: (evenement: AjoutEvenement, numero: string) => Promise<void>
 }
 
 const VIDE: ValeursAjoutEvenement = {
@@ -70,16 +74,19 @@ export function FormulaireAjoutEvenement({
   const [refus, setRefus] = useState<Refus | null>(null)
   const [reussite, setReussite] = useState<string | null>(null)
   const [envoi, setEnvoi] = useState(0)
+  const numero = useNumeroEnvoi()
 
   const soumettre = handleSubmit(async (evenement) => {
     setRefus(null)
     setReussite(null)
     try {
-      await envoyer(evenement)
+      await envoyer(evenement, numero.tirer())
+      numero.oublier()
       reset(VIDE)
       setReussite(TEXTES_EVENEMENT.reussiteAjout)
       setEnvoi((precedent) => precedent + 1)
     } catch (erreur) {
+      numero.apresEchec(erreur)
       // Un ajout dont l'issue est inconnue est peut-être enregistré (m259, T76).
       const lu = lireRefus(erreur, 'ajout')
       if (lu.ou === 'date' || lu.ou === 'heure_prevue') {
