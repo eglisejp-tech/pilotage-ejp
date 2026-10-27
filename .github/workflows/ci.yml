@@ -104,6 +104,10 @@ jobs:
   # Le 23 octobre 2026, le 1440 px (26 minutes, captures comprises) a dépassé trois fois ses
   # 30 minutes : l'installation du navigateur, d'habitude sous 30 secondes, en a pris 5 à 7.
   # Il est coupé en deux moitiés (--shard), et chaque job a 40 minutes de marge.
+  # Le 27 octobre 2026, un run complet durait 25 minutes : le 834 px et le 390 px, chacun d'un
+  # seul bloc, prenaient 22 minutes de parcours, et la seconde moitié du 1440 px 15. Chaque format
+  # est coupé en trois tiers (dépôt public : les minutes ne coûtent rien) ; un tiers prend environ
+  # 7 minutes de parcours plus 2 de démarrage de la base.
   e2e:
     name: Parcours Playwright (${{ matrix.partie.nom }})
     needs: changements
@@ -115,21 +119,68 @@ jobs:
       matrix:
         partie:
           - {
-              nom: '1440 px, 1 sur 2',
+              nom: '1440 px, 1 sur 3',
               projet: ordinateur,
-              morceau: '1/2',
+              morceau: '1/3',
               suffixe: '-1',
               ecritures_seules: '0',
             }
           - {
-              nom: '1440 px, 2 sur 2',
+              nom: '1440 px, 2 sur 3',
               projet: ordinateur,
-              morceau: '2/2',
+              morceau: '2/3',
               suffixe: '-2',
               ecritures_seules: '0',
             }
-          - { nom: '834 px', projet: tablette, morceau: '1/1', suffixe: '', ecritures_seules: '0' }
-          - { nom: '390 px', projet: telephone, morceau: '1/1', suffixe: '', ecritures_seules: '0' }
+          - {
+              nom: '1440 px, 3 sur 3',
+              projet: ordinateur,
+              morceau: '3/3',
+              suffixe: '-3',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '834 px, 1 sur 3',
+              projet: tablette,
+              morceau: '1/3',
+              suffixe: '-1',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '834 px, 2 sur 3',
+              projet: tablette,
+              morceau: '2/3',
+              suffixe: '-2',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '834 px, 3 sur 3',
+              projet: tablette,
+              morceau: '3/3',
+              suffixe: '-3',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '390 px, 1 sur 3',
+              projet: telephone,
+              morceau: '1/3',
+              suffixe: '-1',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '390 px, 2 sur 3',
+              projet: telephone,
+              morceau: '2/3',
+              suffixe: '-2',
+              ecritures_seules: '0',
+            }
+          - {
+              nom: '390 px, 3 sur 3',
+              projet: telephone,
+              morceau: '3/3',
+              suffixe: '-3',
+              ecritures_seules: '0',
+            }
           - {
               nom: 'écritures',
               projet: ecritures,
