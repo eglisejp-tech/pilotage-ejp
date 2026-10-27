@@ -77,6 +77,9 @@ const PageSessions: Page = ecranALaDemande('PageSessions', () =>
 const PageSignalement: Page = ecranALaDemande('PageSignalement', () =>
   import('@/pages/PageSignalement').then((m) => m.PageSignalement),
 )
+const PageMesSignalements: Page = ecranALaDemande('PageMesSignalements', () =>
+  import('@/pages/PageMesSignalements').then((m) => m.PageMesSignalements),
+)
 
 /**
  * « / » (Cette semaine, ou Ma semaine pour un ministère) : à part, car la page reçoit le lecteur,
@@ -109,6 +112,7 @@ export const PAGES_DES_ADRESSES: Readonly<Record<string, Page>> = {
   '/saisir/reunion': PageSaisieReunion,
   '/saisir/point': PageSaisiePoint,
   '/signaler': PageSignalement,
+  '/signalements': PageMesSignalements,
   '/points': PagePoints,
   '/journal': PageJournal,
   '/journal-technique': PageJournal,

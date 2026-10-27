@@ -29,11 +29,28 @@ export function erreurDeConnexion(objet: ObjetSaisie): string {
 }
 
 /**
+ * Début de la ligne de référence d'un échec d'envoi (T76, Proposé Q12) : « Référence pour EJP
+ * Tech : » pour les autres profils ; sur les écrans d'EJP Tech, qui lit lui-même ses incidents,
+ * « Référence : » (conception erreurs-envoi, 4.3).
+ */
+export function libelleReference(ecranEjpTech = false): string {
+  return ecranEjpTech ? 'Référence : ' : 'Référence pour EJP Tech : '
+}
+
+/**
  * Référence d'un échec d'envoi (T76), sous sa phrase : la même que dans les journaux de la
  * passerelle Supabase, à donner à EJP Tech avec une capture d'écran.
  */
-export function texteReference(reference: string): string {
-  return `Référence pour EJP Tech : ${reference}`
+export function texteReference(reference: string, ecranEjpTech = false): string {
+  return `${libelleReference(ecranEjpTech)}${reference}`
+}
+
+/**
+ * La référence épelée pour un lecteur d'écran (« K 7 Q 4 M X ») : lue d'un bloc, « K7Q4MX » se
+ * prononcerait comme un mot.
+ */
+export function referenceEpelee(reference: string): string {
+  return Array.from(reference).join(' ')
 }
 
 /** Largeur à partir de laquelle une saisie s'ouvre en panneau latéral de 460 px (BRIEF section 9). */

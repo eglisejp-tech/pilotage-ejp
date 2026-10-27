@@ -188,7 +188,7 @@ export function FenetreRefus({
             </button>
           </div>
           {refus?.ou === 'formulaire' ? (
-            <ErreurFormulaire message={refus.message} reference={refus.reference} />
+            <ErreurFormulaire message={refus.message} reference={refus.reference} ecranEjpTech />
           ) : null}
         </form>
       </div>

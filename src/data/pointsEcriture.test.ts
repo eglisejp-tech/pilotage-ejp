@@ -17,6 +17,8 @@ vi.mock('@/lib/supabase', () => ({ supabase: () => courant.client }))
 
 const POINT = '30000000-0000-4000-8000-000000000001'
 const MINISTERE = '10000000-0000-4000-8000-000000000002'
+/** Numéro anti-doublon tiré par le formulaire (T76). */
+const NUMERO = 'a1000000-0000-4000-8000-000000000001'
 
 /** Faux client : `rpc` pour les fonctions de la base, `from` pour vérifier qu'on n'écrit jamais en direct. */
 function installer(rpc: ReponseFausse = { data: null, error: null }) {
@@ -33,16 +35,19 @@ beforeEach(() => {
 })
 
 describe('creerPoint', () => {
-  it('appelle creer_point avec ses six arguments et rend l’identifiant', async () => {
+  it('appelle creer_point avec ses sept arguments (numéro compris) et rend l’identifiant', async () => {
     const faux = installer({ data: POINT, error: null })
-    const id = await creerPoint({
-      titre: '  Salle pour la soirée  ',
-      description: 'Il faut une salle de 80 places.',
-      attendu: 'Une réponse',
-      priorite: 'haute',
-      echeance: '2026-10-12',
-      mentions: [MINISTERE, MINISTERE],
-    })
+    const id = await creerPoint(
+      {
+        titre: '  Salle pour la soirée  ',
+        description: 'Il faut une salle de 80 places.',
+        attendu: 'Une réponse',
+        priorite: 'haute',
+        echeance: '2026-10-12',
+        mentions: [MINISTERE, MINISTERE],
+      },
+      NUMERO,
+    )
     expect(id).toBe(POINT)
     expect(faux.rpc).toHaveBeenCalledWith('creer_point', {
       p_titre: 'Salle pour la soirée',
@@ -51,6 +56,7 @@ describe('creerPoint', () => {
       p_priorite: 'haute',
       p_echeance: '2026-10-12',
       p_mentions: [MINISTERE],
+      p_cle: NUMERO,
     })
     // Jamais d'ajout direct dans point_attention, point_mention ni point_suivi.
     expect(faux.from).not.toHaveBeenCalled()
@@ -58,14 +64,17 @@ describe('creerPoint', () => {
 
   it('envoie null pour une description, une action et une échéance absentes', async () => {
     const faux = installer({ data: POINT, error: null })
-    await creerPoint({
-      titre: 'Clés',
-      description: null,
-      attendu: null,
-      priorite: 'normale',
-      echeance: null,
-      mentions: [],
-    })
+    await creerPoint(
+      {
+        titre: 'Clés',
+        description: null,
+        attendu: null,
+        priorite: 'normale',
+        echeance: null,
+        mentions: [],
+      },
+      NUMERO,
+    )
     expect(faux.rpc).toHaveBeenCalledWith('creer_point', {
       p_titre: 'Clés',
       p_description: null,
@@ -73,19 +82,23 @@ describe('creerPoint', () => {
       p_priorite: 'normale',
       p_echeance: null,
       p_mentions: [],
+      p_cle: NUMERO,
     })
   })
 
   it('lit les textes facultatifs comme la base : bords retirés, vide devenu null', async () => {
     const faux = installer({ data: POINT, error: null })
-    await creerPoint({
-      titre: 'Clés',
-      description: '   ',
-      attendu: `  ${'x'.repeat(80)}  `,
-      priorite: 'normale',
-      echeance: null,
-      mentions: [],
-    })
+    await creerPoint(
+      {
+        titre: 'Clés',
+        description: '   ',
+        attendu: `  ${'x'.repeat(80)}  `,
+        priorite: 'normale',
+        echeance: null,
+        mentions: [],
+      },
+      NUMERO,
+    )
     expect(faux.rpc).toHaveBeenCalledWith(
       'creer_point',
       expect.objectContaining({ p_description: null, p_action_attendue: 'x'.repeat(80) }),
@@ -102,15 +115,17 @@ describe('creerPoint', () => {
       echeance: null,
       mentions: [],
     }
-    await expect(creerPoint({ ...valide, titre: '   ' })).rejects.toThrow()
-    await expect(creerPoint({ ...valide, titre: 'x'.repeat(81) })).rejects.toThrow()
-    await expect(creerPoint({ ...valide, description: 'x'.repeat(281) })).rejects.toThrow()
-    await expect(creerPoint({ ...valide, attendu: 'x'.repeat(81) })).rejects.toThrow()
-    await expect(creerPoint({ ...valide, echeance: '12/10/2026' })).rejects.toThrow()
-    await expect(creerPoint({ ...valide, mentions: ['social'] })).rejects.toThrow()
+    await expect(creerPoint({ ...valide, titre: '   ' }, NUMERO)).rejects.toThrow()
+    await expect(creerPoint({ ...valide, titre: 'x'.repeat(81) }, NUMERO)).rejects.toThrow()
+    await expect(creerPoint({ ...valide, description: 'x'.repeat(281) }, NUMERO)).rejects.toThrow()
+    await expect(creerPoint({ ...valide, attendu: 'x'.repeat(81) }, NUMERO)).rejects.toThrow()
+    await expect(creerPoint({ ...valide, echeance: '12/10/2026' }, NUMERO)).rejects.toThrow()
+    await expect(creerPoint({ ...valide, mentions: ['social'] }, NUMERO)).rejects.toThrow()
     await expect(
-      creerPoint({ ...valide, priorite: 'critique' as unknown as 'normale' }),
+      creerPoint({ ...valide, priorite: 'critique' as unknown as 'normale' }, NUMERO),
     ).rejects.toThrow()
+    // Numéro anti-doublon qui n'est pas un uuid (T76).
+    await expect(creerPoint(valide, 'pas-un-numero')).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
   })
 
@@ -118,14 +133,17 @@ describe('creerPoint', () => {
     const refus = { code: 'P0001', message: MESSAGES_POINT.refus.echeancePassee }
     installer({ data: null, error: refus })
     await expect(
-      creerPoint({
-        titre: 'Clés',
-        description: null,
-        attendu: null,
-        priorite: 'normale',
-        echeance: '2026-10-01',
-        mentions: [],
-      }),
+      creerPoint(
+        {
+          titre: 'Clés',
+          description: null,
+          attendu: null,
+          priorite: 'normale',
+          echeance: '2026-10-01',
+          mentions: [],
+        },
+        NUMERO,
+      ),
     ).rejects.toBe(refus)
   })
 
@@ -378,14 +396,17 @@ describe('lireEchecPoint', () => {
     expect(messageDeRefusPoint(erreurLongue)).toBe(MESSAGES_POINT.controle.commentaireLong)
     const erreurId = await changerStatutPoint('1', 'en_cours').catch((e: unknown) => e)
     expect(messageDeRefusPoint(erreurId)).toBe(MESSAGES_POINT.refus.acces)
-    const erreurPoint = await creerPoint({
-      titre: 'Clés',
-      description: null,
-      attendu: null,
-      priorite: 'critique' as unknown as 'normale',
-      echeance: null,
-      mentions: [],
-    }).catch((e: unknown) => e)
+    const erreurPoint = await creerPoint(
+      {
+        titre: 'Clés',
+        description: null,
+        attendu: null,
+        priorite: 'critique' as unknown as 'normale',
+        echeance: null,
+        mentions: [],
+      },
+      NUMERO,
+    ).catch((e: unknown) => e)
     expect(messageDeRefusPoint(erreurPoint, 'creation')).toBe(MESSAGES_POINT.controle.prioriteVide)
     expect(faux.rpc).not.toHaveBeenCalled()
   })

@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
-import { classer } from '@/data/echecEnvoi'
+import { classer, premierEnvoiEnregistre } from '@/data/echecEnvoi'
 import { CLE_SESSION } from '@/lib/requetes'
 
 /**
@@ -18,11 +18,11 @@ export function useApresEcriture(): () => void {
 }
 
 /**
- * Une création (événement, point, signalement) : les lectures sont relues après la réussite, et
- * aussi après tout échec dont l'issue est inconnue (aucune réponse, réponse perdue, délai : la base
- * a peut-être enregistré, m259, T76). La liste relue
- * montre alors ce qui est passé : la phrase d'erreur dit de la vérifier avant de réessayer, car
- * un doublon ne s'efface plus (ajout seulement).
+ * Une création à numéro anti-doublon (événement, point, signalement ; T76) : les lectures sont
+ * relues après la réussite, et aussi après tout échec dont l'issue est inconnue (aucune réponse,
+ * réponse perdue, délai : la base a peut-être enregistré, m259) ou dont le numéro dit que le
+ * premier envoi est enregistré. La liste relue montre alors ce qui est passé. Un statut 2xx reçu
+ * (réponse perdue ensuite, ou bogue après la réponse) vaut réussite : la base a enregistré.
  */
 export async function creerPuisRelire(
   creer: () => Promise<unknown>,
@@ -31,7 +31,12 @@ export async function creerPuisRelire(
   try {
     await creer()
   } catch (erreur) {
-    if (classer(erreur).issue !== 'rien_enregistre') apresEcriture()
+    const { issue } = classer(erreur)
+    if (issue === 'enregistre') {
+      apresEcriture()
+      return
+    }
+    if (issue !== 'rien_enregistre' || premierEnvoiEnregistre(erreur)) apresEcriture()
     throw erreur
   }
   apresEcriture()

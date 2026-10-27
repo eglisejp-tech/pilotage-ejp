@@ -318,8 +318,9 @@ test.describe('Ministères et comptes (EJP Tech, T60), aperçu', () => {
     await ouvrir(page, 'envoi=echec')
     await bouton(page, 'Désactiver Conseil, compte 1').click()
     await fenetre(page).getByRole('button', { name: 'Désactiver le compte' }).click()
+    // Écran d'EJP Tech : la référence de l'échec suit, « Référence : » (T76).
     await expect(fenetre(page).getByRole('alert')).toHaveText(
-      'La connexion a échoué. Fermez cette fenêtre et vérifiez la liste avant de réessayer.',
+      /^La connexion a échoué\. Fermez cette fenêtre et vérifiez la liste avant de réessayer\. Référence : [2-9A-HJKMNP-Z]{6}/,
     )
   })
 

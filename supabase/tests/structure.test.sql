@@ -58,8 +58,10 @@ select tables_are('public', array[
 select tables_are('private', array[
   'terme', 'fij_rubrique', 'indicateur_prevu', 'indicateur_prevu_terme', 'libelle_commun',
   -- étape 8 (T72)
-  'ministere_modele'
-]::name[], 'private contient les 6 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs, liste choisie pour chaque ministère), rien de plus');
+  'ministere_modele',
+  -- étape 8 (T76, numéro anti-doublon et incidents d'envoi)
+  'envoi', 'incident'
+]::name[], 'private contient les 8 tables internes (lexique, rubriques FIJ, indicateurs prévus, libellés communs, liste choisie pour chaque ministère, numéros d''envoi, incidents d''envoi), rien de plus');
 select views_are('public', array[
   'v_semaine', 'v_derniere_mesure', 'v_mesure_dimanche', 'v_total_dimanche', 'v_total_a_ce_jour',
   'v_pourcentage_fij', 'v_carte_fij', 'v_participation_courante', 'v_session_completude',
@@ -363,12 +365,15 @@ $$, $$ values
   ('ajouter_evenement', 3, false, true, false),
   ('ajouter_evenement', 4, false, true, false),
   ('ajouter_evenement', 5, false, true, false),
+  -- T76 : les trois créations à numéro anti-doublon (numéro obligatoire)
+  ('ajouter_evenement', 6, false, true, false),
   ('ajouter_mention_point', 2, false, true, false),
   ('ajouter_suggestion', 3, false, true, false),
   ('changer_statut_point', 2, false, true, false),
   ('choisir_modele_prevus', 2, false, true, false),
   ('clore_signalement', 2, false, true, false),
   ('conditions_acceptees', 1, false, true, false),
+  ('confirmer_signalement', 1, false, true, false),
   ('corriger_indicateur', 3, false, true, false),
   -- T78, lot 1 : corrections d'un événement
   ('corriger_titre_evenement', 2, false, true, false),
@@ -378,19 +383,26 @@ $$, $$ values
   ('creer_indicateur', 9, false, true, false),
   ('creer_indicateurs_prevus', 2, false, true, false),
   ('creer_point', 6, false, true, false),
+  ('creer_point', 7, false, true, false),
   ('declarer_intervenant', 2, false, true, false),
   ('declarer_session', 4, false, true, false),
   ('effacer_prenom', 1, false, true, false),
   ('effacer_prenoms_anciens', 0, false, true, false),
   ('evenements_eglise_mois', 0, false, true, false),
+  -- T76 : incidents d'envoi (tout compte en aal2 écrit, EJP Tech seul lit)
+  ('incidents_recents', 1, false, true, false),
   ('limites_indicateurs', 1, false, true, false),
   ('marquer_relu', 2, false, true, false),
   ('marquer_traite', 2, false, true, false),
   ('masquer_texte', 4, false, true, false),
   ('modifier_mentions_point', 2, false, true, false),
   ('modifier_session', 2, false, true, false),
+  ('noter_incidents', 1, false, true, false),
+  ('prendre_en_charge_signalement', 1, false, true, false),
   -- T75 : raisons d'un refus de suppression (EJP Tech seul)
   ('raisons_suppression_ministere', 1, false, true, false),
+  ('repondre_a_ejp_tech', 2, false, true, false),
+  ('repondre_au_ministere', 2, false, true, false),
   ('retirer_indicateur', 2, false, true, false),
   ('retirer_mention_point', 2, false, true, false),
   ('retirer_mon_indicateur', 2, false, true, false),
@@ -412,10 +424,11 @@ $$, $$ values
   ('serveur_revoquer_sessions', 3, false, false, true),
   ('serveur_supprimer_ministere', 3, false, false, true),
   ('signaler_difficulte', 2, false, true, false),
+  ('signaler_difficulte', 3, false, true, false),
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 54 fonctions de public : 39 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 63 fonctions de public : 48 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -429,6 +442,7 @@ $$, $$ values
   ('ajouter_evenement', 3, true, true, false),
   ('ajouter_evenement', 4, true, true, false),
   ('ajouter_evenement', 5, true, true, false),
+  ('ajouter_evenement', 6, true, true, false),
   ('ajouter_mention_point', 2, true, true, false),
   ('ajouter_suggestion', 3, true, true, false),
   ('ajouts_fiche', 1, false, false, false),
@@ -438,14 +452,17 @@ $$, $$ values
   ('changer_statut_point', 2, true, true, false),
   ('choisir_modele_prevus', 2, true, true, false),
   ('clore_signalement', 2, true, true, false),
+  ('cloture_automatique_le', 1, false, true, false),
   ('communs_de_fiche', 0, true, true, false),
   ('comptages_evenements_mois', 1, false, true, false),
   ('compte_active', 1, false, false, false),
   ('compte_active_un_jour', 1, false, false, false),
   ('comptes_jamais_actives', 0, true, true, false),
   ('conditions_acceptees', 1, true, true, false),
+  ('confirmer_signalement', 1, true, true, false),
   ('controler_appel', 2, false, false, false),
   ('controler_appelant', 1, false, false, false),
+  ('codes_incident', 0, false, false, false),
   ('controler_categorie_sensible', 0, true, false, false),
   ('controler_cible', 2, false, false, false),
   ('controler_cible_desactivee', 2, false, false, false),
@@ -475,6 +492,7 @@ $$, $$ values
   ('creer_indicateur', 9, true, true, false),
   ('creer_indicateurs_prevus', 2, true, true, false),
   ('creer_point', 6, true, true, false),
+  ('creer_point', 7, true, true, false),
   ('date_en_lettres', 1, false, false, false),
   ('declarations_de_ma_personne', 0, true, false, false),
   ('declarer_intervenant', 2, true, true, false),
@@ -483,9 +501,12 @@ $$, $$ values
   ('derniere_periode_finie', 1, false, true, false),
   ('dimanche_reference', 0, false, true, false),
   ('dimanche_reference_de', 1, false, true, false),
+  ('ecrans_incident', 0, false, false, false),
   ('ecrans_signalement', 0, false, false, false),
   ('effacer_prenom', 1, true, true, false),
   ('effacer_prenoms_anciens', 0, true, true, false),
+  -- T76 : aides du numéro anti-doublon (au nom du propriétaire, aucun droit d'exécution)
+  ('envoi_existant', 3, true, false, false),
   ('est_decideur', 0, true, true, false),
   ('etat_comptes', 0, true, true, false),
   ('evenements_eglise_mois', 0, true, true, false),
@@ -504,6 +525,7 @@ $$, $$ values
   ('figer_part', 0, false, false, false),
   ('fij_rubriques', 0, true, true, false),
   ('fin_periode', 2, false, true, false),
+  ('incidents_recents', 1, true, true, false),
   ('forcer_auteur', 0, false, false, false),
   ('forcer_intervenant', 0, false, false, false),
   ('forcer_passage', 0, false, false, false),
@@ -515,6 +537,8 @@ $$, $$ values
   ('journaliser_reunions', 0, true, false, false),
   ('libelle_pris', 3, false, false, false),
   ('libelle_session', 2, false, false, false),
+  ('lire_horodatage', 1, false, false, false),
+  ('lire_incident', 1, false, false, false),
   ('lignes_fiche', 2, false, false, false),
   ('limites_indicateurs', 1, true, true, false),
   ('lit_tout', 0, true, true, false),
@@ -537,23 +561,33 @@ $$, $$ values
   ('mon_ministere', 0, true, true, false),
   ('mon_type', 0, true, true, false),
   ('normaliser', 1, false, true, false),
+  ('noter_incidents', 1, true, true, false),
+  ('operations_incident', 0, false, false, false),
   ('periode_de', 2, false, true, false),
   ('peut_configurer', 0, true, true, false),
   ('points_mentionnant_mon_ministere', 0, true, true, false),
   ('poser_mention', 3, true, false, false),
   ('poser_modele', 3, false, false, false),
   ('precisions_sensibles', 0, true, true, false),
+  ('prendre_en_charge_signalement', 1, true, true, false),
+  ('purger_envois', 0, false, false, false),
+  ('purger_incidents', 0, false, false, false),
   ('refuser_mention_double', 0, false, false, false),
   ('refuser_modification', 0, false, false, false),
   ('refuser_modification_sauf_effacement', 0, false, false, false),
   ('refuser_modification_sauf_masquage', 0, false, false, false),
   ('refuser_modification_sauf_ministere_supprime', 0, false, false, false),
+  ('refuser_modification_sauf_purge', 0, false, false, false),
   ('refus_suppression_ministere', 1, false, false, false),
   -- T75 : les raisons (aide interne), puis leur lecture par l'écran (EJP Tech seul, aal2)
   ('raisons_suppression', 1, false, false, false),
   ('raisons_suppression_ministere', 1, true, true, false),
+  ('repondre_a_ejp_tech', 2, true, true, false),
+  ('repondre_au_ministere', 2, true, true, false),
+  ('reponse_possible_jusquau', 1, false, true, false),
   ('reprendre_modeles', 0, false, false, false),
   ('retard_minutes', 2, false, true, false),
+  ('retenir_envoi', 4, true, false, false),
   ('retirer_calculs_de', 1, false, false, false),
   ('retirer_indicateur', 2, true, true, false),
   ('retirer_mention_point', 2, true, true, false),
@@ -577,10 +611,15 @@ $$, $$ values
   ('serveur_revoquer_sessions', 3, true, false, true),
   ('serveur_supprimer_ministere', 3, true, false, true),
   ('session_courante', 0, false, true, false),
+  ('signalement_a_verifier', 1, false, false, false),
   ('signaler_difficulte', 2, true, true, false),
+  ('signaler_difficulte', 3, true, true, false),
+  ('statut_du_signalement', 1, false, false, false),
+  ('statut_signalement', 3, false, true, false),
   ('suggestions', 0, true, true, false),
   ('supprimer_session', 1, true, true, false),
   ('tableau_ministeres', 0, true, true, false),
+  ('texte_de_reponse', 1, false, false, false),
   ('texte_libre_refuse', 1, false, false, false),
   ('texte_refuse', 5, false, false, false),
   ('textes_a_relire', 0, true, true, false),
@@ -595,7 +634,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 170 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 195 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace
@@ -700,6 +739,10 @@ select bag_eq($$
     join pg_class c on c.oid = t.tgrelid
    where c.relnamespace in ('public'::regnamespace, 'private'::regnamespace) and not t.tgisinternal
 $$, $$ values
+  ('private.envoi', 'ajout_seulement'),
+  ('private.envoi', 'ajout_seulement_vider'),
+  ('private.incident', 'ajout_seulement'),
+  ('private.incident', 'ajout_seulement_vider'),
   ('private.indicateur_prevu_terme', 'controler_prevu_terme'),
   ('private.ministere_modele', 'ajout_seulement'),
   ('private.ministere_modele', 'ajout_seulement_vider'),
@@ -799,7 +842,7 @@ $$, $$ values
   ('public.ventilation_sensible', 'ajout_seulement_vider'),
   ('public.ventilation_sensible', 'forcer_auteur'),
   ('public.ventilation_sensible', 'verifier_ventilations')
-$$, 'les 98 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles (ministère du journal compris, T74), mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72 ; suppression d''un ministère vide, T74), termes complets, et eux seuls');
+$$, 'les 102 triggers de public et de private : auteur imposé, journal et son attribution (T56), contrôles (ministère du journal compris, T74), mention unique, inaltérabilité (liste choisie de chaque ministère comprise, T72 ; suppression d''un ministère vide, T74 ; numéros d''envoi purgés à 7 jours et incidents d''envoi purgés à 90 jours, T76 ; corrections d''un événement, T78), termes complets, et eux seuls');
 
 -- Données de référence (migration, production comprise)
 select results_eq($$

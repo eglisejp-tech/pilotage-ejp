@@ -718,7 +718,7 @@ describe("adresses de l'étape 4", () => {
     expect(faux.tables).toEqual(['compte'])
   })
 
-  it('/moderation : le titre de l’écran, puis le bloc « Signalements » lu dans v_signalement (lot E8)', async () => {
+  it('/moderation : le titre de l’écran, puis le bloc « Signalements » lu dans v_signalement et signalement_suivi (lot E8, T77)', async () => {
     const faux = installer({
       ...scenarioDe('admin_plateforme'),
       lignes: {
@@ -735,17 +735,28 @@ describe("adresses de l'étape 4", () => {
             clos_le: null,
             ouvert: true,
             clos_recent: false,
+            statut: 'recu',
+            derniere_etape: null,
+            statut_le: '2026-10-02T18:40:00+02:00',
+            jours_depuis: 9,
+            fin: null,
+            reponse_possible_jusquau: null,
+            compte_actif: true,
           },
         ],
       },
     })
     afficher('/moderation')
-    expect(await screen.findByText('Communication')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Communication' })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Modération')
     expect(screen.getByRole('heading', { level: 2, name: 'Signalements' })).toBeInTheDocument()
-    expect(screen.getByText('1 signalement ouvert')).toBeInTheDocument()
+    expect(screen.getByText('1 signalement à traiter')).toBeInTheDocument()
+    expect(screen.getByText('Reçu le 2 oct., il y a 9 jours.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Prendre en charge' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Répondre au ministère' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Clore le signalement' })).toBeInTheDocument()
+    expect(faux.tables).toContain('signalement_suivi')
     // Lot L6 : la file « Champs libres à relire », vide ici, sous le bloc.
     expect(
       await screen.findByRole('heading', { level: 2, name: 'Textes à relire' }),
@@ -812,7 +823,7 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getByText('1 texte à relire')).toBeInTheDocument()
   })
 
-  it('un ministère sur /signaler : le formulaire, l’écran prérempli, ses seuls signalements lus', async () => {
+  it('un ministère sur /signaler : le formulaire, l’écran prérempli, le lien « Voir mes signalements », aucune lecture (T77)', async () => {
     const faux = connecte('ministere')
     afficher('/signaler?ecran=saisie_reunion')
     expect(
@@ -821,9 +832,75 @@ describe("adresses de l'étape 4", () => {
     expect(screen.getByText('Écran concerné : Prochaine réunion')).toBeInTheDocument()
     // Plus de phrase sur le lecteur sous le titre (T66) : le formulaire dit seulement quoi écrire.
     expect(screen.queryByText(/EJP Tech lit votre signalement/)).toBeNull()
-    await waitFor(() => expect(faux.tables).toEqual(['compte', 'v_signalement']))
-    expect(faux.eq).toHaveBeenCalledWith('ministere_id', 'm-communication')
+    // Le suivi est sur « Mes signalements » (T77) : /signaler ne lit plus aucun signalement.
+    expect(screen.getByRole('link', { name: 'Voir mes signalements' })).toHaveAttribute(
+      'href',
+      '/signalements',
+    )
+    expect(faux.tables).toEqual(['compte'])
   })
+
+  it('un ministère sur /signalements : « Mes signalements », ses seuls signalements et leur suivi lus (T77)', async () => {
+    const faux = installer({
+      ...scenarioDe('ministere'),
+      lignes: {
+        v_signalement: [
+          {
+            id: '43000000-0000-4000-8000-000000000006',
+            ministere_id: 'm-communication',
+            ministere_nom: 'Communication',
+            ecran: 'saisie_evenement',
+            texte: 'Problème au niveau de la saisie des événement dans le calendrier',
+            saisi_le: '2026-10-26T10:15:00+01:00',
+            suivi_id: null,
+            commentaire: null,
+            clos_le: null,
+            ouvert: true,
+            clos_recent: false,
+            statut: 'recu',
+            derniere_etape: null,
+            statut_le: '2026-10-26T10:15:00+01:00',
+            jours_depuis: 0,
+            fin: null,
+            reponse_possible_jusquau: null,
+            compte_actif: true,
+          },
+        ],
+      },
+    })
+    const routeur = afficher('/signalements')
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Mes signalements' }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 3, name: 'Ajouter un événement, 26 oct.' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('EJP Tech a reçu votre signalement le 26 oct.')).toBeInTheDocument()
+    expect(document.title).toBe('Mes signalements, Pilotage EJP')
+    expect(routeur.state.location.pathname).toBe('/signalements')
+    expect(faux.tables).toEqual(['compte', 'v_signalement', 'signalement_suivi'])
+    expect(faux.eq).toHaveBeenCalledWith('ministere_id', 'm-communication')
+    // Pas d'onglet « Mes signalements » : on y arrive par « Ma semaine », /signaler et l'ancre.
+    for (const menu of navigation()) {
+      expect(within(menu).queryByRole('link', { name: 'Mes signalements' })).toBeNull()
+    }
+  })
+
+  it.each<TypeCompte>(['berger', 'conseil', 'admin_eglise', 'admin_plateforme'])(
+    '%s sur /signalements : page non disponible, lien vers son accueil, aucune lecture de signalement (T77)',
+    async (profil) => {
+      const faux = connecte(profil)
+      afficher('/signalements')
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Page non disponible' }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: "Revenir à l'accueil" })).toHaveAttribute(
+        'href',
+        accueil(profil),
+      )
+      expect(faux.tables).toEqual(['compte'])
+    },
+  )
 
   it.each<TypeCompte>(['berger', 'conseil', 'admin_eglise'])(
     '%s sur /moderation : page non disponible, aucune lecture de signalement',

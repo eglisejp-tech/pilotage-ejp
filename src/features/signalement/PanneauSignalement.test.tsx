@@ -1,55 +1,24 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { describe, expect, it, vi } from 'vitest'
-import type { LigneSignalement } from '@/data/signalements'
-import type { ContenuMesSignalements } from '@/features/signalement/MesSignalements'
 import { PanneauSignalement } from '@/features/signalement/PanneauSignalement'
 import type { Signalement } from '@/features/signalement/schemas'
 import type { EcranSignalement } from '@/lib/base'
 
-type Envoi = (signalement: Signalement) => Promise<void>
+type Envoi = (signalement: Signalement, numero: string) => Promise<void>
 
 const RAPPEL = "N'écrivez aucun nom ni information personnelle."
-const CONFIRMATION = "Signalement envoyé. La réponse s'affichera sur cette page."
-
-const OUVERT: LigneSignalement = {
-  id: '43000000-0000-4000-8000-000000000001',
-  ministere_id: '10000000-0000-4000-8000-000000000001',
-  ministere_nom: 'Communication',
-  ecran: 'saisie_evenement',
-  texte: 'Le formulaire refuse la date de notre soirée.',
-  saisi_le: '2026-10-02T18:40:00+02:00',
-  suivi_id: null,
-  commentaire: null,
-  clos_le: null,
-  ouvert: true,
-  clos_recent: false,
-}
-
-const CLOS: LigneSignalement = {
-  ...OUVERT,
-  id: '43000000-0000-4000-8000-000000000002',
-  ecran: 'saisie_dimanche',
-  texte: '[texte masqué par EJP Tech]',
-  saisi_le: '2026-09-27T13:10:00+02:00',
-  suivi_id: '43000000-0000-4000-8000-000000000011',
-  commentaire: 'Réglé : le champ attendait un nombre entier.',
-  // 0 h 30 à Paris le 30 sept., 22 h 30 UTC le 29 : le jour affiché est celui de Paris.
-  clos_le: '2026-09-29T22:30:00Z',
-  ouvert: false,
-  clos_recent: true,
-}
+/** T77, conception 3.1 c : la réponse se suit dans « Mes signalements ». */
+const CONFIRMATION = "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements »."
 
 function afficher({
   ecran = 'saisie_evenement',
   envoyer = vi.fn<Envoi>(() => Promise.resolve()),
-  mesSignalements = { etat: 'liste', signalements: [] },
   onFermer = vi.fn(),
 }: {
   ecran?: EcranSignalement
   envoyer?: Envoi
-  mesSignalements?: ContenuMesSignalements
   onFermer?: () => void
 } = {}) {
   render(
@@ -57,7 +26,6 @@ function afficher({
       <PanneauSignalement
         ecran={ecran}
         envoyer={envoyer}
-        mesSignalements={mesSignalements}
         onFermer={onFermer}
         surtitre="Ministère Communication"
       />
@@ -118,11 +86,34 @@ describe('« Signaler une difficulté »', () => {
     await userEvent.type(champ(), '  Je ne peux pas choisir la date.  ')
     await envoyerLeFormulaire()
     expect(await screen.findByText(CONFIRMATION)).toBeInTheDocument()
-    expect(envoyer).toHaveBeenCalledWith({
-      ecran: 'saisie_evenement',
-      texte: 'Je ne peux pas choisir la date.',
-    })
+    expect(envoyer).toHaveBeenCalledWith(
+      {
+        ecran: 'saisie_evenement',
+        texte: 'Je ne peux pas choisir la date.',
+      },
+      // Numéro anti-doublon (T76) : un uuid tiré au premier envoi.
+      expect.stringMatching(
+        /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+      ),
+    )
     expect(champ()).toHaveValue('')
+  })
+
+  it('numéro anti-doublon (T76) : le même au nouvel essai après une réponse perdue', async () => {
+    const envoyer = vi
+      .fn<Envoi>()
+      .mockRejectedValueOnce({ code: '', message: 'TypeError: Load failed' })
+      .mockResolvedValueOnce(undefined)
+    afficher({ envoyer })
+    await userEvent.type(champ(), 'Je ne peux pas choisir la date.')
+    await envoyerLeFormulaire()
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'La connexion a échoué. Vérifiez la liste avant de réessayer.',
+    )
+    await envoyerLeFormulaire()
+    expect(await screen.findByText(CONFIRMATION)).toBeInTheDocument()
+    const [premier, second] = envoyer.mock.calls.map(([, numero]) => numero)
+    expect(second).toBe(premier)
   })
 
   it('refus de la base (donnée personnelle) : son message sous le champ, texte gardé', async () => {
@@ -203,36 +194,25 @@ describe('« Signaler une difficulté »', () => {
   })
 })
 
-describe('« Vos derniers signalements »', () => {
-  it('premier usage : rien sous le formulaire', () => {
-    afficher({ mesSignalements: { etat: 'liste', signalements: [] } })
+describe('« Voir mes signalements » (T77, conception 3.1 c)', () => {
+  it('un seul lien sous le formulaire, vers /signalements ; plus de liste ici', () => {
+    afficher()
+    expect(screen.getByRole('link', { name: 'Voir mes signalements' })).toHaveAttribute(
+      'href',
+      '/signalements',
+    )
     expect(screen.queryByRole('heading', { name: 'Vos derniers signalements' })).toBeNull()
+    expect(screen.queryByRole('list')).toBeNull()
   })
 
-  it('pendant la lecture : rien non plus', () => {
-    afficher({ mesSignalements: { etat: 'chargement' } })
-    expect(screen.queryByRole('heading', { name: 'Vos derniers signalements' })).toBeNull()
-  })
-
-  it('« Ouvert », ou « Clos le 30 sept. » (jour de Paris) avec la réponse', () => {
-    afficher({ mesSignalements: { etat: 'liste', signalements: [OUVERT, CLOS] } })
-    const liste = screen.getByRole('region', { name: 'Vos derniers signalements' })
-    const lignes = within(liste).getAllByRole('listitem')
-    expect(lignes).toHaveLength(2)
-    expect(lignes[0]).toHaveTextContent('Ajouter un événement, 2 oct.')
-    expect(lignes[0]).toHaveTextContent('Ouvert')
-    expect(lignes[1]).toHaveTextContent('Chiffres du dimanche, 27 sept.')
-    expect(lignes[1]).toHaveTextContent('Clos le 30 sept.')
-    expect(lignes[1]).toHaveTextContent('Réponse : Réglé : le champ attendait un nombre entier.')
-    // Un texte masqué s'affiche « [texte masqué] » en encre 3 (T66).
-    expect(within(lignes[1]!).getByText('[texte masqué]')).toHaveClass('text-encre-3')
-  })
-
-  it('lecture en échec : « La connexion a échoué. Réessayez. » avec « Réessayer »', async () => {
-    const reessayer = vi.fn()
-    afficher({ mesSignalements: { etat: 'probleme', reessayer } })
-    expect(screen.getByRole('alert')).toHaveTextContent('La connexion a échoué. Réessayez.')
-    await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
-    expect(reessayer).toHaveBeenCalled()
+  it('après l’envoi, la confirmation renvoie à « Mes signalements », le lien reste', async () => {
+    afficher()
+    await userEvent.type(
+      champ(),
+      'Problème au niveau de la saisie des événement dans le calendrier',
+    )
+    await envoyerLeFormulaire()
+    expect(await screen.findByText(CONFIRMATION)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voir mes signalements' })).toBeInTheDocument()
   })
 })

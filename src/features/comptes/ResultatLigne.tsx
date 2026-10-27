@@ -10,6 +10,8 @@ export interface ResultatAction {
   message: string
   /** Numéro de l'action : le même message, une deuxième fois, s'affiche de nouveau. */
   envoi: number
+  /** Référence d'un échec technique (T76), sous le refus. */
+  reference?: string | null
 }
 
 interface Props {
@@ -33,7 +35,13 @@ export function ResultatLigne({ resultat, pleineLargeur = false }: Props) {
         message={resultat?.reussite ? resultat.message : null}
         envoi={resultat?.envoi ?? 0}
       />
-      {resultat && !resultat.reussite ? <ErreurFormulaire message={resultat.message} /> : null}
+      {resultat && !resultat.reussite ? (
+        <ErreurFormulaire
+          message={resultat.message}
+          reference={resultat.reference ?? null}
+          ecranEjpTech
+        />
+      ) : null}
     </div>
   )
 }

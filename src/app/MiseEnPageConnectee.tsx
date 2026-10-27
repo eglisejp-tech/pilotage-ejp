@@ -3,6 +3,7 @@ import { Outlet, useLocation } from 'react-router'
 import { MiseEnPage } from '@/app/MiseEnPage'
 import { AnnonceSuivante } from '@/features/connexion/AnnonceSuivante'
 import { useEspaces } from '@/features/espaces/useEspaces'
+import { useIncidentsEnvoi } from '@/features/incidents/incidentsEnvoi'
 import { accueil, ONGLETS } from '@/features/navigation/profils'
 import { seDeconnecter } from '@/features/session/actions'
 import { useCompteConnecte, usePrenomDeclare } from '@/features/session/contexte'
@@ -20,6 +21,8 @@ export function MiseEnPageConnectee() {
   const { pathname, search } = useLocation()
   const [deconnexionEnCours, setDeconnexionEnCours] = useState(false)
   const espaces = useEspaces(compte.libelle)
+  // Session en aal2 : la file des incidents d'envoi de cet espace peut partir (T76, lot C).
+  useIncidentsEnvoi()
 
   async function deconnecter() {
     setDeconnexionEnCours(true)

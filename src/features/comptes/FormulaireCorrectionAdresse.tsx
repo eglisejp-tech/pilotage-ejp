@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { Bouton } from '@/components/ui/Bouton'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { ChampLigne } from '@/features/comptes/ChampLigne'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { schemaCorrection } from '@/features/comptes/schemas'
@@ -57,6 +58,7 @@ export function FormulaireCorrectionAdresse({
     defaultValues: { email: adresseActuelle ?? '' },
   })
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   // Dans le panneau : « Annuler » demande confirmation si l'adresse a changé (m265).
   const annuler = useFermetureSaisie(onAnnuler)
   const ancienne = adresseActuelle?.trim().toLowerCase() ?? ''
@@ -70,7 +72,10 @@ export function FormulaireCorrectionAdresse({
     } catch (erreur) {
       const lu = lireRefusCompte(erreur)
       if (lu.ou === 'email') setError('email', { message: lu.message }, { shouldFocus: true })
-      else setRefus(lu.message)
+      else {
+        setRefus(lu.message)
+        setReference(referenceEchec(erreur))
+      }
     }
   })
 
@@ -128,7 +133,9 @@ export function FormulaireCorrectionAdresse({
       <Bouton pleineLargeur onClick={annuler}>
         {TEXTES_COMPTES.annuler}
       </Bouton>
-      {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      {refus !== null ? (
+        <ErreurFormulaire message={refus} reference={reference} ecranEjpTech />
+      ) : null}
     </form>
   )
 }

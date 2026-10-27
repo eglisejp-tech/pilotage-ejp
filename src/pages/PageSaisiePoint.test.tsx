@@ -120,6 +120,8 @@ describe('/saisir/point (maquette 10)', () => {
       p_priorite: 'urgente',
       p_echeance: '2026-10-12',
       p_mentions: ['10000000-0000-4000-8000-000000000005'],
+      // Numéro anti-doublon (T76), tiré au premier envoi.
+      p_cle: expect.stringMatching(/^[0-9a-f-]{36}$/) as string,
     })
     // Jamais d'écriture directe dans une table.
     expect(faux.tables.filter((table) => table.startsWith('point'))).toEqual([])

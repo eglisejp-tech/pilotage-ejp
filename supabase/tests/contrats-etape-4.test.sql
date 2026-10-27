@@ -55,7 +55,7 @@ insert into attendu_action values
   ('point_mention_ajoutee'), ('point_mention_retiree'),
   ('modele_prevus_choisi'),
   ('adresse_corrigee'), ('ministere_supprime'),
-  -- T77 (suivi des signalements), repris par la liste de T78
+  -- T77 (suivi des signalements)
   ('signalement_pris_en_charge'), ('signalement_repondu'), ('signalement_regle'),
   ('signalement_reponse_ministere'),
   -- T78, lot 1 (corrections d'un événement)
@@ -116,11 +116,16 @@ select is_empty($$
   select pg_temp.valeurs_du_check('public.journal', 'journal_cible_check')
 $$, 'toute cible de la modération est une cible du journal (texte_relu et texte_masque)');
 
--- Une ligne de journal par code d'action, puis par cible (au nom de Système, sans détail).
-select lives_ok(format('insert into public.journal (ministere_id, action) values (%L, %L)',
-                       (select m from ctx), a.code),
+-- Une ligne de journal par code d'action, puis par cible (au nom de Système, sans détail). Les
+-- quatre codes du suivi des signalements (T77) portent toujours la cible signalement.
+select lives_ok(format('insert into public.journal (ministere_id, action, cible, cible_id) values (%L, %L, %L, %L)',
+                       (select m from ctx), a.code,
+                       case when a.suivi then 'signalement' end,
+                       case when a.suivi then gen_random_uuid() end),
                 'journal : le code d''action ' || a.code || ' est accepté')
-  from attendu_action a
+  from (select x.code, x.code in ('signalement_pris_en_charge', 'signalement_repondu', 'signalement_regle',
+                                  'signalement_reponse_ministere') as suivi
+          from attendu_action x) as a
  order by a.code;
 select lives_ok(format('insert into public.journal (ministere_id, action, cible, cible_id) values (%L, %L, %L, %L)',
                        (select m from ctx), 'texte_masque', c.code, gen_random_uuid()),

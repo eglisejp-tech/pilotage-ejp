@@ -13,6 +13,7 @@ import type { FonctionsConditions, TablesConditions } from './base/conditions'
 import type { FonctionsEvenements, TablesEvenements, VuesEvenements } from './base/evenements'
 import type { FonctionsFiche, TablesFiche, VuesFiche } from './base/fiche'
 import type { FonctionsFij, TablesFij, VuesFij } from './base/fij'
+import type { FonctionsIncidents } from './base/incidents'
 import type { FonctionsIndicateurs, TablesIndicateurs, VuesIndicateurs } from './base/indicateurs'
 import type { FonctionsJournal, TablesJournal, VuesJournal } from './base/journal'
 import type { FonctionsModeration, TablesModeration, VuesModeration } from './base/moderation'
@@ -31,6 +32,7 @@ export type * from './base/conditions'
 export type * from './base/evenements'
 export type * from './base/fiche'
 export type * from './base/fij'
+export type * from './base/incidents'
 export type * from './base/indicateurs'
 export type * from './base/journal'
 export type * from './base/moderation'
@@ -75,7 +77,8 @@ export type Database = {
       FonctionsComptes &
       FonctionsJournal &
       FonctionsModeration &
-      FonctionsPersonnes
+      FonctionsPersonnes &
+      FonctionsIncidents
     Enums: EnumsCommuns
     CompositeTypes: Aucun
   }

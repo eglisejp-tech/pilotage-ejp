@@ -31,7 +31,8 @@ export type FonctionsPoints = {
    * traiter », avec ses mentions, une ligne de journal sans texte. Rend l'identifiant du point.
    * Refus de la base (clés de `src/data/messagesBase.ts`) : « Donnez un titre au point
    * (80 caractères au plus). », « L'échéance ne peut pas être passée. », « Ce ministère ne peut
-   * pas être mentionné. ».
+   * pas être mentionné. ». Version à sept arguments (T76) : le numéro anti-doublon, obligatoire,
+   * comme `ajouter_evenement` ; celle à six (ancien site) délègue sans numéro.
    */
   creer_point: {
     Args: {
@@ -42,6 +43,8 @@ export type FonctionsPoints = {
       /** « 2026-10-12 » (jour de Paris), ou null : sans échéance. */
       p_echeance: string | null
       p_mentions: string[]
+      /** Numéro anti-doublon (uuid), le même à chaque nouvel essai du même envoi. */
+      p_cle: string
     }
     Returns: string
   }

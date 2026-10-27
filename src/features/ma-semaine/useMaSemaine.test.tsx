@@ -99,6 +99,82 @@ describe('useMaSemaine', () => {
     await waitFor(() => expect(lectures(faux, 'v_evenement_mention')).toBeGreaterThan(avant))
   })
 
+  it('T77 : le suivi des signalements se lit avec le reste, puis le bandeau d’un Répondu', async () => {
+    const faux = installer({
+      v_semaine: [SEMAINE],
+      v_signalement: [
+        { id: 's-recu', saisi_le: '2026-10-20T10:00:00+02:00', statut: 'recu' },
+        { id: 's-repondu', saisi_le: '2026-10-26T10:15:00+01:00', statut: 'repondu' },
+      ],
+    })
+    const { result } = rendre()
+    await waitFor(() => expect(result.current.etat).toBe('pret'), { timeout: 5000 })
+    if (result.current.etat !== 'pret') return
+    expect(result.current.donnees.signalements).toEqual({
+      genre: 'bandeau',
+      nombre: 1,
+      plusAncien: { id: 's-repondu', saisi_le: '2026-10-26T10:15:00+01:00' },
+    })
+    expect(lectures(faux, 'v_signalement')).toBe(1)
+    // Les seuls ouverts du ministère : jamais un autre ministère, jamais une date du navigateur.
+    expect(faux.filtres).toEqual(
+      expect.arrayContaining([
+        { table: 'v_signalement', operateur: 'eq', colonne: 'ministere_id', valeur: MINISTERE },
+        { table: 'v_signalement', operateur: 'eq', colonne: 'ouvert', valeur: true },
+      ]),
+    )
+  })
+
+  it('T77 : des Reçu ou En cours seulement, la ligne discrète', async () => {
+    installer({
+      v_semaine: [SEMAINE],
+      v_signalement: [
+        { id: 's-en-cours', saisi_le: '2026-10-20T10:00:00+02:00', statut: 'en_cours' },
+      ],
+    })
+    const { result } = rendre()
+    await waitFor(() => expect(result.current.etat).toBe('pret'), { timeout: 5000 })
+    if (result.current.etat !== 'pret') return
+    expect(result.current.donnees.signalements).toEqual({ genre: 'ligne', nombre: 1 })
+  })
+
+  it('T77 : aucun ouvert, rien', async () => {
+    installer()
+    const { result } = rendre()
+    await waitFor(() => expect(result.current.etat).toBe('pret'), { timeout: 5000 })
+    if (result.current.etat !== 'pret') return
+    expect(result.current.donnees.signalements).toBeNull()
+  })
+
+  it('T77 : la lecture du suivi en échec, la page s’affiche quand même, sans bandeau ni ligne', async () => {
+    installer({ v_semaine: [SEMAINE] }, ['v_signalement'])
+    const { result } = rendre()
+    await waitFor(() => expect(result.current.etat).toBe('pret'), { timeout: 5000 })
+    if (result.current.etat !== 'pret') return
+    expect(result.current.donnees.signalements).toBeNull()
+    expect(result.current.donnees.semaine.numero).toBe(39)
+  })
+
+  it('T77 : le suivi qui ne répond pas en 10 s ne bloque pas la page', async () => {
+    const faux = installer()
+    const lire = faux.from.getMockImplementation()
+    faux.from.mockImplementation((table: string) =>
+      table === 'v_signalement' ? (suspendue() as never) : (lire?.(table) as never),
+    )
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    const { result } = rendre()
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9_000)
+    })
+    expect(result.current.etat).toBe('chargement')
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_500)
+    })
+    expect(result.current.etat).toBe('pret')
+    if (result.current.etat !== 'pret') return
+    expect(result.current.donnees.signalements).toBeNull()
+  })
+
   it('v_semaine sans ligne : erreur, jamais une page à moitié construite', async () => {
     installer({ v_semaine: [] })
     const { result } = rendre()

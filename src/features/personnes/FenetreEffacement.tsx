@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { LibelleEnvoi } from '@/components/etats/LibelleEnvoi'
-import { phraseErreur } from '@/data/echecEnvoi'
+import { phraseErreur, referenceEchec } from '@/data/echecEnvoi'
 import { TEXTES_FENETRE_EFFACEMENT } from '@/features/personnes/textes'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 import { usePiegeFocus } from '@/features/saisie/usePiegeFocus'
@@ -27,6 +27,7 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
   const fenetre = useRef<HTMLDivElement>(null)
   const [enCours, setEnCours] = useState(false)
   const [echec, setEchec] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   usePiegeFocus(fenetre, true, () => {
     if (!enCours) onAnnuler()
   })
@@ -58,6 +59,7 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
           { formulaire: false },
         ),
       )
+      setReference(referenceEchec(erreur))
       setEnCours(false)
     }
   }
@@ -112,7 +114,9 @@ export function FenetreEffacement({ cible, effacer, onAnnuler }: Props) {
             </LibelleEnvoi>
           </button>
         </div>
-        {echec !== null ? <ErreurFormulaire message={echec} /> : null}
+        {echec !== null ? (
+          <ErreurFormulaire message={echec} reference={reference} ecranEjpTech />
+        ) : null}
       </div>
     </div>,
     document.body,

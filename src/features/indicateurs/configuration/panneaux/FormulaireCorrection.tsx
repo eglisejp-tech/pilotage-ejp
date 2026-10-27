@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { referenceEchec } from '@/data/echecEnvoi'
 import {
   LONGUEUR_DEFINITION_MAX,
   LONGUEUR_LIBELLE_MAX,
@@ -95,6 +96,7 @@ function CorpsCorrection({ controleur, ligne }: Props) {
   const [erreurs, setErreurs] = useState<Record<string, string>>({})
   const [essais, setEssais] = useState(0)
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   const [enCours, setEnCours] = useState(false)
 
   const verifications = useVerificationLibelle(ecritures, ministere.id, libelle, ligne.nature)
@@ -131,6 +133,7 @@ function CorpsCorrection({ controleur, ligne }: Props) {
       const surChamp = erreurDeChamp(erreur)
       if (surChamp === null) {
         setRefus(lireRefusEcriture(erreur, TEXTES_PANNEAUX.connexionFormulaire))
+        setReference(referenceEchec(erreur))
       } else {
         setErreurs(surChamp)
         setEssais((precedent) => precedent + 1)
@@ -187,7 +190,7 @@ function CorpsCorrection({ controleur, ligne }: Props) {
           enCours={enCours}
           libelleEnCours={TEXTES_PANNEAUX.enCours}
         />
-        {refus !== null ? <ErreurEnvoi message={refus} /> : null}
+        {refus !== null ? <ErreurEnvoi message={refus} reference={reference} /> : null}
         <button
           type="button"
           onClick={annuler}

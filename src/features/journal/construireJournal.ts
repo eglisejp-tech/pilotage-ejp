@@ -503,7 +503,11 @@ function detailParAction(ligne: LigneJournal, contexte: ContexteJournal): Segmen
       return avecSuite(objet(ligne), motif === undefined ? null : `motif : ${motif}`)
     }
     case 'difficulte_signalee':
-    case 'signalement_clos': {
+    case 'signalement_clos':
+    case 'signalement_pris_en_charge':
+    case 'signalement_repondu':
+    case 'signalement_regle':
+    case 'signalement_reponse_ministere': {
       const code = texteDe(detail, 'ecran') ?? ligne.cible_texte ?? ''
       const ecran = Object.hasOwn(LIBELLES_ECRAN, code)
         ? LIBELLES_ECRAN[code as keyof typeof LIBELLES_ECRAN]

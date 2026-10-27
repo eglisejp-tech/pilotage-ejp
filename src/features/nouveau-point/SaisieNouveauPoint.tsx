@@ -32,7 +32,8 @@ export function SaisieNouveauPoint({
   })
   const ministeres = useQuery({ queryKey: ['ministeres', 'liste'], queryFn: lireMinisteres })
 
-  const envoyer = (point: NouveauPoint) => creerPuisRelire(() => creerPoint(point), apresEcriture)
+  const envoyer = (point: NouveauPoint, numero: string) =>
+    creerPuisRelire(() => creerPoint(point, numero), apresEcriture)
 
   let contenu: ContenuPanneauNouveauPoint
   if (semaine.data && ministeres.data) {

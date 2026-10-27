@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { flushSync } from 'react-dom'
 import { ErreurCompte } from '@/data/comptes'
 import type { CodeErreurCompte } from '@/data/comptes'
+import { referenceEchec } from '@/data/echecEnvoi'
 import type { ActionLigne } from '@/features/comptes/actionsLigne'
 import type { PanneauOuvert } from '@/features/comptes/PanneauCompte'
 import { RAISON_INCONNUE } from '@/features/comptes/raisons'
@@ -69,13 +70,19 @@ export function useEcranComptes(actions: ActionsComptes) {
   const [resultat, setResultat] = useState<ResultatAction | null>(null)
 
   /** Résultat d'une action de ligne : un nouveau numéro, pour réafficher le même message. */
-  const noterResultat = (cle: string, reussiteAction: boolean, message: string) => {
+  const noterResultat = (
+    cle: string,
+    reussiteAction: boolean,
+    message: string,
+    reference: string | null = null,
+  ) => {
     setReussite(null)
     setResultat((precedent) => ({
       cle,
       reussite: reussiteAction,
       message,
       envoi: (precedent?.envoi ?? 0) + 1,
+      reference,
     }))
   }
 
@@ -93,7 +100,12 @@ export function useEcranComptes(actions: ActionsComptes) {
       await appel(ligne.userId)
       noterResultat(ligne.cle, true, message)
     } catch (erreur) {
-      noterResultat(ligne.cle, false, lireRefusCompte(erreur, 'ligne').message)
+      noterResultat(
+        ligne.cle,
+        false,
+        lireRefusCompte(erreur, 'ligne').message,
+        referenceEchec(erreur),
+      )
     } finally {
       setEnCours(null)
     }

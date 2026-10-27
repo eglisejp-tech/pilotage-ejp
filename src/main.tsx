@@ -7,6 +7,7 @@ import { LimiteErreurRacine } from '@/app/LimiteErreurRacine'
 import { routes } from '@/app/routes'
 import { BandeauHorsLigne } from '@/components/etats/BandeauHorsLigne'
 import { AnnonceDePage } from '@/features/connexion/AnnonceDePage'
+import { installerIncidents } from '@/features/incidents/incidentsEnvoi'
 import { clientRequetes } from '@/lib/requetes'
 import { prechargerEcran } from '@/pages/pagesDesAdresses'
 import './index.css'
@@ -18,6 +19,9 @@ if (!racine) {
 
 // Le code de l'écran demandé arrive pendant la lecture de la session et l'ouverture (T67).
 prechargerEcran(window.location.pathname)
+
+// Incidents d'envoi (T76, lot C) : tout échec d'envoi entre dans la file de l'espace actif.
+installerIncidents()
 
 const routeur = createBrowserRouter(routes)
 

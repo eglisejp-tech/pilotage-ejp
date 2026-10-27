@@ -54,8 +54,20 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     afficher()
     elementExact(
       'p',
-      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 25 octobre 2026.",
+      "Ce que l'outil fait des données, et à qui s'adresser. Dernière mise à jour : 26 octobre 2026.",
     )
+  })
+
+  // T76, lot C (conception erreurs-envoi, 6.7 ; Proposé, Q7 : sans nouvelle acceptation).
+  it('annonce les incidents d’envoi dans « Données traitées » et leur durée de 90 jours', () => {
+    afficher()
+    const incidents = elementExact(
+      'li',
+      "Les incidents d'envoi : quand un enregistrement échoue, l'heure, l'écran, le type d'erreur, le nom et la version du navigateur et la version du site, avec le ministère ou le profil du compte. Jamais ce qui a été saisi. EJP Tech seul les lit, pour corriger l'outil.",
+    )
+    expect(partie('Données traitées')).toContainElement(incidents)
+    const duree = elementExact('li', "Incidents d'envoi : 90 jours, puis effacés.")
+    expect(partie('Durées de conservation')).toContainElement(duree)
   })
 
   it('dit ce que devient le prénom indiqué sur un compte partagé, qui le lit et comment l’effacer (T56)', () => {
@@ -113,13 +125,15 @@ describe('PageConfidentialite (étape 4, lot I)', () => {
     expect(textePage()).not.toMatch(/1 ou 2/)
   })
 
-  it('place les signalements dans « Données traitées », avant la règle des champs libres', () => {
+  it('place les signalements et leur suivi dans « Données traitées », avant la règle des champs libres (T77)', () => {
     afficher()
     const donnees = partie('Données traitées')
     const signalements = elementExact(
       'li',
-      "Les signalements (« Signaler une difficulté ») : un court message qu'un ministère adresse à EJP Tech pour obtenir de l'aide avec l'outil. Seuls ce ministère et EJP Tech les lisent.",
+      "Les signalements (« Signaler une difficulté ») : un court message qu'un ministère adresse à EJP Tech pour obtenir de l'aide avec l'outil, puis les réponses d'EJP Tech et du ministère, et la date de chaque étape. Ces réponses se lisent dans l'outil. Seuls ce ministère et EJP Tech lisent les signalements et leurs réponses.",
     )
+    // Le courriel de suivi (lot 3 de T77) n'est pas construit : la page n'en dit rien.
+    expect(texteDe(signalements)).not.toMatch(/courriel|email/i)
     const champsLibres = elementExact(
       'li',
       "Ce qui est écrit dans les champs libres. N'y écrivez aucune information sur une personne : ce qui y est écrit par erreur est masqué.",

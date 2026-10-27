@@ -2,16 +2,18 @@ import { z } from 'zod'
 import {
   LONGUEUR_MAX_SIGNALEMENT,
   LONGUEUR_MIN_SIGNALEMENT,
-  TEXTES_BLOC_SIGNALEMENTS,
+  TEXTES_REPONSE,
   TEXTES_SIGNALEMENT,
 } from '@/features/signalement/textes'
 import type { EcranSignalement } from '@/lib/base'
 
-// Schémas partagés entre les formulaires « Signaler une difficulté » et « Clore le signalement »
-// et les appels de `src/data/signalements.ts` (CLAUDE.md : validation Zod partagée). Ils disent ce
-// que la base accepte (B7) : texte de 10 à 280 caractères après `trim`, commentaire vide ou de 10
-// à 280 caractères, ni crochets ni « texte masqué » (T43). Les familles « données personnelles »
-// (« @ », 5 chiffres de suite, civilité suivie d'un nom) restent à la base, qui les refuse : la
+// Schémas partagés entre les formulaires « Signaler une difficulté », les réponses du suivi (T77),
+// « Clore le signalement », et les appels de `src/data/signalements.ts` (CLAUDE.md : validation
+// Zod partagée). Ils disent ce que la base accepte (B7, T77) : texte de 10 à 280 caractères après
+// `trim`, ni crochets ni « texte masqué » (T43) ; une réponse est toujours obligatoire, celle de
+// « Clore le signalement » comprise (la base l'accepte encore vide pour l'ancien site). Les
+// familles « données personnelles » (« @ », 5 chiffres de suite, civilité suivie d'un nom)
+// restent à la base, qui les refuse : la
 // table de traduction donne la phrase, sous le champ. Les messages avant l'envoi sont ceux de
 // `TEXTES_SIGNALEMENT` (T66).
 
@@ -66,31 +68,33 @@ export type ValeursSignalement = z.input<typeof schemaSignalement>
 /** Signalement validé, prêt pour la base (texte sans espaces autour). */
 export type Signalement = z.output<typeof schemaSignalement>
 
-/**
- * Commentaire de clôture facultatif : vide (espaces seuls compris) devient null, sinon 10 à 280
- * caractères après `trim`, sans marqueur de la modération.
- */
-const schemaCommentaire = z
-  .string()
-  .trim()
-  .transform((texte) => (texte === '' ? null : texte))
-  .pipe(
-    texteLibre(
-      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireCourt,
-      TEXTES_BLOC_SIGNALEMENTS.erreurCommentaireLong,
-    ).nullable(),
-  )
+/** Une réponse du suivi (T77) : obligatoire, 10 à 280 caractères après `trim`. */
+const schemaTexteReponse = texteLibre(TEXTES_REPONSE.erreurCourt, TEXTES_REPONSE.erreurLong)
 
-/** Ce que reçoit `clore_signalement` : le signalement et le commentaire (null sans commentaire). */
+/** Un signalement, désigné par son identifiant (« Prendre en charge », « Oui, c'est réglé »). */
+export const schemaIdentifiantSignalement = z.uuid()
+
+/** Ce que reçoit `clore_signalement` à l'écran : le signalement et la réponse, obligatoire. */
 export const schemaCloture = z.object({
   signalementId: z.uuid(),
-  commentaire: schemaCommentaire.nullable(),
+  commentaire: schemaTexteReponse,
 })
 
 export type Cloture = z.output<typeof schemaCloture>
 
-/** Le formulaire de clôture : le commentaire seul (le signalement est celui de la ligne). */
-export const schemaFormulaireCloture = z.object({ commentaire: schemaCommentaire })
+/**
+ * Ce que reçoivent `repondre_au_ministere` (EJP Tech) et `repondre_a_ejp_tech` (le ministère) :
+ * le signalement et la réponse.
+ */
+export const schemaReponse = z.object({
+  signalementId: z.uuid(),
+  texte: schemaTexteReponse,
+})
 
-export type ValeursFormulaireCloture = z.input<typeof schemaFormulaireCloture>
-export type FormulaireCloture = z.output<typeof schemaFormulaireCloture>
+export type Reponse = z.output<typeof schemaReponse>
+
+/** Le panneau de réponse : le texte seul. */
+export const schemaFormulaireReponse = z.object({ texte: schemaTexteReponse })
+
+export type ValeursFormulaireReponse = z.input<typeof schemaFormulaireReponse>
+export type FormulaireReponse = z.output<typeof schemaFormulaireReponse>

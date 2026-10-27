@@ -124,6 +124,9 @@ export const ADRESSES_APPLICATION: readonly AdresseApplication[] = [
   // « Signaler une difficulté » (T39) : le ministère seul écrit, EJP Tech lit dans le bloc
   // « Signalements » de /moderation, le berger et le conseil n'y ont aucun accès.
   { chemin: '/signaler', profils: ['ministere'], titre: 'Signaler une difficulté', etape: 4 },
+  // « Mes signalements » (T77) : le suivi, pour le ministère seul, sans onglet ; on y arrive par le
+  // bandeau ou la ligne de « Ma semaine » et par le lien de /signaler.
+  { chemin: '/signalements', profils: ['ministere'], titre: 'Mes signalements', etape: 8 },
   // Nouveau point (maquette 10, étape 5) : seul un compte de ministère crée un point (BRIEF
   // règle 7). Ni le berger, ni le conseil, ni l'administration, ni EJP Tech n'y ont accès.
   { chemin: '/saisir/point', profils: ['ministere'], titre: 'Nouveau point', etape: 5 },

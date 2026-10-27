@@ -1,13 +1,14 @@
 import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
-// « Signaler une difficulté » et bloc « Signalements » (lot E8, T39) sur l'aperçu de
-// développement : les vrais écrans, données d'exemple, envois simulés comme la base (aucune
-// base, aucune écriture). Trois formats par les projets Playwright : 1440, 834 et 390 px.
+// « Signaler une difficulté » (lot E8, T39) et bloc « Signalements » d'EJP Tech avec le suivi
+// (T77) sur l'aperçu de développement : les vrais écrans, données d'exemple (jour de l'aperçu le
+// mercredi 28 oct. 2026), envois simulés comme la base (aucune base, aucune écriture). Trois
+// formats par les projets Playwright : 1440, 834 et 390 px. La page « Mes signalements » du
+// ministère est dans signalements-suivi.spec.ts.
 
 const RAPPEL = "N'écrivez aucun nom ni information personnelle."
-const VUES_MINISTERE = ['formulaire', 'premier-usage', 'liste-probleme', 'lien-long'] as const
 const VUES_EJP_TECH = [
   'bloc',
   'bloc-lien-long',
@@ -24,21 +25,16 @@ async function ouvrir(page: Page, requete: string) {
 
 const champ = (page: Page) => page.getByLabel('Quelle difficulté rencontrez-vous ?')
 const envoyer = (page: Page) => page.getByRole('button', { name: 'Envoyer le signalement' }).click()
-const REPONSE = 'Réponse au ministère (facultatif)'
 const CLORE = 'Clore le signalement'
-/** Le premier signalement ouvert du bloc d'EJP Tech (Communication, dans l'aperçu). */
-const premierOuvert = (page: Page) =>
-  page
-    .getByRole('region', { name: 'Signalements', exact: true })
-    .getByRole('list')
-    .first()
+const REPONSE_CLOTURE = 'Réponse au ministère'
+const bloc = (page: Page) => page.getByRole('region', { name: 'Signalements', exact: true })
+const groupe = (page: Page, nom: string) =>
+  bloc(page).getByRole('region', { name: nom, exact: true })
+/** La ligne d'un ministère dans le bloc d'EJP Tech (un signalement par ministère dans l'aperçu). */
+const ligne = (page: Page, ministere: string): Locator =>
+  bloc(page)
     .getByRole('article')
-    .first()
-/**
- * Le même libellé ouvre le panneau et confirme (T66) : le bouton de la ligne laisse sa place au
- * bouton du panneau, la ligne n'a donc jamais qu'un « Clore le signalement ».
- */
-const cloreLePremier = (page: Page) => premierOuvert(page).getByRole('button', { name: CLORE })
+    .filter({ has: page.getByRole('heading', { name: ministere, exact: true }) })
 
 async function auditer(page: Page) {
   const resultat = await new AxeBuilder({ page })
@@ -64,7 +60,7 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await expect(page.getByText('Écran concerné : Autre écran')).toBeVisible()
   })
 
-  test('trop court, puis envoyé : l’erreur sous le champ, puis la confirmation et le champ vidé', async ({
+  test('trop court, puis envoyé : l’erreur sous le champ, puis la confirmation vers « Mes signalements »', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=ministere&ecran=saisie_reunion')
@@ -76,11 +72,22 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await champ(page).fill('Je ne trouve pas la réunion de jeudi.')
     await envoyer(page)
     await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      "Signalement envoyé. La réponse s'affichera sur cette page.",
+      "Signalement envoyé. Suivez la réponse d'EJP Tech dans « Mes signalements ».",
     )
     await expect(champ(page)).toHaveValue('')
     // Il n'y a plus rien à annuler : le bouton dit « Fermer ».
     await expect(page.getByRole('button', { name: 'Fermer', exact: true })).toBeVisible()
+  })
+
+  test('sous le formulaire, un seul lien « Voir mes signalements », plus de liste', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=ministere')
+    await expect(page.getByRole('link', { name: 'Voir mes signalements' })).toHaveAttribute(
+      'href',
+      '/signalements',
+    )
+    await expect(page.getByRole('heading', { name: 'Vos derniers signalements' })).toHaveCount(0)
   })
 
   test('refus de la base (donnée personnelle) : son message sous le champ, texte gardé', async ({
@@ -108,27 +115,6 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
     await expect(champ(page)).toHaveValue('Je ne peux pas choisir la date.')
   })
 
-  test('« Vos derniers signalements » : ouvert, puis clos avec la réponse d’EJP Tech', async ({
-    page,
-  }) => {
-    await ouvrir(page, 'profil=ministere')
-    const liste = page.getByRole('region', { name: 'Vos derniers signalements' })
-    await expect(liste.getByRole('listitem')).toHaveCount(2)
-    await expect(liste.getByRole('listitem').first()).toContainText('Ouvert')
-    await expect(liste.getByRole('listitem').nth(1)).toContainText('Clos le 29 sept.')
-    await expect(liste).toContainText('Réponse : Réglé avec le ministère')
-  })
-
-  test('premier usage : rien sous le formulaire ; lecture en échec : « Réessayer »', async ({
-    page,
-  }) => {
-    await ouvrir(page, 'profil=ministere&vue=premier-usage')
-    await expect(page.getByRole('heading', { name: 'Vos derniers signalements' })).toHaveCount(0)
-    await ouvrir(page, 'profil=ministere&vue=liste-probleme')
-    await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
-    await expect(page.getByRole('button', { name: 'Réessayer' })).toBeVisible()
-  })
-
   for (const profil of ['berger', 'conseil', 'admin_eglise']) {
     test(`profil ${profil} : page non disponible, aucun signalement`, async ({ page }) => {
       await ouvrir(page, `profil=${profil}`)
@@ -144,71 +130,200 @@ test.describe('Signaler une difficulté (ministère), aperçu', () => {
 })
 
 test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
-  test('titre de l’écran, bloc en tête, ouverts du plus ancien au plus récent, puis les clos', async ({
+  test('titre, compteur, trois groupes, chaque ligne avec sa ligne d’état et ses gestes', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=admin_plateforme')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modération')
-    const bloc = page.getByRole('region', { name: 'Signalements', exact: true })
-    await expect(bloc.getByText('2 signalements ouverts')).toBeVisible()
-    // Le sous-titre redisait le titre : retiré par T66 (t361).
-    await expect(bloc.getByText('Difficultés signalées par les ministères')).toHaveCount(0)
-    const ouverts = bloc.getByRole('list').first().getByRole('article')
-    await expect(ouverts).toHaveCount(2)
-    await expect(ouverts.first()).toContainText('Communication')
-    await expect(ouverts.first()).toContainText('Ajouter un événement, 2 oct.')
-    await expect(ouverts.nth(1)).toContainText('Intégration')
-    const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
-    await expect(clos).toContainText('Clos le 29 sept.')
-    await expect(clos).toContainText('Réponse : Réglé avec le ministère')
-    await expect(clos.getByRole('button')).toHaveCount(0)
+    await expect(bloc(page).getByText('4 signalements à traiter')).toBeVisible()
+    await expect(bloc(page).getByRole('heading', { level: 3 })).toHaveText([
+      'À traiter',
+      'En attente du ministère',
+      'Clos ces 30 derniers jours',
+    ])
+
+    // À traiter : du plus ancien au plus récent, avec l'âge lu dans la base.
+    const aTraiter = groupe(page, 'À traiter').getByRole('article')
+    await expect(aTraiter.getByRole('heading', { level: 4 })).toHaveText([
+      'Intégration',
+      'Social',
+      'Jeunesse',
+      'Coordination',
+    ])
+    await expect(ligne(page, 'Intégration')).toContainText('Le ministère a répondu hier.')
+    await expect(ligne(page, 'Intégration')).toContainText(
+      'Réponse du ministère : « La session du samedi 24 octobre, celle du soir. »',
+    )
+    await expect(ligne(page, 'Social')).toContainText('Pris en charge le 20 oct., il y a 8 jours.')
+    await expect(ligne(page, 'Coordination')).toContainText("Reçu aujourd'hui.")
+    await expect(ligne(page, 'Coordination')).toContainText('Ajouter un événement, 28 oct.')
+    await expect(
+      ligne(page, 'Coordination').getByRole('button', { name: /^(Prendre|Répondre|Clore)/ }),
+    ).toHaveText(['Prendre en charge', 'Répondre au ministère', CLORE])
+    await expect(
+      ligne(page, 'Intégration').getByRole('button', { name: /^(Prendre|Répondre|Clore)/ }),
+    ).toHaveText(['Répondre au ministère', CLORE])
+
+    // En attente du ministère : la date limite, aucun geste.
+    const attente = groupe(page, 'En attente du ministère')
+    await expect(ligne(page, 'Communication').first()).toContainText(
+      "Réponse envoyée le 27 oct. Le ministère peut répondre jusqu'au 3 nov.",
+    )
+    await expect(attente.getByRole('button', { name: /^(Prendre|Répondre|Clore)/ })).toHaveCount(0)
+
+    // Clos : les derniers clos d'abord, chacun avec sa fin.
+    const clos = groupe(page, 'Clos ces 30 derniers jours').getByRole('article')
+    await expect(clos).toHaveCount(3)
+    await expect(clos.first()).toContainText('Confirmé par le ministère le 26 oct.')
+    await expect(clos.nth(1)).toContainText('Clos le 25 oct., sans retour du ministère.')
+    await expect(clos.nth(2)).toContainText('Clos par EJP Tech le 8 oct.')
+    await expect(clos.nth(2)).toContainText(
+      "Transmis à l'administration de l'église, qui recontacte le ministère.",
+    )
+    await expect(
+      groupe(page, 'Clos ces 30 derniers jours').getByRole('button', {
+        name: /^(Prendre|Répondre|Clore)/,
+      }),
+    ).toHaveCount(0)
   })
 
-  test('clore avec une réponse : la ligne passe dans les clos, « Signalement clos. »', async ({
+  test('« Prendre en charge » : annoncé, la ligne reste à traiter, focus sur son en-tête', async ({
     page,
   }) => {
     await ouvrir(page, 'profil=admin_plateforme')
-    await cloreLePremier(page).click()
-    const commentaire = page.getByLabel(REPONSE)
-    await expect(commentaire).toBeFocused()
-    // Un seul « Clore le signalement » sur la ligne ouverte : celui qui envoie le panneau.
-    await expect(cloreLePremier(page)).toHaveAttribute('type', 'submit')
-    // La consigne « transmis à l'administration » a quitté l'écran (T66, point ouvert 10).
-    await expect(commentaire).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
-    await expect(page.getByText('Un signalement clos ne se rouvre pas.')).toBeVisible()
-    await commentaire.fill('Court')
-    await cloreLePremier(page).click()
-    await expect(
-      page.getByText('Écrivez au moins 10 caractères, ou laissez la réponse vide.'),
-    ).toBeVisible()
-    await commentaire.fill("transmis à l'administration")
-    await cloreLePremier(page).click()
-    await expect(page.getByRole('status').filter({ hasText: 'Signalement' })).toHaveText(
-      'Signalement clos.',
+    await ligne(page, 'Coordination').getByRole('button', { name: 'Prendre en charge' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'pris en charge' })).toHaveText(
+      'Signalement pris en charge.',
     )
-    await expect(page.getByText('1 signalement ouvert')).toBeVisible()
-    const clos = page.getByRole('region', { name: 'Clos ces 30 derniers jours' })
-    await expect(clos).toContainText('Clos le 6 oct.')
-    await expect(clos).toContainText("Réponse : transmis à l'administration")
+    await expect(ligne(page, 'Coordination')).toContainText("Pris en charge aujourd'hui.")
+    await expect(
+      ligne(page, 'Coordination').getByRole('button', { name: 'Prendre en charge' }),
+    ).toHaveCount(0)
+    await expect(
+      ligne(page, 'Coordination').getByRole('heading', { name: 'Coordination' }),
+    ).toBeFocused()
   })
 
-  test('états : sans ouvert (titre et clos gardés), rien, chargement, problème passager', async ({
+  test('« Répondre au ministère » : panneau, contrôles, envoi ; la ligne passe en attente du ministère', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=admin_plateforme')
+    const bouton = ligne(page, 'Coordination').getByRole('button', {
+      name: 'Répondre au ministère',
+    })
+    await bouton.click()
+    await expect(bouton).toHaveAttribute('aria-expanded', 'true')
+    const reponse = page.getByLabel('Votre réponse à Coordination')
+    await expect(reponse).toBeFocused()
+    await expect(reponse).toHaveAccessibleDescription(
+      `Posez une question, ou dites ce que vous avez fait. ${RAPPEL} 0 sur 280`,
+    )
+    await expect(ligne(page, 'Coordination')).toContainText(
+      'Coordination lit votre réponse dans Pilotage EJP.',
+    )
+    await expect(page.getByText(/courriel|e-mail|email/i)).toHaveCount(0)
+    const envoyerReponse = page.getByRole('button', { name: 'Envoyer la réponse' })
+    await envoyerReponse.click()
+    await expect(page.getByText('Écrivez au moins 10 caractères.')).toBeVisible()
+    await reponse.fill('Quel événement, à quelle date, et quel message voyez-vous ?')
+    await envoyerReponse.click()
+    await expect(page.getByRole('status').filter({ hasText: 'Réponse envoyée' })).toHaveText(
+      'Réponse envoyée.',
+    )
+    await expect(bloc(page).getByText('3 signalements à traiter')).toBeVisible()
+    const deplace = groupe(page, 'En attente du ministère')
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: 'Coordination', exact: true }) })
+    await expect(deplace).toContainText(
+      "Réponse envoyée le 28 oct. Le ministère peut répondre jusqu'au 4 nov.",
+    )
+    await expect(deplace.getByRole('heading', { name: 'Coordination' })).toBeFocused()
+  })
+
+  test('« Clore le signalement » : réponse obligatoire, la ligne passe dans les clos', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=admin_plateforme')
+    await ligne(page, 'Social').getByRole('button', { name: CLORE }).click()
+    const reponse = page.getByLabel(REPONSE_CLOTURE, { exact: true })
+    await expect(reponse).toBeFocused()
+    await expect(reponse).toHaveAccessibleDescription(`${RAPPEL} 0 sur 280`)
+    await expect(ligne(page, 'Social')).toContainText(
+      'Le ministère lit cette réponse dans « Mes signalements ». Un signalement clos ne se rouvre pas.',
+    )
+    // Un seul « Clore le signalement » sur la ligne : celui qui envoie le panneau.
+    await expect(ligne(page, 'Social').getByRole('button', { name: CLORE })).toHaveAttribute(
+      'type',
+      'submit',
+    )
+    await ligne(page, 'Social').getByRole('button', { name: CLORE }).click()
+    await expect(page.getByText('Écrivez au moins 10 caractères.')).toBeVisible()
+    await reponse.fill("Transmis à l'administration de l'église.")
+    await ligne(page, 'Social').getByRole('button', { name: CLORE }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'Signalement clos' })).toHaveText(
+      'Signalement clos.',
+    )
+    const clos = groupe(page, 'Clos ces 30 derniers jours')
+      .getByRole('article')
+      .filter({ has: page.getByRole('heading', { name: 'Social', exact: true }) })
+    await expect(clos).toContainText('Clos par EJP Tech le 28 oct.')
+    await expect(clos).toContainText("Transmis à l'administration de l'église.")
+    await expect(bloc(page).getByText('3 signalements à traiter')).toBeVisible()
+  })
+
+  test('ministère sans compte actif : la raison, et « Clore le signalement » seul', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=admin_plateforme')
+    await expect(ligne(page, 'Jeunesse')).toContainText("Ce ministère n'a plus de compte actif.")
+    await expect(
+      ligne(page, 'Jeunesse').getByRole('button', { name: /^(Prendre|Répondre|Clore)/ }),
+    ).toHaveText([CLORE])
+  })
+
+  test('« Masquer » sous chaque texte cité : la fenêtre sur ce texte seul', async ({ page }) => {
+    await ouvrir(page, 'profil=admin_plateforme')
+    const masquer = ligne(page, 'Intégration').getByRole('button', { name: 'Masquer' })
+    // Le texte du signalement, puis la réponse d'EJP Tech et celle du ministère.
+    await expect(masquer).toHaveCount(3)
+    await masquer.last().click()
+    const fenetre = page.getByRole('dialog', { name: 'Masquer ce texte ?' })
+    await expect(fenetre).toContainText('La session du samedi 24 octobre, celle du soir.')
+    await fenetre.getByLabel("Nom d'une personne").check()
+    await fenetre.getByRole('button', { name: 'Masquer le texte' }).click()
+    await expect(page.getByRole('status').filter({ hasText: 'masqué' })).toHaveText('Texte masqué.')
+    // L'écran dit « [texte masqué] » ; la base garde son propre marqueur (T66).
+    await expect(ligne(page, 'Intégration')).toContainText(
+      'Réponse du ministère : « [texte masqué] »',
+    )
+  })
+
+  test('refus de la base (deux personnes d’EJP Tech) : le message, puis la liste se relit', async ({
+    page,
+  }) => {
+    await ouvrir(page, 'profil=admin_plateforme&envoi=deja')
+    await ligne(page, 'Coordination').getByRole('button', { name: 'Prendre en charge' }).click()
+    await expect(
+      page.getByText('Ce signalement a déjà été pris en charge. La liste est à jour.'),
+    ).toBeVisible()
+  })
+
+  test('états : sans signalement à traiter, rien, chargement, problème passager', async ({
     page,
   }) => {
     const vide = 'Aucun signalement.'
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-sans-ouvert')
-    // Le compteur du titre suffit quand des clos suivent (T66, t363).
-    await expect(page.getByText('Les prochains arriveront ici.')).toHaveCount(0)
     await expect(page.getByText(vide, { exact: true })).toHaveCount(0)
-    await expect(page.getByText('Aucun signalement ouvert', { exact: true })).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toBeVisible()
+    await expect(page.getByText('Aucun signalement à traiter', { exact: true })).toBeVisible()
+    await expect(groupe(page, 'À traiter')).toHaveCount(0)
+    await expect(groupe(page, 'Clos ces 30 derniers jours')).toBeVisible()
 
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-vide')
     await expect(page.getByText(vide)).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Clos ces 30 derniers jours' })).toHaveCount(0)
+    await expect(groupe(page, 'Clos ces 30 derniers jours')).toHaveCount(0)
 
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-chargement')
-    await expect(page.getByText('Chargement')).toBeVisible()
+    await expect(page.getByText('Chargement des signalements')).toBeVisible()
 
     await ouvrir(page, 'profil=admin_plateforme&vue=bloc-probleme')
     await expect(page.getByRole('alert')).toHaveText('La connexion a échoué. Réessayez.')
@@ -217,12 +332,10 @@ test.describe('Bloc « Signalements » (EJP Tech), aperçu', () => {
 })
 
 test.describe('accessibilité et largeurs', () => {
-  for (const vue of VUES_MINISTERE) {
-    test(`audit axe : ministère, ${vue}`, async ({ page }) => {
-      await ouvrir(page, `profil=ministere&vue=${vue}&ecran=saisie_evenement`)
-      await auditer(page)
-    })
-  }
+  test('audit axe : ministère, formulaire', async ({ page }) => {
+    await ouvrir(page, 'profil=ministere&ecran=saisie_evenement')
+    await auditer(page)
+  })
   for (const vue of VUES_EJP_TECH) {
     test(`audit axe : EJP Tech, ${vue}`, async ({ page }) => {
       await ouvrir(page, `profil=admin_plateforme&vue=${vue}`)
@@ -230,14 +343,17 @@ test.describe('accessibilité et largeurs', () => {
     })
   }
 
-  test('audit axe avec l’erreur du champ et le panneau de clôture ouvert', async ({ page }) => {
+  test('audit axe avec l’erreur du champ et les panneaux ouverts', async ({ page }) => {
     await ouvrir(page, 'profil=ministere')
     await envoyer(page)
     await expect(page.getByText('Décrivez la difficulté (10 caractères au moins).')).toBeVisible()
     await auditer(page)
     await ouvrir(page, 'profil=admin_plateforme')
-    await cloreLePremier(page).click()
-    await expect(page.getByLabel(REPONSE)).toBeVisible()
+    await ligne(page, 'Coordination').getByRole('button', { name: 'Répondre au ministère' }).click()
+    await expect(page.getByLabel('Votre réponse à Coordination')).toBeVisible()
+    await auditer(page)
+    await ligne(page, 'Social').getByRole('button', { name: CLORE }).click()
+    await expect(page.getByLabel(REPONSE_CLOTURE, { exact: true })).toBeVisible()
     await auditer(page)
   })
 
@@ -245,17 +361,21 @@ test.describe('accessibilité et largeurs', () => {
     page,
   }) => {
     await ouvrir(page, 'profil=admin_plateforme')
-    await cloreLePremier(page).click()
-    await page.getByLabel(REPONSE).fill('Réglé par téléphone.')
-    await premierOuvert(page).getByRole('button', { name: 'Annuler' }).click()
+    const bouton = ligne(page, 'Coordination').getByRole('button', {
+      name: 'Répondre au ministère',
+    })
+    await bouton.click()
+    await page.getByLabel('Votre réponse à Coordination').fill('Réglé par téléphone.')
+    await ligne(page, 'Coordination').getByRole('button', { name: 'Annuler' }).click()
     const fenetre = page.getByRole('alertdialog', { name: 'Fermer sans enregistrer ?' })
     await fenetre.getByRole('button', { name: 'Continuer la saisie' }).click()
-    await expect(page.getByLabel(REPONSE)).toHaveValue('Réglé par téléphone.')
-    await premierOuvert(page).getByRole('button', { name: 'Annuler' }).click()
+    await expect(page.getByLabel('Votre réponse à Coordination')).toHaveValue(
+      'Réglé par téléphone.',
+    )
+    await ligne(page, 'Coordination').getByRole('button', { name: 'Annuler' }).click()
     await fenetre.getByRole('button', { name: 'Fermer sans enregistrer' }).click()
-    await expect(page.getByLabel(REPONSE)).toHaveCount(0)
-    await expect(cloreLePremier(page)).toBeFocused()
-    await expect(cloreLePremier(page)).toHaveAttribute('type', 'button')
+    await expect(page.getByLabel('Votre réponse à Coordination')).toHaveCount(0)
+    await expect(bouton).toBeFocused()
   })
 
   test('à 360 px, aucun défilement horizontal', async ({ page }, testInfo) => {
@@ -265,8 +385,8 @@ test.describe('accessibilité et largeurs', () => {
       'profil=ministere',
       'profil=admin_plateforme',
       'profil=admin_plateforme&vue=bloc-sans-ouvert',
-      // Un lien collé de 90 caractères, sans espace, dans le texte et la réponse.
-      'profil=ministere&vue=lien-long',
+      // Un lien collé de 90 caractères, sans espace, dans le texte et les réponses.
+      'profil=ministere&vue=suivi-lien-long',
       'profil=admin_plateforme&vue=bloc-lien-long',
     ]) {
       await ouvrir(page, requete)
@@ -305,8 +425,6 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
   await capturer('formulaire')
   await envoyer(page)
   await capturer('formulaire-erreur')
-  await ouvrir(page, 'profil=ministere&vue=premier-usage&ecran=saisie_evenement')
-  await capturer('premier-usage')
   for (const vue of VUES_EJP_TECH) {
     await ouvrir(page, `profil=admin_plateforme&vue=${vue}`)
     // « Chargement » n'apparaît qu'après 300 ms : la capture l'attend.
@@ -314,6 +432,9 @@ test('captures en 1440, 834 et 390 px', { tag: '@captures' }, async ({ page }) =
     await capturer(vue)
   }
   await ouvrir(page, 'profil=admin_plateforme')
-  await cloreLePremier(page).click()
+  await ligne(page, 'Coordination').getByRole('button', { name: 'Répondre au ministère' }).click()
+  await capturer('bloc-reponse')
+  await ouvrir(page, 'profil=admin_plateforme')
+  await ligne(page, 'Social').getByRole('button', { name: CLORE }).click()
   await capturer('bloc-cloture')
 })

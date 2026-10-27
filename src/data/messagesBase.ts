@@ -79,6 +79,12 @@ interface Traduction {
 /** Garde-fou que l'interface ne déclenche pas : il prend le message de repli (m274). */
 const REPLI = 'repli'
 
+/**
+ * Refus du numéro anti-doublon (T76, lot B) : ce numéro a déjà servi, avec d'autres valeurs ou
+ * pour une autre création. Texte exact de `private.envoi_existant`.
+ */
+export const MESSAGE_ENVOI_AUTRES_VALEURS = "Cet envoi est déjà enregistré avec d'autres valeurs."
+
 /** Les mentions d'un point ont changé pendant que la fenêtre était ouverte (m157). */
 const MENTIONS_CHANGEES =
   'Les mentions de ce point viennent de changer. Fermez cette fenêtre pour mettre la page à jour.'
@@ -236,6 +242,13 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
       'Les mentions de cet événement viennent de changer. Fermez cette fenêtre pour mettre la page à jour.',
   },
 
+  // Numéro anti-doublon (T76, lot B ; Proposé, Q2) : un événement, un point ou un signalement
+  // renvoyé avec son numéro mais d'autres valeurs (corrigé après une issue inconnue). Le premier
+  // envoi est enregistré : l'écran relit la liste et oublie le numéro (`premierEnvoiEnregistre`).
+  [MESSAGE_ENVOI_AUTRES_VALEURS]: {
+    texte: 'Votre premier envoi est déjà enregistré. Vérifiez la liste avant de réessayer.',
+  },
+
   // Points d'attention (creer_point, changer_statut_point, marquer_traite, mentions). Les textes
   // des contrôles avant l'envoi (MESSAGES_POINT.controle ; T66, t240 à t262 et m137 à m151).
   // Le titre vide ou trop long lève un seul message : il reste tel quel.
@@ -296,11 +309,35 @@ const REFUS_DE_SAISIE: Readonly<Record<string, Traduction | typeof REPLI>> = {
   "Choisissez l'écran concerné dans la liste.": {
     texte: "Ouvrez « Signaler une difficulté » depuis l'écran concerné.",
   },
+  // La réponse de « Clore le signalement » est obligatoire à l'écran (T77) ; la base l'accepte
+  // encore vide pour l'ancien site.
   'Le commentaire fait 10 caractères au moins, ou reste vide.': {
-    texte: 'Écrivez au moins 10 caractères, ou laissez la réponse vide.',
+    texte: 'Écrivez au moins 10 caractères.',
     champ: 'texte',
   },
   'Ce signalement est déjà clos.': {},
+  // Suivi des signalements (T77) : un geste refusé parce que le signalement a changé (deux
+  // personnes d'EJP Tech, une page ouverte depuis longtemps) ; l'écran relit la liste.
+  'Ce signalement est déjà pris en charge.': {
+    texte: 'Ce signalement a déjà été pris en charge. La liste est à jour.',
+  },
+  'Ce signalement attend le retour du ministère.': {
+    texte: 'EJP Tech a déjà répondu à ce signalement. La liste est à jour.',
+  },
+  "Ce signalement n'attend pas votre réponse.": {
+    texte: 'Ce signalement a changé entre-temps. La liste est à jour.',
+  },
+  "Ce ministère n'a plus de compte actif.": {
+    texte: "Ce ministère n'a plus de compte actif : utilisez « Clore le signalement ».",
+  },
+  'Écrivez votre réponse (10 caractères au moins).': {
+    texte: 'Écrivez au moins 10 caractères.',
+    champ: 'texte',
+  },
+  'La réponse dépasse 280 caractères.': {
+    texte: 'Raccourcissez la réponse : 280 caractères au plus.',
+    champ: 'texte',
+  },
 
   // Modération (marquer_relu, masquer_texte, auteur_texte).
   'Texte introuvable, vide ou déjà masqué.': {

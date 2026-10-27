@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { Bouton } from '@/components/ui/Bouton'
 import { SansCoupureAuTrait } from '@/components/ui/SansCoupureAuTrait'
 import { useFenetreModale } from '@/components/ui/useFenetreModale'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { ErreurFormulaire } from '@/features/saisie/ErreurFormulaire'
 
 interface Props {
@@ -30,6 +31,8 @@ interface Props {
   onAnnuler: () => void
   /** La phrase d'un refus de l'action. Obligatoire pour une action qui peut échouer. */
   lireMessage?: (refus: unknown) => string
+  /** Écran d'EJP Tech : la référence d'un échec technique se dit « Référence : » (T76). */
+  ecranEjpTech?: boolean
 }
 
 /**
@@ -52,6 +55,7 @@ export function FenetreConfirmation({
   onConfirmer,
   onAnnuler,
   lireMessage,
+  ecranEjpTech = false,
 }: Props) {
   const idTitre = useId()
   const idTexte = useId()
@@ -60,6 +64,8 @@ export function FenetreConfirmation({
   // Lu sans attendre le rendu : deux appuis rapprochés n'envoient qu'une fois.
   const verrou = useRef(false)
   const [erreur, setErreur] = useState<string | null>(null)
+  /** Référence d'un échec technique (T76), sous la phrase. */
+  const [reference, setReference] = useState<string | null>(null)
 
   const annulerSiLibre = () => {
     if (!verrou.current) onAnnuler()
@@ -79,6 +85,7 @@ export function FenetreConfirmation({
       setEnCours(false)
       if (!lireMessage) throw refus
       setErreur(lireMessage(refus))
+      setReference(referenceEchec(refus))
     }
   }
 
@@ -116,7 +123,9 @@ export function FenetreConfirmation({
           </Bouton>
         )}
       </div>
-      {erreur !== null ? <ErreurFormulaire message={erreur} /> : null}
+      {erreur !== null ? (
+        <ErreurFormulaire message={erreur} reference={reference} ecranEjpTech={ecranEjpTech} />
+      ) : null}
     </dialog>
   )
 }

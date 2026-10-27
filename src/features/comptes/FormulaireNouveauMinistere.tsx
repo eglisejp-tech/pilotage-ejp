@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { LONGUEUR_MAX_NOM_MINISTERE } from '../../../supabase/functions/_shared/schemas.ts'
 import { Bouton } from '@/components/ui/Bouton'
+import { referenceEchec } from '@/data/echecEnvoi'
 import { ChampLigne } from '@/features/comptes/ChampLigne'
 import { lireRefusCompte } from '@/features/comptes/refus'
 import { longueurEnCaracteres, schemaNouveauMinistere } from '@/features/comptes/schemas'
@@ -39,6 +40,7 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
   })
   const [nom, description] = useWatch({ control, name: ['nom', 'description'] })
   const [refus, setRefus] = useState<string | null>(null)
+  const [reference, setReference] = useState<string | null>(null)
   // Dans le panneau : « Annuler » demande confirmation si un champ a changé (m265).
   const annuler = useFermetureSaisie(onAnnuler)
 
@@ -48,8 +50,10 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
       await envoyer(ministere)
     } catch (erreur) {
       const lu = lireRefusCompte(erreur)
-      if (lu.ou === 'formulaire') setRefus(lu.message)
-      else setError(lu.ou, { message: lu.message }, { shouldFocus: true })
+      if (lu.ou === 'formulaire') {
+        setRefus(lu.message)
+        setReference(referenceEchec(erreur))
+      } else setError(lu.ou, { message: lu.message }, { shouldFocus: true })
     }
   })
 
@@ -106,7 +110,9 @@ export function FormulaireNouveauMinistere({ envoyer, onAnnuler }: Props) {
       <Bouton pleineLargeur onClick={annuler}>
         {TEXTES_COMPTES.annuler}
       </Bouton>
-      {refus !== null ? <ErreurFormulaire message={refus} /> : null}
+      {refus !== null ? (
+        <ErreurFormulaire message={refus} reference={reference} ecranEjpTech />
+      ) : null}
     </form>
   )
 }

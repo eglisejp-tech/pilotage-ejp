@@ -29,16 +29,22 @@ beforeEach(() => {
   courant.client = undefined
 })
 
+/** Numéro anti-doublon tiré par le formulaire (T76). */
+const NUMERO = 'a1000000-0000-4000-8000-000000000001'
+
 describe('ajouterEvenement', () => {
-  it('appelle ajouter_evenement avec ses cinq arguments (heure prévue comprise), rend l’identifiant', async () => {
+  it('appelle ajouter_evenement avec ses six arguments (heure prévue et numéro compris), rend l’identifiant', async () => {
     const faux = installer({}, { data: '20000000-0000-4000-8000-000000000001', error: null })
-    const id = await ajouterEvenement({
-      date: '2026-10-10',
-      titre: 'Soirée de louange',
-      statut: 'attente_validation',
-      mentions: ['10000000-0000-4000-8000-000000000002'],
-      heure_prevue: 1140,
-    })
+    const id = await ajouterEvenement(
+      {
+        date: '2026-10-10',
+        titre: 'Soirée de louange',
+        statut: 'attente_validation',
+        mentions: ['10000000-0000-4000-8000-000000000002'],
+        heure_prevue: 1140,
+      },
+      NUMERO,
+    )
     expect(id).toBe('20000000-0000-4000-8000-000000000001')
     expect(faux.rpc).toHaveBeenCalledWith('ajouter_evenement', {
       p_titre: 'Soirée de louange',
@@ -46,38 +52,46 @@ describe('ajouterEvenement', () => {
       p_statut: 'attente_validation',
       p_mentions: ['10000000-0000-4000-8000-000000000002'],
       p_heure_prevue: 1140,
+      p_cle: NUMERO,
     })
     // Jamais d'ajout direct dans `evenement` ni dans `evenement_mention`.
     expect(faux.from).not.toHaveBeenCalled()
   })
 
-  it('sans heure prévue : la version à cinq arguments, avec null (jamais deux candidates)', async () => {
+  it('sans heure prévue : la version à six arguments, avec null (jamais deux candidates)', async () => {
     const faux = installer({}, { data: '20000000-0000-4000-8000-000000000001', error: null })
-    await ajouterEvenement({
-      date: '2026-10-10',
-      titre: 'Soirée de louange',
-      statut: 'brouillon',
-      mentions: [],
-      heure_prevue: null,
-    })
-    expect(faux.rpc).toHaveBeenCalledWith(
-      'ajouter_evenement',
-      expect.objectContaining({ p_heure_prevue: null }),
-    )
-  })
-
-  it('un refus de la base est relancé tel quel', async () => {
-    const refus = { code: 'P0001', message: 'La date ne peut pas être passée.' }
-    installer({}, { data: null, error: refus })
-    await expect(
-      ajouterEvenement({
-        date: '2026-10-01',
-        titre: 'Essai',
+    await ajouterEvenement(
+      {
+        date: '2026-10-10',
+        titre: 'Soirée de louange',
         statut: 'brouillon',
         mentions: [],
         heure_prevue: null,
-      }),
+      },
+      NUMERO,
+    )
+    expect(faux.rpc).toHaveBeenCalledWith(
+      'ajouter_evenement',
+      expect.objectContaining({ p_heure_prevue: null, p_cle: NUMERO }),
+    )
+  })
+
+  it('un refus de la base est relancé tel quel, sans nouvel essai', async () => {
+    const refus = { code: 'P0001', message: 'La date ne peut pas être passée.' }
+    const faux = installer({}, { data: null, error: refus })
+    await expect(
+      ajouterEvenement(
+        {
+          date: '2026-10-01',
+          titre: 'Essai',
+          statut: 'brouillon',
+          mentions: [],
+          heure_prevue: null,
+        },
+        NUMERO,
+      ),
     ).rejects.toBe(refus)
+    expect(faux.rpc).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -144,15 +158,21 @@ describe('validation avant tout appel à la base (Zod partagé avec les formulai
 
   it('ajouterEvenement : titre trop long, statut hors liste, mention qui n’est pas un uuid', async () => {
     const faux = installer()
-    await expect(ajouterEvenement({ ...evenement, titre: 'a'.repeat(81) })).rejects.toThrow()
     await expect(
-      ajouterEvenement({ ...evenement, statut: 'reporte' as unknown as 'brouillon' }),
+      ajouterEvenement({ ...evenement, titre: 'a'.repeat(81) }, NUMERO),
     ).rejects.toThrow()
-    await expect(ajouterEvenement({ ...evenement, mentions: ['pas-un-uuid'] })).rejects.toThrow()
+    await expect(
+      ajouterEvenement({ ...evenement, statut: 'reporte' as unknown as 'brouillon' }, NUMERO),
+    ).rejects.toThrow()
+    await expect(
+      ajouterEvenement({ ...evenement, mentions: ['pas-un-uuid'] }, NUMERO),
+    ).rejects.toThrow()
     // Heure prévue hors de la journée ou pas entière (T68, E3).
-    await expect(ajouterEvenement({ ...evenement, heure_prevue: 1440 })).rejects.toThrow()
-    await expect(ajouterEvenement({ ...evenement, heure_prevue: -1 })).rejects.toThrow()
-    await expect(ajouterEvenement({ ...evenement, heure_prevue: 19.5 })).rejects.toThrow()
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: 1440 }, NUMERO)).rejects.toThrow()
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: -1 }, NUMERO)).rejects.toThrow()
+    await expect(ajouterEvenement({ ...evenement, heure_prevue: 19.5 }, NUMERO)).rejects.toThrow()
+    // Numéro anti-doublon qui n'est pas un uuid (T76) : un bogue du code, rien ne part.
+    await expect(ajouterEvenement(evenement, 'pas-un-numero')).rejects.toThrow()
     expect(faux.rpc).not.toHaveBeenCalled()
     expect(faux.from).not.toHaveBeenCalled()
   })
