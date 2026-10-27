@@ -45,6 +45,20 @@
   --alerte: #b42318; /* plus de 30 jours, dépassée, priorité urgente */
   --alerte-fond: #fdecea; /* fond des messages d'erreur */
 
+  /* Ajout de l'application (demande de la personne responsable, 27 octobre 2026), absent de la
+   * référence : le ruban d'Octobre rose à côté du nom de l'outil, affiché chaque année du 1er au
+   * 31 octobre (heure de Paris) et seulement alors (src/features/octobre-rose). Élément graphique
+   * qui porte un sens : 3,53:1 sur --papier (fond de l'en-tête) et 3,18:1 sur --fond, au-dessus
+   * des 3:1 demandés. Un rose franc, demandé par la personne le 27 octobre 2026 (le premier,
+   * #d6336c, se lisait framboise). Pas de thème sombre dans l'outil. À retirer avec la fonction
+   * si elle cesse. */
+  --octobre-rose: #ec4899;
+  /* Bandeau Octobre rose (même demande, 27 octobre 2026 : « ça n'a rien de rose ») : fond rose
+   * pâle, et « Octobre rose » en rose foncé. Sur ce fond : --octobre-rose-fonce 5,14:1, --encre-2
+   * 7,62:1, --encre-3 4,59:1, au-dessus des 4,5:1 demandés pour un texte. */
+  --octobre-rose-fond: #fce7f3;
+  --octobre-rose-fonce: #be185d;
+
   /* Typographie */
   --f-lecture: 'Newsreader', Georgia, serif;
   --f-chiffres: 'Big Shoulders Display', 'Arial Narrow', sans-serif;

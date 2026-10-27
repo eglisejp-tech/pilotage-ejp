@@ -5,6 +5,7 @@ import { BandeauAvancement } from '@/features/avancement/BandeauAvancement'
 import { EnTete } from '@/features/navigation/EnTete'
 import type { ProprietesEnTete } from '@/features/navigation/EnTete'
 import { EnTeteSaisie } from '@/features/navigation/EnTeteSaisie'
+import { BandeauOctobreRose } from '@/features/octobre-rose/BandeauOctobreRose'
 import { ContexteEnTeteSaisie } from '@/features/saisie/enTeteSaisie'
 import type { EnTeteSaisie as OffreEnTeteSaisie } from '@/features/saisie/enTeteSaisie'
 
@@ -12,6 +13,8 @@ type Proprietes = ProprietesEnTete & {
   children: ReactNode
   /** Bandeau d'avancement sous l'en-tête (T50) : pages connectées seulement. */
   avecBandeau?: boolean
+  /** Bandeau Octobre rose sous l'en-tête, en octobre seulement : pages connectées seulement. */
+  avecOctobreRose?: boolean
 }
 
 /** La saisie qui tient l'en-tête simplifié : son « Retour », et un jeton pour le rendre. */
@@ -25,7 +28,12 @@ interface SaisieOuverte {
 // (maquette 01 : 1264 px de contenu entre deux marges de 88 px à 1440 px).
 // Une saisie en page entière (sous 600 px, PanneauSaisie) prend l'en-tête simplifié de la
 // maquette 08 (proposition 4, T69) : « Retour » et le compte, sans menu ni bandeau d'avancement.
-export function MiseEnPage({ children, avecBandeau = false, ...entete }: Proprietes) {
+export function MiseEnPage({
+  children,
+  avecBandeau = false,
+  avecOctobreRose = false,
+  ...entete
+}: Proprietes) {
   const [saisie, setSaisie] = useState<SaisieOuverte | null>(null)
   const prochainJeton = useRef(0)
   const offre = useMemo<OffreEnTeteSaisie>(
@@ -58,6 +66,7 @@ export function MiseEnPage({ children, avecBandeau = false, ...entete }: Proprie
         <EnTete {...entete} />
       )}
       {avecBandeau && !saisie ? <BandeauAvancement /> : null}
+      {avecOctobreRose && !saisie ? <BandeauOctobreRose /> : null}
       {/* Blocs intérieurs : dans la colonne flexible, mx-auto empêcherait l'étirement.
           tabIndex -1 : « Fermer » le bandeau renvoie le focus ici. */}
       <main id="contenu" tabIndex={-1} className="flex-1 outline-none">

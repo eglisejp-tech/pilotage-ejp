@@ -312,8 +312,9 @@ test.describe('animations de chargement (T65, T67)', () => {
   for (const [nom, adresse] of Object.entries({ ouverture: OUVERTURE, ...MOMENTS })) {
     test(`axe et 360 px : ${nom}`, async ({ page }) => {
       await ouvrir(page, adresse)
+      // Le dessin du chargement, hors de l'en-tête : en octobre, le ruban rose y est un svg.
       if (!nom.startsWith('envoi'))
-        await expect(page.locator('[data-flamme], svg').first()).toBeVisible()
+        await expect(page.locator('[data-flamme], svg:not(header svg)').first()).toBeVisible()
       // « Pilotage EJP » arrive en fondu pendant l'ouverture : l'audit attend la flamme vivante,
       // pour ne jamais mesurer le contraste d'un texte à moitié transparent.
       if (nom === 'ouverture')
