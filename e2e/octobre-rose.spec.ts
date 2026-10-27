@@ -2,7 +2,6 @@ import { AxeBuilder } from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { CLE_MASQUE } from '../src/features/octobre-rose/memoire.ts'
-import { ADRESSE_DEPISTAGE } from '../src/features/octobre-rose/octobreRose.ts'
 import { ciblesTropPetites, debordementHorizontal } from './outils/controles.ts'
 
 // Octobre rose (27 octobre 2026) : le ruban à côté de « Pilotage EJP » et le bandeau sous
@@ -14,6 +13,10 @@ const OCTOBRE = new Date('2026-10-27T10:00:00+01:00')
 const DERNIERE_MINUTE = new Date('2026-10-31T23:59:00+01:00')
 const NOVEMBRE = new Date('2026-11-01T00:00:00+01:00')
 
+// Page « Les dépistages » de l'Institut national du cancer (vérifiée le 27 octobre 2026). Les
+// parcours ne lisent pas src/features/octobre-rose/octobreRose.ts, qui importe par l'alias « @ ».
+const ADRESSE_DEPISTAGE =
+  'https://www.cancer.fr/toute-l-information-sur-les-cancers/se-faire-depister/les-depistages'
 const ECRAN = '/apercu/cette-semaine?profil=berger&octobre-rose=1'
 const PROFILS = ['ministere', 'berger', 'conseil', 'admin_eglise', 'admin_plateforme'] as const
 
