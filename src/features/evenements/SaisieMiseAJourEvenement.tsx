@@ -2,10 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import {
   corrigerNomEvenement,
+  corrigerNomSerie,
+  lireDatesSerie,
   lireEtatFinalEvenement,
   lireRetraitEvenement,
   modifierMentionsEvenement,
+  modifierMentionsSerie,
   retirerEvenement,
+  retirerSerie,
 } from '@/data/evenementsCorrections'
 import {
   lireEvenementAMettreAJour,
@@ -19,6 +23,8 @@ import { nomDuMinistere, nomsDesMentions } from '@/features/evenements/mentions'
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { MiseAJourEvenement } from '@/features/evenements/schemas'
+import { TEXTES_CORRECTIONS } from '@/features/evenements/textesCorrections'
+import { datesQuiRestent, reussiteRetraitSerie } from '@/features/evenements/textesPlages'
 import { useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
 
@@ -45,8 +51,9 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
   const fermer = useFermerSaisie()
   const apresEcriture = useApresEcriture()
   const valide = estIdentifiant(id)
-  // Le retrait vient de réussir dans ce panneau : il le dit, avant toute relecture.
-  const [retireALInstant, setRetireALInstant] = useState(false)
+  // Le retrait vient de réussir dans ce panneau : il le dit, avant toute relecture (pour une
+  // série, les dates retirées et celles qui restent).
+  const [reussiteRetrait, setReussiteRetrait] = useState<string | null>(null)
   const semaine = useQuery({
     queryKey: ['eglise', 'semaine'],
     queryFn: lireSemaine,
@@ -74,6 +81,13 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     queryFn: lireMinisteres,
     enabled: valide,
   })
+  // Une date d'une série (T78, lot 2) : les dates de la série, pour « Toute la série ».
+  const serieId = evenement.data?.serie_id ?? null
+  const datesSerie = useQuery({
+    queryKey: ['evenements', 'serie', serieId],
+    queryFn: () => lireDatesSerie(serieId ?? ''),
+    enabled: valide && porteur && serieId !== null,
+  })
   // Un événement absent de v_evenement a peut-être été retiré (T78) : un ancien lien le dit.
   const retrait = useQuery({
     queryKey: ['evenements', 'retrait', id],
@@ -100,13 +114,20 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     if (porteur) {
       void mentions.refetch()
       void etatFinal.refetch()
+      if (serieId !== null) void datesSerie.refetch()
     }
   }
   // Le porteur attend aussi les mentions ; un ministère mentionné n'a que le message à lire.
 
   let contenu: ContenuPanneauEvenement
-  if (retireALInstant) {
-    contenu = { etat: 'retire', le: null, aLInstant: true, mode: 'mise_a_jour' }
+  if (reussiteRetrait !== null) {
+    contenu = {
+      etat: 'retire',
+      le: null,
+      aLInstant: true,
+      message: reussiteRetrait,
+      mode: 'mise_a_jour',
+    }
   } else if (!valide) {
     contenu = { etat: 'introuvable' }
   } else if (evenement.data === null) {
@@ -127,10 +148,19 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
     semaine.data &&
     ministeres.data &&
     mentions.data &&
-    etatFinal.isSuccess
+    etatFinal.isSuccess &&
+    (serieId === null || datesSerie.data)
   ) {
     const lu = evenement.data
     const idsMentions = mentions.data.map((mention) => mention.ministere_id)
+    // Les dates d'une série : le porteur retire celles à venir sans état final enregistré ; les
+    // autres restent au calendrier, et la fenêtre puis la réussite le disent (27 octobre 2026).
+    const dates = datesSerie.data ?? []
+    const retirables = dates.filter(
+      (date) => date.jours_fin >= 0 && !date.etat_final_enregistre,
+    ).length
+    const termineesOuAnnulees = dates.filter((date) => date.etat_final_enregistre).length
+    const passees = dates.filter((date) => date.jours_fin < 0 && !date.etat_final_enregistre).length
     contenu = {
       etat: 'mise_a_jour',
       evenementId: lu.id,
@@ -142,6 +172,8 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
         statut: lu.statut,
         heurePrevue: lu.heure_prevue,
         heureDebut: lu.heure_debut,
+        dateFin: lu.date_fin,
+        heureFin: lu.heure_fin,
         aConfirmer: lu.a_confirmer,
       },
       envoyer,
@@ -156,12 +188,37 @@ export function SaisieMiseAJourEvenement({ id, ministereId, libelleCompte }: Pro
         modifierMentions: (liste) => ecrire(() => modifierMentionsEvenement(lu.id, liste)),
         retirer: async () => {
           await ecrire(() => retirerEvenement(lu.id))
-          setRetireALInstant(true)
+          setReussiteRetrait(TEXTES_CORRECTIONS.reussiteRetrait)
         },
+        serie:
+          serieId === null
+            ? null
+            : {
+                nombre: dates.length,
+                aVenir: dates.filter((date) => date.jours_fin >= 0).length,
+                retirables,
+                termineesOuAnnulees,
+                passees,
+                corrigerNom: (titre) => ecrire(() => corrigerNomSerie(serieId, titre)),
+                modifierMentions: (liste) => ecrire(() => modifierMentionsSerie(serieId, liste)),
+                retirer: async () => {
+                  await ecrire(() => retirerSerie(serieId))
+                  setReussiteRetrait(
+                    reussiteRetraitSerie(retirables, datesQuiRestent(termineesOuAnnulees, passees)),
+                  )
+                },
+              },
       },
     }
   } else if (
-    enEchec([semaine, evenement, ministeres, mentions, etatFinal]) ||
+    enEchec([
+      semaine,
+      evenement,
+      ministeres,
+      mentions,
+      etatFinal,
+      ...(serieId === null ? [] : [datesSerie]),
+    ]) ||
     semaine.data === null
   ) {
     contenu = { etat: 'probleme', mode: 'mise_a_jour', reessayer }

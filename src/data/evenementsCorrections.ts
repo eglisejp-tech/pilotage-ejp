@@ -67,6 +67,44 @@ export async function retirerEvenement(evenementId: string): Promise<void> {
   if (error) throw error
 }
 
+/**
+ * « Toute la série » (T78, lot 2, Q8) : le nom de toutes les dates non retirées de la série. Même
+ * contrôle que pour un événement ; la base n'écrit rien pour une date qui a déjà ce nom.
+ */
+export async function corrigerNomSerie(serieId: string, titre: string): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const nom = schemaNomEvenement.parse({ titre }).titre
+  const { error } = await envoyer('rpc/corriger_titre_serie', () =>
+    supabase().rpc('corriger_titre_serie', { p_serie_id: identifiant, p_titre: nom }),
+  )
+  if (error) throw error
+}
+
+/** « Toute la série » : les mentions des dates à venir de la série (dernier jour compris). */
+export async function modifierMentionsSerie(
+  serieId: string,
+  mentions: readonly string[],
+): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const liste = schemaMentionsEvenement.parse({ mentions: [...mentions] }).mentions
+  const { error } = await envoyer('rpc/modifier_mentions_serie', () =>
+    supabase().rpc('modifier_mentions_serie', { p_serie_id: identifiant, p_mentions: liste }),
+  )
+  if (error) throw error
+}
+
+/**
+ * « Toute la série » : le porteur retire les dates à venir sans « Terminé » ni « Annulé » (les
+ * autres restent au calendrier) ; EJP Tech retire toutes les dates.
+ */
+export async function retirerSerie(serieId: string): Promise<void> {
+  const identifiant = verifierIdentifiant(serieId)
+  const { error } = await envoyer('rpc/retirer_serie', () =>
+    supabase().rpc('retirer_serie', { p_serie_id: identifiant }),
+  )
+  if (error) throw error
+}
+
 /** Les états finals d'un événement : une fois l'un d'eux enregistré, seul EJP Tech le retire. */
 export type EtatFinal = Extract<StatutEvenement, 'termine' | 'annule'>
 
@@ -75,6 +113,36 @@ const ETATS_FINALS = ['termine', 'annule'] as const satisfies readonly EtatFinal
 /** Vrai pour « Terminé » et « Annulé ». */
 export function estEtatFinal(statut: StatutEvenement): statut is EtatFinal {
   return (ETATS_FINALS as readonly StatutEvenement[]).includes(statut)
+}
+
+/**
+ * Une date d'une série, telle que le panneau la compte (T78, lot 2). `etat_final_enregistre` :
+ * « Terminé » ou « Annulé » a été enregistré, même remplacé depuis ; la date reste alors au
+ * calendrier quand le porteur retire la série (décision du 27 octobre 2026, comme la base).
+ */
+export type DateDeSerie = Pick<LigneVue<'v_evenement'>, 'id' | 'statut' | 'jours_fin'> & {
+  etat_final_enregistre: boolean
+}
+
+/** Les dates non retirées d'une série que le compte lit (`v_evenement`), et leurs états finals. */
+export async function lireDatesSerie(serieId: string): Promise<DateDeSerie[]> {
+  const { data, error } = await supabase()
+    .from('v_evenement')
+    .select('id, statut, jours_fin')
+    .eq('serie_id', serieId)
+  if (error) throw error
+  if (data.length === 0) return []
+  const finals = await supabase()
+    .from('evenement_etat')
+    .select('evenement_id')
+    .in(
+      'evenement_id',
+      data.map((date) => date.id),
+    )
+    .in('statut', [...ETATS_FINALS])
+  if (finals.error) throw finals.error
+  const avecEtatFinal = new Set(finals.data.map((ligne) => ligne.evenement_id))
+  return data.map((date) => ({ ...date, etat_final_enregistre: avecEtatFinal.has(date.id) }))
 }
 
 /**

@@ -44,6 +44,10 @@ describe("ajout d'un événement", () => {
       ...valide,
       titre: 'Soirée de louange',
       heure_prevue: null,
+      // « Un jour » par défaut (T78, lot 2) : un événement, sans dernier jour ni heure de fin.
+      forme: 'evenement',
+      date_fin: null,
+      heure_fin: null,
     })
   })
 
@@ -220,15 +224,54 @@ describe("mise à jour d'un événement : heures (T68)", () => {
   it('vides : null, la base reprend les heures enregistrées', () => {
     expect(
       schema.parse({ date: '2026-10-03', statut: 'termine', heure_prevue: '', heure_debut: '' }),
-    ).toEqual({ date: '2026-10-03', statut: 'termine', heure_prevue: null, heure_debut: null })
+    ).toEqual({
+      date: '2026-10-03',
+      statut: 'termine',
+      heure_prevue: null,
+      heure_debut: null,
+      // Un seul jour (T78, lot 2) : pas de dernier jour ; heure de fin vide, la base la reprend.
+      date_fin: null,
+      heure_fin: null,
+    })
   })
 
   it('Terminé daté au plus aujourd’hui : l’heure de début part en minutes', () => {
     for (const date of ['2026-10-03', AUJOURDHUI]) {
       expect(
         schema.parse({ date, statut: 'termine', heure_prevue: '19:00', heure_debut: '19:12' }),
-      ).toEqual({ date, statut: 'termine', heure_prevue: 1140, heure_debut: 1152 })
+      ).toEqual({
+        date,
+        statut: 'termine',
+        heure_prevue: 1140,
+        heure_debut: 1152,
+        date_fin: null,
+        heure_fin: null,
+      })
     }
+  })
+
+  it('plusieurs jours (T78, lot 2) : le dernier jour part ; égal au premier, un seul jour ; vide ou avant : refusé', () => {
+    const camp = schemaMiseAJourEvenement({
+      aujourdhui: AUJOURDHUI,
+      dateActuelle: '2026-10-31',
+      plusieursJours: true,
+    })
+    const valeurs = { date: '2026-10-31', statut: 'valide', heure_prevue: '', heure_debut: '' }
+    expect(camp.parse({ ...valeurs, date_fin: '2026-11-02', heure_fin: '17:00' })).toMatchObject({
+      date_fin: '2026-11-02',
+      heure_fin: 1020,
+    })
+    expect(camp.parse({ ...valeurs, date_fin: '2026-10-31' }).date_fin).toBe('2026-10-31')
+    expect(erreurs(camp.safeParse({ ...valeurs, date_fin: '' }))).toEqual({
+      date_fin: 'Choisissez le dernier jour.',
+    })
+    expect(erreurs(camp.safeParse({ ...valeurs, date_fin: '2026-10-30' }))).toEqual({
+      date_fin: 'Le dernier jour doit suivre le premier.',
+    })
+    expect(erreurs(camp.safeParse({ ...valeurs, date_fin: '2026-12-01' }))).toEqual({
+      date_fin:
+        'Un événement dure 31 jours au plus. Pour des dates séparées, choisissez Se répète.',
+    })
   })
 
   it('l’heure de début gardée d’un champ caché ne part pas : sans Terminé, ou date à venir', () => {

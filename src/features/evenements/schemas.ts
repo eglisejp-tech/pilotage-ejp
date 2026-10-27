@@ -1,9 +1,18 @@
 import { z } from 'zod'
 import { TEXTES_EVENEMENT, TEXTES_REUNION, LONGUEUR_MAX_COURT } from '@/features/evenements/textes'
+import { TEXTES_PLAGES } from '@/features/evenements/textesPlages'
+import type { Quand } from '@/features/evenements/textesPlages'
 import { TEXTES_SIGNALEMENT } from '@/features/signalement/textes'
 import type { StatutEvenement } from '@/lib/base'
-import { estDateIso } from '@/lib/metier/dates'
+import { ajouterJours, estDateIso } from '@/lib/metier/dates'
 import type { DateIso } from '@/lib/metier/dates'
+import {
+  DATES_MAX_SERIE,
+  DATES_MIN_SERIE,
+  datesDeSerie,
+  ECART_MAX_JOURS,
+  unAnApres,
+} from '@/lib/metier/plages'
 import { heureDepuisMinutes, minutesDepuisHeure, PLAFOND_UNITE } from '@/lib/metier/unites'
 
 // Schémas partagés entre les formulaires d'événement et de réunion et les appels de
@@ -144,19 +153,64 @@ function texteCourtFacultatif(messageLong: string) {
 // Schémas de base : appliqués par `src/data/` à chaque appel d'écriture.
 // ---------------------------------------------------------------------------------------------
 
-/** Ce que `ajouter_evenement` reçoit (version à cinq arguments, T68). */
-export const schemaBaseAjoutEvenement = z.object({
-  date: dateDeBase(TEXTES_EVENEMENT.erreurDateVide),
+/**
+ * Dernier jour d'un événement (T78, lot 2) : null pour un seul jour ; sinon du premier jour (le
+ * même jour ramène à un seul jour) à 30 jours après. Même règle que la base.
+ */
+function finDansLaPlage(
+  valeurs: { date: string; date_fin?: string | null },
+  contexte: z.RefinementCtx,
+) {
+  const fin = valeurs.date_fin ?? null
+  if (fin === null || !estDateIso(valeurs.date)) return
+  if (fin < valeurs.date) {
+    contexte.addIssue({
+      code: 'custom',
+      path: ['date_fin'],
+      message: TEXTES_PLAGES.erreurFinAvantDebut,
+    })
+  } else if (fin > ajouterJours(valeurs.date, ECART_MAX_JOURS)) {
+    contexte.addIssue({ code: 'custom', path: ['date_fin'], message: TEXTES_PLAGES.erreurTropLong })
+  }
+}
+
+/**
+ * Ce que `ajouter_evenement` reçoit (version à huit arguments, T78 lot 2) : le dernier jour et
+ * l'heure de fin sont null pour un événement d'un jour sans heure de fin.
+ */
+export const schemaBaseAjoutEvenement = z
+  .object({
+    date: dateDeBase(TEXTES_EVENEMENT.erreurDateVide),
+    date_fin: dateDeBase(TEXTES_PLAGES.erreurDernierJourVide).nullable().default(null),
+    titre: schemaTitre,
+    statut: schemaStatut,
+    mentions: schemaMentions,
+    heure_prevue: minutesDeBase,
+    heure_fin: minutesDeBase.default(null),
+  })
+  .superRefine(finDansLaPlage)
+
+/**
+ * Ce que `ajouter_evenements_serie` reçoit (T78, lot 2) : 2 à 31 dates (la base les trie, retire
+ * les doublons et refuse une date passée ou plus de 12 mois).
+ */
+export const schemaBaseSerie = z.object({
+  dates: z
+    .array(dateDeBase(TEXTES_EVENEMENT.erreurDateVide))
+    .min(DATES_MIN_SERIE, TEXTES_PLAGES.erreurUneSeuleDate)
+    .max(DATES_MAX_SERIE, TEXTES_PLAGES.erreurTropDeDates),
   titre: schemaTitre,
   statut: schemaStatut,
   mentions: schemaMentions,
   heure_prevue: minutesDeBase,
+  heure_fin: minutesDeBase,
 })
 
 /**
  * Ce que la ligne d'état d'un événement reçoit. La base contrôle la date, l'heure de début sur
  * une date à venir (E1) et la ligne identique ; l'heure de début sans Terminé est refusée ici
- * aussi (E2).
+ * aussi (E2). Le dernier jour et l'heure de fin (T78, lot 2) sont facultatifs : absents ou null,
+ * la base reprend la durée et l'heure de fin du dernier état.
  */
 export const schemaBaseMiseAJourEvenement = z
   .object({
@@ -164,8 +218,11 @@ export const schemaBaseMiseAJourEvenement = z
     statut: schemaStatut,
     heure_prevue: minutesDeBase,
     heure_debut: minutesDeBase,
+    date_fin: dateDeBase(TEXTES_PLAGES.erreurDernierJourVide).nullable().optional(),
+    heure_fin: minutesDeBase.optional(),
   })
   .superRefine(heureDebutAvecTermine)
+  .superRefine(finDansLaPlage)
 
 /** Ce que la table `reunion` reçoit (la politique d'ajout contrôle la date). */
 export const schemaBaseReunion = z.object({
@@ -184,35 +241,121 @@ export function verifierIdentifiant(valeur: string): string {
 // Schémas des formulaires.
 // ---------------------------------------------------------------------------------------------
 
-/** Ajout d'un événement (maquette 11) : `ministereId` est celui du compte, jamais mentionné. */
+/** Un refus de plage, sous le champ qu'il vise. */
+interface ErreurPlage {
+  champ: 'date_fin' | 'jours'
+  message: string
+}
+
+/**
+ * Contrôle de la plage choisie par « Quand ? » (T78, lot 2 ; conception 8.1), une erreur à la
+ * fois. « Plusieurs jours » : le dernier jour après le premier, 31 jours au plus. « Se répète » :
+ * une dernière date, 12 mois au plus, au moins un jour coché, puis 2 à 31 dates trouvées.
+ */
+function erreurPlage(valeurs: {
+  quand: Quand
+  date: string
+  date_fin: string
+  jours: readonly string[]
+}): ErreurPlage | null {
+  const { quand, date, date_fin: fin } = valeurs
+  if (quand === 'un_jour' || !estDateIso(date)) return null
+  const serie = quand === 'repete'
+  const enFin = (message: string): ErreurPlage => ({ champ: 'date_fin', message })
+  const enJours = (message: string): ErreurPlage => ({ champ: 'jours', message })
+  if (!estDateIso(fin)) {
+    return enFin(serie ? TEXTES_PLAGES.erreurDerniereDateVide : TEXTES_PLAGES.erreurDernierJourVide)
+  }
+  if (!serie) {
+    if (fin <= date) return enFin(TEXTES_PLAGES.erreurFinAvantDebut)
+    if (fin > ajouterJours(date, ECART_MAX_JOURS)) return enFin(TEXTES_PLAGES.erreurTropLong)
+    return null
+  }
+  if (fin < date) return enFin(TEXTES_PLAGES.erreurDerniereDateAvant)
+  if (fin > unAnApres(date)) return enFin(TEXTES_PLAGES.erreurDouzeMois)
+  if (valeurs.jours.length === 0) return enJours(TEXTES_PLAGES.erreurAucunJour)
+  const nombre = datesDeSerie(date, fin, valeurs.jours.map(Number)).length
+  if (nombre === 0) return enJours(TEXTES_PLAGES.erreurAucuneDate)
+  if (nombre < DATES_MIN_SERIE) return enJours(TEXTES_PLAGES.erreurUneSeuleDate)
+  if (nombre > DATES_MAX_SERIE) return enFin(TEXTES_PLAGES.erreurTropDeDates)
+  return null
+}
+
+/**
+ * Ajout d'un événement (maquette 11, étendue par T78 lot 2) : `ministereId` est celui du compte,
+ * jamais mentionné. « Quand ? » choisit la forme : un jour (par défaut), plusieurs jours (un
+ * événement, du premier au dernier jour) ou une série (un événement par date trouvée, les jours de
+ * la semaine cochés entre la première et la dernière date). Le nom, le statut, les mentions et les
+ * heures valent pour chaque date. La sortie dit quelle fonction appeler (`forme`).
+ */
 export function schemaAjoutEvenement(contexte: { aujourdhui: DateIso; ministereId: string }) {
-  return z.object({
-    date: champDate({
-      aujourdhui: contexte.aujourdhui,
-      messageVide: TEXTES_EVENEMENT.erreurDateVide,
-      messagePassee: TEXTES_SIGNALEMENT.dateRefuseeAjout,
-    }),
-    titre: schemaTitre,
-    statut: schemaStatut,
-    // Mentions sans doublon, jamais le ministère lui-même (T32 ; la base refuse aussi).
-    mentions: schemaMentions.refine(
-      (ids) => !ids.includes(contexte.ministereId),
-      TEXTES_EVENEMENT.erreurMention,
-    ),
-    // Heure prévue facultative (T68) ; jamais d'heure de début à l'ajout.
-    heure_prevue: champHeureEvenement,
-  })
+  return z
+    .object({
+      quand: z.enum(['un_jour', 'plusieurs_jours', 'repete']).default('un_jour'),
+      date: champDate({
+        aujourdhui: contexte.aujourdhui,
+        messageVide: TEXTES_EVENEMENT.erreurDateVide,
+        messagePassee: TEXTES_SIGNALEMENT.dateRefuseeAjout,
+      }),
+      date_fin: z.string().default(''),
+      jours: z.array(z.string()).default([]),
+      titre: schemaTitre,
+      statut: schemaStatut,
+      // Mentions sans doublon, jamais le ministère lui-même (T32 ; la base refuse aussi).
+      mentions: schemaMentions.refine(
+        (ids) => !ids.includes(contexte.ministereId),
+        TEXTES_EVENEMENT.erreurMention,
+      ),
+      // Heures prévue et de fin facultatives (T68, T78) ; jamais d'heure de début à l'ajout.
+      heure_prevue: champHeureEvenement,
+      heure_fin: champHeureEvenement.default(null),
+    })
+    .superRefine((valeurs, contexteZod) => {
+      const erreur = erreurPlage(valeurs)
+      if (erreur)
+        contexteZod.addIssue({ code: 'custom', path: [erreur.champ], message: erreur.message })
+    })
+    .transform((valeurs): SaisieAjout => {
+      const commun = {
+        titre: valeurs.titre,
+        statut: valeurs.statut,
+        mentions: valeurs.mentions,
+        heure_prevue: valeurs.heure_prevue,
+        heure_fin: valeurs.heure_fin,
+      }
+      if (valeurs.quand === 'repete') {
+        const jours = valeurs.jours.map(Number)
+        return {
+          forme: 'serie',
+          dates: datesDeSerie(valeurs.date, valeurs.date_fin, jours),
+          ...commun,
+        }
+      }
+      return {
+        forme: 'evenement',
+        date: valeurs.date,
+        date_fin: valeurs.quand === 'plusieurs_jours' ? valeurs.date_fin : null,
+        ...commun,
+      }
+    })
 }
 
 /**
  * Mise à jour d'un événement (panneau dérivé de 11) : une nouvelle date passée est refusée, la
  * date actuelle reste permise même passée (T37). Heures (T68) : vide, la base reprend l'heure
- * enregistrée. Le champ « Heure de début » n'existe que pour un Terminé daté au plus `aujourdhui`
- * (`heureDebutPossible`) : sinon sa valeur gardée ne part pas (null), jamais une erreur sous un
- * champ caché ; la base refuse toujours une heure de début sans Terminé (E2) ou à venir (E1). Une
- * ligne identique au dernier état est arrêtée par le formulaire (m134) ; la base la refuse aussi.
+ * enregistrée ; l'heure de fin aussi (T78, lot 2). Le champ « Heure de début » n'existe que pour
+ * un Terminé daté au plus `aujourdhui` (`heureDebutPossible`) : sinon sa valeur gardée ne part pas
+ * (null), jamais une erreur sous un champ caché ; la base refuse toujours une heure de début sans
+ * Terminé (E2) ou à venir (E1). Un événement sur plusieurs jours (`plusieursJours`) a son dernier
+ * jour, obligatoire, du premier jour (retour à un seul jour) à 30 jours après ; sinon le dernier
+ * jour ne part pas (null : la base garde un seul jour). Une ligne identique au dernier état est
+ * arrêtée par le formulaire (m134) ; la base la refuse aussi.
  */
-export function schemaMiseAJourEvenement(contexte: { aujourdhui: DateIso; dateActuelle: DateIso }) {
+export function schemaMiseAJourEvenement(contexte: {
+  aujourdhui: DateIso
+  dateActuelle: DateIso
+  plusieursJours?: boolean
+}) {
   return z
     .object({
       date: champDate({
@@ -221,15 +364,32 @@ export function schemaMiseAJourEvenement(contexte: { aujourdhui: DateIso; dateAc
         messageVide: TEXTES_EVENEMENT.erreurDateVide,
         messagePassee: TEXTES_SIGNALEMENT.dateRefuseeMiseAJour,
       }),
+      date_fin: z.string().default(''),
       statut: schemaStatut,
       heure_prevue: champHeureEvenement,
       heure_debut: champHeureEvenement,
+      heure_fin: champHeureEvenement.default(null),
     })
-    .transform((valeurs) =>
-      heureDebutPossible({ ...valeurs, aujourdhui: contexte.aujourdhui })
-        ? valeurs
-        : { ...valeurs, heure_debut: null },
-    )
+    .superRefine((valeurs, contexteZod) => {
+      if (contexte.plusieursJours !== true || !estDateIso(valeurs.date)) return
+      const message = !estDateIso(valeurs.date_fin)
+        ? TEXTES_PLAGES.erreurDernierJourVide
+        : valeurs.date_fin < valeurs.date
+          ? TEXTES_PLAGES.erreurFinAvantDebut
+          : valeurs.date_fin > ajouterJours(valeurs.date, ECART_MAX_JOURS)
+            ? TEXTES_PLAGES.erreurTropLong
+            : null
+      if (message) contexteZod.addIssue({ code: 'custom', path: ['date_fin'], message })
+    })
+    .transform((valeurs) => {
+      const avecFin = {
+        ...valeurs,
+        date_fin: contexte.plusieursJours === true ? valeurs.date_fin : null,
+      }
+      return heureDebutPossible({ ...valeurs, aujourdhui: contexte.aujourdhui })
+        ? avecFin
+        : { ...avecFin, heure_debut: null }
+    })
 }
 
 /**
@@ -267,6 +427,12 @@ export function schemaReunion(contexte: { aujourdhui: DateIso }) {
 
 export type ValeursAjoutEvenement = z.input<ReturnType<typeof schemaAjoutEvenement>>
 export type AjoutEvenement = z.output<typeof schemaBaseAjoutEvenement>
+/** Ce qu'un appelant donne à `ajouterEvenement` : le dernier jour et l'heure de fin facultatifs. */
+export type EntreeAjoutEvenement = z.input<typeof schemaBaseAjoutEvenement>
+export type AjoutSerie = z.output<typeof schemaBaseSerie>
+/** Sortie du formulaire d'ajout : un événement (un ou plusieurs jours) ou une série. */
+export type SaisieAjout =
+  ({ forme: 'evenement' } & AjoutEvenement) | ({ forme: 'serie' } & AjoutSerie)
 export type ValeursMiseAJourEvenement = z.input<ReturnType<typeof schemaMiseAJourEvenement>>
 export type MiseAJourEvenement = z.output<typeof schemaBaseMiseAJourEvenement>
 export type ValeursReunion = z.input<ReturnType<typeof schemaReunion>>

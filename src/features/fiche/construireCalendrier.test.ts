@@ -29,7 +29,12 @@ function evenement(
     heure_debut: null,
     retard: null,
     a_l_heure: null,
+    date_fin: null,
+    heure_fin: null,
+    serie_id: null,
     ...surcharge,
+    // Un seul jour : le dernier jour est le premier (T78, lot 2).
+    jours_fin: surcharge.jours_fin ?? surcharge.jours ?? 4,
   }
 }
 
@@ -40,6 +45,38 @@ const lectures = (
   evenements,
   mentions,
   ministeres,
+})
+
+describe('construireCalendrier : plages (T78, lot 2)', () => {
+  it('S6 : « Du sam. 31 oct. au lun. 2 nov. », « 10 h à 17 h » ; un jour, « 19 h à 21 h »', () => {
+    const [camp, reunion] = construireCalendrier(
+      lectures([
+        evenement({
+          id: 'a',
+          titre: 'Camp de Toussaint',
+          date: '2026-10-31',
+          date_fin: '2026-11-02',
+          heure_prevue: 600,
+          heure_fin: 1020,
+        }),
+        evenement({ id: 'b', date: '2026-11-02', heure_prevue: 1140, heure_fin: 1260 }),
+      ]),
+      { ministereId: COMMUNICATION, profil: 'berger' },
+    )
+    expect([camp?.jour, camp?.heure]).toEqual(['Du sam. 31 oct. au lun. 2 nov.', '10 h à 17 h'])
+    expect([reunion?.jour, reunion?.heure]).toEqual(['Lun. 2 nov.', '19 h à 21 h'])
+  })
+
+  it('un événement sur plusieurs jours reste au calendrier jusqu’à son dernier jour plus 7', () => {
+    const lignes = construireCalendrier(
+      lectures([
+        evenement({ id: 'a', titre: 'Retraite', jours: -12, jours_fin: -6 }),
+        evenement({ id: 'b', titre: 'Ancien', jours: -12, jours_fin: -8 }),
+      ]),
+      { ministereId: COMMUNICATION, profil: 'berger' },
+    )
+    expect(lignes.map((ligne) => ligne.titre.texte)).toEqual(['Retraite'])
+  })
 })
 
 describe('construireCalendrier', () => {

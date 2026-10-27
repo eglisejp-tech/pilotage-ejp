@@ -97,7 +97,9 @@ test.describe('Ajouter un événement (maquette 11), aperçu', () => {
     await expect(page.getByLabel("Nom de l'événement")).toHaveAccessibleDescription(
       "N'écrivez aucun nom ni information personnelle.",
     )
-    await expect(page.getByRole('radio')).toHaveCount(6)
+    // Six statuts, plus les trois cases de « Quand ? » (T78, lot 2), « Un jour » coché.
+    await expect(page.getByRole('radio')).toHaveCount(9)
+    await expect(page.getByRole('radio', { name: 'Un jour' })).toBeChecked()
     await expect(page.getByRole('checkbox', { name: 'Communication' })).toHaveCount(0)
     await expect(page.getByRole('checkbox', { name: 'Coordination' })).toBeVisible()
     await expect(page.getByText('Le ministère mentionné verra cet événement.')).toBeVisible()

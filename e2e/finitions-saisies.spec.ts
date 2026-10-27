@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 // Finitions des saisies (T69, 24 octobre 2026), sur les aperçus de développement, aux trois
 // largeurs du projet et à 360 px : le grand chiffre du dimanche se voit même vide (proposition 1,
@@ -38,9 +38,14 @@ const champsTropPetits = (page: Page) =>
  * libellés peut arriver après l'ouverture du panneau, et la mesure suit les polices. Pour chaque
  * case : sa hauteur et le nombre de lignes de son libellé.
  */
-async function casesDuChoix(page: Page, disposition: 'ligne' | 'colonne' | 'grille') {
+async function casesDuChoix(
+  page: Page,
+  disposition: 'ligne' | 'colonne' | 'grille',
+  /** Le groupe qui contient le choix, quand la page en a plusieurs (« Quand ? », T78 lot 2). */
+  dans?: Locator,
+) {
   await page.evaluate(() => document.fonts.ready)
-  const groupe = page.locator('[data-disposition]').first()
+  const groupe = (dans ?? page).locator('[data-disposition]').first()
   await expect(groupe).toHaveAttribute('data-disposition', disposition)
   return groupe.evaluate((element) =>
     Array.from(element.querySelectorAll<HTMLElement>('[data-libelle]')).map((libelle) => {
@@ -167,7 +172,8 @@ test.describe('choix en un seul bloc, sans mot coupé (proposition 9)', () => {
     for (const taille of largeursDuTest(page)) {
       await page.setViewportSize({ width: taille, height: 900 })
       await ouvrir(page, '/apercu/evenements?profil=ministere')
-      for (const choix of await casesDuChoix(page, 'grille')) {
+      const statut = page.getByRole('group', { name: 'Statut' })
+      for (const choix of await casesDuChoix(page, 'grille', statut)) {
         expect(choix.hauteur, choix.texte ?? '').toBe(48)
         expect(choix.lignes, choix.texte ?? '').toBeLessThanOrEqual(2)
       }

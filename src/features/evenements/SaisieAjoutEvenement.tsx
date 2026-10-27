@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { ajouterEvenement } from '@/data/evenementsEcriture'
+import { ajouterEvenement, ajouterSerie } from '@/data/evenementsEcriture'
 import { lireSemaine } from '@/data/eglise'
 import { lireMinisteres } from '@/data/ministeres'
 import { enEchec } from '@/features/evenements/lectures'
 import { ministeresAMentionner } from '@/features/evenements/mentions'
 import { PanneauEvenement } from '@/features/evenements/PanneauEvenement'
 import type { ContenuPanneauEvenement } from '@/features/evenements/PanneauEvenement'
-import type { AjoutEvenement } from '@/features/evenements/schemas'
+import type { AjoutEvenement, AjoutSerie } from '@/features/evenements/schemas'
 import { creerPuisRelire, useApresEcriture } from '@/features/evenements/useApresEcriture'
 import { useFermerSaisie } from '@/features/evenements/useFermerSaisie'
 
@@ -29,6 +29,9 @@ export function SaisieAjoutEvenement({
 
   const envoyer = (evenement: AjoutEvenement, numero: string) =>
     creerPuisRelire(() => ajouterEvenement(evenement, numero), apresEcriture)
+  // Une série (T78, lot 2) : une seule écriture, un événement par date.
+  const envoyerSerie = (serie: AjoutSerie, numero: string) =>
+    creerPuisRelire(() => ajouterSerie(serie, numero), apresEcriture)
 
   let contenu: ContenuPanneauEvenement
   if (semaine.data && ministeres.data) {
@@ -38,6 +41,7 @@ export function SaisieAjoutEvenement({
       ministereId,
       ministeres: ministeresAMentionner(ministeres.data, ministereId),
       envoyer,
+      envoyerSerie,
     }
   } else if (enEchec([semaine, ministeres]) || semaine.data === null) {
     contenu = {

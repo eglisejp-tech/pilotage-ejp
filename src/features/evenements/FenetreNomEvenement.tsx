@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import type { FormEvent } from 'react'
+import { ChoixPortee } from '@/features/evenements/ChoixPortee'
+import type { ChoixSerie, Portee } from '@/features/evenements/ChoixPortee'
 import { Bouton } from '@/components/ui/Bouton'
 import { lireEchecCorrection } from '@/data/evenementsCorrections'
 import type { EchecLu } from '@/data/echecEnvoi'
@@ -21,6 +23,8 @@ interface Props {
   onReussite: () => void
   /** « Annuler », « Retour », Échap et le fond ferment sans rien écrire. */
   onFermer: () => void
+  /** Une date d'une série (T78, lot 2) : le choix « Toute la série » et son écriture. */
+  serie?: ChoixSerie<string>
 }
 
 /**
@@ -31,7 +35,10 @@ interface Props {
  * base (événement retiré entre-temps) ou une connexion perdue, sous le bouton, le nom gardé.
  * L'ancien nom reste dans l'historique de l'événement.
  */
-export function FenetreNomEvenement({ nom, envoyer, onReussite, onFermer }: Props) {
+export function FenetreNomEvenement({ nom, envoyer, onReussite, onFermer, serie }: Props) {
+  const id = useId()
+  const [portee, setPortee] = useState<Portee>('evenement')
+  const surLaSerie = serie !== undefined && portee === 'serie'
   const [valeur, setValeur] = useState(nom.masque ? '' : nom.texte)
   const [erreurChamp, setErreurChamp] = useState<string | null>(null)
   const [refus, setRefus] = useState<EchecLu | null>(null)
@@ -49,14 +56,15 @@ export function FenetreNomEvenement({ nom, envoyer, onReussite, onFermer }: Prop
       return
     }
     setErreurChamp(null)
-    if (!nom.masque && lu.data.titre === nom.texte.trim()) {
+    // Sur toute la série, une autre date peut porter un autre nom : la base décide date par date.
+    if (!surLaSerie && !nom.masque && lu.data.titre === nom.texte.trim()) {
       setInchange((essais) => essais + 1)
       return
     }
     setInchange(0)
     setEnCours(true)
     try {
-      await envoyer(lu.data.titre)
+      await (surLaSerie ? serie.envoyer(lu.data.titre) : envoyer(lu.data.titre))
       onReussite()
     } catch (erreur) {
       const echec = lireEchecCorrection(erreur)
@@ -70,6 +78,19 @@ export function FenetreNomEvenement({ nom, envoyer, onReussite, onFermer }: Prop
   return (
     <FenetreAction titre={TEXTES_CORRECTIONS.corrigerNom} point={nom} onFermer={onFermer}>
       <form noValidate className="flex flex-col gap-5" onSubmit={(e) => void soumettre(e)}>
+        {serie ? (
+          <ChoixPortee
+            id={`${id}-portee`}
+            nombre={serie.nombre}
+            libelleSerie={serie.libelle}
+            valeur={portee}
+            onChange={(choix) => {
+              setPortee(choix)
+              setInchange(0)
+              setRefus(null)
+            }}
+          />
+        ) : null}
         <ChampTexteCourt
           id="evenement-nom-corrige"
           libelle={TEXTES_EVENEMENT.libelleNom}

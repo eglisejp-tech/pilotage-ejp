@@ -29,7 +29,12 @@ function evenement(
     heure_debut: null,
     retard: null,
     a_l_heure: null,
+    date_fin: null,
+    heure_fin: null,
+    serie_id: null,
     ...surcharge,
+    // Un seul jour : le dernier jour est le premier (T78, lot 2).
+    jours_fin: surcharge.jours_fin ?? surcharge.jours ?? 4,
   }
 }
 

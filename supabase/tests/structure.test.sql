@@ -379,6 +379,12 @@ $$, $$ values
   ('corriger_titre_evenement', 2, false, true, false),
   ('modifier_mentions_evenement', 2, false, true, false),
   ('retirer_evenement', 1, false, true, false),
+  -- T78, lot 2 : plages (plusieurs jours, séries)
+  ('ajouter_evenement', 8, false, true, false),
+  ('ajouter_evenements_serie', 7, false, true, false),
+  ('corriger_titre_serie', 2, false, true, false),
+  ('modifier_mentions_serie', 2, false, true, false),
+  ('retirer_serie', 1, false, true, false),
   ('creer_calcul', 7, false, true, false),
   ('creer_indicateur', 9, false, true, false),
   ('creer_indicateurs_prevus', 2, false, true, false),
@@ -428,7 +434,7 @@ $$, $$ values
   ('supprimer_session', 1, false, true, false),
   ('valider_indicateur', 3, false, true, false),
   ('verifier_libelle', 3, false, true, false)
-$$, 'les 63 fonctions de public : 48 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
+$$, 'les 68 fonctions de public : 53 de l''API (security invoker, authenticated) et 15 fonctions serveur des comptes (service_role), et elles seules');
 select bag_eq($$
   select p.proname::text collate "default" as nom, p.pronargs::int as arguments, p.prosecdef as definer,
          has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
@@ -475,6 +481,13 @@ $$, $$ values
   ('corriger_titre_evenement', 2, true, true, false),
   ('modifier_mentions_evenement', 2, true, true, false),
   ('retirer_evenement', 1, true, true, false),
+  -- T78, lot 2 : plages ; contrôle commun aux gestes de série (aucun droit d'exécution)
+  ('ajouter_evenement', 8, true, true, false),
+  ('ajouter_evenements_serie', 7, true, true, false),
+  ('controler_serie', 2, true, false, false),
+  ('corriger_titre_serie', 2, true, true, false),
+  ('modifier_mentions_serie', 2, true, true, false),
+  ('retirer_serie', 1, true, true, false),
   ('controler_indicateur', 0, true, false, false),
   ('controler_invitation_en_attente', 1, false, false, false),
   ('controler_journal_ministere', 0, true, false, false),
@@ -634,7 +647,7 @@ $$, $$ values
   ('verifier_texte', 2, false, false, false),
   ('verifier_ventilations', 0, true, false, false),
   ('verrouiller_ministere', 1, false, false, false)
-$$, 'les 195 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
+$$, 'les 201 fonctions de private : security definer, invoker, droits d''exécution d''authenticated et de service_role, et elles seules');
 select is_empty($$
   select p.oid::regprocedure from pg_proc p
    where p.pronamespace = 'public'::regnamespace

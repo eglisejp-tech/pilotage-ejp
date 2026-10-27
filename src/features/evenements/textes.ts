@@ -65,6 +65,11 @@ export const TEXTES_EVENEMENT = {
   /** Ligne au-dessus du statut, pour un événement à confirmer (validation-metier.md, 4.4). */
   aConfirmer:
     'Cet événement attend toujours sa validation. Choisissez son nouveau statut ou changez sa date.',
+  /**
+   * La même ligne, le dernier jour passé : les dates ne changent plus par le porteur (décision
+   * du 27 octobre 2026), la ligne ne propose plus de changer la date.
+   */
+  aConfirmerPasse: 'Cet événement attend toujours sa validation. Choisissez son nouveau statut.',
   boutonAjout: 'Ajouter au calendrier',
   boutonMiseAJour: 'Enregistrer la mise à jour',
   /** « Enregistrement » quand on enregistre, « Envoi » quand quelque chose part (T66, t136). */

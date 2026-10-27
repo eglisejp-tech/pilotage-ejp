@@ -34,6 +34,8 @@ export type TablesEvenements = {
     titre: string
     saisi_le: string
     saisi_par: string
+    /** Série (T78, lot 2) : posée à la création par `ajouter_evenements_serie`, sinon null. */
+    serie_id: string | null
   }>
   /**
    * États successifs : la ligne la plus récente fait foi (règle 14, T37). Les deux heures (T68)
@@ -51,6 +53,14 @@ export type TablesEvenements = {
       saisi_par: string
       heure_prevue: number | null
       heure_debut: number | null
+      /**
+       * Dernier jour d'un événement sur plusieurs jours (T78, lot 2), du lendemain du premier à
+       * 30 jours après ; null pour un seul jour. Absent de l'ajout : la base reprend la durée du
+       * dernier état ; égal à `date` : l'événement revient à un seul jour.
+       */
+      date_fin: string | null
+      /** Heure de fin facultative (T78, lot 2), en minutes ; absente, la base reprend la dernière. */
+      heure_fin: number | null
     },
     {
       evenement_id: string
@@ -58,6 +68,8 @@ export type TablesEvenements = {
       statut: StatutEvenement
       heure_prevue?: number | null
       heure_debut?: number | null
+      date_fin?: string | null
+      heure_fin?: number | null
     }
   >
   /**
@@ -150,6 +162,18 @@ export type VuesEvenements = {
     titre_precedent: string | null
     /** Jour (heure de Paris) de la dernière correction du nom (T78), ou null. */
     titre_corrige_le: string | null
+    /** Dernier jour d'un événement sur plusieurs jours (T78, lot 2), ou null pour un seul jour. */
+    date_fin: string | null
+    /** Heure de fin du dernier état (T78, lot 2), en minutes depuis minuit, ou null. */
+    heure_fin: number | null
+    /**
+     * Dernier jour (ou le seul) moins `private.aujourdhui()` : les lectures qui dépendent de la
+     * fin d'un événement (calendrier, « Vos saisies », mentions, retrait) le lisent ; `jours`
+     * garde le premier jour (T78, lot 2).
+     */
+    jours_fin: number
+    /** Série de l'événement (T78, lot 2), ou null. */
+    serie_id: string | null
   }>
   /**
    * Mentions en vigueur des événements lisibles et non retirés (T78). `saisi_le` : la date de la
@@ -172,23 +196,71 @@ export type FonctionsEvenements = {
    * Ajoute un événement du ministère connecté avec ses mentions (B6) et son heure prévue (T68) :
    * rend son identifiant. Refus de la base (clés de `src/data/messagesBase.ts`) : « La date ne
    * peut pas être passée. », « Ce ministère ne peut pas être mentionné. », « L'heure prévue est
-   * invalide. ». L'écran appelle toujours la version à six arguments (T76), avec le numéro
-   * anti-doublon tiré au premier envoi, obligatoire et sans valeur par défaut : même numéro et
-   * même contenu, la base rend le même identifiant sans rien écrire ; même numéro et autre
-   * contenu, « Cet envoi est déjà enregistré avec d'autres valeurs. ». Les versions à cinq, quatre
-   * et trois arguments (ancien site) délèguent sans numéro.
+   * invalide. », « Le dernier jour doit suivre le premier. », « Un événement dure 31 jours au
+   * plus. [...] », « L'heure de fin est invalide. ». L'écran appelle toujours la version à huit
+   * arguments (T78, lot 2 : dernier jour et heure de fin, null pour un seul jour ou sans heure),
+   * avec le numéro anti-doublon tiré au premier envoi (T76), obligatoire et sans valeur par
+   * défaut : même numéro et même contenu, la base rend le même identifiant sans rien écrire ; même
+   * numéro et autre contenu, « Cet envoi est déjà enregistré avec d'autres valeurs. ». Les
+   * versions à six, cinq, quatre et trois arguments (ancien site) délèguent.
    */
   ajouter_evenement: {
+    Args:
+      | {
+          p_titre: string
+          p_date: string
+          p_date_fin: string | null
+          p_statut: StatutEvenement
+          p_mentions: string[]
+          p_heure_prevue: number | null
+          p_heure_fin: number | null
+          /** Numéro anti-doublon (uuid), le même à chaque nouvel essai du même envoi. */
+          p_cle: string
+        }
+      /** Version à six arguments (T76), gardée pour l'ancien site : elle délègue sans fin. */
+      | {
+          p_titre: string
+          p_date: string
+          p_statut: StatutEvenement
+          p_mentions: string[]
+          p_heure_prevue: number | null
+          p_cle: string
+        }
+    Returns: string
+  }
+  /**
+   * Ajoute une série (T78, lot 2) : un événement ordinaire par date, en une fois, liés par la
+   * série dont l'identifiant est rendu. 2 à 31 dates, aucune passée, 12 mois au plus ; mêmes
+   * contrôles et même numéro anti-doublon que `ajouter_evenement`.
+   */
+  ajouter_evenements_serie: {
     Args: {
       p_titre: string
-      p_date: string
+      p_dates: string[]
       p_statut: StatutEvenement
       p_mentions: string[]
       p_heure_prevue: number | null
-      /** Numéro anti-doublon (uuid), le même à chaque nouvel essai du même envoi. */
+      p_heure_fin: number | null
       p_cle: string
     }
     Returns: string
+  }
+  /** « Toute la série » (T78, lot 2) : le nom de toutes les dates non retirées, porteur seul. */
+  corriger_titre_serie: {
+    Args: { p_serie_id: string; p_titre: string }
+    Returns: undefined
+  }
+  /** « Toute la série » : les mentions des dates à venir (dernier jour compris), porteur seul. */
+  modifier_mentions_serie: {
+    Args: { p_serie_id: string; p_mentions: string[] }
+    Returns: undefined
+  }
+  /**
+   * « Toute la série » : le porteur retire les dates à venir sans état final ; EJP Tech, toutes.
+   */
+  retirer_serie: {
+    Args: { p_serie_id: string }
+    Returns: undefined
   }
   /**
    * Corrige le nom d'un événement du ministère connecté (T78) : une ligne de `evenement_titre`.

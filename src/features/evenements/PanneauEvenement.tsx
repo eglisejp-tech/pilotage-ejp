@@ -29,9 +29,16 @@ export type ContenuPanneauEvenement =
   | { etat: 'pas_porteur'; nomPorteur: string }
   /**
    * Événement retiré (T78) : par un ancien lien (« Cet événement a été retiré le 26 oct. »), ou
-   * juste après le retrait (« Événement retiré du calendrier. », annoncé).
+   * juste après le retrait (« Événement retiré du calendrier. », annoncé). Après « Toute la
+   * série », `message` dit les dates retirées et celles qui restent (`reussiteRetraitSerie`).
    */
-  | { etat: 'retire'; le: DateIso | null; aLInstant: boolean; mode: ModePanneauEvenement }
+  | {
+      etat: 'retire'
+      le: DateIso | null
+      aLInstant: boolean
+      message?: string
+      mode: ModePanneauEvenement
+    }
   | ({ etat: 'ajout' } & ProprietesAjoutEvenement)
   | ({
       etat: 'mise_a_jour'
@@ -115,7 +122,9 @@ export function PanneauEvenement({ contenu, onFermer, surtitre }: Props) {
         {contenu.etat === 'retire' ? (
           <div role={contenu.aLInstant ? 'status' : undefined}>
             <EtatVide situation="tout_est_fait" action={retour}>
-              {contenu.aLInstant ? TEXTES_CORRECTIONS.reussiteRetrait : ligneRetireLe(contenu.le)}
+              {contenu.aLInstant
+                ? (contenu.message ?? TEXTES_CORRECTIONS.reussiteRetrait)
+                : ligneRetireLe(contenu.le)}
             </EtatVide>
           </div>
         ) : null}
