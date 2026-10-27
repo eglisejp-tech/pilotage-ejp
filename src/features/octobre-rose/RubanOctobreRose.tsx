@@ -22,7 +22,7 @@ export function RubanOctobreRose({ className }: Proprietes) {
       viewBox="0 0 24 32"
       fill="none"
       stroke="currentColor"
-      strokeWidth={3.4}
+      strokeWidth={4.6}
       strokeLinejoin="round"
       className={cn('w-auto shrink-0 text-octobre-rose', className)}
     >
